@@ -1,0 +1,24 @@
+[general]
+user = psss
+width = 79
+
+[header]
+highlights = Highlights
+joy = Joy of the week ;-)
+
+[footer]
+next = Plans, thoughts, ideas...
+status = Status: Green | Yellow | Orange | Red
+
+[tools]
+type = git
+apps = /home/psss/git/apps
+
+[tests]
+type = git
+tests = /home/psss/git/tests/*
+
+[trac]
+type = trac
+prefix = TT
+url = https://some.trac.com/trac/project/rpc

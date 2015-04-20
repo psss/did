@@ -1,0 +1,257 @@
+#!/usr/bin/python
+# coding: utf-8
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#   status-report - Generate status report stats
+#   Author: Petr Šplíchal <psplicha@redhat.com>
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#   Copyright (c) 2012 Red Hat, Inc. All rights reserved.
+#
+#   This copyrighted material is made available to anyone wishing
+#   to use, modify, copy, or redistribute it subject to the terms
+#   and conditions of the GNU General Public License version 2.
+#
+#   This program is distributed in the hope that it will be
+#   useful, but WITHOUT ANY WARRANTY; without even the implied
+#   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+#   PURPOSE. See the GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public
+#   License along with this program; if not, write to the Free
+#   Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#   Boston, MA 02110-1301, USA.
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+"""
+Comfortably generate status report stats (e.g. list of committed
+changes) for given week, month, quarter, year or selected date
+range. By default all available stats for this week are reported.
+"""
+
+import sys
+import nitrate
+import kerberos
+import optparse
+import ConfigParser
+from dateutil.relativedelta import relativedelta as delta
+from nitrate import log, info, pretty
+
+from status_report.base import Date, User, Header, Footer
+from status_report.base import StatsGroup, CustomStats
+
+from status_report.plugins.git import GitStats
+from status_report.plugins.trac import TracStats
+from status_report.utils import header, item, Config, ConfigError, CONFIG
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  User Stats
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class UserStats(StatsGroup):
+    """ User statistics in one place """
+
+    def __init__(self, user=None, options=None):
+        """ Initialize stats objects. """
+        log.debug('options = {0}'.format(options))
+        StatsGroup.__init__(self, option="all", user=user, options=options)
+        self.stats = []
+        if "header" in Config().sections():
+            self.stats.append(Header(option="header", parent=self))
+        self.stats = []
+        for section in Config().sections(kind="git"):
+            self.stats.append(GitStats(
+                option=section, parent=self,
+                name="Work on {0}".format(section)))
+        for section in Config().sections(kind="trac"):
+            self.stats.append(TracStats(
+                option=section, parent=self,
+                name="Work on {0}".format(section)))
+        if Config().sections(kind="items"):
+            self.stats.append(CustomStats(
+                option="custom", parent=self))
+        if "footer" in Config().sections():
+            self.stats.append(Footer(option="footer", parent=self))
+
+    def add_option(self, parser):
+        """ Add options for each stats group. """
+        for stat in self.stats:
+            stat.add_option(parser)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Options
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class Options(object):
+    """ Command line options parser """
+
+    def __init__(self):
+        """ Prepare the parser. """
+        self.parser = optparse.OptionParser(
+            usage="status-report [last] [week|month|quarter|year] [opts]",
+            description=__doc__.strip())
+        self.sample_stats = UserStats()
+
+        # Time & user selection
+        group = optparse.OptionGroup(self.parser, "Selection")
+        group.add_option(
+            "--user", dest="users", default=[], action="append",
+            help="User login name(s)")
+        group.add_option(
+            "--email", dest="emails", default=[], action="append",
+            help="User email address(es)")
+        group.add_option(
+            "--since",
+            help="Start date in the YYYY-MM-DD format")
+        group.add_option(
+            "--until",
+            help="End date in the YYYY-MM-DD format")
+        self.parser.add_option_group(group)
+
+        # Include all stats objects options
+        self.sample_stats.add_option(self.parser)
+
+        # Display mode
+        group = optparse.OptionGroup(self.parser, "Display mode")
+        group.add_option(
+            "--format", default="text",
+            help="Output style, possible values: text (default) or wiki")
+        group.add_option(
+            "--width", default=Config().width, type="int",
+            help="Maximum width of the report output (default: %default)")
+        group.add_option(
+            "--brief", action="store_true",
+            help="Show brief summary only, do not list individual items")
+        group.add_option(
+            "--verbose", action="store_true",
+            help="Include more details (like modified git directories)")
+        group.add_option(
+            "--total", action="store_true",
+            help="Append total stats after listing individual users")
+        group.add_option(
+            "--merge", action="store_true",
+            help="Merge stats of all users into a single report")
+        group.add_option(
+            "--debug", action="store_true",
+            help="Turn on debugging output, do not catch exceptions")
+        self.parser.add_option_group(group)
+
+    def parse(self):
+        """ Parse the options. """
+        (opt, arg) = self.parser.parse_args()
+
+        # Enable debugging output
+        if opt.debug:
+            nitrate.set_log_level(nitrate.log.DEBUG)
+
+        # Enable --all if no particular stat or group selected
+        opt.all = not any([
+            getattr(opt, stat.dest) or getattr(opt, group.dest)
+            for group in self.sample_stats.stats
+            for stat in group.stats])
+
+        # Set the default user
+        if not opt.users and not opt.emails:
+            opt.users = Config().user
+            opt.emails = Config().email
+
+        # Time period handling
+        if opt.since is None and opt.until is None:
+            if "year" in arg:
+                if "last" in arg:
+                    opt.since, opt.until = Date.last_year()
+                    period = "the last fiscal year"
+                else:
+                    opt.since, opt.until = Date.this_year()
+                    period = "this fiscal year"
+            elif "quarter" in arg:
+                if "last" in arg:
+                    opt.since, opt.until = Date.last_quarter()
+                    period = "the last quarter"
+                else:
+                    opt.since, opt.until = Date.this_quarter()
+                    period = "this quarter"
+            elif "month" in arg:
+                if "last" in arg:
+                    opt.since, opt.until = Date.last_month()
+                    period = "the last month"
+                else:
+                    opt.since, opt.until = Date.this_month()
+                    period = "this month"
+            else:
+                if "last" in arg:
+                    opt.since, opt.until = Date.last_week()
+                    period = "the last week"
+                else:
+                    opt.since, opt.until = Date.this_week()
+                    period = "this week"
+        else:
+            opt.since = Date(opt.since or "1993-01-01")
+            opt.until = Date(opt.until or "today")
+            # Make the 'until' limit inclusive
+            opt.until.date += delta(days=1)
+            period = "given date range"
+        if not opt.since.date < opt.until.date:
+            raise nitrate.NitrateError(
+                "Invalid date range ({0} to {1})".format(
+                    opt.since, opt.until.date - delta(days=1)))
+        print(u"Status report for {0} ({1} to {2}).".format(
+            period, opt.since, opt.until.date - delta(days=1)))
+
+        # Finito
+        log.debug("Gathered options:")
+        log.debug(pretty(opt))
+        return opt
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Main
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+if __name__ == "__main__":
+    try:
+        # Parse options
+        options = Options().parse()
+
+        # Check for users by both login and email
+        users = [User(login=login) for login in options.users]
+        users += [User(email=email) for email in options.emails]
+        if not users:
+            raise nitrate.NitrateError("No user or email provided")
+
+        # Prepare team stats object for data merging
+        team_stats = UserStats(options=options)
+        if options.merge:
+            header("Total Report")
+            item("Users: {0}".format(len(users)), options=options)
+
+        # Check individual user stats
+        for user in users:
+            if options.merge:
+                item(user, 1, options=options)
+            else:
+                header(user)
+            user_stats = UserStats(user, options)
+            team_stats.merge(user_stats)
+
+        # Display merged team report
+        if options.merge or options.total:
+            if options.total:
+                header("Total Report")
+            team_stats.show()
+
+    except (nitrate.NitrateError, ConfigError) as error:
+        log.error(error)
+        sys.exit(1)
+
+    except kerberos.GSSError as error:
+        log.error("Kerberos authentication failed. Try kinit.")
+        sys.exit(2)
+
+    except ConfigParser.NoSectionError:
+        info("Create at least a minimum config file {0}:".format(CONFIG))
+        info("[general]\nuser = psss")
+        log.error("No user provided on the command line or in the config file")
+        sys.exit(3)
