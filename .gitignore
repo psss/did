@@ -1,17 +1,10 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 
-# notebook cache
-.ipynb_checkpoints
-
 # vim swap files
 *.sw*
 
 *.py[cod]
-
-# C extensions
-*.c
-*.so
 
 # Packages
 *.egg
@@ -30,23 +23,5 @@ lib64
 # Installer logs
 pip-log.txt
 
-# Unit test / coverage reports
-.coverage
-.tox
-nosetests.xml
-
-# Translations
-*.mo
-
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
-
-#Rope
+# Rope
 .ropeproject/
-
-# Builded documentation
-docs/build
-# Generated source-code documentation
-docs/source/source_codes
