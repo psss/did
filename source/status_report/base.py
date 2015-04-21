@@ -6,10 +6,11 @@ from __future__ import absolute_import
 import datetime
 import optparse
 import xmlrpclib
-import nitrate
 from dateutil.relativedelta import MO as MONDAY
 from dateutil.relativedelta import relativedelta as delta
-from status_report.utils import log, pretty, item, ReportsError, Config
+
+from status_report.utils import log, item, Config, ascii, email_re
+from status_report.utils import ReportsError, ConfigError
 
 TODAY = datetime.date.today()
 
@@ -35,7 +36,7 @@ class Date(object):
 
     def __str__(self):
         """ Ascii version of the string representation """
-        return nitrate.ascii(unicode(self))
+        return ascii(unicode(self))
 
     def __unicode__(self):
         """ String format for printing """
@@ -110,27 +111,18 @@ class Date(object):
 class User(object):
     """ User info """
 
-    def __init__(self, login=None, email=None):
-        """ Set values, attempt to fetch user name from Nitrate. """
-        if login is None and email is None:
+    def __init__(self, email, name=None, login=None):
+        """ Set user email, name and login values. """
+        if not email:
             raise ReportsError(
-                "Login or email required for user initialization.")
-        # Skip fetching name when email provided
-        if email is not None:
-            self.email = email
-            self.login = email.split('@')[0]
-            self.name = u"Unknown"
-        # Otherwise attempt to fetch user name from the server
+                "Email required for user initialization.")
         else:
-            self.login = login
-            try:
-                user = nitrate.User(login)
-                self.email = user.email
-                self.name = unicode(user)
-            except nitrate.NitrateError as error:
-                log.debug(pretty(error))
-                self.email = u"{0}@redhat.com".format(self.login)
-                self.name = u"Unknown"
+            # extract everything from the email string provided
+            # eg, "My Name" <bla@email.com>
+            parts = email_re.search(email)
+            self.email = parts.groups()[1]
+            self.login = login or self.email.split('@')[0]
+            self.name = name or parts.groups()[0] or u"Unknown"
 
     def __unicode__(self):
         """ Use name & email for string representation. """
@@ -189,7 +181,7 @@ class Stats(object):
         if self.enabled():
             try:
                 self.fetch()
-            except (xmlrpclib.Fault, nitrate.NitrateError) as error:
+            except (xmlrpclib.Fault, ConfigError) as error:
                 log.error(error)
                 self._error = True
                 # Raise the exception if debugging
