@@ -33,6 +33,8 @@ range. By default all available stats for this week are reported.
 """
 
 import sys
+import os
+import types
 import nitrate
 import kerberos
 import optparse
@@ -61,15 +63,44 @@ class UserStats(StatsGroup):
         self.stats = []
         if "header" in Config().sections():
             self.stats.append(Header(option="header", parent=self))
-        self.stats = []
-        for section in Config().sections(kind="git"):
-            self.stats.append(GitStats(
-                option=section, parent=self,
-                name="Work on {0}".format(section)))
-        for section in Config().sections(kind="trac"):
-            self.stats.append(TracStats(
-                option=section, parent=self,
-                name="Work on {0}".format(section)))
+
+        # detect all available plugins
+        # Detection and import  of plugins was taken from
+        #  beaker-client package, file command.py with several adjustments
+        plugins_path=os.path.dirname(plugins.__file__)
+        plugins_list=[]
+        for fn in os.listdir(plugins_path):
+            if not fn.endswith(".py"):
+                continue
+            if fn.startswith("_"):
+                continue
+            if not os.path.isfile(os.path.join(plugins_path, fn)):
+                continue
+            plugins_list.append(fn[:-3])
+
+        # try to import plugins
+        for mod in plugins_list[:]:
+            try:
+                __import__(plugins.__name__, {}, {}, [mod])
+            except:
+                print >> sys.stderr, "WARNING: Skipping broken plugin: %s" % (mod)
+                plugins_list.remove(mod)
+
+        # detect all classes inherited from StatsGroup and execute them
+        for plugin in plugins_list:
+            plugin_obj=getattr(plugins,plugin)
+            for obj_name in dir(plugin_obj):
+                object=getattr(plugin_obj,obj_name)
+                if isinstance(object, (type, types.ClassType)) and \
+                   issubclass(object,StatsGroup) and object != StatsGroup:
+                    for section in Config().sections(kind=plugin):
+                        # execution of plugin
+                        self.stats.append(object(
+                            option=section, parent=self,
+                            name="Work on {0}".format(section)))
+
+
+
         if Config().sections(kind="items"):
             self.stats.append(CustomStats(
                 option="custom", parent=self))
