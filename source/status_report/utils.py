@@ -27,7 +27,7 @@ COLOR_OFF = 0
 COLOR_AUTO = 2
 
 # Logging
-LOG_ENV_DEBUG = os.environ["DEBUG"]
+LOG_ENV_DEBUG = os.environ.get("DEBUG")
 LOG_ERROR = logging.ERROR
 LOG_WARN = logging.WARN
 LOG_INFO = logging.INFO
