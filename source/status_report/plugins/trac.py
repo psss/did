@@ -1,4 +1,5 @@
-# coding: utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """ Comfortably generate reports - Trac """
 
 import re
@@ -9,14 +10,15 @@ from status_report.utils import Config, ReportsError, log, pretty
 INTERESTING_RESOLUTIONS = ["canceled"]
 MAX_TICKETS = 1000000
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Trac Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Trac(object):
     """ Trac investigator """
-    def __init__(
-            self, ticket=None, changelog=None, parent=None, options=None):
+    def __init__(self, ticket=None, changelog=None, parent=None,
+                 options=None):
         """ Initialize ticket info and history """
         if ticket is None:
             return
@@ -107,9 +109,11 @@ class Trac(object):
                 return True
         return False
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Trac Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class TracCommon(Stats):
     """ Common Trac Stats object for saving prefix & proxy """
@@ -190,4 +194,4 @@ class TracStats(StatsGroup):
             TracClosed(
                 option=option + "-closed", parent=self,
                 name="Tickets closed in {0}".format(option)),
-            ]
+        ]
