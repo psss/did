@@ -283,16 +283,6 @@ class EmptyStatsGroup(StatsGroup):
         for opt, name in sorted(Config().section(option)):
             self.stats.append(EmptyStats(opt, name, parent=self))
 
-
-class Header(EmptyStatsGroup):
-    """ Header """
-    pass
-
-
-class Footer(EmptyStatsGroup):
-    """ Footer """
-    pass
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Custom Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

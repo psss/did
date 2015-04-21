@@ -12,7 +12,7 @@ import os
 import sys
 import types
 
-from status_report.base import StatsGroup
+from status_report.base import StatsGroup, EmptyStatsGroup
 from status_report.utils import Config, ConfigError, log
 
 # Self reference and file path to this module
@@ -54,7 +54,8 @@ def detect():
             # Filter out anything except for StatsGroup descendants
             if (not isinstance(statsgroup, (type, types.ClassType))
                     or not issubclass(statsgroup, StatsGroup)
-                    or statsgroup is StatsGroup):
+                    or statsgroup is StatsGroup
+                    or statsgroup is EmptyStatsGroup):
                 continue
             # Search config for sections with type matching the plugin,
             # use order provided there or class default otherwise

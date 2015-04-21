@@ -3,10 +3,12 @@ user = psss
 width = 79
 
 [header]
+type = header
 highlights = Highlights
 joy = Joy of the week ;-)
 
 [footer]
+type = footer
 next = Plans, thoughts, ideas...
 status = Status: Green | Yellow | Orange | Red
 

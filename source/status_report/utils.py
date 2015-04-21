@@ -110,7 +110,12 @@ class Config(object):
                     if section_type != kind:
                         continue
                 except ConfigParser.NoOptionError:
-                    continue
+                    # Implicit header/footer type for backward compatibility
+                    if (section == kind == "header" or
+                            section == kind == "footer"):
+                        pass
+                    else:
+                        continue
             result.append(section)
         return result
 

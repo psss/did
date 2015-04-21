@@ -41,7 +41,7 @@ from dateutil.relativedelta import relativedelta as delta
 from nitrate import log, info, pretty
 
 import status_report.plugins
-from status_report.base import Date, User, Header, Footer
+from status_report.base import Date, User
 from status_report.base import StatsGroup, CustomStats
 from status_report.utils import header, item, Config, ConfigError, CONFIG
 
@@ -57,8 +57,6 @@ class UserStats(StatsGroup):
         log.debug('options = {0}'.format(options))
         StatsGroup.__init__(self, option="all", user=user, options=options)
         self.stats = []
-        if "header" in Config().sections():
-            self.stats.append(Header(option="header", parent=self))
 
         for section, statsgroup in status_report.plugins.detect():
             self.stats.append(statsgroup(option=section, parent=self))
@@ -66,8 +64,6 @@ class UserStats(StatsGroup):
         if Config().sections(kind="items"):
             self.stats.append(CustomStats(
                 option="custom", parent=self))
-        if "footer" in Config().sections():
-            self.stats.append(Footer(option="footer", parent=self))
 
     def add_option(self, parser):
         """ Add options for each stats group. """
