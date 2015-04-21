@@ -32,8 +32,8 @@ changes) for given week, month, quarter, year or selected date
 range. By default all available stats for this week are reported.
 """
 
-import sys
 import os
+import sys
 import types
 import nitrate
 import kerberos
@@ -42,11 +42,9 @@ import ConfigParser
 from dateutil.relativedelta import relativedelta as delta
 from nitrate import log, info, pretty
 
+import status_report.plugins
 from status_report.base import Date, User, Header, Footer
 from status_report.base import StatsGroup, CustomStats
-
-from status_report.plugins.git import GitStats
-from status_report.plugins.trac import TracStats
 from status_report.utils import header, item, Config, ConfigError, CONFIG
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,42 +62,40 @@ class UserStats(StatsGroup):
         if "header" in Config().sections():
             self.stats.append(Header(option="header", parent=self))
 
-        # detect all available plugins
-        # Detection and import  of plugins was taken from
-        #  beaker-client package, file command.py with several adjustments
-        plugins_path=os.path.dirname(plugins.__file__)
-        plugins_list=[]
-        for fn in os.listdir(plugins_path):
-            if not fn.endswith(".py"):
+        # Detect available plugins (based on beaker-client's command.py)
+        plugins_path = os.path.dirname(status_report.plugins.__file__)
+        plugins_list = []
+        for filename in os.listdir(plugins_path):
+            if not filename.endswith(".py"):
                 continue
-            if fn.startswith("_"):
+            if filename.startswith("_"):
                 continue
-            if not os.path.isfile(os.path.join(plugins_path, fn)):
+            if not os.path.isfile(os.path.join(plugins_path, filename)):
                 continue
-            plugins_list.append(fn[:-3])
+            plugins_list.append(filename[:-3])
 
-        # try to import plugins
-        for mod in plugins_list[:]:
+        # Try to import plugins
+        for plugin in plugins_list[:]:
             try:
-                __import__(plugins.__name__, {}, {}, [mod])
-            except:
-                print >> sys.stderr, "WARNING: Skipping broken plugin: %s" % (mod)
-                plugins_list.remove(mod)
+                __import__(status_report.plugins.__name__, {}, {}, [plugin])
+            except ImportError, error:
+                log.warn("Failed to import {0} plugin ({1})".format(
+                    plugin, error))
+                plugins_list.remove(plugin)
 
-        # detect all classes inherited from StatsGroup and execute them
+        # Detect all classes inherited from StatsGroup and execute them
         for plugin in plugins_list:
-            plugin_obj=getattr(plugins,plugin)
+            plugin_obj = getattr(status_report.plugins, plugin)
             for obj_name in dir(plugin_obj):
-                object=getattr(plugin_obj,obj_name)
-                if isinstance(object, (type, types.ClassType)) and \
-                   issubclass(object,StatsGroup) and object != StatsGroup:
+                object = getattr(plugin_obj, obj_name)
+                if (isinstance(object, (type, types.ClassType))
+                        and issubclass(object, StatsGroup)
+                        and object is not StatsGroup):
                     for section in Config().sections(kind=plugin):
-                        # execution of plugin
+                        # Execution of plugin
                         self.stats.append(object(
                             option=section, parent=self,
                             name="Work on {0}".format(section)))
-
-
 
         if Config().sections(kind="items"):
             self.stats.append(CustomStats(
