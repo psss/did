@@ -71,5 +71,8 @@ def detect():
                 stats.append((section, statsgroup, order))
                 log.info("Found {0}, an instance of {1}, order {2}".format(
                     section, statsgroup.__name__, order))
+                # Custom stats are handled with a single instance
+                if statsgroup.__name__ == "CustomStats":
+                    break
     for section, statsgroup, _ in sorted(stats, key=lambda x: x[2]):
         yield section, statsgroup
