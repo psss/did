@@ -115,15 +115,15 @@ class Config(object):
         return result
 
     def section(self, section, skip=None):
-        """ Return section items, skip selected items (type by default) """
+        """ Return section items, skip selected (type/order by default) """
         if skip is None:
-            skip = ['type']
+            skip = ['type', 'order']
         return [(key, val) for key, val in self.parser.items(section)
                 if key not in skip]
 
     def item(self, section, it):
         """ Return content of given item in selected section """
-        for key, value in self.section(section):
+        for key, value in self.section(section, skip=['type']):
             if key == it:
                 return value
         raise ConfigError(

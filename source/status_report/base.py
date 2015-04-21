@@ -226,6 +226,9 @@ class Stats(object):
 class StatsGroup(Stats):
     """ Stats group """
 
+    # Default order
+    order = 500
+
     def add_option(self, parser):
         """ Add option group and all children options. """
 

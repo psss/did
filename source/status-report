@@ -32,9 +32,7 @@ changes) for given week, month, quarter, year or selected date
 range. By default all available stats for this week are reported.
 """
 
-import os
 import sys
-import types
 import nitrate
 import kerberos
 import optparse
@@ -62,40 +60,8 @@ class UserStats(StatsGroup):
         if "header" in Config().sections():
             self.stats.append(Header(option="header", parent=self))
 
-        # Detect available plugins (based on beaker-client's command.py)
-        plugins_path = os.path.dirname(status_report.plugins.__file__)
-        plugins_list = []
-        for filename in os.listdir(plugins_path):
-            if not filename.endswith(".py"):
-                continue
-            if filename.startswith("_"):
-                continue
-            if not os.path.isfile(os.path.join(plugins_path, filename)):
-                continue
-            plugins_list.append(filename[:-3])
-
-        # Try to import plugins
-        for plugin in plugins_list[:]:
-            try:
-                __import__(status_report.plugins.__name__, {}, {}, [plugin])
-            except ImportError, error:
-                log.warn("Failed to import {0} plugin ({1})".format(
-                    plugin, error))
-                plugins_list.remove(plugin)
-
-        # Detect all classes inherited from StatsGroup and execute them
-        for plugin in plugins_list:
-            plugin_obj = getattr(status_report.plugins, plugin)
-            for obj_name in dir(plugin_obj):
-                object = getattr(plugin_obj, obj_name)
-                if (isinstance(object, (type, types.ClassType))
-                        and issubclass(object, StatsGroup)
-                        and object is not StatsGroup):
-                    for section in Config().sections(kind=plugin):
-                        # Execution of plugin
-                        self.stats.append(object(
-                            option=section, parent=self,
-                            name="Work on {0}".format(section)))
+        for section, statsgroup in status_report.plugins.detect():
+            self.stats.append(statsgroup(option=section, parent=self))
 
         if Config().sections(kind="items"):
             self.stats.append(CustomStats(
