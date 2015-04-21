@@ -1,6 +1,5 @@
-#!/usr/bin/python
-# coding: utf-8
-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 #   status-report - Generate status report stats
@@ -33,19 +32,23 @@ range. By default all available stats for this week are reported.
 """
 
 import sys
-import nitrate
 import kerberos
 import optparse
 import ConfigParser
 from dateutil.relativedelta import relativedelta as delta
-from nitrate import log, info, pretty
 
 from status_report.base import Date, User, Header, Footer
 from status_report.base import StatsGroup, CustomStats
 
 from status_report.plugins.git import GitStats
 from status_report.plugins.trac import TracStats
-from status_report.utils import header, item, Config, ConfigError, CONFIG
+from status_report.utils import header, item
+from status_report.utils import Config, ConfigError, CONFIG
+from status_report.utils import Logging, info, pretty
+
+# Create the output logger
+logging = Logging('status-report')
+log = logging.logger
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  User Stats
@@ -61,7 +64,8 @@ class UserStats(StatsGroup):
         self.stats = []
         if "header" in Config().sections():
             self.stats.append(Header(option="header", parent=self))
-        self.stats = []
+        # BUG FIX; this overwrites previous assignment!
+        #self.stats = []
         for section in Config().sections(kind="git"):
             self.stats.append(GitStats(
                 option=section, parent=self,
@@ -97,9 +101,6 @@ class Options(object):
 
         # Time & user selection
         group = optparse.OptionGroup(self.parser, "Selection")
-        group.add_option(
-            "--user", dest="users", default=[], action="append",
-            help="User login name(s)")
         group.add_option(
             "--email", dest="emails", default=[], action="append",
             help="User email address(es)")
@@ -145,7 +146,7 @@ class Options(object):
 
         # Enable debugging output
         if opt.debug:
-            nitrate.set_log_level(nitrate.log.DEBUG)
+            logging.set(level=2)
 
         # Enable --all if no particular stat or group selected
         opt.all = not any([
@@ -154,8 +155,7 @@ class Options(object):
             for stat in group.stats])
 
         # Set the default user
-        if not opt.users and not opt.emails:
-            opt.users = Config().user
+        if not opt.emails:
             opt.emails = Config().email
 
         # Time period handling
@@ -195,7 +195,7 @@ class Options(object):
             opt.until.date += delta(days=1)
             period = "given date range"
         if not opt.since.date < opt.until.date:
-            raise nitrate.NitrateError(
+            raise RuntimeError(
                 "Invalid date range ({0} to {1})".format(
                     opt.since, opt.until.date - delta(days=1)))
         print(u"Status report for {0} ({1} to {2}).".format(
@@ -216,10 +216,9 @@ if __name__ == "__main__":
         options = Options().parse()
 
         # Check for users by both login and email
-        users = [User(login=login) for login in options.users]
-        users += [User(email=email) for email in options.emails]
+        users = [User(email=email) for email in options.emails]
         if not users:
-            raise nitrate.NitrateError("No user or email provided")
+            raise ConfigError("No user or email provided")
 
         # Prepare team stats object for data merging
         team_stats = UserStats(options=options)
@@ -242,7 +241,7 @@ if __name__ == "__main__":
                 header("Total Report")
             team_stats.show()
 
-    except (nitrate.NitrateError, ConfigError) as error:
+    except ConfigError as error:
         log.error(error)
         sys.exit(1)
 
@@ -251,7 +250,8 @@ if __name__ == "__main__":
         sys.exit(2)
 
     except ConfigParser.NoSectionError:
-        info("Create at least a minimum config file {0}:".format(CONFIG))
-        info("[general]\nuser = psss")
         log.error("No user provided on the command line or in the config file")
+        info("Create at least a minimum config file {0}:".format(CONFIG))
+        from getpass import getuser
+        info("[general]\nuser = {}".format(getuser()))
         sys.exit(3)

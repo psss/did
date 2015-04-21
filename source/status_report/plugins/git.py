@@ -1,4 +1,5 @@
-# coding: utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """ Comfortably generate reports - Git """
 
 import os
@@ -7,9 +8,11 @@ import subprocess
 from status_report.base import Stats, StatsGroup
 from status_report.utils import Config, item, log, pretty
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Git Repository
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class GitRepo(object):
     """ Git repository investigator """
@@ -59,9 +62,11 @@ class GitRepo(object):
             log.warn(errors.strip())
             return []
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Git Commits
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class GitCommits(Stats):
     """ Git commits """
@@ -80,6 +85,7 @@ class GitCommits(Stats):
                 self.name, len(self.stats),
                 "" if len(self.stats) == 1 else "s"),
             level=0, options=self.options)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Git Stats
