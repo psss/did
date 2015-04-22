@@ -166,7 +166,12 @@ class TracClosed(TracCommon):
 
 class TracStats(StatsGroup):
     """ Trac stats group """
+
+    # Default order
+    order = 400
+
     def __init__(self, option, name=None, parent=None):
+        name = "Tickets in {0}".format(option)
         StatsGroup.__init__(self, option, name, parent)
         # Initialize the server proxy
         config = dict(Config().section(option))

@@ -93,7 +93,12 @@ class GitCommits(Stats):
 
 class GitStats(StatsGroup):
     """ Git stats group """
+
+    # Default order
+    order = 300
+
     def __init__(self, option, name=None, parent=None):
+        name = "Work on {0}".format(option)
         StatsGroup.__init__(self, option, name, parent)
         for repo, path in Config().section(option):
             if path.endswith('/*'):
