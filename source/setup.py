@@ -5,16 +5,16 @@
 from setuptools import setup
 
 # acceptable version schema: major.minor[.patch][sub]
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __pkg__ = 'status_report'
-__pkgdir__ = {'status_report': 'source/status_report'}
+__pkgdir__ = {'status_report': 'status_report'}
 __pkgs__ = [
     'status_report',
     'status_report.plugins',
 ]
 __provides__ = ['status_report']
 __desc__ = 'Status Report - Comfortable CLI Activity Status Reporting'
-__scripts__ = ['source/status-report']
+__scripts__ = ['status-report']
 __requires__ = [
     'python_dateutil',
     'kerberos',
@@ -26,7 +26,7 @@ __irequires__ = [
 pip_src = 'https://pypi.python.org/packages/source'
 __deplinks__ = []
 
-with open('README') as _file:
+with open('../README') as _file:
     readme = _file.read()
 
 github = 'https://github.com/psss/status-report'

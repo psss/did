@@ -230,9 +230,9 @@ class Logging(object):
         logger.DATA = LOG_DATA
         logger.CACHE = LOG_CACHE
         logger.ALL = LOG_ALL
-        logger.cache = lambda message: logger.log(LOG_CACHE, message)
-        logger.data = lambda message: logger.log(LOG_DATA, message)
-        logger.all = lambda message: logger.log(LOG_ALL, message)
+        logger.cache = lambda message: logger.log(LOG_CACHE, message) # NOQA
+        logger.data = lambda message: logger.log(LOG_DATA, message) # NOQA
+        logger.all = lambda message: logger.log(LOG_ALL, message) # NOQA
         return logger
 
     def set(self, level=None):
@@ -263,9 +263,6 @@ class Logging(object):
     def get(self):
         """ Get the current log level """
         return self.logger.level
-
-#set_log_level = Logging.set
-#get_log_level = Logging.get
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -66,13 +66,18 @@ settings and configuration of individual reports::
 
 See also examples link for some more inspiration.
 
-Quick Install (pip)
+QUICK INSTALL (pip)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sudo yum install gcc krb5-devel
 virtualenv --no-site-packages ~/virtenv_statusreport
 source ~/virtenv_statusreport/bin/activate
 pip install -U pip setuptools
-pip install virtualenv kerberos python-dateutil
 pip install status_report
+
+RUN TESTS (pytest)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pip install pytest
+py.test source/tests
 
 LINKS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
