@@ -4,7 +4,8 @@
 
 from setuptools import setup
 
-__version__ = '0.1'
+# acceptable version schema: major.minor[.patch][sub]
+__version__ = '0.1.1'
 __pkg__ = 'status_report'
 __pkgdir__ = {'status_report': 'source/status_report'}
 __pkgs__ = [
