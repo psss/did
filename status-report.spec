@@ -41,7 +41,7 @@ install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
-* Wed Apr 22 2015 Petr Šplíchal <psplicha@redhat.com> 1.0-0
+* Wed Apr 22 2015 Petr Šplíchal <psplicha@redhat.com> 0.2-1
 - Incorporated package review feedback [BZ#1213739]
 - Include essential gitignore patterns
 - Handle custom stats as a plugin as well
