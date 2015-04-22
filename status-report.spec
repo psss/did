@@ -1,10 +1,9 @@
 Name: status-report
-Version: 0.1
-Release: 0%{?dist}
+Version: 0.2
+Release: 1%{?dist}
 
 Summary: Generate status report stats for selected date range
-Group: Applications/Productivity
-License: GPLv2
+License: GPLv2+
 
 URL: http://psss.fedorapeople.org/status-report/
 Source0: http://psss.fedorapeople.org/status-report/download/%{name}-%{version}.tar.bz2
@@ -37,8 +36,19 @@ install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
 %{_mandir}/man1/*
 %{_bindir}/status-report
 %{python_sitelib}/*
-%doc LICENSE README examples
+%doc README examples
+%{!?_licensedir:%global license %%doc}
+%license LICENSE
 
 %changelog
+* Wed Apr 22 2015 Petr Šplíchal <psplicha@redhat.com> 1.0-0
+- Incorporated package review feedback [BZ#1213739]
+- Include essential gitignore patterns
+- Handle custom stats as a plugin as well
+- Handle header & footer as other plugins
+- Plugin detection finalized including sort order
+- Style cleanup and adjustments for plugin detection
+- The first version of the plugin detection support
+
 * Mon Apr 20 2015 Petr Šplíchal <psplicha@redhat.com> 0.1-0
 - Initial packaging.
