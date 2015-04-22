@@ -278,13 +278,6 @@ class Config(object):
         self.parser.read([CONFIG])
 
     @property
-    def user(self):
-        try:
-            return self.parser.get("general", "user").split(", ")
-        except ConfigParser.NoOptionError:
-            return []
-
-    @property
     def email(self):
         try:
             return self.parser.get("general", "email").split(", ")

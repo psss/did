@@ -240,5 +240,5 @@ if __name__ == "__main__":
         log.error("No user provided on the command line or in the config file")
         info("Create at least a minimum config file {0}:".format(CONFIG))
         from getpass import getuser
-        info("[general]\nuser = {}".format(getuser()))
+        info("[general]\nemail = {}@domain.com".format(getuser()))
         sys.exit(3)
