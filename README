@@ -38,7 +38,7 @@ The config file ~/.status-report is used to store both general
 settings and configuration of individual reports::
 
     [general]
-    user = psss
+    email = "Petr Splichal" <psss@redhat.com>
     width = 79
 
     [header]
