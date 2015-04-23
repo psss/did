@@ -27,3 +27,10 @@ url = https://some.trac.com/trac/project/rpc
 
 [nitrate]
 type = nitrate
+
+[projects]
+type = items
+header = Work on projects
+item1 = Project One
+item2 = Project Two
+item3 = Project Three
