@@ -38,7 +38,7 @@ The config file ~/.status-report is used to store both general
 settings and configuration of individual reports::
 
     [general]
-    email = "Petr Splichal" <psss@redhat.com>
+    email = "Petr Šplíchal" <psplicha@redhat.com>
     width = 79
 
     [header]
@@ -66,18 +66,25 @@ settings and configuration of individual reports::
 
 See also examples link for some more inspiration.
 
-QUICK INSTALL (pip)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-sudo yum install gcc krb5-devel
-virtualenv --no-site-packages ~/virtenv_statusreport
-source ~/virtenv_statusreport/bin/activate
-pip install -U pip setuptools
-pip install status_report
 
-RUN TESTS (pytest)
+INSTALLATION
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-pip install pytest
-py.test source/tests
+Install directly from Fedora/Copr repository or use PIP::
+
+    sudo yum install gcc krb5-devel
+    virtualenv --no-site-packages ~/virtenv_statusreport
+    source ~/virtenv_statusreport/bin/activate
+    pip install -U pip setuptools
+    pip install status_report
+
+
+TESTS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To run tests using pytest::
+
+    pip install pytest
+    py.test source/tests
+
 
 LINKS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,6 +108,7 @@ https://github.com/psss/status-report
 
 PIP repo:
 https://pypi.python.org/pypi/status_report/
+
 
 AUTHORS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
