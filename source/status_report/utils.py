@@ -11,13 +11,16 @@ import re
 import sys
 import unicodedata
 
-# extract name and email from string
-# see: http://stackoverflow.com/questions/14010875
-email_re = re.compile('(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
-
 log = logging.getLogger('status-report')
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Constants
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Config file location
 CONFIG = os.path.expanduser("~/.status-report")
+
+# Default maximum width
 MAX_WIDTH = 79
 
 # Coloring
@@ -26,7 +29,6 @@ COLOR_OFF = 0
 COLOR_AUTO = 2
 
 # Logging
-LOG_ENV_DEBUG = os.environ["DEBUG"]
 LOG_ERROR = logging.ERROR
 LOG_WARN = logging.WARN
 LOG_INFO = logging.INFO
@@ -34,6 +36,10 @@ LOG_DEBUG = logging.DEBUG
 LOG_CACHE = 7
 LOG_DATA = 4
 LOG_ALL = 1
+
+# Extract name and email from string
+# See: http://stackoverflow.com/questions/14010875
+EMAIL_REGEX = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utils
@@ -77,7 +83,7 @@ def item(text, level=0, options=None):
 
 
 def pluralize(singular=None, plural=None):
-    ''' Naively pluarlize words '''
+    """ Naively pluralize words """
     if singular is not None and plural is None:
         if singular.endswith("y") and not singular.endswith("ay"):
             plural = singular[:-1] + "ies"
@@ -284,7 +290,8 @@ class Config(object):
     @property
     def email(self):
         try:
-            return self.parser.get("general", "email").split(", ")
+            mails = self.parser.get("general", "email").split(", ")
+            return [mail.decode("utf-8") for mail in mails]
         except ConfigParser.NoOptionError:
             return []
 
@@ -457,6 +464,6 @@ class ConfigError(Exception):
     pass
 
 
-class ReportsError(Exception):
+class ReportError(Exception):
     """ General problem with report generation """
     pass

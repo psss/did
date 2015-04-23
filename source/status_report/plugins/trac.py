@@ -3,8 +3,10 @@
 
 import re
 import xmlrpclib
+
+import status_report.utils as utils
 from status_report.base import Stats, StatsGroup
-from status_report.utils import Config, ReportsError, log, pretty
+from status_report.utils import Config, ReportError, log, pretty
 
 INTERESTING_RESOLUTIONS = ["canceled"]
 MAX_TICKETS = 1000000
@@ -55,7 +57,7 @@ class Trac(object):
             result = parent.proxy.ticket.query(query)
         except xmlrpclib.Fault as error:
             log.error("An error encountered, while searching for tickets.")
-            raise ReportsError(error)
+            raise ReportError(error)
         log.debug("Search result: {0}".format(result))
         # Fetch tickets and their history using multicall
         multicall = xmlrpclib.MultiCall(parent.proxy)
@@ -172,13 +174,13 @@ class TracStats(StatsGroup):
         # Initialize the server proxy
         config = dict(Config().section(option))
         if "url" not in config:
-            raise ReportsError(
+            raise ReportError(
                 "No trac url set in the [{0}] section".format(option))
         self.url = re.sub("/rpc$", "", config["url"])
         self.proxy = xmlrpclib.ServerProxy(self.url + "/rpc")
         # Make sure we have prefix set
         if "prefix" not in config:
-            raise ReportsError(
+            raise ReportError(
                 "No prefix set in the [{0}] section".format(option))
         self.prefix = config["prefix"]
         # Create the list of stats

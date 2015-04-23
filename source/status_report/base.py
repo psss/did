@@ -9,8 +9,8 @@ import xmlrpclib
 from dateutil.relativedelta import MO as MONDAY
 from dateutil.relativedelta import relativedelta as delta
 
-from status_report.utils import log, item, Config, ascii, email_re
-from status_report.utils import ReportsError, ConfigError
+import status_report.utils as utils
+from status_report.utils import log, item
 
 TODAY = datetime.date.today()
 
@@ -36,7 +36,7 @@ class Date(object):
 
     def __str__(self):
         """ Ascii version of the string representation """
-        return ascii(unicode(self))
+        return utils.ascii(unicode(self))
 
     def __unicode__(self):
         """ String format for printing """
@@ -114,12 +114,12 @@ class User(object):
     def __init__(self, email, name=None, login=None):
         """ Set user email, name and login values. """
         if not email:
-            raise ReportsError(
+            raise utils.ReportError(
                 "Email required for user initialization.")
         else:
             # extract everything from the email string provided
             # eg, "My Name" <bla@email.com>
-            parts = email_re.search(email)
+            parts = utils.EMAIL_REGEX.search(email)
             self.email = parts.groups()[1]
             self.login = login or self.email.split('@')[0]
             self.name = name or parts.groups()[0] or u"Unknown"
@@ -181,7 +181,7 @@ class Stats(object):
         if self.enabled():
             try:
                 self.fetch()
-            except (xmlrpclib.Fault, ConfigError) as error:
+            except (xmlrpclib.Fault, utils.ConfigError) as error:
                 log.error(error)
                 self._error = True
                 # Raise the exception if debugging
@@ -272,5 +272,5 @@ class EmptyStatsGroup(StatsGroup):
     """ Header & Footer stats group """
     def __init__(self, option, name=None, parent=None):
         StatsGroup.__init__(self, option, name, parent=parent)
-        for opt, name in sorted(Config().section(option)):
+        for opt, name in sorted(utils.Config().section(option)):
             self.stats.append(EmptyStats(opt, name, parent=self))

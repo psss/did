@@ -39,14 +39,12 @@ import ConfigParser
 from dateutil.relativedelta import relativedelta as delta
 
 import status_report.plugins
-from status_report.base import Date, User
-from status_report.base import StatsGroup
-from status_report.utils import header, item
-from status_report.utils import Config, ConfigError, CONFIG
-from status_report.utils import Logging, info, pretty
+import status_report.utils as utils
+from status_report.utils import info
+from status_report.base import Date, User, StatsGroup
 
 # Create the output logger
-logging = Logging('status-report')
+logging = utils.Logging('status-report')
 log = logging.logger
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -106,7 +104,7 @@ class Options(object):
             "--format", default="text",
             help="Output style, possible values: text (default) or wiki")
         group.add_option(
-            "--width", default=Config().width, type="int",
+            "--width", default=utils.Config().width, type="int",
             help="Maximum width of the report output (default: %default)")
         group.add_option(
             "--brief", action="store_true",
@@ -131,7 +129,7 @@ class Options(object):
 
         # Enable debugging output
         if opt.debug:
-            logging.set(level=2)
+            logging.set(utils.LOG_DEBUG)
 
         # Enable --all if no particular stat or group selected
         opt.all = not any([
@@ -141,7 +139,7 @@ class Options(object):
 
         # Set the default user
         if not opt.emails:
-            opt.emails = Config().email
+            opt.emails = utils.Config().email
 
         # Time period handling
         if opt.since is None and opt.until is None:
@@ -188,7 +186,7 @@ class Options(object):
 
         # Finito
         log.debug("Gathered options:")
-        log.debug(pretty(opt))
+        log.debug(utils.pretty(opt))
         return opt
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -203,30 +201,30 @@ if __name__ == "__main__":
         # Check for users by both login and email
         users = [User(email=email) for email in options.emails]
         if not users:
-            raise ConfigError("No user or email provided")
+            raise utils.ConfigError("No user or email provided")
 
         # Prepare team stats object for data merging
         team_stats = UserStats(options=options)
         if options.merge:
-            header("Total Report")
-            item("Users: {0}".format(len(users)), options=options)
+            utils.header("Total Report")
+            utils.item("Users: {0}".format(len(users)), options=options)
 
         # Check individual user stats
         for user in users:
             if options.merge:
-                item(user, 1, options=options)
+                utils.item(user, 1, options=options)
             else:
-                header(user)
+                utils.header(user)
             user_stats = UserStats(user, options)
             team_stats.merge(user_stats)
 
         # Display merged team report
         if options.merge or options.total:
             if options.total:
-                header("Total Report")
+                utils.header("Total Report")
             team_stats.show()
 
-    except ConfigError as error:
+    except utils.ConfigError as error:
         log.error(error)
         sys.exit(1)
 
@@ -236,7 +234,7 @@ if __name__ == "__main__":
 
     except ConfigParser.NoSectionError:
         log.error("No user provided on the command line or in the config file")
-        info("Create at least a minimum config file {0}:".format(CONFIG))
+        info("Create at least a minimum config file {0}:".format(utils.CONFIG))
         from getpass import getuser
-        info("[general]\nuser = {}".format(getuser()))
+        info("[general]\nuser = {0}".format(getuser()))
         sys.exit(3)
