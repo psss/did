@@ -120,7 +120,7 @@ class JiraResolved(Stats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class JiraStats(StatsGroup):
-    """ Jira stats group """
+    """ Jira stats """
 
     # Default order
     order = 600
