@@ -20,6 +20,10 @@ apps = /home/psss/git/apps
 type = git
 tests = /home/psss/git/tests/*
 
+[apache]
+type = bugzilla
+url = https://issues.apache.org/bugzilla/
+
 [trac]
 type = trac
 prefix = TT
