@@ -121,6 +121,10 @@ class JiraResolved(Stats):
 
 class JiraStats(StatsGroup):
     """ Jira stats group """
+
+    # Default order
+    order = 600
+
     def __init__(self, option, name=None, parent=None):
         StatsGroup.__init__(self, option, name, parent)
         self._session = None
