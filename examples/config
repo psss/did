@@ -24,3 +24,6 @@ tests = /home/psss/git/tests/*
 type = trac
 prefix = TT
 url = https://some.trac.com/trac/project/rpc
+
+[nitrate]
+type = nitrate
