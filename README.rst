@@ -19,6 +19,9 @@
     :target: https://pypi.python.org/pypi/status_report/
     :alt: License
  
+.. image:: https://landscape.io/github/psss/status-report/master/landscape.svg
+    :target: https://landscape.io/github/psss/status-report/master
+    :alt: Code Health
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
