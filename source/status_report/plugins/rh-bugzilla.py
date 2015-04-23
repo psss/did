@@ -8,38 +8,26 @@ import bugzilla
 import xmlrpclib
 from status_report.base import Stats, StatsGroup
 from status_report.utils import Config, log, pretty
+from status_report.plugins.bugzilla import VerifiedBugs, ReturnedBugs, FiledBugs, FixedBugs, PostedBugs, CommentedBugs
+import status_report.plugins.bugzilla as bugzilla_plugin
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Bug
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Bug(object):
+class Bug(bugzilla_plugin.Bug):
     """ Bugzilla search """
 
     _server = None
     _url = None
 
     def __init__(self, bug=None, history=None, comments=None, options=None):
-        """ Initialize bug info and history """
+        """ Initialize bug info and history (Red Hat specific) """
         if bug is not None:
-            self.id = bug.id
-            self.summary = bug.summary
-            self.history = history
-            self.comments = comments
-            self.options = options
-
-    def __unicode__(self):
-        """ Consistent identifier and summary for displaying """
-        try:
-            grade=self.options.grade
-        except:
-            grade=""
-        if self.options.format == "wiki":
-            return u"<<Bug({0})>> - {1}".format(self.id, self.summary)
-        else:
-            return u"BZ#{0}{1} - {2}".format(
-                str(self.id).rjust(7, "0"),
-                " " + grade, self.summary)
+            bugzilla_plugin.Bug.__init__(self,bug=bug, history=history, comments=comments, options=options)
+            # Get the bug grade
+            matched = re.search("grade([A-D])", bug.cf_qa_whiteboard, re.I)
+            self.grade = matched.groups()[0].upper() if matched else " "
 
     @property
     def server(self):
@@ -52,6 +40,7 @@ class Bug(object):
     @staticmethod
     def search(query, options):
         """ Perform Bugzilla search. """
+        # TODO: This method should be shared with bugzilla module
         query["query_format"] = "advanced"
         log.debug("Search query:")
         log.debug(pretty(query))
@@ -84,65 +73,47 @@ class Bug(object):
             Bug(bugs[id], history[id], comments[id], options=options)
             for id in bugs]
 
-    @property
-    def logs(self):
-        """ Return relevant who-did-what pairs from the bug history """
-        for record in self.history:
-            if (record["when"] >= self.options.since.date
-                    and record["when"] < self.options.until.date):
-                for change in record["changes"]:
-                    yield record["who"], change
 
-    def verified(self):
-        """ True if bug was verified in given time frame """
+    def sanitized(self, user):
+        """ True if SanityOnly was added to Verified field by given user """
         for who, record in self.logs:
-            if record["field_name"] == "status" \
-                    and record["added"] == "VERIFIED":
+            if (record["field_name"] == "cf_verified"
+                    and "SanityOnly" in record["added"] and who == user.email):
                 return True
         return False
 
-    def returned(self, user):
-        """ True if the bug was returned to ASSIGNED by given user """
+    def patched(self, user):
+        """ True if Patch was added to Keywords field by given user """
         for who, record in self.logs:
-            if (record["field_name"] == "status"
-                    and record["added"] == "ASSIGNED"
+            if (record["field_name"] == "keywords" and
+                    "Patch" in record["added"] and who == user.email):
+                return True
+        return False
+
+    def acked(self, user):
+        """ True if qa_ack+ flag was added in given time frame """
+        for who, record in self.logs:
+            if (record["field_name"] == "flagtypes.name"
+                    and "qa_ack+" in record["added"] and who == user.email):
+                return True
+        return False
+
+    def graded(self, user):
+        """ True if the grade was added in a given time frame """
+        for who, record in self.logs:
+            if (record["field_name"] == "cf_qa_whiteboard"
+                    and "grade" in record["added"]
+                    and "grade" not in record["removed"]
                     and who == user.email):
                 return True
         return False
 
-    def fixed(self):
-        """ True if bug was moved to MODIFIED in given time frame """
-        for who, record in self.logs:
-            if (record["field_name"] == "status"
-                    and record["added"] == "MODIFIED"
-                    and record["removed"] != "CLOSED"):
-                return True
-        return False
-
-    def posted(self):
-        """ True if bug was moved to POST in given time frame """
-        for who, record in self.logs:
-            if record["field_name"] == "status" and record["added"] == "POST":
-                return True
-        return False
-
-    def commented(self, user):
-        """ True if comment was added in given time frame """
-        for comment in self.comments:
-            # Description (comment #0) is not considered as a comment
-            if comment["count"] == 0:
-                continue
-            if (comment["author"] == user.email and
-                    comment["creation_time"] >= self.options.since.date and
-                    comment["creation_time"] < self.options.until.date):
-                return True
-        return False
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Bugzilla Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class VerifiedBugs(Stats):
+class VerifiedBugs(bugzilla_plugin.Stats):
     """ Bugs verified """
     def fetch(self):
         log.info(u"Searching for bugs verified by {0}".format(self.user))
@@ -162,11 +133,42 @@ class VerifiedBugs(Stats):
             # Until date
             "field0-3-0": "bug_status",
             "type0-3-0": "changedbefore",
-            "value0-3-0": str(self.options.until)
+            "value0-3-0": str(self.options.until),
+            # Skip SanityOnly bugs
+            "field0-4-0": "cf_verified",
+            "type0-4-0": "notsubstring",
+            "value0-4-0": "SanityOnly",
             }
         self.stats = [
             bug for bug in Bug.search(query, options=self.options)
             if bug.verified()]
+
+
+class SanityBugs(Stats):
+    """ SanityOnly bugs """
+    def fetch(self):
+        log.info(u"Searching for SanityOnly bugs by {0}".format(self.user))
+        query = {
+            # Verified field changed by the user
+            "field0-0-0": "cf_verified",
+            "type0-0-0": "changedby",
+            "value0-0-0": self.user.email,
+            # Verified changed to SanityOnly
+            "field0-1-0": "cf_verified",
+            "type0-1-0": "changedto",
+            "value0-1-0": "SanityOnly",
+            # Since date
+            "field0-2-0": "cf_verified",
+            "type0-2-0": "changedafter",
+            "value0-2-0": str(self.options.since),
+            # Until date
+            "field0-3-0": "cf_verified",
+            "type0-3-0": "changedbefore",
+            "value0-3-0": str(self.options.until),
+            }
+        self.stats = [
+            bug for bug in Bug.search(query, options=self.options)
+            if bug.sanitized(self.user)]
 
 
 class ReturnedBugs(Stats):
@@ -275,48 +277,108 @@ class PostedBugs(Stats):
             if bug.posted()]
 
 
-class CommentedBugs(Stats):
-    """ Bugs commented """
+class PatchesWritten(Stats):
+    """ Patches written """
     def fetch(self):
-        log.info(u"Searching for bugs commented by {0}".format(self.user))
+        log.info(u"Searching for bugs patched by {0}".format(self.user))
         query = {
-            # Commented by the user
-            "f1": "longdesc",
+            # Keywords field changed by the user
+            "field0-0-0": "keywords",
+            "type0-0-0": "changedby",
+            "value0-0-0": self.user.email,
+            # Verified changed to SanityOnly
+            "field0-1-0": "keywords",
+            "type0-1-0": "changedto",
+            "value0-1-0": "Patch",
+            # Since date
+            "field0-2-0": "keywords",
+            "type0-2-0": "changedafter",
+            "value0-2-0": str(self.options.since),
+            # Until date
+            "field0-3-0": "keywords",
+            "type0-3-0": "changedbefore",
+            "value0-3-0": str(self.options.until),
+            }
+        self.stats = [
+            bug for bug in Bug.search(query, options=self.options)
+            if bug.patched(self.user)]
+
+
+class AckedBugs(Stats):
+    """ Bugs acked """
+    def fetch(self):
+        log.info(u"Searching for bugs acked by {0}".format(self.user))
+        query = {
+            # Acked by the user
+            "f1": "flagtypes.name",
             "o1": "changedby",
             "v1": self.user.email,
+            # Changed to qa_ack+
+            "f2": "flagtypes.name",
+            "o2": "changedto",
+            "v2": "qa_ack+",
             # Since date
-            "f3": "longdesc",
+            "f3": "flagtypes.name",
             "o3": "changedafter",
             "v3": str(self.options.since),
             # Until date
-            "f4": "longdesc",
+            "f4": "flagtypes.name",
             "o4": "changedbefore",
             "v4": str(self.options.until),
             }
         self.stats = [
             bug for bug in Bug.search(query, options=self.options)
-            if bug.commented(self.user)]
+            if bug.acked(self.user)]
 
+
+class GradedBugs(Stats):
+    """ Bugs graded """
+    def fetch(self):
+        log.info(u"Searching for bugs graded by {0}".format(self.user))
+        query = {
+            # Graded by the user
+            "f1": "cf_qa_whiteboard",
+            "o1": "changedby",
+            "v1": self.user.email,
+            # Changed to grade*
+            "f2": "cf_qa_whiteboard",
+            "o2": "changedto",
+            "v2": "",
+            # Since date
+            "f3": "cf_qa_whiteboard",
+            "o3": "changedafter",
+            "v3": str(self.options.since),
+            # Until date
+            "f4": "cf_qa_whiteboard",
+            "o4": "changedbefore",
+            "v4": str(self.options.until),
+            }
+        self.stats = [
+            bug for bug in Bug.search(query, options=self.options)
+            if bug.graded(self.user)]
 
 class BugzillaStats(StatsGroup):
-    """ Bugzilla stats """
+    """ Red Hat Bugzilla stats """
 
     # Default order
-    order = 250
+    order = 200
 
     def __init__(self, option, name=None, parent=None):
         StatsGroup.__init__(self, option, name, parent)
-        # Initialize the server proxy
         config = dict(Config().section(option))
         if "url" not in config:
             raise ReportError(
                 "No bugzilla url set in the [{0}] section".format(option))
         Bug._url=config["url"]
         self.stats = [
-            VerifiedBugs(option=option + "-verified", parent=self),
-            ReturnedBugs(option=option + "-returned", parent=self),
-            FiledBugs(option=option + "-filed", parent=self),
-            FixedBugs(option=option + "-fixed", parent=self),
-            PostedBugs(option=option + "-posted", parent=self),
-            CommentedBugs(option=option + "-commented", parent=self),
+            VerifiedBugs(option="verified", parent=self),
+            ReturnedBugs(option="returned", parent=self),
+            FiledBugs(option="filed", parent=self),
+            FixedBugs(option="fixed", parent=self),
+            PostedBugs(option="posted", parent=self),
+            CommentedBugs(option="commented", parent=self),
+            SanityBugs(option="sanity", parent=self),
+            PatchesWritten(option="patches", parent=self),
+            AckedBugs(option="acked", parent=self),
+            GradedBugs(option="graded", parent=self),
             ]
