@@ -2,7 +2,6 @@
 """ Comfortably generate reports - Wiki """
 
 import xmlrpclib
-#from reports.utils import Config, item
 from status_report.base import Stats, StatsGroup
 from status_report.utils import Config, item
 
@@ -46,6 +45,10 @@ class WikiChanges(Stats):
 
 class WikiStats(StatsGroup):
     """ Wiki stats group """
+
+    # Default order
+    order = 700
+
     def __init__(self, option, name=None, parent=None):
         StatsGroup.__init__(self, option, name, parent)
         for wiki, url in Config().section(option):
