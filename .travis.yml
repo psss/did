@@ -2,8 +2,10 @@ language: python
 python:
   - "2.7"
 before_install:
-  - "pip install -U pip setuptools virtualenv"
+  - "pip install -U pip setuptools virtualenv coveralls"
 install:
   - "python source/setup.py install"
 script:
-  - "py.test source/tests"
+  - "coverage run --source=status_report -m py.test source/tests"
+after_success:
+  - coveralls
