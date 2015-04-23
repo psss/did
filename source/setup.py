@@ -39,7 +39,7 @@ pip_src = 'https://pypi.python.org/packages/source'
 __deplinks__ = []
 
 # README is in the parent directory
-readme_pth = os.path.join(parent_pth, 'README')
+readme_pth = os.path.join(parent_pth, 'README.rst')
 with open(readme_pth) as _file:
     readme = _file.read()
 
