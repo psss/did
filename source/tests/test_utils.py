@@ -14,29 +14,29 @@ def test_utils_import():
 def test_email_re():
     ''' Confirm regex works as we would expect for extracting
         name, login and email from standard email strings'''
-    from status_report.utils import email_re
+    from status_report.utils import EMAIL_REGEXP
 
     # good
     x = '"Chris Ward" <cward@redhat.com>'
-    groups = email_re.search(x).groups()
+    groups = EMAIL_REGEXP.search(x).groups()
     assert len(groups) == 2
     assert groups[0] == 'Chris Ward'
     assert groups[1] == 'cward@redhat.com'
 
     x = 'cward@redhat.com'
-    groups = email_re.search(x).groups()
+    groups = EMAIL_REGEXP.search(x).groups()
     assert len(groups) == 2
     assert groups[0] is None
     assert groups[1] == 'cward@redhat.com'
 
     # bad
     x = 'cward'
-    groups = email_re.search(x)
+    groups = EMAIL_REGEXP.search(x)
     assert groups is None
 
     # ugly
     x = '"" <>'
-    groups = email_re.search(x)
+    groups = EMAIL_REGEXP.search(x)
     assert groups is None
 
 
@@ -54,11 +54,11 @@ def test_ConfigError():
 
 def test_ReportError():
     ''' Confirm ReportError exception is defined '''
-    from status_report.utils import ReportsError
+    from status_report.utils import ReportError
 
     try:
-        raise ReportsError
-    except ReportsError:
+        raise ReportError
+    except ReportError:
         pass
     else:
-        raise RuntimeError("ReportsError exception failing!")
+        raise RuntimeError("ReportError exception failing!")

@@ -39,7 +39,7 @@ LOG_ALL = 1
 
 # Extract name and email from string
 # See: http://stackoverflow.com/questions/14010875
-EMAIL_REGEX = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
+EMAIL_REGEXP = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utils

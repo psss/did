@@ -119,7 +119,7 @@ class User(object):
         else:
             # extract everything from the email string provided
             # eg, "My Name" <bla@email.com>
-            parts = utils.EMAIL_REGEX.search(email)
+            parts = utils.EMAIL_REGEXP.search(email)
             self.email = parts.groups()[1]
             self.login = login or self.email.split('@')[0]
             self.name = name or parts.groups()[0] or u"Unknown"
