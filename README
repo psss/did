@@ -71,10 +71,18 @@ INSTALLATION
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Install directly from Fedora/Copr repository or use PIP::
 
+    # Basic dependencies for buiding/installing pip packages
     sudo yum install gcc krb5-devel
+    sudo yum install python-devel python-pip python-virtualenv
+
+    # Upgrade to the latest pip/setup/virtualenv installer code
+    sudo pip install -U pip setuptools virtualenv
+
+    # Install into a python virtual environment (OPTIONAL)
     virtualenv --no-site-packages ~/virtenv_statusreport
     source ~/virtenv_statusreport/bin/activate
-    pip install -U pip setuptools
+
+    # Install status_report (sudo required if not in a virtualenv)
     pip install status_report
 
 
@@ -82,7 +90,7 @@ TESTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To run tests using pytest::
 
-    pip install pytest
+    pip install pytest  (sudo required if not in a virtualenv)
     py.test source/tests
 
 

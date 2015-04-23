@@ -2,10 +2,26 @@
 # -*- coding: utf-8 -*-
 # Author: "Chris Ward" <cward@redhat.com>
 
+import os
+import re
 from setuptools import setup
 
+script_pth = os.path.dirname(os.path.realpath(__file__))
+# make sure we're working from the root where (this) setup.py is
+os.chdir(script_pth)
+# get the parents directory path to find spec and README
+parent_pth = os.path.realpath('../')
+
+# Parse the version and release from master spec file
+# RPM spec file is in the parent directory
+spec_pth = os.path.join(parent_pth, 'status-report.spec')
+with open(spec_pth) as f:
+    lines = "\n".join(l.rstrip() for l in f)
+    version = re.search('Version: (.+)', lines).group(1).rstrip()
+    release = re.search('Release: (\d+)', lines).group(1).rstrip()
+
 # acceptable version schema: major.minor[.patch][sub]
-__version__ = '0.1.2'
+__version__ = '.'.join([version, release])
 __pkg__ = 'status_report'
 __pkgdir__ = {'status_report': 'status_report'}
 __pkgs__ = [
@@ -15,18 +31,16 @@ __pkgs__ = [
 __provides__ = ['status_report']
 __desc__ = 'Status Report - Comfortable CLI Activity Status Reporting'
 __scripts__ = ['status-report']
-__requires__ = [
-    'python_dateutil',
-    'kerberos',
-]
 __irequires__ = [
-    'python_dateutil',
-    'kerberos',
+    'python_dateutil==2.4.2',
+    'kerberos==1.2.2',
 ]
 pip_src = 'https://pypi.python.org/packages/source'
 __deplinks__ = []
 
-with open('../README') as _file:
+# README is in the parent directory
+readme_pth = os.path.join(parent_pth, 'README')
+with open(readme_pth) as _file:
     readme = _file.read()
 
 github = 'https://github.com/psss/status-report'
@@ -57,7 +71,6 @@ default_setup = dict(
     package_dir=__pkgdir__,
     packages=__pkgs__,
     provides=__provides__,
-    requires=__requires__,
     scripts=__scripts__,
     version=__version__,
     zip_safe=False,  # we reference __file__; see [1]
