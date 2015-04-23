@@ -44,7 +44,7 @@ class WikiChanges(Stats):
 
 
 class WikiStats(StatsGroup):
-    """ Wiki stats group """
+    """ Wiki stats """
 
     # Default order
     order = 700

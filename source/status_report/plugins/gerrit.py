@@ -315,25 +315,13 @@ class ReviewedChanges(GerritUnit):
 
 
 class GerritStats(StatsGroup):
-    """ Custom stats group for header & footer
-
-    Don't we just want a list of all reviews
-    CLOSED AFTER the given time (age:)
-    ||
-    OPENED AFTER the given time ... or perhaps ALL OPENED changes
-    (and then manually eliminate all changes not conforming)
-
-    Roles:
-        owner:self ... find changes owned by the caller.
-        reviewer:self ... find changes where the caller has been added
-            as a reviewer.
-        (instead of 'self' use users' login and it doesn't require
-         authentication)
-
-    I.e.,
-        curl -v 'https://REPOURL/changes/?q=status:merged+owner:mcepl+-age:1y'
-
     """
+    Gerrit
+    """
+
+    # Default order
+    order = 350
+
     def __init__(
             self, option, name=None, user=None, parent=None, options=None):
         StatsGroup.__init__(self, option, name, parent, user, options)
