@@ -20,6 +20,10 @@ apps = /home/psss/git/apps
 type = git
 tests = /home/psss/git/tests/*
 
+[bugzilla]
+type = rh-bugzilla
+url = https://bugzilla.redhat.com/xmlrpc.cgi
+
 [apache]
 type = bugzilla
 url = https://issues.apache.org/bugzilla/
