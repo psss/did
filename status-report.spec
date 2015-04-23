@@ -1,5 +1,5 @@
 Name: status-report
-Version: 0.2
+Version: 0.3
 Release: 1%{?dist}
 
 Summary: Generate status report stats for selected date range
@@ -41,6 +41,12 @@ install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Thu Apr 23 2015 Petr Šplíchal <psplicha@redhat.com> 0.3-1
+- Update README with PIP and test information
+- Enable travis-ci and some tests
+- A couple of adjustments after the nitrate cleanup
+- Remove nitrate dependency, adjust user handling
+
 * Wed Apr 22 2015 Petr Šplíchal <psplicha@redhat.com> 0.2-1
 - Incorporated package review feedback [BZ#1213739]
 - Include essential gitignore patterns
