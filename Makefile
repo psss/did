@@ -17,6 +17,10 @@ FILES = LICENSE README \
 		Makefile status-report.spec \
 		docs examples source
 
+ifndef USERNAME
+    USERNAME = echo $$USER
+endif
+
 all: push clean
 
 build:
@@ -52,3 +56,18 @@ push: packages
 clean:
 	rm -rf $(TMP)
 	find source -name '*.pyc' -exec rm {} \;
+
+run_docker: build_docker
+	@echo
+	@echo "Please note: this is a first cut at doing a container version as a result; known issues:"
+	@echo "* kerberos auth may not be working correctly"
+	@echo "* container runs as privileged to access the conf file"
+	@echo "* output directory may not be quite right"
+	@echo
+	@echo "This does not actually run the docker image as it makes more sense to run it directly. Use:"
+	@echo "docker run --privileged --rm -it -v $(HOME)/.status-report:/status-report.conf $(USERNAME)/status-report"
+	@echo "If you want to add it to your .bashrc use this:"
+	@echo "alias status-report=\"docker run --privileged --rm -it -v $(HOME)/.status-report:/status-report.conf $(USERNAME)/status-report\""
+
+build_docker: docker-artifacts/Dockerfile
+	docker build -t $(USERNAME)/status-report --file="docker-artifacts/Dockerfile" .
