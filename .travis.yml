@@ -1,6 +1,10 @@
 language: python
 python:
+  - "2.6"
   - "2.7"
+# not py3 compatible yet; still uses OptionParse and some deps are borked for py3
+#  - "3.3"
+#  - "3.4"
 before_install:
   - "pip install -U pip setuptools virtualenv coveralls"
 install:
@@ -9,3 +13,4 @@ script:
   - "coverage run --source=status_report -m py.test source/tests"
 after_success:
   - coveralls
+  - coverage report
