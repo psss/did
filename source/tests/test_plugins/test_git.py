@@ -36,7 +36,7 @@ def test_GitRepo():
 
     repo = GitRepo(path=git_pth)
     commits = repo.commits(user=user_cward, options=options)
-    assert len(commits) > 20
+    assert len(commits) > 0
 
     repo = GitRepo(path='bad path')
     try:
@@ -58,11 +58,11 @@ def test_GitCommits():
                        options=options)
     stats.user = user_cward
     stats.fetch()
-    assert len(stats.stats) > 20
+    assert len(stats.stats) > 0
 
     stats.user = user_psplicha
     stats.fetch()
-    assert len(stats.stats) > 10
+    assert len(stats.stats) > 0
 
 
 def test_GitStats():
