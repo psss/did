@@ -87,6 +87,23 @@ settings and configuration of individual reports::
 
 See also examples link for some more inspiration.
 
+QUICK INSTALL (pip)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sudo yum install gcc krb5-devel
+virtualenv --no-site-packages ~/virtenv_statusreport
+source ~/virtenv_statusreport/bin/activate
+pip install -U pip setuptools
+pip install status_report
+
+DOCKER INSTALL
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Fedora: https://fedoraproject.org/wiki/Getting_started_with_docker
+Feodra: https://fedoraproject.org/wiki/Docker
+
+RUN TESTS (pytest)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+pip install pytest
+py.test source/tests
 
 INSTALLATION
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
