@@ -41,6 +41,12 @@ install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Sun Apr 26 2015 Chris Ward <cward@redhat.com> 0.4-1
+- Snippet saving and reporting functionality added
+- Refactor of Stat classes; don't fetch during __init__()
+- Docker builds enabled [langdon@redhat.com]
+- More tests!
+
 * Thu Apr 23 2015 Petr Šplíchal <psplicha@redhat.com> 0.3-1
 - Update README with PIP and test information
 - Enable travis-ci and some tests

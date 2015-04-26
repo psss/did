@@ -55,7 +55,6 @@ class Stats(object):
 
     def enabled(self):
         """ Check whether we're enabled (or if parent is). """
-        # FIXME: Cache into ._enabled?
         if self._enabled is None:
             if self.parent is not None and self.parent.enabled():
                 self._enabled = True
