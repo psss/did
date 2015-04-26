@@ -1,5 +1,5 @@
 Name: status-report
-Version: 0.3
+Version: 0.4
 Release: 1%{?dist}
 
 Summary: Generate status report stats for selected date range
