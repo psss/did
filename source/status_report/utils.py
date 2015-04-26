@@ -1,17 +1,19 @@
-# coding: utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """ Comfortably generate reports - Utils """
 
-from __future__ import absolute_import
+from __future__ import unicode_literals, absolute_import
 
 import ConfigParser
+import datetime
+from dateutil.relativedelta import relativedelta as delta
+from dateutil.relativedelta import MO as MONDAY
 import logging
 import os
 from pprint import pformat as pretty  # NOQA - pyflakes ignore
 import re
 import sys
 import unicodedata
-
-log = logging.getLogger('status-report')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -41,16 +43,12 @@ LOG_ALL = 1
 # See: http://stackoverflow.com/questions/14010875
 EMAIL_REGEXP = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
 
+TODAY = datetime.date.today()
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utils
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-def eprint(text):
-    """ Print (optionaly encoded) text """
-    # When there's no terminal we need to explicitly encode strings.
-    # Otherwise this would cause problems when redirecting output.
-    print((text if sys.stdout.isatty() else text.encode("utf8")))
-
 
 def header(text):
     """ Show text as a header. """
@@ -150,14 +148,20 @@ def ascii(text):
     return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
 
 
-def info(message, newline=True):
-    """ Log provided info message to the standard error output """
-    sys.stderr.write(message + ("\n" if newline else ""))
-
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Logging
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def eprint(text):
+    """ Print (optionaly encoded) text """
+    # When there's no terminal we need to explicitly encode strings.
+    # Otherwise this would cause problems when redirecting output.
+    print((text if sys.stdout.isatty() else text.encode("utf8")))
+
+
+def info(message, newline=True):
+    """ Log provided info message to the standard error output """
+    sys.stderr.write(message + ("\n" if newline else ""))
 
 
 class Logging(object):
@@ -278,13 +282,6 @@ class Config(object):
         self.parser.read([CONFIG])
 
     @property
-    def user(self):
-        try:
-            return self.parser.get("general", "user").split(", ")
-        except ConfigParser.NoOptionError:
-            return []
-
-    @property
     def email(self):
         try:
             mails = self.parser.get("general", "email").split(", ")
@@ -348,7 +345,6 @@ class Config(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Color
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 def color(text, color=None, background=None, light=False, enabled=True):
     """
@@ -456,6 +452,135 @@ def get_color_mode():
 #  Exceptions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Date
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class Date(object):
+    """ Date parsing for common word formats """
+
+    def __init__(self, date=None):
+        """ Parse the date string """
+        if isinstance(date, datetime.date):
+            self.date = date
+        elif date is None or date.lower() == "today":
+            self.date = TODAY
+        elif date.lower() == "yesterday":
+            self.date = TODAY - delta(days=1)
+        else:
+            self.date = datetime.date(*[int(i) for i in date.split("-")])
+        self.datetime = datetime.datetime(
+            self.date.year, self.date.month, self.date.day, 0, 0, 0)
+
+    def __str__(self):
+        """ Ascii version of the string representation """
+        return ascii(unicode(self))
+
+    def __unicode__(self):
+        """ String format for printing """
+        return unicode(self.date)
+
+    @staticmethod
+    def this_week():
+        """ Return start and end date of the current week. """
+        since = TODAY + delta(weekday=MONDAY(-1))
+        until = since + delta(weeks=1)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def last_week():
+        """ Return start and end date of the last week. """
+        since = TODAY + delta(weekday=MONDAY(-2))
+        until = since + delta(weeks=1)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def this_month():
+        """ Return start and end date of this month. """
+        since = TODAY + delta(day=1)
+        until = since + delta(months=1)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def last_month():
+        """ Return start and end date of this month. """
+        since = TODAY + delta(day=1, months=-1)
+        until = since + delta(months=1)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def this_quarter():
+        """ Return start and end date of this quarter. """
+        since = TODAY + delta(day=1)
+        while since.month % 3 != 0:
+            since -= delta(months=1)
+        until = since + delta(months=3)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def last_quarter():
+        """ Return start and end date of this quarter. """
+        since, until = Date.this_quarter()
+        since = since.date - delta(months=3)
+        until = until.date - delta(months=3)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def this_year():
+        """ Return start and end date of this fiscal year """
+        since = TODAY
+        while since.month != 3 or since.day != 1:
+            since -= delta(days=1)
+        until = since + delta(years=1)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def last_year():
+        """ Return start and end date of the last fiscal year """
+        since, until = Date.this_year()
+        since = since.date - delta(years=1)
+        until = until.date - delta(years=1)
+        return Date(since), Date(until)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  User
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  User
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class User(object):
+    """ User info """
+
+    def __init__(self, email, name=None, login=None):
+        """ Set user email, name and login values. """
+        if not email:
+            raise ReportError(
+                "Email required for user initialization.")
+        else:
+            # extract everything from the email string provided
+            # eg, "My Name" <bla@email.com>
+            parts = EMAIL_REGEXP.search(email)
+            self.email = parts.groups()[1]
+            self.login = login or self.email.split('@')[0]
+            self.name = name or parts.groups()[0] or u"Unknown"
+
+    def __unicode__(self):
+        """ Use name & email for string representation. """
+        return u"{0} <{1}>".format(self.name, self.email)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Stats
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Exceptions
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 class ConfigError(Exception):
     """ General problem with configuration file """
     pass
@@ -464,3 +589,13 @@ class ConfigError(Exception):
 class ReportError(Exception):
     """ General problem with report generation """
     pass
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  DEFAULT LOGGER
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# log = logging.getLogger('status-report')
+# Create the output logger
+logging = Logging('status-report')
+log = logging.logger

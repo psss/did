@@ -5,8 +5,9 @@ from datetime import datetime
 import json
 import urllib
 import urlparse
-from status_report.base import Stats, StatsGroup, TODAY
-from status_report.utils import Config, ReportError, log, pretty
+from status_report.base import Stats, StatsGroup
+from status_report.utils import Config, ReportError, log, pretty, TODAY
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Change
@@ -33,6 +34,7 @@ class Change(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Gerrit Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Gerrit(object):
     """
@@ -333,7 +335,7 @@ class GerritStats(StatsGroup):
         log.debug('repo_url = {0}'.format(self.repo_url))
 
         if "prefix" not in self.config:
-            raise ReportsError(
+            raise ReportError(
                 "No prefix set in the [{0}] section".format(option))
 
         self.stats = [
