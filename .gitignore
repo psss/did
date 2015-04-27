@@ -24,3 +24,6 @@ pip-log.txt
 
 # Rope
 .ropeproject/
+
+# coveralls code coverage
+.coverage

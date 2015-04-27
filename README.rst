@@ -3,6 +3,27 @@
     status-report
 ======================
 
+.. image:: https://badge.fury.io/py/status-report.svg
+    :target: http://badge.fury.io/py/status-report
+
+.. image:: https://travis-ci.org/psss/status-report.svg?branch=master
+    :target: https://travis-ci.org/psss/status-report
+
+.. image:: https://coveralls.io/repos/psss/status-report/badge.svg 
+    :target: https://coveralls.io/r/psss/status-report
+
+.. image:: https://pypip.in/download/status_report/badge.svg
+    :target: https://pypi.python.org/pypi/status_report/
+
+.. image:: https://pypip.in/license/status_report/badge.svg
+    :target: https://pypi.python.org/pypi/status_report/
+    :alt: License
+ 
+.. image:: https://landscape.io/github/psss/status-report/master/landscape.svg
+    :target: https://landscape.io/github/psss/status-report/master
+    :alt: Code Health
+
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Generate status report stats for selected date range
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -90,8 +111,10 @@ TESTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To run tests using pytest::
 
-    pip install pytest  (sudo required if not in a virtualenv)
-    py.test source/tests
+    # sudo required if not in a virtualenv
+    pip install pytest coveralls
+    coverage run --source=status_report -m py.test source/tests
+    coverage report
 
 
 LINKS
