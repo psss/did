@@ -6,7 +6,7 @@ RUN yum clean all
 
 COPY . /opt/status-report
 WORKDIR /opt/status-report
-RUN source/setup.py install
+RUN python setup.py install
 #RUN ln -s /user-home/.status-report /root/.status-report
 RUN ln -s /status-report.conf /root/.status-report
 
