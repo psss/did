@@ -30,13 +30,13 @@ mkdir -p %{buildroot}%{python_sitelib}/status_report/plugins
 install -pm 755 source/status-report %{buildroot}%{_bindir}
 install -pm 644 source/status_report/*.py %{buildroot}%{python_sitelib}/status_report
 install -pm 644 source/status_report/plugins/*.py %{buildroot}%{python_sitelib}/status_report/plugins
-install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
+install -pm 644 docs/_build/man/*.1.gz %{buildroot}%{_mandir}/man1
 
 %files
 %{_mandir}/man1/*
 %{_bindir}/status-report
 %{python_sitelib}/*
-%doc README examples
+%doc README.rst examples
 %{!?_licensedir:%global license %%doc}
 %license LICENSE
 

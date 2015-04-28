@@ -3,28 +3,14 @@
     status-report
 ======================
 
-.. image:: https://badge.fury.io/py/status-report.svg
-    :target: http://badge.fury.io/py/status-report
-
-.. image:: https://travis-ci.org/psss/status-report.svg?branch=master
-    :target: https://travis-ci.org/psss/status-report
-
-.. image:: https://coveralls.io/repos/psss/status-report/badge.svg
-    :target: https://coveralls.io/r/psss/status-report
-
-.. image:: https://img.shields.io/pypi/dm/status-report.svg
-    :target: https://pypi.python.org/pypi/status_report/
-
-.. image:: https://img.shields.io/pypi/l/status-report.svg
-    :target: https://pypi.python.org/pypi/status_report/
-
-.. image:: https://landscape.io/github/psss/status-report/master/landscape.svg
-    :target: https://landscape.io/github/psss/status-report/master
-
-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Generate status report stats for selected date range
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:Manual section: 1
+:Manual group: User Commands
+:Date: April 2015
+
 
 DESCRIPTION
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,8 +37,8 @@ INSTALLATION
 Install directly from Fedora/Copr repository or use PIP::
 
     # Basic dependencies for buiding/installing pip packages
-    sudo yum install gcc krb5-devel
     sudo yum install python-devel python-pip python-virtualenv
+    sudo yum install gcc krb5-devel
 
     # Upgrade to the latest pip/setup/virtualenv installer code
     sudo pip install -U pip setuptools virtualenv
@@ -107,17 +93,6 @@ To build and execute in a docker container, run::
     make run_docker
 
 See LINKS section below for more docker resources.
-
-
-GIT COMMIT HOOKS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you're planning to make commits to this project, please enable
-the following git hooks::
-
-    # UPDATE according to the correct absolute git path
-    PATH = ~/status-report/git-hooks
-    ln -s $(PATH)/pre-commit.py .git/hooks/pre-commit
-    ln -s $(PATH)/commit-msg.py .git/hooks/commit-msg
 
 
 TESTS

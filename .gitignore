@@ -27,3 +27,11 @@ pip-log.txt
 
 # coveralls code coverage
 .coverage
+
+# sphinx docs
+_build
+_static
+_templates
+
+# rpm build files
+tmp/
