@@ -12,10 +12,10 @@
 .. image:: https://coveralls.io/repos/psss/status-report/badge.svg 
     :target: https://coveralls.io/r/psss/status-report
 
-.. image:: https://pypip.in/download/status_report/badge.svg
+.. image:: https://img.shields.io/pypi/dm/status-report.svg
     :target: https://pypi.python.org/pypi/status_report/
 
-.. image:: https://pypip.in/license/status_report/badge.svg
+.. image:: https://img.shields.io/pypi/l/status-report.svg
     :target: https://pypi.python.org/pypi/status_report/
  
 .. image:: https://landscape.io/github/psss/status-report/master/landscape.svg
