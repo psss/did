@@ -65,6 +65,15 @@ def run_tests():
     return run(cmd)
 
 
+def make_sdist():
+    '''
+    Make sure we haven't broken the rpm source builds
+    '''
+    # Try to build a python pip installable package
+    cmd = 'python setup.py sdist'
+    return run(cmd)
+
+
 def make_rpm():
     '''
     Make sure we haven't broken the rpm source builds

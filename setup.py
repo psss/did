@@ -23,7 +23,7 @@ __pkgs__ = [
 ]
 __provides__ = ['status_report']
 __desc__ = 'Status Report - Comfortable CLI Activity Status Reporting'
-__scripts__ = ['status-report', 'snippet']
+__scripts__ = ['source/status-report', 'source/snippet']
 __irequires__ = [
     'python_dateutil==2.4.2',
     'sqlalchemy==1.0.0',
