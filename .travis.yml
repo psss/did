@@ -8,7 +8,7 @@ python:
 before_install:
   - "pip install -U pip setuptools virtualenv coveralls"
 install:
-  - "python source/setup.py install"
+  - "python setup.py install"
 script:
   - "coverage run --source=status_report -m py.test source/tests"
 after_success:
