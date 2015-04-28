@@ -13,7 +13,7 @@ PACKAGE = status-report-$(VERSION)
 DOCS = $(TMP)/$(PACKAGE)/docs
 EXAMPLES = $(TMP)/$(PACKAGE)/examples
 CSS = --stylesheet=style.css --link-stylesheet
-FILES = LICENSE README \
+FILES = LICENSE README.rst \
 		Makefile status-report.spec \
 		docs examples source
 
@@ -23,13 +23,17 @@ endif
 
 all: push clean
 
+# Looking for HTML docs? Could copy them too or just check out http://status-report.readthedocs.org/
+# To build locally; cd docs; make html
+#rst2man README | gzip > $(DOCS)/status-report.1.gz
+#rst2html README $(CSS) > $(DOCS)/index.html
+#rst2man $(DOCS)/notes.rst | gzip > $(DOCS)/status-report-notes.1.gz
+#rst2html $(DOCS)/notes.rst $(CSS) > $(DOCS)/notes.html
+
 build:
 	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
-	rst2man README | gzip > $(DOCS)/status-report.1.gz
-	rst2html README $(CSS) > $(DOCS)/index.html
-	rst2man $(DOCS)/notes.rst | gzip > $(DOCS)/status-report-notes.1.gz
-	rst2html $(DOCS)/notes.rst $(CSS) > $(DOCS)/notes.html
+	cd docs && make man SPHINXOPTS=-Q && gzip -c _build/man/status-report.1 > $(DOCS)/status-report.1.gz
 
 tarball: build
 	cd $(TMP) && tar cfj SOURCES/$(PACKAGE).tar.bz2 $(PACKAGE)

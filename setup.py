@@ -2,19 +2,12 @@
 # -*- coding: utf-8 -*-
 # Author: "Chris Ward" <cward@redhat.com>
 
-import os
 import re
 from setuptools import setup
 
-script_pth = os.path.dirname(os.path.realpath(__file__))
-# make sure we're working from the root where (this) setup.py is
-os.chdir(script_pth)
-# get the parents directory path to find spec and README
-parent_pth = os.path.realpath('../')
-
 # Parse the version and release from master spec file
 # RPM spec file is in the parent directory
-spec_pth = os.path.join(parent_pth, 'status-report.spec')
+spec_pth = 'status-report.spec'
 with open(spec_pth) as f:
     lines = "\n".join(l.rstrip() for l in f)
     version = re.search('Version: (.+)', lines).group(1).rstrip()
@@ -23,7 +16,7 @@ with open(spec_pth) as f:
 # acceptable version schema: major.minor[.patch][sub]
 __version__ = '.'.join([version, release])
 __pkg__ = 'status_report'
-__pkgdir__ = {'status_report': 'status_report'}
+__pkgdir__ = {'status_report': 'source/status_report'}
 __pkgs__ = [
     'status_report',
     'status_report.plugins',
@@ -41,7 +34,7 @@ pip_src = 'https://pypi.python.org/packages/source'
 __deplinks__ = []
 
 # README is in the parent directory
-readme_pth = os.path.join(parent_pth, 'README.rst')
+readme_pth = 'README.rst'
 with open(readme_pth) as _file:
     readme = _file.read()
 
