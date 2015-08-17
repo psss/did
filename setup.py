@@ -23,7 +23,7 @@ __pkgs__ = [
 ]
 __provides__ = ['status_report']
 __desc__ = 'Status Report - Comfortable CLI Activity Status Reporting'
-__scripts__ = ['source/status-report', 'source/snippet']
+__scripts__ = ['source/status-report']
 __irequires__ = [
     'python_dateutil==2.4.2',
     'sqlalchemy==1.0.0',
@@ -58,7 +58,7 @@ default_setup = dict(
         'Topic :: Office/Business',
         'Topic :: Utilities',
     ],
-    keywords=['information', 'postgresql', 'tasks', 'snippets'],
+    keywords=['information', 'postgresql', 'tasks'],
     dependency_links=__deplinks__,
     description=__desc__,
     install_requires=__irequires__,
