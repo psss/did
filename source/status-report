@@ -34,7 +34,6 @@ range. By default all available stats for this week are reported.
 from __future__ import unicode_literals, absolute_import
 
 import sys
-import kerberos
 import optparse
 import ConfigParser
 from dateutil.relativedelta import relativedelta as delta
@@ -214,10 +213,6 @@ def main():
         utils.log.error(error)
         sys.exit(1)
 
-    except kerberos.GSSError as error:
-        utils.log.error("Kerberos authentication failed. Try kinit.")
-        sys.exit(2)
-
     except ConfigParser.NoSectionError as e:
         utils.log.error(e)
         utils.log.error(
@@ -228,6 +223,11 @@ def main():
         utils.info(
             '[general]\nemail = "My Name" <{0}@domain.com>'.format(getuser()))
         sys.exit(3)
+
+    except Exception as error:
+        utils.log.error("Perhaps authentication failed. Try kinit?")
+        sys.exit(2)
+
 
 
 if __name__ == "__main__":

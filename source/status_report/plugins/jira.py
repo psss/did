@@ -2,15 +2,17 @@
 """ Comfortably generate reports - Jira """
 
 import re
-import json
-import urllib
-import urllib2
-import urllib2_kerberos
+from urllib import urlencode
+import requests as rq
+from requests_kerberos import HTTPKerberosAuth, DISABLED
 import dateutil.parser
-import cookielib
+import warnings
 
 from status_report.base import Stats, StatsGroup
 from status_report.utils import Config, ReportError, log, pretty, listed
+
+# Output warnings ONE time, then supress
+warnings.simplefilter('default')
 
 # Default identifier width
 DEFAULT_WIDTH = 4
@@ -19,11 +21,14 @@ DEFAULT_WIDTH = 4
 #  Issue Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Issue(object):
+
+class Issue(Stats):
     """ Jira issue investigator """
 
     def __init__(self, issue=None, prefix=None):
         """ Initialize issue """
+        # FIXME: return in __init__ doesn't seem to be very pythonic
+        # http://stackoverflow.com/questions/11981368/ raise an error instead?
         if issue is None:
             return
         self.issue = issue
@@ -46,11 +51,11 @@ class Issue(object):
     def search(query, stats):
         """ Perform issue search for given stats instance """
         log.debug("Search query: {0}".format(query))
-        result = stats.parent.session.open(
+        result = stats.parent.session.get(
             "{0}/rest/api/latest/search?{1}".format(
-                stats.parent.url, urllib.urlencode(
+                stats.parent.url, urlencode(
                     {"jql": query, "fields": "summary,comment"})))
-        issues = json.loads(result.read())
+        issues = result.json()
         log.debug(
             "Search result: {0} found".format(
                 listed(issues["total"], "issue")))
@@ -69,6 +74,7 @@ class Issue(object):
                     created < options.until.date):
                 return True
         return False
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
@@ -115,6 +121,7 @@ class JiraResolved(Stats):
                 self.options.since, self.options.until))
         self.stats = Issue.search(query, stats=self)
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -125,18 +132,21 @@ class JiraStats(StatsGroup):
     # Default order
     order = 600
 
-    def __init__(self, option, name=None, parent=None):
-        StatsGroup.__init__(self, option, name, parent)
+    def __init__(self, option, name=None, parent=None, user=None,
+                 options=None):
+        super(JiraStats, self).__init__(
+            option=option, name=name, parent=parent, user=user,
+            options=options)
         self._session = None
         # Make sure there is an url provided
         config = dict(Config().section(option))
         if "url" not in config:
-            raise ReportsError(
+            raise ReportError(
                 "No Jira url set in the [{0}] section".format(option))
         self.url = config["url"].rstrip("/")
         # Make sure we have project set
         if "project" not in config:
-            raise ReportsError(
+            raise ReportError(
                 "No project set in the [{0}] section".format(option))
         self.project = config["project"]
         # Check for custom prefix
@@ -152,19 +162,27 @@ class JiraStats(StatsGroup):
             JiraResolved(
                 option=option + "-resolved", parent=self,
                 name="Issues resolved in {0}".format(option)),
-            ]
+        ]
 
     @property
     def session(self):
         """ Initialize the session """
         if self._session is None:
+            # OLD
             # http://stackoverflow.com/questions/8811269/
             # http://www.techchorus.net/using-cookie-jar-urllib2
-            cookie = cookielib.CookieJar()
-            self._session = urllib2.build_opener(
-                urllib2.HTTPSHandler(debuglevel=0),
-                urllib2.HTTPRedirectHandler,
-                urllib2.HTTPCookieProcessor(cookie),
-                urllib2_kerberos.HTTPKerberosAuthHandler)
-            self._session.open(self.url + "/step-auth-gss")
+            #self._session = urllib2.build_opener(
+            #    urllib2.HTTPSHandler(debuglevel=0),
+            #    urllib2.HTTPRedirectHandler,
+            #    urllib2.HTTPCookieProcessor(cookie),
+            #    urllib2_kerberos.HTTPKerberosAuthHandler)
+            #self._session.open(self.url + "/step-auth-gss")
+
+            # http://stackoverflow.com/questions/21578699/
+            auth = HTTPKerberosAuth(mutual_authentication=DISABLED)
+            self._session = rq.Session()
+            url = self.url + "/step-auth-gss"
+            # FIXME: not verifying SSL is a hack...
+            self._session.get(url, auth=auth, verify=False,
+                              allow_redirects=True)
         return self._session
