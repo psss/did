@@ -1,139 +1,29 @@
-# coding: utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """ Comfortably generate reports - Base """
 
-from __future__ import absolute_import
+from __future__ import unicode_literals, absolute_import
 
-import datetime
 import optparse
 import xmlrpclib
-from dateutil.relativedelta import MO as MONDAY
-from dateutil.relativedelta import relativedelta as delta
 
-import status_report.utils as utils
-from status_report.utils import log, item
+from status_report import utils
+from status_report import plugins
 
-TODAY = datetime.date.today()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Date
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class Date(object):
-    """ Date parsing for common word formats """
-
-    def __init__(self, date=None):
-        """ Parse the date string """
-        if isinstance(date, datetime.date):
-            self.date = date
-        elif date is None or date.lower() == "today":
-            self.date = TODAY
-        elif date.lower() == "yesterday":
-            self.date = TODAY - delta(days=1)
-        else:
-            self.date = datetime.date(*[int(i) for i in date.split("-")])
-        self.datetime = datetime.datetime(
-            self.date.year, self.date.month, self.date.day, 0, 0, 0)
-
-    def __str__(self):
-        """ Ascii version of the string representation """
-        return utils.ascii(unicode(self))
-
-    def __unicode__(self):
-        """ String format for printing """
-        return unicode(self.date)
-
-    @staticmethod
-    def this_week():
-        """ Return start and end date of the current week. """
-        since = TODAY + delta(weekday=MONDAY(-1))
-        until = since + delta(weeks=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def last_week():
-        """ Return start and end date of the last week. """
-        since = TODAY + delta(weekday=MONDAY(-2))
-        until = since + delta(weeks=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def this_month():
-        """ Return start and end date of this month. """
-        since = TODAY + delta(day=1)
-        until = since + delta(months=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def last_month():
-        """ Return start and end date of this month. """
-        since = TODAY + delta(day=1, months=-1)
-        until = since + delta(months=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def this_quarter():
-        """ Return start and end date of this quarter. """
-        since = TODAY + delta(day=1)
-        while since.month % 3 != 0:
-            since -= delta(months=1)
-        until = since + delta(months=3)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def last_quarter():
-        """ Return start and end date of this quarter. """
-        since, until = Date.this_quarter()
-        since = since.date - delta(months=3)
-        until = until.date - delta(months=3)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def this_year():
-        """ Return start and end date of this fiscal year """
-        since = TODAY
-        while since.month != 3 or since.day != 1:
-            since -= delta(days=1)
-        until = since + delta(years=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def last_year():
-        """ Return start and end date of the last fiscal year """
-        since, until = Date.this_year()
-        since = since.date - delta(years=1)
-        until = until.date - delta(years=1)
-        return Date(since), Date(until)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  User
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class User(object):
-    """ User info """
-
-    def __init__(self, email, name=None, login=None):
-        """ Set user email, name and login values. """
-        if not email:
-            raise utils.ReportError(
-                "Email required for user initialization.")
-        else:
-            # extract everything from the email string provided
-            # eg, "My Name" <bla@email.com>
-            parts = utils.EMAIL_REGEXP.search(email)
-            self.email = parts.groups()[1]
-            self.login = login or self.email.split('@')[0]
-            self.name = name or parts.groups()[0] or u"Unknown"
-
-    def __unicode__(self):
-        """ Use name & email for string representation. """
-        return u"{0} <{1}>".format(self.name, self.email)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Stats
+#  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Stats(object):
     """ General statistics """
+    _name = None
+    _error = None
+    _enabled = None
+    option = None
+    dest = None
+    parent = None
+    stats = None
 
     def __init__(
             self, option, name=None, parent=None, user=None, options=None):
@@ -144,17 +34,14 @@ class Stats(object):
         self.parent = parent
         self.stats = []
         # Save user and options (get it directly or from parent)
-        self.options = options
-        if self.options is None and self.parent is not None:
-            self.options = self.parent.options
-        self.user = user
-        if self.user is None and self.parent is not None:
+        self.options = options or getattr(self.parent, 'options', None)
+        if user is None and self.parent is not None:
             self.user = self.parent.user
-        # True if error encountered when generating stats
-        self._error = False
-        # If user provided, let's check the data right now
-        if self.user is not None:
-            self.check()
+        else:
+            self.user = user
+        utils.log.debug(
+            'Loading {0} Stats instance for {1}'.format(option, self.user))
+        self.check()
 
     @property
     def name(self):
@@ -168,9 +55,15 @@ class Stats(object):
 
     def enabled(self):
         """ Check whether we're enabled (or if parent is). """
-        if self.parent is not None and self.parent.enabled():
-            return True
-        return getattr(self.options, self.dest)
+        if self._enabled is None:
+            if self.parent is not None and self.parent.enabled():
+                self._enabled = True
+            else:
+                # Default to Enabled if not otherwise disabled
+                self._enabled = getattr(self.options, self.dest, True)
+        utils.log.debug(
+            "{0} Enabled? {1}".format(self.option, self._enabled))
+        return self._enabled
 
     def fetch(self):
         """ Fetch the stats (to be implemented by respective class). """
@@ -178,38 +71,55 @@ class Stats(object):
 
     def check(self):
         """ Check the stats if enabled. """
-        if self.enabled():
-            try:
-                self.fetch()
-            except (xmlrpclib.Fault, utils.ConfigError) as error:
-                log.error(error)
-                self._error = True
-                # Raise the exception if debugging
-                if self.options.debug:
-                    raise
-            # Show the results stats (unless merging)
-            if not self.options.merge:
-                self.show()
+        # Backwards compatability; use .enabled() and .get_status()
+        return self.enabled()
+
+    def get_stats(self):
+        '''
+        Run the stat's fetch method to get the stats we're looking for
+        '''
+        if not self.enabled():
+            return
+
+        try:
+            self.fetch()
+        except (xmlrpclib.Fault, utils.ConfigError) as error:
+            utils.log.error(error)
+            self._error = True
+            # Raise the exception if debugging
+            if not self.options or self.options.debug:
+                raise
+
+        # Show the results stats (unless merging)
+        if self.options and not self.options.merge:
+            self.show()
 
     def header(self):
         """ Show summary header. """
         # Show question mark instead of count when errors encountered
         count = "? (error encountered)" if self._error else len(self.stats)
-        item("{0}: {1}".format(self.name, count, 0), options=self.options)
+        utils.item("{0}: {1}".format(self.name, count, 0), options=self.options)
 
     def show(self):
         """ Display indented statistics. """
-        if not self._error and not self.stats:
-            return
         self.header()
+        if self._error is not None:
+            utils.log.error("Error detected: {0}".format(self._error))
+        if not self.stats:
+            utils.log.warn("No Stats available!")
+            return
         for stat in self.stats:
-            item(stat, level=1, options=self.options)
+            utils.item(stat, level=1, options=self.options)
 
     def merge(self, other):
         """ Merge another stats. """
+        if not other.stats:
+            utils.log.debug('Merge: stats is empty for {0}'.format(other))
+            return
         self.stats.extend(other.stats)
         if other._error:
             self._error = True
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
@@ -243,12 +153,65 @@ class StatsGroup(Stats):
 
     def merge(self, other):
         """ Merge all children stats. """
+        if not (other and other.stats):
+            utils.log.debug('Merge: stats is empty for {0}'.format(other))
+            return
         for this, other in zip(self.stats, other.stats):
             this.merge(other)
 
     def fetch(self):
-        """ Stats group do not fetch anything """
-        pass
+        '''
+        default is to assume self.stats has been filled with a list of Stats
+        instances that we can call fetch() on to load the stats we're
+        looking for into each instance. Otherwise, overloading this method
+        is necessary.
+        '''
+        [s.fetch() for s in self.stats]
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  User Stats
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class UserStats(StatsGroup):
+    """ User statistics in one place """
+
+    def __init__(self, user=None, options=None):
+        """ Initialize stats objects. """
+        super(UserStats, self).__init__(option="all", user=user,
+                                        options=options)
+        self.stats = []
+        for section, statsgroup in plugins.detect():
+            try:
+                stats = statsgroup(option=section, parent=self,
+                                   options=options, user=self.user)
+            except Exception:
+                utils.log.error("Failed to load plugin instance {0}".format(
+                                statsgroup))
+                raise
+            else:
+                if stats:
+                    self.stats.append(stats)
+
+    def add_option(self, parser):
+        """ Add options for each stats group. """
+        for stat in self.stats:
+            stat.add_option(parser)
+
+    def get_stats(self):
+        """
+        Explitly fetch stats for each stat instance in self.stats. Replace
+        self.stats with the result of those calls, which should be a list
+        of stat (snippet) strings.
+        """
+        stats = []
+        # FIXME: DON"T RUN THIS MORE THAN ONCE! set _dirty? or something
+        # to indicate .stats no longer contains Stat classes but actual stats
+        for stat in self.stats:
+            stat.get_stats()
+            stats.extend(stat.stats)
+        self.stats = stats
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Header & Footer
@@ -261,7 +224,7 @@ class EmptyStats(Stats):
 
     def show(self):
         """ Name only for empty stats """
-        item(self.name, options=self.options)
+        utils.item(self.name, options=self.options)
 
     def fetch(self):
         """ Nothing to do for empty stats """

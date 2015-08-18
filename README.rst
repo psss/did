@@ -3,14 +3,28 @@
     status-report
 ======================
 
+.. image:: https://badge.fury.io/py/status-report.svg
+    :target: http://badge.fury.io/py/status-report
+
+.. image:: https://travis-ci.org/psss/status-report.svg?branch=master
+    :target: https://travis-ci.org/psss/status-report
+
+.. image:: https://coveralls.io/repos/psss/status-report/badge.svg 
+    :target: https://coveralls.io/r/psss/status-report
+
+.. image:: https://img.shields.io/pypi/dm/status-report.svg
+    :target: https://pypi.python.org/pypi/status_report/
+
+.. image:: https://img.shields.io/pypi/l/status-report.svg
+    :target: https://pypi.python.org/pypi/status_report/
+ 
+.. image:: https://landscape.io/github/psss/status-report/master/landscape.svg
+    :target: https://landscape.io/github/psss/status-report/master
+
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Generate status report stats for selected date range
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-:Manual section: 1
-:Manual group: User Commands
-:Date: April 2015
-
 
 DESCRIPTION
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,6 +44,25 @@ Generate stats for the last week::
     status-report last week
 
 See status-report --help for complete list of available stats.
+
+
+INSTALLATION
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Install directly from Fedora/Copr repository or use PIP::
+
+    # Basic dependencies for buiding/installing pip packages
+    sudo yum install gcc krb5-devel
+    sudo yum install python-devel python-pip python-virtualenv
+
+    # Upgrade to the latest pip/setup/virtualenv installer code
+    sudo pip install -U pip setuptools virtualenv
+
+    # Install into a python virtual environment (OPTIONAL)
+    virtualenv --no-site-packages ~/virtenv_statusreport
+    source ~/virtenv_statusreport/bin/activate
+
+    # Install status_report (sudo required if not in a virtualenv)
+    pip install status_report
 
 
 CONFIGURATION
@@ -67,31 +100,34 @@ settings and configuration of individual reports::
 See also examples link for some more inspiration.
 
 
-INSTALLATION
+DOCKER INSTALL
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Install directly from Fedora/Copr repository or use PIP::
+To build and execute in a docker container, run::
 
-    # Basic dependencies for buiding/installing pip packages
-    sudo yum install gcc krb5-devel
-    sudo yum install python-devel python-pip python-virtualenv
+    make run_docker
 
-    # Upgrade to the latest pip/setup/virtualenv installer code
-    sudo pip install -U pip setuptools virtualenv
+See LINKS section below for more docker resources.
 
-    # Install into a python virtual environment (OPTIONAL)
-    virtualenv --no-site-packages ~/virtenv_statusreport
-    source ~/virtenv_statusreport/bin/activate
 
-    # Install status_report (sudo required if not in a virtualenv)
-    pip install status_report
+GIT COMMIT HOOKS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If you're planning to make commits to this project, please enable
+the following git hooks::
+
+    # UPDATE according to the correct absolute git path
+    PATH = ~/status-report/git-hooks
+    ln -s $(PATH)/pre-commit.py .git/hooks/pre-commit
+    ln -s $(PATH)/commit-msg.py .git/hooks/commit-msg
 
 
 TESTS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To run tests using pytest::
 
-    pip install pytest  (sudo required if not in a virtualenv)
-    py.test source/tests
+    # sudo required if not in a virtualenv
+    pip install pytest coveralls
+    coverage run --source=status_report -m py.test source/tests
+    coverage report
 
 
 LINKS
@@ -116,6 +152,10 @@ https://github.com/psss/status-report
 
 PIP repo:
 https://pypi.python.org/pypi/status_report/
+
+Docker Guides:
+https://fedoraproject.org/wiki/Getting_started_with_docker
+https://fedoraproject.org/wiki/Docker
 
 
 AUTHORS

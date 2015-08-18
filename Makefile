@@ -13,19 +13,27 @@ PACKAGE = status-report-$(VERSION)
 DOCS = $(TMP)/$(PACKAGE)/docs
 EXAMPLES = $(TMP)/$(PACKAGE)/examples
 CSS = --stylesheet=style.css --link-stylesheet
-FILES = LICENSE README \
+FILES = LICENSE README.rst \
 		Makefile status-report.spec \
 		docs examples source
 
+ifndef USERNAME
+    USERNAME = echo $$USER
+endif
+
 all: push clean
+
+# Looking for HTML docs? Could copy them too or just check out http://status-report.readthedocs.org/
+# To build locally; cd docs; make html
+#rst2man README | gzip > $(DOCS)/status-report.1.gz
+#rst2html README $(CSS) > $(DOCS)/index.html
+#rst2man $(DOCS)/notes.rst | gzip > $(DOCS)/status-report-notes.1.gz
+#rst2html $(DOCS)/notes.rst $(CSS) > $(DOCS)/notes.html
 
 build:
 	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
-	rst2man README | gzip > $(DOCS)/status-report.1.gz
-	rst2html README $(CSS) > $(DOCS)/index.html
-	rst2man $(DOCS)/notes.rst | gzip > $(DOCS)/status-report-notes.1.gz
-	rst2html $(DOCS)/notes.rst $(CSS) > $(DOCS)/notes.html
+	cd docs && make man SPHINXOPTS=-Q && gzip -c _build/man/status-report.1 > $(DOCS)/status-report.1.gz
 
 tarball: build
 	cd $(TMP) && tar cfj SOURCES/$(PACKAGE).tar.bz2 $(PACKAGE)
@@ -52,3 +60,18 @@ push: packages
 clean:
 	rm -rf $(TMP)
 	find source -name '*.pyc' -exec rm {} \;
+
+run_docker: build_docker
+	@echo
+	@echo "Please note: this is a first cut at doing a container version as a result; known issues:"
+	@echo "* kerberos auth may not be working correctly"
+	@echo "* container runs as privileged to access the conf file"
+	@echo "* output directory may not be quite right"
+	@echo 
+	@echo "This does not actually run the docker image as it makes more sense to run it directly. Use:"
+	@echo "docker run --privileged --rm -it -v $(HOME)/.status-report:/status-report.conf $(USERNAME)/status-report"
+	@echo "If you want to add it to your .bashrc use this:"
+	@echo "alias status-report=\"docker run --privileged --rm -it -v $(HOME)/.status-report:/status-report.conf $(USERNAME)/status-report\""
+
+build_docker: docker-artifacts/Dockerfile
+	docker build -t $(USERNAME)/status-report --file="docker-artifacts/Dockerfile" .

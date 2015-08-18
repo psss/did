@@ -1,5 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+
 *.py[cod]
 
 # Vim swap files
@@ -24,3 +25,14 @@ pip-log.txt
 
 # Rope
 .ropeproject/
+
+# coveralls code coverage
+.coverage
+
+# sphinx docs
+_build
+_static
+_templates
+
+# rpm build files
+tmp/

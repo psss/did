@@ -1,4 +1,5 @@
-# coding: utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """ Comfortably generate reports - Git """
 
 import os
@@ -7,9 +8,11 @@ import subprocess
 from status_report.base import Stats, StatsGroup
 from status_report.utils import Config, item, log, pretty
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Git Repository
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class GitRepo(object):
     """ Git repository investigator """
@@ -36,8 +39,7 @@ class GitRepo(object):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as error:
             log.warn("Unable to access git repo in {0}".format(self.path))
-            log.warn(error)
-            return []
+            raise
         output, errors = process.communicate()
         log.debug("git log output:")
         log.debug(output)
@@ -59,15 +61,20 @@ class GitRepo(object):
             log.warn(errors.strip())
             return []
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Git Commits
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class GitCommits(Stats):
     """ Git commits """
-    def __init__(self, option, name=None, parent=None, path=None):
-        self.repo = GitRepo(path)
-        Stats.__init__(self, option, name, parent)
+    def __init__(self, option, name=None, parent=None, path=None,
+                 options=None):
+        super(GitCommits, self).__init__(option=option, name=name,
+                                         parent=parent, options=options)
+        self.path = path
+        self.repo = GitRepo(self.path)
 
     def fetch(self):
         self.stats = self.repo.commits(self.user, self.options)
@@ -81,6 +88,7 @@ class GitCommits(Stats):
                 "" if len(self.stats) == 1 else "s"),
             level=0, options=self.options)
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Git Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -91,18 +99,25 @@ class GitStats(StatsGroup):
     # Default order
     order = 300
 
-    def __init__(self, option, name=None, parent=None):
-        name = "Work on {0}".format(option)
-        StatsGroup.__init__(self, option, name, parent)
-        for repo, path in Config().section(option):
+    def fetch(self):
+        # FIXME: path should be pushed in and used from kwarg
+        # not pull from config here...
+        repos = Config().section(self.option)
+        log.debug('Found {0} repo paths'.format(len(repos)))
+        log.debug(repos)
+        for repo, path in repos:
             if path.endswith('/*'):
                 for repo_dir in sorted(os.listdir(path[:-1])):
                     repo_path = path.replace('*', repo_dir)
-                    self.stats.append(GitCommits(
-                        option="{0}-{1}".format(repo, repo_dir),
-                        parent=self, path=repo_path,
-                        name="Work on {0}/{1}".format(repo, repo_dir)))
+                    option = "{0}-{1}".format(repo, repo_dir)
+                    name = "Work on {0}/{1}".format(repo, repo_dir)
+                    commits = GitCommits(option=option, parent=self,
+                                         path=repo_path, name=name)
+                    commits.fetch()
+                    self.stats.append(commits)
             else:
-                self.stats.append(GitCommits(
-                    option=repo, parent=self, path=path,
-                    name="Work on {0}".format(repo)))
+                name = "Work on {0}".format(repo)
+                commits = GitCommits(option=repo, parent=self,
+                                     path=path, name=name)
+                commits.fetch()
+                self.stats.append(commits)

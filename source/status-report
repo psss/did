@@ -1,6 +1,5 @@
-#!/usr/bin/python
-# coding: utf-8
-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 #   status-report - Generate status report stats
@@ -32,41 +31,16 @@ changes) for given week, month, quarter, year or selected date
 range. By default all available stats for this week are reported.
 """
 
+from __future__ import unicode_literals, absolute_import
+
 import sys
-import kerberos
 import optparse
 import ConfigParser
 from dateutil.relativedelta import relativedelta as delta
 
-import status_report.plugins
 import status_report.utils as utils
-from status_report.utils import info
-from status_report.base import Date, User, StatsGroup
+from status_report.base import UserStats
 
-# Create the output logger
-logging = utils.Logging('status-report')
-log = logging.logger
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  User Stats
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class UserStats(StatsGroup):
-    """ User statistics in one place """
-
-    def __init__(self, user=None, options=None):
-        """ Initialize stats objects. """
-        log.debug('options = {0}'.format(options))
-        StatsGroup.__init__(self, option="all", user=user, options=options)
-        self.stats = []
-
-        for section, statsgroup in status_report.plugins.detect():
-            self.stats.append(statsgroup(option=section, parent=self))
-
-    def add_option(self, parser):
-        """ Add options for each stats group. """
-        for stat in self.stats:
-            stat.add_option(parser)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Options
@@ -80,7 +54,6 @@ class Options(object):
         self.parser = optparse.OptionParser(
             usage="status-report [last] [week|month|quarter|year] [opts]",
             description=__doc__.strip())
-        self.sample_stats = UserStats()
 
         # Time & user selection
         group = optparse.OptionGroup(self.parser, "Selection")
@@ -94,6 +67,9 @@ class Options(object):
             "--until",
             help="End date in the YYYY-MM-DD format")
         self.parser.add_option_group(group)
+
+        utils.log.debug("Loading Sample Stats group to build Options")
+        self.sample_stats = UserStats()
 
         # Include all stats objects options
         self.sample_stats.add_option(self.parser)
@@ -129,7 +105,7 @@ class Options(object):
 
         # Enable debugging output
         if opt.debug:
-            logging.set(utils.LOG_DEBUG)
+            utils.logging.set(utils.LOG_DEBUG)
 
         # Enable --all if no particular stat or group selected
         opt.all = not any([
@@ -143,40 +119,14 @@ class Options(object):
 
         # Time period handling
         if opt.since is None and opt.until is None:
-            if "year" in arg:
-                if "last" in arg:
-                    opt.since, opt.until = Date.last_year()
-                    period = "the last fiscal year"
-                else:
-                    opt.since, opt.until = Date.this_year()
-                    period = "this fiscal year"
-            elif "quarter" in arg:
-                if "last" in arg:
-                    opt.since, opt.until = Date.last_quarter()
-                    period = "the last quarter"
-                else:
-                    opt.since, opt.until = Date.this_quarter()
-                    period = "this quarter"
-            elif "month" in arg:
-                if "last" in arg:
-                    opt.since, opt.until = Date.last_month()
-                    period = "the last month"
-                else:
-                    opt.since, opt.until = Date.this_month()
-                    period = "this month"
-            else:
-                if "last" in arg:
-                    opt.since, opt.until = Date.last_week()
-                    period = "the last week"
-                else:
-                    opt.since, opt.until = Date.this_week()
-                    period = "this week"
+            opt.since, opt.until, period = self.time_period(arg)
         else:
-            opt.since = Date(opt.since or "1993-01-01")
-            opt.until = Date(opt.until or "today")
+            opt.since = utils.Date(opt.since or "1993-01-01")
+            opt.until = utils.Date(opt.until or "today")
             # Make the 'until' limit inclusive
             opt.until.date += delta(days=1)
             period = "given date range"
+        # validate the date range
         if not opt.since.date < opt.until.date:
             raise RuntimeError(
                 "Invalid date range ({0} to {1})".format(
@@ -185,23 +135,57 @@ class Options(object):
             period, opt.since, opt.until.date - delta(days=1)))
 
         # Finito
-        log.debug("Gathered options:")
-        log.debug(utils.pretty(opt))
+        utils.log.debug("Gathered options:")
+        utils.log.debug('options = {0}'.format(opt))
         return opt
+
+    @staticmethod
+    def time_period(arg):
+        since, until, period = None, None, None
+        if "year" in arg:
+            if "last" in arg:
+                since, until = utils.Date.last_year()
+                period = "the last fiscal year"
+            else:
+                since, until = utils.Date.this_year()
+                period = "this fiscal year"
+        elif "quarter" in arg:
+            if "last" in arg:
+                since, until = utils.Date.last_quarter()
+                period = "the last quarter"
+            else:
+                since, until = utils.Date.this_quarter()
+                period = "this quarter"
+        elif "month" in arg:
+            if "last" in arg:
+                since, until = utils.Date.last_month()
+                period = "the last month"
+            else:
+                since, until = utils.Date.this_month()
+                period = "this month"
+        else:
+            if "last" in arg:
+                since, until = utils.Date.last_week()
+                period = "the last week"
+            else:
+                since, until = utils.Date.this_week()
+                period = "this week"
+        return since, until, period
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Main
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-if __name__ == "__main__":
+def main():
     try:
         # Parse options
         options = Options().parse()
 
         # Check for users by both login and email
-        users = [User(email=email) for email in options.emails]
+        users = [utils.User(email=email) for email in options.emails]
         if not users:
-            raise utils.ConfigError("No user or email provided")
+            raise utils.ConfigError("No user email provided")
 
         # Prepare team stats object for data merging
         team_stats = UserStats(options=options)
@@ -215,7 +199,8 @@ if __name__ == "__main__":
                 utils.item(user, 1, options=options)
             else:
                 utils.header(user)
-            user_stats = UserStats(user, options)
+            user_stats = UserStats(user=user, options=options)
+            user_stats.get_stats()
             team_stats.merge(user_stats)
 
         # Display merged team report
@@ -225,16 +210,25 @@ if __name__ == "__main__":
             team_stats.show()
 
     except utils.ConfigError as error:
-        log.error(error)
+        utils.log.error(error)
         sys.exit(1)
 
-    except kerberos.GSSError as error:
-        log.error("Kerberos authentication failed. Try kinit.")
+    except ConfigParser.NoSectionError as e:
+        utils.log.error(e)
+        utils.log.error(
+            "No email provided on the command line or in the config file")
+        utils.info(
+            "Create at least a minimum config file {0}:".format(utils.CONFIG))
+        from getpass import getuser
+        utils.info(
+            '[general]\nemail = "My Name" <{0}@domain.com>'.format(getuser()))
+        sys.exit(3)
+
+    except Exception as error:
+        utils.log.error("Perhaps authentication failed. Try kinit?")
         sys.exit(2)
 
-    except ConfigParser.NoSectionError:
-        log.error("No user provided on the command line or in the config file")
-        info("Create at least a minimum config file {0}:".format(utils.CONFIG))
-        from getpass import getuser
-        info("[general]\nuser = {0}".format(getuser()))
-        sys.exit(3)
+
+
+if __name__ == "__main__":
+    main()

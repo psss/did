@@ -1,5 +1,5 @@
 Name: status-report
-Version: 0.3
+Version: 0.4
 Release: 1%{?dist}
 
 Summary: Generate status report stats for selected date range
@@ -30,17 +30,23 @@ mkdir -p %{buildroot}%{python_sitelib}/status_report/plugins
 install -pm 755 source/status-report %{buildroot}%{_bindir}
 install -pm 644 source/status_report/*.py %{buildroot}%{python_sitelib}/status_report
 install -pm 644 source/status_report/plugins/*.py %{buildroot}%{python_sitelib}/status_report/plugins
-install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
+install -pm 644 docs/_build/man/*.1.gz %{buildroot}%{_mandir}/man1
 
 %files
 %{_mandir}/man1/*
 %{_bindir}/status-report
 %{python_sitelib}/*
-%doc README examples
+%doc README.rst examples
 %{!?_licensedir:%global license %%doc}
 %license LICENSE
 
 %changelog
+* Sun Apr 26 2015 Chris Ward <cward@redhat.com> 0.4-1
+- Snippet saving and reporting functionality added
+- Refactor of Stat classes; don't fetch during __init__()
+- Docker builds enabled [langdon@redhat.com]
+- More tests!
+
 * Thu Apr 23 2015 Petr Šplíchal <psplicha@redhat.com> 0.3-1
 - Update README with PIP and test information
 - Enable travis-ci and some tests
