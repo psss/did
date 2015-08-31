@@ -319,6 +319,22 @@ class GerritStats(StatsGroup):
     Gerrit
     """
 
+    # Don't we just want a list of all reviews
+    # CLOSED AFTER the given time (age:)
+    # ||
+    # OPENED AFTER the given time ... or perhaps ALL OPENED changes
+    # (and then manually eliminate all changes not conforming)
+    #
+    # Roles:
+    #     owner:self ... find changes owned by the caller.
+    #     reviewer:self ... find changes where the caller has been added
+    #         as a reviewer.
+    #     (instead of 'self' use users' login and it doesn't require
+    #      authentication)
+    #
+    # I.e.
+    # curl -v 'https://REPOURL/changes/?q=status:merged+owner:mcepl+-age:1y'
+
     # Default order
     order = 350
 
@@ -333,7 +349,7 @@ class GerritStats(StatsGroup):
         log.debug('repo_url = {0}'.format(self.repo_url))
 
         if "prefix" not in self.config:
-            raise ReportsError(
+            raise ReportError(
                 "No prefix set in the [{0}] section".format(option))
 
         self.stats = [
