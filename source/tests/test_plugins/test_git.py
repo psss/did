@@ -5,6 +5,7 @@
 from __future__ import unicode_literals, absolute_import
 
 import os
+from status_report import utils
 
 
 class Mock(object):
@@ -25,6 +26,10 @@ user_cward.login = 'cward'
 user_psplicha = Mock()
 user_psplicha.login = 'psplicha'
 
+parent = Mock()
+parent.options = options
+parent.user = user_cward
+
 with open(os.path.expanduser('~/.status-report'), 'w') as f:
     f.write('[general]\nemail = "Chris Ward" <cward@redhat.com>\n')
     f.write('\n[test_header]\ntype = git\nstatus-report = {0}'.format(git_pth))
@@ -41,7 +46,7 @@ def test_GitRepo():
     repo = GitRepo(path='bad path')
     try:
         repo.commits(user=user_cward, options=options)
-    except OSError:
+    except utils.ReportError:
         pass
     else:
         raise RuntimeError("expected a failure")
@@ -53,9 +58,8 @@ def test_GitCommits():
 
     stats = GitCommits(option='test_header',
                        name='Working on topic',
-                       parent=None,
-                       path=git_pth,
-                       options=options)
+                       parent=parent,
+                       path=git_pth)
     stats.user = user_cward
     stats.fetch()
     assert len(stats.stats) > 0
@@ -71,8 +75,7 @@ def test_GitStats():
 
     stats = GitStats(option='test_header',
                      name='Working on topic',
-                     parent=None,
-                     options=options)
+                     parent=parent)
 
     stats.user = user_cward
     stats.fetch()

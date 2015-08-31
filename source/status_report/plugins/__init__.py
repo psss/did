@@ -22,11 +22,9 @@ PLUGINS_PATH = os.path.dirname(PLUGINS.__file__)
 
 FAILED_PLUGINS = []
 
-def get_plugins():
-    '''
-    Detect available plugins and attempt to import them
-    (Code is based on beaker-client's command.py script)
-    '''
+def load():
+    """ Check available plugins and attempt to import them """
+    # Code is based on beaker-client's command.py script
     plugins = []
     for filename in os.listdir(PLUGINS_PATH):
         if not filename.endswith(".py") or filename.startswith("_"):
@@ -44,15 +42,22 @@ def get_plugins():
         except (ImportError, SyntaxError) as error:
             log.warn("Failed to import {0} plugin ({1})".format(plugin, error))
             FAILED_PLUGINS.append(plugin)
-
     return plugins
 
 
-def load_plugins(plugins):
-    from status_report.base import StatsGroup, EmptyStatsGroup
+def detect():
+    """
+    Detect available plugins and return enabled/configured stats
+
+    Yields tuples of the form (section, statsgroup) sorted by the
+    default StatsGroup order which maybe overriden in the config
+    file. The 'section' is the name of the configuration section
+    as well as the option used to enable those particular stats.
+    """
     # Detect classes inherited from StatsGroup and return them sorted
+    from status_report.base import StatsGroup, EmptyStatsGroup
     stats = []
-    for plugin in plugins:
+    for plugin in load():
         module = getattr(PLUGINS, plugin)
         for object_name in dir(module):
             statsgroup = getattr(module, object_name)
@@ -77,25 +82,7 @@ def load_plugins(plugins):
                 log.info("Found {0}, an instance of {1}, order {2}".format(
                     section, statsgroup.__name__, order))
                 # Custom stats are handled with a single instance
-                # FIXME: we don't load any more plugins once we hit
-                # this...
                 if statsgroup.__name__ == "CustomStats":
                     break
-
-    return stats
-
-
-def detect():
-    """
-    Detect available plugins and return enabled/configured stats
-
-    Yields tuples of the form (section, statsgroup) sorted by the
-    default StatsGroup order which maybe overriden in the config
-    file. The 'section' is the name of the configuration section
-    as well as the option used to enable those particular stats.
-    """
-
-    plugins = get_plugins()
-    stats = load_plugins(plugins)
     for section, statsgroup, _ in sorted(stats, key=lambda x: x[2]):
         yield section, statsgroup

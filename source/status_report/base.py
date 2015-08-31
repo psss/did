@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 """ Comfortably generate reports - Base """
 
 from __future__ import unicode_literals, absolute_import
@@ -12,7 +11,7 @@ from status_report import plugins
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Stats Group
+#  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Stats(object):
@@ -41,7 +40,6 @@ class Stats(object):
             self.user = user
         utils.log.debug(
             'Loading {0} Stats instance for {1}'.format(option, self.user))
-        self.check()
 
     @property
     def name(self):
@@ -55,15 +53,14 @@ class Stats(object):
 
     def enabled(self):
         """ Check whether we're enabled (or if parent is). """
-        # FIXME: Cache into ._enabled?
+        # Cache into ._enabled
         if self._enabled is None:
             if self.parent is not None and self.parent.enabled():
                 self._enabled = True
             else:
                 # Default to Enabled if not otherwise disabled
                 self._enabled = getattr(self.options, self.dest, True)
-        utils.log.debug(
-            "{0} Enabled? {1}".format(self.option, self._enabled))
+        utils.log.debug("{0} Enabled? {1}".format(self.option, self._enabled))
         return self._enabled
 
     def fetch(self):
@@ -72,16 +69,8 @@ class Stats(object):
 
     def check(self):
         """ Check the stats if enabled. """
-        # Backwards compatability; use .enabled() and .get_status()
-        return self.enabled()
-
-    def get_stats(self):
-        '''
-        Run the stat's fetch method to get the stats we're looking for
-        '''
         if not self.enabled():
             return
-
         try:
             self.fetch()
         except (xmlrpclib.Fault, utils.ConfigError) as error:
@@ -90,7 +79,6 @@ class Stats(object):
             # Raise the exception if debugging
             if not self.options or self.options.debug:
                 raise
-
         # Show the results stats (unless merging)
         if self.options and not self.options.merge:
             self.show()
@@ -99,28 +87,21 @@ class Stats(object):
         """ Show summary header. """
         # Show question mark instead of count when errors encountered
         count = "? (error encountered)" if self._error else len(self.stats)
-        utils.item("{0}: {1}".format(self.name, count, 0), options=self.options)
+        utils.item("{0}: {1}".format(self.name, count), options=self.options)
 
     def show(self):
         """ Display indented statistics. """
-        self.header()
-        if self._error is not None:
-            utils.log.error("Error detected: {0}".format(self._error))
-        if not self.stats:
-            utils.log.warn("No Stats available!")
+        if not self._error and not self.stats:
             return
+        self.header()
         for stat in self.stats:
             utils.item(stat, level=1, options=self.options)
 
     def merge(self, other):
         """ Merge another stats. """
-        if not other.stats:
-            utils.log.debug('Merge: stats is empty for {0}'.format(other))
-            return
         self.stats.extend(other.stats)
         if other._error:
             self._error = True
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
@@ -154,20 +135,12 @@ class StatsGroup(Stats):
 
     def merge(self, other):
         """ Merge all children stats. """
-        if not (other and other.stats):
-            utils.log.debug('Merge: stats is empty for {0}'.format(other))
-            return
         for this, other in zip(self.stats, other.stats):
             this.merge(other)
 
     def fetch(self):
-        '''
-        default is to assume self.stats has been filled with a list of Stats
-        instances that we can call fetch() on to load the stats we're
-        looking for into each instance. Otherwise, overloading this method
-        is necessary.
-        '''
-        [s.fetch() for s in self.stats]
+        """ Stats groups do not fetch anything """
+        pass
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -179,40 +152,16 @@ class UserStats(StatsGroup):
 
     def __init__(self, user=None, options=None):
         """ Initialize stats objects. """
-        super(UserStats, self).__init__(option="all", user=user,
-                                        options=options)
+        super(UserStats, self).__init__(
+            option="all", user=user, options=options)
         self.stats = []
         for section, statsgroup in plugins.detect():
-            try:
-                stats = statsgroup(option=section, parent=self,
-                                   options=options, user=self.user)
-            except Exception:
-                utils.log.error("Failed to load plugin instance {0}".format(
-                                statsgroup))
-                raise
-            else:
-                if stats:
-                    self.stats.append(stats)
+            self.stats.append(statsgroup(option=section, parent=self))
 
     def add_option(self, parser):
         """ Add options for each stats group. """
         for stat in self.stats:
             stat.add_option(parser)
-
-    def get_stats(self):
-        """
-        Explitly fetch stats for each stat instance in self.stats. Replace
-        self.stats with the result of those calls, which should be a list
-        of stat (snippet) strings.
-        """
-        stats = []
-        # FIXME: DON"T RUN THIS MORE THAN ONCE! set _dirty? or something
-        # to indicate .stats no longer contains Stat classes but actual stats
-        for stat in self.stats:
-            stat.get_stats()
-            stats.extend(stat.stats)
-        self.stats = stats
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Header & Footer

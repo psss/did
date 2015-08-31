@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 """ Comfortably generate reports - Utils """
 
 from __future__ import unicode_literals, absolute_import
@@ -43,12 +42,19 @@ LOG_ALL = 1
 # See: http://stackoverflow.com/questions/14010875
 EMAIL_REGEXP = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
 
+# Date
 TODAY = datetime.date.today()
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utils
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def eprint(text):
+    """ Print (optionaly encoded) text """
+    # When there's no terminal we need to explicitly encode strings.
+    # Otherwise this would cause problems when redirecting output.
+    print((text if sys.stdout.isatty() else text.encode("utf8")))
+
 
 def header(text):
     """ Show text as a header. """
@@ -148,20 +154,14 @@ def ascii(text):
     return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Logging
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-def eprint(text):
-    """ Print (optionaly encoded) text """
-    # When there's no terminal we need to explicitly encode strings.
-    # Otherwise this would cause problems when redirecting output.
-    print((text if sys.stdout.isatty() else text.encode("utf8")))
-
-
 def info(message, newline=True):
     """ Log provided info message to the standard error output """
     sys.stderr.write(message + ("\n" if newline else ""))
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Logging
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 class Logging(object):
@@ -283,6 +283,7 @@ class Config(object):
 
     @property
     def email(self):
+        """ User email(s) """
         try:
             mails = self.parser.get("general", "email").split(", ")
             return [mail.decode("utf-8") for mail in mails]
@@ -345,6 +346,7 @@ class Config(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Color
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 def color(text, color=None, background=None, light=False, enabled=True):
     """
@@ -452,6 +454,14 @@ def get_color_mode():
 #  Exceptions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+class ConfigError(Exception):
+    """ General problem with configuration file """
+    pass
+
+
+class ReportError(Exception):
+    """ General problem with report generation """
+    pass
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Date
@@ -547,21 +557,15 @@ class Date(object):
 #  User
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  User
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 class User(object):
     """ User info """
 
     def __init__(self, email, name=None, login=None):
         """ Set user email, name and login values. """
         if not email:
-            raise ReportError(
-                "Email required for user initialization.")
+            raise ReportError("Email required for user initialization.")
         else:
-            # extract everything from the email string provided
+            # Extract everything from the email string provided
             # eg, "My Name" <bla@email.com>
             parts = EMAIL_REGEXP.search(email)
             self.email = parts.groups()[1]
@@ -571,25 +575,6 @@ class User(object):
     def __unicode__(self):
         """ Use name & email for string representation. """
         return u"{0} <{1}>".format(self.name, self.email)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Stats
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Exceptions
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class ConfigError(Exception):
-    """ General problem with configuration file """
-    pass
-
-
-class ReportError(Exception):
-    """ General problem with report generation """
-    pass
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  DEFAULT LOGGER
