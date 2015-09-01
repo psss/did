@@ -7,14 +7,6 @@
 :Manual group: User Commands
 :Date: April 2015
 
-status-report 0.4-1
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-* Sun Apr 26 2015 Chris Ward <cward@redhat.com> 0.4-1
-- Snippet saving and reporting functionality added
-- Refactor of Stat classes; don't fetch during __init__()
-- Docker builds enabled [langdon@redhat.com]
-- More tests!
-
 status-report 0.3-1
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Thu Apr 23 2015 Petr Šplíchal <psplicha@redhat.com> 0.3-1

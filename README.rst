@@ -64,6 +64,12 @@ Install directly from Fedora/Copr repository or use PIP::
     # Install status_report (sudo required if not in a virtualenv)
     pip install status_report
 
+To build and execute in a docker container, run::
+
+    make run_docker
+
+See LINKS section below for more docker resources.
+
 
 CONFIGURATION
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -98,15 +104,6 @@ settings and configuration of individual reports::
     url = https://some.trac.com/trac/project/rpc
 
 See also examples link for some more inspiration.
-
-
-DOCKER INSTALL
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To build and execute in a docker container, run::
-
-    make run_docker
-
-See LINKS section below for more docker resources.
 
 
 GIT COMMIT HOOKS
@@ -154,7 +151,6 @@ PIP repo:
 https://pypi.python.org/pypi/status_report/
 
 Docker Guides:
-https://fedoraproject.org/wiki/Getting_started_with_docker
 https://fedoraproject.org/wiki/Docker
 
 

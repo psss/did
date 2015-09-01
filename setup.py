@@ -23,7 +23,7 @@ __pkgs__ = [
 ]
 __provides__ = ['status_report']
 __desc__ = 'Status Report - Comfortable CLI Activity Status Reporting'
-__scripts__ = ['status-report']
+__scripts__ = ['source/status-report']
 __irequires__ = [
     'python_dateutil==2.4.2',
     'kerberos==1.2.2',
