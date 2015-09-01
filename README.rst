@@ -3,37 +3,17 @@
     status-report
 ======================
 
-.. image:: https://badge.fury.io/py/status-report.svg
-    :target: http://badge.fury.io/py/status-report
-
-.. image:: https://travis-ci.org/psss/status-report.svg?branch=master
-    :target: https://travis-ci.org/psss/status-report
-
-.. image:: https://coveralls.io/repos/psss/status-report/badge.svg
-    :target: https://coveralls.io/r/psss/status-report
-
-.. image:: https://img.shields.io/pypi/dm/status-report.svg
-    :target: https://pypi.python.org/pypi/status_report/
-
-.. image:: https://img.shields.io/pypi/l/status-report.svg
-    :target: https://pypi.python.org/pypi/status_report/
-
-.. image:: https://landscape.io/github/psss/status-report/master/landscape.svg
-    :target: https://landscape.io/github/psss/status-report/master
+Gather status report data for given date range.
 
 
+Description
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Generate status report stats for selected date range
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-DESCRIPTION
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Comfortably generate status report stats (e.g. list of committed
+Comfortably gather status report data (e.g. list of committed
 changes) for given week, month, quarter, year or selected date
 range. By default all available stats for this week are reported.
 
 
-EXAMPLES
+Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Generate all stats for current week::
 
@@ -46,7 +26,7 @@ Generate stats for the last week::
 See status-report --help for complete list of available stats.
 
 
-INSTALLATION
+Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Install directly from Fedora/Copr repository or use PIP::
 
@@ -71,7 +51,7 @@ To build and execute in a docker container, run::
 See LINKS section below for more docker resources.
 
 
-CONFIGURATION
+Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The config file ~/.status-report is used to store both general
 settings and configuration of individual reports::
@@ -106,7 +86,7 @@ settings and configuration of individual reports::
 See also examples link for some more inspiration.
 
 
-GIT COMMIT HOOKS
+Git Commit Hooks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If you're planning to make commits to this project, please enable
 the following git hooks::
@@ -117,7 +97,7 @@ the following git hooks::
     ln -s $(PATH)/commit-msg.py .git/hooks/commit-msg
 
 
-TESTS
+Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To run tests using pytest::
 
@@ -127,7 +107,7 @@ To run tests using pytest::
     coverage report
 
 
-LINKS
+Links
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Project page:
 http://psss.fedorapeople.org/status-report/
@@ -154,13 +134,13 @@ Docker Guides:
 https://fedoraproject.org/wiki/Docker
 
 
-AUTHORS
+Authors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Petr Šplíchal, Karel Šrot, Lukáš Zachar, Matěj Cepl, Ondřej Pták,
-Chris Ward.
+Petr Šplíchal, Karel Šrot, Lukáš Zachar, Matěj Cepl, Ondřej Pták
+and Chris Ward.
 
 
-COPYRIGHT
+Copyright
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Copyright (c) 2015 Red Hat, Inc. All rights reserved.
 
@@ -168,3 +148,25 @@ This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of
 the License, or (at your option) any later version.
+
+
+Status
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. image:: https://badge.fury.io/py/status-report.svg
+    :target: http://badge.fury.io/py/status-report
+
+.. image:: https://travis-ci.org/psss/status-report.svg?branch=master
+    :target: https://travis-ci.org/psss/status-report
+
+.. image:: https://coveralls.io/repos/psss/status-report/badge.svg
+    :target: https://coveralls.io/r/psss/status-report
+
+.. image:: https://img.shields.io/pypi/dm/status-report.svg
+    :target: https://pypi.python.org/pypi/status_report/
+
+.. image:: https://img.shields.io/pypi/l/status-report.svg
+    :target: https://pypi.python.org/pypi/status_report/
+
+.. image:: https://landscape.io/github/psss/status-report/master/landscape.svg
+    :target: https://landscape.io/github/psss/status-report/master
