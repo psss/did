@@ -10,7 +10,7 @@ Source0: http://psss.fedorapeople.org/status-report/download/%{name}-%{version}.
 
 BuildArch: noarch
 BuildRequires: python-devel
-Requires: python-kerberos python-nitrate python-dateutil
+Requires: python-kerberos python-nitrate python-dateutil python-urllib2_kerberos
 
 %description
 Comfortably generate status report stats (e.g. list of committed
