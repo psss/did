@@ -1,59 +1,43 @@
-# coding: utf-8
 """ Comfortably generate reports - Bugzilla """
+# coding: utf-8
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import re
 import bugzilla
 import xmlrpclib
+
 from status_report.base import Stats, StatsGroup
-from status_report.utils import Config, log, pretty
+from status_report.utils import Config, log, pretty, ReportError
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Bug
+#  Bugzilla
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Bug(object):
-    """ Bugzilla search """
+class Bugzilla(object):
+    """ Bugzilla investigator """
 
-    _server = None
-    _url = None
-
-    def __init__(self, bug=None, history=None, comments=None, options=None):
-        """ Initialize bug info and history """
-        self.options = options
-        if bug is None:
-            return
-        self.id = bug.id
-        self.summary = bug.summary
-        self.history = history
-        self.comments = comments
-
-    def __unicode__(self):
-        """ Consistent identifier and summary for displaying """
-        if self.options.format == "wiki":
-            return u"<<Bug({0})>> - {1}".format(self.id, self.summary)
-        else:
-            return u"BZ#{0} - {1}".format(
-                str(self.id).rjust(7, "0"),self.summary)
+    def __init__(self, url, prefix):
+        """ Initialize url """
+        self.url = url
+        self.prefix = prefix
+        self._server = None
 
     @property
     def server(self):
-        """ Shared connection to the server. """
-        if Bug._server is None:
-            Bug._server = bugzilla.Bugzilla(url=Bug._url)
-        return Bug._server
+        """ Connection to the server """
+        if self._server is None:
+            self._server = bugzilla.Bugzilla(url=self.url)
+        return self._server
 
-    @staticmethod
-    def search(query, options):
-        """ Perform Bugzilla search. """
+    def search(self, query, options):
+        """ Perform Bugzilla search """
         query["query_format"] = "advanced"
         log.debug("Search query:")
         log.debug(pretty(query))
-        server = Bug().server
         # Fetch bug info
         try:
-            result = server.query(query)
+            result = self.server.query(query)
         except xmlrpclib.Fault as error:
             log.error("An error encountered, while searching for bugs.")
             log.error("Exception:\n{0}".format(error))
@@ -64,20 +48,49 @@ class Bug(object):
         bugs = dict((bug.id, bug) for bug in result)
         # Fetch bug history
         log.debug("Fetching bug history")
-        result = server._proxy.Bug.history({'ids': bugs.keys()})
+        result = self.server._proxy.Bug.history({'ids': bugs.keys()})
         log.debug(pretty(result))
         history = dict((bug["id"], bug["history"]) for bug in result["bugs"])
         # Fetch bug comments
         log.debug("Fetching bug comments")
-        result = server._proxy.Bug.comments({'ids': bugs.keys()})
+        result = self.server._proxy.Bug.comments({'ids': bugs.keys()})
         log.debug(pretty(result))
         comments = dict(
             (int(bug), data["comments"])
             for bug, data in result["bugs"].items())
         # Create bug objects
         return [
-            Bug(bugs[id], history[id], comments[id], options=options)
+            Bug(bugs[id], history[id], comments[id],
+                options=options, prefix=self.prefix)
             for id in bugs]
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Bug
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class Bug(object):
+    """ Bugzilla search """
+
+    def __init__(
+            self, bug=None, history=None, comments=None, options=None,
+            prefix=None):
+        """ Initialize bug info and history """
+        self.options = options
+        if bug is None:
+            return
+        self.id = bug.id
+        self.summary = bug.summary
+        self.history = history
+        self.comments = comments
+        self.prefix = prefix
+
+    def __unicode__(self):
+        """ Consistent identifier and summary for displaying """
+        if self.options.format == "wiki":
+            return u"<<Bug({0})>> - {1}".format(self.id, self.summary)
+        else:
+            return u"{0}#{1} - {2}".format(
+                self.prefix, unicode(self.id).rjust(7, "0"), self.summary)
 
     @property
     def logs(self):
@@ -121,6 +134,14 @@ class Bug(object):
                 return True
         return False
 
+    def patched(self, user):
+        """ True if Patch was added to Keywords field by given user """
+        for who, record in self.logs:
+            if (record["field_name"] == "keywords" and
+                    "Patch" in record["added"] and who == user.email):
+                return True
+        return False
+
     def commented(self, user):
         """ True if comment was added in given time frame """
         for comment in self.comments:
@@ -160,7 +181,8 @@ class VerifiedBugs(Stats):
             "value0-3-0": str(self.options.until)
             }
         self.stats = [
-            bug for bug in Bug.search(query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(
+                query, options=self.options)
             if bug.verified()]
 
 
@@ -191,7 +213,8 @@ class ReturnedBugs(Stats):
             "value0-3-0": str(self.options.until),
             }
         self.stats = [
-            bug for bug in Bug.search(query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(
+                query, options=self.options)
             if bug.returned(self.user)]
 
 
@@ -213,7 +236,7 @@ class FiledBugs(Stats):
             "type0-2-0": "lessthan",
             "value0-2-0": str(self.options.until),
             }
-        self.stats = Bug.search(query, options=self.options)
+        self.stats = self.parent.bugzilla.search(query, options=self.options)
 
 
 class FixedBugs(Stats):
@@ -239,7 +262,8 @@ class FixedBugs(Stats):
             "value0-3-0": str(self.options.until),
             }
         self.stats = [
-            bug for bug in Bug.search(query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(
+                query, options=self.options)
             if bug.fixed()]
 
 
@@ -266,8 +290,37 @@ class PostedBugs(Stats):
             "value0-3-0": str(self.options.until),
             }
         self.stats = [
-            bug for bug in Bug.search(query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(
+                query, options=self.options)
             if bug.posted()]
+
+
+class PatchedBugs(Stats):
+    """ Bugs patched """
+    def fetch(self):
+        log.info(u"Searching for bugs patched by {0}".format(self.user))
+        query = {
+            # Keywords field changed by the user
+            "field0-0-0": "keywords",
+            "type0-0-0": "changedby",
+            "value0-0-0": self.user.email,
+            # Patch keyword added
+            "field0-1-0": "keywords",
+            "type0-1-0": "changedto",
+            "value0-1-0": "Patch",
+            # Since date
+            "field0-2-0": "keywords",
+            "type0-2-0": "changedafter",
+            "value0-2-0": str(self.options.since),
+            # Until date
+            "field0-3-0": "keywords",
+            "type0-3-0": "changedbefore",
+            "value0-3-0": str(self.options.until),
+            }
+        self.stats = [
+            bug for bug in self.parent.bugzilla.search(
+                query, options=self.options)
+            if bug.patched(self.user)]
 
 
 class CommentedBugs(Stats):
@@ -289,7 +342,8 @@ class CommentedBugs(Stats):
             "v4": str(self.options.until),
             }
         self.stats = [
-            bug for bug in Bug.search(query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(
+                query, options=self.options)
             if bug.commented(self.user)]
 
 
@@ -297,7 +351,7 @@ class BugzillaStats(StatsGroup):
     """ Bugzilla stats """
 
     # Default order
-    order = 250
+    order = 200
 
     def __init__(self, option, name=None, parent=None):
         StatsGroup.__init__(self, option, name, parent)
@@ -306,12 +360,18 @@ class BugzillaStats(StatsGroup):
         if "url" not in config:
             raise ReportError(
                 "No bugzilla url set in the [{0}] section".format(option))
-        Bug._url=config["url"]
+        # Make sure we have prefix set
+        if "prefix" not in config:
+            raise ReportError(
+                "No prefix set in the [{0}] section".format(option))
+        # Set up Bugzilla investigator and construct stats
+        self.bugzilla = Bugzilla(config["url"], config["prefix"])
         self.stats = [
-            VerifiedBugs(option=option + "-verified", parent=self),
-            ReturnedBugs(option=option + "-returned", parent=self),
             FiledBugs(option=option + "-filed", parent=self),
-            FixedBugs(option=option + "-fixed", parent=self),
+            PatchedBugs(option=option + "-patched", parent=self),
             PostedBugs(option=option + "-posted", parent=self),
+            FixedBugs(option=option + "-fixed", parent=self),
+            ReturnedBugs(option=option + "-returned", parent=self),
+            VerifiedBugs(option=option + "-verified", parent=self),
             CommentedBugs(option=option + "-commented", parent=self),
             ]
