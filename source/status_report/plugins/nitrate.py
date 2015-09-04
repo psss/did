@@ -10,7 +10,6 @@ Config example::
 
 from __future__ import absolute_import
 
-import nitrate
 from status_report.base import Stats, StatsGroup
 from status_report.utils import log
 
@@ -23,6 +22,7 @@ TEST_CASE_COPY_TAG = "TestCaseCopy"
 class TestPlans(Stats):
     """ Test plans created """
     def fetch(self):
+        import nitrate
         log.info(u"Searching for test plans created by {0}".format(self.user))
         self.stats.extend(nitrate.TestPlan.search(
             is_active=True,
@@ -34,6 +34,7 @@ class TestPlans(Stats):
 class TestRuns(Stats):
     """ Test runs finished """
     def fetch(self):
+        import nitrate
         log.info(u"Searching for test runs finished by {0}".format(self.user))
         self.stats.extend(nitrate.TestRun.search(
             default_tester__email=self.user.email,
@@ -93,6 +94,7 @@ class NitrateStats(StatsGroup):
     @property
     def cases(self):
         """ All test cases created by the user """
+        import nitrate
         if self._cases is None:
             log.info(u"Searching for cases created by {0}".format(self.user))
             self._cases = [
@@ -106,6 +108,7 @@ class NitrateStats(StatsGroup):
     @property
     def copies(self):
         """ All test case copies created by the user """
+        import nitrate
         if self._copies is None:
             log.info(u"Searching for cases copied by {0}".format(self.user))
             self._copies = [
