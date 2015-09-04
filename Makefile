@@ -23,17 +23,14 @@ endif
 
 all: push clean
 
-# Looking for HTML docs? Could copy them too or just check out http://status-report.readthedocs.org/
-# To build locally; cd docs; make html
-#rst2man README | gzip > $(DOCS)/status-report.1.gz
-#rst2html README $(CSS) > $(DOCS)/index.html
-#rst2man $(DOCS)/notes.rst | gzip > $(DOCS)/status-report-notes.1.gz
-#rst2html $(DOCS)/notes.rst $(CSS) > $(DOCS)/notes.html
-
 build:
 	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
-	cd docs && make man SPHINXOPTS=-Q && gzip -c _build/man/status-report.1 > $(DOCS)/status-report.1.gz
+	# Construct man page from header and README
+	cp docs/header.txt $(TMP)/man.rst
+	tail -n+7 README.rst | sed '/^Status/,$$d' >> $(TMP)/man.rst
+	rst2man $(TMP)/man.rst | gzip > $(DOCS)/status-report.1.gz
+	rst2html README.rst $(CSS) > $(DOCS)/index.html
 
 tarball: build
 	cd $(TMP) && tar cfj SOURCES/$(PACKAGE).tar.bz2 $(PACKAGE)
