@@ -342,15 +342,6 @@ class Config(object):
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
             return MAX_WIDTH
 
-    @property
-    def grades(self):
-        """ Include bug grades """
-        try:
-            value = self.parser.get("general", "grades")
-            return value == '1' or value.lower() == 'true'
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            return False
-
     def sections(self, kind=None):
         """ Return all sections (optionally of given kind only) """
         result = []
