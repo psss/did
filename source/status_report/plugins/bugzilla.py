@@ -17,17 +17,16 @@ from status_report.utils import Config, log, pretty, ReportError
 class Bugzilla(object):
     """ Bugzilla investigator """
 
-    def __init__(self, url, prefix):
+    def __init__(self, parent):
         """ Initialize url """
-        self.url = url
-        self.prefix = prefix
+        self.parent = parent
         self._server = None
 
     @property
     def server(self):
         """ Connection to the server """
         if self._server is None:
-            self._server = bugzilla.Bugzilla(url=self.url)
+            self._server = bugzilla.Bugzilla(url=self.parent.url)
         return self._server
 
     def search(self, query, options):
@@ -60,8 +59,8 @@ class Bugzilla(object):
             for bug, data in result["bugs"].items())
         # Create bug objects
         return [
-            Bug(bugs[id], history[id], comments[id],
-                options=options, prefix=self.prefix)
+            self.parent.bug(
+                bugs[id], history[id], comments[id], parent=self.parent)
             for id in bugs]
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,18 +70,15 @@ class Bugzilla(object):
 class Bug(object):
     """ Bugzilla search """
 
-    def __init__(
-            self, bug=None, history=None, comments=None, options=None,
-            prefix=None):
+    def __init__(self, bug, history, comments, parent):
         """ Initialize bug info and history """
-        self.options = options
-        if bug is None:
-            return
         self.id = bug.id
         self.summary = bug.summary
         self.history = history
         self.comments = comments
-        self.prefix = prefix
+        self.options = parent.options
+        self.prefix = parent.prefix
+        self.parent = parent
 
     def __unicode__(self):
         """ Consistent identifier and summary for displaying """
@@ -355,17 +351,24 @@ class BugzillaStats(StatsGroup):
 
     def __init__(self, option, name=None, parent=None):
         StatsGroup.__init__(self, option, name, parent)
-        # Initialize the server proxy
         config = dict(Config().section(option))
-        if "url" not in config:
+        # Check Bugzilla instance url
+        try:
+            self.url = config["url"]
+        except KeyError:
             raise ReportError(
                 "No bugzilla url set in the [{0}] section".format(option))
         # Make sure we have prefix set
-        if "prefix" not in config:
+        try:
+            self.prefix = config["prefix"]
+        except KeyError:
             raise ReportError(
                 "No prefix set in the [{0}] section".format(option))
-        # Set up Bugzilla investigator and construct stats
-        self.bugzilla = Bugzilla(config["url"], config["prefix"])
+        # Save Bug class as attribute to allow customizations by
+        # descendant class and set up the Bugzilla investigator
+        self.bug = Bug
+        self.bugzilla = Bugzilla(parent=self)
+        # Construct the list of stats
         self.stats = [
             FiledBugs(option=option + "-filed", parent=self),
             PatchedBugs(option=option + "-patched", parent=self),
