@@ -1,5 +1,31 @@
-""" Comfortably generate reports - Bugzilla """
 # coding: utf-8
+
+"""
+Bugzilla stats such as verified, filed or fixed bugs
+
+Config example::
+
+    [bz]
+    type = bugzilla
+    prefix = BZ
+    url = https://bugzilla.redhat.com/xmlrpc.cgi
+
+    [mz]
+    type = bugzilla
+    prefix = MZ
+    url = https://bugzilla.mozilla.org/xmlrpc.cgi
+
+Available options:
+
+    --bz-filed          Bugs filed
+    --bz-patched        Bugs patched
+    --bz-posted         Bugs posted
+    --bz-fixed          Bugs fixed
+    --bz-returned       Bugs returned
+    --bz-verified       Bugs verified
+    --bz-commented      Bugs commented
+    --bz                All above
+"""
 
 from __future__ import absolute_import, unicode_literals
 

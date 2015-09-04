@@ -1,5 +1,14 @@
 # coding: utf-8
-""" Comfortably generate reports - Header """
+"""
+Customizable header
+
+Config example::
+
+    [header]
+    type = header
+    highlights = Highlights
+    joy = Joy of the week ;-)
+"""
 
 from status_report.base import EmptyStatsGroup
 

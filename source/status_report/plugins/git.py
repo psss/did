@@ -1,5 +1,19 @@
 # coding: utf-8
-""" Comfortably generate reports - Git """
+"""
+Git commits
+
+Config example::
+
+    [tools]
+    type = git
+    apps = /home/psss/git/apps
+
+    [tests]
+    type = git
+    tests = /home/psss/git/tests/*
+
+Note that using ``*`` you can enable multiple git repositories.
+"""
 
 import os
 import re

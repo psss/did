@@ -1,5 +1,12 @@
 # coding: utf-8
-""" Comfortably generate reports - Nitrate """
+"""
+Nitrate stats such as created test plans, runs, cases
+
+Config example::
+
+    [nitrate]
+    type = nitrate
+"""
 
 from __future__ import absolute_import
 

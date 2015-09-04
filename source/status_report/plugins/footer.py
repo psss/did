@@ -1,5 +1,15 @@
 # coding: utf-8
-""" Comfortably generate reports - Footer """
+
+"""
+Customizable footer
+
+Config example::
+
+    [footer]
+    type = footer
+    next = Plans, thoughts, ideas...
+    status = Status: Green | Yellow | Orange | Red
+"""
 
 from status_report.base import EmptyStatsGroup
 

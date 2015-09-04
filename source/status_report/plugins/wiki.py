@@ -1,5 +1,13 @@
 # coding: utf-8
-""" Comfortably generate reports - Wiki """
+"""
+MoinMoin wiki stats about updated pages
+
+Config example::
+
+    [wiki]
+    type = wiki
+    wiki test = http://moinmo.in/
+"""
 
 import xmlrpclib
 from status_report.base import Stats, StatsGroup

@@ -1,5 +1,14 @@
 # coding: utf-8
-""" Comfortably generate reports - Trac """
+"""
+Trac stats such as created, accepted, updated and closed tickets
+
+Config example::
+
+    [trac]
+    type = trac
+    prefix = TT
+    url = https://some.trac.com/trac/project/rpc
+"""
 
 import re
 import xmlrpclib

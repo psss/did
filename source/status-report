@@ -3,7 +3,7 @@
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   status-report - Generate status report stats
+#   status-report - Gather status report data
 #   Author: Petr Šplíchal <psplicha@redhat.com>
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -27,7 +27,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-Comfortably generate status report stats (e.g. list of committed
+Comfortably gather status report data (e.g. list of committed
 changes) for given week, month, quarter, year or selected date
 range. By default all available stats for this week are reported.
 """

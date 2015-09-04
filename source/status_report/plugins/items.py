@@ -1,5 +1,16 @@
 # coding: utf-8
-""" Comfortably generate reports - Custom Stats """
+"""
+Custom section with multiple items
+
+Config example::
+
+    [projects]
+    type = items
+    header = Work on projects
+    item1 = Project One
+    item2 = Project Two
+    item3 = Project Three
+"""
 
 from status_report.base import Stats, StatsGroup
 from status_report.utils import Config, item

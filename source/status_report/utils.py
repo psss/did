@@ -1,5 +1,6 @@
 # coding: utf-8
-""" Comfortably generate reports - Utils """
+
+""" Logging, config, constants & utilities """
 
 from __future__ import unicode_literals, absolute_import
 
@@ -101,15 +102,15 @@ def pluralize(singular=None, plural=None):
 
 def listed(items, singular=None, plural=None, max=None, quote=""):
     """
-    Convert an iterable into a nice, human readable list or description.
+    Convert an iterable into a nice, human readable list or description::
 
-    listed(range(1)) .................... 0
-    listed(range(2)) .................... 0 and 1
-    listed(range(3), quote='"') ......... "0", "1" and "2"
-    listed(range(4), max=3) ............. 0, 1, 2 and 1 more
-    listed(range(5), 'number', max=3) ... 0, 1, 2 and 2 more numbers
-    listed(range(6), 'category') ........ 6 categories
-    listed(7, "leaf", "leaves") ......... 7 leaves
+        listed(range(1)) .................... 0
+        listed(range(2)) .................... 0 and 1
+        listed(range(3), quote='"') ......... "0", "1" and "2"
+        listed(range(4), max=3) ............. 0, 1, 2 and 1 more
+        listed(range(5), 'number', max=3) ... 0, 1, 2 and 2 more numbers
+        listed(range(6), 'category') ........ 6 categories
+        listed(7, "leaf", "leaves") ......... 7 leaves
 
     If singular form is provided but max not set the description-only
     mode is activated as shown in the last two examples. Also, an int
@@ -245,7 +246,7 @@ class Logging(object):
         Set the default log level
 
         If the level is not specified environment variable DEBUG is used
-        with the following meaning:
+        with the following meaning::
 
             DEBUG=0 ... LOG_WARN (default)
             DEBUG=1 ... LOG_INFO
@@ -452,7 +453,7 @@ def set_color_mode(mode):
 
     If enabled, some objects (like case run Status) are printed in color
     to easily spot failures, errors and so on. By default the feature is
-    enabled when script is attached to a terminal. Possible values are:
+    enabled when script is attached to a terminal. Possible values are::
 
         COLOR=0 ... COLOR_OFF .... coloring disabled
         COLOR=1 ... COLOR_ON ..... coloring enabled

@@ -1,11 +1,23 @@
 """
-Plugins for status-report
-
 Modules in this direcotry are searched for available stats. Each
 plugin should contain a single class inheriting from StatsGroup.
 Stats from this group will be included in the report if enabled in
 user config. Name of the plugin should match config section type.
-Attribute 'order' defines the default order in the final report.
+Attribute ``order`` defines the default order in the final report.
+
+This is the default plugin order::
+
+    header ..... 000
+    nitrate .... 100
+    bugzilla ... 200
+    git ........ 300
+    gerrit ..... 350
+    trac ....... 400
+    rt ......... 500
+    jira ....... 600
+    wiki ....... 700
+    items ...... 800
+    footer ..... 900
 """
 
 from __future__ import unicode_literals, absolute_import

@@ -1,5 +1,6 @@
 # coding: utf-8
-""" Comfortably generate reports - Base """
+
+""" Stats & StatsGroup, the core of the data gathering """
 
 from __future__ import unicode_literals, absolute_import
 

@@ -1,5 +1,15 @@
 # coding: utf-8
-""" Comfortably generate reports - Jira """
+"""
+Jira stats such as created, updated or resolved issues
+
+Config example::
+
+    [jboss]
+    type = jira
+    prefix = JIRA
+    project = ORG
+    url = https://issues.jboss.org/
+"""
 
 import re
 import json

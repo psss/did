@@ -1,5 +1,14 @@
 # coding: utf-8
-""" Comfortably generate reports - Gerrit """
+"""
+Gerrit stats such as submitted, review or merged changes
+
+Config example::
+
+    [gerrit]
+    type = gerrit
+    url = https://example.org/gerrit/#/
+    prefix = GR
+"""
 
 from datetime import datetime
 import json

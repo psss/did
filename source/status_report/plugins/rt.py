@@ -1,5 +1,14 @@
 # coding: utf-8
-""" Comfortably generate reports - Request Tracker """
+"""
+Request Tracker stats such as reported and resolved tickets
+
+Config example::
+
+    [rt]
+    type = rt
+    prefix = RT
+    url = https://tracker.org/rt/Search/Results.tsv
+"""
 
 from __future__ import absolute_import, unicode_literals
 
