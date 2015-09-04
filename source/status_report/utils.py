@@ -312,6 +312,7 @@ class Config(object):
             log.info("Inspecting config file from string")
             log.debug(pretty(config))
             self.parser.readfp(StringIO.StringIO(config))
+            return
         # Check the environment for config file override
         try:
             path = os.environ["STATUS_REPORT_CONFIG"]
