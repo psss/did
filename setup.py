@@ -26,7 +26,8 @@ __desc__ = 'Status Report - Comfortable CLI Activity Status Reporting'
 __scripts__ = ['source/status-report']
 __irequires__ = [
     'python_dateutil==2.4.2',
-    'kerberos==1.2.2',
+    # FIXME Kerberos breaks docs building, need to investigate later
+    #'kerberos==1.2.2',
 ]
 pip_src = 'https://pypi.python.org/packages/source'
 __deplinks__ = []
