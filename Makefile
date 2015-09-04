@@ -73,5 +73,5 @@ run_docker: build_docker
 	@echo "If you want to add it to your .bashrc use this:"
 	@echo "alias status-report=\"docker run --privileged --rm -it -v $(HOME)/.status-report:/status-report.conf $(USERNAME)/status-report\""
 
-build_docker: docker-artifacts/Dockerfile
-	docker build -t $(USERNAME)/status-report --file="docker-artifacts/Dockerfile" .
+build_docker: docker/Dockerfile
+	docker build -t $(USERNAME)/status-report --file="docker/Dockerfile" .
