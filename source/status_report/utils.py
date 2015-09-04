@@ -319,8 +319,12 @@ class Config(object):
         except KeyError:
             path = CONFIG
         # Parse the config from file
-        log.info("Inspecting config file '{0}'".format(path))
-        self.parser.readfp(codecs.open(path, "r", "utf8"))
+        try:
+            log.info("Inspecting config file '{0}'".format(path))
+            self.parser.readfp(codecs.open(path, "r", "utf8"))
+        except IOError as error:
+            log.error(error)
+            raise ConfigError("Unable to read the config file")
 
     @property
     def email(self):
