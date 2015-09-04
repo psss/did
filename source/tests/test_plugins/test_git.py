@@ -12,9 +12,17 @@ class Mock(object):
     pass
 
 
-script_pth = os.path.dirname(os.path.realpath(__file__))
+script_path = os.path.dirname(os.path.realpath(__file__))
 # go all the way to the git repo root (3 levels up)
-git_pth = os.path.realpath('{0}/../../../'.format(script_pth))
+git_path = os.path.realpath('{0}/../../../'.format(script_path))
+
+utils.Config("""
+[general]
+email = "Chris Ward" <cward@redhat.com>
+[test_header]
+type = git
+status-report = {0}
+""".format(git_path))
 
 options = Mock()
 options.since = '2015-04-01'
@@ -30,16 +38,12 @@ parent = Mock()
 parent.options = options
 parent.user = user_cward
 
-with open(os.path.expanduser('~/.status-report'), 'w') as f:
-    f.write('[general]\nemail = "Chris Ward" <cward@redhat.com>\n')
-    f.write('\n[test_header]\ntype = git\nstatus-report = {0}'.format(git_pth))
-
 
 def test_GitRepo():
     from status_report.plugins.git import GitRepo
     assert GitRepo
 
-    repo = GitRepo(path=git_pth)
+    repo = GitRepo(path=git_path)
     commits = repo.commits(user=user_cward, options=options)
     assert len(commits) > 0
 
@@ -59,7 +63,7 @@ def test_GitCommits():
     stats = GitCommits(option='test_header',
                        name='Working on topic',
                        parent=parent,
-                       path=git_pth)
+                       path=git_path)
     stats.user = user_cward
     stats.fetch()
     assert len(stats.stats) > 0

@@ -13,6 +13,7 @@ from pprint import pformat as pretty  # NOQA - pyflakes ignore
 import re
 import sys
 import unicodedata
+import StringIO
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -278,19 +279,24 @@ class Config(object):
 
     parser = None
 
-    def __init__(self):
+    def __init__(self, config=None):
         """ Read the config file. """
         # Read the config only once
         if self.parser is not None:
             return
+        Config.parser = ConfigParser.SafeConfigParser()
+        # If config provided as string, parse it directly
+        if config is not None:
+            log.info("Inspecting config file from string")
+            log.debug(config)
+            self.parser.readfp(StringIO.StringIO(config))
         # Check the environment for config file override
         try:
             path = os.environ["STATUS_REPORT_CONFIG"]
         except KeyError:
             path = CONFIG
-        # Create parser and parse the config
+        # Parse the config from file
         log.info("Inspecting config file '{0}'".format(path))
-        Config.parser = ConfigParser.SafeConfigParser()
         self.parser.read([path])
 
     @property
