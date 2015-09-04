@@ -28,31 +28,25 @@ Gather stats for the last week::
 See status-report --help for complete list of available stats.
 
 
-Installation
+Install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Install directly from Fedora/Copr repository or use PIP::
+Install directly from Fedora/Copr repository::
 
-    # Basic dependencies for buiding/installing pip packages
-    sudo yum install gcc krb5-devel
-    sudo yum install python-devel python-pip python-virtualenv
+    yum install status-report
 
-    # Upgrade to the latest pip/setup/virtualenv installer code
-    sudo pip install -U pip setuptools virtualenv
+or use PIP (sudo required if not in a virtualenv)::
 
-    # Install into a python virtual environment (OPTIONAL)
-    virtualenv --no-site-packages ~/virtenv_statusreport
-    source ~/virtenv_statusreport/bin/activate
-
-    # Install status_report (sudo required if not in a virtualenv)
     pip install status_report
 
 To build and execute in a docker container, run::
 
     make run_docker
 
+See documentation for more details about installation options.
 
-Configuration
+
+Config
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The config file ``~/.status-report`` is used to store both general
@@ -67,11 +61,6 @@ settings and configuration of individual reports::
     highlights = Highlights
     joy = Joy of the week ;-)
 
-    [footer]
-    type = footer
-    next = Plans, thoughts, ideas...
-    status = Status: Green | Yellow | Orange | Red
-
     [tools]
     type = git
     apps = /home/psss/git/apps
@@ -85,34 +74,14 @@ settings and configuration of individual reports::
     prefix = TT
     url = https://some.trac.com/trac/project/rpc
 
+    [footer]
+    type = footer
+    next = Plans, thoughts, ideas...
+    status = Status: Green | Yellow | Orange | Red
+
 See examples to get some more inspiration on how to customize your
 config file. Use environment variable ``STATUS_REPORT_CONFIG`` to
 override the default config file location.
-
-
-Contributing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you're planning to contribute to this project consider copying
-the following hooks into your git config::
-
-    GIT=~/git/status-report # update to your actual path
-    cp $GIT/examples/pre-commit.py $GIT/.git/hooks/pre-commit
-    cp $GIT/examples/commit-msg.py $GIT/.git/hooks/commit-msg
-
-To run tests using pytest::
-
-    coverage run --source=status_report -m py.test source/tests
-    coverage report
-
-Install pytest and coverage using yum::
-
-    yum install pytest python-coverage
-
-or pip::
-
-    # sudo required if not in a virtualenv
-    pip install pytest coveralls
 
 
 Links

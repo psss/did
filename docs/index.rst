@@ -13,9 +13,10 @@ Table of Contents
     :maxdepth: 2
 
     Overview <overview>
+    Install <install>
     Modules <modules>
     Plugins <plugins>
-    Docker <docker>
+    Contribute <contribute>
 
 Indices and Tables
 ==================
