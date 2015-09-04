@@ -35,6 +35,11 @@ type = trac
 prefix = TT
 url = https://some.trac.com/trac/project/rpc
 
+[rt]
+type = rt
+prefix = RT
+url = https://tracker.org/rt/Search/Results.tsv
+
 [nitrate]
 type = nitrate
 
