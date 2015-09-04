@@ -34,6 +34,7 @@ range. By default all available stats for this week are reported.
 
 from __future__ import unicode_literals, absolute_import
 
+import re
 import sys
 import kerberos
 import optparse
@@ -114,9 +115,10 @@ class Options(object):
             for group in self.sample_stats.stats
             for stat in group.stats])
 
-        # Set the default user
+        # Detect email addresses and split them on comma
         if not opt.emails:
             opt.emails = utils.Config().email
+        opt.emails = utils.split(opt.emails, separator=re.compile(r"\s*,\s*"))
 
         # Time period handling
         if opt.since is None and opt.until is None:

@@ -4,17 +4,18 @@
 
 from __future__ import unicode_literals, absolute_import
 
-import ConfigParser
-import datetime
-from dateutil.relativedelta import relativedelta as delta
-from dateutil.relativedelta import MO as MONDAY
-import logging
 import os
-from pprint import pformat as pretty  # NOQA - pyflakes ignore
 import re
 import sys
-import unicodedata
+import codecs
+import logging
+import datetime
 import StringIO
+import unicodedata
+import ConfigParser
+from pprint import pformat as pretty
+from dateutil.relativedelta import MO as MONDAY
+from dateutil.relativedelta import relativedelta as delta
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -147,6 +148,26 @@ def listed(items, singular=None, plural=None, max=None, quote=""):
         return "".join(items)
     else:
         return ", ".join(items[0:-2] + [" and ".join(items[-2:])])
+
+
+def split(values, separator=re.compile("[ ,]+")):
+    """
+    Convert space-or-comma-separated values into a single list
+
+    Common use case for this is merging content of options with multiple
+    values allowed into a single list of strings thus allowing any of
+    the formats below and converts them into ['a', 'b', 'c']::
+
+        --option a --option b --option c ... ['a', 'b', 'c']
+        --option a,b --option c ............ ['a,b', 'c']
+        --option 'a b c' ................... ['a b c']
+
+    Accepts both string and list. By default space and comma are used as
+    value separators. Use any regular expression for custom separator.
+    """
+    if not isinstance(values, list):
+        values = [values]
+    return sum([separator.split(value) for value in values], [])
 
 
 def ascii(text):
@@ -289,7 +310,7 @@ class Config(object):
         # If config provided as string, parse it directly
         if config is not None:
             log.info("Inspecting config file from string")
-            log.debug(config)
+            log.debug(pretty(config))
             self.parser.readfp(StringIO.StringIO(config))
         # Check the environment for config file override
         try:
@@ -298,14 +319,13 @@ class Config(object):
             path = CONFIG
         # Parse the config from file
         log.info("Inspecting config file '{0}'".format(path))
-        self.parser.read([path])
+        self.parser.readfp(codecs.open(path, "r", "utf8"))
 
     @property
     def email(self):
         """ User email(s) """
         try:
-            mails = self.parser.get("general", "email").split(", ")
-            return [mail.decode("utf-8") for mail in mails]
+            return self.parser.get("general", "email")
         except ConfigParser.NoOptionError:
             return []
 
