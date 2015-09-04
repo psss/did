@@ -49,3 +49,9 @@ header = Work on projects
 item1 = Project One
 item2 = Project Two
 item3 = Project Three
+
+[jboss]
+type = jira
+prefix = JIRA
+project = ORG
+url = https://issues.jboss.org/
