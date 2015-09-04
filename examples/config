@@ -1,5 +1,5 @@
 [general]
-user = psss
+email = Petr Splichal <psplicha@redhat.com>
 width = 79
 
 [header]
@@ -7,18 +7,8 @@ type = header
 highlights = Highlights
 joy = Joy of the week ;-)
 
-[footer]
-type = footer
-next = Plans, thoughts, ideas...
-status = Status: Green | Yellow | Orange | Red
-
-[tools]
-type = git
-apps = /home/psss/git/apps
-
-[tests]
-type = git
-tests = /home/psss/git/tests/*
+[nitrate]
+type = nitrate
 
 [bz]
 type = bugzilla
@@ -30,6 +20,19 @@ type = bugzilla
 prefix = MZ
 url = https://bugzilla.mozilla.org/xmlrpc.cgi
 
+[tools]
+type = git
+apps = /home/psss/git/apps
+
+[tests]
+type = git
+tests = /home/psss/git/tests/*
+
+[gerrit]
+type = gerrit
+url = https://example.org/gerrit/#/
+prefix = GR
+
 [trac]
 type = trac
 prefix = TT
@@ -40,8 +43,15 @@ type = rt
 prefix = RT
 url = https://tracker.org/rt/Search/Results.tsv
 
-[nitrate]
-type = nitrate
+[jboss]
+type = jira
+prefix = JIRA
+project = ORG
+url = https://issues.jboss.org/
+
+[wiki]
+type = wiki
+wiki test = http://moinmo.in/
 
 [projects]
 type = items
@@ -50,8 +60,7 @@ item1 = Project One
 item2 = Project Two
 item3 = Project Three
 
-[jboss]
-type = jira
-prefix = JIRA
-project = ORG
-url = https://issues.jboss.org/
+[footer]
+type = footer
+next = Plans, thoughts, ideas...
+status = Status: Green | Yellow | Orange | Red
