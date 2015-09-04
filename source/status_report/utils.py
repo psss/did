@@ -276,10 +276,22 @@ class Logging(object):
 class Config(object):
     """ User config file """
 
+    parser = None
+
     def __init__(self):
         """ Read the config file. """
-        self.parser = ConfigParser.SafeConfigParser()
-        self.parser.read([CONFIG])
+        # Read the config only once
+        if self.parser is not None:
+            return
+        # Check the environment for config file override
+        try:
+            path = os.environ["STATUS_REPORT_CONFIG"]
+        except KeyError:
+            path = CONFIG
+        # Create parser and parse the config
+        log.info("Inspecting config file '{0}'".format(path))
+        Config.parser = ConfigParser.SafeConfigParser()
+        self.parser.read([path])
 
     @property
     def email(self):

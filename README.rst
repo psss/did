@@ -83,7 +83,9 @@ settings and configuration of individual reports::
     prefix = TT
     url = https://some.trac.com/trac/project/rpc
 
-See also examples link for some more inspiration.
+See examples to get some more inspiration on how to customize your
+config file. Use environment variable ``STATUS_REPORT_CONFIG`` to
+override the default config file location.
 
 
 Git Commit Hooks
