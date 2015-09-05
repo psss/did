@@ -25,7 +25,7 @@ Gather stats for the last week::
 
     did last week
 
-See did --help for complete list of available stats.
+See ``did --help`` for complete list of available stats.
 
 
 Install
