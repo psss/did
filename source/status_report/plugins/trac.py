@@ -13,7 +13,6 @@ Config example::
 import re
 import xmlrpclib
 
-import status_report.utils as utils
 from status_report.base import Stats, StatsGroup
 from status_report.utils import Config, ReportError, log, pretty
 

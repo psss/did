@@ -20,7 +20,7 @@ import dateutil.parser
 import cookielib
 
 from status_report.base import Stats, StatsGroup
-from status_report.utils import Config, ReportError, log, pretty, listed
+from status_report.utils import Config, log, pretty, listed
 
 # Default identifier width
 DEFAULT_WIDTH = 4
