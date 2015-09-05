@@ -22,7 +22,7 @@ __pkgs__ = [
     'did.plugins',
 ]
 __provides__ = ['did']
-__desc__ = 'Status Report - Comfortable CLI Activity Status Reporting'
+__desc__ = 'did - What did you do last week, month, year?'
 __scripts__ = ['source/did.py']
 __irequires__ = [
     'python_dateutil==2.4.2',

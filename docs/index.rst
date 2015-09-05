@@ -1,6 +1,6 @@
 
 =====================
-    Status Report
+    did
 =====================
 
 .. automodule:: did

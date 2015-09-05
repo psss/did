@@ -2,7 +2,7 @@ Name: did
 Version: 0.3
 Release: 1%{?dist}
 
-Summary: Generate status report stats for selected date range
+Summary: What did you do last week, month, year?
 License: GPLv2+
 
 URL: http://psss.fedorapeople.org/did/
@@ -13,7 +13,7 @@ BuildRequires: python-devel
 Requires: python-kerberos python-nitrate python-dateutil python-urllib2_kerberos
 
 %description
-Comfortably generate status report stats (e.g. list of committed
+Comfortably gather status report data (e.g. list of committed
 changes) for given week, month, quarter, year or selected date
 range. By default all available stats for this week are reported.
 
