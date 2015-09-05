@@ -1,11 +1,11 @@
 Name: did
-Version: 0.3
+Version: 0.4
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
 License: GPLv2+
 
-URL: http://psss.fedorapeople.org/did/
+URL: https://github.com/psss/did
 Source0: http://psss.fedorapeople.org/did/download/%{name}-%{version}.tar.bz2
 
 BuildArch: noarch
@@ -42,6 +42,20 @@ install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Sun Sep 06 2015 Petr Šplíchal <psplicha@redhat.com> 0.4-1
+- What did you do last week, month, year? (did rename)
+- Plugins: bugzilla, rt, gerrit, jira, wiki, nitrate
+- Separate the install/contribute documentation
+- Correctly handle config as utf8, email splitting
+- The Big Documentation Cleanup, hooks to examples
+- Allow parsing config file directly from string
+- Allow config location override, read config once
+- Move docs to sphinx, githooks, rpm build fix
+- An initial cut at creating a docker container
+- Refactor plugin/stats architecture
+- Use Travis CI, add initial tests
+- Move README, add code coverage and badges
+
 * Thu Apr 23 2015 Petr Šplíchal <psplicha@redhat.com> 0.3-1
 - Update README with PIP and test information
 - Enable travis-ci and some tests
