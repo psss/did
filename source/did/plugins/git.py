@@ -18,8 +18,8 @@ Note that using ``*`` you can enable multiple git repositories.
 import os
 import re
 import subprocess
-from status_report.base import Stats, StatsGroup
-from status_report.utils import Config, item, log, pretty, ReportError
+from did.base import Stats, StatsGroup
+from did.utils import Config, item, log, pretty, ReportError
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Git Repository

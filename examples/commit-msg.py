@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   status-report - Generate status report stats
+#   did - Generate status report stats
 #   Author: Petr Šplíchal <psplicha@redhat.com>
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -36,7 +36,7 @@ process, so you can use it to validate your project state or commit
 message before allowing a commit to go through.
 """
 
-from status_report.utils import log, LOG_DEBUG
+from did.utils import log, LOG_DEBUG
 
 # Turn on DEBUG so we can get a full log on each commit
 log.setLevel(LOG_DEBUG)

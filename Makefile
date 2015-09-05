@@ -1,20 +1,20 @@
 
 TMP = $(CURDIR)/tmp
-VERSION = $(shell grep ^Version status-report.spec | sed 's/.* //')
+VERSION = $(shell grep ^Version did.spec | sed 's/.* //')
 
 # Push files to the production web only when in the master branch
 ifeq "$(shell git rev-parse --abbrev-ref HEAD)" "master"
-PUSH_URL = fedorapeople.org:public_html/status-report
+PUSH_URL = fedorapeople.org:public_html/did
 else
-PUSH_URL = fedorapeople.org:public_html/status-report/testing
+PUSH_URL = fedorapeople.org:public_html/did/testing
 endif
 
-PACKAGE = status-report-$(VERSION)
+PACKAGE = did-$(VERSION)
 DOCS = $(TMP)/$(PACKAGE)/docs
 EXAMPLES = $(TMP)/$(PACKAGE)/examples
 CSS = --stylesheet=style.css --link-stylesheet
 FILES = LICENSE README.rst \
-		Makefile status-report.spec \
+		Makefile did.spec \
 		docs examples source
 
 ifndef USERNAME
@@ -29,17 +29,17 @@ build:
 	# Construct man page from header and README
 	cp docs/header.txt $(TMP)/man.rst
 	tail -n+7 README.rst | sed '/^Status/,$$d' >> $(TMP)/man.rst
-	rst2man $(TMP)/man.rst | gzip > $(DOCS)/status-report.1.gz
+	rst2man $(TMP)/man.rst | gzip > $(DOCS)/did.1.gz
 	rst2html README.rst $(CSS) > $(DOCS)/index.html
 
 tarball: build
 	cd $(TMP) && tar cfj SOURCES/$(PACKAGE).tar.bz2 $(PACKAGE)
 
 rpm: tarball
-	rpmbuild --define '_topdir $(TMP)' -bb status-report.spec
+	rpmbuild --define '_topdir $(TMP)' -bb did.spec
 
 srpm: tarball
-	rpmbuild --define '_topdir $(TMP)' -bs status-report.spec
+	rpmbuild --define '_topdir $(TMP)' -bs did.spec
 
 packages: rpm srpm
 
@@ -48,7 +48,7 @@ push: packages
 	scp $(DOCS)/*.{css,html} $(PUSH_URL)
 	scp $(EXAMPLES)/* $(PUSH_URL)/examples
 	# Archives & rpms
-	scp status-report.spec \
+	scp did.spec \
 		$(TMP)/SRPMS/$(PACKAGE)* \
 		$(TMP)/RPMS/noarch/$(PACKAGE)* \
 		$(TMP)/SOURCES/$(PACKAGE).tar.bz2 \
@@ -66,9 +66,9 @@ run_docker: build_docker
 	@echo "* output directory may not be quite right"
 	@echo
 	@echo "This does not actually run the docker image as it makes more sense to run it directly. Use:"
-	@echo "docker run --privileged --rm -it -v $(HOME)/.status-report:/status-report.conf $(USERNAME)/status-report"
+	@echo "docker run --privileged --rm -it -v $(HOME)/.did:/did.conf $(USERNAME)/did"
 	@echo "If you want to add it to your .bashrc use this:"
-	@echo "alias status-report=\"docker run --privileged --rm -it -v $(HOME)/.status-report:/status-report.conf $(USERNAME)/status-report\""
+	@echo "alias did=\"docker run --privileged --rm -it -v $(HOME)/.did:/did.conf $(USERNAME)/did\""
 
 build_docker: docker/Dockerfile
-	docker build -t $(USERNAME)/status-report --file="docker/Dockerfile" .
+	docker build -t $(USERNAME)/did --file="docker/Dockerfile" .

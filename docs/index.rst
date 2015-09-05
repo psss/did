@@ -3,7 +3,7 @@
     Status Report
 =====================
 
-.. automodule:: status_report
+.. automodule:: did
     :members:
 
 Table of Contents

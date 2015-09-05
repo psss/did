@@ -6,10 +6,10 @@ from __future__ import unicode_literals, absolute_import
 
 
 def test_load():
-    from status_report.plugins import load
+    from did.plugins import load
     assert load
 
 
 def test_detect():
-    from status_report.plugins import detect
+    from did.plugins import detect
     assert detect

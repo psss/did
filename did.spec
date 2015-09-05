@@ -1,12 +1,12 @@
-Name: status-report
+Name: did
 Version: 0.3
 Release: 1%{?dist}
 
 Summary: Generate status report stats for selected date range
 License: GPLv2+
 
-URL: http://psss.fedorapeople.org/status-report/
-Source0: http://psss.fedorapeople.org/status-report/download/%{name}-%{version}.tar.bz2
+URL: http://psss.fedorapeople.org/did/
+Source0: http://psss.fedorapeople.org/did/download/%{name}-%{version}.tar.bz2
 
 BuildArch: noarch
 BuildRequires: python-devel
@@ -25,17 +25,17 @@ range. By default all available stats for this week are reported.
 %install
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_mandir}/man1
-mkdir -p %{buildroot}%{python_sitelib}/status_report
-mkdir -p %{buildroot}%{python_sitelib}/status_report/plugins
-install -pm 755 source/status-report %{buildroot}%{_bindir}
-install -pm 644 source/status_report/*.py %{buildroot}%{python_sitelib}/status_report
-install -pm 644 source/status_report/plugins/*.py %{buildroot}%{python_sitelib}/status_report/plugins
+mkdir -p %{buildroot}%{python_sitelib}/did
+mkdir -p %{buildroot}%{python_sitelib}/did/plugins
+install -pm 755 source/did.py %{buildroot}%{_bindir}/did
+install -pm 644 source/did/*.py %{buildroot}%{python_sitelib}/did
+install -pm 644 source/did/plugins/*.py %{buildroot}%{python_sitelib}/did/plugins
 install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
 
 
 %files
 %{_mandir}/man1/*
-%{_bindir}/status-report
+%{_bindir}/did
 %{python_sitelib}/*
 %doc README.rst examples
 %{!?_licensedir:%global license %%doc}

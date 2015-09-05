@@ -14,8 +14,8 @@ from datetime import datetime
 import json
 import urllib
 import urlparse
-from status_report.base import Stats, StatsGroup
-from status_report.utils import Config, ReportError, log, pretty, TODAY
+from did.base import Stats, StatsGroup
+from did.utils import Config, ReportError, log, pretty, TODAY
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Change

@@ -10,7 +10,7 @@ Config example::
     joy = Joy of the week ;-)
 """
 
-from status_report.base import EmptyStatsGroup
+from did.base import EmptyStatsGroup
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Header

@@ -7,8 +7,8 @@ from __future__ import unicode_literals, absolute_import
 import optparse
 import xmlrpclib
 
-from status_report import utils
-from status_report import plugins
+from did import utils
+from did import plugins
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

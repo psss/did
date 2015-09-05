@@ -1,9 +1,9 @@
 
 ======================
-    status-report
+    did
 ======================
 
-Gather status report data for given date range.
+What did you do last week, month, year?
 
 
 Description
@@ -19,13 +19,13 @@ Examples
 
 Gather all stats for current week::
 
-    status-report
+    did
 
 Gather stats for the last week::
 
-    status-report last week
+    did last week
 
-See status-report --help for complete list of available stats.
+See did --help for complete list of available stats.
 
 
 Install
@@ -33,11 +33,11 @@ Install
 
 Install directly from Fedora/Copr repository::
 
-    yum install status-report
+    yum install did
 
 or use PIP (sudo required if not in a virtualenv)::
 
-    pip install status_report
+    pip install did
 
 To build and execute in a docker container, run::
 
@@ -49,7 +49,7 @@ See documentation for more details about installation options.
 Config
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The config file ``~/.status-report`` is used to store both general
+The config file ``~/.did`` is used to store both general
 settings and configuration of individual reports::
 
     [general]
@@ -88,22 +88,22 @@ Links
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Git:
-https://github.com/psss/status-report
+https://github.com/psss/did
 
 Docs:
-http://status-report.readthedocs.org
+http://did.readthedocs.org
 
 Issues:
-https://github.com/psss/status-report/issues
+https://github.com/psss/did/issues
 
 Releases:
-https://github.com/psss/status-report/releases
+https://github.com/psss/did/releases
 
 Copr:
-http://copr.fedoraproject.org/coprs/psss/status-report
+http://copr.fedoraproject.org/coprs/psss/did
 
 PIP:
-https://pypi.python.org/pypi/status_report
+https://pypi.python.org/pypi/did
 
 
 Authors
@@ -127,20 +127,20 @@ the License, or (at your option) any later version.
 Status
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: https://badge.fury.io/py/status-report.svg
-    :target: http://badge.fury.io/py/status-report
+.. image:: https://badge.fury.io/py/did.svg
+    :target: http://badge.fury.io/py/did
 
-.. image:: https://travis-ci.org/psss/status-report.svg?branch=master
-    :target: https://travis-ci.org/psss/status-report
+.. image:: https://travis-ci.org/psss/did.svg?branch=master
+    :target: https://travis-ci.org/psss/did
 
-.. image:: https://coveralls.io/repos/psss/status-report/badge.svg
-    :target: https://coveralls.io/r/psss/status-report
+.. image:: https://coveralls.io/repos/psss/did/badge.svg
+    :target: https://coveralls.io/r/psss/did
 
-.. image:: https://img.shields.io/pypi/dm/status-report.svg
-    :target: https://pypi.python.org/pypi/status_report/
+.. image:: https://img.shields.io/pypi/dm/did.svg
+    :target: https://pypi.python.org/pypi/did/
 
-.. image:: https://img.shields.io/pypi/l/status-report.svg
-    :target: https://pypi.python.org/pypi/status_report/
+.. image:: https://img.shields.io/pypi/l/did.svg
+    :target: https://pypi.python.org/pypi/did/
 
-.. image:: https://readthedocs.org/projects/status-report/badge/
-    :target: https://readthedocs.org/projects/status-report/
+.. image:: https://readthedocs.org/projects/did/badge/
+    :target: https://readthedocs.org/projects/did/

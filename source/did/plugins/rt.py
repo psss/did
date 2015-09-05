@@ -17,8 +17,8 @@ import urllib
 import urlparse
 import kerberos
 
-from status_report.base import Stats, StatsGroup
-from status_report.utils import log, pretty, ReportError, Config
+from did.base import Stats, StatsGroup
+from did.utils import log, pretty, ReportError, Config
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  RequestTracker

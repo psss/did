@@ -7,7 +7,7 @@ from setuptools import setup
 
 # Parse the version and release from master spec file
 # RPM spec file is in the parent directory
-spec_pth = 'status-report.spec'
+spec_pth = 'did.spec'
 with open(spec_pth) as f:
     lines = "\n".join(l.rstrip() for l in f)
     version = re.search('Version: (.+)', lines).group(1).rstrip()
@@ -15,15 +15,15 @@ with open(spec_pth) as f:
 
 # acceptable version schema: major.minor[.patch][sub]
 __version__ = '.'.join([version, release])
-__pkg__ = 'status_report'
-__pkgdir__ = {'status_report': 'source/status_report'}
+__pkg__ = 'did'
+__pkgdir__ = {'did': 'source/did'}
 __pkgs__ = [
-    'status_report',
-    'status_report.plugins',
+    'did',
+    'did.plugins',
 ]
-__provides__ = ['status_report']
+__provides__ = ['did']
 __desc__ = 'Status Report - Comfortable CLI Activity Status Reporting'
-__scripts__ = ['source/status-report']
+__scripts__ = ['source/did.py']
 __irequires__ = [
     'python_dateutil==2.4.2',
     'urllib2_kerberos',
@@ -38,7 +38,7 @@ readme_pth = 'README.rst'
 with open(readme_pth) as _file:
     readme = _file.read()
 
-github = 'https://github.com/psss/status-report'
+github = 'https://github.com/psss/did'
 download_url = '%s/archive/master.zip' % github
 
 default_setup = dict(

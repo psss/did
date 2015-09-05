@@ -5,7 +5,7 @@
 from __future__ import unicode_literals, absolute_import
 
 import os
-from status_report import utils
+from did import utils
 
 
 class Mock(object):
@@ -21,7 +21,7 @@ utils.Config("""
 email = "Chris Ward" <cward@redhat.com>
 [test_header]
 type = git
-status-report = {0}
+did = {0}
 """.format(git_path))
 
 options = Mock()
@@ -40,7 +40,7 @@ parent.user = user_cward
 
 
 def test_GitRepo():
-    from status_report.plugins.git import GitRepo
+    from did.plugins.git import GitRepo
     assert GitRepo
 
     repo = GitRepo(path=git_path)
@@ -57,7 +57,7 @@ def test_GitRepo():
 
 
 def test_GitCommits():
-    from status_report.plugins.git import GitCommits
+    from did.plugins.git import GitCommits
     assert GitCommits
 
     stats = GitCommits(option='test_header',
@@ -74,7 +74,7 @@ def test_GitCommits():
 
 
 def test_GitStats():
-    from status_report.plugins.git import GitStats
+    from did.plugins.git import GitStats
     assert GitStats
 
     stats = GitStats(option='test_header',

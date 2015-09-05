@@ -3,7 +3,7 @@
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   status-report - Gather status report data
+#   did - Gather status report data
 #   Author: Petr Šplíchal <psplicha@redhat.com>
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,8 +41,8 @@ import optparse
 import ConfigParser
 from dateutil.relativedelta import relativedelta as delta
 
-import status_report.utils as utils
-from status_report.base import UserStats
+import did.utils as utils
+from did.base import UserStats
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,7 +55,7 @@ class Options(object):
     def __init__(self):
         """ Prepare the parser. """
         self.parser = optparse.OptionParser(
-            usage="status-report [last] [week|month|quarter|year] [opts]",
+            usage="did [last] [week|month|quarter|year] [opts]",
             description=__doc__.strip())
 
         # Time & user selection

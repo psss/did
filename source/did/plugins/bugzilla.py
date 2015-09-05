@@ -32,8 +32,8 @@ from __future__ import absolute_import, unicode_literals
 import bugzilla
 import xmlrpclib
 
-from status_report.base import Stats, StatsGroup
-from status_report.utils import Config, log, pretty, ReportError
+from did.base import Stats, StatsGroup
+from did.utils import Config, log, pretty, ReportError
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Bugzilla

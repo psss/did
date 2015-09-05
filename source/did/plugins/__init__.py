@@ -26,7 +26,7 @@ import os
 import sys
 import types
 
-from status_report.utils import Config, ConfigError, log
+from did.utils import Config, ConfigError, log
 
 # Self reference and file path to this module
 PLUGINS = sys.modules[__name__]
@@ -67,7 +67,7 @@ def detect():
     as well as the option used to enable those particular stats.
     """
     # Detect classes inherited from StatsGroup and return them sorted
-    from status_report.base import StatsGroup, EmptyStatsGroup
+    from did.base import StatsGroup, EmptyStatsGroup
     stats = []
     for plugin in load():
         module = getattr(PLUGINS, plugin)

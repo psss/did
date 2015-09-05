@@ -9,13 +9,13 @@ Except for plugins there are two basic modules, `base`_ and
 base
 ----
 
-.. automodule:: status_report.base
+.. automodule:: did.base
     :members:
     :undoc-members:
 
 utils
 -----
 
-.. automodule:: status_report.utils
+.. automodule:: did.utils
     :members:
     :undoc-members:

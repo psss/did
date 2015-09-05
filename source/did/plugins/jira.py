@@ -19,8 +19,8 @@ import urllib2_kerberos
 import dateutil.parser
 import cookielib
 
-from status_report.base import Stats, StatsGroup
-from status_report.utils import Config, log, pretty, listed
+from did.base import Stats, StatsGroup
+from did.utils import Config, log, pretty, listed
 
 # Default identifier width
 DEFAULT_WIDTH = 4

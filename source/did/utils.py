@@ -22,7 +22,7 @@ from dateutil.relativedelta import relativedelta as delta
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Config file location
-CONFIG = os.path.expanduser("~/.status-report")
+CONFIG = os.path.expanduser("~/.did")
 
 # Default maximum width
 MAX_WIDTH = 79
@@ -214,7 +214,7 @@ class Logging(object):
     # Default log level is WARN
     _level = LOG_WARN
 
-    def __init__(self, name='status-report'):
+    def __init__(self, name='did'):
         self.logger = self._create_logger()
         self.set()
 
@@ -243,8 +243,8 @@ class Logging(object):
             return u"{0} {1}".format(level, record.getMessage())
 
     @staticmethod
-    def _create_logger(name='status-report', level=None):
-        """ Create status-report logger """
+    def _create_logger(name='did', level=None):
+        """ Create did logger """
         # Create logger, handler and formatter
         logger = logging.getLogger(name)
         handler = logging.StreamHandler()
@@ -615,7 +615,7 @@ class User(object):
 #  DEFAULT LOGGER
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# log = logging.getLogger('status-report')
+# log = logging.getLogger('did')
 # Create the output logger
-logging = Logging('status-report')
+logging = Logging('did')
 log = logging.logger

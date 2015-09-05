@@ -10,8 +10,8 @@ Config example::
 """
 
 import xmlrpclib
-from status_report.base import Stats, StatsGroup
-from status_report.utils import Config, item
+from did.base import Stats, StatsGroup
+from did.utils import Config, item
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Wiki Stats

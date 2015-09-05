@@ -3,83 +3,83 @@
     Plugins
 ===============
 
-.. automodule:: status_report.plugins
+.. automodule:: did.plugins
     :members:
     :undoc-members:
 
 bugzilla
 --------
 
-.. automodule:: status_report.plugins.bugzilla
+.. automodule:: did.plugins.bugzilla
     :members:
     :undoc-members:
 
 footer
 ------
 
-.. automodule:: status_report.plugins.footer
+.. automodule:: did.plugins.footer
     :members:
     :undoc-members:
 
 gerrit
 ------
 
-.. automodule:: status_report.plugins.gerrit
+.. automodule:: did.plugins.gerrit
     :members:
     :undoc-members:
 
 git
 ---
 
-.. automodule:: status_report.plugins.git
+.. automodule:: did.plugins.git
     :members:
     :undoc-members:
 
 header
 ------
 
-.. automodule:: status_report.plugins.header
+.. automodule:: did.plugins.header
     :members:
     :undoc-members:
 
 items
 -----
 
-.. automodule:: status_report.plugins.items
+.. automodule:: did.plugins.items
     :members:
     :undoc-members:
 
 jira
 ----
 
-.. automodule:: status_report.plugins.jira
+.. automodule:: did.plugins.jira
     :members:
     :undoc-members:
 
 nitrate
 -------
 
-.. automodule:: status_report.plugins.nitrate
+.. automodule:: did.plugins.nitrate
     :members:
     :undoc-members:
 
 rt
 --
 
-.. automodule:: status_report.plugins.rt
+.. automodule:: did.plugins.rt
     :members:
     :undoc-members:
 
 trac
 ----
 
-.. automodule:: status_report.plugins.trac
+.. automodule:: did.plugins.trac
     :members:
     :undoc-members:
 
 wiki
 ----
 
-.. automodule:: status_report.plugins.wiki
+.. automodule:: did.plugins.wiki
     :members:
     :undoc-members:

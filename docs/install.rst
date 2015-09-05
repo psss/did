@@ -8,15 +8,15 @@ Copr
 
 Download Copr repository from the project page:
 
-* https://copr.fedoraproject.org/coprs/psss/status-report/
+* https://copr.fedoraproject.org/coprs/psss/did/
 
 Install using yum::
 
-    yum install status-report
+    yum install did
 
 or dnf::
 
-    dnf install status-report
+    dnf install did
 
 This will bring dependencies for all core plugins as well.
 
@@ -38,9 +38,9 @@ Install into a python virtual environment (OPTIONAL)::
     virtualenv --no-site-packages ~/virtenv_statusreport
     source ~/virtenv_statusreport/bin/activate
 
-Install status_report (sudo required if not in a virtualenv)::
+Install did (sudo required if not in a virtualenv)::
 
-    pip install status_report
+    pip install did
 
 
 Docker
@@ -56,11 +56,11 @@ result; known issues:
 This does not actually run the docker image as it makes more sense
 to run it directly. Use::
 
-    docker run --privileged --rm -it -v $(HOME)/.status-report:/status-report.conf $(USERNAME)/status-report
+    docker run --privileged --rm -it -v $(HOME)/.did:/did.conf $(USERNAME)/did
 
 If you want to add it to your .bashrc use this::
 
-    alias status-report="docker run --privileged --rm -it -v $(HOME)/.status-report:/status-report.conf $(USERNAME)/status-report"
+    alias did="docker run --privileged --rm -it -v $(HOME)/.did:/did.conf $(USERNAME)/did"
 
 A couple of useful resources to get started with docker:
 
