@@ -15,6 +15,13 @@
 import os
 import sys
 
+try:
+    import sphinx_bootstrap_theme
+    HTML_THEME = 'bootstrap'
+    html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+except ImportError:
+    HTML_THEME = 'default'
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -110,7 +117,7 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+html_theme = HTML_THEME
 
 # 1.3.1 sphinx READTHEDOCS build compat
 # SEE:

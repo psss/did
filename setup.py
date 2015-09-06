@@ -30,6 +30,16 @@ __irequires__ = [
     'python-bugzilla',
     'pykerberos',
 ]
+__xrequires__ = {
+    'tests': [
+        'pytest==2.7.2',
+    ],
+    'docs': [
+        'sphinx==1.3.1',
+        'sphinx_bootstrap_theme',
+    ],
+}
+
 pip_src = 'https://pypi.python.org/packages/source'
 __deplinks__ = []
 
@@ -62,6 +72,7 @@ default_setup = dict(
     dependency_links=__deplinks__,
     description=__desc__,
     install_requires=__irequires__,
+    extras_require=__xrequires__,
     name=__pkg__,
     package_dir=__pkgdir__,
     packages=__pkgs__,
