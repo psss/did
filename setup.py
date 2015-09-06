@@ -16,14 +16,14 @@ with open(spec_pth) as f:
 # acceptable version schema: major.minor[.patch][sub]
 __version__ = '.'.join([version, release])
 __pkg__ = 'did'
-__pkgdir__ = {'did': 'source/did'}
+__pkgdir__ = {}
 __pkgs__ = [
     'did',
     'did.plugins',
 ]
 __provides__ = ['did']
 __desc__ = 'did - What did you do last week, month, year?'
-__scripts__ = ['source/did.py']
+__scripts__ = ['bin/did']
 __irequires__ = [
     'python_dateutil==2.4.2',
     'urllib2_kerberos',

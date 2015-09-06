@@ -13,8 +13,8 @@ class Mock(object):
 
 
 script_path = os.path.dirname(os.path.realpath(__file__))
-# go all the way to the git repo root (3 levels up)
-git_path = os.path.realpath('{0}/../../../'.format(script_path))
+# go all the way to the git repo root (2 levels up)
+git_path = os.path.realpath('{0}/../../'.format(script_path))
 
 utils.Config("""
 [general]
