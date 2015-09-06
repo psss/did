@@ -240,7 +240,8 @@ class Logging(object):
                 level = color(" " + levelname + " ", "lightwhite", colour)
             else:
                 level = "[{0}]".format(levelname)
-            return u"{0} {1}".format(level, record.getMessage())
+            message = record.getMessage().decode('utf8', errors='ignore')
+            return u"{0} {1}".format(level, message)
 
     @staticmethod
     def _create_logger(name='did', level=None):

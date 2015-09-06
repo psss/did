@@ -15,7 +15,7 @@ EXAMPLES = $(TMP)/$(PACKAGE)/examples
 CSS = --stylesheet=style.css --link-stylesheet
 FILES = LICENSE README.rst \
 		Makefile did.spec \
-		docs examples source
+		docs examples did
 
 ifndef USERNAME
     USERNAME = echo $$USER
@@ -56,7 +56,7 @@ push: packages
 
 clean:
 	rm -rf $(TMP)
-	find source -name '*.pyc' -exec rm {} \;
+	find did -name '*.pyc' -exec rm {} \;
 
 run_docker: build_docker
 	@echo
