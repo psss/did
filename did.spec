@@ -1,5 +1,5 @@
 Name: did
-Version: 0.4
+Version: 0.4.1
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -42,7 +42,15 @@ install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
-* Sun Sep 06 2015 Petr Šplíchal <psplicha@redhat.com> 0.4-1
+* Sun Sep 07 2015 Chris Ward <cward@redhat.com> 0.4.1-1
+- Invoke tasks.py: build, test, clean_git, ...
+- MrBob Project Templates: plugin, py_file
+- pep8 fixes
+- log fixes: pass name to Logging on intiation
+- enable package dependency extra's installation
+- change default sphinx template: readthedocs
+- flatten package directory (eg, /sources/did->/did)
+* Sat Sep 06 2015 Petr Šplíchal <psplicha@redhat.com> 0.4-1
 - What did you do last week, month, year? (did rename)
 - Plugins: bugzilla, rt, gerrit, jira, wiki, nitrate
 - Separate the install/contribute documentation
