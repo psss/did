@@ -16,11 +16,19 @@ import os
 import sys
 
 try:
+    # use bootstrap theme if user has it installed
     import sphinx_bootstrap_theme
     HTML_THEME = 'bootstrap'
-    html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+    html_theme_path = [sphinx_bootstrap_theme.get_html_theme_path()]
 except ImportError:
-    HTML_THEME = 'default'
+    try:
+        # fall back to sphinx_rtd_theme if available
+        import sphinx_rtd_theme
+        HTML_THEME = 'sphinx_rtd_theme'
+        html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+    except ImportError:
+        # and fall back to 'default' if neither of those are available
+        HTML_THEME = 'default'
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
