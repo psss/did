@@ -73,5 +73,5 @@ run_docker: build_docker
 	@echo "If you want to add it to your .bashrc use this:"
 	@echo "alias did=\"docker run --privileged --rm -it -v $(HOME)/.did:/did.conf $(USERNAME)/did\""
 
-build_docker: docker/Dockerfile
-	docker build -t $(USERNAME)/did --file="docker/Dockerfile" .
+build_docker: examples/dockerfile
+	docker build -t $(USERNAME)/did --file="examples/dockerfile" .
