@@ -28,6 +28,8 @@ This is the default plugin order:
     +----------+-----+
     | wiki     | 700 |
     +----------+-----+
+    | bitly    | 701 |
+    +----------+-----+
     | items    | 800 |
     +----------+-----+
     | footer   | 900 |
@@ -50,6 +52,7 @@ PLUGINS = sys.modules[__name__]
 PLUGINS_PATH = os.path.dirname(PLUGINS.__file__)
 
 FAILED_PLUGINS = []
+
 
 def load():
     """ Check available plugins and attempt to import them """

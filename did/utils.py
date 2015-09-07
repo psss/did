@@ -4,6 +4,7 @@
 
 from __future__ import unicode_literals, absolute_import
 
+from dateutil.parser import parse as dt_parse
 import os
 import re
 import sys
