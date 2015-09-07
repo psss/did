@@ -34,6 +34,7 @@ PLUGINS_PATH = os.path.dirname(PLUGINS.__file__)
 
 FAILED_PLUGINS = []
 
+
 def load():
     """ Check available plugins and attempt to import them """
     # Code is based on beaker-client's command.py script
