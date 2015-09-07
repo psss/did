@@ -615,10 +615,9 @@ class User(object):
         return u"{0} <{1}>".format(self.name, self.email)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  DEFAULT LOGGER
+#  Default Logger
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# log = logging.getLogger('did')
 # Create the output logger
 _logging = Logging('did')
 log = _logging.logger
