@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 # Author: "Chris Ward" <cward@redhat.com>
 
 from __future__ import absolute_import, unicode_literals
@@ -116,20 +116,33 @@ def clean_git(force=False, options='Xd'):
     run(cmd)
 
 
-@task
-def bob_py_file(name, template=None, overwrite=False):
+_bob_py_file_help = {
+    'name': "Name of the python file",
+    'answers': "path to mrbob.ini with [variables] defined",
+    # FIXME: Add remaining bob_py_file_help strings
+}
+
+
+@task(help=_bob_py_file_help)
+def bob_py_file(path='./', answers='~/.mrbob.ini',
+                template='bobtemplates/default.py', overwrite=False):
     '''
     MrBob: New .py File
     -------------------
 
+    MrBob asks for filename rather than pass it here to the task
+    to make it more easily accessible from the template
+
     '''
-    log.info("Bob is building a .py file")
+    log.info("MrBob is building a .py file")
 
-    template = template or 'bobstemplates/default.py'
-    name = name.strip()
-    if not name.startswith('/'):
-        name = './' + name
-    if not overwrite and os.path.exists(name):
-        raise RuntimeError('{} exists!'.format(name))
+    path = path or './'
+    template = template or 'bobtemplates/py_file'
+    answers = answers or os.path.expanduser('~/.mrbob.ini')
 
-    print name
+    cmd = 'mrbob bobtemplates/py_file -O {}'.format(path)
+    if answers:
+        cmd += ' -c {}'.format(answers)
+
+    log.info(" ... Defaults: {}".format(answers))
+    run(cmd, pty=True)
