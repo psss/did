@@ -27,9 +27,23 @@ __scripts__ = ['bin/did']
 __irequires__ = [
     'python_dateutil==2.4.2',
     'urllib2_kerberos',
-    'python-bugzilla',
+    'python-bugzilla',  # FIXME: make optional? see __xrequires__
     'pykerberos',
 ]
+__xrequires__ = {
+    # `install` usage: pip install did[tests,docs]
+    # `develop` usage: python setup.py -e .[tests,docs]
+    'tests': [
+        'pytest==2.7.2',
+    ],
+    'docs': [
+        'sphinx==1.3.1',
+    ],
+    'bootstrap': [
+        'sphinx_bootstrap_theme',
+    ],
+}
+
 pip_src = 'https://pypi.python.org/packages/source'
 __deplinks__ = []
 
@@ -62,6 +76,7 @@ default_setup = dict(
     dependency_links=__deplinks__,
     description=__desc__,
     install_requires=__irequires__,
+    extras_require=__xrequires__,
     name=__pkg__,
     package_dir=__pkgdir__,
     packages=__pkgs__,
