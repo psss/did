@@ -48,6 +48,7 @@ EMAIL_REGEXP = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
 # Date
 TODAY = datetime.date.today()
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utils
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -258,9 +259,9 @@ class Logging(object):
         logger.DATA = LOG_DATA
         logger.CACHE = LOG_CACHE
         logger.ALL = LOG_ALL
-        logger.cache = lambda message: logger.log(LOG_CACHE, message) # NOQA
-        logger.data = lambda message: logger.log(LOG_DATA, message) # NOQA
-        logger.all = lambda message: logger.log(LOG_ALL, message) # NOQA
+        logger.cache = lambda message: logger.log(LOG_CACHE, message)  # NOQA
+        logger.data = lambda message: logger.log(LOG_DATA, message)  # NOQA
+        logger.all = lambda message: logger.log(LOG_ALL, message)  # NOQA
         return logger
 
     def set(self, level=None):
@@ -490,6 +491,7 @@ def get_color_mode():
 #  Exceptions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class ConfigError(Exception):
     """ General problem with configuration file """
     pass
@@ -502,6 +504,7 @@ class ReportError(Exception):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Date
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Date(object):
     """ Date parsing for common word formats """
@@ -592,6 +595,7 @@ class Date(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  User
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class User(object):
     """ User info """

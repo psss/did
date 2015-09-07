@@ -15,6 +15,7 @@ from did.utils import log
 
 TEST_CASE_COPY_TAG = "TestCaseCopy"
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Nitrate Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,7 +57,7 @@ class AutoproposedCases(Stats):
         self.stats = [
             case for case in self.parent.cases
             if case.autoproposed and not case.automated and
-                case not in self.parent.copies]
+            case not in self.parent.copies]
 
 
 class ManualCases(Stats):
