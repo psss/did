@@ -1,0 +1,56 @@
+# coding: utf-8
+"""
+{{{plugin.app}}} stats
+
+Config example::
+
+    [{{{plugin.name}}}]
+    type = {{{plugin.name}}}
+    # more config options
+"""
+
+from did.base import Stats, StatsGroup
+from did.utils import Config, item
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  {{{plugin.app}}} Investigator
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class {{{plugin.activity}}}(object):
+    """ {{{plugin.app}}} {{{plugin.activity}}} investigator """
+
+    def __init__(self, **kwargs):
+        """ Initialize {{{plugin.activity}}} """
+	self.record = 'Testing ONE TWO THREE'
+
+    def __unicode__(self):
+        """ Summary for displaying """
+        return "{0}".format(self.record)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  {{{plugin.app}}} Stats
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class {{{plugin.app}}}{{{plugin.verb}}}(Stats):
+    """ {{{plugin.app}}} changes """
+    def __init__(self, option, name=None, parent=None):
+        super({{{plugin.app}}}, self).__init__(option, name, parent)
+
+    def fetch(self):
+        self.stats = ['Something: DONE']
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  {{{plugin.app}}} Stats Group
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class {{{plugin.app}}}Stats(StatsGroup):
+    """ {{{plugin.app}}} aggregated stats """
+
+    # Default order
+    order = {{{plugin.sort_order}}}
+
+    def __init__(self, option, name=None, parent=None):
+        super({{{plugin.app}}}Stats, self).__init__(option, name, parent)
+        self.stats = [{{{plugin.app}}}{{{plugin.verb}}}()]
