@@ -26,6 +26,13 @@ all: push clean
 test:
 	py.test tests
 
+coverage:
+	coverage run --source=did -m py.test tests
+	coverage report
+
+docs: README.rst docs/*.rst
+	cd docs && make html
+
 build:
 	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
@@ -60,6 +67,7 @@ push: packages
 clean:
 	rm -rf $(TMP)
 	find did -name '*.pyc' -exec rm {} \;
+	cd docs && make clean
 
 run_docker: build_docker
 	@echo
