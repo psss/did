@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+# coding: utf-8
+# Author: "{{{author.name}}}" <{{{author.email}}}>
+
+from __future__ import unicode_literals, absolute_import
+
+from did import utils
+
+
+def test_{{{plugin.app}}}{{{plugin.target}}}():
+    from did.plugins.{{{plugin.name}}} import {{{plugin.app}}}{{{plugin.target}}}
+    assert {{{plugin.app}}}{{{plugin.target}}}
+    _str = 'Testing ONE TWO THREE'
+    assert unicode({{{plugin.app}}}{{{plugin.target}}}()) == _str
+
+
+def test_{{{plugin.target}}}{{{plugin.verb}}}():
+    from did.plugins.{{{plugin.name}}} import {{{plugin.target}}}{{{plugin.verb}}}
+    assert {{{plugin.target}}}{{{plugin.verb}}}
+
+
+def test_{{{plugin.app}}}Stats():
+    from did.plugins.{{{plugin.name}}} import {{{plugin.app}}}Stats
+    assert {{{plugin.app}}}Stats

@@ -48,6 +48,7 @@ EMAIL_REGEXP = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
 # Date
 TODAY = datetime.date.today()
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utils
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -215,7 +216,7 @@ class Logging(object):
     _level = LOG_WARN
 
     def __init__(self, name='did'):
-        self.logger = self._create_logger()
+        self.logger = self._create_logger(name=name)
         self.set()
 
     class ColoredFormatter(logging.Formatter):
@@ -258,9 +259,9 @@ class Logging(object):
         logger.DATA = LOG_DATA
         logger.CACHE = LOG_CACHE
         logger.ALL = LOG_ALL
-        logger.cache = lambda message: logger.log(LOG_CACHE, message) # NOQA
-        logger.data = lambda message: logger.log(LOG_DATA, message) # NOQA
-        logger.all = lambda message: logger.log(LOG_ALL, message) # NOQA
+        logger.cache = lambda message: logger.log(LOG_CACHE, message)  # NOQA
+        logger.data = lambda message: logger.log(LOG_DATA, message)  # NOQA
+        logger.all = lambda message: logger.log(LOG_ALL, message)  # NOQA
         return logger
 
     def set(self, level=None):
@@ -490,6 +491,7 @@ def get_color_mode():
 #  Exceptions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class ConfigError(Exception):
     """ General problem with configuration file """
     pass
@@ -502,6 +504,7 @@ class ReportError(Exception):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Date
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Date(object):
     """ Date parsing for common word formats """
@@ -593,6 +596,7 @@ class Date(object):
 #  User
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class User(object):
     """ User info """
 
@@ -618,5 +622,5 @@ class User(object):
 
 # log = logging.getLogger('did')
 # Create the output logger
-logging = Logging('did')
-log = logging.logger
+_logging = Logging()
+log = _logging.logger
