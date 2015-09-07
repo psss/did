@@ -1,4 +1,9 @@
+#!/usr/bin/env python
 # coding: utf-8
+# Author: "{{{author.name}}}" <{{{author.email}}}>
+
+from __future__ import unicode_literals, absolute_import
+
 """
 {{{plugin.app}}} stats
 
@@ -12,16 +17,17 @@ Config example::
 from did.base import Stats, StatsGroup
 from did.utils import Config, item
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  {{{plugin.app}}} Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class {{{plugin.activity}}}(object):
-    """ {{{plugin.app}}} {{{plugin.activity}}} investigator """
+class {{{plugin.app}}}{{{plugin.target}}}(object):
+    """ {{{plugin.app}}} {{{plugin.target}}} investigator """
 
     def __init__(self, **kwargs):
-        """ Initialize {{{plugin.activity}}} """
-	self.record = 'Testing ONE TWO THREE'
+        """ Initialize {{{plugin.target}}} """
+        self.record = 'Testing ONE TWO THREE'
 
     def __unicode__(self):
         """ Summary for displaying """
@@ -32,13 +38,16 @@ class {{{plugin.activity}}}(object):
 #  {{{plugin.app}}} Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class {{{plugin.app}}}{{{plugin.verb}}}(Stats):
+class {{{plugin.target}}}{{{plugin.verb}}}(Stats):
     """ {{{plugin.app}}} changes """
-    def __init__(self, option, name=None, parent=None):
-        super({{{plugin.app}}}, self).__init__(option, name, parent)
+    def __init__(self, option='cards', name=None, parent=None):
+        super({{{plugin.target}}}{{{plugin.verb}}}, self).__init__(option, name, parent)
 
     def fetch(self):
-        self.stats = ['Something: DONE']
+        if self.option == 'cards':
+           self.stats.append('CARD #X: DONE')
+        else:
+           self.stats.append('UNKNOWN: UNKNOWN')
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,4 +62,6 @@ class {{{plugin.app}}}Stats(StatsGroup):
 
     def __init__(self, option, name=None, parent=None):
         super({{{plugin.app}}}Stats, self).__init__(option, name, parent)
-        self.stats = [{{{plugin.app}}}{{{plugin.verb}}}()]
+        self.stats.append(
+	    {{{plugin.target}}}{{{plugin.verb}}}(parent=self)
+	)
