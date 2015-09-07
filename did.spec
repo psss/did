@@ -27,7 +27,7 @@ mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_mandir}/man1
 mkdir -p %{buildroot}%{python_sitelib}/did
 mkdir -p %{buildroot}%{python_sitelib}/did/plugins
-install -pm 755 bin/did.py %{buildroot}%{_bindir}/did
+install -pm 755 bin/did %{buildroot}%{_bindir}/did
 install -pm 644 did/*.py %{buildroot}%{python_sitelib}/did
 install -pm 644 did/plugins/*.py %{buildroot}%{python_sitelib}/did/plugins
 install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
