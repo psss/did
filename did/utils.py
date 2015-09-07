@@ -259,9 +259,9 @@ class Logging(object):
         logger.DATA = LOG_DATA
         logger.CACHE = LOG_CACHE
         logger.ALL = LOG_ALL
-        logger.cache = lambda message: logger.log(LOG_CACHE, message) # NOQA
-        logger.data = lambda message: logger.log(LOG_DATA, message) # NOQA
-        logger.all = lambda message: logger.log(LOG_ALL, message) # NOQA
+        logger.cache = lambda message: logger.log(LOG_CACHE, message)  # NOQA
+        logger.data = lambda message: logger.log(LOG_DATA, message)  # NOQA
+        logger.all = lambda message: logger.log(LOG_ALL, message)  # NOQA
         return logger
 
     def set(self, level=None):
