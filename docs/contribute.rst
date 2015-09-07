@@ -38,3 +38,17 @@ or pip::
 
     # sudo required if not in a virtualenv
     pip install pytest coveralls
+
+
+MrBob
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can use also use `mrbob` to easily create templates to help
+you get started contributing::
+
+    pip install mrbob
+    mrbob examples/mr.bob/plugin -O ./did/plugins
+
+`mrbob` should have asked you a few questions before creating a
+new basic Stats plugin for you in `did/plugins/`. Check `git
+status` to see the new files it created as a result.
