@@ -149,8 +149,7 @@ def bob_py_file(path='./', answers='~/.mrbob.ini', overwrite=False):
 
 
 @task
-def bob_did_plugin(path='./did/plugins', answers='~/.mrbob.ini',
-                   overwrite=False):
+def bob_did_plugin(path=None, answers=None, overwrite=False):
     '''
     MrBob: New did Plugin
     ---------------------
@@ -169,10 +168,10 @@ def bob_did_plugin(path='./did/plugins', answers='~/.mrbob.ini',
 
     cmd = 'mrbob {} -O {}'.format(template, path)
 
-    _default_answers = os.path.expanduser('~/.mrbob.ini')
-    answers = answers or _default_answers
-    answers = answers if os.path.exists(answers) else None
     if answers:
+        if not os.path.exists(answers):
+            # if the path doesn't exist, don't try to load it
+            raise RuntimeError('{} does not exist'.format(answers))
         cmd += ' -c {}'.format(answers)
 
     log.info(" ... Defaults: {}".format(answers))
