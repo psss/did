@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf-8
 # Author: "Chris Ward" <cward@redhat.com>
 
 from __future__ import absolute_import, unicode_literals
+
+import os
 
 from invoke import task, run
 
@@ -22,8 +24,8 @@ log.setLevel(LOG_INFO)
 @task
 def build(sdist=False, rpm=False):
     '''
-    Build
-    -----
+    Build Packages
+    --------------
 
     Supports
 
@@ -42,8 +44,8 @@ def build(sdist=False, rpm=False):
 @task
 def pytest():
     '''
-    pytest
-    ------
+    Run pytest
+    ----------
     '''
     log.info("Running `{}` command!".format(__name__))
     run("py.test tests/")
@@ -53,8 +55,8 @@ def pytest():
 @task
 def coverage(report=True, coveralls=False, append=True):
     '''
-    Coverage Test
-    ----
+    Run Coverage Test [pytest]
+    --------------------------
 
     Supports
      * coverage [reporting, coveralls, append]
@@ -83,8 +85,8 @@ def coverage(report=True, coveralls=False, append=True):
 @task
 def docs(html=False):
     '''
-    Test
-    ----
+    Build Documentation
+    -------------------
 
     '''
     log.info("Running Documentation command!")
@@ -100,8 +102,8 @@ def docs(html=False):
 @task
 def clean_git(force=False, options='Xd'):
     '''
-    Test
-    ----
+    Clean Your Repo
+    ---------------
 
     '''
     log.info("Running Git Repository Clean command")
@@ -112,3 +114,35 @@ def clean_git(force=False, options='Xd'):
         cmd += _options
     log.info(" ... Options: {}".format(_options))
     run(cmd)
+
+
+_bob_py_file_help = {
+    'name': "Name of the python file",
+    'answers': "path to mrbob.ini with [variables] defined",
+    # FIXME: Add remaining bob_py_file_help strings
+}
+
+
+@task(help=_bob_py_file_help)
+def bob_py_file(path='./', answers='~/.mrbob.ini',
+                template='bobtemplates/default.py', overwrite=False):
+    '''
+    MrBob: New .py File
+    -------------------
+
+    MrBob asks for filename rather than pass it here to the task
+    to make it more easily accessible from the template
+
+    '''
+    log.info("MrBob is building a .py file")
+
+    path = path or './'
+    template = template or 'bobtemplates/py_file'
+    answers = answers or os.path.expanduser('~/.mrbob.ini')
+
+    cmd = 'mrbob bobtemplates/py_file -O {}'.format(path)
+    if answers:
+        cmd += ' -c {}'.format(answers)
+
+    log.info(" ... Defaults: {}".format(answers))
+    run(cmd, pty=True)
