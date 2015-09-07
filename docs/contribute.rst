@@ -38,3 +38,28 @@ or pip::
 
     # sudo required if not in a virtualenv
     pip install pytest coveralls
+
+
+Invoke
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can use `invoke` command to run certain built-in project 
+commands::
+
+    pip install invoke
+    invoke --list
+    invoke --help coverage
+    invoke coverage
+
+MrBob
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With or without `invoke` you can also use `mrbob` to easily create 
+templates to help you get started contributing. Demo using `invoke`::
+
+    pip install mrbob
+    invoke bob_did_plugin
+
+`mrbob` should have asked you a few questions before creating a 
+new basic Stats plugin for you in `did/plugins/`. Check `git status`
+to see the new files it created as a result.
