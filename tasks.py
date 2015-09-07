@@ -25,27 +25,59 @@ def build(sdist=False, rpm=False):
     Build
     -----
 
+    Supports
+
+     * sdist
+     * rpm [fedora]
+
     '''
     log.info("Running build command!")
     if sdist:
         run("python setup.py sdist")
     if rpm:
         run("make rpm")
+    return
 
 
 @task
-def test(coverage=False):
+def pytest():
     '''
-    Test
+    pytest
+    ------
+    '''
+    log.info("Running `{}` command!".format(__name__))
+    run("py.test tests/")
+    return
+
+
+@task
+def coverage(report=True, coveralls=False, append=True):
+    '''
+    Coverage Test
     ----
 
+    Supports
+     * coverage [reporting, coveralls, append]
+     * coveralls
+
+    Do not support (yet)
+     * coverage [xml]
     '''
-    log.info("Running Test command!")
-    if coverage:
-        log.info(" ... Running Coverage!")
-        run("coverage run --source=did -m py.test tests")
-    else:
-        run("py.test tests/")
+    log.info("Running `{}` command!".format(__name__))
+    opts = {}
+    # save to new timestamped file in ~/.coverage ?
+    _cmd = "coverage run {run_opts}--source=did -m py.test tests"
+
+    opts['run_opts'] = '--append ' if append else ''
+    cmd = _cmd.format(**opts)
+
+    log.info(" ... Options: {}".format(opts))
+    run(cmd)
+    if coveralls:
+        run("coveralls")
+    if report:
+        run("coverage report")
+    return
 
 
 @task
@@ -62,6 +94,7 @@ def docs(html=False):
     else:
         cmd = "{0} make html".format(_cmd)
     run(cmd)
+    return
 
 
 @task
