@@ -9,13 +9,11 @@ import os
 from invoke import task, run
 
 try:
-    from did.utils import Logging, LOG_INFO
-    _logging = Logging('did.tasks')
-    log = _logging.logger
+    from did.utils import log, LOG_INFO
 except Exception as e:
     import logging
     LOG_INFO = logging.INFO
-    log = logging.getLogger('did.tasks')
+    log = logging.getLogger()
 
 # set log level to INFO
 log.setLevel(LOG_INFO)
@@ -168,9 +166,12 @@ def bob_did_plugin(path='./did/plugins', answers='~/.mrbob.ini',
     template = 'bobtemplates/plugin'
 
     path = path or './did/plugins'
-    answers = answers or os.path.expanduser('~/.mrbob.ini')
 
     cmd = 'mrbob {} -O {}'.format(template, path)
+
+    _default_answers = os.path.expanduser('~/.mrbob.ini')
+    answers = answers or _default_answers
+    answers = answers if os.path.exists(answers) else None
     if answers:
         cmd += ' -c {}'.format(answers)
 
