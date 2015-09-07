@@ -49,7 +49,7 @@ See documentation for more details about installation options.
 Config
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The config file ``~/.did`` is used to store both general
+The config file ``~/.did/config`` is used to store both general
 settings and configuration of individual reports::
 
     [general]
@@ -80,8 +80,8 @@ settings and configuration of individual reports::
     status = Status: Green | Yellow | Orange | Red
 
 See examples to get some more inspiration on how to customize your
-config file. Use environment variable ``STATUS_REPORT_CONFIG`` to
-override the default config file location.
+config file. Use environment variable ``DID_CONFIG`` to override
+the default config directory location ``~/.did``.
 
 
 Links

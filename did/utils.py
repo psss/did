@@ -316,9 +316,10 @@ class Config(object):
             return
         # Check the environment for config file override
         try:
-            path = os.environ["STATUS_REPORT_CONFIG"]
+            directory = os.environ["DID_CONFIG"]
         except KeyError:
-            path = CONFIG
+            directory = CONFIG
+        path = directory.rstrip("/") + "/config"
         # Parse the config from file
         try:
             log.info("Inspecting config file '{0}'".format(path))
