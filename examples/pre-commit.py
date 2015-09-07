@@ -61,7 +61,7 @@ def run_tests():
     Run all the available tests.
     '''
     # Try to run make build
-    cmd = "py.test source/tests"
+    cmd = "py.test tests"
     return run(cmd)
 
 
