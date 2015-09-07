@@ -15,7 +15,7 @@ EXAMPLES = $(TMP)/$(PACKAGE)/examples
 CSS = --stylesheet=style.css --link-stylesheet
 FILES = LICENSE README.rst \
 		Makefile did.spec \
-		docs examples did
+		docs examples did bin
 
 ifndef USERNAME
     USERNAME = echo $$USER
