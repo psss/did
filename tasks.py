@@ -123,24 +123,54 @@ _bob_py_file_help = {
 }
 
 
+# FIXME: make 'bob' stuff reusable? redefining code here
+# and in the other bob func below... not good.
 @task(help=_bob_py_file_help)
-def bob_py_file(path='./', answers='~/.mrbob.ini',
-                template='bobtemplates/default.py', overwrite=False):
+def bob_py_file(path='./', answers='~/.mrbob.ini', overwrite=False):
     '''
     MrBob: New .py File
     -------------------
 
-    MrBob asks for filename rather than pass it here to the task
+    Note: MrBob asks for filename rather than pass it here to the task
     to make it more easily accessible from the template
 
     '''
     log.info("MrBob is building a .py file")
 
+    template = 'bobtemplates/py_file'
+
     path = path or './'
-    template = template or 'bobtemplates/py_file'
     answers = answers or os.path.expanduser('~/.mrbob.ini')
 
-    cmd = 'mrbob bobtemplates/py_file -O {}'.format(path)
+    cmd = 'mrbob {} -O {}'.format(template, path)
+    if answers:
+        cmd += ' -c {}'.format(answers)
+
+    log.info(" ... Defaults: {}".format(answers))
+    run(cmd, pty=True)
+
+
+@task
+def bob_did_plugin(path='./did/plugins', answers='~/.mrbob.ini',
+                   overwrite=False):
+    '''
+    MrBob: New did Plugin
+    ---------------------
+
+    Create all the files needed to start writing a new did plugin.
+
+    Note: MrBob asks for filename rather than pass it here to the task
+    to make it more easily accessible from the template
+
+    '''
+    log.info("MrBob is building a did plugin template")
+
+    template = 'bobtemplates/plugin'
+
+    path = path or './did/plugins'
+    answers = answers or os.path.expanduser('~/.mrbob.ini')
+
+    cmd = 'mrbob {} -O {}'.format(template, path)
     if answers:
         cmd += ' -c {}'.format(answers)
 
