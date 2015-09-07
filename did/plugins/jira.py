@@ -20,7 +20,7 @@ import dateutil.parser
 import cookielib
 
 from did.base import Stats, StatsGroup
-from did.utils import Config, log, pretty, listed
+from did.utils import Config, log, pretty, listed, ReportError
 
 # Default identifier width
 DEFAULT_WIDTH = 4
@@ -141,12 +141,12 @@ class JiraStats(StatsGroup):
         # Make sure there is an url provided
         config = dict(Config().section(option))
         if "url" not in config:
-            raise ReportsError(
+            raise ReportError(
                 "No Jira url set in the [{0}] section".format(option))
         self.url = config["url"].rstrip("/")
         # Make sure we have project set
         if "project" not in config:
-            raise ReportsError(
+            raise ReportError(
                 "No project set in the [{0}] section".format(option))
         self.project = config["project"]
         # Check for custom prefix
