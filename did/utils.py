@@ -215,7 +215,7 @@ class Logging(object):
     _level = LOG_WARN
 
     def __init__(self, name='did'):
-        self.logger = self._create_logger()
+        self.logger = self._create_logger(name=name)
         self.set()
 
     class ColoredFormatter(logging.Formatter):
@@ -618,5 +618,5 @@ class User(object):
 
 # log = logging.getLogger('did')
 # Create the output logger
-logging = Logging('did')
-log = logging.logger
+_logging = Logging('did')
+log = _logging.logger
