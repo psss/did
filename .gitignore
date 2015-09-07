@@ -30,8 +30,6 @@ pip-log.txt
 
 # sphinx docs
 _build
-_static
-_templates
 
 # rpm build files
 tmp/
