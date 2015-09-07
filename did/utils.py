@@ -622,5 +622,5 @@ class User(object):
 
 # log = logging.getLogger('did')
 # Create the output logger
-_logging = Logging('did')
+_logging = Logging()
 log = _logging.logger
