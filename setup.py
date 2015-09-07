@@ -42,6 +42,9 @@ __xrequires__ = {
     'bootstrap': [
         'sphinx_bootstrap_theme',
     ],
+    'bitly': [
+        'bitly_api',
+    ],
 }
 
 pip_src = 'https://pypi.python.org/packages/source'

@@ -97,3 +97,10 @@ wiki
 .. automodule:: did.plugins.wiki
     :members:
     :undoc-members:
+
+bitly
+-----
+
+.. automodule:: did.plugins.bitly
+    :members:
+    :undoc-members:
