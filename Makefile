@@ -23,6 +23,9 @@ endif
 
 all: push clean
 
+test:
+	py.test tests
+
 build:
 	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
@@ -32,7 +35,7 @@ build:
 	rst2man $(TMP)/man.rst | gzip > $(DOCS)/did.1.gz
 	rst2html README.rst $(CSS) > $(DOCS)/index.html
 
-tarball: build
+tarball: build test
 	cd $(TMP) && tar cfj SOURCES/$(PACKAGE).tar.bz2 $(PACKAGE)
 
 rpm: tarball
