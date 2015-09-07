@@ -4,6 +4,8 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import os
+
 from invoke import task, run
 
 try:
@@ -22,8 +24,8 @@ log.setLevel(LOG_INFO)
 @task
 def build(sdist=False, rpm=False):
     '''
-    Build
-    -----
+    Build Packages
+    --------------
 
     Supports
 
@@ -42,8 +44,8 @@ def build(sdist=False, rpm=False):
 @task
 def pytest():
     '''
-    pytest
-    ------
+    Run pytest
+    ----------
     '''
     log.info("Running `{}` command!".format(__name__))
     run("py.test tests/")
@@ -53,8 +55,8 @@ def pytest():
 @task
 def coverage(report=True, coveralls=False, append=True):
     '''
-    Coverage Test
-    ----
+    Run Coverage Test [pytest]
+    --------------------------
 
     Supports
      * coverage [reporting, coveralls, append]
@@ -83,8 +85,8 @@ def coverage(report=True, coveralls=False, append=True):
 @task
 def docs(html=False):
     '''
-    Test
-    ----
+    Build Documentation
+    -------------------
 
     '''
     log.info("Running Documentation command!")
@@ -100,8 +102,8 @@ def docs(html=False):
 @task
 def clean_git(force=False, options='Xd'):
     '''
-    Test
-    ----
+    Clean Your Repo
+    ---------------
 
     '''
     log.info("Running Git Repository Clean command")
@@ -112,3 +114,22 @@ def clean_git(force=False, options='Xd'):
         cmd += _options
     log.info(" ... Options: {}".format(_options))
     run(cmd)
+
+
+@task
+def bob_py_file(name, template=None, overwrite=False):
+    '''
+    MrBob: New .py File
+    -------------------
+
+    '''
+    log.info("Bob is building a .py file")
+
+    template = template or 'bobstemplates/default.py'
+    name = name.strip()
+    if not name.startswith('/'):
+        name = './' + name
+    if not overwrite and os.path.exists(name):
+        raise RuntimeError('{} exists!'.format(name))
+
+    print name
