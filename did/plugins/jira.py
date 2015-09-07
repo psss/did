@@ -25,6 +25,7 @@ from did.utils import Config, log, pretty, listed
 # Default identifier width
 DEFAULT_WIDTH = 4
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,6 +85,7 @@ class Issue(object):
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class JiraCreated(Stats):
     """ Created issues """
     def fetch(self):
@@ -129,6 +131,7 @@ class JiraResolved(Stats):
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class JiraStats(StatsGroup):
     """ Jira stats """
 
@@ -141,12 +144,12 @@ class JiraStats(StatsGroup):
         # Make sure there is an url provided
         config = dict(Config().section(option))
         if "url" not in config:
-            raise ReportsError(
+            raise RuntimeError(
                 "No Jira url set in the [{0}] section".format(option))
         self.url = config["url"].rstrip("/")
         # Make sure we have project set
         if "project" not in config:
-            raise ReportsError(
+            raise RuntimeError(
                 "No project set in the [{0}] section".format(option))
         self.project = config["project"]
         # Check for custom prefix
