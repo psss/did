@@ -22,7 +22,7 @@ all: docs packages
 test:
 	py.test tests
 coverage:
-	coverage run --source=did -m py.test tests
+	coverage run --source=did,bin -m py.test tests
 	coverage report
 
 

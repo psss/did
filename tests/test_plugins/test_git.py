@@ -16,13 +16,13 @@ script_path = os.path.dirname(os.path.realpath(__file__))
 # go all the way to the git repo root (2 levels up)
 git_path = os.path.realpath('{0}/../../'.format(script_path))
 
-utils.Config("""
+CONFIG = """
 [general]
 email = "Chris Ward" <cward@redhat.com>
 [test_header]
 type = git
 did = {0}
-""".format(git_path))
+""".format(git_path)
 
 options = Mock()
 options.since = '2015-04-01'
@@ -40,6 +40,7 @@ parent.user = user_cward
 
 
 def test_GitRepo():
+    utils.Config(CONFIG)
     from did.plugins.git import GitRepo
     assert GitRepo
 
@@ -57,6 +58,7 @@ def test_GitRepo():
 
 
 def test_GitCommits():
+    utils.Config(CONFIG)
     from did.plugins.git import GitCommits
     assert GitCommits
 
@@ -74,6 +76,7 @@ def test_GitCommits():
 
 
 def test_GitStats():
+    utils.Config(CONFIG)
     from did.plugins.git import GitStats
     assert GitStats
 

@@ -303,10 +303,16 @@ class Config(object):
 
     parser = None
 
-    def __init__(self, config=None):
-        """ Read the config file. """
-        # Read the config only once
-        if self.parser is not None:
+    def __init__(self, config=None, path=None):
+        """
+        Read the config file
+
+        Parse config from given string (config) or file (path).
+        If no config or path given, default to "~/.did/config" which
+        can be overrided by the DID_CONFIG environment variable.
+        """
+        # Read the config only once (unless explicitly provided)
+        if self.parser is not None and config is None and path is None:
             return
         Config.parser = ConfigParser.SafeConfigParser()
         # If config provided as string, parse it directly
@@ -316,11 +322,13 @@ class Config(object):
             self.parser.readfp(StringIO.StringIO(config))
             return
         # Check the environment for config file override
-        try:
-            directory = os.environ["DID_CONFIG"]
-        except KeyError:
-            directory = CONFIG
-        path = directory.rstrip("/") + "/config"
+        # (unless path is explicitly provided)
+        if path is None:
+            try:
+                directory = os.environ["DID_CONFIG"]
+            except KeyError:
+                directory = CONFIG
+            path = directory.rstrip("/") + "/config"
         # Parse the config from file
         try:
             log.info("Inspecting config file '{0}'".format(path))
@@ -379,6 +387,11 @@ class Config(object):
                 return value
         raise ConfigError(
             "Item '{0}' not found in section '{1}'".format(it, section))
+
+    @staticmethod
+    def example():
+        """ Return config example """
+        return "[general]\nemail = Name Surname <email@domain.com>\n"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

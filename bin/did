@@ -101,9 +101,9 @@ class Options(object):
             help="Turn on debugging output, do not catch exceptions")
         self.parser.add_option_group(group)
 
-    def parse(self):
+    def parse(self, arguments=None):
         """ Parse the options. """
-        (opt, arg) = self.parser.parse_args()
+        (opt, arg) = self.parser.parse_args(arguments)
 
         # Enable debugging output
         if opt.debug:
@@ -186,11 +186,11 @@ class Options(object):
 #  Main
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def main():
+def main(arguments=None):
     """ Parse options, gather stats, show the results """
     try:
         # Parse options
-        options = Options().parse()
+        options = Options().parse(arguments)
 
         # Check for user email addresses (command line or config)
         users = [utils.User(email=email) for email in options.emails]
