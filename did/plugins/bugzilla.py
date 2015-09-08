@@ -35,6 +35,7 @@ import xmlrpclib
 from did.base import Stats, StatsGroup
 from did.utils import Config, log, pretty, ReportError
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Bugzilla
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,6 +88,7 @@ class Bugzilla(object):
             self.parent.bug(
                 bugs[id], history[id], comments[id], parent=self.parent)
             for id in bugs]
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Bug
@@ -174,6 +176,7 @@ class Bug(object):
                     comment["creation_time"] < self.options.until.date):
                 return True
         return False
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Bugzilla Stats

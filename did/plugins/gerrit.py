@@ -17,6 +17,7 @@ import urlparse
 from did.base import Stats, StatsGroup
 from did.utils import Config, ReportError, log, pretty, TODAY
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Change
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,6 +39,7 @@ class Change(object):
     def __unicode__(self):
         """ Consistent identifier and subject for displaying """
         return u"{0}#{1} - {2}".format(self.prefix, self.id[:32], self.subject)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Gerrit Stats
@@ -322,6 +324,10 @@ class ReviewedChanges(GerritUnit):
                            prefix=self.prefix))
         log.debug(u"self.stats = {0}".format(self.stats))
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Stats Group
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class GerritStats(StatsGroup):
     """
