@@ -21,6 +21,8 @@ ifndef USERNAME
     USERNAME = echo $$USER
 endif
 
+.PHONY: docs hooks
+
 all: push clean
 
 test:
@@ -32,6 +34,11 @@ coverage:
 
 docs: README.rst docs/*.rst
 	cd docs && make html
+
+# Install commit hooks
+hooks:
+	ln -snf ../../hooks/pre-commit .git/hooks
+	ln -snf ../../hooks/commit-msg .git/hooks
 
 build:
 	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}

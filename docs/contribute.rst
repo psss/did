@@ -3,6 +3,7 @@
     Contribute
 ==================
 
+
 Issues
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -11,15 +12,42 @@ File issues and ideas for improvement in GitHub:
 * https://github.com/psss/did/issues
 
 
+Commits
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is challenging to be both concise and descriptive, but that is
+what a well-written summary should do. Consider the commit message
+as something that could/will be pasted into release notes:
+
+* The first line should have up to 50 characters.
+* Complete sentence with the first word capitalized.
+* Should concisely describe the purpose of the patch.
+* Other details should be separated by a blank line.
+
+Why should I care?
+
+* It helps others (and yourself) find relevant commits quickly.
+* The summary line can be re-used later (e.g. for rpm changelog).
+* Some tools do not handle wrapping, so it is then hard to read.
+* You will make the maintainer happy to read beautiful commits :)
+
+You can get some more context in the `stackoverflow`__ article.
+
+__ http://stackoverflow.com/questions/2290016/
+
+
 Hooks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you're planning to contribute to this project consider copying
-the following hooks into your git config::
+You can find git commit hooks in the ``examples`` directory.
+Consider linking or copying them into your git config::
 
-    GIT=~/git/did # update to your actual path
-    cp $GIT/examples/pre-commit.py $GIT/.git/hooks/pre-commit
-    cp $GIT/examples/commit-msg.py $GIT/.git/hooks/commit-msg
+    GIT=~/git/did # Update to your actual path
+    ln -snf $GIT/hooks/pre-commit $GIT/.git/hooks
+    ln -snf $GIT/hooks/commit-msg $GIT/.git/hooks
+
+Or simply run ``make hooks`` which will do the linking for you.
+Note that this will overwrite existing hooks.
 
 
 Tests

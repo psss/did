@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Git commit-msg hook check for commit message subject
+# Make sure that its length does not exceed 50 characters
+
+message=$(head -1 $1)
+
+if [ $(echo $message | wc -c) -gt 51 ]; then
+    cat <<-EOF
+	Sorry, commit message summary exceeds 50 characters:
+
+	    --------------------------------------------------
+	    $message
+	    --------------------------------------------------
+
+	It is challenging to be both concise and descriptive, but that is
+	what a well-written summary should do. Consider the commit message
+	as something that could/will be likely pasted into release notes:
+
+	 * The first line should have up to 50 characters.
+	 * Complete sentence with the first word capitalized.
+	 * Should concisely describe the purpose of the patch.
+	 * Separate other details/comments by a blank line.
+
+	Why should I care?
+
+	 * It helps others (and yourself) find relevant commits quickly.
+	 * The summary line can be re-used later (e.g. for rpm changelog).
+	 * Some tools do not handle wrapping, so it is then hard to read.
+	 * You will make the maintainer happy to read beautiful commits :)
+
+	Thanks!
+	EOF
+    exit 1
+fi
