@@ -4,12 +4,50 @@
 ==================
 
 
-Issues
+Introduction
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-File issues and ideas for improvement in GitHub:
+Feel free and welcome to contribute to this project. You can start
+with filing issues and ideas for improvement in GitHub tracker__.
+My favorite thoughts from The Zen of Python:
 
-* https://github.com/psss/did/issues
+* Beautiful is better than ugly.
+* Simple is better than complex.
+* Readability counts.
+
+A couple of recommendations from `PEP8`__ and myself:
+
+* Comments should be complete sentences.
+* The first word should be capitalized (unless identifier).
+* When using hanging indent, the first line should be empty.
+
+__ https://github.com/psss/did/issues
+__ https://www.python.org/dev/peps/pep-0008/
+
+
+Makefile
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are several Makefile targets defined to make the common
+daily tasks easy & efficient:
+
+make test
+    Execute the test suite.
+
+make coverage
+    Run the test suite under coverage and report results.
+
+make docs
+    Build documentation.
+
+make packages
+    Build rpm and srpm packages.
+
+make hooks
+    Link git commit hooks.
+
+make clean
+    Cleanup all temporary files.
 
 
 Commits
