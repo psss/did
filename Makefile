@@ -54,8 +54,8 @@ hooks:
 	ln -snf ../../hooks/commit-msg .git/hooks
 clean:
 	rm -rf $(TMP)
-	find did -name '*.pyc' -exec rm {} \;
-	find tests -name '*.pyc' -exec rm {} \;
+	find . -type f -name "*.py[co]" -delete
+	find . -type d -name "__pycache__" -delete
 	cd docs && make clean
 	rm -f .coverage
 
