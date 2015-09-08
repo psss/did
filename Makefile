@@ -1,14 +1,6 @@
-
+# Prepare variables
 TMP = $(CURDIR)/tmp
 VERSION = $(shell grep ^Version did.spec | sed 's/.* //')
-
-# Push files to the production web only when in the master branch
-ifeq "$(shell git rev-parse --abbrev-ref HEAD)" "master"
-PUSH_URL = fedorapeople.org:public_html/did
-else
-PUSH_URL = fedorapeople.org:public_html/did/testing
-endif
-
 PACKAGE = did-$(VERSION)
 DOCS = $(TMP)/$(PACKAGE)/docs
 EXAMPLES = $(TMP)/$(PACKAGE)/examples
@@ -16,66 +8,59 @@ CSS = --stylesheet=style.css --link-stylesheet
 FILES = LICENSE README.rst \
 		Makefile did.spec \
 		docs examples did bin
-
 ifndef USERNAME
     USERNAME = echo $$USER
 endif
 
-.PHONY: docs hooks
 
-all: push clean
+# Define special targets
+all: docs packages
+.PHONY: docs hooks tmp
 
+
+# Run the test suite, optionally with coverage
 test:
 	py.test tests
-
 coverage:
 	coverage run --source=did -m py.test tests
 	coverage report
 
-docs: README.rst docs/*.rst
+
+# Build documentation, prepare man page
+docs: man
 	cd docs && make html
-
-# Install commit hooks
-hooks:
-	ln -snf ../../hooks/pre-commit .git/hooks
-	ln -snf ../../hooks/commit-msg .git/hooks
-
-build:
-	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
-	cp -a $(FILES) $(TMP)/$(PACKAGE)
-	# Construct man page from header and README
+man: tmp
 	cp docs/header.txt $(TMP)/man.rst
 	tail -n+7 README.rst | sed '/^Status/,$$d' >> $(TMP)/man.rst
 	rst2man $(TMP)/man.rst | gzip > $(DOCS)/did.1.gz
-	rst2html README.rst $(CSS) > $(DOCS)/index.html
 
-tarball: build test
+
+# Build packages
+tmp:
+	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
+	cp -a $(FILES) $(TMP)/$(PACKAGE)
+tarball: tmp test man
 	cd $(TMP) && tar cfj SOURCES/$(PACKAGE).tar.bz2 $(PACKAGE)
-
 rpm: tarball
 	rpmbuild --define '_topdir $(TMP)' -bb did.spec
-
 srpm: tarball
 	rpmbuild --define '_topdir $(TMP)' -bs did.spec
-
 packages: rpm srpm
 
-push: packages
-	# Documentation & examples
-	scp $(DOCS)/*.{css,html} $(PUSH_URL)
-	scp $(EXAMPLES)/* $(PUSH_URL)/examples
-	# Archives & rpms
-	scp did.spec \
-		$(TMP)/SRPMS/$(PACKAGE)* \
-		$(TMP)/RPMS/noarch/$(PACKAGE)* \
-		$(TMP)/SOURCES/$(PACKAGE).tar.bz2 \
-		$(PUSH_URL)/download
 
+# Git hooks and cleanup
+hooks:
+	ln -snf ../../hooks/pre-commit .git/hooks
+	ln -snf ../../hooks/commit-msg .git/hooks
 clean:
 	rm -rf $(TMP)
 	find did -name '*.pyc' -exec rm {} \;
+	find tests -name '*.pyc' -exec rm {} \;
 	cd docs && make clean
+	rm -f .coverage
 
+
+# Docker
 run_docker: build_docker
 	@echo
 	@echo "Please note: this is a first cut at doing a container version as a result; known issues:"
@@ -87,6 +72,5 @@ run_docker: build_docker
 	@echo "docker run --privileged --rm -it -v $(HOME)/.did:/did.conf $(USERNAME)/did"
 	@echo "If you want to add it to your .bashrc use this:"
 	@echo "alias did=\"docker run --privileged --rm -it -v $(HOME)/.did:/did.conf $(USERNAME)/did\""
-
 build_docker: examples/dockerfile
 	docker build -t $(USERNAME)/did --file="examples/dockerfile" .
