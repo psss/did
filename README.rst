@@ -14,12 +14,24 @@ changes) for given week, month, quarter, year or selected date
 range. By default all available stats for this week are reported.
 
 
+Synopsis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Usage is straightforward::
+
+    did [last] [week|month|quarter|year] [opts]
+
+
 Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Gather all stats for current week::
 
     did
+
+Show me all stats for today::
+
+    did today
 
 Gather stats for the last week::
 

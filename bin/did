@@ -146,7 +146,12 @@ class Options(object):
     def time_period(arg):
         """ Detect desired time period for the argument """
         since, until, period = None, None, None
-        if "year" in arg:
+        if "today" in arg:
+            since = utils.Date("today")
+            until = utils.Date("today")
+            until.date += delta(days=1)
+            period = "today"
+        elif "year" in arg:
             if "last" in arg:
                 since, until = utils.Date.last_year()
                 period = "the last fiscal year"
