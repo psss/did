@@ -10,7 +10,7 @@ before_install:
 install:
   - "python setup.py install"
 script:
-  - "coverage run --source=did -m py.test tests"
+  - "coverage run --source=bin,did -m py.test --capture=no tests"
 after_success:
   - coveralls
   - coverage report
