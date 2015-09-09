@@ -21,6 +21,8 @@ all: docs packages
 # Run the test suite, optionally with coverage
 test:
 	py.test tests
+smoke:
+	py.test tests/test_did.py
 coverage:
 	coverage run --source=did,bin -m py.test tests
 	coverage report
@@ -39,7 +41,7 @@ man: tmp
 tmp:
 	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
-tarball: tmp test man
+tarball: tmp smoke man
 	cd $(TMP) && tar cfj SOURCES/$(PACKAGE).tar.bz2 $(PACKAGE)
 rpm: tarball
 	rpmbuild --define '_topdir $(TMP)' -bb did.spec

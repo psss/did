@@ -6,9 +6,9 @@
 separator="\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
 
 # Run tests
-if ! make test &> /dev/null ; then
+if ! make smoke &> /dev/null ; then
     echo -e $separator Test suite failed $separator
-    make test
+    make smoke
     exit 1
 fi
 
