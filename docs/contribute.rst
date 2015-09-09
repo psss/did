@@ -34,6 +34,9 @@ daily tasks easy & efficient:
 make test
     Execute the test suite.
 
+make smoke
+    Perform quick basic functionality test.
+
 make coverage
     Run the test suite under coverage and report results.
 
