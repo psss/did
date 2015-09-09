@@ -193,10 +193,20 @@ class Options(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def main(arguments=None):
-    """ Parse options, gather stats, show the results """
+    """
+    Parse options, gather stats and show the results
+
+    Takes optional parameter ``arguments`` which can be useful for
+    testing purposes. Function returns tuple of the form::
+
+        ([user_stats], team_stats)
+
+    with the list of all gathered stats objects.
+    """
     try:
-        # Parse options
+        # Parse options, initialize gathered stats
         options = Options().parse(arguments)
+        gathered_stats = []
 
         # Check for user email addresses (command line or config)
         users = [utils.User(email=email) for email in options.emails]
@@ -218,12 +228,16 @@ def main(arguments=None):
             user_stats = UserStats(user=user, options=options)
             user_stats.check()
             team_stats.merge(user_stats)
+            gathered_stats.append(user_stats)
 
         # Display merged team report
         if options.merge or options.total:
             if options.total:
                 utils.header("Total Report")
             team_stats.show()
+
+        # Return all gathered stats objects
+        return gathered_stats, team_stats
 
     except (utils.ConfigError, utils.ReportError) as error:
         utils.log.error(error)
