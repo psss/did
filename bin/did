@@ -52,11 +52,12 @@ from did.base import UserStats
 class Options(object):
     """ Command line options parser """
 
-    def __init__(self):
+    def __init__(self, arguments=None):
         """ Prepare the parser. """
         self.parser = optparse.OptionParser(
             usage="did [last] [week|month|quarter|year] [opts]",
             description=__doc__.strip())
+        self.arguments = arguments
 
         # Time & user selection
         group = optparse.OptionGroup(self.parser, "Selection")
@@ -103,7 +104,12 @@ class Options(object):
 
     def parse(self, arguments=None):
         """ Parse the options. """
-        (opt, arg) = self.parser.parse_args(arguments)
+        if arguments is not None:
+            self.arguments = arguments
+        if (self.arguments is not None
+                and isinstance(self.arguments, basestring)):
+            self.arguments = self.arguments.split()
+        (opt, arg) = self.parser.parse_args(self.arguments)
 
         # Enable debugging output
         if opt.debug:
