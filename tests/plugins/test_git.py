@@ -33,15 +33,35 @@ did = {0}
 def test_git_regular():
     """ Simple git stats """
     did.utils.Config(CONFIG.format(GIT_PATH))
-    did.did.main(INTERVAL)
+    stats = did.did.main(INTERVAL)[0][0].stats[0].stats[0].stats
+    assert any([
+        "8a725af - Simplify git plugin tests" in stat
+        for stat in stats])
 
 def test_git_verbose():
     """ Verbose git stats """
     did.utils.Config(CONFIG.format(GIT_PATH))
-    did.did.main(INTERVAL + " --verbose")
+    stats = did.did.main(INTERVAL + " --verbose")[0][0].stats[0].stats[0].stats
+    assert any(["tests/plugins" in stat for stat in stats])
+
+def test_git_nothing():
+    """ No stats found """
+    did.utils.Config(CONFIG.format(GIT_PATH))
+    stats = did.did.main("--until 2015-01-01")[0][0].stats[0].stats[0].stats
+    assert stats == []
 
 def test_git_invalid():
     """ Invalid git repo """
+    did.utils.Config(CONFIG.format("/tmp"))
+    try:
+        did.did.main(INTERVAL)
+    except SystemExit:
+        pass
+    else:
+        raise RuntimeError("Expected failure")
+
+def test_git_non_existent():
+    """ Non-existent git repo """
     did.utils.Config(CONFIG.format("i-do-not-exist"))
     try:
         did.did.main(INTERVAL)

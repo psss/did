@@ -52,7 +52,7 @@ class GitRepo(object):
         except OSError as error:
             log.error(error)
             raise ReportError(
-                "Unable to access git repo in {0}".format(self.path))
+                "Unable to access git repo '{0}'".format(self.path))
         output, errors = process.communicate()
         log.debug("git log output:")
         log.debug(output)
@@ -70,9 +70,9 @@ class GitRepo(object):
                         summary, 8 * " ", directory))
                 return commits
         else:
-            log.warn("Unable to check commits in {0}".format(self.path))
-            log.warn(errors.strip())
-            return []
+            log.error(errors.strip())
+            raise ReportError(
+                "Unable to check commits in '{0}'".format(self.path))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
