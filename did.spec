@@ -1,5 +1,5 @@
 Name: did
-Version: 0.4
+Version: 0.5
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -42,6 +42,20 @@ install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Wed Sep 09 2015 Petr Šplíchal <psplicha@redhat.com> 0.5-1
+- New tests for command line script, bugzilla, git
+- Update README with synopsis and today's example
+- Clean up the Makefile, remove obsoleted stuff
+- Document general command line options in overview
+- Extend contribute doc with Introduction & Makefile
+- Update and simplify git commit hooks
+- Use config directory instead of a single file
+- New Makefile targets: test, smoke, coverage, docs
+- Add mr.bob template to generate new default plugin
+- Enable package 'extras' (dependencies) install
+- Do not ignore sphinx dirs _static and _templates
+- Move script, modules & tests out of the source dir
+
 * Sun Sep 06 2015 Petr Šplíchal <psplicha@redhat.com> 0.4-1
 - What did you do last week, month, year? (did rename)
 - Plugins: bugzilla, rt, gerrit, jira, wiki, nitrate
