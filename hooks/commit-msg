@@ -3,7 +3,7 @@
 # Git commit-msg hook check for commit message subject
 # Make sure that its length does not exceed 50 characters
 
-message=$(head -1 $1)
+message=$(head -1 $1 | sed 's/#.*//')
 
 if [ $(echo $message | wc -c) -gt 51 ]; then
     cat <<-EOF
