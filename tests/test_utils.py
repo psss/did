@@ -126,16 +126,6 @@ def test_color():
     assert color
 
 
-def test_set_color_mode():
-    from did.utils import set_color_mode
-    assert set_color_mode
-
-
-def test_get_color_mode():
-    from did.utils import get_color_mode
-    assert get_color_mode
-
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Date
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

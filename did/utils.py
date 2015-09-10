@@ -446,7 +446,20 @@ class Coloring(object):
         self.set(mode)
 
     def set(self, mode=None):
-        """ Set the coloring mode """
+        """
+        Set the coloring mode
+
+        If enabled, some objects (like case run Status) are printed in color
+        to easily spot failures, errors and so on. By default the feature is
+        enabled when script is attached to a terminal. Possible values are::
+
+            COLOR=0 ... COLOR_OFF .... coloring disabled
+            COLOR=1 ... COLOR_ON ..... coloring enabled
+            COLOR=2 ... COLOR_AUTO ... if terminal attached (default)
+
+        Environment variable COLOR can be used to set up the coloring to the
+        desired mode without modifying code.
+        """
         # Detect from the environment if no mode given (only once)
         if mode is None:
             # Nothing to do if already detected
@@ -475,29 +488,6 @@ class Coloring(object):
         if self._mode == COLOR_AUTO:
             return sys.stdout.isatty()
         return self._mode == COLOR_ON
-
-
-def set_color_mode(mode):
-    """
-    Set the coloring mode
-
-    If enabled, some objects (like case run Status) are printed in color
-    to easily spot failures, errors and so on. By default the feature is
-    enabled when script is attached to a terminal. Possible values are::
-
-        COLOR=0 ... COLOR_OFF .... coloring disabled
-        COLOR=1 ... COLOR_ON ..... coloring enabled
-        COLOR=2 ... COLOR_AUTO ... if terminal attached (default)
-
-    Environment variable COLOR can be used to set up the coloring to the
-    desired mode without modifying code.
-    """
-    Coloring().set(mode)
-
-
-def get_color_mode():
-    """ Get the current coloring mode """
-    return Coloring().get()
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
