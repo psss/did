@@ -21,9 +21,9 @@ utils
     :members:
     :undoc-members:
 
-did
+cli
 ---
 
-.. automodule:: did.did
+.. automodule:: did.cli
     :members:
     :undoc-members:

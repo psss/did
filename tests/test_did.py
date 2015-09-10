@@ -5,7 +5,7 @@ from __future__ import unicode_literals, absolute_import
 
 import os
 import re
-import did.did
+import did.cli
 import did.utils
 
 # Prepare path and config examples
@@ -23,7 +23,7 @@ def test_help_minimal():
     """ Help message with minimal config """
     did.utils.Config(config=MINIMAL)
     try:
-        did.did.main(["--help"])
+        did.cli.main(["--help"])
     except SystemExit:
         pass
 
@@ -35,6 +35,6 @@ def test_help_example():
     """ Help message with example config """
     did.utils.Config(config=EXAMPLE)
     try:
-        did.did.main(["--help"])
+        did.cli.main(["--help"])
     except SystemExit:
         pass
