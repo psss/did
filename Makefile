@@ -3,8 +3,6 @@ TMP = $(CURDIR)/tmp
 VERSION = $(shell grep ^Version did.spec | sed 's/.* //')
 PACKAGE = did-$(VERSION)
 DOCS = $(TMP)/$(PACKAGE)/docs
-EXAMPLES = $(TMP)/$(PACKAGE)/examples
-CSS = --stylesheet=style.css --link-stylesheet
 FILES = LICENSE README.rst \
 		Makefile did.spec \
 		docs examples did bin
@@ -41,6 +39,7 @@ man: tmp
 tmp:
 	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
+	rm -rf $(TMP)/$(PACKAGE)/examples/mr.bob
 tarball: tmp smoke man
 	cd $(TMP) && tar cfj SOURCES/$(PACKAGE).tar.bz2 $(PACKAGE)
 rpm: tarball
