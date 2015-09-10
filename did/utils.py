@@ -91,15 +91,14 @@ def item(text, level=0, options=None):
     eprint(u"{0}* {1}".format(u" " * indent, shorted(unicode(text), width)))
 
 
-def pluralize(singular=None, plural=None):
+def pluralize(singular=None):
     """ Naively pluralize words """
-    if singular is not None and plural is None:
-        if singular.endswith("y") and not singular.endswith("ay"):
-            plural = singular[:-1] + "ies"
-        elif singular.endswith("s"):
-            plural = singular + "es"
-        else:
-            plural = singular + "s"
+    if singular.endswith("y") and not singular.endswith("ay"):
+        plural = singular[:-1] + "ies"
+    elif singular.endswith("s"):
+        plural = singular + "es"
+    else:
+        plural = singular + "s"
     return plural
 
 
@@ -128,7 +127,8 @@ def listed(items, singular=None, plural=None, max=None, quote=""):
         max = 0
         more = ""
     # Set the default plural form
-    plural = pluralize(singular, plural)
+    if singular is not None and plural is None:
+        plural = pluralize(singular)
     # Convert to strings and optionally quote each item
     items = ["{0}{1}{0}".format(quote, item) for item in items]
 
