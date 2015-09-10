@@ -11,7 +11,7 @@ Config example::
     status = Status: Green | Yellow | Orange | Red
 """
 
-from did.base import EmptyStatsGroup
+from did.stats import EmptyStatsGroup
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

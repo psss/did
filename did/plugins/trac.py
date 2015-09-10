@@ -13,8 +13,9 @@ Config example::
 import re
 import xmlrpclib
 
-from did.base import Stats, StatsGroup
-from did.utils import Config, ReportError, log, pretty
+from did.utils import log, pretty
+from did.base import Config, ReportError
+from did.stats import Stats, StatsGroup
 
 INTERESTING_RESOLUTIONS = ["canceled"]
 MAX_TICKETS = 1000000

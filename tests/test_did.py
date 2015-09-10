@@ -10,7 +10,7 @@ import did.utils
 
 # Prepare path and config examples
 PATH = os.path.dirname(os.path.realpath(__file__))
-MINIMAL = did.utils.Config.example()
+MINIMAL = did.base.Config.example()
 EXAMPLE = "".join(open(PATH + "/../examples/config").readlines())
 # Substitute example git paths for real life directories
 EXAMPLE = re.sub(r"\S+/git/[a-z]+", PATH, EXAMPLE)
@@ -21,7 +21,7 @@ EXAMPLE = re.sub(r"\S+/git/[a-z]+", PATH, EXAMPLE)
 
 def test_help_minimal():
     """ Help message with minimal config """
-    did.utils.Config(config=MINIMAL)
+    did.base.Config(config=MINIMAL)
     try:
         did.cli.main(["--help"])
     except SystemExit:
@@ -33,7 +33,7 @@ def test_help_minimal():
 
 def test_help_example():
     """ Help message with example config """
-    did.utils.Config(config=EXAMPLE)
+    did.base.Config(config=EXAMPLE)
     try:
         did.cli.main(["--help"])
     except SystemExit:

@@ -12,8 +12,9 @@ Config example::
     item3 = Project Three
 """
 
-from did.base import Stats, StatsGroup
-from did.utils import Config, item
+from did.utils import item
+from did.base import Config
+from did.stats import Stats, StatsGroup
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

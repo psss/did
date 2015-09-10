@@ -16,8 +16,10 @@ import optparse
 import ConfigParser
 from dateutil.relativedelta import relativedelta as delta
 
+import did.base
 import did.utils as utils
-from did.base import UserStats
+from did.stats import UserStats
+from did.base import ConfigError, ReportError
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,7 +60,7 @@ class Options(object):
             "--format", default="text",
             help="Output style, possible values: text (default) or wiki")
         group.add_option(
-            "--width", default=utils.Config().width, type="int",
+            "--width", default=did.base.Config().width, type="int",
             help="Maximum width of the report output (default: %default)")
         group.add_option(
             "--brief", action="store_true",
@@ -88,7 +90,7 @@ class Options(object):
 
         # Enable debugging output
         if opt.debug:
-            utils.logging.set(utils.LOG_DEBUG)
+            utils.Logging.set(utils.LOG_DEBUG)
 
         # Enable --all if no particular stat or group selected
         opt.all = not any([
@@ -98,15 +100,15 @@ class Options(object):
 
         # Detect email addresses and split them on comma
         if not opt.emails:
-            opt.emails = utils.Config().email
+            opt.emails = did.base.Config().email
         opt.emails = utils.split(opt.emails, separator=re.compile(r"\s*,\s*"))
 
         # Time period handling
         if opt.since is None and opt.until is None:
             opt.since, opt.until, period = self.time_period(arg)
         else:
-            opt.since = utils.Date(opt.since or "1993-01-01")
-            opt.until = utils.Date(opt.until or "today")
+            opt.since = did.base.Date(opt.since or "1993-01-01")
+            opt.until = did.base.Date(opt.until or "today")
             # Make the 'until' limit inclusive
             opt.until.date += delta(days=1)
             period = "given date range"
@@ -128,37 +130,37 @@ class Options(object):
         """ Detect desired time period for the argument """
         since, until, period = None, None, None
         if "today" in arg:
-            since = utils.Date("today")
-            until = utils.Date("today")
+            since = did.base.Date("today")
+            until = did.base.Date("today")
             until.date += delta(days=1)
             period = "today"
         elif "year" in arg:
             if "last" in arg:
-                since, until = utils.Date.last_year()
+                since, until = did.base.Date.last_year()
                 period = "the last fiscal year"
             else:
-                since, until = utils.Date.this_year()
+                since, until = did.base.Date.this_year()
                 period = "this fiscal year"
         elif "quarter" in arg:
             if "last" in arg:
-                since, until = utils.Date.last_quarter()
+                since, until = did.base.Date.last_quarter()
                 period = "the last quarter"
             else:
-                since, until = utils.Date.this_quarter()
+                since, until = did.base.Date.this_quarter()
                 period = "this quarter"
         elif "month" in arg:
             if "last" in arg:
-                since, until = utils.Date.last_month()
+                since, until = did.base.Date.last_month()
                 period = "the last month"
             else:
-                since, until = utils.Date.this_month()
+                since, until = did.base.Date.this_month()
                 period = "this month"
         else:
             if "last" in arg:
-                since, until = utils.Date.last_week()
+                since, until = did.base.Date.last_week()
                 period = "the last week"
             else:
-                since, until = utils.Date.this_week()
+                since, until = did.base.Date.this_week()
                 period = "this week"
         return since, until, period
 
@@ -184,9 +186,9 @@ def main(arguments=None):
         gathered_stats = []
 
         # Check for user email addresses (command line or config)
-        users = [utils.User(email=email) for email in options.emails]
+        users = [did.base.User(email=email) for email in options.emails]
         if not users:
-            raise utils.ConfigError("No user email provided")
+            raise ConfigError("No user email provided")
 
         # Prepare team stats object for data merging
         team_stats = UserStats(options=options)
@@ -214,7 +216,7 @@ def main(arguments=None):
         # Return all gathered stats objects
         return gathered_stats, team_stats
 
-    except (utils.ConfigError, utils.ReportError) as error:
+    except (ConfigError, ReportError) as error:
         utils.log.error(error)
         sys.exit(1)
 
@@ -226,8 +228,8 @@ def main(arguments=None):
         utils.log.error(error)
         utils.log.error(
             "No email provided on the command line or in the config file")
-        utils.info(
-            "Create at least a minimum config file {0}:".format(utils.CONFIG))
+        utils.info("Create at least a minimum config file {0}:".format(
+            did.base.CONFIG))
         from getpass import getuser
         utils.info(
             '[general]\nemail = "My Name" <{0}@domain.com>'.format(getuser()))

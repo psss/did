@@ -17,8 +17,9 @@ import urllib
 import urlparse
 import kerberos
 
-from did.base import Stats, StatsGroup
-from did.utils import log, pretty, ReportError, Config
+from did.utils import log, pretty
+from did.base import ReportError, Config
+from did.stats import Stats, StatsGroup
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

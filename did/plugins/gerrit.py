@@ -10,12 +10,14 @@ Config example::
     prefix = GR
 """
 
-from datetime import datetime
 import json
 import urllib
 import urlparse
-from did.base import Stats, StatsGroup
-from did.utils import Config, ReportError, log, pretty, TODAY
+from datetime import datetime
+
+from did.utils import log, pretty
+from did.stats import Stats, StatsGroup
+from did.base import Config, ReportError, TODAY
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

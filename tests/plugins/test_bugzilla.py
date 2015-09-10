@@ -4,7 +4,7 @@
 from __future__ import unicode_literals, absolute_import
 
 import did.cli
-import did.utils
+import did.base
 
 
 CONFIG = """
@@ -21,7 +21,7 @@ url = https://bugzilla.redhat.com/xmlrpc.cgi
 
 def test_bugzilla_linus():
     """ Check bugs filed by Linus :-) """
-    did.utils.Config(CONFIG)
+    did.base.Config(CONFIG)
     did.cli.main(
         "--email torvalds@linux-foundation.org "
         "--bz-filed --until today".split())
@@ -33,5 +33,5 @@ def test_bugzilla_linus():
 
 def test_bugzilla_week():
     """ Check all stats for given week"""
-    did.utils.Config(CONFIG)
+    did.base.Config(CONFIG)
     did.cli.main("--bz --email psplicha@redhat.com".split())

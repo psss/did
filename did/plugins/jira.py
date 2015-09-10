@@ -15,12 +15,13 @@ import re
 import json
 import urllib
 import urllib2
-import urllib2_kerberos
-import dateutil.parser
 import cookielib
+import dateutil.parser
+import urllib2_kerberos
 
-from did.base import Stats, StatsGroup
-from did.utils import Config, log, pretty, listed, ReportError
+from did.utils import log, pretty, listed
+from did.base import Config, ReportError
+from did.stats import Stats, StatsGroup
 
 # Default identifier width
 DEFAULT_WIDTH = 4

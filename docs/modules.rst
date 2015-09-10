@@ -3,9 +3,18 @@
     Modules
 ===============
 
-Except for plugins there are two basic modules, `base`_ and
-`utils`_, which handle essential part of the functionality.
-The command line script `did`_ implements option handling.
+The `stats`_ module contains the core of the stats gathering
+functionality. Some basic functionality like exceptions, config,
+user and date handling is placed in the `base`_ module. Generic
+utilities can be found in the `utils`_ module. Option parsing
+and other command line stuff resides in the `cli`_ module.
+
+stats
+-----
+
+.. automodule:: did.stats
+    :members:
+    :undoc-members:
 
 base
 ----

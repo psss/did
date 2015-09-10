@@ -1,192 +1,263 @@
 # coding: utf-8
 
-""" Stats & StatsGroup, the core of the data gathering """
+""" Config, Date, User and Exceptions """
 
 from __future__ import unicode_literals, absolute_import
 
+import os
+import codecs
+import datetime
 import optparse
+import StringIO
 import xmlrpclib
+import ConfigParser
+from dateutil.relativedelta import MO as MONDAY
+from dateutil.relativedelta import relativedelta as delta
 
 from did import utils
-from did import plugins
+from did.utils import log
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Stats
+#  Constants
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Stats(object):
-    """ General statistics """
-    _name = None
-    _error = None
-    _enabled = None
-    option = None
-    dest = None
-    parent = None
-    stats = None
+# Config file location
+CONFIG = os.path.expanduser("~/.did")
 
-    def __init__(
-            self, option, name=None, parent=None, user=None, options=None):
-        """ Set the name, indent level and initialize data.  """
-        self.option = option.replace(" ", "-")
-        self.dest = self.option.replace("-", "_")
-        self._name = name
-        self.parent = parent
-        self.stats = []
-        # Save user and options (get it directly or from parent)
-        self.options = options or getattr(self.parent, 'options', None)
-        if user is None and self.parent is not None:
-            self.user = self.parent.user
-        else:
-            self.user = user
-        utils.log.debug(
-            'Loading {0} Stats instance for {1}'.format(option, self.user))
+# Default maximum width
+MAX_WIDTH = 79
+
+# Today's date
+TODAY = datetime.date.today()
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Exceptions
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class ConfigError(Exception):
+    """ General problem with configuration file """
+    pass
+
+
+class ReportError(Exception):
+    """ General problem with report generation """
+    pass
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Config
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class Config(object):
+    """ User config file """
+
+    parser = None
+
+    def __init__(self, config=None, path=None):
+        """
+        Read the config file
+
+        Parse config from given string (config) or file (path).
+        If no config or path given, default to "~/.did/config" which
+        can be overrided by the DID_CONFIG environment variable.
+        """
+        # Read the config only once (unless explicitly provided)
+        if self.parser is not None and config is None and path is None:
+            return
+        Config.parser = ConfigParser.SafeConfigParser()
+        # If config provided as string, parse it directly
+        if config is not None:
+            log.info("Inspecting config file from string")
+            log.debug(utils.pretty(config))
+            self.parser.readfp(StringIO.StringIO(config))
+            return
+        # Check the environment for config file override
+        # (unless path is explicitly provided)
+        if path is None:
+            try:
+                directory = os.environ["DID_CONFIG"]
+            except KeyError:
+                directory = CONFIG
+            path = directory.rstrip("/") + "/config"
+        # Parse the config from file
+        try:
+            log.info("Inspecting config file '{0}'".format(path))
+            self.parser.readfp(codecs.open(path, "r", "utf8"))
+        except IOError as error:
+            log.error(error)
+            raise ConfigError("Unable to read the config file")
 
     @property
-    def name(self):
-        """ Use docs string unless name set. """
-        return self._name or self.__doc__.strip()
-
-    def add_option(self, group):
-        """ Add option for self to the parser group object. """
-        group.add_option(
-            "--{0}".format(self.option), action="store_true", help=self.name)
-
-    def enabled(self):
-        """ Check whether we're enabled (or if parent is). """
-        # Cache into ._enabled
-        if self._enabled is None:
-            if self.parent is not None and self.parent.enabled():
-                self._enabled = True
-            else:
-                # Default to Enabled if not otherwise disabled
-                self._enabled = getattr(self.options, self.dest, True)
-        utils.log.debug("{0} Enabled? {1}".format(self.option, self._enabled))
-        return self._enabled
-
-    def fetch(self):
-        """ Fetch the stats (to be implemented by respective class). """
-        raise NotImplementedError()
-
-    def check(self):
-        """ Check the stats if enabled. """
-        if not self.enabled():
-            return
+    def email(self):
+        """ User email(s) """
         try:
-            self.fetch()
-        except (xmlrpclib.Fault, utils.ConfigError) as error:
-            utils.log.error(error)
-            self._error = True
-            # Raise the exception if debugging
-            if not self.options or self.options.debug:
-                raise
-        # Show the results stats (unless merging)
-        if self.options and not self.options.merge:
-            self.show()
+            return self.parser.get("general", "email")
+        except ConfigParser.NoOptionError:
+            return []
 
-    def header(self):
-        """ Show summary header. """
-        # Show question mark instead of count when errors encountered
-        count = "? (error encountered)" if self._error else len(self.stats)
-        utils.item("{0}: {1}".format(self.name, count), options=self.options)
+    @property
+    def width(self):
+        """ Maximum width of the report """
+        try:
+            return int(self.parser.get("general", "width"))
+        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            return MAX_WIDTH
 
-    def show(self):
-        """ Display indented statistics. """
-        if not self._error and not self.stats:
-            return
-        self.header()
-        for stat in self.stats:
-            utils.item(stat, level=1, options=self.options)
+    def sections(self, kind=None):
+        """ Return all sections (optionally of given kind only) """
+        result = []
+        for section in self.parser.sections():
+            # Selected kind only if provided
+            if kind is not None:
+                try:
+                    section_type = self.parser.get(section, "type")
+                    if section_type != kind:
+                        continue
+                except ConfigParser.NoOptionError:
+                    # Implicit header/footer type for backward compatibility
+                    if (section == kind == "header" or
+                            section == kind == "footer"):
+                        pass
+                    else:
+                        continue
+            result.append(section)
+        return result
 
-    def merge(self, other):
-        """ Merge another stats. """
-        self.stats.extend(other.stats)
-        if other._error:
-            self._error = True
+    def section(self, section, skip=None):
+        """ Return section items, skip selected (type/order by default) """
+        if skip is None:
+            skip = ['type', 'order']
+        return [(key, val) for key, val in self.parser.items(section)
+                if key not in skip]
 
+    def item(self, section, it):
+        """ Return content of given item in selected section """
+        for key, value in self.section(section, skip=['type']):
+            if key == it:
+                return value
+        raise ConfigError(
+            "Item '{0}' not found in section '{1}'".format(it, section))
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Stats Group
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class StatsGroup(Stats):
-    """ Stats group """
-
-    # Default order
-    order = 500
-
-    def add_option(self, parser):
-        """ Add option group and all children options. """
-
-        group = optparse.OptionGroup(parser, self.name)
-        for stat in self.stats:
-            stat.add_option(group)
-        group.add_option(
-            "--{0}".format(self.option), action="store_true", help="All above")
-        parser.add_option_group(group)
-
-    def check(self):
-        """ Check all children stats. """
-        for stat in self.stats:
-            stat.check()
-
-    def show(self):
-        """ List all children stats. """
-        for stat in self.stats:
-            stat.show()
-
-    def merge(self, other):
-        """ Merge all children stats. """
-        for this, other in zip(self.stats, other.stats):
-            this.merge(other)
-
-    def fetch(self):
-        """ Stats groups do not fetch anything """
-        pass
+    @staticmethod
+    def example():
+        """ Return config example """
+        return "[general]\nemail = Name Surname <email@domain.com>\n"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  User Stats
+#  Date
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class UserStats(StatsGroup):
-    """ User statistics in one place """
+class Date(object):
+    """ Date parsing for common word formats """
 
-    def __init__(self, user=None, options=None):
-        """ Initialize stats objects. """
-        super(UserStats, self).__init__(
-            option="all", user=user, options=options)
-        self.stats = []
-        for section, statsgroup in plugins.detect():
-            self.stats.append(statsgroup(option=section, parent=self))
+    def __init__(self, date=None):
+        """ Parse the date string """
+        if isinstance(date, datetime.date):
+            self.date = date
+        elif date is None or date.lower() == "today":
+            self.date = TODAY
+        elif date.lower() == "yesterday":
+            self.date = TODAY - delta(days=1)
+        else:
+            self.date = datetime.date(*[int(i) for i in date.split("-")])
+        self.datetime = datetime.datetime(
+            self.date.year, self.date.month, self.date.day, 0, 0, 0)
 
-    def add_option(self, parser):
-        """ Add options for each stats group. """
-        for stat in self.stats:
-            stat.add_option(parser)
+    def __str__(self):
+        """ Ascii version of the string representation """
+        return utils.ascii(unicode(self))
+
+    def __unicode__(self):
+        """ String format for printing """
+        return unicode(self.date)
+
+    @staticmethod
+    def this_week():
+        """ Return start and end date of the current week. """
+        since = TODAY + delta(weekday=MONDAY(-1))
+        until = since + delta(weeks=1)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def last_week():
+        """ Return start and end date of the last week. """
+        since = TODAY + delta(weekday=MONDAY(-2))
+        until = since + delta(weeks=1)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def this_month():
+        """ Return start and end date of this month. """
+        since = TODAY + delta(day=1)
+        until = since + delta(months=1)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def last_month():
+        """ Return start and end date of this month. """
+        since = TODAY + delta(day=1, months=-1)
+        until = since + delta(months=1)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def this_quarter():
+        """ Return start and end date of this quarter. """
+        since = TODAY + delta(day=1)
+        while since.month % 3 != 0:
+            since -= delta(months=1)
+        until = since + delta(months=3)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def last_quarter():
+        """ Return start and end date of this quarter. """
+        since, until = Date.this_quarter()
+        since = since.date - delta(months=3)
+        until = until.date - delta(months=3)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def this_year():
+        """ Return start and end date of this fiscal year """
+        since = TODAY
+        while since.month != 3 or since.day != 1:
+            since -= delta(days=1)
+        until = since + delta(years=1)
+        return Date(since), Date(until)
+
+    @staticmethod
+    def last_year():
+        """ Return start and end date of the last fiscal year """
+        since, until = Date.this_year()
+        since = since.date - delta(years=1)
+        until = until.date - delta(years=1)
+        return Date(since), Date(until)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Header & Footer
+#  User
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class EmptyStats(Stats):
-    """ Custom stats group for header & footer """
-    def __init__(self, option, name=None, parent=None):
-        Stats.__init__(self, option, name, parent)
+class User(object):
+    """ User info """
 
-    def show(self):
-        """ Name only for empty stats """
-        utils.item(self.name, options=self.options)
+    def __init__(self, email, name=None, login=None):
+        """ Set user email, name and login values. """
+        if not email:
+            raise ReportError("Email required for user initialization.")
+        else:
+            # Extract everything from the email string provided
+            # eg, "My Name" <bla@email.com>
+            parts = utils.EMAIL_REGEXP.search(email)
+            if parts is None:
+                raise ConfigError("Invalid email address '{0}'".format(email))
+            self.email = parts.groups()[1]
+            self.login = login or self.email.split('@')[0]
+            self.name = name or parts.groups()[0] or u"Unknown"
 
-    def fetch(self):
-        """ Nothing to do for empty stats """
-        pass
-
-
-class EmptyStatsGroup(StatsGroup):
-    """ Header & Footer stats group """
-    def __init__(self, option, name=None, parent=None):
-        StatsGroup.__init__(self, option, name, parent=parent)
-        for opt, name in sorted(utils.Config().section(option)):
-            self.stats.append(EmptyStats(opt, name, parent=self))
+    def __unicode__(self):
+        """ Use name & email for string representation. """
+        return u"{0} <{1}>".format(self.name, self.email)

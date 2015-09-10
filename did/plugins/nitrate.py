@@ -10,7 +10,7 @@ Config example::
 
 from __future__ import absolute_import
 
-from did.base import Stats, StatsGroup
+from did.stats import Stats, StatsGroup
 from did.utils import log
 
 TEST_CASE_COPY_TAG = "TestCaseCopy"
