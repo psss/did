@@ -6,11 +6,11 @@ Summary: What did you do last week, month, year?
 License: GPLv2+
 
 URL: https://github.com/psss/did
-Source0: http://psss.fedorapeople.org/did/download/%{name}-%{version}.tar.bz2
+Source: https://github.com/psss/did/releases/download/%{version}/did-%{version}.tar.bz2
 
 BuildArch: noarch
 BuildRequires: python-devel
-Requires: python-kerberos python-nitrate python-dateutil python-urllib2_kerberos
+Requires: python-kerberos python-nitrate python-dateutil python-urllib2_kerberos python-bugzilla
 
 %description
 Comfortably gather status report data (e.g. list of committed
