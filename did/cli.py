@@ -105,7 +105,7 @@ class Options(object):
 
         # Time period handling
         if opt.since is None and opt.until is None:
-            opt.since, opt.until, period = self.time_period(arg)
+            opt.since, opt.until, period = did.base.Date.period(arg)
         else:
             opt.since = did.base.Date(opt.since or "1993-01-01")
             opt.until = did.base.Date(opt.until or "today")
@@ -124,45 +124,6 @@ class Options(object):
         utils.log.debug("Gathered options:")
         utils.log.debug('options = {0}'.format(opt))
         return opt
-
-    @staticmethod
-    def time_period(arg):
-        """ Detect desired time period for the argument """
-        since, until, period = None, None, None
-        if "today" in arg:
-            since = did.base.Date("today")
-            until = did.base.Date("today")
-            until.date += delta(days=1)
-            period = "today"
-        elif "year" in arg:
-            if "last" in arg:
-                since, until = did.base.Date.last_year()
-                period = "the last fiscal year"
-            else:
-                since, until = did.base.Date.this_year()
-                period = "this fiscal year"
-        elif "quarter" in arg:
-            if "last" in arg:
-                since, until = did.base.Date.last_quarter()
-                period = "the last quarter"
-            else:
-                since, until = did.base.Date.this_quarter()
-                period = "this quarter"
-        elif "month" in arg:
-            if "last" in arg:
-                since, until = did.base.Date.last_month()
-                period = "the last month"
-            else:
-                since, until = did.base.Date.this_month()
-                period = "this month"
-        else:
-            if "last" in arg:
-                since, until = did.base.Date.last_week()
-                period = "the last week"
-            else:
-                since, until = did.base.Date.this_week()
-                period = "this week"
-        return since, until, period
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

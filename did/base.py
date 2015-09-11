@@ -236,6 +236,45 @@ class Date(object):
         until = until.date - delta(years=1)
         return Date(since), Date(until)
 
+    @staticmethod
+    def period(argument):
+        """ Detect desired time period for the argument """
+        since, until, period = None, None, None
+        if "today" in argument:
+            since = Date("today")
+            until = Date("today")
+            until.date += delta(days=1)
+            period = "today"
+        elif "year" in argument:
+            if "last" in argument:
+                since, until = Date.last_year()
+                period = "the last fiscal year"
+            else:
+                since, until = Date.this_year()
+                period = "this fiscal year"
+        elif "quarter" in argument:
+            if "last" in argument:
+                since, until = Date.last_quarter()
+                period = "the last quarter"
+            else:
+                since, until = Date.this_quarter()
+                period = "this quarter"
+        elif "month" in argument:
+            if "last" in argument:
+                since, until = Date.last_month()
+                period = "the last month"
+            else:
+                since, until = Date.this_month()
+                period = "this month"
+        else:
+            if "last" in argument:
+                since, until = Date.last_week()
+                period = "the last week"
+            else:
+                since, until = Date.this_week()
+                period = "this week"
+        return since, until, period
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  User
