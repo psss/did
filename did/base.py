@@ -12,6 +12,7 @@ import StringIO
 import xmlrpclib
 import ConfigParser
 from dateutil.relativedelta import MO as MONDAY
+from ConfigParser import NoOptionError, NoSectionError
 from dateutil.relativedelta import relativedelta as delta
 
 from did import utils
@@ -76,25 +77,23 @@ class Config(object):
         # Check the environment for config file override
         # (unless path is explicitly provided)
         if path is None:
-            try:
-                directory = os.environ["DID_CONFIG"]
-            except KeyError:
-                directory = CONFIG
-            path = directory.rstrip("/") + "/config"
+            path = Config.path()
         # Parse the config from file
         try:
             log.info("Inspecting config file '{0}'".format(path))
             self.parser.readfp(codecs.open(path, "r", "utf8"))
         except IOError as error:
-            log.error(error)
-            raise ConfigError("Unable to read the config file")
+            log.debug(error)
+            raise ConfigError(
+                "Unable to read the config file {0}".format(path))
 
     @property
     def email(self):
         """ User email(s) """
         try:
             return self.parser.get("general", "email")
-        except ConfigParser.NoOptionError:
+        except (NoOptionError, NoSectionError) as error:
+            log.debug(error)
             return []
 
     @property
@@ -102,7 +101,7 @@ class Config(object):
         """ Maximum width of the report """
         try:
             return int(self.parser.get("general", "width"))
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        except (NoOptionError, NoSectionError):
             return MAX_WIDTH
 
     def sections(self, kind=None):
@@ -115,7 +114,7 @@ class Config(object):
                     section_type = self.parser.get(section, "type")
                     if section_type != kind:
                         continue
-                except ConfigParser.NoOptionError:
+                except NoOptionError:
                     # Implicit header/footer type for backward compatibility
                     if (section == kind == "header" or
                             section == kind == "footer"):
@@ -141,9 +140,18 @@ class Config(object):
             "Item '{0}' not found in section '{1}'".format(it, section))
 
     @staticmethod
+    def path():
+        """ Detect config file path """
+        try:
+            directory = os.environ["DID_CONFIG"]
+        except KeyError:
+            directory = CONFIG
+        return directory.rstrip("/") + "/config"
+
+    @staticmethod
     def example():
         """ Return config example """
-        return "[general]\nemail = Name Surname <email@domain.com>\n"
+        return "[general]\nemail = Name Surname <email@example.org>\n"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

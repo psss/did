@@ -81,6 +81,7 @@ class Options(object):
 
     def parse(self, arguments=None):
         """ Parse the options. """
+        # Split arguments if given as string and run the parser
         if arguments is not None:
             self.arguments = arguments
         if (self.arguments is not None
@@ -102,6 +103,8 @@ class Options(object):
         if not opt.emails:
             opt.emails = did.base.Config().email
         opt.emails = utils.split(opt.emails, separator=re.compile(r"\s*,\s*"))
+        if not opt.emails:
+            raise ConfigError("No email given. Use --email or create config.")
 
         # Time period handling
         if opt.since is None and opt.until is None:
@@ -112,6 +115,7 @@ class Options(object):
             # Make the 'until' limit inclusive
             opt.until.date += delta(days=1)
             period = "given date range"
+
         # Validate the date range
         if not opt.since.date < opt.until.date:
             raise RuntimeError(
@@ -148,8 +152,6 @@ def main(arguments=None):
 
         # Check for user email addresses (command line or config)
         users = [did.base.User(email=email) for email in options.emails]
-        if not users:
-            raise ConfigError("No user email provided")
 
         # Prepare team stats object for data merging
         team_stats = UserStats(options=options)
@@ -177,21 +179,17 @@ def main(arguments=None):
         # Return all gathered stats objects
         return gathered_stats, team_stats
 
-    except (ConfigError, ReportError) as error:
+    except ConfigError as error:
+        utils.info("Create at least a minimum config file {0}:\n{1}".format(
+            did.base.Config.path(), did.base.Config().example().strip()))
+        utils.log.error(error)
+        sys.exit(1)
+
+    except ReportError as error:
         utils.log.error(error)
         sys.exit(1)
 
     except kerberos.GSSError as error:
+        utils.log.error(error)
         utils.log.error("Kerberos authentication failed. Try kinit.")
         sys.exit(2)
-
-    except ConfigParser.NoSectionError as error:
-        utils.log.error(error)
-        utils.log.error(
-            "No email provided on the command line or in the config file")
-        utils.info("Create at least a minimum config file {0}:".format(
-            did.base.CONFIG))
-        from getpass import getuser
-        utils.info(
-            '[general]\nemail = "My Name" <{0}@domain.com>'.format(getuser()))
-        sys.exit(3)

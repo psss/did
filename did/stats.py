@@ -158,9 +158,17 @@ class UserStats(StatsGroup):
         super(UserStats, self).__init__(
             option="all", user=user, options=options)
         self.stats = []
-        import did.plugins
-        for section, statsgroup in did.plugins.detect():
-            self.stats.append(statsgroup(option=section, parent=self))
+        try:
+            import did.plugins
+            for section, statsgroup in did.plugins.detect():
+                self.stats.append(statsgroup(option=section, parent=self))
+        except did.base.ConfigError as error:
+            # Missing config file is OK if building options (--help).
+            # Otherwise raise the expection to suggest config example.
+            if options is None:
+                log.debug(error)
+            else:
+                raise
 
     def add_option(self, parser):
         """ Add options for each stats group. """
