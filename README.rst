@@ -141,9 +141,10 @@ settings and configuration of individual reports::
     next = Plans, thoughts, ideas...
     status = Status: Green | Yellow | Orange | Red
 
-See examples to get some more inspiration on how to customize your
-config file. Use environment variable ``DID_CONFIG`` to override
-the default config directory location ``~/.did``.
+See plugin documentation for more detailed description of options
+available for particular plugin. You can also check python module
+documentation directly, e.g. ``pydoc did.plugins.git`` or use the
+example config provided in the package and web documentation.
 
 
 Links

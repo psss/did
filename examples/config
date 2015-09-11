@@ -15,11 +15,6 @@ type = bugzilla
 prefix = BZ
 url = https://bugzilla.redhat.com/xmlrpc.cgi
 
-[mz]
-type = bugzilla
-prefix = MZ
-url = https://bugzilla.mozilla.org/xmlrpc.cgi
-
 [tools]
 type = git
 apps = /home/psss/git/apps

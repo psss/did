@@ -14,8 +14,9 @@ Table of Contents
 
     Overview <overview>
     Install <install>
-    Modules <modules>
+    Config <config>
     Plugins <plugins>
+    Modules <modules>
     Contribute <contribute>
 
 Indices and Tables
