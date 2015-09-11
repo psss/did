@@ -107,7 +107,7 @@ class Trac(object):
     def updated(self, user):
         """ True if the user commented the ticket in given time frame """
         for who, what, old, new in self.history(user):
-            if what == "comment" and new != "":
+            if (what == "comment" or what == "description") and new != "":
                 return True
         return False
 
