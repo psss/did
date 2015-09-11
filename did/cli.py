@@ -137,8 +137,9 @@ def main(arguments=None):
     """
     Parse options, gather stats and show the results
 
-    Takes optional parameter ``arguments`` which can be useful for
-    testing purposes. Function returns tuple of the form::
+    Takes optional parameter ``arguments`` which can be either
+    command line string or list of options. This is very useful
+    for testing purposes. Function returns a tuple of the form::
 
         ([user_stats], team_stats)
 
