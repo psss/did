@@ -19,7 +19,7 @@ import did.base
 import did.utils as utils
 from did.utils import log
 from did.stats import UserStats
-from did.base import ConfigError, ReportError
+from did.base import ConfigError, ReportError, OptionError
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -34,6 +34,7 @@ class Options(object):
         self.parser = optparse.OptionParser(
             usage="did [last] [week|month|quarter|year] [opts]")
         self.arguments = arguments
+        self.opt = self.arg = None
 
         # Enable debugging output (even before options are parsed)
         if "--debug" in sys.argv:
@@ -91,6 +92,9 @@ class Options(object):
                 and isinstance(self.arguments, basestring)):
             self.arguments = self.arguments.split()
         (opt, arg) = self.parser.parse_args(self.arguments)
+        self.opt = opt
+        self.arg = arg
+        self.check()
 
         # Enable --all if no particular stat or group selected
         opt.all = not any([
@@ -127,6 +131,13 @@ class Options(object):
         log.debug("Gathered options:")
         log.debug('options = {0}'.format(opt))
         return opt
+
+    def check(self):
+        """ Perform additional check for given options """
+        keywords = "today this last week month quarter year"
+        for argument in self.arg:
+            if argument not in keywords:
+                raise OptionError("Invalid argument: '{0}'".format(argument))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,7 +196,7 @@ def main(arguments=None):
         log.error(error)
         sys.exit(1)
 
-    except ReportError as error:
+    except (OptionError, ReportError) as error:
         log.error(error)
         sys.exit(1)
 

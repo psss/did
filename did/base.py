@@ -42,6 +42,11 @@ class ConfigError(Exception):
     pass
 
 
+class OptionError(Exception):
+    """ General problem with configuration file """
+    pass
+
+
 class ReportError(Exception):
     """ General problem with report generation """
     pass
