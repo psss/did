@@ -20,6 +20,7 @@ Table of Contents
     Overview <overview>
     Install <install>
     Config <config>
+    Examples <examples>
     Plugins <plugins>
     Modules <modules>
     Contribute <contribute>

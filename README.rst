@@ -33,9 +33,9 @@ Show me all stats for today::
 
     did today
 
-Gather stats for the last week::
+Gather stats for the last month::
 
-    did last week
+    did last month
 
 See ``did --help`` for complete list of available stats.
 
@@ -125,7 +125,7 @@ settings and configuration of individual reports::
 
     [tools]
     type = git
-    apps = /home/psss/git/apps
+    did = /home/psss/git/did
 
     [tests]
     type = git
@@ -135,6 +135,11 @@ settings and configuration of individual reports::
     type = trac
     prefix = TT
     url = https://some.trac.com/trac/project/rpc
+
+    [bz]
+    type = bugzilla
+    prefix = BZ
+    url = https://bugzilla.redhat.com/xmlrpc.cgi
 
     [footer]
     type = footer
