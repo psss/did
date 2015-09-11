@@ -13,7 +13,6 @@ import re
 import sys
 import kerberos
 import optparse
-import ConfigParser
 from dateutil.relativedelta import relativedelta as delta
 
 import did.base
@@ -33,8 +32,7 @@ class Options(object):
     def __init__(self, arguments=None):
         """ Prepare the parser. """
         self.parser = optparse.OptionParser(
-            usage="did [last] [week|month|quarter|year] [opts]",
-            description=__doc__.strip())
+            usage="did [last] [week|month|quarter|year] [opts]")
         self.arguments = arguments
 
         # Time & user selection
