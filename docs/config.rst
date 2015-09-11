@@ -18,3 +18,4 @@ options available for particular plugin. You can also check python
 module documentation, e.g. ``pydoc did.plugins.git``.
 
 .. literalinclude:: ../examples/config
+    :language: ini
