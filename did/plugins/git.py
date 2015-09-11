@@ -52,7 +52,7 @@ class GitRepo(object):
                 command, cwd=self.path,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as error:
-            log.error(error)
+            log.debug(error)
             raise ReportError(
                 "Unable to access git repo '{0}'".format(self.path))
         output, errors = process.communicate()
@@ -117,7 +117,14 @@ class GitStats(StatsGroup):
         StatsGroup.__init__(self, option, name, parent)
         for repo, path in Config().section(option):
             if path.endswith('/*'):
-                for repo_dir in sorted(os.listdir(path[:-1])):
+                try:
+                    directories = os.listdir(path[:-1])
+                except OSError as error:
+                    log.error("Wrong path in the [{0}] config section".format(
+                        option))
+                    log.error(error)
+                    raise SystemExit(1)
+                for repo_dir in sorted(directories):
                     repo_path = path.replace('*', repo_dir)
                     self.stats.append(GitCommits(
                         option="{0}-{1}".format(repo, repo_dir),
