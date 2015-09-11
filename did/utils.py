@@ -200,9 +200,18 @@ class Logging(object):
     # Default log level is WARN
     _level = LOG_WARN
 
+    # Already initialized loggers by their name
+    _loggers = dict()
+
     def __init__(self, name='did'):
-        self.logger = self._create_logger(name=name)
-        self.set()
+        # Use existing logger if already initialized
+        try:
+            self.logger = Logging._loggers[name]
+        # Otherwise create a new one, save it and set it
+        except KeyError:
+            self.logger = self._create_logger(name=name)
+            Logging._loggers[name] = self.logger
+            self.set()
 
     class ColoredFormatter(logging.Formatter):
         """ Custom color formatter for logging """
@@ -379,6 +388,5 @@ class Coloring(object):
 #  Default Logger
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Create the output logger
-_logging = Logging('did')
-log = _logging.logger
+# Create the default output logger
+log = Logging('did').logger

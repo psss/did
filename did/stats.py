@@ -62,7 +62,6 @@ class Stats(object):
             else:
                 # Default to Enabled if not otherwise disabled
                 self._enabled = getattr(self.options, self.dest, True)
-        log.debug("{0} Enabled? {1}".format(self.option, self._enabled))
         return self._enabled
 
     def fetch(self):

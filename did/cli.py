@@ -35,6 +35,10 @@ class Options(object):
             usage="did [last] [week|month|quarter|year] [opts]")
         self.arguments = arguments
 
+        # Enable debugging output (even before options are parsed)
+        if "--debug" in sys.argv:
+            utils.Logging("did").set(utils.LOG_DEBUG)
+
         # Time & user selection
         group = optparse.OptionGroup(self.parser, "Selection")
         group.add_option(
@@ -87,10 +91,6 @@ class Options(object):
                 and isinstance(self.arguments, basestring)):
             self.arguments = self.arguments.split()
         (opt, arg) = self.parser.parse_args(self.arguments)
-
-        # Enable debugging output
-        if opt.debug:
-            utils.Logging.set(utils.LOG_DEBUG)
 
         # Enable --all if no particular stat or group selected
         opt.all = not any([
