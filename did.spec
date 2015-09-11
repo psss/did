@@ -1,5 +1,5 @@
 Name: did
-Version: 0.5
+Version: 0.6
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -42,6 +42,24 @@ install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Fri Sep 11 2015 Petr Šplíchal <psplicha@redhat.com> 0.6-1
+- Provide a couple of real-life examples in docs
+- Convert plugin order list into table
+- Update welcome page and module documentation
+- Handle invalid dates, paths and urls
+- Consider ticket description change as update
+- Check free command line arguments for typos
+- Include example config in docs, adjust man page
+- Fix the --debug option, prevent logger duplication
+- Correctly handle missing config file
+- Move Options.time_period() to Date.period()
+- Update source url, add python-bugzilla to requires
+- Move stats classes into a separate module
+- Completely remove get_color_mode/set_color_mode
+- Adjust utils.pluralize() to take a single argument
+- Adjust commit-msg hook to handle comments
+- Move command line code to the did.cli module
+
 * Wed Sep 09 2015 Petr Šplíchal <psplicha@redhat.com> 0.5-1
 - New tests for command line script, bugzilla, git
 - Update README with synopsis and today's example
