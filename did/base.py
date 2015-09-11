@@ -175,7 +175,11 @@ class Date(object):
         elif date.lower() == "yesterday":
             self.date = TODAY - delta(days=1)
         else:
-            self.date = datetime.date(*[int(i) for i in date.split("-")])
+            try:
+                self.date = datetime.date(*[int(i) for i in date.split("-")])
+            except ValueError:
+                raise OptionError(
+                    "Invalid date format: '{0}', use YYYY-MM-DD.".format(date))
         self.datetime = datetime.datetime(
             self.date.year, self.date.month, self.date.day, 0, 0, 0)
 
