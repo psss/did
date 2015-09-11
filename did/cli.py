@@ -18,6 +18,7 @@ from dateutil.relativedelta import relativedelta as delta
 
 import did.base
 import did.utils as utils
+from did.utils import log
 from did.stats import UserStats
 from did.base import ConfigError, ReportError
 
@@ -50,7 +51,7 @@ class Options(object):
         self.parser.add_option_group(group)
 
         # Create sample stats and include all stats objects options
-        utils.log.debug("Loading Sample Stats group to build Options")
+        log.debug("Loading Sample Stats group to build Options")
         self.sample_stats = UserStats()
         self.sample_stats.add_option(self.parser)
 
@@ -125,8 +126,8 @@ class Options(object):
             period, opt.since, opt.until.date - delta(days=1)))
 
         # Finito
-        utils.log.debug("Gathered options:")
-        utils.log.debug('options = {0}'.format(opt))
+        log.debug("Gathered options:")
+        log.debug('options = {0}'.format(opt))
         return opt
 
 
@@ -182,14 +183,14 @@ def main(arguments=None):
     except ConfigError as error:
         utils.info("Create at least a minimum config file {0}:\n{1}".format(
             did.base.Config.path(), did.base.Config().example().strip()))
-        utils.log.error(error)
+        log.error(error)
         sys.exit(1)
 
     except ReportError as error:
-        utils.log.error(error)
+        log.error(error)
         sys.exit(1)
 
     except kerberos.GSSError as error:
-        utils.log.error(error)
-        utils.log.error("Kerberos authentication failed. Try kinit.")
+        log(error)
+        log.error("Kerberos authentication failed. Try kinit.")
         sys.exit(2)
