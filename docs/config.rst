@@ -19,3 +19,19 @@ module documentation, e.g. ``pydoc did.plugins.git``.
 
 .. literalinclude:: ../examples/config
     :language: ini
+
+Order
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Order of individual sections is based on the default order set for
+each plugin separately. You can adjust stats order by providing
+your desired value in respective config section, for example::
+
+    [tools]
+    type = git
+    order = 100
+    apps = /home/psss/git/apps
+
+This  would place the git stats at the top of your report, just
+after the header section. Check :doc:`plugins` documentation for
+the default order information.
