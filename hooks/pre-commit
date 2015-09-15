@@ -19,6 +19,5 @@ if ! make rpm &> /dev/null; then
     exit 1
 fi
 
-# Cleanup & exit
-make clean &> /dev/null
+# Everything seems fine
 exit 0
