@@ -45,8 +45,12 @@ class Stats(object):
 
     @property
     def name(self):
-        """ Use docs string unless name set. """
-        return self._name or self.__doc__.strip()
+        """ Use the first line of docs string unless name set. """
+        if self._name:
+            return self._name
+        return [
+            line.strip() for line in self.__doc__.split("\n")
+            if line.strip()][0]
 
     def add_option(self, group):
         """ Add option for self to the parser group object. """
