@@ -143,13 +143,27 @@ class Bug(object):
         return False
 
     def fixed(self):
-        """ True if bug was moved to MODIFIED in given time frame """
-        for who, record in self.logs:
-            if (record["field_name"] == "status"
-                    and record["added"] == "MODIFIED"
-                    and record["removed"] != "CLOSED"):
-                return True
-        return False
+        """ Moved to MODIFIED and not later moved to ASSIGNED """
+        decision = False
+        for record in self.history:
+            # Completely ignore older changes
+            if record["when"] < self.options.since.date:
+                continue
+            # Look for status change to MODIFIED (unless already found)
+            if not decision and record["when"] < self.options.until.date:
+                for change in record["changes"]:
+                    if (change["field_name"] == "status"
+                            and change["added"] == "MODIFIED"
+                            and change["removed"] != "CLOSED"):
+                        decision = True
+            # Make sure that the bug has not been later moved to ASSIGNED.
+            # (This would mean the issue has not been fixed properly.)
+            else:
+                for change in record["changes"]:
+                    if (change["field_name"] == "status"
+                            and change["added"] == "ASSIGNED"):
+                        decision = False
+        return decision
 
     def posted(self):
         """ True if bug was moved to POST in given time frame """
@@ -265,7 +279,14 @@ class FiledBugs(Stats):
 
 
 class FixedBugs(Stats):
-    """ Bugs fixed """
+    """
+    Bugs fixed
+
+    As fixed are considered those bugs which have been moved to the
+    MODIFIED state in given time frame and later have not been moved
+    back to the ASSIGNED state (which would suggest an incomplete fix).
+    """
+
     def fetch(self):
         log.info(u"Searching for bugs fixed by {0}".format(self.user))
         query = {
