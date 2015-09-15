@@ -58,3 +58,26 @@ def test_bugzilla_fixed():
         --since 2015-04-16
         --until 2015-04-16""")[0][0].stats[0].stats[3].stats
     assert any([bug.id == 1174186 for bug in stats])
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Returned Bugs
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def test_bugzilla_returned():
+    """ Check returned bugs """
+    did.base.Config(CONFIG)
+    # Moving bug to ASSIGNED from ON_QA (test on BZ#1174186)
+    stats = did.cli.main("""
+        --bz-returned
+        --email dkutalek@redhat.com
+        --since 2015-04-15
+        --until 2015-04-15""")[0][0].stats[0].stats[4].stats
+    assert any([bug.id == 1174186 for bug in stats])
+    # Moving from NEW is not returning bug (test on BZ#1229704)
+    stats = did.cli.main("""
+        --bz-returned
+        --email mizdebsk@redhat.com
+        --since 2015-06-09
+        --until 2015-06-09""")[0][0].stats[0].stats[4].stats
+    assert not any([bug.id == 1229704 for bug in stats])

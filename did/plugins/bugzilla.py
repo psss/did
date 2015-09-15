@@ -134,10 +134,11 @@ class Bug(object):
         return False
 
     def returned(self, user):
-        """ True if the bug was returned to ASSIGNED by given user """
+        """ Moved to ASSIGNED by given user (but not from NEW) """
         for who, record in self.logs:
             if (record["field_name"] == "status"
                     and record["added"] == "ASSIGNED"
+                    and record["removed"] != "NEW"
                     and who == user.email):
                 return True
         return False
