@@ -26,6 +26,12 @@ from did.stats import Stats, StatsGroup
 # Default identifier width
 DEFAULT_WIDTH = 4
 
+# Maximum number of results fetched at once
+MAX_RESULTS = 1000
+
+# Maximum number of batches
+MAX_BATCHES = 100
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
@@ -58,19 +64,26 @@ class Issue(object):
     def search(query, stats):
         """ Perform issue search for given stats instance """
         log.debug("Search query: {0}".format(query))
-        result = stats.parent.session.open(
-            "{0}/rest/api/latest/search?{1}".format(
-                stats.parent.url, urllib.urlencode(
-                    {"jql": query, "fields": "summary,comment"})))
-        issues = json.loads(result.read())
-        log.debug(
-            "Search result: {0} found".format(
-                listed(issues["total"], "issue")))
-        log.data(pretty(issues))
+        issues = []
+        # Fetch data from the server in batches of MAX_RESULTS issues
+        for batch in range(MAX_BATCHES):
+            result = stats.parent.session.open(
+                "{0}/rest/api/latest/search?{1}".format(
+                    stats.parent.url, urllib.urlencode({
+                        "jql": query,
+                        "fields": "summary,comment",
+                        "maxResults": MAX_RESULTS,
+                        "startAt": batch * MAX_RESULTS})))
+            data = json.loads(result.read())
+            log.debug("Batch {0} result: {1} fetched".format(
+                batch, listed(data["issues"], "issue")))
+            log.data(pretty(data))
+            issues.extend(data["issues"])
+            # If all issues fetched, we're done
+            if len(issues) >= data["total"]:
+                break
         # Return the list of issue objects
-        return [
-            Issue(issue, prefix=stats.parent.prefix)
-            for issue in issues["issues"]]
+        return [Issue(issue, prefix=stats.parent.prefix) for issue in issues]
 
     def updated(self, user, options):
         """ True if the issue was commented by given user """
