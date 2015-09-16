@@ -65,6 +65,12 @@ class Bugzilla(object):
         try:
             result = self.server.query(query)
         except xmlrpclib.Fault as error:
+            # Ignore non-existent users (this is necessary for users with
+            # several email aliases to allow them using --merge/--total)
+            if "not a valid username" in unicode(error):
+                log.debug(error)
+                return []
+            # Otherwise suggest to bake bugzilla cookies
             log.error("An error encountered, while searching for bugs.")
             log.debug(error)
             raise ReportError(
