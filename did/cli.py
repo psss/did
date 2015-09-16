@@ -204,6 +204,6 @@ def main(arguments=None):
         sys.exit(1)
 
     except kerberos.GSSError as error:
-        log(error)
+        log.debug(error)
         log.error("Kerberos authentication failed. Try kinit.")
         sys.exit(2)
