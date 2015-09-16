@@ -139,7 +139,7 @@ class Bug(object):
             if (record["field_name"] == "status"
                     and record["added"] == "ASSIGNED"
                     and record["removed"] != "NEW"
-                    and who == user.email):
+                    and who == user.email or who == user.name):
                 return True
         return False
 
