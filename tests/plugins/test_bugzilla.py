@@ -22,9 +22,10 @@ url = https://bugzilla.redhat.com/xmlrpc.cgi
 def test_bugzilla_linus():
     """ Check bugs filed by Linus :-) """
     did.base.Config(CONFIG)
-    did.cli.main(
-        "--email torvalds@linux-foundation.org "
-        "--bz-filed --until today".split())
+    stats = did.cli.main("""
+        --email torvalds@linux-foundation.org
+        --bz-filed --until today""")[0][0].stats[0].stats[0].stats
+    assert any([bug.id == 439858 for bug in stats])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,9 +33,10 @@ def test_bugzilla_linus():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_bugzilla_week():
-    """ Check all stats for given week"""
+    """ Check all stats for given week """
     did.base.Config(CONFIG)
-    did.cli.main("--bz --email psplicha@redhat.com".split())
+    stats = did.cli.main("--email psplicha@redhat.com")
+    assert stats
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
