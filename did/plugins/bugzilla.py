@@ -199,7 +199,12 @@ class Bug(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class VerifiedBugs(Stats):
-    """ Bugs verified """
+    """
+    Bugs verified
+
+    Bugs with ``QA Contact`` field set to given user and having
+    their status changed to ``VERIFIED``.
+    """
     def fetch(self):
         log.info(u"Searching for bugs verified by {0}".format(self.user))
         query = {
@@ -227,7 +232,13 @@ class VerifiedBugs(Stats):
 
 
 class ReturnedBugs(Stats):
-    """ Bugs returned """
+    """
+    Bugs returned
+
+    Returned bugs are those which were returned by given user to
+    the ``ASSIGNED`` status, meaning the fix for the issue is not
+    correct or complete.
+    """
     def fetch(self):
         log.info(u"Searching for bugs returned by {0}".format(self.user))
         query = {
@@ -259,7 +270,11 @@ class ReturnedBugs(Stats):
 
 
 class FiledBugs(Stats):
-    """ Bugs filed """
+    """
+    Bugs filed
+
+    Newly created bugs by given user, marked as the ``Reporter``.
+    """
     def fetch(self):
         log.info(u"Searching for bugs filed by {0}".format(self.user))
         query = {
@@ -283,9 +298,9 @@ class FixedBugs(Stats):
     """
     Bugs fixed
 
-    As fixed are considered those bugs which have been moved to the
-    MODIFIED state in given time frame and later have not been moved
-    back to the ASSIGNED state (which would suggest an incomplete fix).
+    Bugs which have been moved to the ``MODIFIED`` state in given
+    time frame and later have not been moved back to the
+    ``ASSIGNED`` state (which would suggest an incomplete fix).
     """
 
     def fetch(self):
@@ -315,7 +330,12 @@ class FixedBugs(Stats):
 
 
 class PostedBugs(Stats):
-    """ Bugs posted """
+    """
+    Bugs posted
+
+    Bugs with patches posted for review, detected by their status
+    change to ``POST`` and given user set as ``Assignee``.
+    """
     def fetch(self):
         log.info(u"Searching for bugs posted by {0}".format(self.user))
         query = {
@@ -343,7 +363,13 @@ class PostedBugs(Stats):
 
 
 class PatchedBugs(Stats):
-    """ Bugs patched """
+    """
+    Bugs patched
+
+    Gathers bugs with keyword ``Patch`` added by given user,
+    denoting the patch for the issue is available (e.g. attached
+    to the bug or pushed to a feature git branch).
+    """
     def fetch(self):
         log.info(u"Searching for bugs patched by {0}".format(self.user))
         query = {
@@ -371,7 +397,11 @@ class PatchedBugs(Stats):
 
 
 class CommentedBugs(Stats):
-    """ Bugs commented """
+    """
+    Bugs commented
+
+    All bugs commented by given user in requested time frame.
+    """
     def fetch(self):
         log.info(u"Searching for bugs commented by {0}".format(self.user))
         query = {
