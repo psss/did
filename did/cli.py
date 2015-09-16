@@ -91,6 +91,9 @@ class Options(object):
         if (self.arguments is not None
                 and isinstance(self.arguments, basestring)):
             self.arguments = self.arguments.split()
+        # Otherwise properly decode command line arguments
+        if self.arguments is None:
+            self.arguments = [arg.decode("utf-8") for arg in sys.argv[1:]]
         (opt, arg) = self.parser.parse_args(self.arguments)
         self.opt = opt
         self.arg = arg
