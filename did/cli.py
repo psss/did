@@ -207,3 +207,7 @@ def main(arguments=None):
         log.debug(error)
         log.error("Kerberos authentication failed. Try kinit.")
         sys.exit(2)
+
+    except Exception as error:
+        log.error(error)
+        sys.exit(3)
