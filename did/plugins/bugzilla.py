@@ -66,9 +66,9 @@ class Bugzilla(object):
             result = self.server.query(query)
         except xmlrpclib.Fault as error:
             log.error("An error encountered, while searching for bugs.")
-            log.error("Exception:\n{0}".format(error))
-            log.error("Have you prepared your cookies by 'bugzilla login'?")
-            raise
+            log.debug(error)
+            raise ReportError(
+                "Have you prepared your cookies by 'bugzilla login'?")
         log.debug("Search result:")
         log.debug(pretty(result))
         bugs = dict((bug.id, bug) for bug in result)
