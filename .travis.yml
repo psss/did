@@ -9,6 +9,7 @@ before_install:
   - "pip install -U pip setuptools virtualenv coveralls"
 install:
   - "python setup.py install"
+  - "git fetch --unshallow"
 script:
   - "coverage run --source=bin,did -m py.test $CAPTURE tests"
 after_success:
