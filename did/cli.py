@@ -209,7 +209,7 @@ def main(arguments=None):
         sys.exit(2)
 
     except Exception as error:
-        if options.debug:
+        if "--debug" in sys.argv:
             raise
         log.error(error)
         sys.exit(3)
