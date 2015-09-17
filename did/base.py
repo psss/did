@@ -177,7 +177,8 @@ class Date(object):
         else:
             try:
                 self.date = datetime.date(*[int(i) for i in date.split("-")])
-            except ValueError:
+            except StandardError as error:
+                log.debug(error)
                 raise OptionError(
                     "Invalid date format: '{0}', use YYYY-MM-DD.".format(date))
         self.datetime = datetime.datetime(
