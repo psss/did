@@ -72,7 +72,7 @@ author = u'Petr Šplíchal'
 # built documents.
 #
 # The short X.Y version.
-version = '0.4'
+version = ''
 # The full version, including alpha/beta/rc tags.
 release = ''
 
