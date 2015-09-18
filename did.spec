@@ -1,5 +1,5 @@
 Name: did
-Version: 0.6
+Version: 0.7
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -42,6 +42,24 @@ install -pm 644 docs/*.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Fri Sep 18 2015 Petr Šplíchal <psplicha@redhat.com> 0.7-1
+- Refer Travis CI and Coveralls in contribute docs
+- Remove version from the documentation completely
+- Unshallow the git repo as it is used for testing
+- Ignore errors about non-existent bugzilla emails
+- Better handle xmlrpclib errors during bug search
+- Document bugzilla plugin stats in more detail
+- Bugzilla test suite adjustments (split, asserts)
+- Log kerberos error as a debug message
+- Decode command line arguments from utf-8
+- Filter returned bugs by email or name
+- Moving bug from NEW to ASSIGNED is not returning
+- Improve fixed bugs detection in bugzilla plugin
+- Allow stats name detection from multiline docs
+- Do not run 'make clean' in the pre-commit hook
+- Support fetching large queries in jira plugin
+- Document stats order specification in config
+
 * Fri Sep 11 2015 Petr Šplíchal <psplicha@redhat.com> 0.6-1
 - Provide a couple of real-life examples in docs
 - Convert plugin order list into table
