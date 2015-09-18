@@ -108,6 +108,11 @@ or pip::
     # sudo required if not in a virtualenv
     pip install pytest coveralls
 
+See Travis CI and Coveralls for the latest test/coverage results:
+
+* https://travis-ci.org/psss/did/builds
+* https://coveralls.io/github/psss/did
+
 
 MrBob
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
