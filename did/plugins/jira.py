@@ -161,6 +161,11 @@ class JiraStats(StatsGroup):
             raise ReportError(
                 "No Jira url set in the [{0}] section".format(option))
         self.url = config["url"].rstrip("/")
+        # Optional SSO url
+        if "sso_url" in config:
+            self.sso_url = config["sso_url"]
+        else:
+            self.sso_url = self.url + "/step-auth-gss"
         # Make sure we have project set
         if "project" not in config:
             raise ReportError(
@@ -193,5 +198,6 @@ class JiraStats(StatsGroup):
                 urllib2.HTTPRedirectHandler,
                 urllib2.HTTPCookieProcessor(cookie),
                 urllib2_kerberos.HTTPKerberosAuthHandler)
-            self._session.open(self.url + "/step-auth-gss")
+            log.debug(u"Connecting to {0}".format(self.sso_url))
+            self._session.open(self.sso_url)
         return self._session
