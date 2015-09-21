@@ -14,8 +14,9 @@ Install using yum::
 
     yum install did
 
-or dnf::
+or dnf which allows to easily enable the copr repository::
 
+    dnf copr enable psss/did
     dnf install did
 
 This will bring dependencies for all core plugins as well.
