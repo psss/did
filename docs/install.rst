@@ -6,20 +6,18 @@
 Copr
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Download Copr repository from the project page:
-
-* https://copr.fedoraproject.org/coprs/psss/did/
-
-Install using yum::
+Set up the `did repository`__ and install the tool using yum::
 
     yum install did
 
-or dnf which allows to easily enable the copr repository::
+or use dnf which allows to enable the repository directly::
 
     dnf copr enable psss/did
     dnf install did
 
 This will bring dependencies for all core plugins as well.
+
+__ https://copr.fedoraproject.org/coprs/psss/did/
 
 
 PIP
@@ -32,12 +30,12 @@ Basic dependencies for buiding/installing pip packages::
 
 Upgrade to the latest pip/setup/virtualenv installer code::
 
-    sudo pip install -U pip setuptools virtualenv
+    sudo pip install --upgrade pip setuptools virtualenv
 
 Install into a python virtual environment (OPTIONAL)::
 
-    virtualenv --no-site-packages ~/virtenv_statusreport
-    source ~/virtenv_statusreport/bin/activate
+    virtualenv ~/did
+    source ~/did/bin/activate
 
 Install did (sudo required if not in a virtualenv)::
 
