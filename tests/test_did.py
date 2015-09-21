@@ -38,3 +38,20 @@ def test_help_example():
         did.cli.main(["--help"])
     except SystemExit:
         pass
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Invalid Arguments
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def test_invalid_arguments():
+    """ Complain about invalid arguments """
+    did.base.Config(config=MINIMAL)
+    for argument in ["a", "b", "c", "something"]:
+        try:
+            did.cli.main(argument)
+        except SystemExit:
+            pass
+        else:
+            raise RuntimeError(
+                "Invalid argument {0} not handled".format(argument))

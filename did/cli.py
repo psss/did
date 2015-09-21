@@ -137,7 +137,7 @@ class Options(object):
 
     def check(self):
         """ Perform additional check for given options """
-        keywords = "today this last week month quarter year"
+        keywords = "today this last week month quarter year".split()
         for argument in self.arg:
             if argument not in keywords:
                 raise OptionError("Invalid argument: '{0}'".format(argument))
