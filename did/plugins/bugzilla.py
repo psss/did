@@ -3,6 +3,11 @@
 """
 Bugzilla stats such as verified, filed or fixed bugs
 
+This plugin uses ``python-bugzilla`` module to gather the stats.
+Use the ``bugzilla login`` command to initialize Bugzilla cookies
+which then will be used for authentication. Reports will contain
+only publicly available issues if cookies are not properly set.
+
 Config example::
 
     [bz]
@@ -74,7 +79,7 @@ class Bugzilla(object):
             log.error("An error encountered, while searching for bugs.")
             log.debug(error)
             raise ReportError(
-                "Have you prepared your cookies by 'bugzilla login'?")
+                "Have you baked cookies using the 'bugzilla login' command?")
         log.debug("Search result:")
         log.debug(pretty(result))
         bugs = dict((bug.id, bug) for bug in result)
