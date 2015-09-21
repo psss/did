@@ -178,7 +178,7 @@ Authors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Petr Šplíchal, Karel Šrot, Lukáš Zachar,
-Matěj Cepl, Ondřej Pták and Chris Ward.
+Matěj Cepl, Ondřej Pták, Chris Ward and Tomáš Hofman.
 
 
 Copyright

@@ -9,6 +9,10 @@ Config example::
     prefix = JIRA
     project = ORG
     url = https://issues.jboss.org/
+    sso_url = https://sso.jboss.org
+
+Note that the ``sso_url`` parameter is optional. If not provided,
+``url + "/step-auth-gss"`` will be used for authentication.
 """
 
 import re
