@@ -2,10 +2,9 @@
 TMP = $(CURDIR)/tmp
 VERSION = $(shell grep ^Version did.spec | sed 's/.* //')
 PACKAGE = did-$(VERSION)
-DOCS = $(TMP)/$(PACKAGE)/docs
 FILES = LICENSE README.rst \
 		Makefile did.spec \
-		docs examples did bin
+		examples did bin
 ifndef USERNAME
     USERNAME = echo $$USER
 endif
@@ -13,7 +12,7 @@ endif
 
 # Define special targets
 all: docs packages
-.PHONY: docs hooks tmp
+.PHONY: docs hooks
 
 
 # Run the test suite, optionally with coverage
@@ -29,18 +28,18 @@ coverage:
 # Build documentation, prepare man page
 docs: man
 	cd docs && make html
-man: tmp
+man: source
 	cp docs/header.txt $(TMP)/man.rst
 	tail -n+7 README.rst | sed '/^Status/,$$d' >> $(TMP)/man.rst
-	rst2man $(TMP)/man.rst | gzip > $(DOCS)/did.1.gz
+	rst2man $(TMP)/man.rst | gzip > $(TMP)/$(PACKAGE)/did.1.gz
 
 
 # RPM packaging
-tmp:
+source:
 	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
 	rm -rf $(TMP)/$(PACKAGE)/examples/mr.bob
-tarball: tmp smoke man
+tarball: source man
 	cd $(TMP) && tar cfj SOURCES/$(PACKAGE).tar.bz2 $(PACKAGE)
 rpm: tarball
 	rpmbuild --define '_topdir $(TMP)' -bb did.spec
