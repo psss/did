@@ -35,7 +35,7 @@ man: tmp
 	rst2man $(TMP)/man.rst | gzip > $(DOCS)/did.1.gz
 
 
-# Build packages
+# RPM packaging
 tmp:
 	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
@@ -49,12 +49,19 @@ srpm: tarball
 packages: rpm srpm
 
 
+# Python packaging
+wheel:
+	python setup.py sdist bdist_wheel
+upload:
+	twine upload dist/*
+
+
 # Git hooks and cleanup
 hooks:
 	ln -snf ../../hooks/pre-commit .git/hooks
 	ln -snf ../../hooks/commit-msg .git/hooks
 clean:
-	rm -rf $(TMP)
+	rm -rf $(TMP) build dist did.egg-info
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
 	cd docs && make clean
