@@ -19,7 +19,7 @@ all: docs packages
 test:
 	py.test tests
 smoke:
-	py.test tests/test_did.py
+	py.test tests/test_cli.py
 coverage:
 	coverage run --source=did,bin -m py.test tests
 	coverage report
