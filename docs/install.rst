@@ -41,6 +41,10 @@ Install did (sudo required if not in a virtualenv)::
 
     pip install did
 
+See the `pypi package index`__ for detailed package information.
+
+__ https://pypi.python.org/pypi/did
+
 
 Docker
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
