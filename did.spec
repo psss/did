@@ -1,6 +1,6 @@
 Name: did
 Version: 0.7
-Release: 1%{?dist}
+Release: 3%{?dist}
 
 Summary: What did you do last week, month, year?
 License: GPLv2+

@@ -51,9 +51,9 @@ packages: rpm srpm
 
 # Python packaging
 wheel:
-	python setup.py sdist bdist_wheel
+	python setup.py bdist_wheel
 upload:
-	twine upload dist/*
+	twine upload dist/*.whl
 
 
 # Git hooks and cleanup
