@@ -274,9 +274,14 @@ class AddedPatches(GerritUnit):
                 # patch setts added by the owner of the change, but
                 # I don’t know how to find a list of all revisions for
                 # the particular change.
-                if 'author' in chg and owner == chg['author']['email'] and \
-                    self.get_gerrit_date(chg['date'][:10]) >= self.since_date \
-                        and 'uploaded patch' in chg['message'].lower():
+                if 'author' not in chg:
+                    continue
+                if 'email' not in chg['author']:
+                    continue
+                date = self.get_gerrit_date(chg['date'][:10])
+                if (owner == chg['author']['email'] and
+                        date >= self.since_date and
+                        'uploaded patch' in chg['message'].lower()):
                     cmnts_by_user.append(chg)
             if len(cmnts_by_user) > 0:
                 self.stats.append(
@@ -316,7 +321,11 @@ class ReviewedChanges(GerritUnit):
                 pretty(changes['messages'])))
             cmnts_by_user = []
             for chg in changes['messages']:
-                if 'author' in chg and reviewer in chg['author']['email']:
+                if 'author' not in chg:
+                    continue
+                if 'email' not in chg['author']:
+                    continue
+                if reviewer in chg['author']['email']:
                     comment_date = self.get_gerrit_date(chg['date'][:10])
                     if comment_date >= self.since_date:
                         cmnts_by_user.append(chg)
