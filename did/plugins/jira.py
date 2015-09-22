@@ -2,17 +2,33 @@
 """
 Jira stats such as created, updated or resolved issues
 
-Config example::
+Configuration example (GSS authentication)::
 
     [jboss]
     type = jira
     prefix = JIRA
     project = ORG
     url = https://issues.jboss.org/
-    sso_url = https://sso.jboss.org
 
-Note that the ``sso_url`` parameter is optional. If not provided,
-``url + "/step-auth-gss"`` will be used for authentication.
+Configuration example (basic authentication)::
+
+    [jboss]
+    type = jira
+    prefix = JIRA
+    project = ORG
+    url = https://issues.jboss.org/
+    auth_url = https://issues.jboss.org/rest/auth/latest/session
+    auth_type = basic
+    auth_username = username
+    auth_password = password
+
+Notes:
+
+* ``auth_url`` parameter is optional. If not provided,
+  ``url + "/step-auth-gss"`` will be used for authentication.
+* ``auth_type`` parameter is optional, default value is 'gss'.
+* ``auth_username`` and ``auth_password`` are only valid for 
+  basic authentication.
 """
 
 import re
@@ -36,6 +52,8 @@ MAX_RESULTS = 1000
 # Maximum number of batches
 MAX_BATCHES = 100
 
+# Supported authentication types
+AUTH_TYPES = ["gss", "basic"]
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
@@ -165,11 +183,41 @@ class JiraStats(StatsGroup):
             raise ReportError(
                 "No Jira url set in the [{0}] section".format(option))
         self.url = config["url"].rstrip("/")
-        # Optional SSO url
-        if "sso_url" in config:
-            self.sso_url = config["sso_url"]
+        # Optional authentication url
+        if "auth_url" in config:
+            self.auth_url = config["auth_url"]
         else:
-            self.sso_url = self.url + "/step-auth-gss"
+            self.auth_url = self.url + "/step-auth-gss"
+        # Authentication type
+        if "auth_type" in config:
+            if config["auth_type"] not in AUTH_TYPES:
+                raise ReportError(
+                    "Unsupported authentication type: {0}"
+                    .format(config["auth_type"]))
+            self.auth_type = config["auth_type"]
+        else:
+            self.auth_type = "gss"
+        # Authentication credentials
+        if self.auth_type == "basic":
+            if "auth_username" not in config:
+                raise ReportError(
+                    "`auth_username` not set in the [{0}] section"
+                    .format(option))
+            self.auth_username = config["auth_username"]
+            if "auth_password" not in config:
+                raise ReportError(
+                    "`auth_password` not set in the [{0}] section"
+                    .format(option))
+            self.auth_password = config["auth_password"]
+        else:
+            if "auth_username" in config:
+                raise ReportError(
+                    "`auth_username` is only valid for basic authentication"
+                    + " (section [{0}])".format(option))
+            if "auth_password" in config:
+                raise ReportError(
+                    "`auth_password` is only valid for basic authentication"
+                    + " (section [{0}])".format(option))
         # Make sure we have project set
         if "project" not in config:
             raise ReportError(
@@ -202,6 +250,14 @@ class JiraStats(StatsGroup):
                 urllib2.HTTPRedirectHandler,
                 urllib2.HTTPCookieProcessor(cookie),
                 urllib2_kerberos.HTTPKerberosAuthHandler)
-            log.debug(u"Connecting to {0}".format(self.sso_url))
-            self._session.open(self.sso_url)
+
+            log.debug(u"Connecting to {0}".format(self.auth_url))
+            if self.auth_type == 'basic':
+                req = urllib2.Request(self.auth_url)
+                req.add_data('{ "username" : "%s", "password" : "%s" }' % (self.auth_username, self.auth_password))
+                req.add_header("Content-type", "application/json")
+                req.add_header("Accept", "application/json")
+                self._session.open(req)
+            else:
+                self._session.open(self.auth_url)
         return self._session
