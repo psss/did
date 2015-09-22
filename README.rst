@@ -50,6 +50,12 @@ related to any plugin:
 Select
 ------
 
+At least one email address needs to be provided on command line
+unless defined in the config file. Use the complete email address
+format ``Name Surname <email@example.org>`` to display full name
+in the report output. For date values ``today`` and ``yesterday``
+can be used instead of the full date format.
+
 --email=EMAILS
     User email address(es)
 
@@ -61,6 +67,14 @@ Select
 
 Format
 ------
+
+The default output is plain text of maximum width 79 characters.
+This can adjusted using the ``--width`` parameter. To disable
+shortening altogether use ``--width=0``. The default width value
+can be saved in the config file as well. Use ``--format=wiki`` to
+enable simple MoinMoin wiki syntax. For stats which support them,
+``--brief`` and ``--verbose`` can be used to specify a different
+level of detail to be shown.
 
 --format=FMT
     Output style, possible values: text (default) or wiki
@@ -76,6 +90,13 @@ Format
 
 Other
 -----
+
+Multiple emails can be used to put together a team report or to
+gather stats for all of your email aliases. For this use case
+``--total`` and ``--merge`` can be used to append the overall
+summary at the end or merge all results into a single report
+respectively. Use ``--debug`` or set the environment variable
+``DEBUG`` to 1 through 5 to set the desired level of debugging.
 
 --total
     Append total stats after listing individual users
