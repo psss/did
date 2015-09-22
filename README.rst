@@ -177,8 +177,8 @@ https://pypi.python.org/pypi/did
 Authors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Petr Šplíchal, Karel Šrot, Lukáš Zachar,
-Matěj Cepl, Ondřej Pták, Chris Ward and Tomáš Hofman.
+Petr Šplíchal, Karel Šrot, Lukáš Zachar, Matěj Cepl, Ondřej Pták,
+Chris Ward, Tomáš Hofman and Martin Mágr.
 
 
 Copyright
