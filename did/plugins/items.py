@@ -46,8 +46,8 @@ class CustomStats(StatsGroup):
     # Default order
     order = 800
 
-    def __init__(self, option, name=None, parent=None):
-        StatsGroup.__init__(self, "custom", name, parent)
+    def __init__(self, option, name=None, parent=None, user=None):
+        StatsGroup.__init__(self, "custom", name, parent, user)
         for section in Config().sections(kind="items"):
             self.stats.append(ItemStats(
                 option=section, parent=self,

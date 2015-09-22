@@ -84,8 +84,8 @@ class NitrateStats(StatsGroup):
     # Default order
     order = 100
 
-    def __init__(self, option, name=None, parent=None):
-        StatsGroup.__init__(self, option, name, parent)
+    def __init__(self, option, name=None, parent=None, user=None):
+        StatsGroup.__init__(self, option, name, parent, user)
         self._cases = self._copies = None
         self.stats = [
             TestPlans(option=option + "-plans", parent=self),

@@ -128,11 +128,11 @@ class RequestTrackerStats(StatsGroup):
     # Default order
     order = 500
 
-    def __init__(self, option, name=None, parent=None):
+    def __init__(self, option, name=None, parent=None, user=None):
         """ Process config, prepare investigator, construct stats """
 
         # Check Request Tracker instance url and custom prefix
-        StatsGroup.__init__(self, option, name, parent)
+        StatsGroup.__init__(self, option, name, parent, user)
         config = dict(Config().section(option))
         try:
             self.url = config["url"]

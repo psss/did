@@ -156,8 +156,8 @@ class JiraStats(StatsGroup):
     # Default order
     order = 600
 
-    def __init__(self, option, name=None, parent=None):
-        StatsGroup.__init__(self, option, name, parent)
+    def __init__(self, option, name=None, parent=None, user=None):
+        StatsGroup.__init__(self, option, name, parent, user)
         self._session = None
         # Make sure there is an url provided
         config = dict(Config().section(option))

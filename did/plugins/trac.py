@@ -186,9 +186,9 @@ class TracStats(StatsGroup):
     # Default order
     order = 400
 
-    def __init__(self, option, name=None, parent=None):
+    def __init__(self, option, name=None, parent=None, user=None):
         name = "Tickets in {0}".format(option)
-        StatsGroup.__init__(self, option, name, parent)
+        StatsGroup.__init__(self, option, name, parent, user)
         # Initialize the server proxy
         config = dict(Config().section(option))
         if "url" not in config:

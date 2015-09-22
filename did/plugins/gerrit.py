@@ -365,9 +365,8 @@ class GerritStats(StatsGroup):
     # Default order
     order = 350
 
-    def __init__(
-            self, option, name=None, user=None, parent=None, options=None):
-        StatsGroup.__init__(self, option, name, parent, user, options)
+    def __init__(self, option, name=None, parent=None, user=None):
+        StatsGroup.__init__(self, option, name, parent, user)
         self.config = dict(Config().section(option))
         if 'url' not in self.config:
             raise IOError(

@@ -164,7 +164,9 @@ class UserStats(StatsGroup):
         try:
             import did.plugins
             for section, statsgroup in did.plugins.detect():
-                self.stats.append(statsgroup(option=section, parent=self))
+                self.stats.append(statsgroup(
+                    option=section, parent=self,
+                    user=self.user.clone(section) if self.user else None))
         except did.base.ConfigError as error:
             # Missing config file is OK if building options (--help).
             # Otherwise raise the expection to suggest config example.
@@ -185,8 +187,8 @@ class UserStats(StatsGroup):
 
 class EmptyStats(Stats):
     """ Custom stats group for header & footer """
-    def __init__(self, option, name=None, parent=None):
-        Stats.__init__(self, option, name, parent)
+    def __init__(self, option, name=None, parent=None, user=None):
+        Stats.__init__(self, option, name, parent, user)
 
     def show(self):
         """ Name only for empty stats """
@@ -199,7 +201,7 @@ class EmptyStats(Stats):
 
 class EmptyStatsGroup(StatsGroup):
     """ Header & Footer stats group """
-    def __init__(self, option, name=None, parent=None):
-        StatsGroup.__init__(self, option, name, parent=parent)
+    def __init__(self, option, name=None, parent=None, user=None):
+        StatsGroup.__init__(self, option, name, parent, user)
         for opt, name in sorted(did.base.Config().section(option)):
             self.stats.append(EmptyStats(opt, name, parent=self))

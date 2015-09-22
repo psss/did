@@ -441,8 +441,8 @@ class BugzillaStats(StatsGroup):
     # Default order
     order = 200
 
-    def __init__(self, option, name=None, parent=None):
-        StatsGroup.__init__(self, option, name, parent)
+    def __init__(self, option, name=None, parent=None, user=None):
+        StatsGroup.__init__(self, option, name, parent, user)
         config = dict(Config().section(option))
         # Check Bugzilla instance url
         try:

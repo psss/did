@@ -68,8 +68,8 @@ class WikiStats(StatsGroup):
     # Default order
     order = 700
 
-    def __init__(self, option, name=None, parent=None):
-        StatsGroup.__init__(self, option, name, parent)
+    def __init__(self, option, name=None, parent=None, user=None):
+        StatsGroup.__init__(self, option, name, parent, user)
         for wiki, url in Config().section(option):
             self.stats.append(WikiChanges(
                 option=wiki, parent=self, url=url,

@@ -35,6 +35,27 @@ def test_User():
     from did.base import User
     assert User
 
+    # Short email format
+    user = User("some@email.org")
+    assert user.email == "some@email.org"
+    assert user.login == "some"
+    assert user.name == "Unknown"
+
+    # Full email format
+    user = User("Some Body <some@email.org>")
+    assert user.email == "some@email.org"
+    assert user.login == "some"
+    assert user.name == "Some Body"
+
+    # Custom email alias
+    user = User("some@email.org; bz: bugzilla@email.org", alias="bz")
+    assert user.email == "bugzilla@email.org"
+    assert user.login == "bugzilla"
+
+    # Custom login alias
+    user = User("some@email.org; bz: bzlogin", alias="bz")
+    assert user.login == "bzlogin"
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Exceptions

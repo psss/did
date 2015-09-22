@@ -5,6 +5,7 @@
 from __future__ import unicode_literals, absolute_import
 
 import os
+import re
 import codecs
 import datetime
 import optparse
@@ -299,22 +300,71 @@ class Date(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class User(object):
-    """ User info """
+    """
+    User information
 
-    def __init__(self, email, name=None, login=None):
-        """ Set user email, name and login values. """
+    The User object holds name, login and email which are used for
+    performing queries by individual plugins. This information is
+    parsed from given email address. Both short & full email format
+    are supported::
+
+        some@email.org
+        Name Surname <some@email.org>
+
+    In addition, it's possible to provide email and login aliases for
+    individual stats. This is useful if you use different email/login
+    for different services. The syntax consists of ``stats: login`` or
+    ``stats: email`` pairs appended at the end of the email address::
+
+        some@email.org; bz: bugzilla@email.org; gh: githublogin
+
+    Use config section name to identify stats where given alias should
+    be used. The exactly same syntax can be used both in the config file
+    and on the command line.
+    """
+
+    def __init__(self, email, alias=None):
+        """ Detect name, login and email """
+        # Make sure we received the email string, save the original for cloning
         if not email:
             raise ReportError("Email required for user initialization.")
-        else:
-            # Extract everything from the email string provided
-            # eg, "My Name" <bla@email.com>
-            parts = utils.EMAIL_REGEXP.search(email)
-            if parts is None:
-                raise ConfigError("Invalid email address '{0}'".format(email))
-            self.email = parts.groups()[1]
-            self.login = login or self.email.split('@')[0]
-            self.name = name or parts.groups()[0] or u"Unknown"
+        self._original = email
+        # Separate aliases if provided
+        try:
+            email, aliases = re.split(r"\s*;\s*", self._original, 1)
+        except ValueError:
+            email = self._original
+            aliases = None
+        # Extract everything from the email string provided
+        parts = utils.EMAIL_REGEXP.search(email)
+        if parts is None:
+            raise ConfigError("Invalid email address '{0}'".format(email))
+        self.name = parts.groups()[0] or "Unknown"
+        self.email = parts.groups()[1]
+        self.login = self.email.split('@')[0]
+        # Apply the alias if requested and configured
+        if alias is None or aliases is None:
+            return
+        aliases = dict([
+            re.split(r"\s*:\s*", definition, 1)
+            for definition in re.split(r"\s*;\s*", aliases.strip())])
+        if alias not in aliases:
+            return
+        # Only set login if no email given
+        if "@" not in aliases[alias]:
+            self.login = aliases[alias]
+            log.info("Using login alias '{0}' for '{1}'".format(
+                self.login, alias))
+            return
+        # Otherwise set both
+        self.email = aliases[alias]
+        self.login = self.email.split("@")[0]
+        log.info("Using email alias '{0}' for '{1}'".format(self.email, alias))
 
     def __unicode__(self):
         """ Use name & email for string representation. """
         return u"{0} <{1}>".format(self.name, self.email)
+
+    def clone(self, alias):
+        """ Create a user copy with stats alias enabled. """
+        return User(self._original, alias)
