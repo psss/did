@@ -23,6 +23,10 @@ apps = /home/psss/git/apps
 type = git
 tests = /home/psss/git/tests/*
 
+[github]
+type = github
+url = https://api.github.com/
+
 [gerrit]
 type = gerrit
 url = https://example.org/gerrit/#/

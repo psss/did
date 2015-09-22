@@ -35,6 +35,13 @@ git
     :members:
     :undoc-members:
 
+github
+------
+
+.. automodule:: did.plugins.github
+    :members:
+    :undoc-members:
+
 header
 ------
 
