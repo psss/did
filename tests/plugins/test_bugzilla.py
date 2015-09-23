@@ -11,7 +11,7 @@ CONFIG = """
 [bz]
 type = bugzilla
 prefix = BZ
-url = https://bugzilla.redhat.com/xmlrpc.cgi
+url = https://partner-bugzilla.redhat.com/xmlrpc.cgi
 """
 
 
