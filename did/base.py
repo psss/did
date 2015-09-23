@@ -365,14 +365,17 @@ class User(object):
         if stats is None:
             return
         # Use alias directly from the config section
-        config = dict(Config().section(stats))
         try:
-            email = config["email"]
-        except KeyError:
-            pass
-        try:
-            login = config["login"]
-        except KeyError:
+            config = dict(Config().section(stats))
+            try:
+                email = config["email"]
+            except KeyError:
+                pass
+            try:
+                login = config["login"]
+            except KeyError:
+                pass
+        except NoSectionError:
             pass
         # Check for aliases specified in the email string
         if aliases is not None:
