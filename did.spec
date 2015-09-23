@@ -1,6 +1,6 @@
 Name: did
-Version: 0.7
-Release: 3%{?dist}
+Version: 0.8
+Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
 License: GPLv2+
@@ -42,6 +42,23 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Wed Sep 23 2015 Petr Šplíchal <psplicha@redhat.com> 0.8-1
+- Give warning for git repository problems [fix #41]
+- Add example with config dir set to: ~/.config/did/
+- Support for basic authentication in jira plugin
+- Support config profiles (new option --config)
+- Generate coverage annotations for 'make coverage'
+- Support aliases in config sections, improves #36
+- The first draft of the github plugin [fix #42]
+- Support custom email/login aliases [fix #36]
+- Include detailed description for general options
+- Properly check email in gerrit messages [fix #34]
+- Correctly handle invalid arguments [fix #33]
+- Do not include the whole docs dir in the tarball
+- Properly document how email addresses are handled
+- Use wheels for python packaging (no source dist)
+- Include Python package building stuff in Makefile
+
 * Fri Sep 18 2015 Petr Šplíchal <psplicha@redhat.com> 0.7-1
 - Refer Travis CI and Coveralls in contribute docs
 - Remove version from the documentation completely
