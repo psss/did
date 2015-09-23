@@ -24,9 +24,21 @@ config file and on the command line, for example::
 This can be useful if you have several email aliases or if you
 want to generate report for the whole team. Note that the full
 email address format can be used on the command line as well.
+
+
+Aliases
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Custom email or login alias can be provided in stats sections.
+This allows to override the default value for individual stats::
+
+    [github]
+    type = github
+    url = https://api.github.com/
+    login = psss
+
 See :class:`did.base.User` for detailed information about the
 advanced email/login alias support.
-
 
 Order
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

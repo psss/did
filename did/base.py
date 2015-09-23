@@ -320,14 +320,20 @@ class User(object):
 
     Use config section name to identify stats where given alias should
     be used. The exactly same syntax can be used both in the config file
-    and on the command line.
+    and on the command line. Finally it's also possible to include the
+    alias directly in the respective config section::
+
+        [github]
+        type = github
+        url = https://api.github.com/
+        login = psss
     """
 
-    def __init__(self, email, alias=None):
+    def __init__(self, email, stats=None):
         """ Detect name, login and email """
         # Make sure we received the email string, save the original for cloning
         if not email:
-            raise ReportError("Email required for user initialization.")
+            raise ConfigError("Email required for user initialization.")
         self._original = email
         # Separate aliases if provided
         try:
@@ -342,29 +348,52 @@ class User(object):
         self.name = parts.groups()[0] or "Unknown"
         self.email = parts.groups()[1]
         self.login = self.email.split('@')[0]
-        # Apply the alias if requested and configured
-        if alias is None or aliases is None:
-            return
-        aliases = dict([
-            re.split(r"\s*:\s*", definition, 1)
-            for definition in re.split(r"\s*;\s*", aliases.strip())])
-        if alias not in aliases:
-            return
-        # Only set login if no email given
-        if "@" not in aliases[alias]:
-            self.login = aliases[alias]
-            log.info("Using login alias '{0}' for '{1}'".format(
-                self.login, alias))
-            return
-        # Otherwise set both
-        self.email = aliases[alias]
-        self.login = self.email.split("@")[0]
-        log.info("Using email alias '{0}' for '{1}'".format(self.email, alias))
+        # Check for possible aliases
+        self.alias(aliases, stats)
 
     def __unicode__(self):
         """ Use name & email for string representation. """
         return u"{0} <{1}>".format(self.name, self.email)
 
-    def clone(self, alias):
-        """ Create a user copy with stats alias enabled. """
-        return User(self._original, alias)
+    def clone(self, stats):
+        """ Create a user copy with alias enabled for given stats. """
+        return User(self._original, stats)
+
+    def alias(self, aliases, stats):
+        """ Apply the login/email alias if configured. """
+        login = email = None
+        if stats is None:
+            return
+        # Use alias directly from the config section
+        config = dict(Config().section(stats))
+        try:
+            email = config["email"]
+        except KeyError:
+            pass
+        try:
+            login = config["login"]
+        except KeyError:
+            pass
+        # Check for aliases specified in the email string
+        if aliases is not None:
+            try:
+                aliases = dict([
+                    re.split(r"\s*:\s*", definition, 1)
+                    for definition in re.split(r"\s*;\s*", aliases.strip())])
+            except ValueError:
+                raise ConfigError(
+                    "Invalid alias definition: '{0}'".format(aliases))
+            if stats in aliases:
+                if "@" in aliases[stats]:
+                    email = aliases[stats]
+                else:
+                    login = aliases[stats]
+        # Update login/email if alias detected
+        if email is not None:
+            self.email = email
+            log.info("Using email alias '{0}' for '{1}'".format(email, stats))
+            if login is None:
+                login = email.split("@")[0]
+        if login is not None:
+            self.login = login
+            log.info("Using login alias '{0}' for '{1}'".format(login, stats))
