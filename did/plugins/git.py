@@ -72,9 +72,9 @@ class GitRepo(object):
                         summary, 8 * " ", directory))
                 return commits
         else:
-            log.error(errors.strip())
-            raise ReportError(
-                "Unable to check commits in '{0}'".format(self.path))
+            log.debug(errors.strip())
+            log.warn("Unable to check commits in '{0}'".format(self.path))
+            return []
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

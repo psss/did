@@ -56,9 +56,7 @@ def test_git_invalid():
     try:
         did.cli.main(INTERVAL)
     except SystemExit:
-        pass
-    else:
-        raise RuntimeError("Expected failure")
+        raise RuntimeError("Expected warning only")
 
 def test_git_non_existent():
     """ Non-existent git repo """
