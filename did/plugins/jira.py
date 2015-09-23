@@ -27,9 +27,11 @@ Notes:
 * ``auth_url`` parameter is optional. If not provided,
   ``url + "/step-auth-gss"`` will be used for authentication.
 * ``auth_type`` parameter is optional, default value is 'gss'.
-* ``auth_username`` and ``auth_password`` are only valid for 
+* ``auth_username`` and ``auth_password`` are only valid for
   basic authentication.
 """
+
+from __future__ import absolute_import, unicode_literals
 
 import re
 import json
@@ -79,7 +81,7 @@ class Issue(object):
 
     def __unicode__(self):
         """ Jira key and summary for displaying """
-        return u"{0}-{1} - {2}".format(
+        return "{0}-{1} - {2}".format(
             self.prefix, self.identifier.zfill(DEFAULT_WIDTH), self.summary)
 
     @staticmethod
@@ -125,7 +127,7 @@ class Issue(object):
 class JiraCreated(Stats):
     """ Created issues """
     def fetch(self):
-        log.info(u"Searching for issues created in {0} by {1}".format(
+        log.info("Searching for issues created in {0} by {1}".format(
             self.parent.project, self.user))
         query = (
             "project = '{0}' AND creator = '{1}' AND "
@@ -138,7 +140,7 @@ class JiraCreated(Stats):
 class JiraUpdated(Stats):
     """ Updated issues """
     def fetch(self):
-        log.info(u"Searching for issues updated in {0} by {1}".format(
+        log.info("Searching for issues updated in {0} by {1}".format(
             self.parent.project, self.user))
         query = (
             "project = '{0}' AND "
@@ -154,7 +156,7 @@ class JiraUpdated(Stats):
 class JiraResolved(Stats):
     """ Resolved issues """
     def fetch(self):
-        log.info(u"Searching for issues resolved in {0} by {1}".format(
+        log.info("Searching for issues resolved in {0} by {1}".format(
             self.parent.project, self.user))
         query = (
             "project = '{0}' AND assignee = '{1}' AND "
@@ -251,10 +253,11 @@ class JiraStats(StatsGroup):
                 urllib2.HTTPCookieProcessor(cookie),
                 urllib2_kerberos.HTTPKerberosAuthHandler)
 
-            log.debug(u"Connecting to {0}".format(self.auth_url))
+            log.debug("Connecting to {0}".format(self.auth_url))
             if self.auth_type == 'basic':
                 req = urllib2.Request(self.auth_url)
-                req.add_data('{ "username" : "%s", "password" : "%s" }' % (self.auth_username, self.auth_password))
+                req.add_data('{ "username" : "%s", "password" : "%s" }'
+                    % (self.auth_username, self.auth_password))
                 req.add_header("Content-type", "application/json")
                 req.add_header("Accept", "application/json")
                 self._session.open(req)
