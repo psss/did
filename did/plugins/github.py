@@ -16,7 +16,8 @@ __ https://developer.github.com/guides/getting-started/#authentication
 """
 
 import re
-import requests
+import json
+import urllib2
 from requests.exceptions import RequestException
 
 from did.utils import log, pretty, listed
@@ -40,7 +41,7 @@ class GitHub(object):
         if token is not None:
             self.headers = {'Authorization': 'token {0}'.format(token)}
         else:
-            self.headers = None
+            self.headers = {}
 
         self.token = token
 
@@ -49,12 +50,15 @@ class GitHub(object):
         url = self.url + "/" + query
         log.debug("GitHub query: {0}".format(url))
         try:
-            response = requests.get(url, headers=self.headers)
-        except RequestException as error:
+            request = urllib2.Request(url, headers=self.headers)
+            response = urllib2.urlopen(request)
+            log.debug("Response headers:\n{0}".format(
+                unicode(response.info()).strip()))
+        except urllib2.URLError as error:
             log.debug(error)
             raise ReportError(
                 "GitHub search on {0} failed.".format(self.url))
-        result = response.json()["items"]
+        result = json.loads(response.read())["items"]
         log.debug("Result: {0} fetched".format(listed(len(result), "item")))
         log.data(pretty(result))
         return result
