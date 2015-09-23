@@ -23,6 +23,7 @@ smoke:
 coverage:
 	coverage run --source=did,bin -m py.test tests
 	coverage report
+	coverage annotate
 
 
 # Build documentation, prepare man page
@@ -62,6 +63,7 @@ hooks:
 clean:
 	rm -rf $(TMP) build dist did.egg-info
 	find . -type f -name "*.py[co]" -delete
+	find . -type f -name "*,cover" -delete
 	find . -type d -name "__pycache__" -delete
 	cd docs && make clean
 	rm -f .coverage
