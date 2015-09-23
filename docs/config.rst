@@ -6,7 +6,10 @@
 The config file ``~/.did/config`` is used to store both general
 settings and configuration of individual reports. You can use the 
 ``DID_CONFIG`` environment variable to override the default config
-directory ``~/.did`` and use your custom location instead.
+directory ``~/.did`` and use your custom location instead. Command
+line option ``--config`` allows to select a different config file
+from the config directory. This can serve as a kind of a profile
+and is especially useful if you need to gather team reports.
 
 
 Email

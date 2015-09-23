@@ -88,7 +88,7 @@ level of detail to be shown.
 --verbose
     Include more details (like modified git directories)
 
-Other
+Utils
 -----
 
 Multiple emails can be used to put together a team report or to
@@ -97,6 +97,9 @@ gather stats for all of your email aliases. For this use case
 summary at the end or merge all results into a single report
 respectively. Use ``--debug`` or set the environment variable
 ``DEBUG`` to 1 through 5 to set the desired level of debugging.
+
+--config=FILE
+    Use alternate configuration file (default: 'config')
 
 --total
     Append total stats after listing individual users

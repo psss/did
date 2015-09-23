@@ -6,6 +6,7 @@ from __future__ import unicode_literals, absolute_import
 
 import os
 import re
+import sys
 import codecs
 import datetime
 import optparse
@@ -148,11 +149,19 @@ class Config(object):
     @staticmethod
     def path():
         """ Detect config file path """
+        # Detect config directory
         try:
             directory = os.environ["DID_CONFIG"]
         except KeyError:
             directory = CONFIG
-        return directory.rstrip("/") + "/config"
+        # Detect config file (even before options are parsed)
+        filename = "config"
+        arguments = " ".join(sys.argv)
+        if "--config" in arguments:
+            matched = re.search("--config[ =](\S+)", arguments)
+            if matched:
+                filename = matched.groups()[0]
+        return directory.rstrip("/") + "/" + filename
 
     @staticmethod
     def example():

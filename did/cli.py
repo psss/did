@@ -41,7 +41,7 @@ class Options(object):
             utils.Logging("did").set(utils.LOG_DEBUG)
 
         # Time & user selection
-        group = optparse.OptionGroup(self.parser, "Selection")
+        group = optparse.OptionGroup(self.parser, "Select")
         group.add_option(
             "--email", dest="emails", default=[], action="append",
             help="User email address(es)")
@@ -58,8 +58,8 @@ class Options(object):
         self.sample_stats = UserStats()
         self.sample_stats.add_option(self.parser)
 
-        # Display mode
-        group = optparse.OptionGroup(self.parser, "Display mode")
+        # Formating options
+        group = optparse.OptionGroup(self.parser, "Format")
         group.add_option(
             "--format", default="text",
             help="Output style, possible values: text (default) or wiki")
@@ -72,6 +72,14 @@ class Options(object):
         group.add_option(
             "--verbose", action="store_true",
             help="Include more details (like modified git directories)")
+        self.parser.add_option_group(group)
+
+        # Other options
+        group = optparse.OptionGroup(self.parser, "Utils")
+        group.add_option(
+            "--config",
+            metavar="FILE",
+            help="Use alternate configuration file (default: 'config')")
         group.add_option(
             "--total", action="store_true",
             help="Append total stats after listing individual users")
