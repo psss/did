@@ -1,7 +1,7 @@
 # coding: utf-8
 
 """
-Bugzilla stats such as verified, filed, closed or fixed bugs
+Bugzilla stats such as filed, fixed or verified bugs
 
 This plugin uses ``python-bugzilla`` module to gather the stats.
 Use the ``bugzilla login`` command to initialize Bugzilla cookies
@@ -26,10 +26,10 @@ Available options:
     --bz-patched        Bugs patched
     --bz-posted         Bugs posted
     --bz-fixed          Bugs fixed
-    --bz-closed	        Bugs closed
     --bz-returned       Bugs returned
     --bz-verified       Bugs verified
     --bz-commented      Bugs commented
+    --bz-closed         Bugs closed
     --bz                All above
 """
 
@@ -178,25 +178,26 @@ class Bug(object):
                         decision = False
         return decision
 
-    def closed(self):
+    def closed(self, user):
         """ Moved to CLOSED and not later moved to ASSIGNED """
         decision = False
         for record in self.history:
             # Completely ignore older changes
             if record["when"] < self.options.since.date:
                 continue
-            # Look for status change to MODIFIED (unless already found)
+            # Look for status change to CLOSED (unless already found)
             if not decision and record["when"] < self.options.until.date:
                 for change in record["changes"]:
                     if (change["field_name"] == "status"
-                            and change["added"] == "CLOSED"):
+                            and change["added"] == "CLOSED"
+                            and record["who"] in [user.email, user.name]):
                         decision = True
-            # Make sure that the bug has not been later moved to ASSIGNED.
-            # (This would mean the issue has not been fixed properly.)
+            # Make sure that the bug has not been later moved from CLOSED.
+            # (This would mean the bug was not closed for a proper reason.)
             else:
                 for change in record["changes"]:
                     if (change["field_name"] == "status"
-                            and change["added"] == "ASSIGNED"):
+                            and change["removed"] == "CLOSED"):
                         decision = False
         return decision
 
@@ -392,11 +393,15 @@ class ClosedBugs(Stats):
             "field0-3-0": "bug_status",
             "type0-3-0": "changedbefore",
             "value0-3-0": str(self.options.until),
+            # Status is now CLOSED
+            "field0-4-0": "bug_status",
+            "type0-4-0": "equals",
+            "value0-4-0": "CLOSED",
             }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
                 query, options=self.options)
-            if bug.closed()]
+            if bug.closed(self.user)]
 
 
 class PostedBugs(Stats):
@@ -525,8 +530,8 @@ class BugzillaStats(StatsGroup):
             PatchedBugs(option=option + "-patched", parent=self),
             PostedBugs(option=option + "-posted", parent=self),
             FixedBugs(option=option + "-fixed", parent=self),
-            ClosedBugs(option=option + "-closed", parent=self),
             ReturnedBugs(option=option + "-returned", parent=self),
             VerifiedBugs(option=option + "-verified", parent=self),
             CommentedBugs(option=option + "-commented", parent=self),
+            ClosedBugs(option=option + "-closed", parent=self),
             ]

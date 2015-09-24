@@ -83,3 +83,18 @@ def test_bugzilla_returned():
         --since 2015-06-09
         --until 2015-06-09""")[0][0].stats[0].stats[4].stats
     assert not any([bug.id == 1229704 for bug in stats])
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Closed Bugs
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def test_bugzilla_closed():
+    """ Check closed bugs """
+    did.base.Config(CONFIG)
+    stats = did.cli.main([
+        "--bz-closed",
+        "--email", "Petr Šplíchal <psplicha@redhat.com>",
+        "--since", "2012-12-06",
+        "--until", "2012-12-06"])[0][0].stats[0].stats[7].stats
+    assert any([bug.id == 862231 for bug in stats])
