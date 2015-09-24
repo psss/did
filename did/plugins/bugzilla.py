@@ -1,7 +1,7 @@
 # coding: utf-8
 
 """
-Bugzilla stats such as verified, filed or fixed bugs
+Bugzilla stats such as verified, filed, closed or fixed bugs
 
 This plugin uses ``python-bugzilla`` module to gather the stats.
 Use the ``bugzilla login`` command to initialize Bugzilla cookies
@@ -26,6 +26,7 @@ Available options:
     --bz-patched        Bugs patched
     --bz-posted         Bugs posted
     --bz-fixed          Bugs fixed
+    --bz-closed	        Bugs closed
     --bz-returned       Bugs returned
     --bz-verified       Bugs verified
     --bz-commented      Bugs commented
@@ -167,6 +168,28 @@ class Bug(object):
                     if (change["field_name"] == "status"
                             and change["added"] == "MODIFIED"
                             and change["removed"] != "CLOSED"):
+                        decision = True
+            # Make sure that the bug has not been later moved to ASSIGNED.
+            # (This would mean the issue has not been fixed properly.)
+            else:
+                for change in record["changes"]:
+                    if (change["field_name"] == "status"
+                            and change["added"] == "ASSIGNED"):
+                        decision = False
+        return decision
+
+    def closed(self):
+        """ Moved to CLOSED and not later moved to ASSIGNED """
+        decision = False
+        for record in self.history:
+            # Completely ignore older changes
+            if record["when"] < self.options.since.date:
+                continue
+            # Look for status change to MODIFIED (unless already found)
+            if not decision and record["when"] < self.options.until.date:
+                for change in record["changes"]:
+                    if (change["field_name"] == "status"
+                            and change["added"] == "CLOSED"):
                         decision = True
             # Make sure that the bug has not been later moved to ASSIGNED.
             # (This would mean the issue has not been fixed properly.)
@@ -340,6 +363,42 @@ class FixedBugs(Stats):
             if bug.fixed()]
 
 
+class ClosedBugs(Stats):
+    """
+    Bugs closed
+
+    Bugs which have been moved to the ``CLOSED`` state in given
+    time frame and later have not been moved back to the
+    ``ASSIGNED`` state (which would suggest the bug was not closed
+    for a proper reason).
+    """
+
+    def fetch(self):
+        log.info(u"Searching for bugs closed by {0}".format(self.user))
+        query = {
+            # User is the assignee
+            "field0-0-0": "assigned_to",
+            "type0-0-0": "equals",
+            "value0-0-0": self.user.email,
+            # Status changed to CLOSED
+            "field0-1-0": "bug_status",
+            "type0-1-0": "changedto",
+            "value0-1-0": "CLOSED",
+            # Since date
+            "field0-2-0": "bug_status",
+            "type0-2-0": "changedafter",
+            "value0-2-0": str(self.options.since),
+            # Until date
+            "field0-3-0": "bug_status",
+            "type0-3-0": "changedbefore",
+            "value0-3-0": str(self.options.until),
+            }
+        self.stats = [
+            bug for bug in self.parent.bugzilla.search(
+                query, options=self.options)
+            if bug.closed()]
+
+
 class PostedBugs(Stats):
     """
     Bugs posted
@@ -466,6 +525,7 @@ class BugzillaStats(StatsGroup):
             PatchedBugs(option=option + "-patched", parent=self),
             PostedBugs(option=option + "-posted", parent=self),
             FixedBugs(option=option + "-fixed", parent=self),
+            ClosedBugs(option=option + "-closed", parent=self),
             ReturnedBugs(option=option + "-returned", parent=self),
             VerifiedBugs(option=option + "-verified", parent=self),
             CommentedBugs(option=option + "-commented", parent=self),
