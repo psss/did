@@ -202,7 +202,7 @@ Authors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Petr Šplíchal, Karel Šrot, Lukáš Zachar, Matěj Cepl, Ondřej Pták,
-Chris Ward, Tomáš Hofman and Martin Mágr.
+Chris Ward, Tomáš Hofman, Martin Mágr and Stanislav Kozina.
 
 
 Copyright
