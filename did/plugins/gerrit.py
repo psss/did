@@ -31,7 +31,7 @@ class Change(object):
         """ Initialize the change from the record.
         changelog['messages'] could be useful for collecting changes.
         """
-        self.id = ticket['id']
+        self.id = ticket['_number']
         self.change_id = ticket['change_id']
         self.subject = ticket['subject']
         self.ticket = ticket
@@ -40,7 +40,7 @@ class Change(object):
 
     def __unicode__(self):
         """ Consistent identifier and subject for displaying """
-        return u"{0}#{1} - {2}".format(self.prefix, self.id[:32], self.subject)
+        return u"{0}#{1} - {2}".format(self.prefix, self.id, self.subject)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
