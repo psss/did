@@ -21,6 +21,10 @@ from did.utils import log
 from did.stats import UserStats
 from did.base import ConfigError, ReportError, OptionError
 
+# Cache the current version of the config into this namespace
+# Avoid unexpected config changes
+_Config = did.base.Config()
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Options
@@ -64,7 +68,7 @@ class Options(object):
             "--format", default="text",
             help="Output style, possible values: text (default) or wiki")
         group.add_option(
-            "--width", default=did.base.Config().width, type="int",
+            "--width", default=_Config.width, type="int",
             help="Maximum width of the report output (default: %default)")
         group.add_option(
             "--brief", action="store_true",
@@ -115,7 +119,7 @@ class Options(object):
 
         # Detect email addresses and split them on comma
         if not opt.emails:
-            opt.emails = did.base.Config().email
+            opt.emails = did.base._Config.email
         opt.emails = utils.split(opt.emails, separator=re.compile(r"\s*,\s*"))
         if not opt.emails:
             raise ConfigError("No email given. Use --email or create config.")
@@ -203,7 +207,7 @@ def main(arguments=None):
 
     except ConfigError as error:
         utils.info("Create at least a minimum config file {0}:\n{1}".format(
-            did.base.Config.path(), did.base.Config().example().strip()))
+            Config.path(), _Config.example().strip()))
         log.error(error)
         sys.exit(1)
 
