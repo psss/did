@@ -38,7 +38,7 @@ class Options(object):
 
         # Enable debugging output (even before options are parsed)
         if "--debug" in sys.argv:
-            utils.Logging("did").set(utils.LOG_DEBUG)
+            log.setLevel(utils.LOG_DEBUG)
 
         # Time & user selection
         group = optparse.OptionGroup(self.parser, "Select")
