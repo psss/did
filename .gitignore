@@ -33,3 +33,6 @@ _build
 
 # rpm build files
 tmp/
+
+# vim autocomplete
+.cache

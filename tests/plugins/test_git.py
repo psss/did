@@ -4,8 +4,10 @@
 from __future__ import unicode_literals, absolute_import
 
 import os
+
 import did.cli
 import did.utils
+from did.base import ReportError
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,7 +65,7 @@ def test_git_non_existent():
     did.base.Config(CONFIG.format("i-do-not-exist"))
     try:
         did.cli.main(INTERVAL)
-    except SystemExit:
+    except (SystemExit, ReportError):
         pass
     else:
         raise RuntimeError("Expected failure")
