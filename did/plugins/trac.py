@@ -169,7 +169,7 @@ class TracClosed(TracCommon):
     """ Closed tickets """
     def fetch(self):
         log.info(u"Searching for tickets closed by {0}".format(self.user))
-        query = "owner=^{0}@&time=..{2}&modified={1}..".format(
+        query = "owner=~{0}&time=..{2}&modified={1}..".format(
             self.user.login, self.options.since, self.options.until)
         self.stats = [
             ticket for ticket in Trac.search(query, self.parent, self.options)
