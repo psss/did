@@ -341,7 +341,7 @@ class User(object):
         # Make sure we received the email string, save the original for cloning
         if not email:
             raise ConfigError("Email required for user initialization.")
-        self._original = email
+        self._original = email.strip()
         # Separate aliases if provided
         try:
             email, aliases = re.split(r"\s*;\s*", self._original, 1)
