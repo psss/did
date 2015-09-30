@@ -156,11 +156,9 @@ class Config(object):
             directory = CONFIG
         # Detect config file (even before options are parsed)
         filename = "config"
-        arguments = " ".join(sys.argv)
-        if "--config" in arguments:
-            matched = re.search("--config[ =](\S+)", arguments)
-            if matched:
-                filename = matched.groups()[0]
+        matched = re.search("--confi?g?[ =](\S+)", " ".join(sys.argv))
+        if matched:
+            filename = matched.groups()[0]
         return directory.rstrip("/") + "/" + filename
 
     @staticmethod
