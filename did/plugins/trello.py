@@ -3,14 +3,17 @@
 Trello actions
 
 Config example::
-
+    
     [tools]
     type = trello
     apikey = ... [https://trello.com/app-key]
     token = ...  [http://stackoverflow.com/questions/17178907/how-to-get-a-permanent-user-token-for-writes-using-the-trello-api]
-    board = Tasks
+    boards = Tasks
     filters = updateCheckItemStateOnCard,updateCard
     user = member
+
+    Positional arguments: apikey, token, user
+    Optional arguments: boards(default:all), filters(default:all)
 
     Possible API methods to add:
     http://developers.trello.com/advanced-reference/member#get-1-members-idmember-or-username-actions
@@ -53,7 +56,7 @@ class TrelloAPI(object):
         self.key = config['apikey']
         self.token = config['token']
         self.username = config['user']
-        self.board_names = config['boards']
+        self.board_names = [b.strip() for b in config['boards'].split(',')]
         self.stats = stats
 
     def get_actions(self, filters, since=None, before=None, limit=1000):
@@ -77,7 +80,8 @@ class TrelloAPI(object):
         actions = json.loads(resp.read())
         log.data(pretty(actions))
         actions = [act for act in actions if act[
-            'data']['board']['name'] in self.board_names]
+            'data']['board']['name'] in self.board_names or
+            self.board_names == ['']]
         return actions
 
 
@@ -143,7 +147,7 @@ class TrelloCardsClosed(TrelloStats):
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Trello updateCard:closed
+#  Trello updateCard:idList
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloCardsMoved(TrelloStats):
@@ -214,18 +218,23 @@ class TrelloStatsGroup(StatsGroup):
         self.url = "https://trello.com/1"
         config = dict(Config().section(option))
 
-        positional_options = ["apikey", "token", "boards", "filters", "user"]
-        for opt in positional_options:
-            if opt not in config:
+        positional_args = ["apikey", "token", "user"]
+        for arg in positional_args:
+            if arg not in config:
                 raise ReportError(
-                    "No {0} set in the [{1}] section".format(opt, option))
+                    "No {0} set in the [{1}] section".format(arg, option))
+
+        optional_args = ["boards", "filters"]
+        for arg in optional_args:
+            if arg not in config:
+                config[arg] = ""
 
         trello = TrelloAPI(stats=self, config=config)
 
         filters = [filt.strip() for filt in config['filters'].split(',')]
         for filt_group in filter_map.keys():
             for filt in filter_map[filt_group].keys():
-                if filt not in filters:
+                if filters != [""] and filt not in filters:
                     continue
                 self.stats.append(filter_map[filt_group][filt](
                     trello=trello,
