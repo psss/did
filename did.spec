@@ -11,6 +11,7 @@ Source: https://github.com/psss/did/releases/download/%{version}/did-%{version}.
 BuildArch: noarch
 BuildRequires: python-devel
 Requires: python-kerberos python-nitrate python-dateutil python-urllib2_kerberos python-bugzilla
+%{?el6:Requires: python-argparse}
 
 %description
 Comfortably gather status report data (e.g. list of committed
