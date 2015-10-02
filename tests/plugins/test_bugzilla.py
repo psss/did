@@ -98,3 +98,4 @@ def test_bugzilla_closed():
         "--since", "2012-12-06",
         "--until", "2012-12-06"])[0][0].stats[0].stats[7].stats
     assert any([bug.id == 862231 for bug in stats])
+    assert any(["[duplicate]" in unicode(bug) for bug in stats])

@@ -14,11 +14,13 @@ Config example::
     type = bugzilla
     prefix = BZ
     url = https://bugzilla.redhat.com/xmlrpc.cgi
+    resolutions = notabug, duplicate
 
-    [mz]
-    type = bugzilla
-    prefix = MZ
-    url = https://bugzilla.mozilla.org/xmlrpc.cgi
+Resolutions:
+    List of resolutions to be displayed at the end of the summary
+    if bug is closed. By default ``notabug`` and ``duplicate`` are
+    shown.  Use ``all`` to always display resolution if available
+    or ``none`` to turn off the feature completely.
 
 Available options:
 
@@ -40,7 +42,14 @@ import xmlrpclib
 
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
-from did.utils import log, pretty
+from did.utils import log, pretty, split
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Constants
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+DEFAULT_RESOLUTIONS = ["notabug", "duplicate"]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -113,7 +122,7 @@ class Bug(object):
     def __init__(self, bug, history, comments, parent):
         """ Initialize bug info and history """
         self.id = bug.id
-        self.summary = bug.summary
+        self.bug = bug
         self.history = history
         self.comments = comments
         self.options = parent.options
@@ -127,6 +136,17 @@ class Bug(object):
         else:
             return u"{0}#{1} - {2}".format(
                 self.prefix, unicode(self.id).rjust(7, "0"), self.summary)
+
+    @property
+    def summary(self):
+        """ Bug summary including resolution if enabled """
+        if not self.bug.resolution:
+            return self.bug.summary
+        if (self.bug.resolution.lower() in self.parent.resolutions
+                or "all" in self.parent.resolutions):
+            return "{0} [{1}]".format(
+                self.bug.summary, self.bug.resolution.lower())
+        return self.bug.summary
 
     @property
     def logs(self):
@@ -520,6 +540,13 @@ class BugzillaStats(StatsGroup):
         except KeyError:
             raise ReportError(
                 "No prefix set in the [{0}] section".format(option))
+        # Check for customized list of resolutions
+        try:
+            self.resolutions = [
+                resolution.lower()
+                for resolution in split(config["resolutions"])]
+        except KeyError:
+            self.resolutions = DEFAULT_RESOLUTIONS
         # Save Bug class as attribute to allow customizations by
         # descendant class and set up the Bugzilla investigator
         self.bug = Bug
