@@ -2,8 +2,9 @@
 __pycache__/
 *.py[cod]
 
-# Vim swap files
+# Vim swap files and autocomplete
 *.sw*
+.cache
 
 # Packages
 *.egg
