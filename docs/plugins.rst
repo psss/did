@@ -84,6 +84,13 @@ trac
     :members:
     :undoc-members:
 
+trello
+------
+
+.. automodule:: did.plugins.trello
+    :members:
+    :undoc-members:
+
 wiki
 ----
 

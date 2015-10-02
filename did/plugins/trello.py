@@ -1,23 +1,40 @@
 # coding: utf-8
 """
-Trello actions
+Trello actions such as created, moved or closed cards
 
-Config example::
-    
+Config example (public)::
+
     [tools]
     type = trello
-    apikey = ... [https://trello.com/app-key]
-    token = ...  [http://stackoverflow.com/questions/17178907/how-to-get-a-permanent-user-token-for-writes-using-the-trello-api]
-    board_links = g9mdhdzg
-    filters = updateCheckItemStateOnCard,updateCard
     user = member
 
-    Positional arguments: (apikey and token) OR user, if board is (private OR public)
-    Optional arguments: boards(default:all), filters(default:all)
+Config example (private)::
 
-    Possible API methods to add:
-    http://developers.trello.com/advanced-reference/member#get-1-members-idmember-or-username-actions
+    [tools]
+    type = trello
+    apikey = ...
+    token = ...
+
+Optional arguments::
+
+    board_links = g9mdhdzg
+    filters = updateCheckItemStateOnCard,updateCard
+
+apikey
+    https://trello.com/app-key
+
+token
+    http://stackoverflow.com/questions/17178907
+
+boards
+    default: all
+
+filters
+    default: all
 """
+
+# Possible API methods to add:
+# http://developers.trello.com/advanced-reference/member
 
 from __future__ import unicode_literals, absolute_import
 
@@ -26,7 +43,7 @@ import urllib
 import urllib2
 
 from did.base import Config, ReportError
-from did.utils import log, pretty
+from did.utils import log, pretty, listed
 from did.stats import Stats, StatsGroup
 
 
@@ -35,7 +52,6 @@ from did.stats import Stats, StatsGroup
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloStats(Stats):
-
     """ Trello stats """
 
     def __init__(self, trello, filt, option, name=None, parent=None):
@@ -51,6 +67,7 @@ class TrelloStats(Stats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloAPI(object):
+    """ Trello API """
 
     def __init__(self, stats, config):
         self.stats = stats
@@ -89,6 +106,7 @@ class TrelloAPI(object):
         return actions
 
     def board_links_to_ids(self):
+        """ Convert board links to ids """
         resp = self.stats.session.open(
             "{0}/members/{1}/boards?{2}".format(
                 self.stats.url, self.username, urllib.urlencode({
@@ -96,7 +114,7 @@ class TrelloAPI(object):
                     "token": self.token,
                     "fields": "shortLink"})))
         boards = json.loads(resp.read())
-        
+
         return [board['id'] for board in boards if self.board_links == [""]
                 or board['shortLink'] in self.board_links]
 
@@ -106,17 +124,18 @@ class TrelloAPI(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloCardsCreated(TrelloStats):
-
-    """ Trello cards """
+    """ Trello cards created """
 
     def fetch(self):
-        log.info(u"Searching for cards created in %s by %s" %
-                 (self.parent.option, self.user))
-        actions = ["{0} was created".format(act['data']['card']['name'])
-                   for act in self.trello.get_actions(
-            filters=self.filt,
-            since=self.options.since.date,
-            before=self.options.until.date)]
+        log.info(
+            "Searching for cards created in %s by %s",
+            self.parent.option, self.user)
+        actions = [
+            "{0} was created".format(act['data']['card']['name'])
+            for act in self.trello.get_actions(
+                filters=self.filt,
+                since=self.options.since.date,
+                before=self.options.until.date)]
         self.stats = sorted(list(set(actions)))
 
 
@@ -125,17 +144,18 @@ class TrelloCardsCreated(TrelloStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloCards(TrelloStats):
-
     """ Trello cards """
 
     def fetch(self):
-        log.info(u"Searching for cards updated in %s by %s" %
-                 (self.parent.option, self.user))
-        actions = [act['data']['card']['name']
-                   for act in self.trello.get_actions(
-            filters=self.filt,
-            since=self.options.since.date,
-            before=self.options.until.date)]
+        log.info(
+            "Searching for cards updated in %s by %s",
+            self.parent.option, self.user)
+        actions = [
+            act['data']['card']['name']
+            for act in self.trello.get_actions(
+                filters=self.filt,
+                since=self.options.since.date,
+                before=self.options.until.date)]
         self.stats = sorted(list(set(actions)))
 
 
@@ -144,20 +164,22 @@ class TrelloCards(TrelloStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloCardsClosed(TrelloStats):
-
     """ Trello cards closed"""
 
     def fetch(self):
-        log.info(u"Searching for cards closed in %s by %s" %
-                 (self.parent.option, self.user))
+        log.info(
+            "Searching for cards closed in %s by %s",
+            self.parent.option, self.user)
         status = {True: 'closed',
                   False: 'opened'}
-        actions = ["{0}: {1}".format(act['data']['card']['name'],
-                                     status[act['data']['card']['closed']])
-                   for act in self.trello.get_actions(
-            filters=self.filt,
-            since=self.options.since.date,
-            before=self.options.until.date)]
+        actions = [
+            "{0}: {1}".format(
+                act['data']['card']['name'],
+                status[act['data']['card']['closed']])
+            for act in self.trello.get_actions(
+                filters=self.filt,
+                since=self.options.since.date,
+                before=self.options.until.date)]
 
         self.stats = sorted(list(set(actions)))
 
@@ -167,16 +189,17 @@ class TrelloCardsClosed(TrelloStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloCardsMoved(TrelloStats):
-
     """ Trello cards moved"""
 
     def fetch(self):
-        log.info(u"Searching for cards moved in %s by %s" %
-                 (self.parent.option, self.user))
-        actions = ["{0} moved from {1} to {2}".format(
-            act['data']['card']['name'],
-            act['data']['listBefore']['name'],
-            act['data']['listAfter']['name'])
+        log.info(
+            "Searching for cards moved in %s by %s",
+            self.parent.option, self.user)
+        actions = [
+            "{0} moved from {1} to {2}".format(
+                act['data']['card']['name'],
+                act['data']['listBefore']['name'],
+                act['data']['listAfter']['name'])
             for act in self.trello.get_actions(
                 filters=self.filt,
                 since=self.options.since.date,
@@ -190,18 +213,20 @@ class TrelloCardsMoved(TrelloStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloCheckItem(TrelloStats):
-
     """ Trello cards """
 
     def fetch(self):
-        log.info(u"Searching for CheckItem completed in %s by %s" %
-                 (self.parent.option, self.user))
-        actions = ["{0}: {1}".format(act['data']['card']['name'],
-                                     act['data']['checkItem']['name'])
-                   for act in self.trello.get_actions(
-            filters=self.filt,
-            since=self.options.since.date,
-            before=self.options.until.date)]
+        log.info(
+            "Searching for CheckItem completed in %s by %s",
+            self.parent.option, self.user)
+        actions = [
+            "{0}: {1}".format(
+                act['data']['card']['name'],
+                act['data']['checkItem']['name'])
+            for act in self.trello.get_actions(
+                filters=self.filt,
+                since=self.options.since.date,
+                before=self.options.until.date)]
         self.stats = sorted(list(set(actions)))
 
 
@@ -210,35 +235,38 @@ class TrelloCheckItem(TrelloStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloStatsGroup(StatsGroup):
-
     """ Trello stats group """
 
     # Default order
-
     order = 450
 
-    def __init__(self, option, name=None, parent=None):
+    def __init__(self, option, name=None, parent=None, user=None):
+        name = "Trello updates for {0}".format(option)
         super(TrelloStatsGroup, self).__init__(
-            option=option, name=name, parent=parent)
+            option=option, name=name, parent=parent, user=user)
 
         # map appropriate API methods to Classes
-        filter_map = {'Boards': {},
-                      'Lists': {},
-                      'Cards': {'updateCard': TrelloCards,
-                                'updateCard:closed': TrelloCardsClosed,
-                                'updateCard:idList': TrelloCardsMoved,
-                                'createCard': TrelloCardsCreated},
-                      'Checklists': {'updateCheckItemStateOnCard': TrelloCheckItem}
-                      }
+        filter_map = {
+            'Boards': {},
+            'Lists': {},
+            'Cards': {
+                'updateCard': TrelloCards,
+                'updateCard:closed': TrelloCardsClosed,
+                'updateCard:idList': TrelloCardsMoved,
+                'createCard': TrelloCardsCreated},
+            'Checklists': {
+                'updateCheckItemStateOnCard': TrelloCheckItem}
+            }
         self._session = None
         self.url = "https://trello.com/1"
         config = dict(Config().section(option))
 
         positional_args = ['apikey', 'token']
-        if not set(positional_args).issubset(set(config.keys())) and "user" not in config:
+        if (not set(positional_args).issubset(set(config.keys()))
+                and "user" not in config):
             raise ReportError(
                 "No ({0}) or 'user' set in the [{1}] section".format(
-                    ' and '.join(["'%s'" % (s) for s in positional_args]), option))
+                    listed(positional_args, quote="'"), option))
 
         optional_args = ["board_links", "filters", "apikey", "token"]
         for arg in optional_args:
@@ -255,8 +283,7 @@ class TrelloStatsGroup(StatsGroup):
                 self.stats.append(filter_map[filt_group][filt](
                     trello=trello,
                     filt=filt,
-                    option=option + filt,
-                    name="Actions in %s" % (filt_group),
+                    option=option + "-" + filt,
                     parent=self))
 
     @property

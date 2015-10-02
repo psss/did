@@ -37,6 +37,10 @@ type = trac
 prefix = TT
 url = https://some.trac.com/trac/project/rpc
 
+[trello]
+type = trello
+user = member
+
 [rt]
 type = rt
 prefix = RT
