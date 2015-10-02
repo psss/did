@@ -56,8 +56,8 @@ def test_User():
     user = User("some@email.org")
     assert user.email == "some@email.org"
     assert user.login == "some"
-    assert user.name == "Unknown"
-    assert unicode(user) == "Unknown <some@email.org>"
+    assert user.name == None
+    assert unicode(user) == "some@email.org"
 
     # Full email format
     user = User("Some Body <some@email.org>")

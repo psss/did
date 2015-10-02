@@ -352,7 +352,7 @@ class User(object):
         parts = utils.EMAIL_REGEXP.search(email)
         if parts is None:
             raise ConfigError("Invalid email address '{0}'".format(email))
-        self.name = parts.groups()[0] or "Unknown"
+        self.name = parts.groups()[0]
         self.email = parts.groups()[1]
         self.login = self.email.split('@')[0]
         # Check for possible aliases
@@ -360,7 +360,9 @@ class User(object):
 
     def __unicode__(self):
         """ Use name & email for string representation. """
-        return u"{0} <{1}>".format(self.name, self.email)
+        if not self.name:
+            return self.email
+        return "{0} <{1}>".format(self.name, self.email)
 
     def clone(self, stats):
         """ Create a user copy with alias enabled for given stats. """
