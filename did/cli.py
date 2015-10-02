@@ -9,10 +9,10 @@ running the main loop which gathers all individual stats.
 
 from __future__ import unicode_literals, absolute_import
 
+import argparse
 import re
 import sys
 import kerberos
-import optparse
 from dateutil.relativedelta import relativedelta as delta
 
 import did.base
@@ -31,8 +31,10 @@ class Options(object):
 
     def __init__(self, arguments=None):
         """ Prepare the parser. """
-        self.parser = optparse.OptionParser(
-            usage="did [last] [week|month|quarter|year] [opts]")
+        self.parser = argparse.ArgumentParser(
+            usage="did [last] [week|month|quarter|year] [opts]",
+            # --help now displays all default values
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         self.arguments = arguments
         self.opt = self.arg = None
 
@@ -41,17 +43,16 @@ class Options(object):
             log.setLevel(utils.LOG_DEBUG)
 
         # Time & user selection
-        group = optparse.OptionGroup(self.parser, "Select")
-        group.add_option(
+        group = self.parser.add_argument_group("Select")
+        group.add_argument(
             "--email", dest="emails", default=[], action="append",
             help="User email address(es)")
-        group.add_option(
+        group.add_argument(
             "--since",
             help="Start date in the YYYY-MM-DD format")
-        group.add_option(
+        group.add_argument(
             "--until",
             help="End date in the YYYY-MM-DD format")
-        self.parser.add_option_group(group)
 
         # Create sample stats and include all stats objects options
         log.debug("Loading Sample Stats group to build Options")
@@ -59,37 +60,35 @@ class Options(object):
         self.sample_stats.add_option(self.parser)
 
         # Formating options
-        group = optparse.OptionGroup(self.parser, "Format")
-        group.add_option(
+        group = self.parser.add_argument_group("Format")
+        group.add_argument(
             "--format", default="text",
             help="Output style, possible values: text (default) or wiki")
-        group.add_option(
-            "--width", default=did.base.Config().width, type="int",
-            help="Maximum width of the report output (default: %default)")
-        group.add_option(
+        group.add_argument(
+            "--width", default=did.base.Config().width, type=int,
+            help="Maximum width of the report output")
+        group.add_argument(
             "--brief", action="store_true",
             help="Show brief summary only, do not list individual items")
-        group.add_option(
+        group.add_argument(
             "--verbose", action="store_true",
             help="Include more details (like modified git directories)")
-        self.parser.add_option_group(group)
 
         # Other options
-        group = optparse.OptionGroup(self.parser, "Utils")
-        group.add_option(
+        group = self.parser.add_argument_group("Utils")
+        group.add_argument(
             "--config",
             metavar="FILE",
             help="Use alternate configuration file (default: 'config')")
-        group.add_option(
+        group.add_argument(
             "--total", action="store_true",
             help="Append total stats after listing individual users")
-        group.add_option(
+        group.add_argument(
             "--merge", action="store_true",
             help="Merge stats of all users into a single report")
-        group.add_option(
+        group.add_argument(
             "--debug", action="store_true",
             help="Turn on debugging output, do not catch exceptions")
-        self.parser.add_option_group(group)
 
     def parse(self, arguments=None):
         """ Parse the options. """
@@ -102,7 +101,8 @@ class Options(object):
         # Otherwise properly decode command line arguments
         if self.arguments is None:
             self.arguments = [arg.decode("utf-8") for arg in sys.argv[1:]]
-        (opt, arg) = self.parser.parse_args(self.arguments)
+        # http://stackoverflow.com/a/6835917/1289080
+        (opt, arg) = self.parser.parse_known_args(self.arguments)
         self.opt = opt
         self.arg = arg
         self.check()
@@ -205,19 +205,20 @@ def main(arguments=None):
         utils.info("Create at least a minimum config file {0}:\n{1}".format(
             did.base.Config.path(), did.base.Config().example().strip()))
         log.error(error)
-        sys.exit(1)
+        # return the actual error in HD, don't mask it in a sys exit
+        raise
 
     except (OptionError, ReportError) as error:
         log.error(error)
-        sys.exit(1)
+        raise
 
     except kerberos.GSSError as error:
         log.debug(error)
         log.error("Kerberos authentication failed. Try kinit.")
-        sys.exit(2)
+        raise
 
     except Exception as error:
         if "--debug" in sys.argv:
             raise
         log.error(error)
-        sys.exit(3)
+        raise

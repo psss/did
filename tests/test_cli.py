@@ -7,6 +7,7 @@ import os
 import re
 import did.cli
 import did.utils
+from did.base import OptionError
 
 # Prepare path and config examples
 PATH = os.path.dirname(os.path.realpath(__file__))
@@ -14,6 +15,7 @@ MINIMAL = did.base.Config.example()
 EXAMPLE = "".join(open(PATH + "/../examples/config").readlines())
 # Substitute example git paths for real life directories
 EXAMPLE = re.sub(r"\S+/git/[a-z]+", PATH, EXAMPLE)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Minimal Config
@@ -26,6 +28,7 @@ def test_help_minimal():
         did.cli.main(["--help"])
     except SystemExit:
         pass
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Example Config
@@ -50,7 +53,7 @@ def test_invalid_arguments():
     for argument in ["a", "b", "c", "something"]:
         try:
             did.cli.main(argument)
-        except SystemExit:
+        except (SystemExit, OptionError):
             pass
         else:
             raise RuntimeError(

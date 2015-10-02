@@ -4,7 +4,6 @@
 
 from __future__ import unicode_literals, absolute_import
 
-import optparse
 import xmlrpclib
 
 import did.base
@@ -54,7 +53,7 @@ class Stats(object):
 
     def add_option(self, group):
         """ Add option for self to the parser group object. """
-        group.add_option(
+        group.add_argument(
             "--{0}".format(self.option), action="store_true", help=self.name)
 
     def enabled(self):
@@ -122,12 +121,12 @@ class StatsGroup(Stats):
     def add_option(self, parser):
         """ Add option group and all children options. """
 
-        group = optparse.OptionGroup(parser, self.name)
+        group = parser.add_argument_group(self.name)
         for stat in self.stats:
             stat.add_option(group)
-        group.add_option(
+
+        group.add_argument(
             "--{0}".format(self.option), action="store_true", help="All above")
-        parser.add_option_group(group)
 
     def check(self):
         """ Check all children stats. """

@@ -4,6 +4,8 @@
 from __future__ import unicode_literals, absolute_import
 
 import pytest
+
+from did.base import ReportError
 import did.cli
 
 
@@ -45,11 +47,11 @@ def test_github_issues_closed():
 def test_github_invalid_token():
     """ Invalid token """
     did.base.Config(CONFIG + "\ntoken = bad-token")
-    with pytest.raises(SystemExit):
+    with pytest.raises((SystemExit, ReportError)):
         did.cli.main(INTERVAL)
 
 def test_github_missing_url():
     """ Missing url """
     did.base.Config("[gh]\ntype = github")
-    with pytest.raises(SystemExit):
+    with pytest.raises((SystemExit, ReportError)):
         did.cli.main(INTERVAL)
