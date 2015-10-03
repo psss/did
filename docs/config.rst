@@ -9,12 +9,12 @@ option ``--config`` allows to select a different config file from
 the config directory. This can serve as a kind of a profile and is
 especially useful for gathering team reports.
 
-Use the ``DID_CONFIG`` environment variable to override the
-default config directory ``~/.did`` and use your custom location
-instead. For example if you prefer to keep you home directory
-clean you might want to add the following line into ``.bashrc``::
+Use the ``DID_DIR`` environment variable to override the default
+config directory ``~/.did`` and use your custom location instead.
+For example if you prefer to keep you home directory clean you
+might want to add the following line into ``.bashrc``::
 
-    export DID_CONFIG=~/.config/did/
+    export DID_DIR=~/.config/did/
 
 
 Email

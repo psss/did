@@ -70,7 +70,7 @@ class Config(object):
 
         Parse config from given string (config) or file (path).
         If no config or path given, default to "~/.did/config" which
-        can be overrided by the DID_CONFIG environment variable.
+        can be overrided by the ``DID_DIR`` environment variable.
         """
         # Read the config only once (unless explicitly provided)
         if self.parser is not None and config is None and path is None:
@@ -158,7 +158,7 @@ class Config(object):
         """ Detect config file path """
         # Detect config directory
         try:
-            directory = os.environ["DID_CONFIG"]
+            directory = os.environ["DID_DIR"]
         except KeyError:
             directory = CONFIG
         # Detect config file (even before options are parsed)

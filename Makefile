@@ -14,14 +14,17 @@ endif
 all: docs packages
 .PHONY: docs hooks
 
+# Temporary directory
+tmp:
+	mkdir $(TMP)
 
 # Run the test suite, optionally with coverage
-test:
-	py.test tests
-smoke:
-	py.test tests/test_cli.py
-coverage:
-	coverage run --source=did,bin -m py.test tests
+test: tmp
+	DID_DIR=$(TMP) py.test tests
+smoke: tmp
+	DID_DIR=$(TMP) py.test tests/test_cli.py
+coverage: tmp
+	DID_DIR=$(TMP) coverage run --source=did,bin -m py.test tests
 	coverage report
 	coverage annotate
 
