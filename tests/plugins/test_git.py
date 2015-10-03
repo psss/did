@@ -28,7 +28,37 @@ did = {0}
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Tests
+#  Smoke
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def test_git_smoke():
+    """ Git smoke """
+    did.base.Config(CONFIG.format(GIT_PATH))
+    did.cli.main(INTERVAL)
+
+def test_git_verbosity():
+    """ Brief git stats """
+    did.base.Config(CONFIG.format(GIT_PATH))
+    did.cli.main(INTERVAL + " --brief")
+    did.cli.main(INTERVAL + " --verbose")
+
+def test_git_format():
+    """ Wiki format """
+    did.base.Config(CONFIG.format(GIT_PATH))
+    did.cli.main(INTERVAL + " --format text")
+    did.cli.main(INTERVAL + " --format wiki")
+
+def test_git_team():
+    """ Team report """
+    emails = " --email psplicha@redhat.com,cward@redhat.com"
+    did.base.Config(CONFIG.format(GIT_PATH))
+    did.cli.main(INTERVAL + emails)
+    did.cli.main(INTERVAL + emails + "--total")
+    did.cli.main(INTERVAL + emails + "--merge")
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Content
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_git_regular():
@@ -50,6 +80,11 @@ def test_git_nothing():
     did.base.Config(CONFIG.format(GIT_PATH))
     stats = did.cli.main("--until 2015-01-01")[0][0].stats[0].stats[0].stats
     assert stats == []
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Errors
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_git_invalid():
     """ Invalid git repo """

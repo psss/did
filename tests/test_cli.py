@@ -34,17 +34,22 @@ def test_help_minimal():
     with pytest.raises(SystemExit):
         did.cli.main(["--help"])
 
-
 def test_help_example():
     """ Help message with example config """
     did.base.Config(config=EXAMPLE)
     with pytest.raises(SystemExit):
         did.cli.main(["--help"])
 
-
 def test_invalid_arguments():
     """ Complain about invalid arguments """
     did.base.Config(config=MINIMAL)
     for argument in ["a", "b", "c", "something"]:
+        with pytest.raises(did.base.OptionError):
+            did.cli.main(argument)
+
+def test_invalid_date():
+    """ Complain about invalid arguments """
+    did.base.Config(config=MINIMAL)
+    for argument in ["--since x", "--since 2015-16-17"]:
         with pytest.raises(did.base.OptionError):
             did.cli.main(argument)

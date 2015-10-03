@@ -2,6 +2,9 @@
 
 from __future__ import unicode_literals, absolute_import
 
+import pytest
+import datetime
+import did.base
 from did.base import Config, ConfigError
 
 def test_base_import():
@@ -18,6 +21,24 @@ def test_Config():
     from did.base import Config
     assert Config
 
+def test_Config_email():
+    config = Config("[general]\nemail = email@example.com\n")
+    assert config.email == "email@example.com"
+
+def test_Config_email_missing():
+    config = Config("[general]\n")
+    with pytest.raises(did.base.ConfigError):
+        config.email == "email@example.com"
+    config = Config("[missing]")
+    with pytest.raises(did.base.ConfigError):
+        config.email == "email@example.com"
+
+def test_Config_width():
+    config = Config("[general]\n")
+    assert config.width == did.base.MAX_WIDTH
+    config = Config("[general]\nwidth = 123\n")
+    assert config.width == 123
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Date
@@ -26,6 +47,59 @@ def test_Config():
 def test_Date():
     from did.base import Date
     assert Date
+
+
+def test_Date_period():
+    from did.base import Date
+    did.base.TODAY = datetime.date(2015, 10, 3)
+    # This week
+    for argument in ["", "week", "this week"]:
+        since, until, period = Date.period(argument)
+        assert unicode(since) == "2015-09-28"
+        assert unicode(until) == "2015-10-05"
+        assert period == "this week"
+    # Last week
+    for argument in ["last", "last week"]:
+        since, until, period = Date.period(argument)
+        assert unicode(since) == "2015-09-21"
+        assert unicode(until) == "2015-09-28"
+        assert period == "the last week"
+    # This month
+    for argument in ["month", "this month"]:
+        since, until, period = Date.period(argument)
+        assert unicode(since) == "2015-10-01"
+        assert unicode(until) == "2015-11-01"
+        assert period == "this month"
+    # Last month
+    for argument in ["last month"]:
+        since, until, period = Date.period(argument)
+        assert unicode(since) == "2015-09-01"
+        assert unicode(until) == "2015-10-01"
+        assert period == "the last month"
+    # This quarter
+    for argument in ["quarter", "this quarter"]:
+        since, until, period = Date.period(argument)
+        assert unicode(since) == "2015-09-01"
+        assert unicode(until) == "2015-12-01"
+        assert period == "this quarter"
+    # Last quarter
+    for argument in ["last quarter"]:
+        since, until, period = Date.period(argument)
+        assert unicode(since) == "2015-06-01"
+        assert unicode(until) == "2015-09-01"
+        assert period == "the last quarter"
+    # This year
+    for argument in ["year", "this year"]:
+        since, until, period = Date.period(argument)
+        assert unicode(since) == "2015-03-01"
+        assert unicode(until) == "2016-03-01"
+        assert period == "this fiscal year"
+    # Last year
+    for argument in ["last year"]:
+        since, until, period = Date.period(argument)
+        assert unicode(since) == "2014-03-01"
+        assert unicode(until) == "2015-03-01"
+        assert period == "the last fiscal year"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -129,12 +129,7 @@ class Config(object):
                     if section_type != kind:
                         continue
                 except NoOptionError:
-                    # Implicit header/footer type for backward compatibility
-                    if (section == kind == "header" or
-                            section == kind == "footer"):
-                        pass
-                    else:
-                        continue
+                    continue
             result.append(section)
         return result
 
