@@ -273,7 +273,11 @@ class TrelloStatsGroup(StatsGroup):
             if arg not in config:
                 config[arg] = ""
 
-        trello = TrelloAPI(stats=self, config=config)
+        # Skip API instance initialization when building options
+        if self.options is None:
+            trello = None
+        else:
+            trello = TrelloAPI(stats=self, config=config)
 
         filters = [filt.strip() for filt in config['filters'].split(',')]
         for filt_group in filter_map.keys():

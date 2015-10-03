@@ -19,7 +19,6 @@ import did.base
 import did.utils as utils
 from did.utils import log
 from did.stats import UserStats
-from did.base import ConfigError, ReportError, OptionError
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,7 +62,7 @@ class Options(object):
             "--format", default="text",
             help="Output style, possible values: text (default) or wiki")
         group.add_argument(
-            "--width", default=did.base.Config().width, type=int,
+            "--width", default=did.base.MAX_WIDTH, type=int,
             help="Maximum width of the report output (default: %(default)s)")
         group.add_argument(
             "--brief", action="store_true",
@@ -110,13 +109,6 @@ class Options(object):
             for group in self.sample_stats.stats
             for stat in group.stats])
 
-        # Detect email addresses and split them on comma
-        if not opt.emails:
-            opt.emails = did.base.Config().email
-        opt.emails = utils.split(opt.emails, separator=re.compile(r"\s*,\s*"))
-        if not opt.emails:
-            raise ConfigError("No email given. Use --email or create config.")
-
         # Time period handling
         if opt.since is None and opt.until is None:
             opt.since, opt.until, period = did.base.Date.period(arg)
@@ -132,20 +124,21 @@ class Options(object):
             raise RuntimeError(
                 "Invalid date range ({0} to {1})".format(
                     opt.since, opt.until.date - delta(days=1)))
-        print(u"Status report for {0} ({1} to {2}).".format(
-            period, opt.since, opt.until.date - delta(days=1)))
+        header = "Status report for {0} ({1} to {2}).".format(
+            period, opt.since, opt.until.date - delta(days=1))
 
         # Finito
         log.debug("Gathered options:")
         log.debug('options = {0}'.format(opt))
-        return opt
+        return opt, header
 
     def check(self):
         """ Perform additional check for given options """
         keywords = "today this last week month quarter year".split()
         for argument in self.arg:
             if argument not in keywords:
-                raise OptionError("Invalid argument: '{0}'".format(argument))
+                raise did.base.OptionError(
+                    "Invalid argument: '{0}'".format(argument))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -166,13 +159,16 @@ def main(arguments=None):
     """
     try:
         # Parse options, initialize gathered stats
-        options = Options().parse(arguments)
+        options, header = Options().parse(arguments)
         gathered_stats = []
 
         # Check for user email addresses (command line or config)
-        users = [did.base.User(email=email) for email in options.emails]
+        emails = options.emails or did.base.Config().email
+        emails = utils.split(emails, separator=re.compile(r"\s*,\s*"))
+        users = [did.base.User(email=email) for email in emails]
 
-        # Prepare team stats object for data merging
+        # Print header and prepare team stats object for data merging
+        utils.eprint(header)
         team_stats = UserStats(options=options)
         if options.merge:
             utils.header("Total Report")
@@ -198,23 +194,12 @@ def main(arguments=None):
         # Return all gathered stats objects
         return gathered_stats, team_stats
 
-    except ConfigError as error:
+    except did.base.ConfigFileError as error:
         utils.info("Create at least a minimum config file {0}:\n{1}".format(
-            did.base.Config.path(), did.base.Config().example().strip()))
-        log.error(error)
-        sys.exit(1)
-
-    except (OptionError, ReportError) as error:
-        log.error(error)
-        sys.exit(1)
+            did.base.Config.path(), did.base.Config.example().strip()))
+        raise
 
     except kerberos.GSSError as error:
         log.debug(error)
-        log.error("Kerberos authentication failed. Try kinit.")
-        sys.exit(2)
-
-    except Exception as error:
-        if "--debug" in sys.argv:
-            raise
-        log.error(error)
-        sys.exit(3)
+        raise did.base.ConfigError(
+            "Kerberos authentication failed. Try kinit.")

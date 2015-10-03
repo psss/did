@@ -8,6 +8,7 @@ from __future__ import unicode_literals, absolute_import
 
 import pytest
 import did.cli
+import did.base
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -81,5 +82,5 @@ def test_trello_checklists_checkitem():
 def test_trello_missing_apikey():
     """ Missing username """
     did.base.Config("[trello]\ntype = trello")
-    with pytest.raises(SystemExit):
+    with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)

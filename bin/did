@@ -32,5 +32,16 @@ changes) for given week, month, quarter, year or selected date
 range. By default all available stats for this week are reported.
 """
 
+import sys
+
 import did.cli
-did.cli.main()
+import did.base
+import did.utils
+
+try:
+    did.cli.main()
+except did.base.GeneralError as error:
+    if "--debug" in sys.argv:
+        raise
+    did.utils.log.error(error)
+    raise SystemExit(1)

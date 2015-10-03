@@ -166,11 +166,12 @@ class UserStats(StatsGroup):
                 self.stats.append(statsgroup(
                     option=section, parent=self,
                     user=self.user.clone(section) if self.user else None))
-        except did.base.ConfigError as error:
+        except did.base.ConfigFileError as error:
             # Missing config file is OK if building options (--help).
             # Otherwise raise the expection to suggest config example.
             if options is None:
                 log.debug(error)
+                log.debug("This is OK for now as we're just building options.")
             else:
                 raise
 

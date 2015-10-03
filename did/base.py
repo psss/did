@@ -39,19 +39,20 @@ TODAY = datetime.date.today()
 #  Exceptions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ConfigError(Exception):
-    """ General problem with configuration file """
-    pass
+class GeneralError(Exception):
+    """ General stats error """
 
+class ConfigError(GeneralError):
+    """ Stats configuration problem """
 
-class OptionError(Exception):
-    """ General problem with configuration file """
-    pass
+class ConfigFileError(ConfigError):
+    """ Problem with the config file """
 
+class OptionError(GeneralError):
+    """ Invalid command line """
 
-class ReportError(Exception):
-    """ General problem with report generation """
-    pass
+class ReportError(GeneralError):
+    """ Report generation error """
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,21 +88,27 @@ class Config(object):
             path = Config.path()
         # Parse the config from file
         try:
-            log.info("Inspecting config file '{0}'".format(path))
+            log.info("Inspecting config file '{0}'.".format(path))
             self.parser.readfp(codecs.open(path, "r", "utf8"))
         except IOError as error:
             log.debug(error)
-            raise ConfigError(
-                "Unable to read the config file {0}".format(path))
+            Config.parser = None
+            raise ConfigFileError(
+                "Unable to read the config file '{0}'.".format(path))
 
     @property
     def email(self):
         """ User email(s) """
         try:
             return self.parser.get("general", "email")
-        except (NoOptionError, NoSectionError) as error:
+        except NoSectionError as error:
             log.debug(error)
-            return []
+            raise ConfigFileError(
+                "No general section found in the config file.")
+        except NoOptionError as error:
+            log.debug(error)
+            raise ConfigFileError(
+                "No email address defined in the config file.")
 
     @property
     def width(self):
@@ -373,7 +380,7 @@ class User(object):
         login = email = None
         if stats is None:
             return
-        # Use alias directly from the config section
+        # Attempt to use alias directly from the config section
         try:
             config = dict(Config().section(stats))
             try:
@@ -384,7 +391,7 @@ class User(object):
                 login = config["login"]
             except KeyError:
                 pass
-        except NoSectionError:
+        except (ConfigFileError, NoSectionError):
             pass
         # Check for aliases specified in the email string
         if aliases is not None:

@@ -4,6 +4,7 @@
 from __future__ import unicode_literals, absolute_import
 
 import os
+import pytest
 import did.cli
 import did.utils
 
@@ -61,9 +62,5 @@ def test_git_invalid():
 def test_git_non_existent():
     """ Non-existent git repo """
     did.base.Config(CONFIG.format("i-do-not-exist"))
-    try:
+    with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)
-    except SystemExit:
-        pass
-    else:
-        raise RuntimeError("Expected failure")
