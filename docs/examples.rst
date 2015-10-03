@@ -19,7 +19,7 @@ trac, plus my favorite header & footer I'm used to fill manually::
 
     [header]
     type = header
-    highlights = Highlights
+    high = Highlights
     joy = Joy of the week ;-)
 
     [tools]
@@ -50,56 +50,60 @@ Here's how available command line options look like with this
 config. Note that ``did`` detects all enabled plugins and creates
 corresponding option groups for each of them::
 
-    Usage: did [last] [week|month|quarter|year] [opts]
+    usage: did [this|last] [week|month|quarter|year] [options]
 
-    Options:
-      -h, --help         show this help message and exit
-    
-      Selection:
-        --email=EMAILS   User email address(es)
-        --since=SINCE    Start date in the YYYY-MM-DD format
-        --until=UNTIL    End date in the YYYY-MM-DD format
-    
-      Header:
-        --highlights     Highlights
-        --joy            Joy of the week
-        --header         All above
-    
-      Bugzilla stats:
-        --bz-filed       Bugs filed
-        --bz-patched     Bugs patched
-        --bz-posted      Bugs posted
-        --bz-fixed       Bugs fixed
-        --bz-returned    Bugs returned
-        --bz-verified    Bugs verified
-        --bz-commented   Bugs commented
-        --bz             All above
-    
-      Work on tools:
-        --did            Work on did
-        --edd            Work on edd
-        --tools          All above
-    
-      Tickets in trac:
-        --trac-created   Tickets created in trac
-        --trac-accepted  Tickets accepted in trac
-        --trac-updated   Tickets updated in trac
-        --trac-closed    Tickets closed in trac
-        --trac           All above
-    
-      Footer:
-        --next           Plans, thoughts, ideas...
-        --status         Status: Green | Yellow | Orange | Red
-        --footer         All above
-    
-      Display mode:
-        --format=FORMAT  Output style, possible values: text (default) or wiki
-        --width=WIDTH    Maximum width of the report output (default: 79)
-        --brief          Show brief summary only, do not list individual items
-        --verbose        Include more details (like modified git directories)
-        --total          Append total stats after listing individual users
-        --merge          Merge stats of all users into a single report
-        --debug          Turn on debugging output, do not catch exceptions
+    optional arguments:
+      -h, --help       show this help message and exit
+
+    Select:
+      --email EMAILS   User email address(es)
+      --since SINCE    Start date in the YYYY-MM-DD format
+      --until UNTIL    End date in the YYYY-MM-DD format
+
+    Header:
+      --header-high    Highlights
+      --header-joy     Joy of the week
+      --header         All above
+
+    Bugzilla stats:
+      --bz-filed       Bugs filed
+      --bz-patched     Bugs patched
+      --bz-posted      Bugs posted
+      --bz-fixed       Bugs fixed
+      --bz-returned    Bugs returned
+      --bz-verified    Bugs verified
+      --bz-commented   Bugs commented
+      --bz-closed      Bugs closed
+      --bz             All above
+
+    Work on tools:
+      --tools-did      Work on did
+      --tools-edd      Work on edd
+      --tools          All above
+
+    Tickets in trac:
+      --trac-created   Tickets created in trac
+      --trac-accepted  Tickets accepted in trac
+      --trac-updated   Tickets updated in trac
+      --trac-closed    Tickets closed in trac
+      --trac           All above
+
+    Footer:
+      --footer-next    Plans, thoughts, ideas...
+      --footer-status  Status: Green | Yellow | Orange | Red
+      --footer         All above
+
+    Format:
+      --format FORMAT  Output style, possible values: text (default) or wiki
+      --width WIDTH    Maximum width of the report output (default: 79)
+      --brief          Show brief summary only, do not list individual items
+      --verbose        Include more details (like modified git directories)
+
+    Utils:
+      --config FILE    Use alternate configuration file (default: 'config')
+      --total          Append total stats after listing individual users
+      --merge          Merge stats of all users into a single report
+      --debug          Turn on debugging output, do not catch exceptions
 
 
 Week
@@ -109,19 +113,19 @@ Now it's easy to find out what I was working on during this week::
 
     > did
     Status report for this week (2015-09-07 to 2015-09-13).
-    
+
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      Petr Šplíchal <psplicha@redhat.com>
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    
+
     * Highlights
-    
+
     * Joy of the week
-    
+
     * Bugs fixed: 2
         * BZ#1261963 - wrong date format causes traceback
         * BZ#1248551 - status-report crashes when trac url is incorrect
-    
+
     * Work on did: 52 commits
         * 91ae8e7 - Enabled syntax highlighting for config example
         * 978add5 - Convert plugin order list into table
@@ -136,13 +140,13 @@ Now it's easy to find out what I was working on during this week::
         * d623ef0 - Clarify a bit more did.cli.main() usage
         * 72aaa5d - Move module description to the module itself
         * ...
-    
+
     * Tickets updated in trac: 2
         * TT#0400 - Convert status-report to an open source project
         * TT#0490 - Add or improve missing test coverage for key use cases
 
     * Plans, thoughts, ideas...
-    
+
     * Status: Green | Yellow | Orange | Red
 
 
@@ -153,16 +157,16 @@ I can check my work on tools development during the last month::
 
     > did --tools last month
     Status report for the last month (2015-08-01 to 2015-08-31).
-    
+
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      Petr Šplíchal <psplicha@redhat.com>
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    
+
     * Work on did: 3 commits
         * 6167e4f - Adjustments after the stats refactoring
         * 3df5c60 - Include gerrit details as comments, fix exception
         * 6bc869f - Include 'items' plugin config example
-    
+
     * Work on edd: 13 commits
         * 77d5c94 - Bail out if no file selected with --list [fix #5]
         * eb4db1a - Document the Ctrl-Shift-V keyboard shortcut
@@ -178,7 +182,7 @@ I can check my work on tools development during the last month::
         * dec9d63 - New option --shortcut for keyboard shortcut
         * 556d3c4 - Include a short usage message
 
-    
+
 Brief
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -189,7 +193,7 @@ instead of typing the whole date string::
 
     > did --bz-filed --bz-fixed --bz-verified --until today --brief
     Status report for given date range (1993-01-01 to 2015-09-11).
-    
+
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
      Petr Šplíchal <psplicha@redhat.com>
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

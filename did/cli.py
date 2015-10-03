@@ -31,7 +31,7 @@ class Options(object):
     def __init__(self, arguments=None):
         """ Prepare the parser. """
         self.parser = argparse.ArgumentParser(
-            usage="did [this|last] [week|month|quarter|year] [opts]")
+            usage="did [this|last] [week|month|quarter|year] [options]")
         self.arguments = arguments
         self.opt = self.arg = None
 

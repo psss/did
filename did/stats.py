@@ -204,4 +204,5 @@ class EmptyStatsGroup(StatsGroup):
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
         for opt, name in sorted(did.base.Config().section(option)):
-            self.stats.append(EmptyStats(opt, name, parent=self))
+            self.stats.append(
+                EmptyStats(option + "-" + opt, name, parent=self))

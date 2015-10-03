@@ -132,5 +132,5 @@ class GitStats(StatsGroup):
                         name="Work on {0}/{1}".format(repo, repo_dir)))
             else:
                 self.stats.append(GitCommits(
-                    option=repo, parent=self, path=path,
+                    option=option + "-" + repo, parent=self, path=path,
                     name="Work on {0}".format(repo)))
