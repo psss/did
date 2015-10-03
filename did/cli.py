@@ -39,6 +39,12 @@ class Options(object):
         if "--debug" in sys.argv:
             log.setLevel(utils.LOG_DEBUG)
 
+        # Get the default output width from the config (if available)
+        try:
+            width = did.base.Config().width
+        except did.base.ConfigFileError:
+            width = did.base.MAX_WIDTH
+
         # Time & user selection
         group = self.parser.add_argument_group("Select")
         group.add_argument(
@@ -62,7 +68,7 @@ class Options(object):
             "--format", default="text",
             help="Output style, possible values: text (default) or wiki")
         group.add_argument(
-            "--width", default=did.base.MAX_WIDTH, type=int,
+            "--width", default=width, type=int,
             help="Maximum width of the report output (default: %(default)s)")
         group.add_argument(
             "--brief", action="store_true",
