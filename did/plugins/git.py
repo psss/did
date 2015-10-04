@@ -53,8 +53,8 @@ class GitRepo(object):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as error:
             log.debug(error)
-            raise ReportError(
-                "Unable to access git repo '{0}'".format(self.path))
+            log.warn("Unable to access git repo '{0}'".format(self.path))
+            return []
         output, errors = process.communicate()
         log.debug("git log output:")
         log.debug(output)
