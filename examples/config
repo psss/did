@@ -56,6 +56,10 @@ url = https://issues.jboss.org/
 type = wiki
 wiki test = http://moinmo.in/
 
+[idonethis]
+type = idonethis
+apitoken = SEE: https://idonethis.com/api/token/
+
 [projects]
 type = items
 header = Work on projects

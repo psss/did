@@ -49,6 +49,13 @@ header
     :members:
     :undoc-members:
 
+idonethis
+---------
+
+.. automodule:: did.plugins.idonethis
+    :members:
+    :undoc-members:
+
 items
 -----
 
