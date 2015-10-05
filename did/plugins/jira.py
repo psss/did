@@ -33,15 +33,25 @@ Notes:
 
 from __future__ import absolute_import, unicode_literals
 
-import re
-import json
-import urllib
-import urllib2
-import cookielib
-import dateutil.parser
-import urllib2_kerberos
+try:
+    import requests as rq
+    from requests_kerberos import HTTPKerberosAuth, DISABLED
+    import warnings
+    # Output warnings ONE time, then supress
+    warnings.simplefilter('default')
+    has_requests = True
+except ImportError:
+    has_requests = False
+    import urllib2
+    import urllib2_kerberos
+    import json
 
-from did.utils import log, pretty, listed
+import cookielib
+import urllib
+import re
+import dateutil.parser
+
+from did.utils import log, pretty, listed, as_bool
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
 
@@ -56,6 +66,7 @@ MAX_BATCHES = 100
 
 # Supported authentication types
 AUTH_TYPES = ["gss", "basic"]
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
@@ -98,7 +109,13 @@ class Issue(object):
                         "fields": "summary,comment",
                         "maxResults": MAX_RESULTS,
                         "startAt": batch * MAX_RESULTS})))
-            data = json.loads(result.read())
+
+            # Load the results; requests comes with json built-in
+            if has_requests:
+                data = result.json()
+            else:
+                data = json.loads(result.read())
+
             log.debug("Batch {0} result: {1} fetched".format(
                 batch, listed(data["issues"], "issue")))
             log.data(pretty(data))
@@ -176,57 +193,55 @@ class JiraStats(StatsGroup):
     # Default order
     order = 600
 
+    cookiejar = None
+    config = None
+    auth_type = None
+    auth_username = None
+    auth_password = None
+    url = None
+    prefix = None
+    project = None
+    _option = None
+    _session = None
+
     def __init__(self, option, name=None, parent=None, user=None):
-        StatsGroup.__init__(self, option, name, parent, user)
-        self._session = None
+        '''
+        Load Jira module with config. Check that we have all the
+        essential arguments set and raise exceptions if not.
+        '''
+        super(JiraStats, self).__init__(option, name, parent, user)
         # Make sure there is an url provided
-        config = dict(Config().section(option))
-        if "url" not in config:
-            raise ReportError(
-                "No Jira url set in the [{0}] section".format(option))
-        self.url = config["url"].rstrip("/")
-        # Optional authentication url
-        if "auth_url" in config:
-            self.auth_url = config["auth_url"]
-        else:
-            self.auth_url = self.url + "/step-auth-gss"
-        # Authentication type
-        if "auth_type" in config:
-            if config["auth_type"] not in AUTH_TYPES:
-                raise ReportError(
-                    "Unsupported authentication type: {0}"
-                    .format(config["auth_type"]))
-            self.auth_type = config["auth_type"]
-        else:
-            self.auth_type = "gss"
+        self._option = option
+        self.config = dict(Config().section(option))
+        # jira base url
+        self.url = self.config["url"].rstrip("/")
         # Authentication credentials
-        if self.auth_type == "basic":
-            if "auth_username" not in config:
-                raise ReportError(
-                    "`auth_username` not set in the [{0}] section"
-                    .format(option))
-            self.auth_username = config["auth_username"]
-            if "auth_password" not in config:
-                raise ReportError(
-                    "`auth_password` not set in the [{0}] section"
-                    .format(option))
-            self.auth_password = config["auth_password"]
-        else:
-            if "auth_username" in config:
-                raise ReportError(
-                    "`auth_username` is only valid for basic authentication"
-                    + " (section [{0}])".format(option))
-            if "auth_password" in config:
-                raise ReportError(
-                    "`auth_password` is only valid for basic authentication"
-                    + " (section [{0}])".format(option))
-        # Make sure we have project set
-        if "project" not in config:
-            raise ReportError(
-                "No project set in the [{0}] section".format(option))
-        self.project = config["project"]
+        self.auth_type = self.config.get('auth_type') or "gss"
+        self.auth_username = self.config.get("auth_username")
+        self.auth_password = self.config.get("auth_password")
+        # Optional authentication url
+        _default = self.url + "/step-auth-gss"
+        self.auth_url = self.config.get('auth_url') or _default
         # Check for custom prefix
-        self.prefix = config["prefix"] if "prefix" in config else None
+        if not self.url:
+            # FIXME: This is a config issue, raise ConfigError?
+            raise ReportError(
+                "No Jira url set in [{0}] section".format(self._option))
+        self.prefix = self.config.get("prefix")
+        # Make sure we have project set
+        self.project = self.config.get("project")
+        if not self.project:
+            raise ReportError(
+                "No project set in the [{0}] section".format(self._option))
+
+        # check that auth_type is configured correctly
+        self._auth_type_check()
+
+        self.ssl_verify = as_bool(self.config.get('ssl_verify', True))
+
+        # http://www.techchorus.net/using-cookie-jar-urllib2
+        self.cookiejar = cookielib.CookieJar()
+
         # Create the list of stats
         self.stats = [
             JiraCreated(
@@ -238,29 +253,97 @@ class JiraStats(StatsGroup):
             JiraResolved(
                 option=option + "-resolved", parent=self,
                 name="Issues resolved in {0}".format(option)),
-            ]
+        ]
+
+    @property
+    def _ssl_handler(self):
+        '''
+        Property to generate urllib2 ssl context workaround to avoid
+        ssl verification
+        '''
+        if self.ssl_verify:
+            # requires ssl verification
+            ssl_hdlr = urllib2.HTTPSHandler(debuglevel=0)
+        else:
+            # skip ssl verification
+            import ssl
+            ctx = ssl.create_default_context()
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+            #urllib2.urlopen("https://your-test-server.local", context=ctx)
+            ssl_hdlr = urllib2.HTTPSHandler(debuglevel=0, context=ctx)
+        return ssl_hdlr
+
+    def _auth_type_check(self):
+        # check that we have the auth config configured correctly
+        # username and password are only useful in the context of 'basic' auth
+        auth_username = self.auth_username
+        auth_password = self.auth_password
+        if self.auth_type not in AUTH_TYPES:
+            raise ReportError(
+                "Unsupported authentication type: {0}".format(self._auth_type))
+        if self.auth_type == "basic":
+            if not auth_username:
+                raise ReportError(
+                    "`auth_username` not set in the [{0}] section"
+                    .format(self._option))
+            if not auth_password:
+                raise ReportError(
+                    "`auth_password` not set in the [{0}] section"
+                    .format(self._option))
+        else:  # self.auth_type == "gss"
+            if auth_username:
+                raise ReportError(
+                    "`auth_username` is only valid for basic authentication"
+                    + " (section [{0}])".format(self._option))
+            if auth_password:
+                raise ReportError(
+                    "`auth_password` is only valid for basic authentication"
+                    + " (section [{0}])".format(self._option))
+
+    def _basic_session(self):
+        # use urllib2 sessions by default here
+        self._session = urllib2.build_opener(
+            urllib2.HTTPSHandler(debuglevel=0),
+            urllib2.HTTPRedirectHandler,
+            urllib2.HTTPCookieProcessor(self.cookiejar),
+            urllib2.HTTPBasicAuthHandler)
+        req = urllib2.Request(self.auth_url)
+        req.add_data('{ "username" : "%s", "password" : "%s" }' % (
+            self.auth_username, self.auth_password))
+        req.add_header("Content-type", "application/json")
+        req.add_header("Accept", "application/json")
+        self._session.open(req)
+
+    def _gss_session(self):
+        # For some reason, GSSAPI isn't working as expected in some cases
+        # so use requests if available.
+        if has_requests:
+            # http://stackoverflow.com/questions/21578699/
+            auth = HTTPKerberosAuth(mutual_authentication=DISABLED)
+            self._session = rq.Session()
+            url = self.url + "/step-auth-gss"
+            self._session.get(url, auth=auth, verify=self.ssl_verify,
+                              allow_redirects=True)
+            # compat with urllib2
+            self._session.open = self._session.get
+        else:
+            # http://stackoverflow.com/questions/8811269/
+            self._session = urllib2.build_opener(
+                urllib2.HTTPSHandler(debuglevel=0),
+                urllib2.HTTPRedirectHandler,
+                urllib2.HTTPCookieProcessor(self.cookiejar),
+                urllib2_kerberos.HTTPKerberosAuthHandler)
+            self._session.open(self.auth_url)
 
     @property
     def session(self):
         """ Initialize the session """
         if self._session is None:
-            # http://stackoverflow.com/questions/8811269/
-            # http://www.techchorus.net/using-cookie-jar-urllib2
-            cookie = cookielib.CookieJar()
-            self._session = urllib2.build_opener(
-                urllib2.HTTPSHandler(debuglevel=0),
-                urllib2.HTTPRedirectHandler,
-                urllib2.HTTPCookieProcessor(cookie),
-                urllib2_kerberos.HTTPKerberosAuthHandler)
-
             log.debug("Connecting to {0}".format(self.auth_url))
             if self.auth_type == 'basic':
-                req = urllib2.Request(self.auth_url)
-                req.add_data('{ "username" : "%s", "password" : "%s" }'
-                    % (self.auth_username, self.auth_password))
-                req.add_header("Content-type", "application/json")
-                req.add_header("Accept", "application/json")
-                self._session.open(req)
+                self._basic_session()
             else:
-                self._session.open(self.auth_url)
+                assert self.auth_type == 'gss'
+                self._gss_session()
         return self._session

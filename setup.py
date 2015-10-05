@@ -42,6 +42,13 @@ __xrequires__ = {
     'bootstrap': [
         'sphinx_bootstrap_theme',
     ],
+    'requests': [
+        'requests==2.7.0',
+        'requests-kerberos==0.7.0',
+    ],
+    #'bugzilla': [
+    #    'python-bugzilla==1.2.2',
+    #],
 }
 
 pip_src = 'https://pypi.python.org/packages/source'

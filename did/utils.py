@@ -39,6 +39,17 @@ EMAIL_REGEXP = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
 #  Utils
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+def as_bool(var):
+    """ Convert unparsed config variable to bool equivalent """
+    if isinstance(var, (str, unicode)):
+        var = var.lower()
+        if var in ['false', '0']:
+            var = False
+        else:
+            var = True
+    return bool(var)
+
+
 def eprint(text):
     """ Print (optionaly encoded) text """
     # When there's no terminal we need to explicitly encode strings.

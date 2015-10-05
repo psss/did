@@ -73,4 +73,4 @@ def assert_conf_error(config, expected_error=ReportError):
     except ReportError as e:
         error = e
     assert type(error) == expected_error
-    
+
