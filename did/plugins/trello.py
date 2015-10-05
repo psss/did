@@ -18,7 +18,8 @@ Config example (private)::
 Optional arguments::
 
     board_links = g9mdhdzg
-    filters = updateCheckItemStateOnCard,updateCard
+    filters = updateCheckItemStateOnCard, updateCard, updateCard:closed,
+              updateCard:idList, createCard
 
 apikey
     https://trello.com/app-key
@@ -45,6 +46,9 @@ import urllib2
 from did.base import Config, ReportError
 from did.utils import log, pretty, listed
 from did.stats import Stats, StatsGroup
+
+DEFAULT_FILTERS = ('updateCheckItemStateOnCard, updateCard, updateCard:closed,'
+                   ' updateCard:idList, createCard')
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,7 +135,7 @@ class TrelloCardsCreated(TrelloStats):
             "Searching for cards created in %s by %s",
             self.parent.option, self.user)
         actions = [
-            "{0} was created".format(act['data']['card']['name'])
+            act['data']['card']['name']
             for act in self.trello.get_actions(
                 filters=self.filt,
                 since=self.options.since.date,
@@ -144,7 +148,7 @@ class TrelloCardsCreated(TrelloStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloCards(TrelloStats):
-    """ Trello cards """
+    """ Trello cards updated"""
 
     def fetch(self):
         log.info(
@@ -196,7 +200,7 @@ class TrelloCardsMoved(TrelloStats):
             "Searching for cards moved in %s by %s",
             self.parent.option, self.user)
         actions = [
-            "{0} moved from {1} to {2}".format(
+            "[{0}] moved from [{1}] to [{2}]".format(
                 act['data']['card']['name'],
                 act['data']['listBefore']['name'],
                 act['data']['listAfter']['name'])
@@ -213,7 +217,7 @@ class TrelloCardsMoved(TrelloStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloCheckItem(TrelloStats):
-    """ Trello cards """
+    """ Trello checklist item completed"""
 
     def fetch(self):
         log.info(
@@ -256,7 +260,7 @@ class TrelloStatsGroup(StatsGroup):
                 'createCard': TrelloCardsCreated},
             'Checklists': {
                 'updateCheckItemStateOnCard': TrelloCheckItem}
-            }
+        }
         self._session = None
         self.url = "https://trello.com/1"
         config = dict(Config().section(option))
@@ -279,7 +283,8 @@ class TrelloStatsGroup(StatsGroup):
         else:
             trello = TrelloAPI(stats=self, config=config)
 
-        filters = [filt.strip() for filt in config['filters'].split(',')]
+        _filters = config.get('filters') or DEFAULT_FILTERS
+        filters = [filt.strip() for filt in _filters.split(',')]
         for filt_group in filter_map.keys():
             for filt in filter_map[filt_group].keys():
                 if filters != [""] and filt not in filters:
