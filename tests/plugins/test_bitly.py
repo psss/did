@@ -16,8 +16,13 @@ type = bitly
 """
 
 BAD_TOKEN_CONFIG = BASIC_CONFIG + "\ntoken = bad-token"
+# test token created by "Chris Ward" <kejbaly2+did@gmail.com>
+OK_CONFIG = BASIC_CONFIG + "\ntoken = 77912602cc1d712731b2d8a2810cf8500d2d0f89"
 
-INTERVAL = "--since 2015-10-01 --until 2015-10-03"
+# one link should be present
+INTERVAL = "--since 2015-10-06 --until 2015-10-07"
+# No links should be present
+INTERVAL1 = "--since 2015-10-07 --until 2015-10-08"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,10 +38,6 @@ def test_import():
 def test_missing_token():
     """
     Missing bitly token results in Exception
-
-    I haven't found a way to test the user-history API call without a token.
-    Can't test that, but we can test that it always fails if token is not
-    defined.
     """
     import did
     did.base.Config(BASIC_CONFIG)
@@ -55,3 +56,21 @@ def test_invalid_token():
     did.base.Config(BAD_TOKEN_CONFIG)
     with pytest.raises((SystemExit, ConfigError)):
         did.cli.main(INTERVAL)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Acceptance tests
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def test_bitly_saved():
+    """ Check expected saved links are returned """
+    import did
+    did.base.Config(OK_CONFIG)
+    result = did.cli.main(INTERVAL)
+    stats = result[0][0].stats[0].stats[0].stats
+    _m = (
+        "http://bit.ly/kejbaly2_roreilly_innerwars_reddit - "
+        "Quest to decode and play my brother's INNER WARS album : bucketlist"
+    )
+    assert len(stats) == 1
+    assert stats[0] == _m
