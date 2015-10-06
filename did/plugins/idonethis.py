@@ -37,7 +37,7 @@ class IdonethisStats(Stats):
     """ Idonethis.com stats """
     def fetch(self, page_size=100):
         log.info(
-            "Searching for idonethis.com dones in {}".format(
+            "Searching for idonethis.com dones in {0}".format(
                 self.parent.option))
 
         # FIXME: add support for pagination (eg, done >= page_size)
@@ -60,8 +60,8 @@ class IdonethisStats(Stats):
             raise RuntimeError(detail)
 
         k = payload['count']
-        log.info('Found {} dones'.format(k))
-        msg = '[{}] <{}> {}'
+        log.info('Found {0} dones'.format(k))
+        msg = '[{0}] <{1}> {2}'
         results = payload.get('results') or []
         stats = [msg.format(x['done_date'], x['owner'], x['raw_text'])
                  for x in results]
@@ -100,7 +100,7 @@ class IdonethisStatsGroup(StatsGroup):
         """ Initialize the session """
         if self._session is None:
             _s = requests.Session()
-            _s.headers['Authorization'] = 'Token {}'.format(self.apitoken)
+            _s.headers['Authorization'] = 'Token {0}'.format(self.apitoken)
             self._session = _s
         return self._session
 
