@@ -72,7 +72,12 @@ def load():
             plugins.append(plugin)
             log.debug("Successfully imported {0} plugin".format(plugin))
         except (ImportError, SyntaxError) as error:
-            log.warn("Failed to import {0} plugin ({1})".format(plugin, error))
+            # Give a warning only when the plugin is configured
+            message = "Failed to import {0} plugin ({1})".format(plugin, error)
+            if Config().sections(kind=plugin):
+                log.warn(message)
+            else:
+                log.debug(message)
             FAILED_PLUGINS.append(plugin)
     return plugins
 
