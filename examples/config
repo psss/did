@@ -56,10 +56,9 @@ url = https://issues.jboss.org/
 type = wiki
 wiki test = http://moinmo.in/
 
-# MUST SET token FOR BITLY PLUGIN TO WORK
 [bitly]
 type = bitly
-token = SEE: https://bitly.com/a/oauth_apps
+token = <token>
 
 [projects]
 type = items

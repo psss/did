@@ -58,9 +58,7 @@ class Bitly(object):
         self.parent = parent
         self.token = token or getattr(parent, 'token')
         if not self.token:
-            msg = "bitly requires token to be defined in config"
-            log.error(msg)
-            raise ConfigError(msg)
+            raise ConfigError("bitly requires token to be defined in config")
 
     @property
     def api(self):
@@ -138,8 +136,7 @@ class BitlyStats(StatsGroup):
         try:
             self.token = config["token"]
         except KeyError:
-            raise ReportError(
-                "No token in the [{0}] section".format(option))
+            raise ConfigError("No token in the [{0}] section".format(option))
 
         self.bitly = Bitly(parent=self)
         # Construct the list of stats

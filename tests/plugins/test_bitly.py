@@ -7,7 +7,8 @@ import pytest
 
 from bitly_api import BitlyError
 
-from did.base import ReportError
+import did.cli
+import did.base
 
 BASIC_CONFIG = """
 [general]
@@ -48,7 +49,7 @@ def test_missing_token():
     # why the use of sys.exit?
     # Testing required that we check for SystemExit exception
     # even though that's not the actual error that is triggered
-    with pytest.raises(ReportError):
+    with pytest.raises(did.base.ConfigError):
         did.cli.main(INTERVAL)
 
 
