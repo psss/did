@@ -126,6 +126,9 @@ class GitStats(StatsGroup):
                     raise SystemExit(1)
                 for repo_dir in sorted(directories):
                     repo_path = path.replace('*', repo_dir)
+                    # Check directories only
+                    if not os.path.isdir(repo_path):
+                        continue
                     self.stats.append(GitCommits(
                         option="{0}-{1}".format(repo, repo_dir),
                         parent=self, path=repo_path,
