@@ -35,7 +35,7 @@ def test_trello_cards_created():
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0].stats
     print stats
     assert any([
-        "Card1 was created" in unicode(stat) for stat in stats])
+        "Card2" in unicode(stat) for stat in stats])
 
 
 def test_trello_cards_updated():
@@ -44,7 +44,7 @@ def test_trello_cards_updated():
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[1].stats
     print stats
     assert any([
-        "Card3"
+        "Card4"
         in unicode(stat) for stat in stats])
 
 
@@ -64,7 +64,7 @@ def test_trello_cards_moved():
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[3].stats
     print stats
     assert any([
-        "Card3 moved from List1 to List3"
+        "[Card3] moved from [List1] to [List3]"
         in unicode(stat) for stat in stats])
 
 
