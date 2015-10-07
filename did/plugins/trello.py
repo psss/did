@@ -18,8 +18,9 @@ Config example (private)::
 Optional arguments::
 
     board_links = g9mdhdzg
-    filters = updateCheckItemStateOnCard, updateCard, updateCard:closed,
-              updateCard:idList, createCard
+    filters = createCard, updateCard,
+        updateCard:idList, updateCard:closed,
+        updateCheckItemStateOnCard
 
 apikey
     https://trello.com/app-key
@@ -44,11 +45,13 @@ import urllib
 import urllib2
 
 from did.base import Config, ReportError
-from did.utils import log, pretty, listed
+from did.utils import log, pretty, listed, split
 from did.stats import Stats, StatsGroup
 
-DEFAULT_FILTERS = ('updateCheckItemStateOnCard, updateCard, updateCard:closed,'
-                   ' updateCard:idList, createCard')
+DEFAULT_FILTERS = [
+    "createCard", "updateCard",
+    "updateCard:idList", "updateCard:closed",
+    "updateCheckItemStateOnCard"]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,8 +82,7 @@ class TrelloAPI(object):
         self.key = config['apikey']
         self.token = config['token']
         self.username = config['user'] if "user" in config else "me"
-        self.board_links = [b.strip()
-                            for b in config['board_links'].split(',')]
+        self.board_links = split(config['board_links'])
         self.board_ids = self.board_links_to_ids()
 
     def get_actions(self, filters, since=None, before=None, limit=1000):
@@ -217,7 +219,7 @@ class TrelloCardsMoved(TrelloStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TrelloCheckItem(TrelloStats):
-    """ Trello checklist item completed"""
+    """ Trello checklist items completed"""
 
     def fetch(self):
         log.info(
@@ -272,7 +274,7 @@ class TrelloStatsGroup(StatsGroup):
                 "No ({0}) or 'user' set in the [{1}] section".format(
                     listed(positional_args, quote="'"), option))
 
-        optional_args = ["board_links", "filters", "apikey", "token"]
+        optional_args = ["board_links", "apikey", "token"]
         for arg in optional_args:
             if arg not in config:
                 config[arg] = ""
@@ -283,10 +285,12 @@ class TrelloStatsGroup(StatsGroup):
         else:
             trello = TrelloAPI(stats=self, config=config)
 
-        _filters = config.get('filters') or DEFAULT_FILTERS
-        filters = [filt.strip() for filt in _filters.split(',')]
-        for filt_group in filter_map.keys():
-            for filt in filter_map[filt_group].keys():
+        try:
+            filters = split(config["filters"])
+        except KeyError:
+            filters = DEFAULT_FILTERS
+        for filt_group in filter_map:
+            for filt in filter_map[filt_group]:
                 if filters != [""] and filt not in filters:
                     continue
                 self.stats.append(filter_map[filt_group][filt](
