@@ -6,14 +6,11 @@ Config example::
 
     [idonethis]
     type = idonethis
-    apitoken = ...
+    token = ...
 
-apitoken
+token
     https://idonethis.com/api/token/
 """
-
-# Possible API methods to add:
-# http://developers.trello.com/advanced-reference/member
 
 from __future__ import unicode_literals, absolute_import
 
@@ -22,7 +19,7 @@ try:
 except ImportError:
     raise NotImplementedError("urllib2 version is not yet implemented!")
 
-from did.base import Config, ConfigError
+import did.base
 from did.utils import log
 from did.stats import Stats, StatsGroup
 
@@ -57,7 +54,8 @@ class IdonethisStats(Stats):
 
         if not payload.get('ok'):
             detail = payload.get('detail') or 'UNKNOWN ERROR'
-            raise RuntimeError(detail)
+            raise did.base.ReportError(
+                "Failed to fetch idonethis items ({0})".format(detail))
 
         k = payload['count']
         log.info('Found {0} dones'.format(k))
@@ -85,11 +83,12 @@ class IdonethisStatsGroup(StatsGroup):
         super(IdonethisStatsGroup, self).__init__(
             option=option, name=name, parent=parent, user=user)
 
-        self.config = dict(Config().section(option))
+        self.config = dict(did.base.Config().section(option))
 
-        self.apitoken = self.config.get('apitoken')
-        if not self.apitoken:
-            raise ConfigError('apitoken must be defined!')
+        self.token = self.config.get('token')
+        if not self.token:
+            raise did.base.ConfigError(
+                'No token defined in the [{0}] section'.format(option))
 
         self.stats = [
             IdonethisStats(option=option + '-dones', parent=self)
@@ -100,7 +99,7 @@ class IdonethisStatsGroup(StatsGroup):
         """ Initialize the session """
         if self._session is None:
             _s = requests.Session()
-            _s.headers['Authorization'] = 'Token {0}'.format(self.apitoken)
+            _s.headers['Authorization'] = 'Token {0}'.format(self.token)
             self._session = _s
         return self._session
 

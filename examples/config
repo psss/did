@@ -62,7 +62,7 @@ token = <token>
 
 [idonethis]
 type = idonethis
-apitoken = <token>
+token = <token>
 
 [projects]
 type = items
