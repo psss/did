@@ -19,7 +19,7 @@ import os
 import re
 import subprocess
 
-from did.base import Config, ReportError
+import did.base
 from did.utils import item, log, pretty
 from did.stats import Stats, StatsGroup
 
@@ -53,7 +53,7 @@ class GitRepo(object):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as error:
             log.debug(error)
-            raise ReportError(
+            raise did.base.ReportError(
                 "Unable to access git repo '{0}'".format(self.path))
         output, errors = process.communicate()
         log.debug("git log output:")
@@ -115,15 +115,14 @@ class GitStats(StatsGroup):
     def __init__(self, option, name=None, parent=None, user=None):
         name = "Work on {0}".format(option)
         StatsGroup.__init__(self, option, name, parent, user)
-        for repo, path in Config().section(option):
+        for repo, path in did.base.Config().section(option):
             if path.endswith('/*'):
                 try:
                     directories = os.listdir(path[:-1])
                 except OSError as error:
-                    log.error("Wrong path in the [{0}] config section".format(
-                        option))
                     log.error(error)
-                    raise SystemExit(1)
+                    raise did.base.ConfigError(
+                        "Invalid path in the [{0}] section".format(option))
                 for repo_dir in sorted(directories):
                     repo_path = path.replace('*', repo_dir)
                     # Check directories only
