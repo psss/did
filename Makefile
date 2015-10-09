@@ -64,15 +64,14 @@ hooks:
 	ln -snf ../../hooks/pre-commit .git/hooks
 	ln -snf ../../hooks/commit-msg .git/hooks
 tags:
-	find did -name '*.py' | xargs ctags --python-kinds=-i -f did/tags
+	find did -name '*.py' | xargs ctags --python-kinds=-i
 clean:
 	rm -rf $(TMP) build dist did.egg-info
 	find . -type f -name "*.py[co]" -delete
 	find . -type f -name "*,cover" -delete
 	find . -type d -name "__pycache__" -delete
-	find . -type f -name tags -delete
 	cd docs && make clean
-	rm -f .coverage
+	rm -f .coverage tags
 
 
 # Docker
