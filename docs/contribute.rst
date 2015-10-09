@@ -49,6 +49,11 @@ make packages
 make hooks
     Link git commit hooks.
 
+make tags
+    Create or update the Vim ``tags`` file for quick searching.
+    You might want to use ``set tags=./tags;`` in your ``.vimrc``
+    to enable parent directory search for the tags file as well.
+
 make clean
     Cleanup all temporary files.
 

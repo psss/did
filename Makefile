@@ -59,15 +59,18 @@ upload:
 	twine upload dist/*.whl
 
 
-# Git hooks and cleanup
+# Git hooks, vim tags and cleanup
 hooks:
 	ln -snf ../../hooks/pre-commit .git/hooks
 	ln -snf ../../hooks/commit-msg .git/hooks
+tags:
+	find did -name '*.py' | xargs ctags --python-kinds=-i -f did/tags
 clean:
 	rm -rf $(TMP) build dist did.egg-info
 	find . -type f -name "*.py[co]" -delete
 	find . -type f -name "*,cover" -delete
 	find . -type d -name "__pycache__" -delete
+	find . -type f -name tags -delete
 	cd docs && make clean
 	rm -f .coverage
 
