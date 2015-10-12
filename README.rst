@@ -56,6 +56,12 @@ format ``Name Surname <email@example.org>`` to display full name
 in the report output. For date values ``today`` and ``yesterday``
 can be used instead of the full date format.
 
+Note, all dates are assumed to be UTC unless otherwise specified. 
+ISO format dates can be used to specify otherwise. eg, 
+
+ * midnight CET is `2014-12-31 22:00:00 +0000` UTC (10pm)
+ * midnight UTC is `2015-01-01 02:00:00 +0200` CET (2am)
+
 --email=EMAILS
     User email address(es)
 

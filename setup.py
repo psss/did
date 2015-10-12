@@ -29,6 +29,7 @@ __irequires__ = [
     'urllib2_kerberos',
     'python-bugzilla',  # FIXME: make optional? see __xrequires__
     'pykerberos',
+    'pytz==2015.6',
 ]
 __xrequires__ = {
     # `install` usage: pip install did[tests,docs]
