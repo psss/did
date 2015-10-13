@@ -19,7 +19,7 @@ Synopsis
 
 Usage is straightforward::
 
-    did [last] [week|month|quarter|year] [opts]
+    did [this|last] [week|month|quarter|year] [opts]
 
 
 Examples
