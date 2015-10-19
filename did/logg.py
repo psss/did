@@ -3,94 +3,276 @@
 
 from __future__ import unicode_literals, absolute_import
 
-import ConfigParser
 import getpass
 import os
 from os.path import expanduser
 import re
-
-import git
+from subprocess import call
+import tempfile
 
 import did.base
 from did.utils import log
 
-""" Log and save your did's """
+try:
+    import git
+except ImportError:
+    log.warn('GitPython not installed!')
+    git = None
+
+""" Logg and save idid activity stats with ease. """
 
 """
-EXPERIMENTAL
-based on psss's https://github.com/psss/did/issues/38#issuecomment-144431647
+Overview
+--------
+``idid`` logg's can be stored in
 
-data store is git repo
-Branch is 'target log'
-Commits are 'logs'
-Commiter and date is present from the git log by default
- - possible to ammend
-
-store's on (eg) github are easily 'cloneable' (aka, subscribable)
-
+ * plain text file (txt; DEFAULT)
+ * git commits repo
+  - target (topic) are branches
+  - loggs are commits
+  - can be 'cloned' and shared
 """
+
+DT_ISO_FMT = "%Y-%m-%dT%H:%M:%S %z"
+DT_GIT_FMT = "%Y-%m-%dT%H:%M:%S"
+
+# Regex's
+URI_RE = re.compile('([\w]*)://(.*)')
 
 # only git backend supported; not sure why, but I think
 # we might want to extend to support other 'backends' somehow
-SUPPORTED_BACKENDS = ['git']
-URI_RE = re.compile('([\w]*)://(.*)')
+SUPPORTED_BACKENDS = ['txt']
+if git:
+    # only enable git backend if PythonGit is installed
+    SUPPORTED_BACKENDS += ['git']
+
 USER = getpass.getuser()
 DEFAULT_ENGINE_DIR = expanduser('~/.did/loggs')
 # TODO: Consider if we should resolve 'user' rather based on config email?
-DEFAULT_ENGINE_PATH = '{0}/did-{1}.git'.format(DEFAULT_ENGINE_DIR, USER)
-DEFAULT_ENGINE_URI = 'git://{0}'.format(DEFAULT_ENGINE_PATH)
+DEFAULT_ENGINE_PATH = '{0}/did-{1}.txt'.format(DEFAULT_ENGINE_DIR, USER)
+DEFAULT_ENGINE_URI = 'txt://{0}'.format(DEFAULT_ENGINE_PATH)
+# TODO: Consider if we should resolve 'user' rather based on config email?
 LOGG_CONFIG_KEY = 'logg'
 
-"""
-# EXAMPLE USAGE
+DEFAULT_GIT_ENGINE_PATH = '{0}/did-{1}.git'.format(DEFAULT_ENGINE_DIR, USER)
+DEFAULT_GIT_ENGINE_URI = 'git://{0}'.format(DEFAULT_GIT_ENGINE_PATH)
 
-    did logg joy yesterday "@psss merged all my PRs! #did #FTW"
+COMMENT_RE = re.compile('^#')
+
+LOGG_EDITOR = os.environ.get('EDITOR', 'vim')
+# explain to the user that they are in a did git message editor
+DEFAULT_LOGG_RECORD = """
+
+
+# Please enter a did logg for the activities you completed on [{date}].
+# Lines starting with '#' will be ignored, and an empty message
+# aborts the commit.
+#
+# Saving idid logg to [{target}] branch
+#
+# Summary line must be
+# * no more than 50c
+# * separated from the body with a empty-line
+"""
+
+
+"""
+# EXAMPLE CLI USAGE
+
+    idid yesterday joy "@psss merged all my PRs! #did #FTW"
+
+# EXAMPLE MODULE USAGE
+
+    >>> from did import logg
+    >>> l = logg.GitLogg()
+    >>> l.logg_record('joy', '@psss merged all my pull requests!', 'yesterday')
 
 # EXAMPLE CONFIG
 
     [general]
     email = "Chris Ward" <cward@redhat.com>
 
-    [work]
+    [logg]
+    engine = git
+    strict = False  # default; allow use of unconfigured topic branches
+    #gpg = 1C725D56  # use gpg to sign commits
+
+    [joy]
     type = logg
-    joy = Joy of the Week
-    tools = Working on Tooling
+    desc = Joy of the Day
+
+    [tools]
+    type = logg
+    desc = My Tools
+    engine = txt://~/.did/loggs/tools.txt # customize storage path
 
 
-Logg Record can contain
+Logg Record can for example contain (for later parsing)::
 
  * any arbitrary text
- * invidual but related dids can be on a single line separated by semi-colon's
  * @mention's to reference another user
  * #tags to include additional reference to shared theme or topic
 
+With ``GitLogg`` backend it is also possible to save multiline logg messages.
+eg::
+
+    idid joy --   # launch $EDITOR
+
+    Summary (50c max), with body separated by \n
+
+    This is the detailed version of the did logg message that
+    describes in more detail what actually happened...
 """
 
-# FIXME: Add 'bio' 'about me' README.rst to the repo
-# cv
+# FIXME: invidual but related dids on a single line separated by semi-colon
 
-# FIXME: add --expand to enable launcing an editor and taking a longer
-# commit message with deeper explanation of the SUBJ
+
+class LoggFactory(type):
+    """ Detect the type of backend based on the engine uri and
+        return the backend expected class automatically
+    """
+    def __call__(cls, config=None):
+        _config = cls._load_config(config)
+        engine = _config.get('engine')
+        log.debug('LoggFactory loading [{0}]...'.format(engine))
+        backend, path = cls._parse_engine(engine)
+        cls = GitLogg if backend == 'git' else Logg
+        log.debug(' ... Loading Backend Class: {0}'.format(cls))
+        _type = type.__call__(cls, config)
+        return _type
 
 
 class Logg(object):
-    """ Git did log class for saving did messages locally to git repo """
-    _args = None
+    """ did logg backend class for storing did messages """
+    __metaclass__ = LoggFactory
+    _config = None
+    backeng = None
     config = None
-    date = None
     engine = None
     logg_repo = None
+    path = None
     record = None
+    since = None
     target = None
+    until = None
 
-    def __init__(self, args, config=None):
-        self._args = args or []
-        self._load_config(config)  # sets self.config
-        self._parse_engine()  # sets self.engine
-        self._parse_logg()   # sets self.target, self.record, self.date
-        self._load_repo()    # sets self.logg_repo
+    def __init__(self, config=None):
+        # convert invlalid null values ('', [], False) to None
+        # load the raw base config so we can parse through it later
+        # to get individual logg target branch configs
+        self._config = did.base.Config(config or None)
+        self.config = self._load_config(self._config)
+        # use the default engine if not specified
+        self.engine = self.config.get('engine')
+        # sets self.engine
+        self.backend, self.path = self._parse_engine(self.engine)
 
-    def logg_record(self, target=None, record=None, date=None):
+    @staticmethod
+    def _load_config(config=None):
+        # get a config file, the default or the one passed in
+        config = did.base.get_config(config)
+        try:
+            config = dict(config.section(LOGG_CONFIG_KEY))
+        except did.base.ConfigFileError as err:
+            log.warn("Error while loading config: [{0}]".format(err))
+            # Don't panic yet if the section doesn't exist ...
+            # maybe we don't actually need it ...
+            config = {}
+        return config
+
+    @staticmethod
+    def _parse_engine(engine):
+        """ Parse the engine uri to determine where to store loggs """
+        # default to storing as txt logg
+        # NOTE: for testing purposes, make sure to always override
+        # DEFAULT_ENGINE_URI users running tests to add test loggs accidently
+        engine = (engine or 'txt').strip()
+        try:
+            backend, path = URI_RE.match(engine).groups()
+        except (AttributeError, TypeError):
+            # AttributeError if we don't have a match; None.groups() is invalid
+            # Not sure now what might trigger TypeError, tbh...
+            if engine == 'txt':
+                log.info('Using default TXT engine store path [{0}]'.format(
+                    DEFAULT_ENGINE_PATH))
+                backend = 'txt'
+                path = DEFAULT_ENGINE_PATH
+            elif engine == 'git':
+                log.info('Using default GIT engine store path [{0}]'.format(
+                    DEFAULT_GIT_ENGINE_PATH))
+                backend = 'git'
+                path = DEFAULT_GIT_ENGINE_PATH
+            else:
+                raise TypeError('Invalid uri: {0}'.format(engine))
+
+        # ENGINE CHECK
+        # At this time, we only support git as a backend
+        if backend not in SUPPORTED_BACKENDS:
+            raise NotImplementedError(
+                "Logg supports only {0} for now.".format(SUPPORTED_BACKENDS))
+        log.debug('Found engine: {0}'.format(engine))
+
+        # create path for engine store if not already available
+        _dir = os.path.dirname(path)
+        _exists = os.path.exists(_dir)
+        if not _exists:
+            log.warn(' Created logg storage path [{0}]'.format(_dir))
+            os.makedirs(_dir)
+        elif not os.path.isdir(_dir):
+            raise RuntimeError('Engine store path exists but it is not a dir!')
+
+        return backend, path
+
+    def logg_record(self, target, record, date=None):
+        if not (target and record):
+            raise RuntimeError(
+                "target [{0}] and record [{1}] must be defined".format(
+                    target, record))
+        # we want to store dates in txt as YYYY-MM-DD which is default
+        # formate for Date() objects
+        date = str(did.base.Date(date or did.base.TODAY))
+
+        # If the user config has strict = true user must 'enable' the branch
+        # targets they want to accept loggs for by adding them to the config
+        # FIXME: filter only 'logg' type plugin config sections?
+        if target not in self._config.sections(kind='logg'):
+            log.warn("Target branch [{0}] is not configured!".format(target))
+            strict = self.config.get('strict') or False
+            if bool(strict):
+                raise did.base.ConfigError(
+                    'Target ({0}) not tracked; add to config'.format(target))
+
+        self._target = target = target.decode('utf-8').strip()
+        self._record = record = record.decode('utf-8').strip()
+        # default format YYYY-MM-DD
+        log.debug('Saving did Logg("{0}", "{1}", "{2}")'.format(
+            target, record, date))
+        result = self._logg_record(target, record, date)
+        result = result.strip()
+        log.info('SUCCESS: \n{0}'.format(result))
+        return result
+
+    def _logg_record(self, target, record, date):
+        # self.path contains the path part of the engine uri
+        mode = 'a' if os.path.exists(self.path) else 'w'
+        with open(self.path, mode) as stdout:
+            result = '{0} {1} [{2}]\n'.format(date, record, target)
+            stdout.write(result)
+        return result
+
+
+class GitLogg(Logg):
+
+    MAX_WIDTH = 50  # raise RuntimeError if logg record > MAX_WIDTH
+
+    """ did logg backend to save loggs to a git repo """
+
+    def __init__(self, *args, **kwargs):
+        super(GitLogg, self).__init__(*args, **kwargs)
+        # cache the logg_repo in the instance
+        self._load_repo()
+
+    def _logg_record(self, target, record, date):
         """
         # %> did logg work 2015-01-01 '... bla bla #tag @mention ...'
         # results in a logg entry in the 'work' datastore for $DATE (by user)
@@ -120,31 +302,72 @@ class Logg(object):
         #  Date: Sun Oct 11 08:31:51 2015 +0200
         # according to my clock (CET; +0200) it's Oct 11 10:33:...
 
-        target = target or self.target
-        record = record or self.record
-        date = date or self.date
-        # normalized date format; git expects iso datetime; -micro (.%f)
-        iso = '%Y-%m-%d %H:%M:%S %z'
-        date = unicode(did.base.Date(date, fmt=iso))
-        log.info('Saving did Logg("{0}", "{1}")'.format(target, record))
-        result = self._commit(target, record, date, sync=True)
-        log.info('SUCCESS: \n{0}'.format(result))
+        # record should respect MAX_WIDTH option in config
+        k_record = len(record)
+        # make sure we get an int out the config...
+        max_width = int(self.config.get('max_width', self.MAX_WIDTH))
+        log.debug('Record `max_width` is {0}'.format(max_width))
+        if k_record > max_width:
+            raise RuntimeError("Record is too bigger than {0}; got {1}. "
+                               "Try using just --".format(max_width, k_record))
 
-    @property
-    def _args_len(self):
-        return len(self._args or [])
+        try:
+            result = self._commit(target, record, date, sync=True)
+        except KeyboardInterrupt as err:
+            log.error('Error encountered during git commit: {0}'.format(err))
+            raise SystemExit('\n\n')
+        return result
 
+    # FIXME: sync; sync_tx == remotee, remotees
     def _commit(self, target, record, date, sync=None):
+        # date shouldn't be None
+        # make sure we actually have a repo to commit to
+        # self._load_repo()    # sets self.logg_repo
         # checkout the target branch, but make sure to return to
         # pre-commit state after completion (clean-up) ...
-
         # always sync/backup/merge commits for 'full-audit' "master" branch
         current = self.logg_repo.active_branch
         sync_to = 'master' if sync else None
+        # Make absolutely sure we have a git 1.8+ compatible date format!
+        date = did.base.Date(date, fmt=DT_GIT_FMT)
+        kwargs = dict(date=date, allow_empty=True)
+        # Build dict for sending as args to the git commend
+        # -- or null says we want to open our editor to edit the commit msg
+        if record in ['--', None]:
+            # inspired by: http://stackoverflow.com/a/6309753/1289080
+            with tempfile.NamedTemporaryFile(suffix=".tmp") as _tmp:
+                _n = _tmp.name
+                description = DEFAULT_LOGG_RECORD.format(**dict(target=target,
+                                                                date=date))
+                _tmp.write(description)
+                _tmp.flush()
+                call([LOGG_EDITOR, _n])
+                record = [x.strip(' ') for x in open(_n).readlines() if x]
+                record = [x for x in record if not COMMENT_RE.match(x)]
+                k_lines = len(record)
+                if k_lines > 1:
+                    # complain that we expect the SUMMARY / MSG BODY form
+                    if not record[1] == '\n':
+                        raise RuntimeError(
+                            'Invalid format. Usage:\nSUMMARY\n\nMESSAGE...')
+                record = ''.join(record).strip()
+                if not record:
+                    raise SystemExit('Empty Logg. Aborting.')
+        # Include the record in the git command too
+        kwargs['m'] = record
+
+        # FIXME: add documentation to describe this config option
+        # if gpg key is defined in .config [logg], git will attempt to
+        # sign the commits with the provided key
+        gpg_sign = self.config.get('gpg', None)
+        if gpg_sign:
+            kwargs['gpg_sign'] = gpg_sign
+
         try:
             log.debug("Checking out branch: {0}".format(target))
             self._checkout_branch(target)
-            r = self.logg_repo.git.commit(m=record, date=date, allow_empty=True)
+            r = self.logg_repo.git.commit(**kwargs)
+
             if sync_to:
                 # sync/backup branch (master)
                 log.info(' ... also syncing to: {0}'.format(sync_to))
@@ -158,17 +381,6 @@ class Logg(object):
                 self._checkout_branch(current)
         return r
 
-    def _check_config(self):
-        pass
-
-    def _check_logg(self):
-        """ Perform additional check for given options for LOG command """
-        if not self._args:
-            raise ValueError("args is empty; try passing something in?")
-        if self._args_len not in (3, 4):
-            raise RuntimeError(
-                "logg cmd invalid; usage: `logg target [YYYY-MM-DD] 'bla bla'`")
-
     def _checkout_branch(self, branch=None):
         branch = branch or 'master'
         # Try to create the target branch
@@ -178,61 +390,21 @@ class Logg(object):
             # branch already exists, so check it out
             self.logg_repo.git.checkout(branch)
 
-    def _load_config(self, config=None):
-        try:
-            config = dict(did.base.Config(config).section(LOGG_CONFIG_KEY))
-        except ConfigParser.NoSectionError:
-            # Don't panic if the section doesn't exist; _check_config()
-            # will check the state of config... maybe {} is OK?
-            config = {}
-        self.config = config
-        self._check_config()
-
     def _load_repo(self):
-        """ """
-        if os.path.exists(self.path):
-            log.info('FOUND {0}'.format(self.path))
-            r = git.Repo(self.path)
-        else:
-            # create the repo if it doesn't already exist
-            log.info('CREATED {0}'.format(self.path))
-            r = git.Repo.init(path=self.path, mkdir=True)
-            r.index.commit("New did repo added")
-        # git checkout
-        self.logg_repo = r
-
-    def _parse_logg(self):
-        """ Parse LOG command """
-        self._check_logg()
-        if self._args_len == 3:
-            target, record = self._args[1:3]
-            date = 'today'  # default
-        else:
-            assert self._args_len == 4
-            target, date, record = self._args[1:4]
-        self.target = target
-        self.record = record.decode('utf-8')
-        self.date = date
-
-        # Require that the user explicitly 'enable' the branch targets
-        # they want to accept loggs for
-        if target not in self.config:
-            raise did.base.ConfigError(
-                'Target ({0}) not tracked; add to config'.format(target))
-
-    def _parse_engine(self):
-        """ """
-        # use the default engine if not specified
-        self.engine = self.config.get('engine') or DEFAULT_ENGINE_URI
-        try:
-            self.backend, self.path = URI_RE.match(self.engine).groups()
-        except TypeError:
-            # bad uri
-            # uri = '{0}://{1}'.format(backend, path)
-            raise TypeError('Invalid uri!')
-
-        # ENGINE CHECK ()
-        # At this time, we only support git as a backend
-        if self.backend not in SUPPORTED_BACKENDS:
-            raise NotImplementedError(
-                "Logg supports only {0} for now.".format(SUPPORTED_BACKENDS))
+        """ Load git repo using GitPython """
+        if not self.logg_repo:
+            if os.path.exists(self.path):
+                log.info('Found git repo [{0}]'.format(self.path))
+                self.logg_repo = git.Repo(self.path)
+            else:
+                # create the repo if it doesn't already exist
+                self.logg_repo = git.Repo.init(path=self.path, mkdir=True)
+                log.info('Created git repo [{0}]'.format(self.path))
+                record = "New did repo added by {0}".format(USER)
+                # FIXME: calling tests via make Makefile with git hook
+                # creates some sort of environmental difference that
+                # breaks this! I've tried debugging for several hours
+                # with no luck.
+                # `make smoke` works but git commit which calls hooks/pre-commit
+                # which calls `make smoke`... fails
+                self.logg_repo.index.commit(record)

@@ -20,14 +20,17 @@ class Stats(object):
     _name = None
     _error = None
     _enabled = None
-    option = None
+    config = None
     dest = None
+    option = None
     parent = None
     stats = None
+    user = None
 
     def __init__(
             self, option, name=None, parent=None, user=None, options=None):
         """ Set the name, indent level and initialize data.  """
+        self.config = did.base.get_config()
         self.option = option.replace(" ", "-")
         self.dest = self.option.replace("-", "_")
         self._name = name
@@ -77,9 +80,13 @@ class Stats(object):
             return
         try:
             self.fetch()
+        # FIXME: This exception is checked even though .fetch() isn't
+        # always going to use xmlrpc... or return xmlrpclib.Fault anyway
+        # Catch exceptions in the subclass, not here at this level?
         except (xmlrpclib.Fault, did.base.ConfigError) as error:
             log.error(error)
             self._error = True
+            # FIXME: This already happens at the bin/did mail level
             # Raise the exception if debugging
             if not self.options or self.options.debug:
                 raise
@@ -159,21 +166,23 @@ class UserStats(StatsGroup):
         """ Initialize stats objects. """
         super(UserStats, self).__init__(
             option="all", user=user, options=options)
+
+        # FIXME
+        # DOESN"T THIS OVERWRITE self.stats set in parent class Stats.__init__?
         self.stats = []
-        try:
-            import did.plugins
-            for section, statsgroup in did.plugins.detect():
-                self.stats.append(statsgroup(
-                    option=section, parent=self,
-                    user=self.user.clone(section) if self.user else None))
-        except did.base.ConfigFileError as error:
-            # Missing config file is OK if building options (--help).
-            # Otherwise raise the expection to suggest config example.
-            if options is None:
-                log.debug(error)
-                log.debug("This is OK for now as we're just building options.")
-            else:
-                raise
+
+        # import here to avoid recursive imports at startup
+        import did.plugins
+
+        # Missing config file is NOT OK if building options (--help).
+        # since we want to get --help for all available plugins and
+        # if we hit an exception because of missing config then
+        # we don't load the plugin and it's not going to add its
+        # args to argparser
+        for section, statsgroup in did.plugins.detect():
+            self.stats.append(statsgroup(
+                option=section, parent=self,
+                user=self.user.clone(section) if self.user else None))
 
     def add_option(self, parser):
         """ Add options for each stats group. """
@@ -187,9 +196,6 @@ class UserStats(StatsGroup):
 
 class EmptyStats(Stats):
     """ Custom stats group for header & footer """
-    def __init__(self, option, name=None, parent=None, user=None):
-        Stats.__init__(self, option, name, parent, user)
-
     def show(self):
         """ Name only for empty stats """
         utils.item(self.name, options=self.options)
@@ -202,7 +208,8 @@ class EmptyStats(Stats):
 class EmptyStatsGroup(StatsGroup):
     """ Header & Footer stats group """
     def __init__(self, option, name=None, parent=None, user=None):
-        StatsGroup.__init__(self, option, name, parent, user)
-        for opt, name in sorted(did.base.Config().section(option)):
+        super(EmptyStatsGroup, self).__init__(option, name, parent, user)
+        _config = did.base.get_config()
+        for opt, name in sorted(_config.section(option)):
             self.stats.append(
                 EmptyStats(option + "-" + opt, name, parent=self))

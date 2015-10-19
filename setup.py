@@ -23,12 +23,13 @@ __pkgs__ = [
 ]
 __provides__ = ['did']
 __desc__ = 'did - What did you do last week, month, year?'
-__scripts__ = ['bin/did']
+__scripts__ = ['bin/did', 'bin/idid']
 __irequires__ = [
     'python_dateutil==2.4.2',
     'urllib2_kerberos',
     'python-bugzilla',  # FIXME: make optional? see __xrequires__
     'pykerberos',
+    'pytz==2015.6',
 ]
 __xrequires__ = {
     # `install` usage: pip install did[tests,docs]
@@ -44,6 +45,9 @@ __xrequires__ = {
     ],
     'bitly': [
         'bitly_api',
+    ],
+    'logg': [
+        'GitPython==1.0.1'
     ],
 }
 

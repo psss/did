@@ -3,11 +3,15 @@
 from __future__ import unicode_literals, absolute_import
 
 from datetime import date, datetime
+
 import did.base
 import pytest
 import pytz
 
 from did.base import Config, ConfigError
+
+UTC = pytz.utc
+CET = pytz.timezone('CET')
 
 
 def test_base_import():
@@ -19,11 +23,6 @@ def test_base_import():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Config
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-def test_Config():
-    from did.base import Config
-    assert Config
-
 
 def test_Config_email():
     config = Config("[general]\nemail = email@example.com\n")
@@ -245,7 +244,7 @@ def test_User():
     user = User("some@email.org")
     assert user.email == "some@email.org"
     assert user.login == "some"
-    assert user.name == None
+    assert user.name is None
     assert unicode(user) == "some@email.org"
 
     # Full email format
@@ -273,13 +272,15 @@ def test_User():
     assert user.login == "bzlogin"
 
     # Custom email alias in config section
-    Config(config="[bz]\ntype = bugzilla\nemail = bugzilla@email.org")
+    config = "[bz]\ntype = bugzilla\nemail = bugzilla@email.org"
+    did.base.set_config(config)
     user = User("some@email.org", stats="bz")
     assert user.email == "bugzilla@email.org"
     assert user.login == "bugzilla"
 
     # Custom login alias in config section
-    Config(config="[bz]\ntype = bugzilla\nlogin = bzlogin")
+    config = "[bz]\ntype = bugzilla\nlogin = bzlogin"
+    did.base.set_config(config)
     user = User("some@email.org", stats="bz")
     assert user.login == "bzlogin"
 
@@ -287,7 +288,6 @@ def test_User():
     user = User("some@email.org; bz: bzlogin")
     clone = user.clone("bz")
     assert clone.login == "bzlogin"
-
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

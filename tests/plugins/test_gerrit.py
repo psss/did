@@ -28,18 +28,18 @@ prefix = GR
 
 def test_gerrit_smoke():
     """ Smoke test for all stats """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main("last week")
     assert stats
 
 
 def test_gerrit_merged():
     """ Check merged changes """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main([
-        "--gerrit-merged",
         "--since", "2015-08-01",
-        "--until", "2015-08-31"])[0][0].stats[0].stats[1].stats
+        "--until", "2015-08-31",
+        "--gerrit-merged"])[0][0].stats[0].stats[1].stats
     assert any([
         "GR#4347 - Fix jobs.rst" in unicode(change)
         for change in stats])
@@ -47,11 +47,11 @@ def test_gerrit_merged():
 
 def test_gerrit_reviewed():
     """ Check reviewed changes """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main([
-        "--gerrit-reviewed",
         "--since", "2015-08-01",
-        "--until", "2015-08-31"])[0][0].stats[0].stats[5].stats
+        "--until", "2015-08-31",
+        "--gerrit-reviewed"])[0][0].stats[0].stats[5].stats
     assert any([
         "GR#4380 - Fix memleak" in unicode(change)
         for change in stats])

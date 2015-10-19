@@ -18,10 +18,9 @@ __ https://developer.github.com/guides/getting-started/#authentication
 import re
 import json
 import urllib2
-from requests.exceptions import RequestException
 
+import did.base
 from did.utils import log, pretty, listed
-from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
 
 # Identifier padding
@@ -56,7 +55,7 @@ class GitHub(object):
                 unicode(response.info()).strip()))
         except urllib2.URLError as error:
             log.debug(error)
-            raise ReportError(
+            raise did.base.ReportError(
                 "GitHub search on {0} failed.".format(self.url))
         result = json.loads(response.read())["items"]
         log.debug("Result: {0} fetched".format(listed(len(result), "item")))
@@ -97,7 +96,8 @@ class IssuesCreated(Stats):
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         self.stats = [
-                Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue) for issue in self.parent.github.search(query)]
+
 
 class IssuesClosed(Stats):
     """ Issues closed """
@@ -106,7 +106,7 @@ class IssuesClosed(Stats):
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         self.stats = [
-                Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue) for issue in self.parent.github.search(query)]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -120,13 +120,13 @@ class GitHubStats(StatsGroup):
     order = 330
 
     def __init__(self, option, name=None, parent=None, user=None):
-        StatsGroup.__init__(self, option, name, parent, user)
-        config = dict(Config().section(option))
+        super(GitHubStats, self).__init__(option, name, parent, user)
+        config = dict(self.config.section(option))
         # Check server url
         try:
             self.url = config["url"]
         except KeyError:
-            raise ReportError(
+            raise did.base.ReportError(
                 "No github url set in the [{0}] section".format(option))
         # Check authorization token
         try:

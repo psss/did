@@ -44,7 +44,7 @@ import json
 import urllib
 import urllib2
 
-from did.base import Config, ReportError
+import did.base
 from did.utils import log, pretty, listed, split
 from did.stats import Stats, StatsGroup
 
@@ -265,12 +265,12 @@ class TrelloStatsGroup(StatsGroup):
         }
         self._session = None
         self.url = "https://trello.com/1"
-        config = dict(Config().section(option))
+        config = dict(self.config.section(option))
 
         positional_args = ['apikey', 'token']
         if (not set(positional_args).issubset(set(config.keys()))
                 and "user" not in config):
-            raise ReportError(
+            raise did.base.ReportError(
                 "No ({0}) or 'user' set in the [{1}] section".format(
                     listed(positional_args, quote="'"), option))
 

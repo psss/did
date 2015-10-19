@@ -13,12 +13,13 @@ Config example::
 import re
 import xmlrpclib
 
-from did.utils import log, pretty
-from did.base import Config, ReportError
+import did.base
 from did.stats import Stats, StatsGroup
+from did.utils import log, pretty
 
 INTERESTING_RESOLUTIONS = ["canceled"]
 MAX_TICKETS = 1000000
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Trac Investigator
@@ -66,11 +67,11 @@ class Trac(object):
             result = parent.proxy.ticket.query(query)
         except xmlrpclib.Fault as error:
             log.error("An error encountered, while searching for tickets.")
-            raise ReportError(error)
+            raise did.base.ReportError(error)
         except xmlrpclib.ProtocolError as error:
             log.debug(error)
             log.error("Trac url: {0}".format(parent.url))
-            raise ReportError(
+            raise did.base.ReportError(
                 "Unable to contact Trac server. Is the url above correct?")
         log.debug("Search result: {0}".format(result))
         # Fetch tickets and their history using multicall
@@ -122,6 +123,7 @@ class Trac(object):
             if what == "status" and new == "closed":
                 return True
         return False
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Trac Stats
@@ -190,15 +192,15 @@ class TracStats(StatsGroup):
         name = "Tickets in {0}".format(option)
         StatsGroup.__init__(self, option, name, parent, user)
         # Initialize the server proxy
-        config = dict(Config().section(option))
+        config = dict(self.config.section(option))
         if "url" not in config:
-            raise ReportError(
+            raise did.base.ReportError(
                 "No trac url set in the [{0}] section".format(option))
         self.url = re.sub("/rpc$", "", config["url"])
         self.proxy = xmlrpclib.ServerProxy(self.url + "/rpc")
         # Make sure we have prefix set
         if "prefix" not in config:
-            raise ReportError(
+            raise did.base.ReportError(
                 "No prefix set in the [{0}] section".format(option))
         self.prefix = config["prefix"]
         # Create the list of stats
@@ -215,4 +217,4 @@ class TracStats(StatsGroup):
             TracClosed(
                 option=option + "-closed", parent=self,
                 name="Tickets closed in {0}".format(option)),
-            ]
+        ]

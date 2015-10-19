@@ -2,10 +2,17 @@
 email = Petr Splichal <psplicha@redhat.com>
 width = 79
 
+[logg]
+engine = txt
+strict = false
+
+[joy]
+type = logg
+desc = Joy of the day ;-)
+
 [header]
 type = header
 highlights = Highlights
-joy = Joy of the week ;-)
 
 [nitrate]
 type = nitrate

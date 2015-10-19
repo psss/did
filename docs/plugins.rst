@@ -7,6 +7,13 @@
     :members:
     :undoc-members:
 
+logg
+----
+
+.. automodule:: did.plugins.logg
+    :members:
+    :undoc-members:
+
 bugzilla
 --------
 

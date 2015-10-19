@@ -6,8 +6,8 @@
 from __future__ import unicode_literals, absolute_import
 
 import pytest
-import did.cli
 import did.base
+import did.cli
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -43,7 +43,7 @@ def test_missing_token():
     Missing apitoken results in Exception
     """
     import did
-    did.base.Config(CONFIG_NO_TOKEN)
+    did.base.set_config(CONFIG_NO_TOKEN)
     with pytest.raises(did.base.ConfigError):
         did.cli.main(INTERVAL)
 
@@ -51,7 +51,7 @@ def test_missing_token():
 def test_invalid_token():
     """ Invalid bitly token """
     import did
-    did.base.Config(CONFIG_BAD_TOKEN)
+    did.base.set_config(CONFIG_BAD_TOKEN)
     with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)
 
@@ -62,7 +62,7 @@ def test_invalid_token():
 
 def test_all_dones():
     """ test that dones stats are queried as expected """
-    did.base.Config(CONFIG_OK)
+    did.base.set_config(CONFIG_OK)
     result = did.cli.main(INTERVAL)
     stats = result[0][0].stats[0].stats[0].stats
     assert any('did done test' in stat for stat in stats)

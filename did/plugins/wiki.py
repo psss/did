@@ -11,8 +11,8 @@ Config example::
 
 import xmlrpclib
 
+import did.base
 from did.utils import item
-from did.base import Config
 from did.stats import Stats, StatsGroup
 
 
@@ -69,8 +69,8 @@ class WikiStats(StatsGroup):
     order = 700
 
     def __init__(self, option, name=None, parent=None, user=None):
-        StatsGroup.__init__(self, option, name, parent, user)
-        for wiki, url in Config().section(option):
+        super(WikiStats, self).__init__(option, name, parent, user)
+        for wiki, url in self.config.section(option):
             self.stats.append(WikiChanges(
                 option=wiki, parent=self, url=url,
                 name="Updates on {0}".format(wiki)))

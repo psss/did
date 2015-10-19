@@ -84,8 +84,7 @@ class GitRepo(object):
 class GitCommits(Stats):
     """ Git commits """
     def __init__(self, option, name=None, parent=None, path=None):
-        super(GitCommits, self).__init__(
-            option=option, name=name, parent=parent)
+        super(GitCommits, self).__init__(option, name, parent)
         self.path = path
         self.repo = GitRepo(self.path)
 
@@ -114,8 +113,8 @@ class GitStats(StatsGroup):
 
     def __init__(self, option, name=None, parent=None, user=None):
         name = "Work on {0}".format(option)
-        StatsGroup.__init__(self, option, name, parent, user)
-        for repo, path in did.base.Config().section(option):
+        super(GitStats, self).__init__(option, name, parent, user)
+        for repo, path in self.config.section(option):
             if path.endswith('/*'):
                 try:
                     directories = os.listdir(path[:-1])

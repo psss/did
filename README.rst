@@ -3,24 +3,31 @@
     did
 ======================
 
-What did you do last week, month, year?
+What did you do today, yesterday, last week, month, year?
 
 
 Description
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Comfortably gather status report data (e.g. list of committed
-changes) for given week, month, quarter, year or selected date
-range. By default all available stats for this week are reported.
+Comfortably gather and save status report data (e.g. list of 
+committed changes) for given day, week, month, quarter, year or 
+selected date range. 
+
+By default, ``did`` report returns all available stats for the 
+current week. ``idid`` saves the activity as completed today.
 
 
 Synopsis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Usage is straightforward::
+Usage for loading stats from configured sources is 
+straightforward::
 
     did [this|last] [week|month|quarter|year] [opts]
 
+Usage for saving loggs to configured sources is too::
+
+    idid [today|yesterday|YYYY-MM-DD] [topic] 'logg msg' [opts] 
 
 Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,7 +44,17 @@ Gather stats for the last month::
 
     did last month
 
+Save a Logg, then display it::
+
+    idid joy '@psss merged all my #github pull requests!'
+    did this week --logg
+
 See ``did --help`` for complete list of available stats.
+
+Save a did logg to the default target topic branch 'unsorted'::
+
+    idid 'changed the flat tire on my car'
+    did today
 
 
 Options
@@ -148,10 +165,16 @@ settings and configuration of individual reports::
     email = "Petr Šplíchal" <psplicha@redhat.com>
     width = 79
 
+    [logg]
+    engine = txt
+
+    [joy]
+    type = logg
+    desc = Joy of the week
+
     [header]
     type = header
     highlights = Highlights
-    joy = Joy of the week ;-)
 
     [tools]
     type = git

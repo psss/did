@@ -27,9 +27,9 @@ import time
 
 from bitly_api import Connection
 
+import did.base
 from did.stats import Stats, StatsGroup
 from did.utils import log, pretty
-from did.base import Config, ConfigError
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  bit.ly
@@ -58,7 +58,8 @@ class Bitly(object):
         self.parent = parent
         self.token = token or getattr(parent, 'token')
         if not self.token:
-            raise ConfigError("bitly requires token to be defined in config")
+            raise did.base.ConfigFileError(
+                "bitly requires token to be defined in config")
 
     @property
     def api(self):
@@ -131,12 +132,13 @@ class BitlyStats(StatsGroup):
 
         # Check Request Tracker instance url and custom prefix
         super(BitlyStats, self).__init__(option, name, parent, user)
-        config = dict(Config().section(option))
+        config = dict(self.config.section(option))
 
         try:
             self.token = config["token"]
         except KeyError:
-            raise ConfigError("No token in the [{0}] section".format(option))
+            raise did.base.ConfigFileError(
+                "No token in the [{0}] section".format(option))
 
         self.bitly = Bitly(parent=self)
         # Construct the list of stats

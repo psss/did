@@ -2,17 +2,14 @@
 
 from __future__ import unicode_literals, absolute_import
 
+import ConfigParser
 import logging
 import os
 import pytest
-import shutil
-
-# import did.base
+import re
 
 # simple test that import works
-from did.base import ConfigError
-from did.logg import Logg
-import did.utils
+import did
 
 did.utils.log.setLevel(logging.DEBUG)
 
@@ -22,73 +19,95 @@ email = "Chris Ward" <cward@redhat.com>
 
 [logg]
 type = logg
-engine = git:///tmp/test.git
 '''.strip()
 # default repo is created in ~/.did/loggs
 # OVERRIDE THE ENGINE PATE so we don't destroy the user's actual
 # db on accident
-ENGINE_PATH = '/tmp/test.git'
+DEFAULT_ENGINE_PATH = '/tmp/logg.txt'
+GIT_ENGINE_PATH = '/tmp/logg.git'
 
-GOOD_CONFIG = CONFIG = BASE_CONFIG + '\njoy = Joy of the Week'
+DEFAULT_ENGINE_URI = 'txt://{0}'.format(DEFAULT_ENGINE_PATH)
 
-ARGS_OK_MIN = ["logg", "joy", "'did logg joy test 1 2 3'"]
+_DEFAULT_ENGINE = '{0}\nengine = {1}\njoy = Joy of the Week'
+GOOD_DEFAULT_CONFIG = _DEFAULT_ENGINE.format(BASE_CONFIG, DEFAULT_ENGINE_URI)
+
+_GIT_ENGINE = '{0}\nengine = git://{1}\njoy = Joy of the Week'
+GOOD_GIT_CONFIG = _GIT_ENGINE.format(BASE_CONFIG, GIT_ENGINE_PATH)
+STRICT_GIT_CONFIG = GOOD_GIT_CONFIG + '\nstrict = true'
+
+ARGS_OK_MIN = ["joy", "did logg joy test 1 2 3", '2015-10-21T07:28:00 +0000']
+
+# NOTE git version 1.8 doesn't include the Date: ... line
+# git 2.4 does
+# FIXME: conditionally check the line according to git version
+#RESULT_OK_GIT = re.compile(r'\[joy \w+\] did logg joy test 1 2 3\n '
+#                           'Date: Wed Oct 21 07:28:00 2015 \+0000')
+RESULT_OK_GIT = re.compile(r'\[joy \w+\] did logg joy test 1 2 3')
 
 
 # CAREFUL NOT TO DO ANYTHING IN THE USER'S ACTUAL HOME DIRECTORY!
+# monkey patch the DEFAULT_ENGINE_URI which normally points to
+# ~/.did/loggs/did-$user.txt
+did.logg.DEFAULT_ENGINE_URI = DEFAULT_ENGINE_URI
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Sanity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_bad_args():
-    from did.logg import Logg
+def test_args():
+    Logg = did.logg.Logg
 
     # Sanity: test good args which shouldn't cause any exception...
-    Logg(['logg', 'joy', 'The most amazing thing happened today...'],
-         config=GOOD_CONFIG)
+    Logg(config=GOOD_GIT_CONFIG).logg_record(
+        target='joy', record='The most amazing thing happened today...')
 
-    # Empty args doesn't fly
-    with pytest.raises(ValueError):
-        Logg(None)
-    with pytest.raises(ValueError):
-        Logg([])
+    # "Empty" config is ok; defaults set are reasonable
+    assert Logg()
+    assert Logg(None)
+    assert Logg('')
+    assert Logg([])
 
-    # These fail because no args or config specified
-    with pytest.raises(ValueError):
-        Logg([], config='')
-    # with Bad Config...
-    with pytest.raises(ConfigError):
-        Logg(['logg', 'joy', 'The most amazing thing happened today...'],
-             config='')
-    # 'joy' target isn't defined in the config
-    with pytest.raises(ConfigError):
-        Logg(['logg', 'joy', 'The most amazing thing happened today...'],
-             config='[logg] \nwork = did it, yes I did!')
-
-    # config is ok, but args isn't
-    with pytest.raises(ValueError):
-        Logg(None, config='[logg]')
-    with pytest.raises(ValueError):
-        Logg([], config='[logg]')
+    # config is bad
+    with pytest.raises(ConfigParser.MissingSectionHeaderError):
+        Logg(config='[logg')
+    with pytest.raises(ConfigParser.MissingSectionHeaderError):
+        Logg('[]')
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Unity
+# Unit
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 def test_default_logg():
-    # remove the git repo if it happens to exist;
-    if os.path.exists(ENGINE_PATH):
-        shutil.rmtree(ENGINE_PATH)
+    did.utils.remove_path(DEFAULT_ENGINE_PATH)
+    # ## FIXTURE ## #
+    # load a log instance, but it shouldn't create a
+    # repo yet, it's lazy
+    l = did.logg.Logg(config=GOOD_DEFAULT_CONFIG)
+    assert not os.path.exists(DEFAULT_ENGINE_PATH)
+    # repo will be created only if commit is called
+    # which then should create the repo if it doesn't exist
+    # ## FIXTURE ## #
 
-    # load a log instance, which should create the repo if it doesn't exist
-    l = Logg(ARGS_OK_MIN, config=GOOD_CONFIG)
+    l.logg_record(*ARGS_OK_MIN)
 
-    assert os.path.exists(ENGINE_PATH)
+    assert l._target == ARGS_OK_MIN[0]
+    assert l._record == ARGS_OK_MIN[1]
 
-    assert l.target == ARGS_OK_MIN[1]
-    assert l.record == ARGS_OK_MIN[2]
+    # now the repo should exist
+    assert os.path.exists(DEFAULT_ENGINE_PATH)
 
-    l.logg_record()
+
+def test_git_logg():
+    did.utils.remove_path(GIT_ENGINE_PATH)
+
+    l = did.logg.GitLogg(config=GOOD_GIT_CONFIG)
+    r = l.logg_record(*ARGS_OK_MIN)
+
+    # the sha changes
+    assert RESULT_OK_GIT.match(r)
 
     commits = list(l.logg_repo.iter_commits())
     assert len(commits) == 2
@@ -99,5 +118,3 @@ def test_default_logg():
 # configured in config file
 
 # ... that only branches defined in config or master can be used
-
-#
