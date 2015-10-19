@@ -13,11 +13,10 @@ Config example::
 import json
 import urllib
 import urlparse
-from datetime import datetime
 
 from did.utils import log, pretty
 from did.stats import Stats, StatsGroup
-from did.base import Config, ReportError, TODAY
+from did.base import Config, ReportError, TODAY, Date
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -123,7 +122,7 @@ class GerritUnit(Stats):
 
     @staticmethod
     def get_gerrit_date(instr):
-        return datetime.strptime(str(instr), '%Y-%m-%d').date()
+        return Date(instr).date
 
     def fetch(self, query_string="", common_query_options=None,
               limit_since=False):
@@ -278,7 +277,6 @@ class AddedPatches(GerritUnit):
                     continue
                 if 'email' not in chg['author']:
                     continue
-                date = self.get_gerrit_date(chg['date'][:10])
                 comment_date = self.get_gerrit_date(chg['date'][:10])
                 if (owner == chg['author']['email'] and
                         comment_date >= self.since_date and

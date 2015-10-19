@@ -29,7 +29,7 @@ from bitly_api import Connection
 
 from did.stats import Stats, StatsGroup
 from did.utils import log, pretty
-from did.base import Config, ReportError, ConfigError
+from did.base import Config, ConfigError
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  bit.ly
@@ -109,8 +109,8 @@ class SavedLinks(Stats):
         '''
         Bit.ly API expect unix timestamps
         '''
-        since = time.mktime(self.options.since.datetime.timetuple())
-        until = time.mktime(self.options.until.datetime.timetuple())
+        since = time.mktime(self.options.since.date.timetuple())
+        until = time.mktime(self.options.until.date.timetuple())
         log.info("Searching for links saved by {0}".format(self.user))
         self.stats = self.parent.bitly.user_link_history(created_after=since,
                                                          created_before=until)

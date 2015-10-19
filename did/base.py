@@ -9,9 +9,7 @@ import re
 import sys
 import codecs
 import datetime
-import optparse
 import StringIO
-import xmlrpclib
 import ConfigParser
 from dateutil.relativedelta import MO as MONDAY
 from ConfigParser import NoOptionError, NoSectionError
@@ -31,8 +29,11 @@ CONFIG = os.path.expanduser("~/.did")
 # Default maximum width
 MAX_WIDTH = 79
 
-# Today's date
-TODAY = datetime.date.today()
+# Today's date (UTC)
+# NOTE: for any long-running processes that load this module
+# TODAY will lose it's accuracy if the module is not reloaded
+# everyday...
+TODAY = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,14 +43,18 @@ TODAY = datetime.date.today()
 class GeneralError(Exception):
     """ General stats error """
 
+
 class ConfigError(GeneralError):
     """ Stats configuration problem """
+
 
 class ConfigFileError(ConfigError):
     """ Problem with the config file """
 
+
 class OptionError(GeneralError):
     """ Invalid command line """
+
 
 class ReportError(GeneralError):
     """ Report generation error """
@@ -174,7 +179,9 @@ class Config(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Date(object):
-    """ Date parsing for common word formats """
+    """ Date parsing for common word and string formats """
+
+    fmt = None
 
     def __init__(self, date=None):
         """ Parse the date string """
@@ -194,13 +201,58 @@ class Date(object):
         self.datetime = datetime.datetime(
             self.date.year, self.date.month, self.date.day, 0, 0, 0)
 
+    def __init__(self, date=None, fmt=None):
+        """ Parse the date string """
+        # REFERENCE - strftime
+        # full iso: '%Y-%m-%d %H:%M:%S.%f %z'
+        # full iso no micro: '%Y-%m-%d %H:%M:%S %z'
+        # Unless asked for it explicitly, only show the date as str()
+        self.fmt = fmt or "%Y-%m-%d"
+        date = date.lower() if isinstance(date, (str, unicode)) else date
+        try:
+            if isinstance(date, Date):
+                # take the date from the Date() and let it recreate itself
+                date = date.date
+            elif isinstance(date, (datetime.datetime, datetime.date)):
+                pass
+            elif not date or date == "today":
+                date = TODAY
+            elif date == "yesterday":
+                date = TODAY - delta(days=1)  # produces datetime.date()
+            elif isinstance(date, (unicode, str)):
+                date = dt_parse(date)
+            else:
+                raise ValueError
+        except Exception as error:
+            log.debug(error)
+            raise OptionError(
+                "Invalid date format: {0}('{1}'), use YYYY-MM-DD.".format(
+                    type(date), date))
+
+        # Make sure we're a datetime, not date
+        if type(date) is datetime.date:
+            date = datetime.datetime(
+                date.year, date.month, date.day, 0, 0, 0, tzinfo=pytz.utc)
+
+        # FIXME: Make sure we've converted to in UTC
+        # if there is no tz info in the datetime object
+        # assume it's UTC (WARNING: AMIGUOUS...)
+        if date.tzinfo:
+            log.debug('Timezone detected [{0}]; converting to UTC'.format(
+                date.tzinfo))
+            date = date.astimezone(pytz.utc)
+        # Makesure the datetime is tz-aware (UTC)
+        date = date.replace(tzinfo=pytz.utc)
+        self.date = date
+
     def __str__(self):
         """ Ascii version of the string representation """
         return utils.ascii(unicode(self))
 
     def __unicode__(self):
         """ String format for printing """
-        return unicode(self.date)
+        # remove trailing space if not timezone is present for whatever reason
+        return unicode(self.date.strftime(self.fmt)).strip()
 
     @staticmethod
     def this_week():
