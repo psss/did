@@ -11,14 +11,9 @@ Config example::
 
 import xmlrpclib
 
-import did.base
 from did.utils import item
 from did.stats import Stats, StatsGroup
 
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Wiki Stats
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~rom did.utils import item
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Wiki Stats

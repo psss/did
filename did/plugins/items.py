@@ -46,7 +46,7 @@ class CustomStats(StatsGroup):
     order = 800
 
     def __init__(self, option, name=None, parent=None, user=None):
-        super(StatsGroup, self).__init__("custom", name, parent, user)
+        super(CustomStats, self).__init__("custom", name, parent, user)
         for section in self.config.sections(kind="items"):
             self.stats.append(ItemStats(
                 option=section, parent=self,

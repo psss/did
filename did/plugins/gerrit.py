@@ -16,8 +16,7 @@ import urlparse
 
 from did.utils import log, pretty
 from did.stats import Stats, StatsGroup
-from did.base import ReportError, TODAY, Date
-import did.base
+from did.base import TODAY, Date
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
