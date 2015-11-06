@@ -36,6 +36,7 @@ DATE_RE = re.compile('(\d\d\d\d-\d\d-\d\d)')
 
 class LoggStats(Stats):
     """ Logg stats """
+
     def fetch(self):
         stats = []
 
@@ -79,6 +80,7 @@ class LoggStats(Stats):
 
 class GitLoggStats(Stats):
     """ Git Logg stats """
+
     def fetch(self):
         # FIXME: this needs to be pulled and parsed from config
         r = git.Repo(self.parent.path)
@@ -123,7 +125,7 @@ class GitLoggStats(Stats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class LoggStatsGroup(StatsGroup):
-    """ Idonethis stats group """
+    """ Logg stats group """
 
     # Default order
     order = 1000
