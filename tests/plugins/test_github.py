@@ -31,26 +31,29 @@ login = psss
 
 def test_github_issues_created():
     """ Created issues """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0].stats
     assert any([
         "psss/did#017 - What did you do" in unicode(stat) for stat in stats])
 
+
 def test_github_issues_closed():
     """ Closed issues """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[1].stats
     assert any([
         "psss/did#017 - What did you do" in unicode(stat) for stat in stats])
 
+
 def test_github_invalid_token():
     """ Invalid token """
-    did.base.Config(CONFIG + "\ntoken = bad-token")
+    did.base.set_config(CONFIG + "\ntoken = bad-token")
     with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)
 
+
 def test_github_missing_url():
     """ Missing url """
-    did.base.Config("[gh]\ntype = github")
+    did.base.set_config("[gh]\ntype = github")
     with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)

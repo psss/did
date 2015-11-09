@@ -25,7 +25,7 @@ prefix = FI
 
 def test_trac_smoke():
     """ Smoke test for all stats """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main("last week")
     assert stats
 
@@ -33,12 +33,13 @@ def test_trac_smoke():
 def test_trac_created():
     """ Check created tickets """
     # Test on: https://fedorahosted.org/fedora-infrastructure/ticket/4891
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main("""
         --email stefw@example.org
-        --trac-created
         --since 2015-09-17
-        --until 2015-09-17""")[0][0].stats[0].stats[0].stats
+        --until 2015-09-17
+        --trac-created""")[0][0].stats[0].stats[0].stats
+
     assert any([
         "FI#4891 - Hosting docs" in unicode(change) for change in stats])
 
@@ -46,11 +47,12 @@ def test_trac_created():
 def test_trac_closed():
     """ Check closed tickets """
     # Test on: https://fedorahosted.org/fedora-infrastructure/ticket/4864
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main("""
         --email smooge@example.org
-        --trac-closed
         --since 2015-08-30
-        --until 2015-08-30""")[0][0].stats[0].stats[3].stats
+        --until 2015-08-30
+        --trac-closed""")[0][0].stats[0].stats[3].stats
+
     assert any([
         "FI#4864 - remove mdomsch" in unicode(change) for change in stats])

@@ -7,8 +7,9 @@ import pytest
 
 from bitly_api import BitlyError
 
-import did.cli
 import did.base
+import did.cli
+import did.plugins
 
 BASIC_CONFIG = """
 [general]
@@ -23,9 +24,9 @@ BAD_TOKEN_CONFIG = BASIC_CONFIG + "\ntoken = bad-token"
 OK_CONFIG = BASIC_CONFIG + "\ntoken = 77912602cc1d712731b2d8a2810cf8500d2d0f89"
 
 # one link should be present
-INTERVAL = "--since 2015-10-06 --until 2015-10-07"
+INTERVAL = "--since 2015-10-06 --until 2015-10-07 --bitly"
 # No links should be present
-INTERVAL1 = "--since 2015-10-07 --until 2015-10-08"
+INTERVAL1 = "--since 2015-10-07 --until 2015-10-08 --bitly"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,23 +43,14 @@ def test_missing_token():
     """
     Missing bitly token results in Exception
     """
-    import did
-    did.base.Config(BASIC_CONFIG)
-    # FIXME: is SystemExit really a reasonable exception?
-    # why not let the exception that occured just happen?
-    # why the use of sys.exit?
-    # Testing required that we check for SystemExit exception
-    # even though that's not the actual error that is triggered
-    with pytest.raises(did.base.ConfigError):
-        did.cli.main(INTERVAL)
+    with pytest.raises(did.base.ConfigFileError):
+        did.cli.main(INTERVAL, BASIC_CONFIG)
 
 
 def test_invalid_token():
     """ Invalid bitly token """
-    import did
-    did.base.Config(BAD_TOKEN_CONFIG)
     with pytest.raises(BitlyError):
-        did.cli.main(INTERVAL)
+        did.cli.main(INTERVAL, BAD_TOKEN_CONFIG)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,9 +59,7 @@ def test_invalid_token():
 
 def test_bitly_saved():
     """ Check expected saved links are returned """
-    import did
-    did.base.Config(OK_CONFIG)
-    result = did.cli.main(INTERVAL)
+    result = did.cli.main(INTERVAL, OK_CONFIG)
     stats = result[0][0].stats[0].stats[0].stats
     _m = (
         "http://bit.ly/kejbaly2_roreilly_innerwars_reddit - "

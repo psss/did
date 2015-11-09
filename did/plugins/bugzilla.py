@@ -40,7 +40,7 @@ from __future__ import absolute_import, unicode_literals
 import bugzilla
 import xmlrpclib
 
-from did.base import Config, ReportError
+import did.base
 from did.stats import Stats, StatsGroup
 from did.utils import log, pretty, split
 
@@ -68,7 +68,10 @@ class Bugzilla(object):
     def server(self):
         """ Connection to the server """
         if self._server is None:
-            self._server = bugzilla.Bugzilla(url=self.parent.url)
+            if self.parent.url:
+                self._server = bugzilla.Bugzilla(url=self.parent.url)
+            else:
+                raise did.base.ConfigError('Bugzilla url not set!')
         return self._server
 
     def search(self, query, options):
@@ -88,17 +91,21 @@ class Bugzilla(object):
             # Otherwise suggest to bake bugzilla cookies
             log.error("An error encountered, while searching for bugs.")
             log.debug(error)
-            raise ReportError(
+            raise did.base.ReportError(
                 "Have you baked cookies using the 'bugzilla login' command?")
         log.debug("Search result:")
         log.debug(pretty(result))
         bugs = dict((bug.id, bug) for bug in result)
         # Fetch bug history
+        # FIXME: This is slow, do we always need COMMENTS for EVERY bug?
+        # FIXME: How to make this lazy?
         log.debug("Fetching bug history")
         result = self.server._proxy.Bug.history({'ids': bugs.keys()})
         log.debug(pretty(result))
         history = dict((bug["id"], bug["history"]) for bug in result["bugs"])
         # Fetch bug comments
+        # FIXME: This is slow, do we always need COMMENTS for EVERY bug?
+        # FIXME: How to make this lazy?
         log.debug("Fetching bug comments")
         result = self.server._proxy.Bug.comments({'ids': bugs.keys()})
         log.debug(pretty(result))
@@ -279,7 +286,7 @@ class VerifiedBugs(Stats):
             "field0-3-0": "bug_status",
             "type0-3-0": "changedbefore",
             "value0-3-0": str(self.options.until)
-            }
+        }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
                 query, options=self.options)
@@ -317,7 +324,7 @@ class ReturnedBugs(Stats):
             "field0-3-0": "bug_status",
             "type0-3-0": "changedbefore",
             "value0-3-0": str(self.options.until),
-            }
+        }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
                 query, options=self.options)
@@ -345,7 +352,7 @@ class FiledBugs(Stats):
             "field0-2-0": "creation_ts",
             "type0-2-0": "lessthan",
             "value0-2-0": str(self.options.until),
-            }
+        }
         self.stats = self.parent.bugzilla.search(query, options=self.options)
 
 
@@ -377,7 +384,7 @@ class FixedBugs(Stats):
             "field0-3-0": "bug_status",
             "type0-3-0": "changedbefore",
             "value0-3-0": str(self.options.until),
-            }
+        }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
                 query, options=self.options)
@@ -417,7 +424,7 @@ class ClosedBugs(Stats):
             "field0-4-0": "bug_status",
             "type0-4-0": "equals",
             "value0-4-0": "CLOSED",
-            }
+        }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
                 query, options=self.options)
@@ -450,7 +457,7 @@ class PostedBugs(Stats):
             "field0-3-0": "bug_status",
             "type0-3-0": "changedbefore",
             "value0-3-0": str(self.options.until),
-            }
+        }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
                 query, options=self.options)
@@ -484,7 +491,7 @@ class PatchedBugs(Stats):
             "field0-3-0": "keywords",
             "type0-3-0": "changedbefore",
             "value0-3-0": str(self.options.until),
-            }
+        }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
                 query, options=self.options)
@@ -512,7 +519,7 @@ class CommentedBugs(Stats):
             "f4": "longdesc",
             "o4": "changedbefore",
             "v4": str(self.options.until),
-            }
+        }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
                 query, options=self.options)
@@ -526,27 +533,27 @@ class BugzillaStats(StatsGroup):
     order = 200
 
     def __init__(self, option, name=None, parent=None, user=None):
-        StatsGroup.__init__(self, option, name, parent, user)
-        config = dict(Config().section(option))
+        super(BugzillaStats, self).__init__(option, name, parent, user)
+        config = dict(self.config.section(option))
+
+        # If basic config variables aren't set, only warn at init
+        # so startup doesn't fail even when we don't actually intend to use the
+        # plugin ...
+
         # Check Bugzilla instance url
-        try:
-            self.url = config["url"]
-        except KeyError:
-            raise ReportError(
-                "No bugzilla url set in the [{0}] section".format(option))
-        # Make sure we have prefix set
-        try:
-            self.prefix = config["prefix"]
-        except KeyError:
-            raise ReportError(
-                "No prefix set in the [{0}] section".format(option))
+        self.url = config.get("url")
+        if not self.url:
+            log.warn("Bugzilla url not set in [{0}] section".format(option))
+
+        # Use custom prefix set or default to 'BZ'
+        self.prefix = config.get("prefix") or 'BZ'
+        if not self.prefix:
+            log.warn("Bugzilla prefix not set in [{0}] section".format(option))
+
         # Check for customized list of resolutions
-        try:
-            self.resolutions = [
-                resolution.lower()
-                for resolution in split(config["resolutions"])]
-        except KeyError:
-            self.resolutions = DEFAULT_RESOLUTIONS
+        resolutions = config.get("resolutions") or DEFAULT_RESOLUTIONS
+        self.resolutions = [_r.lower() for _r in split(resolutions)]
+
         # Save Bug class as attribute to allow customizations by
         # descendant class and set up the Bugzilla investigator
         self.bug = Bug
@@ -561,4 +568,4 @@ class BugzillaStats(StatsGroup):
             VerifiedBugs(option=option + "-verified", parent=self),
             CommentedBugs(option=option + "-commented", parent=self),
             ClosedBugs(option=option + "-closed", parent=self),
-            ]
+        ]

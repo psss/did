@@ -13,11 +13,10 @@ Config example::
 import json
 import urllib
 import urlparse
-from datetime import datetime
 
 from did.utils import log, pretty
 from did.stats import Stats, StatsGroup
-from did.base import Config, ReportError, TODAY
+from did.base import TODAY, Date
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,7 +114,7 @@ class GerritUnit(Stats):
     def __init__(
             self, option, name=None, parent=None, base_url=None, prefix=None):
         self.base_url = base_url if base_url is not None else parent.repo_url
-        self.prefix = prefix if prefix is not None else parent.config['prefix']
+        self.prefix = prefix if prefix is not None else parent.prefix
         self.repo = Gerrit(baseurl=self.base_url, prefix=self.prefix)
         self.since_date = None
 
@@ -123,7 +122,7 @@ class GerritUnit(Stats):
 
     @staticmethod
     def get_gerrit_date(instr):
-        return datetime.strptime(str(instr), '%Y-%m-%d').date()
+        return Date(instr).date
 
     def fetch(self, query_string="", common_query_options=None,
               limit_since=False):
@@ -278,7 +277,6 @@ class AddedPatches(GerritUnit):
                     continue
                 if 'email' not in chg['author']:
                     continue
-                date = self.get_gerrit_date(chg['date'][:10])
                 comment_date = self.get_gerrit_date(chg['date'][:10])
                 if (owner == chg['author']['email'] and
                         comment_date >= self.since_date and
@@ -366,17 +364,15 @@ class GerritStats(StatsGroup):
     order = 350
 
     def __init__(self, option, name=None, parent=None, user=None):
-        StatsGroup.__init__(self, option, name, parent, user)
-        self.config = dict(Config().section(option))
-        if 'url' not in self.config:
-            raise IOError(
-                'No gerrit URL set in the [{0}] section'.format(option))
-        self.repo_url = self.config['url']
+        super(GerritStats, self).__init__(option, name, parent, user)
+        config = dict(self.config.section(option))
+        self.repo_url = config.get('url')
+        if not self.repo_url:
+            log.warn('No gerrit URL set in the [{0}] section'.format(option))
         log.debug('repo_url = {0}'.format(self.repo_url))
 
-        if "prefix" not in self.config:
-            raise ReportError(
-                "No prefix set in the [{0}] section".format(option))
+        # set custom prefix or use default 'GR' prefix value
+        self.prefix = config.get('prefix') or 'GR'
 
         self.stats = [
             AbandonedChanges(option=option + '-abandoned', parent=self),
@@ -385,4 +381,4 @@ class GerritStats(StatsGroup):
             PublishedDrafts(option=option + '-drafts', parent=self),
             AddedPatches(option=option + '-added-patches', parent=self),
             ReviewedChanges(option=option + '-reviewed', parent=self),
-            ]
+        ]

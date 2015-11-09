@@ -1,9 +1,10 @@
 
-================
+=================
     Examples
-================
+=================
 
-Let's have a look at a couple of real-life examples!
+Let's have a look at a couple of real-life examples for ``did``
+and ``idid``
 
 
 Config
@@ -17,10 +18,13 @@ trac, plus my favorite header & footer I'm used to fill manually::
     email = "Petr Šplíchal" <psplicha@redhat.com>
     width = 79
 
+    [joy]
+    type = logg
+    desc = Joy of the Day
+
     [header]
     type = header
     high = Highlights
-    joy = Joy of the week ;-)
 
     [tools]
     type = git
@@ -46,9 +50,9 @@ trac, plus my favorite header & footer I'm used to fill manually::
 Options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here's how available command line options look like with this
-config. Note that ``did`` detects all enabled plugins and creates
-corresponding option groups for each of them::
+Here's how available command line options for ``did`` with this
+config. Note that ``did`` detects all configured plugins and 
+creates corresponding option groups for each of them::
 
     usage: did [this|last] [week|month|quarter|year] [options]
 
@@ -62,8 +66,11 @@ corresponding option groups for each of them::
 
     Header:
       --header-high    Highlights
-      --header-joy     Joy of the week
       --header         All above
+
+    Joy of the Day:
+      --joy-loggs
+      --joy
 
     Bugzilla stats:
       --bz-filed       Bugs filed
@@ -106,6 +113,21 @@ corresponding option groups for each of them::
       --debug          Turn on debugging output, do not catch exceptions
 
 
+Usage for ``idid`` is even simpler::
+
+    usage: idid [today|DATE|...] [topic] 'Logg record' [options]
+
+    optional arguments:
+      -h, --help      show this help message and exit
+      --debug         Turn on debugging output, catch exceptions
+      --quiet         Turn off all logging except errors; no exceptions
+
+    Select:
+      --email EMAILS  User email address(es)
+      --since SINCE   Start date in YYYY-MM-DD format
+      --until UNTIL   End date in YYYY-MM-DD format
+
+
 Week
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -121,6 +143,7 @@ Now it's easy to find out what I was working on during this week::
     * Highlights
 
     * Joy of the week
+        * @cward submitted a bunch of did pull requests! #ftw
 
     * Bugs fixed: 2
         * BZ#1261963 - wrong date format causes traceback
@@ -148,6 +171,23 @@ Now it's easy to find out what I was working on during this week::
     * Plans, thoughts, ideas...
 
     * Status: Green | Yellow | Orange | Red
+
+
+To save additional joys, just run ``idid``::
+
+    > idid joy 'Finished drafting the idid feature'
+    > idid joy yesterday 'Cleaned out my inbox'
+
+To retrieve just the joys you've saved for the week, just run ``did``::
+
+    > did this week --joy
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     Petr Šplíchal <psplicha@redhat.com>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    * Joy of the week
+        * Finished drafting the idid feature
+        * Cleaned out my inbox
 
 
 Tools

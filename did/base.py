@@ -9,30 +9,34 @@ import re
 import sys
 import codecs
 import datetime
-import optparse
 import StringIO
-import xmlrpclib
 import ConfigParser
 from dateutil.relativedelta import MO as MONDAY
 from ConfigParser import NoOptionError, NoSectionError
 from dateutil.relativedelta import relativedelta as delta
+from dateutil.parser import parse as dt_parse
+import pytz
 
 from did import utils
 from did.utils import log
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Config file location
-CONFIG = os.path.expanduser("~/.did")
+DID_DIR = os.path.expanduser("~/.did")
+DID_CONFIG_FILENAME = 'config'
+DID_CONFIG_PATH = os.path.join(DID_DIR, DID_CONFIG_FILENAME)
 
 # Default maximum width
 MAX_WIDTH = 79
 
-# Today's date
-TODAY = datetime.date.today()
+# Today's date (UTC)
+# NOTE: for any long-running processes that load this module
+# TODAY will lose it's accuracy if the module is not reloaded
+# everyday...
+TODAY = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,14 +46,18 @@ TODAY = datetime.date.today()
 class GeneralError(Exception):
     """ General stats error """
 
+
 class ConfigError(GeneralError):
     """ Stats configuration problem """
+
 
 class ConfigFileError(ConfigError):
     """ Problem with the config file """
 
+
 class OptionError(GeneralError):
     """ Invalid command line """
+
 
 class ReportError(GeneralError):
     """ Report generation error """
@@ -72,29 +80,31 @@ class Config(object):
         If no config or path given, default to "~/.did/config" which
         can be overrided by the ``DID_DIR`` environment variable.
         """
-        # Read the config only once (unless explicitly provided)
-        if self.parser is not None and config is None and path is None:
-            return
-        Config.parser = ConfigParser.SafeConfigParser()
-        # If config provided as string, parse it directly
-        if config is not None:
-            log.info("Inspecting config file from string")
+        self.parser = ConfigParser.SafeConfigParser()
+        path = os.path.expanduser(path or Config.path())
+        # if we have an existing config instance, make a new copy
+        config = unicode(config) if isinstance(config, Config) else config
+        if config:
+            # If config provided as string, parse it directly
+            log.debug("Inspecting config file string")
             log.debug(utils.pretty(config))
             self.parser.readfp(StringIO.StringIO(config))
-            return
-        # Check the environment for config file override
-        # (unless path is explicitly provided)
-        if path is None:
-            path = Config.path()
-        # Parse the config from file
-        try:
-            log.info("Inspecting config file '{0}'.".format(path))
-            self.parser.readfp(codecs.open(path, "r", "utf8"))
-        except IOError as error:
-            log.debug(error)
-            Config.parser = None
-            raise ConfigFileError(
-                "Unable to read the config file '{0}'.".format(path))
+        elif os.path.exists(path):
+            # Otherwise, parse the config from file
+            try:
+                log.info("Inspecting config file '{0}'.".format(path))
+                config_file = codecs.open(path, "r", "utf8")
+                self.parser.readfp(config_file)
+            except IOError as error:
+                # FIXME: why not just raise IOError and catch it?
+                log.error(error)
+                raise ConfigFileError(
+                    "Unable to read the config file '{0}'.".format(path))
+        elif path and not os.path.exists(path):
+            log.warn('Invalid path to config file: {0}'.format(path))
+        else:
+            assert not path and not config
+            log.warn('No config string or path to config file provided')
 
     @property
     def email(self):
@@ -137,8 +147,26 @@ class Config(object):
         """ Return section items, skip selected (type/order by default) """
         if skip is None:
             skip = ['type', 'order']
-        return [(key, val) for key, val in self.parser.items(section)
-                if key not in skip]
+
+        # ConfigParser doesn't convert 'true' or 'false' to True/False...?
+        def _type(x):
+            if x == 'true':
+                x = True
+            elif x == 'false':
+                x = False
+            else:
+                pass
+            return x
+
+        try:
+            _section = self.parser.items(section)
+        except Exception as err:
+            log.debug(err)
+            raise ConfigFileError('Invalid section: {0}'.format(section))
+        else:
+            _args = [(key, _type(val)) for key, val in _section
+                     if key not in skip]
+        return _args
 
     def item(self, section, it):
         """ Return content of given item in selected section """
@@ -152,21 +180,44 @@ class Config(object):
     def path():
         """ Detect config file path """
         # Detect config directory
-        try:
-            directory = os.environ["DID_DIR"]
-        except KeyError:
-            directory = CONFIG
+        directory = os.environ.get("DID_DIR") or DID_DIR
         # Detect config file (even before options are parsed)
-        filename = "config"
         matched = re.search("--confi?g?[ =](\S+)", " ".join(sys.argv))
-        if matched:
-            filename = matched.groups()[0]
-        return directory.rstrip("/") + "/" + filename
+        filename = matched.groups()[0] if matched else DID_CONFIG_FILENAME
+        return os.path.join(directory, filename)
 
     @staticmethod
     def example():
         """ Return config example """
         return "[general]\nemail = Name Surname <email@example.org>\n"
+
+    def __unicode__(self):
+        output = StringIO.StringIO()
+        self.parser.write(output)
+        return output.getvalue()
+
+    def __str__(self):
+        return self.__unicode__()
+
+
+def get_config(config=None, path=None):
+    if config:
+        log.debug('Getting Config from string: {0}'.format(config))
+        config = Config(config=config)
+    elif path:
+        log.debug('Getting Config from file path: {0}'.format(path))
+        config = Config(path=path)
+    else:
+        # log.debug('Getting default config')  # this is too loud...
+        config = DID_CONFIG
+    return config
+
+
+def set_config(config=None, path=None):
+    global DID_CONFIG
+    log.debug('Setting Config...')
+    DID_CONFIG = get_config(config, path)
+    return DID_CONFIG
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -174,25 +225,53 @@ class Config(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Date(object):
-    """ Date parsing for common word formats """
+    """ Date parsing for common word and string formats """
 
-    def __init__(self, date=None):
+    fmt = None
+
+    def __init__(self, date=None, fmt=None):
         """ Parse the date string """
-        if isinstance(date, datetime.date):
-            self.date = date
-        elif date is None or date.lower() == "today":
-            self.date = TODAY
-        elif date.lower() == "yesterday":
-            self.date = TODAY - delta(days=1)
-        else:
-            try:
-                self.date = datetime.date(*[int(i) for i in date.split("-")])
-            except StandardError as error:
-                log.debug(error)
-                raise OptionError(
-                    "Invalid date format: '{0}', use YYYY-MM-DD.".format(date))
-        self.datetime = datetime.datetime(
-            self.date.year, self.date.month, self.date.day, 0, 0, 0)
+        # REFERENCE - strftime
+        # full iso: '%Y-%m-%d %H:%M:%S.%f %z'
+        # full iso no micro: '%Y-%m-%d %H:%M:%S %z'
+        # Unless asked for it explicitly, only show the date as str()
+        self.fmt = fmt or "%Y-%m-%d"
+        date = date.lower() if isinstance(date, (str, unicode)) else date
+        try:
+            if isinstance(date, Date):
+                # take the date from the Date() and let it recreate itself
+                date = date.date
+            elif isinstance(date, (datetime.datetime, datetime.date)):
+                pass
+            elif not date or date == "today":
+                date = TODAY
+            elif date == "yesterday":
+                date = TODAY - delta(days=1)  # produces datetime.date()
+            elif isinstance(date, (unicode, str)):
+                date = dt_parse(date)
+            else:
+                raise ValueError
+        except Exception as error:
+            log.debug(error)
+            raise OptionError(
+                "Invalid date format: {0}('{1}'), use YYYY-MM-DD.".format(
+                    type(date), date))
+
+        # Make sure we're a datetime, not date
+        if type(date) is datetime.date:
+            date = datetime.datetime(
+                date.year, date.month, date.day, 0, 0, 0, tzinfo=pytz.utc)
+
+        # FIXME: Make sure we've converted to in UTC
+        # if there is no tz info in the datetime object
+        # assume it's UTC (WARNING: AMIGUOUS...)
+        if date.tzinfo:
+            log.debug('Timezone detected [{0}]; converting to UTC'.format(
+                date.tzinfo))
+            date = date.astimezone(pytz.utc)
+        # Makesure the datetime is tz-aware (UTC)
+        date = date.replace(tzinfo=pytz.utc)
+        self.date = date
 
     def __str__(self):
         """ Ascii version of the string representation """
@@ -200,7 +279,8 @@ class Date(object):
 
     def __unicode__(self):
         """ String format for printing """
-        return unicode(self.date)
+        # remove trailing space if not timezone is present for whatever reason
+        return unicode(self.date.strftime(self.fmt)).strip()
 
     @staticmethod
     def this_week():
@@ -338,8 +418,11 @@ class User(object):
         login = psss
     """
 
+    config = None
+
     def __init__(self, email, stats=None):
         """ Detect name, login and email """
+        self.config = DID_CONFIG
         # Make sure we received the email string, save the original for cloning
         if not email:
             raise ConfigError("Email required for user initialization.")
@@ -377,16 +460,16 @@ class User(object):
             return
         # Attempt to use alias directly from the config section
         try:
-            config = dict(Config().section(stats))
+            _config = dict(self.config.section(stats))
             try:
-                email = config["email"]
+                email = _config["email"]
             except KeyError:
                 pass
             try:
-                login = config["login"]
+                login = _config["login"]
             except KeyError:
                 pass
-        except (ConfigFileError, NoSectionError):
+        except (ConfigFileError, NoSectionError, AttributeError):
             pass
         # Check for aliases specified in the email string
         if aliases is not None:
@@ -411,3 +494,13 @@ class User(object):
         if login is not None:
             self.login = login
             log.info("Using login alias '{0}' for '{1}'".format(login, stats))
+
+
+# By default this loads config from ~/.did/config
+# unless dir path in os.environ['DID_DIR'] is set, which .path() picks up
+# or argv contains --config=/did/path/
+try:
+    DID_CONFIG = Config(path=Config.path())
+except Exception as err:
+    log.error('Failed to load default config file! {0}'.format(err))
+    DID_CONFIG = None

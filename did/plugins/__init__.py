@@ -43,9 +43,9 @@ import os
 import sys
 import types
 
-from did.utils import log
-from did.base import Config, ConfigError
+import did.base
 from did.stats import StatsGroup, EmptyStatsGroup
+from did.utils import log
 
 # Self reference and file path to this module
 PLUGINS = sys.modules[__name__]
@@ -57,8 +57,10 @@ FAILED_PLUGINS = []
 def load():
     """ Check available plugins and attempt to import them """
     # Code is based on beaker-client's command.py script
+    config = did.base.get_config()
     plugins = []
-    for filename in os.listdir(PLUGINS_PATH):
+    _possible_plugins = os.listdir(PLUGINS_PATH)
+    for filename in _possible_plugins:
         if not filename.endswith(".py") or filename.startswith("_"):
             continue
         if not os.path.isfile(os.path.join(PLUGINS_PATH, filename)):
@@ -73,11 +75,11 @@ def load():
             log.debug("Successfully imported {0} plugin".format(plugin))
         except (ImportError, SyntaxError) as error:
             # Give a warning only when the plugin is configured
-            message = "Failed to import {0} plugin ({1})".format(plugin, error)
-            if Config().sections(kind=plugin):
-                log.warn(message)
+            if config.sections(kind=plugin):
+                message = "Failed to import {0} plugin ({1})".format(plugin, error)
             else:
-                log.debug(message)
+                message = "Invalid Plugin {0} ({1})".format(plugin, error)
+            log.error(message)
             FAILED_PLUGINS.append(plugin)
     return plugins
 
@@ -91,6 +93,7 @@ def detect():
     file. The 'section' is the name of the configuration section
     as well as the option used to enable those particular stats.
     """
+    config = did.base.get_config()
     # Detect classes inherited from StatsGroup and return them sorted
     stats = []
     for plugin in load():
@@ -105,14 +108,14 @@ def detect():
                 continue
             # Search config for sections with type matching the plugin,
             # use order provided there or class default otherwise
-            for section in Config().sections(kind=plugin):
+            for section in config.sections(kind=plugin):
                 try:
-                    order = int(Config().item(section, "order"))
-                except ConfigError:
+                    order = int(config.item(section, "order"))
+                except did.base.ConfigError:
                     order = statsgroup.order
                 except ValueError:
                     log.warn("Invalid {0} stats order: '{1}'".format(
-                        section, Config().item(section, "order")))
+                        section, config.item(section, "order")))
                     order = statsgroup.order
                 stats.append((section, statsgroup, order))
                 log.info("Found {0}, an instance of {1}, order {2}".format(

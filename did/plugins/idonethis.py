@@ -83,9 +83,8 @@ class IdonethisStatsGroup(StatsGroup):
         super(IdonethisStatsGroup, self).__init__(
             option=option, name=name, parent=parent, user=user)
 
-        self.config = dict(did.base.Config().section(option))
-
-        self.token = self.config.get('token')
+        config = dict(self.config.section(option))
+        self.token = config.get('token')
         if not self.token:
             raise did.base.ConfigError(
                 'No token defined in the [{0}] section'.format(option))

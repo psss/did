@@ -21,6 +21,13 @@ base
     :members:
     :undoc-members:
 
+logg
+----
+
+.. automodule:: did.logg
+    :members:
+    :undoc-members:
+
 utils
 -----
 

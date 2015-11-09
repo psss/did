@@ -6,6 +6,7 @@ from __future__ import unicode_literals, absolute_import
 import os
 import pytest
 import did.cli
+import did.base
 import did.utils
 
 
@@ -33,25 +34,30 @@ did = {0}
 
 def test_git_smoke():
     """ Git smoke """
-    did.base.Config(CONFIG.format(GIT_PATH))
+    did.base.set_config(CONFIG.format(GIT_PATH))
     did.cli.main(INTERVAL)
+
 
 def test_git_verbosity():
     """ Brief git stats """
-    did.base.Config(CONFIG.format(GIT_PATH))
+    did.base.set_config(CONFIG.format(GIT_PATH))
     did.cli.main(INTERVAL + " --brief")
     did.cli.main(INTERVAL + " --verbose")
 
+
 def test_git_format():
     """ Wiki format """
-    did.base.Config(CONFIG.format(GIT_PATH))
+    did.base.set_config(CONFIG.format(GIT_PATH))
     did.cli.main(INTERVAL + " --format text")
     did.cli.main(INTERVAL + " --format wiki")
 
+
 def test_git_team():
     """ Team report """
-    emails = " --email psplicha@redhat.com,cward@redhat.com"
-    did.base.Config(CONFIG.format(GIT_PATH))
+    emails = " --email psplicha@redhat.com --email cward@redhat.com"
+    # FIXME: single --email with csv doesn't work...
+    #emails = " --email psplicha@redhat.com,cward@redhat.com"
+    did.base.set_config(CONFIG.format(GIT_PATH))
     did.cli.main(INTERVAL + emails)
     did.cli.main(INTERVAL + emails + "--total")
     did.cli.main(INTERVAL + emails + "--merge")
@@ -63,21 +69,23 @@ def test_git_team():
 
 def test_git_regular():
     """ Simple git stats """
-    did.base.Config(CONFIG.format(GIT_PATH))
+    did.base.set_config(CONFIG.format(GIT_PATH))
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0].stats
     assert any([
         "8a725af - Simplify git plugin tests" in stat
         for stat in stats])
 
+
 def test_git_verbose():
     """ Verbose git stats """
-    did.base.Config(CONFIG.format(GIT_PATH))
+    did.base.set_config(CONFIG.format(GIT_PATH))
     stats = did.cli.main(INTERVAL + " --verbose")[0][0].stats[0].stats[0].stats
     assert any(["tests/plugins" in stat for stat in stats])
 
+
 def test_git_nothing():
     """ No stats found """
-    did.base.Config(CONFIG.format(GIT_PATH))
+    did.base.set_config(CONFIG.format(GIT_PATH))
     stats = did.cli.main("--until 2015-01-01")[0][0].stats[0].stats[0].stats
     assert stats == []
 
@@ -88,14 +96,15 @@ def test_git_nothing():
 
 def test_git_invalid():
     """ Invalid git repo """
-    did.base.Config(CONFIG.format("/tmp"))
+    did.base.set_config(CONFIG.format("/tmp"))
     try:
         did.cli.main(INTERVAL)
     except SystemExit:
         raise RuntimeError("Expected warning only")
 
+
 def test_git_non_existent():
     """ Non-existent git repo """
-    did.base.Config(CONFIG.format("i-do-not-exist"))
+    did.base.set_config(CONFIG.format("i-do-not-exist"))
     with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)

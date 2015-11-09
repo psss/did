@@ -41,8 +41,8 @@ import cookielib
 import dateutil.parser
 import urllib2_kerberos
 
+import did.base
 from did.utils import log, pretty, listed
-from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
 
 # Default identifier width
@@ -56,6 +56,7 @@ MAX_BATCHES = 100
 
 # Supported authentication types
 AUTH_TYPES = ["gss", "basic"]
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
@@ -177,12 +178,12 @@ class JiraStats(StatsGroup):
     order = 600
 
     def __init__(self, option, name=None, parent=None, user=None):
-        StatsGroup.__init__(self, option, name, parent, user)
+        super(JiraStats, self).__init__(option, name, parent, user)
         self._session = None
         # Make sure there is an url provided
-        config = dict(Config().section(option))
+        config = dict(self.config.section(option))
         if "url" not in config:
-            raise ReportError(
+            raise did.base.ReportError(
                 "No Jira url set in the [{0}] section".format(option))
         self.url = config["url"].rstrip("/")
         # Optional authentication url
@@ -193,7 +194,7 @@ class JiraStats(StatsGroup):
         # Authentication type
         if "auth_type" in config:
             if config["auth_type"] not in AUTH_TYPES:
-                raise ReportError(
+                raise did.base.ReportError(
                     "Unsupported authentication type: {0}"
                     .format(config["auth_type"]))
             self.auth_type = config["auth_type"]
@@ -202,27 +203,27 @@ class JiraStats(StatsGroup):
         # Authentication credentials
         if self.auth_type == "basic":
             if "auth_username" not in config:
-                raise ReportError(
+                raise did.base.ReportError(
                     "`auth_username` not set in the [{0}] section"
                     .format(option))
             self.auth_username = config["auth_username"]
             if "auth_password" not in config:
-                raise ReportError(
+                raise did.base.ReportError(
                     "`auth_password` not set in the [{0}] section"
                     .format(option))
             self.auth_password = config["auth_password"]
         else:
             if "auth_username" in config:
-                raise ReportError(
+                raise did.base.ReportError(
                     "`auth_username` is only valid for basic authentication"
                     + " (section [{0}])".format(option))
             if "auth_password" in config:
-                raise ReportError(
+                raise did.base.ReportError(
                     "`auth_password` is only valid for basic authentication"
                     + " (section [{0}])".format(option))
         # Make sure we have project set
         if "project" not in config:
-            raise ReportError(
+            raise did.base.ReportError(
                 "No project set in the [{0}] section".format(option))
         self.project = config["project"]
         # Check for custom prefix
@@ -238,7 +239,7 @@ class JiraStats(StatsGroup):
             JiraResolved(
                 option=option + "-resolved", parent=self,
                 name="Issues resolved in {0}".format(option)),
-            ]
+        ]
 
     @property
     def session(self):
@@ -256,8 +257,9 @@ class JiraStats(StatsGroup):
             log.debug("Connecting to {0}".format(self.auth_url))
             if self.auth_type == 'basic':
                 req = urllib2.Request(self.auth_url)
-                req.add_data('{ "username" : "%s", "password" : "%s" }'
-                    % (self.auth_username, self.auth_password))
+                req.add_data(
+                    '{ "username" : "%s", "password" : "%s" }' % (
+                        self.auth_username, self.auth_password))
                 req.add_header("Content-type", "application/json")
                 req.add_header("Accept", "application/json")
                 self._session.open(req)

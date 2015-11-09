@@ -5,11 +5,12 @@
 from __future__ import unicode_literals, absolute_import
 
 import os
+from pprint import pformat as pretty  # imported, but not used # NOQA
 import re
+import shutil
 import sys
 import logging
 import unicodedata
-from pprint import pformat as pretty
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -390,3 +391,19 @@ class Coloring(object):
 
 # Create the default output logger
 log = Logging('did').logger
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Test Utilities
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def remove_path(path):
+    # remove a dir/file if it happens to exist
+    if os.path.exists(path):
+        if os.path.isdir(path):
+            # a dir
+            shutil.rmtree(path)
+        else:
+            # a file
+            os.remove(path)
+    assert not os.path.exists(path)

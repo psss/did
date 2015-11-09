@@ -31,7 +31,7 @@ user = maybelinot
 
 def test_trello_cards_created():
     """ Created cards """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0].stats
     print stats
     assert any([
@@ -40,7 +40,7 @@ def test_trello_cards_created():
 
 def test_trello_cards_updated():
     """ Updated cards """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[1].stats
     print stats
     assert any([
@@ -50,7 +50,7 @@ def test_trello_cards_updated():
 
 def test_trello_cards_closed():
     """ Closed cards """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[2].stats
     print stats
     assert any([
@@ -60,7 +60,7 @@ def test_trello_cards_closed():
 
 def test_trello_cards_moved():
     """ Moved cards """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[3].stats
     print stats
     assert any([
@@ -70,7 +70,7 @@ def test_trello_cards_moved():
 
 def test_trello_checklists_checkitem():
     """ Completed Checkitems in checklists """
-    did.base.Config(CONFIG)
+    did.base.set_config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[4].stats
     print stats
     # print[unicode(stat) for stat in stats]
@@ -81,6 +81,6 @@ def test_trello_checklists_checkitem():
 
 def test_trello_missing_apikey():
     """ Missing username """
-    did.base.Config("[trello]\ntype = trello")
+    did.base.set_config("[trello]\ntype = trello")
     with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)

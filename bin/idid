@@ -3,8 +3,8 @@
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-#   did - What did you do today, yesterday, last week, month, year?
-#   Author: Petr Šplíchal <psplicha@redhat.com>
+#   idid - Logg what did you did today, yesterday, last week or year?
+#   Author: Chris Ward <cward@redhat.com>
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -31,7 +31,8 @@ Comfortably gather and store status report data (e.g. list of
 committed changes) for given week, month, quarter, year or selected
 date range.
 
-By default ``did`` reports all configured stats for this week.
+By default ``idid`` stores your logg activity snippets as if they
+were completed today.
 
 
 """
@@ -43,8 +44,8 @@ import did.base
 import did.utils
 
 try:
-    did.cli.main()
-except did.base.GeneralError as error:
+    did.cli.main(is_logg=True)
+except Exception as error:
     if "--debug" in sys.argv:
         raise
     did.utils.log.error(error)

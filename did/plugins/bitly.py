@@ -27,9 +27,9 @@ import time
 
 from bitly_api import Connection
 
+import did.base
 from did.stats import Stats, StatsGroup
 from did.utils import log, pretty
-from did.base import Config, ReportError, ConfigError
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  bit.ly
@@ -58,7 +58,8 @@ class Bitly(object):
         self.parent = parent
         self.token = token or getattr(parent, 'token')
         if not self.token:
-            raise ConfigError("bitly requires token to be defined in config")
+            raise did.base.ConfigFileError(
+                "bitly requires token to be defined in config")
 
     @property
     def api(self):
@@ -109,8 +110,8 @@ class SavedLinks(Stats):
         '''
         Bit.ly API expect unix timestamps
         '''
-        since = time.mktime(self.options.since.datetime.timetuple())
-        until = time.mktime(self.options.until.datetime.timetuple())
+        since = time.mktime(self.options.since.date.timetuple())
+        until = time.mktime(self.options.until.date.timetuple())
         log.info("Searching for links saved by {0}".format(self.user))
         self.stats = self.parent.bitly.user_link_history(created_after=since,
                                                          created_before=until)
@@ -131,12 +132,13 @@ class BitlyStats(StatsGroup):
 
         # Check Request Tracker instance url and custom prefix
         super(BitlyStats, self).__init__(option, name, parent, user)
-        config = dict(Config().section(option))
+        config = dict(self.config.section(option))
 
         try:
             self.token = config["token"]
         except KeyError:
-            raise ConfigError("No token in the [{0}] section".format(option))
+            raise did.base.ConfigFileError(
+                "No token in the [{0}] section".format(option))
 
         self.bitly = Bitly(parent=self)
         # Construct the list of stats

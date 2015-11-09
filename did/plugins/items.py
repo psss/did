@@ -13,7 +13,6 @@ Config example::
 """
 
 from did.utils import item
-from did.base import Config
 from did.stats import Stats, StatsGroup
 
 
@@ -26,11 +25,11 @@ class ItemStats(Stats):
 
     def __init__(self, option, name=None, parent=None):
         # Prepare sorted item content from the config section
-        items = Config().section(option, skip=["type", "header", "order"])
+        items = self.config.section(option, skip=["type", "header", "order"])
         self._items = [
             "{0}{1}".format(value, "" if "-" in value else " - ")
             for _, value in sorted(items, key=lambda x: x[0])]
-        Stats.__init__(self, option, name, parent)
+        super(ItemStats, self).__init__(option, name, parent)
 
     def header(self):
         """ Simple header for custom stats (no item count) """
@@ -47,8 +46,8 @@ class CustomStats(StatsGroup):
     order = 800
 
     def __init__(self, option, name=None, parent=None, user=None):
-        StatsGroup.__init__(self, "custom", name, parent, user)
-        for section in Config().sections(kind="items"):
+        super(CustomStats, self).__init__("custom", name, parent, user)
+        for section in self.config.sections(kind="items"):
             self.stats.append(ItemStats(
                 option=section, parent=self,
-                name=Config().item(section, "header")))
+                name=self.config.item(section, "header")))

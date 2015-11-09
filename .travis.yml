@@ -6,9 +6,12 @@ python:
 #  - "3.3"
 #  - "3.4"
 before_install:
+  - "git --version"
   - "pip install -U pip setuptools virtualenv coveralls"
+  - "git config --global user.email 'cward@redhat.com'"
+  - "git config --global user.name 'Chris Ward'"
 install:
-  - "pip install -e .[bitly]"
+  - "pip install -e .[bitly,logg]"
   - "git fetch --unshallow"
 script:
   - "coverage run --source=bin,did -m py.test $CAPTURE tests"

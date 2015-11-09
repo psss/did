@@ -17,8 +17,8 @@ import urllib
 import urlparse
 import kerberos
 
+import did.base
 from did.utils import log, pretty
-from did.base import ReportError, Config
 from did.stats import Stats, StatsGroup
 
 
@@ -54,7 +54,7 @@ class RequestTracker(object):
         # Perform the request, convert response into lines
         response = connection.getresponse()
         if response.status != 200:
-            raise ReportError(
+            raise did.base.ReportError(
                 "Failed to fetch tickets: {0}".format(response.status))
         lines = [
             line.decode("utf8")
@@ -133,16 +133,16 @@ class RequestTrackerStats(StatsGroup):
 
         # Check Request Tracker instance url and custom prefix
         StatsGroup.__init__(self, option, name, parent, user)
-        config = dict(Config().section(option))
+        config = dict(self.config.section(option))
         try:
             self.url = config["url"]
         except KeyError:
-            raise ReportError(
+            raise did.base.ReportError(
                 "No url in the [{0}] section".format(option))
         try:
             self.prefix = config["prefix"]
         except KeyError:
-            raise ReportError(
+            raise did.base.ReportError(
                 "No prefix set in the [{0}] section".format(option))
 
         # Save Ticket class as attribute to allow customizations by

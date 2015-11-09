@@ -20,7 +20,7 @@ tmp:
 
 # Run the test suite, optionally with coverage
 test: tmp
-	DID_DIR=$(TMP) py.test tests
+	DID_DIR=$(TMP) py.test tests -s
 smoke: tmp
 	DID_DIR=$(TMP) py.test tests/test_cli.py
 coverage: tmp
