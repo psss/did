@@ -172,7 +172,9 @@ class Logg(object):
         # get a config file, the default or the one passed in
         config = did.base.get_config(config)
         try:
+            email = config.email
             config = dict(config.section(LOGG_CONFIG_KEY))
+            config['email'] = email
         except did.base.ConfigFileError as err:
             log.warn("Error while loading config: [{0}]".format(err))
             # Don't panic yet if the section doesn't exist ...
@@ -356,6 +358,9 @@ class GitLogg(Logg):
         # Include the record in the git command too
         kwargs['m'] = record
 
+        # Include author
+        kwargs['author'] = self.config['email']
+
         # FIXME: add documentation to describe this config option
         # if gpg key is defined in .config [logg], git will attempt to
         # sign the commits with the provided key
@@ -366,6 +371,7 @@ class GitLogg(Logg):
         try:
             log.debug("Checking out branch: {0}".format(target))
             self._checkout_branch(target)
+            os.environ["GIT_COMMITTER_DATE"] = str(date)
             r = self.logg_repo.git.commit(**kwargs)
 
             if sync_to:
