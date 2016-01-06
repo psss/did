@@ -51,6 +51,7 @@ def test_Date():
 
 def test_Date_period():
     from did.base import Date
+    today = did.base.TODAY
     did.base.TODAY = datetime.date(2015, 10, 3)
     # This week
     for argument in ["", "week", "this week"]:
@@ -100,6 +101,7 @@ def test_Date_period():
         assert unicode(since) == "2014-03-01"
         assert unicode(until) == "2015-03-01"
         assert period == "the last fiscal year"
+    did.base.TODAY = today
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
