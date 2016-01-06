@@ -56,9 +56,7 @@ class RequestTracker(object):
         if response.status != 200:
             raise ReportError(
                 "Failed to fetch tickets: {0}".format(response.status))
-        lines = [
-            line.decode("utf8")
-            for line in response.read().strip().split("\n")[1:]]
+        lines = response.read().decode("utf8").strip().split("\n")[1:]
         log.debug("Tickets fetched:")
         log.debug(pretty(lines))
         return lines
