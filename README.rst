@@ -204,7 +204,7 @@ Authors
 
 Petr Šplíchal, Karel Šrot, Lukáš Zachar, Matěj Cepl, Ondřej Pták,
 Chris Ward, Tomáš Hofman, Martin Mágr, Stanislav Kozina, Paul
-Belanger and Eduard Trott.
+Belanger, Eduard Trott, Martin Frodl and Randy Barlow.
 
 
 Copyright
