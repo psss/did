@@ -29,9 +29,10 @@ Gather all stats for current week::
 
     did
 
-Show me all stats for today::
+Show me all stats for today/yesterday::
 
     did today
+    did yesterday
 
 Gather stats for the last month::
 
