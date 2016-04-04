@@ -26,9 +26,7 @@ __desc__ = 'did - What did you do last week, month, year?'
 __scripts__ = ['bin/did']
 __irequires__ = [
     'python_dateutil==2.4.2',
-    'urllib2_kerberos',
     'python-bugzilla',  # FIXME: make optional? see __xrequires__
-    'pykerberos',
 ]
 __xrequires__ = {
     # `install` usage: pip install did[tests,docs]
@@ -44,6 +42,10 @@ __xrequires__ = {
     ],
     'bitly': [
         'bitly_api',
+    ],
+    'kerberos': [
+        'pykerberos',
+        'urllib2_kerberos',
     ],
 }
 
