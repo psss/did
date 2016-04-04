@@ -281,6 +281,7 @@ class AddedPatches(GerritUnit):
                 date = self.get_gerrit_date(chg['date'][:10])
                 comment_date = self.get_gerrit_date(chg['date'][:10])
                 if (owner == chg['author']['email'] and
+                        '_revision_number' in chg and
                         chg['_revision_number'] > 1 and
                         comment_date >= self.since_date and
                         'uploaded patch' in chg['message'].lower()):
