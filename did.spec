@@ -1,5 +1,5 @@
 Name: did
-Version: 0.8
+Version: 0.9
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -43,6 +43,24 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Mon Apr 04 2016 Petr Šplíchal <psplicha@redhat.com> 0.9-1
+- New plugins supported: Trello, bit.ly, idonethis
+- Support 'did yesterday' for yesterday's updates
+- Ignore comment updates without author specified
+- User does not have to be assignee to close a bug
+- Create vim tags using the 'make tags' target
+- Use option prefix also for git, header and footer
+- Extend the test coverage for cli, base and utils
+- Rename DID_CONFIG to DID_DIR to match the content
+- Improve error handling, especially config errors
+- Migrate option parsing from optparse to argparse
+- Configurable support for showing bug resolutions
+- Support --conf as abbreviation for --config
+- Initial set of tests for the trac plugin
+- Improve readability of gerrit by using review number
+- Improve closed bugs stats, add test case [fix #45]
+- Add statistics of closed bugs for bugzilla plugin
+
 * Wed Sep 23 2015 Petr Šplíchal <psplicha@redhat.com> 0.8-1
 - Give warning for git repository problems [fix #41]
 - Add example with config dir set to: ~/.config/did/
