@@ -254,7 +254,7 @@ class AddedPatches(GerritUnit):
         tickets = GerritUnit.fetch(
             self, 'owner:{0}+is:closed&q=owner:{0}+is:open'.format(
                 reviewer),
-            '', limit_since=True)
+            '')
         for tck in tickets:
             log.debug("ticket = {0}".format(tck))
             try:
