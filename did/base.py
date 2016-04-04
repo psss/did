@@ -273,6 +273,11 @@ class Date(object):
             until = Date("today")
             until.date += delta(days=1)
             period = "today"
+        elif "yesterday" in argument:
+            since = Date("yesterday")
+            until = Date("yesterday")
+            until.date += delta(days=1)
+            period = "yesterday"
         elif "year" in argument:
             if "last" in argument:
                 since, until = Date.last_year()
