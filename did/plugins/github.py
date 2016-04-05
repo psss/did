@@ -8,9 +8,13 @@ Config example::
     type = github
     url = https://api.github.com/
     token = <authentication-token>
+    username = <username>
 
 The authentication token is optional. However, unauthenticated
 queries are limited. For more details see `GitHub API`__ docs.
+
+Specify username if you're GitHub username is not the same as
+the one you set in [general] section of your config file.
 
 __ https://developer.github.com/guides/getting-started/#authentication
 """
@@ -35,7 +39,7 @@ PADDING = 3
 class GitHub(object):
     """ GitHub Investigator """
 
-    def __init__(self, url, token):
+    def __init__(self, url, token, username):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         if token is not None:
@@ -44,6 +48,7 @@ class GitHub(object):
             self.headers = {}
 
         self.token = token
+        self.username = username
 
     def search(self, query):
         """ Perform GitHub query """
@@ -90,21 +95,25 @@ class Issue(object):
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class IssuesCreated(Stats):
+class GithubStats(Stats):
+    def get_username(self):
+        return self.parent.github.username if self.parent.github.username is not None else self.user.login
+
+class IssuesCreated(GithubStats):
     """ Issues created """
     def fetch(self):
         log.info(u"Searching for issues created by {0}".format(self.user))
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            self.get_username(), self.options.since, self.options.until)
         self.stats = [
                 Issue(issue) for issue in self.parent.github.search(query)]
 
-class IssuesClosed(Stats):
+class IssuesClosed(GithubStats):
     """ Issues closed """
     def fetch(self):
         log.info(u"Searching for issues closed by {0}".format(self.user))
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            self.get_username(), self.options.since, self.options.until)
         self.stats = [
                 Issue(issue) for issue in self.parent.github.search(query)]
 
@@ -133,7 +142,12 @@ class GitHubStats(StatsGroup):
             self.token = config["token"]
         except KeyError:
             self.token = None
-        self.github = GitHub(self.url, self.token)
+        # Check username
+        try:
+            self.username = config["username"]
+        except KeyError:
+            self.username = None
+        self.github = GitHub(self.url, self.token, self.username)
         # Create the list of stats
         self.stats = [
             IssuesCreated(
