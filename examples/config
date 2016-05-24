@@ -26,6 +26,7 @@ tests = /home/psss/git/tests/*
 [github]
 type = github
 url = https://api.github.com/
+login = psss
 
 [gerrit]
 type = gerrit
