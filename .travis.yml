@@ -11,7 +11,7 @@ before_install:
   - "git config --global user.email 'cward@redhat.com'"
   - "git config --global user.name 'Chris Ward'"
 install:
-  - "pip install -e .[bitly,logg]"
+  - "pip install -e .[bitly,kerberos,logg]"
   - "git fetch --unshallow"
 script:
   - "coverage run --source=bin,did -m py.test $CAPTURE tests"

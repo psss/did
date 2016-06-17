@@ -3,14 +3,20 @@
     Install
 ===============
 
+Fedora
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In Fedora simply install the package::
+
+    dnf install did
+
+That's it! :-)
+
+
 Copr
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Set up the `did repository`__ and install the tool using yum::
-
-    yum install did
-
-or use dnf which allows to enable the repository directly::
+Set up the `did repository`__ and install the tool using dnf::
 
     dnf copr enable psss/did
     dnf install did

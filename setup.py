@@ -26,9 +26,7 @@ __desc__ = 'did - What did you do last week, month, year?'
 __scripts__ = ['bin/did', 'bin/idid']
 __irequires__ = [
     'python_dateutil==2.4.2',
-    'urllib2_kerberos',
     'python-bugzilla',  # FIXME: make optional? see __xrequires__
-    'pykerberos',
     'pytz==2015.6',
 ]
 __xrequires__ = {
@@ -46,8 +44,12 @@ __xrequires__ = {
     'bitly': [
         'bitly_api',
     ],
+    'kerberos': [
+        'pykerberos',
+        'urllib2_kerberos',
+    ],
     'logg': [
-        'GitPython==1.0.1'
+        'GitPython==2.0.5'
     ],
 }
 

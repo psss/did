@@ -22,7 +22,6 @@ MINIMAL = "[general]\nemail = Name Surname <email@example.org>\n"
 EXAMPLE = "".join(open(PATH + "/../examples/config").readlines())
 # Substitute example git paths for real life directories
 EXAMPLE = re.sub(r"\S+/git/[a-z]+", PATH, EXAMPLE)
-GIT_ENGINE_PATH = '/tmp/logg.git'
 
 # Logg configs
 BASE_CONFIG = '''
@@ -113,6 +112,13 @@ def check_gitlogg_commit_k(x, config=GOOD_GIT_CONFIG):
 def clean_git():
     did.utils.remove_path(GIT_ENGINE_PATH)
     assert not os.path.exists(GIT_ENGINE_PATH)
+    # clear all stale GIT environ variables
+    # WARNING DESTRUCTIVE! but when running tests from Make during pre-commit
+    # git hook, it seems GitPython gets all confused because of env vars...
+    _vars = os.environ.keys()
+    for var in _vars:
+        if var[:3] == 'GIT':
+            os.environ.pop(var)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -187,6 +193,9 @@ def test_topic_not_configed():
 
 def test_logg_api():
     clean_git()
+    print os.getcwd()
+    print '*'*1000
+    print GOOD_GIT_CONFIG
     # running this should be OK by default (strict == False)
     r = did.cli.main(ARGS_NO_DATE, GOOD_GIT_CONFIG, is_logg=True)
     # %d comes back as 01 but git doesn't zero-pad the days

@@ -253,7 +253,7 @@ class AddedPatches(GerritUnit):
         tickets = GerritUnit.fetch(
             self, 'owner:{0}+is:closed&q=owner:{0}+is:open'.format(
                 reviewer),
-            '', limit_since=True)
+            '')
         for tck in tickets:
             log.debug("ticket = {0}".format(tck))
             try:
@@ -279,6 +279,8 @@ class AddedPatches(GerritUnit):
                     continue
                 comment_date = self.get_gerrit_date(chg['date'][:10])
                 if (owner == chg['author']['email'] and
+                        '_revision_number' in chg and
+                        chg['_revision_number'] > 1 and
                         comment_date >= self.since_date and
                         'uploaded patch' in chg['message'].lower()):
                     cmnts_by_user.append(chg)

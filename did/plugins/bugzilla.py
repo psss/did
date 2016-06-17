@@ -404,9 +404,9 @@ class ClosedBugs(Stats):
     def fetch(self):
         log.info(u"Searching for bugs closed by {0}".format(self.user))
         query = {
-            # User is the assignee
-            "field0-0-0": "assigned_to",
-            "type0-0-0": "equals",
+            # Status changed by the user
+            "field0-0-0": "bug_status",
+            "type0-0-0": "changedby",
             "value0-0-0": self.user.email,
             # Status changed to CLOSED
             "field0-1-0": "bug_status",
