@@ -302,10 +302,10 @@ class Date(object):
         else:
             if "last" in argument:
                 since, until = Date.last_week()
-                period = "the last week"
+                period = "the last week # " + since.datetime.strftime("%V")
             else:
                 since, until = Date.this_week()
-                period = "this week"
+                period = "this week # " + since.datetime.strftime("%V")
         return since, until, period
 
 
