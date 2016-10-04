@@ -42,6 +42,11 @@ class Change(object):
         """ Consistent identifier and subject for displaying """
         return u"{0}#{1} - {2}".format(self.prefix, self.id, self.subject)
 
+    def __eq__(self, other):
+        return self.__unicode__() == other.__unicode__()
+    
+    def __hash__(self):
+        return hash(self.__unicode__())
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Gerrit Stats

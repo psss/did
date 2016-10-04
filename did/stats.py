@@ -103,7 +103,9 @@ class Stats(object):
 
     def merge(self, other):
         """ Merge another stats. """
-        self.stats.extend(other.stats)
+        self.stats = set(self.stats)
+        self.stats.update(set(other.stats))
+        self.stats = list(self.stats)
         if other._error:
             self._error = True
 
