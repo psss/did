@@ -43,6 +43,24 @@ def test_github_issues_closed():
     assert any([
         "psss/did#017 - What did you do" in unicode(stat) for stat in stats])
 
+def test_github_pull_requests_created():
+    """ Created pull requests """
+    did.base.Config("[gh]\ntype = github\nurl = https://api.github.com/")
+    INTERVAL = "--since 2016-10-26 --until 2016-10-26"
+    EMAIL = " --email mfrodl@redhat.com"
+    stats = did.cli.main(INTERVAL + EMAIL)[0][0].stats[0].stats[2].stats
+    assert any([
+        "psss/did#112 - Fixed test for Trac plugin" in unicode(stat)
+        for stat in stats])
+
+def test_github_pull_requests_closed():
+    """ Closed pull requests """
+    did.base.Config(CONFIG)
+    INTERVAL = "--since 2015-09-22 --until 2015-09-22"
+    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[3].stats
+    assert any([
+        "psss/did#037 - Skip CI users" in unicode(stat) for stat in stats])
+
 def test_github_invalid_token():
     """ Invalid token """
     did.base.Config(CONFIG + "\ntoken = bad-token")
