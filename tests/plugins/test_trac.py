@@ -14,8 +14,8 @@ import did.base
 CONFIG = did.base.Config.example() + """
 [trac]
 type = trac
-url = https://fedorahosted.org/fedora-infrastructure/rpc
-prefix = FI
+url = https://fedorahosted.org/design-team/rpc
+prefix = DT
 """
 
 
@@ -32,25 +32,26 @@ def test_trac_smoke():
 
 def test_trac_created():
     """ Check created tickets """
-    # Test on: https://fedorahosted.org/fedora-infrastructure/ticket/4891
+    # Test on: https://fedorahosted.org/design-team/ticket/468
     did.base.Config(CONFIG)
     stats = did.cli.main("""
-        --email stefw@example.org
+        --email ipanova@example.org
         --trac-created
-        --since 2015-09-17
-        --until 2015-09-17""")[0][0].stats[0].stats[0].stats
+        --since 2016-08-08
+        --until 2016-08-08""")[0][0].stats[0].stats[0].stats
     assert any([
-        "FI#4891 - Hosting docs" in unicode(change) for change in stats])
+        "DT#0468 - Re-brand of pulp logo" in unicode(change)
+        for change in stats])
 
 
 def test_trac_closed():
     """ Check closed tickets """
-    # Test on: https://fedorahosted.org/fedora-infrastructure/ticket/4864
+    # Test on: https://fedorahosted.org/design-team/ticket/437
     did.base.Config(CONFIG)
     stats = did.cli.main("""
-        --email smooge@example.org
+        --email maryshak1996@example.org
         --trac-closed
-        --since 2015-08-30
-        --until 2015-08-30""")[0][0].stats[0].stats[3].stats
+        --since 2016-09-22
+        --until 2016-09-22""")[0][0].stats[0].stats[3].stats
     assert any([
-        "FI#4864 - remove mdomsch" in unicode(change) for change in stats])
+        "DT#0437 - Icon for openQA" in unicode(change) for change in stats])
