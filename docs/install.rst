@@ -29,10 +29,15 @@ __ https://copr.fedoraproject.org/coprs/psss/did/
 PIP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Basic dependencies for buiding/installing pip packages::
+Basic dependencies for buiding/installing pip packages on Fedora::
 
     sudo yum install gcc krb5-devel
     sudo yum install python-devel python-pip python-virtualenv
+
+Dependencies for Debian-based systems::
+
+    sudo apt install gcc libkrb5-dev
+    sudo apt install python-dev python-pip python-virtualenv
 
 Upgrade to the latest pip/setup/virtualenv installer code::
 
