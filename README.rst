@@ -227,8 +227,8 @@ Status
 .. image:: https://travis-ci.org/psss/did.svg?branch=master
     :target: https://travis-ci.org/psss/did
 
-.. image:: https://coveralls.io/repos/psss/did/badge.svg
-    :target: https://coveralls.io/r/psss/did
+.. image:: https://coveralls.io/repos/github/psss/did/badge.svg
+    :target: https://coveralls.io/github/psss/did
 
 .. image:: https://img.shields.io/pypi/dm/did.svg
     :target: https://pypi.python.org/pypi/did/
