@@ -47,6 +47,9 @@ __xrequires__ = {
         'pykerberos',
         'urllib2_kerberos',
     ],
+    'google': [
+        'google-api-python-client',
+    ],
 }
 
 pip_src = 'https://pypi.python.org/packages/source'
