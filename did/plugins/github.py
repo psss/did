@@ -81,7 +81,7 @@ class Issue(object):
 
     def __unicode__(self):
         """ String representation """
-        return "{0}/{1}#{2} - {3}".format(
+        return u"{0}/{1}#{2} - {3}".format(
             self.owner, self.project,
             unicode(self.id).zfill(PADDING), self.data["title"])
 
