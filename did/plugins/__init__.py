@@ -10,6 +10,8 @@ This is the default plugin order:
     +----------+-----+
     | header   | 000 |
     +----------+-----+
+    | google   | 050 |
+    +----------+-----+
     | nitrate  | 100 |
     +----------+-----+
     | bugzilla | 200 |

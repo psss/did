@@ -42,6 +42,13 @@ github
     :members:
     :undoc-members:
 
+google
+------
+
+.. automodule:: did.plugins.google
+    :members:
+    :undoc-members:
+
 header
 ------
 
