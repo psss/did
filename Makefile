@@ -40,7 +40,8 @@ man: source
 
 # RPM packaging
 source:
-	mkdir -p $(TMP)/{SOURCES,$(PACKAGE)}
+	mkdir -p $(TMP)/SOURCES
+	mkdir -p $(TMP)/$(PACKAGE)
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
 	rm -rf $(TMP)/$(PACKAGE)/examples/mr.bob
 tarball: source man
