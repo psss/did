@@ -8,11 +8,15 @@ Config example::
     type = github
     url = https://api.github.com/
     token = <authentication-token>
+    login = <username>
 
 The authentication token is optional. However, unauthenticated
 queries are limited. For more details see `GitHub API`__ docs.
+Use ``login`` to override the default email address for searching.
+See the :doc:`config` documentation for details on using aliases.
 
 __ https://developer.github.com/guides/getting-started/#authentication
+
 """
 
 import re
