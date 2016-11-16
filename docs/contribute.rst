@@ -119,6 +119,21 @@ See Travis CI and Coveralls for the latest test/coverage results:
 * https://coveralls.io/github/psss/did
 
 
+Docs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For building documentation locally install necessary modules::
+
+    pip install sphinx sphinx_rtd_theme mock
+
+Building documentation is then quite straightforward::
+
+    make docs
+
+Find the resulting html pages under the ``docs/_build/html``
+folder.
+
+
 MrBob
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
