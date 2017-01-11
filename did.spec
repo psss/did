@@ -1,5 +1,5 @@
 Name: did
-Version: 0.9
+Version: 0.10
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -43,6 +43,20 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Wed Jan 11 2017 Martin Frodl <mfrodl@redhat.com> 0.10-1
+- New plugin for Google Apps
+- Document how to generate documentation locally
+- Mock C modules while building documentation
+- Make all make versions happy
+- Add requirements.txt to fix docs building
+- Properly handle GitHub issues with Unicode names
+- Add login key to github section in example config
+- Update install docs with fresh Fedora instructions
+- Update coveralls links in README
+- List install dependencies for Debian-based systems
+- Use another Trac instance in plugin test
+- Move kerberos to extra requires
+
 * Mon Apr 04 2016 Petr Šplíchal <psplicha@redhat.com> 0.9-1
 - New plugins supported: Trello, bit.ly, idonethis
 - Support 'did yesterday' for yesterday's updates
