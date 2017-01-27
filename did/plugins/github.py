@@ -73,7 +73,7 @@ class GitHub(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Issue(object):
-    """ GitHub Issue """
+    """ GitHub Issue or PullRequest"""
     def __init__(self, data):
         self.data = data
         self.title = data["title"]
@@ -98,7 +98,7 @@ class IssuesCreated(Stats):
     """ Issues created """
     def fetch(self):
         log.info(u"Searching for issues created by {0}".format(self.user))
-        query = "search/issues?q=author:{0}+created:{1}..{2}".format(
+        query = "search/issues?q=type:issue+author:{0}+created:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         self.stats = [
                 Issue(issue) for issue in self.parent.github.search(query)]
@@ -107,10 +107,28 @@ class IssuesClosed(Stats):
     """ Issues closed """
     def fetch(self):
         log.info(u"Searching for issues closed by {0}".format(self.user))
-        query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
+        query = "search/issues?q=type:issue+assignee:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         self.stats = [
                 Issue(issue) for issue in self.parent.github.search(query)]
+
+class PullRequestsCreated(Stats):
+    """ PullRequests created """
+    def fetch(self):
+        log.info(u"Searching for PullRequests created by {0}".format(self.user))
+        query = "search/issues?q=type:pr+author:{0}+created:{1}..{2}".format(
+            self.user.login, self.options.since, self.options.until)
+        self.stats = [
+                Issue(pr) for pr in self.parent.github.search(query)]
+
+class PullRequestsClosed(Stats):
+    """ PullRequests closed """
+    def fetch(self):
+        log.info(u"Searching for PullRequests closed by {0}".format(self.user))
+        query = "search/issues?q=type:pr+assignee:{0}+closed:{1}..{2}".format(
+            self.user.login, self.options.since, self.options.until)
+        self.stats = [
+                Issue(pr) for pr in self.parent.github.search(query)]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -141,9 +159,15 @@ class GitHubStats(StatsGroup):
         # Create the list of stats
         self.stats = [
             IssuesCreated(
-                option=option + "-created", parent=self,
+                option=option + "-issues-created", parent=self,
                 name="Issues created on {0}".format(option)),
             IssuesClosed(
-                option=option + "-closed", parent=self,
+                option=option + "-issues-closed", parent=self,
                 name="Issues closed on {0}".format(option)),
+            PullRequestsCreated(
+                option=option + "-pullrequests-created", parent=self,
+                name="PullRequests created on {0}".format(option)),
+            PullRequestsClosed(
+                option=option + "-pullrequests-closed", parent=self,
+                name="PullRequests closed on {0}".format(option)),
             ]
