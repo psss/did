@@ -264,21 +264,21 @@ class VerifiedBugs(Stats):
         log.info(u"Searching for bugs verified by {0}".format(self.user))
         query = {
             # User is the QA contact
-            "field0-0-0": "qa_contact",
-            "type0-0-0": "equals",
-            "value0-0-0": self.user.email,
+            "f1": "qa_contact",
+            "o1": "equals",
+            "v1": self.user.email,
             # Status changed to VERIFIED
-            "field0-1-0": "bug_status",
-            "type0-1-0": "changedto",
-            "value0-1-0": "VERIFIED",
+            "f2": "bug_status",
+            "o2": "changedto",
+            "v2": "VERIFIED",
             # Since date
-            "field0-2-0": "bug_status",
-            "type0-2-0": "changedafter",
-            "value0-2-0": str(self.options.since),
+            "f3": "bug_status",
+            "o3": "changedafter",
+            "v3": str(self.options.since),
             # Until date
-            "field0-3-0": "bug_status",
-            "type0-3-0": "changedbefore",
-            "value0-3-0": str(self.options.until)
+            "f4": "bug_status",
+            "o4": "changedbefore",
+            "v4": str(self.options.until)
             }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
@@ -298,25 +298,25 @@ class ReturnedBugs(Stats):
         log.info(u"Searching for bugs returned by {0}".format(self.user))
         query = {
             # User is not the assignee
-            "field0-0-0": "assigned_to",
-            "type0-0-0": "notequals",
-            "value0-0-0": self.user.email,
+            "f1": "assigned_to",
+            "o1": "notequals",
+            "v1": self.user.email,
             # Status changed to ASSIGNED
-            "field0-1-0": "bug_status",
-            "type0-1-0": "changedto",
-            "value0-1-0": "ASSIGNED",
+            "f2": "bug_status",
+            "o2": "changedto",
+            "v2": "ASSIGNED",
             # Changed by the user
-            "field0-4-0": "bug_status",
-            "type0-4-0": "changedby",
-            "value0-4-0": self.user.email,
+            "f5": "bug_status",
+            "o5": "changedby",
+            "v5": self.user.email,
             # Since date
-            "field0-2-0": "bug_status",
-            "type0-2-0": "changedafter",
-            "value0-2-0": str(self.options.since),
+            "f3": "bug_status",
+            "o3": "changedafter",
+            "v3": str(self.options.since),
             # Until date
-            "field0-3-0": "bug_status",
-            "type0-3-0": "changedbefore",
-            "value0-3-0": str(self.options.until),
+            "f4": "bug_status",
+            "o4": "changedbefore",
+            "v4": str(self.options.until),
             }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
@@ -334,17 +334,17 @@ class FiledBugs(Stats):
         log.info(u"Searching for bugs filed by {0}".format(self.user))
         query = {
             # User is the reporter
-            "field0-0-0": "reporter",
-            "type0-0-0": "equals",
-            "value0-0-0": self.user.email,
+            "f1": "reporter",
+            "o1": "equals",
+            "v1": self.user.email,
             # Since date
-            "field0-1-0": "creation_ts",
-            "type0-1-0": "greaterthan",
-            "value0-1-0": str(self.options.since),
+            "f2": "creation_ts",
+            "o2": "greaterthan",
+            "v2": str(self.options.since),
             # Until date
-            "field0-2-0": "creation_ts",
-            "type0-2-0": "lessthan",
-            "value0-2-0": str(self.options.until),
+            "f3": "creation_ts",
+            "o3": "lessthan",
+            "v3": str(self.options.until),
             }
         self.stats = self.parent.bugzilla.search(query, options=self.options)
 
@@ -362,21 +362,21 @@ class FixedBugs(Stats):
         log.info(u"Searching for bugs fixed by {0}".format(self.user))
         query = {
             # User is the assignee
-            "field0-0-0": "assigned_to",
-            "type0-0-0": "equals",
-            "value0-0-0": self.user.email,
+            "f1": "assigned_to",
+            "o1": "equals",
+            "v1": self.user.email,
             # Status changed to MODIFIED
-            "field0-1-0": "bug_status",
-            "type0-1-0": "changedto",
-            "value0-1-0": "MODIFIED",
+            "f2": "bug_status",
+            "o2": "changedto",
+            "v2": "MODIFIED",
             # Since date
-            "field0-2-0": "bug_status",
-            "type0-2-0": "changedafter",
-            "value0-2-0": str(self.options.since),
+            "f3": "bug_status",
+            "o3": "changedafter",
+            "v3": str(self.options.since),
             # Until date
-            "field0-3-0": "bug_status",
-            "type0-3-0": "changedbefore",
-            "value0-3-0": str(self.options.until),
+            "f4": "bug_status",
+            "o4": "changedbefore",
+            "v4": str(self.options.until),
             }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
@@ -398,25 +398,25 @@ class ClosedBugs(Stats):
         log.info(u"Searching for bugs closed by {0}".format(self.user))
         query = {
             # Status changed by the user
-            "field0-0-0": "bug_status",
-            "type0-0-0": "changedby",
-            "value0-0-0": self.user.email,
+            "f1": "bug_status",
+            "o1": "changedby",
+            "v1": self.user.email,
             # Status changed to CLOSED
-            "field0-1-0": "bug_status",
-            "type0-1-0": "changedto",
-            "value0-1-0": "CLOSED",
+            "f2": "bug_status",
+            "o2": "changedto",
+            "v2": "CLOSED",
             # Since date
-            "field0-2-0": "bug_status",
-            "type0-2-0": "changedafter",
-            "value0-2-0": str(self.options.since),
+            "f3": "bug_status",
+            "o3": "changedafter",
+            "v3": str(self.options.since),
             # Until date
-            "field0-3-0": "bug_status",
-            "type0-3-0": "changedbefore",
-            "value0-3-0": str(self.options.until),
+            "f4": "bug_status",
+            "o4": "changedbefore",
+            "v4": str(self.options.until),
             # Status is now CLOSED
-            "field0-4-0": "bug_status",
-            "type0-4-0": "equals",
-            "value0-4-0": "CLOSED",
+            "f5": "bug_status",
+            "o5": "equals",
+            "v5": "CLOSED",
             }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
@@ -435,21 +435,21 @@ class PostedBugs(Stats):
         log.info(u"Searching for bugs posted by {0}".format(self.user))
         query = {
             # User is the assignee
-            "field0-0-0": "assigned_to",
-            "type0-0-0": "equals",
-            "value0-0-0": self.user.email,
+            "f1": "assigned_to",
+            "o1": "equals",
+            "v1": self.user.email,
             # Status changed to POST
-            "field0-1-0": "bug_status",
-            "type0-1-0": "changedto",
-            "value0-1-0": "POST",
+            "f2": "bug_status",
+            "o2": "changedto",
+            "v2": "POST",
             # Since date
-            "field0-2-0": "bug_status",
-            "type0-2-0": "changedafter",
-            "value0-2-0": str(self.options.since),
+            "f3": "bug_status",
+            "o3": "changedafter",
+            "v3": str(self.options.since),
             # Until date
-            "field0-3-0": "bug_status",
-            "type0-3-0": "changedbefore",
-            "value0-3-0": str(self.options.until),
+            "f4": "bug_status",
+            "o4": "changedbefore",
+            "v4": str(self.options.until),
             }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
@@ -469,21 +469,21 @@ class PatchedBugs(Stats):
         log.info(u"Searching for bugs patched by {0}".format(self.user))
         query = {
             # Keywords field changed by the user
-            "field0-0-0": "keywords",
-            "type0-0-0": "changedby",
-            "value0-0-0": self.user.email,
+            "f1": "keywords",
+            "o1": "changedby",
+            "v1": self.user.email,
             # Patch keyword added
-            "field0-1-0": "keywords",
-            "type0-1-0": "changedto",
-            "value0-1-0": "Patch",
+            "f2": "keywords",
+            "o2": "changedto",
+            "v2": "Patch",
             # Since date
-            "field0-2-0": "keywords",
-            "type0-2-0": "changedafter",
-            "value0-2-0": str(self.options.since),
+            "f3": "keywords",
+            "o3": "changedafter",
+            "v3": str(self.options.since),
             # Until date
-            "field0-3-0": "keywords",
-            "type0-3-0": "changedbefore",
-            "value0-3-0": str(self.options.until),
+            "f4": "keywords",
+            "o4": "changedbefore",
+            "v4": str(self.options.until),
             }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
