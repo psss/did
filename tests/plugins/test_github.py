@@ -6,6 +6,7 @@ from __future__ import unicode_literals, absolute_import
 import pytest
 import did.cli
 import did.base
+import time
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,6 +25,11 @@ url = https://api.github.com/
 login = psss
 """
 
+# GitHub has quite strict limits for unauthenticated searches
+# https://developer.github.com/v3/search/#rate-limit
+# Let's have a short nap after each test
+def teardown_function(function):
+    time.sleep(7)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests
