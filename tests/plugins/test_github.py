@@ -38,23 +38,27 @@ def teardown_function(function):
 def test_github_issues_created():
     """ Created issues """
     did.base.Config(CONFIG)
-    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0].stats
+    option = "--gh-issues-created "
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
     assert any([
         "psss/did#017 - What did you do" in unicode(stat) for stat in stats])
 
 def test_github_issues_closed():
     """ Closed issues """
     did.base.Config(CONFIG)
-    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[1].stats
+    option = "--gh-issues-closed "
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[1].stats
     assert any([
         "psss/did#017 - What did you do" in unicode(stat) for stat in stats])
 
 def test_github_pull_requests_created():
     """ Created pull requests """
     did.base.Config("[gh]\ntype = github\nurl = https://api.github.com/")
+    option = "--gh-pull-requests-created "
     INTERVAL = "--since 2016-10-26 --until 2016-10-26"
     EMAIL = " --email mfrodl@redhat.com"
-    stats = did.cli.main(INTERVAL + EMAIL)[0][0].stats[0].stats[2].stats
+    stats = did.cli.main(
+        option + INTERVAL + EMAIL)[0][0].stats[0].stats[2].stats
     assert any([
         "psss/did#112 - Fixed test for Trac plugin" in unicode(stat)
         for stat in stats])
@@ -62,8 +66,9 @@ def test_github_pull_requests_created():
 def test_github_pull_requests_closed():
     """ Closed pull requests """
     did.base.Config(CONFIG)
+    option = "--gh-pull-requests-closed "
     INTERVAL = "--since 2015-09-22 --until 2015-09-22"
-    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[3].stats
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[3].stats
     assert any([
         "psss/did#037 - Skip CI users" in unicode(stat) for stat in stats])
 
@@ -84,7 +89,9 @@ def test_github_unicode():
     INTERVAL = "--since 2016-02-23 --until 2016-02-23"
     EMAIL = " --email hasys@example.org"
     did.base.Config("[gh]\ntype = github\nurl = https://api.github.com/")
-    stats = did.cli.main(INTERVAL + EMAIL)[0][0].stats[0].stats[2].stats
+    option = "--gh-pull-requests-created "
+    stats = did.cli.main(
+        option + INTERVAL + EMAIL)[0][0].stats[0].stats[2].stats
     assert any([
         u"Boundary events lose it’s documentation" in unicode(stat)
         for stat in stats])
