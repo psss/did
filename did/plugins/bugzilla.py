@@ -490,6 +490,38 @@ class PatchedBugs(Stats):
                 query, options=self.options)
             if bug.patched(self.user)]
 
+        # When user adds the Patch keyword when creating a bug, there is no
+        # action in the bug's history from which this would be apparent. We
+        # therefore need to check if there are any bugs reported by the user
+        # which contain the Patch keyword but have no such action in their
+        # history.
+        query = {
+            # Reported by user
+            "f1": "reporter",
+            "o1": "equals",
+            "v1": self.user.email,
+            # Since date
+            "f2": "creation_ts",
+            "o2": "greaterthan",
+            "v2": str(self.options.since),
+            # Until date
+            "f3": "creation_ts",
+            "o3": "lessthan",
+            "v3": str(self.options.until),
+            # Keywords contain Patch
+            "f4": "keywords",
+            "o4": "substring",
+            "v4": "Patch",
+            # The keyword was added when creating the bug
+            "n5": "1",
+            "f5": "keywords",
+            "o5": "changedto",
+            "v5": "Patch",
+            }
+        self.stats += [
+            bug for bug in self.parent.bugzilla.search(
+                query, options=self.options)]
+
 
 class CommentedBugs(Stats):
     """
