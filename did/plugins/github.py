@@ -100,6 +100,7 @@ class IssuesCreated(Stats):
         log.info(u"Searching for issues created by {0}".format(self.user))
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
+        query += "+type:issue"
         self.stats = [
                 Issue(issue) for issue in self.parent.github.search(query)]
 
@@ -109,6 +110,29 @@ class IssuesClosed(Stats):
         log.info(u"Searching for issues closed by {0}".format(self.user))
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
+        query += "+type:issue"
+        self.stats = [
+                Issue(issue) for issue in self.parent.github.search(query)]
+
+class PullRequestsCreated(Stats):
+    """ Pull requests created """
+    def fetch(self):
+        log.info(u"Searching for pull requests created by {0}".format(
+            self.user))
+        query = "search/issues?q=author:{0}+created:{1}..{2}".format(
+            self.user.login, self.options.since, self.options.until)
+        query += "+type:pr"
+        self.stats = [
+                Issue(issue) for issue in self.parent.github.search(query)]
+
+class PullRequestsClosed(Stats):
+    """ Pull requests closed """
+    def fetch(self):
+        log.info(u"Searching for pull requests closed by {0}".format(
+            self.user))
+        query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
+            self.user.login, self.options.since, self.options.until)
+        query += "+type:pr"
         self.stats = [
                 Issue(issue) for issue in self.parent.github.search(query)]
 
@@ -141,9 +165,15 @@ class GitHubStats(StatsGroup):
         # Create the list of stats
         self.stats = [
             IssuesCreated(
-                option=option + "-created", parent=self,
+                option=option + "-issues-created", parent=self,
                 name="Issues created on {0}".format(option)),
             IssuesClosed(
-                option=option + "-closed", parent=self,
+                option=option + "-issues-closed", parent=self,
                 name="Issues closed on {0}".format(option)),
+            PullRequestsCreated(
+                option=option + "-pull-requests-created", parent=self,
+                name="Pull requests created on {0}".format(option)),
+            PullRequestsClosed(
+                option=option + "-pull-requests-closed", parent=self,
+                name="Pull requests closed on {0}".format(option)),
             ]
