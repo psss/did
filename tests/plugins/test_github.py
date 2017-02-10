@@ -78,7 +78,7 @@ def test_github_unicode():
     INTERVAL = "--since 2016-02-23 --until 2016-02-23"
     EMAIL = " --email hasys@example.org"
     did.base.Config("[gh]\ntype = github\nurl = https://api.github.com/")
-    stats = did.cli.main(INTERVAL + EMAIL)[0][0].stats[0].stats[0].stats
+    stats = did.cli.main(INTERVAL + EMAIL)[0][0].stats[0].stats[2].stats
     assert any([
         u"Boundary events lose it’s documentation" in unicode(stat)
         for stat in stats])
