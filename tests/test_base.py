@@ -64,25 +64,25 @@ def test_Date_period():
         since, until, period = Date.period(argument)
         assert unicode(since) == "2015-09-28"
         assert unicode(until) == "2015-10-05"
-        assert period == "this week"
+        assert period == "the week 40"
     # Last week
     for argument in ["last", "last week"]:
         since, until, period = Date.period(argument)
         assert unicode(since) == "2015-09-21"
         assert unicode(until) == "2015-09-28"
-        assert period == "the last week"
+        assert period == "the week 39"
     # This month
     for argument in ["month", "this month"]:
         since, until, period = Date.period(argument)
         assert unicode(since) == "2015-10-01"
         assert unicode(until) == "2015-11-01"
-        assert period == "this month"
+        assert period == "October"
     # Last month
     for argument in ["last month"]:
         since, until, period = Date.period(argument)
         assert unicode(since) == "2015-09-01"
         assert unicode(until) == "2015-10-01"
-        assert period == "the last month"
+        assert period == "September"
     # This quarter
     for argument in ["quarter", "this quarter"]:
         since, until, period = Date.period(argument)

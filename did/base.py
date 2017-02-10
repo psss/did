@@ -295,17 +295,15 @@ class Date(object):
         elif "month" in argument:
             if "last" in argument:
                 since, until = Date.last_month()
-                period = "the last month"
             else:
                 since, until = Date.this_month()
-                period = "this month"
+            period = since.datetime.strftime("%B")
         else:
             if "last" in argument:
                 since, until = Date.last_week()
-                period = "the last week"
             else:
                 since, until = Date.this_week()
-                period = "this week"
+            period = "the week {0}".format(since.datetime.strftime("%V"))
         return since, until, period
 
 
