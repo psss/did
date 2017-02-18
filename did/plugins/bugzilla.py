@@ -32,6 +32,7 @@ Available options:
     --bz-verified       Bugs verified
     --bz-commented      Bugs commented
     --bz-closed         Bugs closed
+    --bz-subscribed     Bugs subscribed
     --bz                All above
 """
 
@@ -248,6 +249,13 @@ class Bug(object):
                 return True
         return False
 
+    def subscribed(self, user):
+        """ True if CC was added in given time frame """
+        for who, record in self.logs:
+            if (record["field_name"] == "cc" and
+                    user.email in record["added"]):
+                return True
+        return False
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Bugzilla Stats
@@ -551,6 +559,38 @@ class CommentedBugs(Stats):
             if bug.commented(self.user)]
 
 
+class SubscribedBugs(Stats):
+    """
+    Bugs Subscribed (CCed)
+
+    All bugs subscribed by given user in requested time frame.
+    """
+    def fetch(self):
+        log.info(u"Searching for bugs subscribed by {0}".format(self.user))
+        query = {
+            # Subscribed by the user
+            "f1": "cc",
+            "o1": "anywordssubstr",
+            "v1": self.user.email,
+            # Since date
+            "f2": "cc",
+            "o2": "changedafter",
+            "v2": str(self.options.since),
+            # Until date
+            "f3": "cc",
+            "o3": "changedbefore",
+            "v3": str(self.options.until),
+            # Changed by
+            "f4": "cc",
+            "o4": "changedby",
+            "v4": self.user.email,
+            }
+        bugs = self.parent.bugzilla.search(query, options=self.options)
+        self.stats = [
+            bug for bug in bugs
+            if bug.subscribed(self.user)]
+
+
 class BugzillaStats(StatsGroup):
     """ Bugzilla stats """
 
@@ -593,4 +633,5 @@ class BugzillaStats(StatsGroup):
             VerifiedBugs(option=option + "-verified", parent=self),
             CommentedBugs(option=option + "-commented", parent=self),
             ClosedBugs(option=option + "-closed", parent=self),
+            SubscribedBugs(option=option + "-subscribed", parent=self),
             ]
