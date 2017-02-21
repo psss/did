@@ -26,7 +26,10 @@ from did.utils import log
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Config file location
-CONFIG = os.path.expanduser("~/.did")
+if 'DID_CONFIG' in os.environ:
+    CONFIG = os.path.expanduser(os.environ['DID_CONFIG'])
+else:
+    CONFIG = os.path.expanduser("~/.did")
 
 # Default maximum width
 MAX_WIDTH = 79
