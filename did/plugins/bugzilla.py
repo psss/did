@@ -31,8 +31,8 @@ Available options:
     --bz-returned       Bugs returned
     --bz-verified       Bugs verified
     --bz-commented      Bugs commented
-    --bz-closed         Bugs closed
     --bz-subscribed     Bugs subscribed
+    --bz-closed         Bugs closed
     --bz                All above
 """
 
@@ -561,7 +561,7 @@ class CommentedBugs(Stats):
 
 class SubscribedBugs(Stats):
     """
-    Bugs Subscribed (CCed)
+    Bugs subscribed
 
     All bugs subscribed by given user in requested time frame.
     """
@@ -586,9 +586,7 @@ class SubscribedBugs(Stats):
             "v4": self.user.email,
             }
         bugs = self.parent.bugzilla.search(query, options=self.options)
-        self.stats = [
-            bug for bug in bugs
-            if bug.subscribed(self.user)]
+        self.stats = [bug for bug in bugs if bug.subscribed(self.user)]
 
 
 class BugzillaStats(StatsGroup):
@@ -632,6 +630,6 @@ class BugzillaStats(StatsGroup):
             ReturnedBugs(option=option + "-returned", parent=self),
             VerifiedBugs(option=option + "-verified", parent=self),
             CommentedBugs(option=option + "-commented", parent=self),
-            ClosedBugs(option=option + "-closed", parent=self),
             SubscribedBugs(option=option + "-subscribed", parent=self),
+            ClosedBugs(option=option + "-closed", parent=self),
             ]
