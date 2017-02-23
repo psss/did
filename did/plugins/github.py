@@ -137,6 +137,18 @@ class PullRequestsClosed(Stats):
                 Issue(issue) for issue in self.parent.github.search(query)]
 
 
+class PullRequestsReviewed(Stats):
+    """ Pull requests closed """
+    def fetch(self):
+        log.info(u"Searching for pull requests reviewed by {0}".format(
+            self.user))
+        query = "search/issues?q=reviewed-by:{0}+closed:{1}..{2}".format(
+            self.user.login, self.options.since, self.options.until)
+        query += "+type:pr"
+        self.stats = [
+                Issue(issue) for issue in self.parent.github.search(query)]
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -176,4 +188,7 @@ class GitHubStats(StatsGroup):
             PullRequestsClosed(
                 option=option + "-pull-requests-closed", parent=self,
                 name="Pull requests closed on {0}".format(option)),
+            PullRequestsReviewed(
+                option=option + "-pull-requests-reviewed", parent=self,
+                name="Pull requests reviewed on {0}".format(option)),
             ]

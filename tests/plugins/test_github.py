@@ -72,6 +72,15 @@ def test_github_pull_requests_closed():
     assert any([
         "psss/did#037 - Skip CI users" in unicode(stat) for stat in stats])
 
+def test_github_pull_requests_reviewed():
+    """ Reviewed pull requests """
+    did.base.Config(CONFIG.replace('psss', 'evgeni'))
+    option = "--gh-pull-requests-reviewed "
+    INTERVAL = "--since 2017-02-22 --until 2017-02-23"
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[4].stats
+    assert any([
+        "Katello/katello-client-bootstrap#164" in unicode(stat) for stat in stats])
+
 def test_github_invalid_token():
     """ Invalid token """
     did.base.Config(CONFIG + "\ntoken = bad-token")
