@@ -113,9 +113,9 @@ class GitLab(object):
             self.project_issues[project_id] = self._get_gitlab_api_list(query, get_all_results=True)
         return self.project_issues[project_id]
 
-    def user_events(self, user_id, since):
+    def user_events(self, user_id, since, until):
         if GITLAB_API >= 4:
-            query = 'users/{0}/events'.format(user_id)
+            query = 'users/{0}/events?after={1}&before={2}'.format(user_id, since, until)
             return self._get_gitlab_api_list(query, since, True)
         else:
             return []
@@ -125,7 +125,7 @@ class GitLab(object):
         if not self.user:
             self.user = self.get_user(user)
         if not self.events:
-            self.events = self.user_events(self.user['id'], since)
+            self.events = self.user_events(self.user['id'], since, until)
         result = []
         for event in self.events:
             created_at = dateutil.parser.parse(event['created_at']).date()
