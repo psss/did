@@ -66,7 +66,7 @@ class GitLab(object):
         results = []
         result = self._get_gitlab_api(endpoint)
         results.extend(result.json())
-        if ('next' in result.links and 'url' in result.links['next'] and
+        while ('next' in result.links and 'url' in result.links['next'] and
                 get_all_results):
             result = self._get_gitlab_api_raw(result.links['next']['url'])
             json_result = result.json()
