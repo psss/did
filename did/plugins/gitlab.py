@@ -71,10 +71,11 @@ class GitLab(object):
             result = self._get_gitlab_api_raw(result.links['next']['url'])
             json_result = result.json()
             results.extend(json_result)
-            # check if the last result is older than the since date
-            created_at = dateutil.parser.parse(json_result[-1]['created_at']).date()
-            if created_at < since.date:
-                return results
+            if since is not None:
+                # check if the last result is older than the since date
+                created_at = dateutil.parser.parse(json_result[-1]['created_at']).date()
+                if created_at < since.date:
+                    return results
         return results
 
     def get_user(self, username):
