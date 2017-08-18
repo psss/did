@@ -35,3 +35,6 @@ _build
 
 # rpm build files
 tmp/
+
+# VS Code
+.vscode
