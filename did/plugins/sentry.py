@@ -6,7 +6,7 @@ Configuration example::
 
     [sentry]
     type = sentry
-    url = http://sentry.usersys.redhat.com/api/0/
+    organization = baseos
     token = ...
 
 You need to generate authentication token
@@ -28,8 +28,11 @@ from did.utils import log, pretty, split
 #  Sentry Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+organization = "baseos"
 token = ""
-url = "http://sentry.usersys.redhat.com/api/0/organizations/baseos/activity/"
+url = "http://sentry.usersys.redhat.com/api/0/organizations/" \
+        + organization \
+        + "/activity/"
 headers = {'Authorization': 'Bearer {0}'.format(token)}
 request = urllib2.Request(url, None, headers)
 try: response = urllib2.urlopen(request)
