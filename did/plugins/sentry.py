@@ -23,64 +23,135 @@ from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
 from did.utils import log, pretty, split
 
+URL = "http://sentry.usersys.redhat.com/api/0/organizations/"
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Sentry Investigator
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class SentryAPI(object):
+    """ Sentry API """
+
+    def __init__(self, stats, config, parent):
+        """ Initialize API """
+        self.stats = stats
+        self.token = config['token']
+        self.organization = config['organization']
+        self.parent = parent
+        self.data = None
+
+    def get_data(self):
+        """ Get organization activity in JSON representation """
+        url = URL + self.organization + "/activity/"
+        headers = {'Authorization': 'Bearer {0}'.format(self.token)}
+        request = urllib2.Request(url, None, headers)
+        try: 
+            response = urllib2.urlopen(request)
+        except urllib2.URLError as e:
+            raise ReportError(e.reason)
+
+        return json.load(response)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Sentry Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-organization = "baseos"
-token = ""
-url = "http://sentry.usersys.redhat.com/api/0/organizations/" \
-        + organization \
-        + "/activity/"
-headers = {'Authorization': 'Bearer {0}'.format(token)}
-request = urllib2.Request(url, None, headers)
-try: response = urllib2.urlopen(request)
-except urllib2.URLError as e:
-    print e.reason
+class SentryStats(Stats):
+    """ Sentry stats """
 
-data = json.load(response)
+    def __init__(self, sentry, option, name=None, parent=None):
+        super(SentryStats, self).__init__(
+            option=option, name=name, parent=parent)
+        self.options = parent.options
+        self.sentry = sentry
 
-user = "makopec@redhat.com"
-since = "2017-08-14"
-until = "2017-08-18"
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Sentry Stats
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+class AssignedIssues(SentryStats):
+    """ Assigned Issues """
 
-def assigned():
-    status = ""
-    count = 0
-    for activity in data:
-        if activity['dateCreated'] > since and activity['dateCreated'] < until and \
-            activity['user']['username'] == user and activity["type"] == 'set_resolved':
-            status += "\t{0} - {1}\n".format(activity['issue']['shortId'], activity['issue']['title'])
-            count += 1
-    print "Assigned to myself: {0}".format(count)
-    print status
-
-def resolved():
-    status = ""
-    count = 0
-    for activity in data:
-        if activity['dateCreated'] > since and activity['dateCreated'] < until and \
-            activity['user']['username'] == user and activity["type"] == 'assigned' and \
-            activity['data']['assigneeEmail'] == user:
-            status += "\t{0} - {1}\n".format(activity['issue']['shortId'], activity['issue']['title'])
-            count += 1
-    print "Set to resolved: {0}".format(count)
-    print status
-
-def commented():
-    status = ""
-    count = 0
-    for activity in data:
-        if activity['dateCreated'] > since and activity['dateCreated'] < until and \
-            activity['user']['username'] == user and activity["type"] == 'note':
-            status += "\t{0} - {1}\n".format(activity['issue']['shortId'], activity['issue']['title'])
-            count += 1
-    print "Commented on: {0}".format(count)
-    print status
+    def fetch(self):
+        status = ""
+        count = 0
+        for activity in self.sentry.get_data():
+            if activity['dateCreated'] > self.options['since'] \
+            and activity['dateCreated'] < self.options['until'] \
+            and activity['user']['username'] == self.options['user'] \
+            and activity["type"] == 'set_resolved':
+                status += "\t{0} - {1}\n".format(activity['issue']['shortId'], activity['issue']['title'])
+                count += 1
+        self.stats.append(status)
 
 
-assigned()
-resolved()
-commented()
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Sentry Stats
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class ResolvedIssues(SentryStats):
+    """ Resolved issues """
+
+    def fetch(self):
+        status = ""
+        count = 0
+        for activity in self.sentry.get_data():
+            if activity['dateCreated'] > self.options['since'] \
+            and activity['dateCreated'] < self.options['until'] \
+            and activity['user']['username'] == self.options['user'] \
+            and activity['data']['assigneeEmail'] == self.options['user'] \
+            and activity["type"] == 'assigned':
+                status += "\t{0} - {1}\n".format(activity['issue']['shortId'], activity['issue']['title'])
+                count += 1
+        self.stats.append(status)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Sentry Stats
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class CommentedIssues(SentryStats):
+    """ Comments on issues """
+
+    def fetch(self):
+        status = ""
+        count = 0
+        for activity in self.sentry.get_data():
+            if activity['dateCreated'] > self.options['since'] \
+            and activity['dateCreated'] < self.options['until'] \
+            and activity['user']['username'] == self.options['user'] \
+            and activity["type"] == 'note':
+                status += "\t{0} - {1}\n".format(activity['issue']['shortId'], activity['issue']['title'])
+                count += 1
+        self.stats.append(status)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Sentry Stats Group
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class SentryGroupStats(StatsGroup):
+    """ Sentry aggregated stats """
+
+    # Default order
+    order = 601
+
+    def __init__(self, option, name=None, parent=None, user=None):
+        StatsGroup.__init__(self, option, name, parent, user)
+        config = dict(Config().section(option))
+        # Check Sentry rganization
+        try:
+            self.organization = config["organization"]
+        except KeyError:
+            raise ReportError(
+                "No organization set in the [{0}] section".format(option))
+        # Set up the Bugzilla investigator
+        sentry = SentryAPI(stats=self, config=config, parent=self)
+        # Construct the list of stats
+        self.stats = [
+            AssignedIssues(sentry=sentry, option=option + '-assigned', parent=self),
+            ResolvedIssues(sentry=sentry, option=option + '-resolved', parent=self),
+            CommentedIssues(sentry=sentry, option=option + '-commented', parent=self),
+            ]
