@@ -34,9 +34,8 @@ URL = "http://sentry.usersys.redhat.com/api/0/organizations/"
 class SentryAPI(object):
     """ Sentry API """
 
-    def __init__(self, stats, config):
+    def __init__(self, config):
         """ Initialize API """
-        self.stats = stats
         self.token = config['token']
         self.organization = config['organization']
         
@@ -74,16 +73,14 @@ class ResolvedIssues(SentryStats):
     """ Resolved Issues """
 
     def fetch(self):
-        status = ""
         count = 0
         for activity in self.sentry.get_data():
             if activity['dateCreated'][:10] > str(self.options.since.date) \
             and activity['dateCreated'][:10] < str(self.options.until.date) \
             and activity['user']['email'] == self.user.email \
             and activity["type"] == 'set_resolved':
-                status += "\t{0} - {1}\n".format(activity['issue']['shortId'], activity['issue']['title'])
+                self.stats.append("\t{0} - {1}".format(activity['issue']['shortId'], activity['issue']['title']))
                 count += 1
-        self.stats.append(status)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -91,20 +88,18 @@ class ResolvedIssues(SentryStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class AssignedIssues(SentryStats):
-    """ Assigned issues """
+    """ Assigned issues to myself """
 
     def fetch(self):
-        status = ""
         count = 0
         for activity in self.sentry.get_data():
             if activity['dateCreated'][:10] > str(self.options.since.date) \
             and activity['dateCreated'][:10] < str(self.options.until.date) \
-            and activity['user']['email'] == self.user.email \
             and activity["type"] == 'assigned' \
-            and activity['data']['assigneeEmail'] == self.user.email:
-                status += "\t{0} - {1}\n".format(activity['issue']['shortId'], activity['issue']['title'])
+            and activity['data']['assigneeEmail'] == self.user.email \
+            and activity['issue']['assignedTo']['email'] == self.user.email:
+                self.stats.append("\t{0} - {1}".format(activity['issue']['shortId'], activity['issue']['title']))
                 count += 1
-        self.stats.append(status)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,19 +107,17 @@ class AssignedIssues(SentryStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class CommentedIssues(SentryStats):
-    """ Comments on issues """
+    """ Commented on issues """
 
     def fetch(self):
-        status = ""
         count = 0
         for activity in self.sentry.get_data():
             if activity['dateCreated'][:10] > str(self.options.since.date) \
             and activity['dateCreated'][:10] < str(self.options.until.date) \
             and activity['user']['email'] == self.user.email \
             and activity["type"] == 'note':
-                status += "\t{0} - {1}\n".format(activity['issue']['shortId'], activity['issue']['title'])
+                self.stats.append("\t{0} - {1}".format(activity['issue']['shortId'], activity['issue']['title']))
                 count += 1
-        self.stats.append(status)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -147,7 +140,7 @@ class SentryGroupStats(StatsGroup):
             raise ReportError(
                 "No organization set in the [{0}] section".format(option))
         # Set up the Bugzilla investigator
-        sentry = SentryAPI(stats=self, config=config)
+        sentry = SentryAPI(config=config)
         # Construct the list of stats
         self.stats = [
             AssignedIssues(sentry=sentry, option=option + '-assigned', parent=self),
