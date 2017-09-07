@@ -6,6 +6,7 @@ Configuration example::
 
     [sentry]
     type = sentry
+    url = http://sentry.usersys.redhat.com/api/0/
     organization = baseos
     token = ...
 
@@ -24,8 +25,6 @@ from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
 from did.utils import log, pretty, split
 
-URL = "http://sentry.usersys.redhat.com/api/0/organizations/"
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Sentry Investigator
@@ -38,16 +37,17 @@ class SentryAPI(object):
         """ Initialize API """
         self.token = config['token']
         self.organization = config['organization']
+        self.url = config['url']
         
     def get_data(self):
         """ Get organization activity in JSON representation """
-        url = URL + self.organization + "/activity/"
+        url = self.url + "organizations/" + self.organization + "/activity/"
         headers = {'Authorization': 'Bearer {0}'.format(self.token)}
         request = urllib2.Request(url, None, headers)
         try:
             response = urllib2.urlopen(request)
         except urllib2.URLError as e:
-            raise ReportError(e.reason)
+            raise ReportError("Could not get data. API HTTP response: " + e.reason)
 
         return json.load(response)
 
@@ -133,10 +133,12 @@ class SentryGroupStats(StatsGroup):
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
         config = dict(Config().section(option))
-        # Check Sentry rganization
-        try:
-            self.organization = config["organization"]
-        except KeyError:
+        # Check Sentry url
+        if "url" not in config:
+            raise ReportError(
+                "No url set in the [{0}] section".format(option))
+        # Check Sentry organization
+        if "organization" not in config:
             raise ReportError(
                 "No organization set in the [{0}] section".format(option))
         # Set up the Bugzilla investigator
