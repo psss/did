@@ -49,8 +49,7 @@ class SentryAPI(object):
         except urllib2.URLError as e:
             log.error("An error encountered while getting data from server.")
             log.debug(e)
-            raise ReportError("""Could not get data. API HTTP response: {0}.
-                Please check your configuration file.""".format(e.reason))
+            raise ReportError("Could not get data. {0}.".format(str(e)))
 
         return json.load(response)
 
