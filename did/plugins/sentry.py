@@ -160,7 +160,7 @@ class SentryGroupStats(StatsGroup):
         if "token" not in config:
             raise ConfigError(
                 "No token set in the [{0}] section".format(option))
-        # Set up the Bugzilla investigator
+        # Set up the Sentry API
         sentry = SentryAPI(config=config)
         # Construct the list of stats
         self.stats = [
