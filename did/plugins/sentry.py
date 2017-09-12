@@ -22,12 +22,8 @@ import urllib2
 
 from did.base import Config, ConfigError, ReportError
 from did.stats import Stats, StatsGroup
-from did.utils import log, pretty, split
+from did.utils import log
 
-
-# TODO
-# - add log.debug
-# - add log.error
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Sentry Investigator
@@ -47,9 +43,12 @@ class SentryAPI(object):
         url = self.url + "organizations/" + self.organization + "/activity/"
         headers = {'Authorization': 'Bearer {0}'.format(self.token)}
         request = urllib2.Request(url, None, headers)
+        log.debug("Trying to get activity data from server.")
         try:
             response = urllib2.urlopen(request)
         except urllib2.URLError as e:
+            log.error("An error encountered while getting data from server.")
+            log.debug(e)
             raise ReportError("""Could not get data. API HTTP response: {0}.
                 Please check your configuration file.""".format(e.reason))
 
@@ -69,6 +68,22 @@ class SentryStats(Stats):
         self.options = parent.options
         self.sentry = sentry
 
+    def filter_data(self):
+        log.debug("Filtering data to match given date interval: {0} - {1}"
+                  .format(str(self.options.since.date),
+                          str(self.options.until.date)))
+        stats = []
+        for activity in self.sentry.get_data():
+            date = self.get_date(activity)
+            if (date > str(self.options.since.date) and
+                    date < str(self.options.until.date)):
+                stats.append(activity)
+        return stats
+
+    @staticmethod
+    def get_date(activity):
+        return activity['dateCreated'][:10]
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Sentry Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,12 +94,11 @@ class ResolvedIssues(SentryStats):
 
     def fetch(self):
         log.info(u"Searching for resolved issues by {0}".format(self.user))
-        for activity in self.sentry.get_data():
-            if activity['dateCreated'][:10] > str(self.options.since.date) \
-                and activity['dateCreated'][:10] < str(self.options.until.date) \
-                and activity['user']['email'] == self.user.email \
-                and activity["type"] == 'set_resolved':
-                self.stats.append("{0} - {1}".format(activity['issue']['shortId'], activity['issue']['title']))
+        for activity in self.filter_data():
+            if (activity['user']['email'] == self.user.email and
+                    activity["type"] == 'set_resolved'):
+                self.stats.append("{0} - {1}".format(
+                    activity['issue']['shortId'], activity['issue']['title']))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -95,14 +109,15 @@ class AssignedIssues(SentryStats):
     """ Assigned issues to myself """
 
     def fetch(self):
-        log.info(u"Searching for assigned issues to herself/himself by {0}".format(self.user))
-        for activity in self.sentry.get_data():
-            if activity['dateCreated'][:10] > str(self.options.since.date) \
-            and activity['dateCreated'][:10] < str(self.options.until.date) \
-            and activity["type"] == 'assigned' \
-            and activity['data']['assigneeEmail'] == self.user.email \
-            and activity['issue']['assignedTo']['email'] == self.user.email:
-                self.stats.append("{0} - {1}".format(activity['issue']['shortId'], activity['issue']['title']))
+        log.info(u"Searching for assigned issues to herself/himself by {0}"
+                 .format(self.user))
+        for activity in self.filter_data():
+            if (activity["type"] == 'assigned' and
+                    activity['data']['assigneeEmail'] == self.user.email and
+                    activity['issue']['assignedTo']['email'] ==
+                    self.user.email):
+                self.stats.append("{0} - {1}".format(
+                    activity['issue']['shortId'], activity['issue']['title']))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,11 +130,10 @@ class CommentedIssues(SentryStats):
     def fetch(self):
         log.info(u"Searching for comments on issues by {0}".format(self.user))
         for activity in self.sentry.get_data():
-            if activity['dateCreated'][:10] > str(self.options.since.date) \
-            and activity['dateCreated'][:10] < str(self.options.until.date) \
-            and activity['user']['email'] == self.user.email \
-            and activity["type"] == 'note':
-                self.stats.append("{0} - {1}".format(activity['issue']['shortId'], activity['issue']['title']))
+            if (activity['user']['email'] == self.user.email and
+                    activity["type"] == 'note'):
+                self.stats.append("{0} - {1}".format(
+                    activity['issue']['shortId'], activity['issue']['title']))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -151,7 +165,10 @@ class SentryGroupStats(StatsGroup):
         sentry = SentryAPI(config=config)
         # Construct the list of stats
         self.stats = [
-            AssignedIssues(sentry=sentry, option=option + '-assigned', parent=self),
-            ResolvedIssues(sentry=sentry, option=option + '-resolved', parent=self),
-            CommentedIssues(sentry=sentry, option=option + '-commented', parent=self),
+            AssignedIssues(sentry=sentry, option=option + '-assigned',
+                           parent=self),
+            ResolvedIssues(sentry=sentry, option=option + '-resolved',
+                           parent=self),
+            CommentedIssues(sentry=sentry, option=option + '-commented',
+                            parent=self),
             ]

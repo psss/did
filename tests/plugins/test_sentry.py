@@ -20,8 +20,8 @@ organization = test-foo
 
 BAD_TOKEN_CONFIG = BASIC_CONFIG + "\ntoken = bad-token"
 # test token for <sentrydidplugin@gmail.com>
-OK_CONFIG = BASIC_CONFIG + \
-    "\ntoken = 8d98bfcf781441aaa3a1ecda412ded0117f5ce0c2a4941a9bd8b3a2d62f77b6c"
+OK_CONFIG = BASIC_CONFIG + "\ntoken = " + \
+    "8d98bfcf781441aaa3a1ecda412ded0117f5ce0c2a4941a9bd8b3a2d62f77b6c"
 
 # 6 issues should be present
 INTERVAL = "--since 2017-09-04 --until 2017-09-10"
@@ -55,7 +55,8 @@ def test_sentry_assigned():
     """ Check expected assigned issues """
     did.base.Config(OK_CONFIG)
     stats = did.cli.main("""
-        --sentry-assigned {0}""".format(INTERVAL))[0][0].stats[0].stats[0].stats
+        --sentry-assigned {0}""".format(
+            INTERVAL))[0][0].stats[0].stats[0].stats
     _m = [
         'TESTPROJECT-4 - Test issue only assigned',
         'TESTPROJECT-1 - Test issue'
@@ -68,7 +69,8 @@ def test_sentry_resolved():
     """ Check expected resolved issues """
     did.base.Config(OK_CONFIG)
     stats = did.cli.main("""
-        --sentry-resolved {0}""".format(INTERVAL))[0][0].stats[0].stats[1].stats
+        --sentry-resolved {0}""".format(
+            INTERVAL))[0][0].stats[0].stats[1].stats
     _m = [
         'TESTPROJECT-3 - Test issue only resolved',
         'TESTPROJECT-1 - Test issue'
@@ -81,7 +83,8 @@ def test_sentry_commented():
     """ Check expected commented issues """
     did.base.Config(OK_CONFIG)
     stats = did.cli.main("""
-        --sentry-commented {0}""".format(INTERVAL))[0][0].stats[0].stats[2].stats
+        --sentry-commented {0}""".format(
+            INTERVAL))[0][0].stats[0].stats[2].stats
     _m = [
         'TESTPROJECT-2 - Test issue only commented',
         'TESTPROJECT-1 - Test issue'
