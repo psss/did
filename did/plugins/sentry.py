@@ -43,7 +43,7 @@ class SentryAPI(object):
         url = self.url + "organizations/" + self.organization + "/activity/"
         headers = {'Authorization': 'Bearer {0}'.format(self.token)}
         request = urllib2.Request(url, None, headers)
-        log.debug("Trying to get activity data from server.")
+        log.debug("Getting activity data from server.")
         try:
             response = urllib2.urlopen(request)
         except urllib2.URLError as e:
@@ -69,10 +69,9 @@ class SentryStats(Stats):
         self.sentry = sentry
 
     def filter_data(self):
-        log.debug("Filtering data to match given date interval: {0} - {1}"
-                  .format(str(self.options.since.date),
-                          str(self.options.until.date)))
         stats = []
+        log.debug("Query: Date range {0} - {1}".format(
+            str(self.options.since.date), str(self.options.until.date)))
         for activity in self.sentry.get_data():
             date = self.get_date(activity)
             if (date > str(self.options.since.date) and
@@ -129,7 +128,7 @@ class CommentedIssues(SentryStats):
 
     def fetch(self):
         log.info(u"Searching for comments on issues by {0}".format(self.user))
-        for activity in self.sentry.get_data():
+        for activity in self.filter_data():
             if (activity['user']['email'] == self.user.email and
                     activity["type"] == 'note'):
                 self.stats.append("{0} - {1}".format(
