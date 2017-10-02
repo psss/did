@@ -51,20 +51,6 @@ def test_invalid_token():
 #  Acceptance tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_sentry_assigned():
-    """ Check expected assigned issues """
-    did.base.Config(OK_CONFIG)
-    stats = did.cli.main("""
-        --sentry-assigned {0}""".format(
-            INTERVAL))[0][0].stats[0].stats[0].stats
-    _m = [
-        'TESTPROJECT-4 - Test issue only assigned',
-        'TESTPROJECT-1 - Test issue'
-    ]
-    assert len(stats) == 2
-    assert stats[0] == _m[0]
-
-
 def test_sentry_resolved():
     """ Check expected resolved issues """
     did.base.Config(OK_CONFIG)

@@ -103,25 +103,6 @@ class ResolvedIssues(SentryStats):
 #  Sentry Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class AssignedIssues(SentryStats):
-    """ Assigned issues to myself """
-
-    def fetch(self):
-        log.info(u"Searching for assigned issues to herself/himself by {0}"
-                 .format(self.user))
-        for activity in self.filter_data():
-            if (activity["type"] == 'assigned' and
-                    activity['data']['assigneeEmail'] == self.user.email and
-                    activity['issue']['assignedTo']['email'] ==
-                    self.user.email):
-                self.stats.append("{0} - {1}".format(
-                    activity['issue']['shortId'], activity['issue']['title']))
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Sentry Stats
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 class CommentedIssues(SentryStats):
     """ Commented on issues """
 
@@ -163,8 +144,6 @@ class SentryGroupStats(StatsGroup):
         sentry = SentryAPI(config=config)
         # Construct the list of stats
         self.stats = [
-            AssignedIssues(sentry=sentry, option=option + '-assigned',
-                           parent=self),
             ResolvedIssues(sentry=sentry, option=option + '-resolved',
                            parent=self),
             CommentedIssues(sentry=sentry, option=option + '-commented',
