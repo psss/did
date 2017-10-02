@@ -73,8 +73,8 @@ class SentryStats(Stats):
             str(self.options.since.date), str(self.options.until.date)))
         for activity in self.sentry.get_data():
             date = self.get_date(activity)
-            if (date > str(self.options.since.date) and
-                    date < str(self.options.until.date)):
+            if (date >= str(self.options.since.date) and
+                    date <= str(self.options.until.date)):
                 stats.append(activity)
         return stats
 
