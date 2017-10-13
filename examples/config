@@ -61,10 +61,6 @@ wiki test = http://moinmo.in/
 type = bitly
 token = <token>
 
-[idonethis]
-type = idonethis
-token = <token>
-
 [projects]
 type = items
 header = Work on projects

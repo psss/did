@@ -40,8 +40,6 @@ This is the default plugin order:
     +----------+-----+
     | items    | 800 |
     +----------+-----+
-    | idonethis| 801 |
-    +----------+-----+
     | footer   | 900 |
     +----------+-----+
 
