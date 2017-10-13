@@ -74,7 +74,8 @@ class SentryStats(Stats):
         for activity in self.sentry.get_data():
             date = self.get_date(activity)
             if (date >= str(self.options.since.date) and
-                    date <= str(self.options.until.date)):
+                    date <= str(self.options.until.date) and
+                    activity['type'] != "set_regression"):
                 stats.append(activity)
         return stats
 
@@ -94,7 +95,7 @@ class ResolvedIssues(SentryStats):
         log.info(u"Searching for resolved issues by {0}".format(self.user))
         for activity in self.filter_data():
             if (activity['user']['email'] == self.user.email and
-                    activity["type"] == 'set_resolved'):
+                    activity['type'] == 'set_resolved'):
                 self.stats.append("{0} - {1}".format(
                     activity['issue']['shortId'], activity['issue']['title']))
 
@@ -110,7 +111,7 @@ class CommentedIssues(SentryStats):
         log.info(u"Searching for comments on issues by {0}".format(self.user))
         for activity in self.filter_data():
             if (activity['user']['email'] == self.user.email and
-                    activity["type"] == 'note'):
+                    activity['type'] == 'note'):
                 self.stats.append("{0} - {1}".format(
                     activity['issue']['shortId'], activity['issue']['title']))
 
