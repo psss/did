@@ -56,7 +56,7 @@ def test_sentry_resolved():
     did.base.Config(OK_CONFIG)
     stats = did.cli.main("""
         --sentry-resolved {0}""".format(
-            INTERVAL))[0][0].stats[0].stats[1].stats
+            INTERVAL))[0][0].stats[0].stats[0].stats
     _m = [
         'TESTPROJECT-3 - Test issue only resolved',
         'TESTPROJECT-1 - Test issue'
@@ -70,7 +70,7 @@ def test_sentry_commented():
     did.base.Config(OK_CONFIG)
     stats = did.cli.main("""
         --sentry-commented {0}""".format(
-            INTERVAL))[0][0].stats[0].stats[2].stats
+            INTERVAL))[0][0].stats[0].stats[1].stats
     _m = [
         'TESTPROJECT-2 - Test issue only commented',
         'TESTPROJECT-1 - Test issue'
