@@ -96,8 +96,12 @@ class ResolvedIssues(SentryStats):
         for activity in self.filter_data():
             if (activity['user']['email'] == self.user.email and
                     activity['type'] == 'set_resolved'):
-                self.stats.append("{0} - {1}".format(
-                    activity['issue']['shortId'], activity['issue']['title']))
+                record = "{0} - {1}".format(
+                    activity['issue']['shortId'], activity['issue']['title'])
+                # skip if the issue is in the stats already
+                if record in self.stats:
+                    continue
+                self.stats.append(record)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,8 +116,12 @@ class CommentedIssues(SentryStats):
         for activity in self.filter_data():
             if (activity['user']['email'] == self.user.email and
                     activity['type'] == 'note'):
-                self.stats.append("{0} - {1}".format(
-                    activity['issue']['shortId'], activity['issue']['title']))
+                record = "{0} - {1}".format(
+                    activity['issue']['shortId'], activity['issue']['title'])
+                # skip if the issue is in the stats already
+                if record in self.stats:
+                    continue
+                self.stats.append(record)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
