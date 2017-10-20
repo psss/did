@@ -37,10 +37,12 @@ class SentryAPI(object):
         self.token = config['token']
         self.organization = config['organization']
         self.url = config['url']
+        self.cursor = ''
 
-    def get_data(self):
+    def get_page(self):
         """ Get organization activity in JSON representation """
-        url = self.url + "organizations/" + self.organization + "/activity/"
+        url = (self.url + "organizations/" + self.organization
+                + "/activity/" + self.cursor)
         headers = {'Authorization': 'Bearer {0}'.format(self.token)}
         request = urllib2.Request(url, None, headers)
         log.debug("Getting activity data from server.")
@@ -51,7 +53,38 @@ class SentryAPI(object):
             log.debug(e)
             raise ReportError("Could not get data. {0}.".format(str(e)))
 
+        # get another page when paginating
+        link_header = response.info().getheader('Link').split(', ')
+        # will ALWAYS return prev and next in response
+        # if there is content on next page then results is set to true
+        if link_header[1].find('results="true"') > 0:
+            # set cursor for next page
+            self.cursor = '?&cursor=' + link_header[1].split('; ')[-1][8:-1]
+        else:
+            self.cursor = ''
         return json.load(response)
+
+    def get_data(self, since, until):
+        next_page = True
+        data = []
+        while next_page:
+            for activity in self.get_page():
+                # log.debug("Actvity: {0}".format(activity))
+                date = self.get_date(activity)
+                if (date > until):
+                    continue
+                if (date < since):
+                    next_page = False
+                    break
+                if (activity['type'] != "set_regression"):
+                    data.append(activity)
+        # erase cursor, so next stats will search from the start
+        self.cursor = ''
+        return data
+
+    @staticmethod
+    def get_date(activity):
+        return activity['dateCreated'][:10]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,21 +100,27 @@ class SentryStats(Stats):
         self.options = parent.options
         self.sentry = sentry
 
-    def filter_data(self):
+    def filter_data(self, kind=['set_resolved', 'note']):
         stats = []
         log.debug("Query: Date range {0} - {1}".format(
             str(self.options.since.date), str(self.options.until.date)))
-        for activity in self.sentry.get_data():
-            date = self.get_date(activity)
-            if (date >= str(self.options.since.date) and
-                    date < str(self.options.until.date) and
-                    activity['type'] != "set_regression"):
+        for activity in self.issues:
+            if activity['type'] == kind:
                 stats.append(activity)
         return stats
 
-    @staticmethod
-    def get_date(activity):
-        return activity['dateCreated'][:10]
+    def append(self, record):
+        """ Append only if unique """
+
+        if record not in self.stats:
+            self.stats.append(record)
+
+    @property
+    def issues(self):
+        """ All issues in sentry under group """
+
+        return self.sentry.get_data(str(self.options.since.date),
+            str(self.options.until.date))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Sentry Stats
@@ -93,11 +132,11 @@ class ResolvedIssues(SentryStats):
 
     def fetch(self):
         log.info(u"Searching for resolved issues by {0}".format(self.user))
-        for activity in self.filter_data():
-            if (activity['user']['email'] == self.user.email and
-                    activity['type'] == 'set_resolved'):
-                self.stats.append("{0} - {1}".format(
-                    activity['issue']['shortId'], activity['issue']['title']))
+        for activity in self.filter_data('set_resolved'):
+            if activity['user']['email'] == self.user.email:
+                record = "{0} - {1}".format(
+                    activity['issue']['shortId'], activity['issue']['title'])
+                self.append(record)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -109,11 +148,11 @@ class CommentedIssues(SentryStats):
 
     def fetch(self):
         log.info(u"Searching for comments on issues by {0}".format(self.user))
-        for activity in self.filter_data():
-            if (activity['user']['email'] == self.user.email and
-                    activity['type'] == 'note'):
-                self.stats.append("{0} - {1}".format(
-                    activity['issue']['shortId'], activity['issue']['title']))
+        for activity in self.filter_data('note'):
+            if activity['user']['email'] == self.user.email:
+                record = "{0} - {1}".format(
+                    activity['issue']['shortId'], activity['issue']['title'])
+                self.append(record)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
