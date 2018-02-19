@@ -12,7 +12,7 @@ from __future__ import unicode_literals, absolute_import
 import re
 import sys
 import argparse
-import kerberos
+import gssapi
 from dateutil.relativedelta import relativedelta as delta
 
 import did.base
@@ -205,7 +205,7 @@ def main(arguments=None):
             did.base.Config.path(), did.base.Config.example().strip()))
         raise
 
-    except kerberos.GSSError as error:
-        log.debug(error)
+    except gssapi.exceptions.GSSError as error:
+        log.debug(error.gen_msg())
         raise did.base.ConfigError(
-            "Kerberos authentication failed. Try kinit.")
+            "GSSAPI authentication failed. Try kinit.")

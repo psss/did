@@ -39,7 +39,7 @@ import urllib
 import urllib2
 import cookielib
 import dateutil.parser
-import urllib2_kerberos
+import urllib_gssapi
 
 from did.utils import log, pretty, listed
 from did.base import Config, ReportError
@@ -254,7 +254,7 @@ class JiraStats(StatsGroup):
                 urllib2.HTTPSHandler(debuglevel=0),
                 urllib2.HTTPRedirectHandler,
                 urllib2.HTTPCookieProcessor(cookie),
-                urllib2_kerberos.HTTPKerberosAuthHandler)
+                urllib_gssapi.HTTPSPNEGOAuthHandler)
 
             log.debug("Connecting to {0}".format(self.auth_url))
             if self.auth_type == 'basic':

@@ -15,7 +15,9 @@ from __future__ import absolute_import, unicode_literals
 import httplib
 import urllib
 import urlparse
-import kerberos
+import gssapi
+
+from base64 import b64encode, b64decode
 
 from did.utils import log, pretty
 from did.base import ReportError, Config
@@ -36,18 +38,18 @@ class RequestTracker(object):
         self.url_string = parent.url
 
     def get(self, path):
-        """ Perform a GET request with Kerberos authentication """
-        # Prepare Kerberos ticket granting ticket """
-        _, ctx = kerberos.authGSSClientInit(
-            'HTTP@{0}'.format(self.url.netloc))
-        kerberos.authGSSClientStep(ctx, "")
-        tgt = kerberos.authGSSClientResponse(ctx)
+        """ Perform a GET request with GSSAPI authentication """
+        # Generate token
+        service_name = gssapi.Name('HTTP@{0}'.format(self.url.netloc),
+                                   gssapi.NameType.hostbased_service)
+        ctx = gssapi.SecurityContext(usage="initiate", name=service_name)
+        data = b64encode(ctx.step()).decode()
 
         # Make the connection
         connection = httplib.HTTPSConnection(self.url.netloc, 443)
         log.debug("GET {0}".format(path))
         connection.putrequest("GET", path)
-        connection.putheader("Authorization", "Negotiate {0}".format(tgt))
+        connection.putheader("Authorization", "Negotiate {0}".format(data))
         connection.putheader("Referer", self.url_string)
         connection.endheaders()
 

@@ -43,9 +43,9 @@ __xrequires__ = {
     'bitly': [
         'bitly_api',
     ],
-    'kerberos': [
-        'pykerberos',
-        'urllib2_kerberos',
+    'gssapi': [
+        'gssapi',
+        'urllib_gssapi',
     ],
     'google': [
         'google-api-python-client',
