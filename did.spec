@@ -26,18 +26,18 @@ range. By default all available stats for this week are reported.
 %install
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_mandir}/man1
-mkdir -p %{buildroot}%{python_sitelib}/did
-mkdir -p %{buildroot}%{python_sitelib}/did/plugins
+mkdir -p %{buildroot}%{python2_sitelib}/did
+mkdir -p %{buildroot}%{python2_sitelib}/did/plugins
 install -pm 755 bin/did %{buildroot}%{_bindir}/did
-install -pm 644 did/*.py %{buildroot}%{python_sitelib}/did
-install -pm 644 did/plugins/*.py %{buildroot}%{python_sitelib}/did/plugins
+install -pm 644 did/*.py %{buildroot}%{python2_sitelib}/did
+install -pm 644 did/plugins/*.py %{buildroot}%{python2_sitelib}/did/plugins
 install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 
 
 %files
 %{_mandir}/man1/*
 %{_bindir}/did
-%{python_sitelib}/*
+%{python2_sitelib}/*
 %doc README.rst examples
 %{!?_licensedir:%global license %%doc}
 %license LICENSE
