@@ -37,10 +37,12 @@ class SentryAPI(object):
         self.token = config['token']
         self.organization = config['organization']
         self.url = config['url']
+        self.cursor = ''
 
     def get_data(self):
         """ Get organization activity in JSON representation """
-        url = self.url + "organizations/" + self.organization + "/activity/"
+        url = (self.url + "organizations/" + self.organization
+                + "/activity/" + self.cursor)
         headers = {'Authorization': 'Bearer {0}'.format(self.token)}
         request = urllib2.Request(url, None, headers)
         log.debug("Getting activity data from server.")
@@ -51,7 +53,19 @@ class SentryAPI(object):
             log.debug(e)
             raise ReportError("Could not get data. {0}.".format(str(e)))
 
+        # get another page when paginating
+        link_header = response.info().getheader('Link').split(', ')
+        # will ALWAYS return prev and next in response
+        # if there is content on next page then results is set to true
+        if link_header[1].find('results="true"') > 0:
+            # set cursor for next page
+            self.cursor = '?&cursor=' + link_header[1].split('; ')[-1][8:-1]
+        else:
+            self.cursor = ''
         return json.load(response)
+
+    def get_next_page(self):
+        """ Get next page in paginated activity """
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,12 +85,19 @@ class SentryStats(Stats):
         stats = []
         log.debug("Query: Date range {0} - {1}".format(
             str(self.options.since.date), str(self.options.until.date)))
-        for activity in self.sentry.get_data():
-            date = self.get_date(activity)
-            if (date >= str(self.options.since.date) and
-                    date <= str(self.options.until.date) and
-                    activity['type'] != "set_regression"):
-                stats.append(activity)
+        next_page = True
+        while next_page:
+            for activity in self.sentry.get_data():
+                date = self.get_date(activity)
+                if (date > str(self.options.until.date)):
+                    continue
+                if (date < str(self.options.since.date)):
+                    next_page = False
+                    break
+                if (activity['type'] != "set_regression"):
+                    stats.append(activity)
+        # erase cursor, so next stats will be search from the start
+        self.sentry.cursor = ''
         return stats
 
     @staticmethod
@@ -96,8 +117,12 @@ class ResolvedIssues(SentryStats):
         for activity in self.filter_data():
             if (activity['user']['email'] == self.user.email and
                     activity['type'] == 'set_resolved'):
-                self.stats.append("{0} - {1}".format(
-                    activity['issue']['shortId'], activity['issue']['title']))
+                record = "{0} - {1}".format(
+                    activity['issue']['shortId'], activity['issue']['title'])
+                # skip if the issue is in the stats already
+                if record in self.stats:
+                    continue
+                self.stats.append(record)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,8 +137,12 @@ class CommentedIssues(SentryStats):
         for activity in self.filter_data():
             if (activity['user']['email'] == self.user.email and
                     activity['type'] == 'note'):
-                self.stats.append("{0} - {1}".format(
-                    activity['issue']['shortId'], activity['issue']['title']))
+                record = "{0} - {1}".format(
+                    activity['issue']['shortId'], activity['issue']['title'])
+                # skip if the issue is in the stats already
+                if record in self.stats:
+                    continue
+                self.stats.append(record)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
