@@ -23,10 +23,11 @@ BAD_TOKEN_CONFIG = BASIC_CONFIG + "\ntoken = bad-token"
 OK_CONFIG = BASIC_CONFIG + "\ntoken = " + \
     "40163646c3aa42d898674d836a1f17595217ccf5f50c409fbd343be72be351b0"
 
-# 6 issues should be present
-INTERVAL = "--since 2018-09-22 --until 2018-09-25"
-# No links should be present
-INTERVAL_EMPTY = "--since 2018-09-01 --until 2018-09-09"
+# Three issues should be present
+INTERVAL = "--since 2018-09-25 --until 2018-09-25"
+# No issues should be present
+INTERVAL_EMPTY1 = "--since 2018-09-01 --until 2018-09-24"
+INTERVAL_EMPTY2 = "--since 2018-09-26 --until 2018-09-30"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,5 +75,7 @@ def test_sentry_commented():
 def test_sentry_no_issues():
     """ Check for no issues """
     did.base.Config(OK_CONFIG)
-    stats = did.cli.main(INTERVAL_EMPTY)[0][0].stats[0].stats[0].stats
+    stats = did.cli.main(INTERVAL_EMPTY1)[0][0].stats[0].stats[0].stats
+    assert not stats
+    stats = did.cli.main(INTERVAL_EMPTY2)[0][0].stats[0].stats[0].stats
     assert not stats

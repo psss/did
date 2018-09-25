@@ -74,7 +74,7 @@ class SentryStats(Stats):
         for activity in self.sentry.get_data():
             date = self.get_date(activity)
             if (date >= str(self.options.since.date) and
-                    date <= str(self.options.until.date) and
+                    date < str(self.options.until.date) and
                     activity['type'] != "set_regression"):
                 stats.append(activity)
         return stats
