@@ -46,7 +46,7 @@ from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
 
 # Default identifier width
-DEFAULT_WIDTH = 4
+DEFAULT_WIDTH = 0
 
 # Maximum number of results fetched at once
 MAX_RESULTS = 1000
