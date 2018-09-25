@@ -49,6 +49,7 @@ __xrequires__ = {
     ],
     'google': [
         'google-api-python-client',
+        'oauth2client',
     ],
 }
 

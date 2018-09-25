@@ -16,12 +16,12 @@ INTERVAL = "--since 2016-11-07 --until 2016-11-13"
 
 CONFIG = """
 [general]
-email = "Let's Test Did" <letstestdid@gmail.com>
+email = "The Did Tester" <the.did.tester@gmail.com>
 
 [google]
 type = google
-client_id = 598386917099-8tnnigaqjdrar7rju9uemgn1stcrlm17.apps.googleusercontent.com
-client_secret = uRa81hwB2KA-veOeFthVAS-T
+client_id = 389009292292-c130a3j6gpgs4677qlt3qil1kbs6gvel.apps.googleusercontent.com
+client_secret = vGlqWk35qnF2pj0qoYxNByrH
 storage = tests/plugins/google-api-credentials.json
 """
 
