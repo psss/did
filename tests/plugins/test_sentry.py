@@ -10,23 +10,23 @@ import did.base
 
 BASIC_CONFIG = """
 [general]
-email = "Test Foo" <sentrydidplugin@gmail.com>
+email = "Did Tester" <the.did.tester@gmail.com>
 
 [sentry]
 type = sentry
 url = http://sentry.io/api/0/
-organization = test-foo
+organization = did-tester
 """
 
 BAD_TOKEN_CONFIG = BASIC_CONFIG + "\ntoken = bad-token"
-# test token for <sentrydidplugin@gmail.com>
+# test token for <the.did.tester@gmail.com>
 OK_CONFIG = BASIC_CONFIG + "\ntoken = " + \
-    "8d98bfcf781441aaa3a1ecda412ded0117f5ce0c2a4941a9bd8b3a2d62f77b6c"
+    "40163646c3aa42d898674d836a1f17595217ccf5f50c409fbd343be72be351b0"
 
 # 6 issues should be present
-INTERVAL = "--since 2017-09-04 --until 2017-09-10"
+INTERVAL = "--since 2018-09-22 --until 2018-09-25"
 # No links should be present
-INTERVAL_EMPTY = "--since 2017-09-11 --until 2017-09-17"
+INTERVAL_EMPTY = "--since 2018-09-01 --until 2018-09-09"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,12 +57,8 @@ def test_sentry_resolved():
     stats = did.cli.main("""
         --sentry-resolved {0}""".format(
             INTERVAL))[0][0].stats[0].stats[0].stats
-    _m = [
-        'TESTPROJECT-3 - Test issue only resolved',
-        'TESTPROJECT-1 - Test issue'
-    ]
     assert len(stats) == 2
-    assert stats[0] == _m[0]
+    assert "PYTHON-1 - This is an example Python exception" in stats
 
 
 def test_sentry_commented():
@@ -71,12 +67,8 @@ def test_sentry_commented():
     stats = did.cli.main("""
         --sentry-commented {0}""".format(
             INTERVAL))[0][0].stats[0].stats[1].stats
-    _m = [
-        'TESTPROJECT-2 - Test issue only commented',
-        'TESTPROJECT-1 - Test issue'
-    ]
     assert len(stats) == 2
-    assert stats[0] == _m[0]
+    assert "PYTHON-3 - IndexError: list index out of range" in stats
 
 
 def test_sentry_no_issues():
