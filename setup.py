@@ -51,6 +51,9 @@ __xrequires__ = {
         'google-api-python-client',
         'oauth2client',
     ],
+    'redmine': [
+        'feedparser',
+    ],
 }
 
 pip_src = 'https://pypi.python.org/packages/source'
