@@ -29,9 +29,6 @@ CONFIG = CONFIG_NOTOKEN + """
 token = vh1tNyke5KzWCynzyAKt
 """
 
-def teardown_function(function):
-    time.sleep(7)
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,7 +39,8 @@ def test_gitlab_issues_created():
     option = "--gitlab-issues-created "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
     assert any([
-        "did.tester/test-project#001 - the readme is almost empty" in unicode(stat) for stat in stats])
+        "did.tester/test-project#001 - the readme is almost empty"
+        in unicode(stat) for stat in stats])
 
 def test_gitlab_issues_commented():
     """ Commented issues """
@@ -50,7 +48,8 @@ def test_gitlab_issues_commented():
     option = "--gitlab-issues-commented "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[1].stats
     assert any([
-        "did.tester/test-project#001 - the readme is almost empty" in unicode(stat) for stat in stats])
+        "did.tester/test-project#001 - the readme is almost empty"
+        in unicode(stat) for stat in stats])
 
 def test_gitlab_issues_closed():
     """ Closed issues """
@@ -58,7 +57,8 @@ def test_gitlab_issues_closed():
     option = "--gitlab-issues-closed "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[2].stats
     assert any([
-        "did.tester/test-project#001 - the readme is almost empty" in unicode(stat) for stat in stats])
+        "did.tester/test-project#001 - the readme is almost empty"
+        in unicode(stat) for stat in stats])
 
 def test_gitlab_merge_requests_created():
     """ Created merge requests """
