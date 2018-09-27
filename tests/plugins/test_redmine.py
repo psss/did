@@ -34,5 +34,6 @@ def test_redmine_activity():
     did.base.Config(CONFIG)
     option = "--redmine-activity "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
-    assert any([
-        "Foreman - Bug #19986 (New): puppetserver fails to restart after installation" in unicode(stat) for stat in stats])
+    assert any(
+        ["puppetserver fails to restart after installation"
+        in unicode(stat) for stat in stats])

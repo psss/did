@@ -10,11 +10,10 @@ Config example::
     login = <user_id>
     activity_days = 30
 
-Use ``login`` to set the user id in Redmine.
-See the :doc:`config` documentation for details on using aliases.
-Use ``activity_days`` to override the default 30 days of activity paging,
-this has to match to the server side setting, otherwise the plugin will miss
-entries.
+Use ``login`` to set the user id in Redmine. See the :doc:`config` docs for
+details on using aliases.  Use ``activity_days`` to override the default 30
+days of activity paging, this has to match to the server side setting,
+otherwise the plugin will miss entries.
 
 """
 
@@ -29,7 +28,6 @@ from did.stats import Stats, StatsGroup
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Activity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 class Activity(object):
     """ Redmine Activity """
@@ -46,9 +44,8 @@ class Activity(object):
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 class RedmineActivity(Stats):
-    """ Redmine Activity Stats"""
+    """ Redmine Activity Stats """
     def fetch(self):
         log.info(u"Searching for activity by {0}".format(self.user))
         results = []
