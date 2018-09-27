@@ -43,10 +43,10 @@ class Change(object):
         return u"{0}#{1} - {2}".format(self.prefix, self.id, self.subject)
 
     def __eq__(self, other):
-        return self.__unicode__() == other.__unicode__()
-    
+        return unicode(self) == unicode(other)
+
     def __hash__(self):
-        return hash(self.__unicode__())
+        return hash(unicode(self))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Gerrit Stats
