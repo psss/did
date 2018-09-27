@@ -9,15 +9,18 @@ Config example::
     url = https://gitlab.com/
     token = <authentication-token>
     login = <username>
+    ssl_verify = true
 
 The authentication token is required.
 Use ``login`` to override the user associated with the token.
 See the :doc:`config` documentation for details on using aliases.
+Use ``ssl_verify`` to enable/disable SSL verification (default: true)
 
 __ https://docs.gitlab.com/ce/api/
 
 """
 
+import distutils.util
 import requests
 import dateutil
 import itertools
@@ -298,7 +301,12 @@ class GitLabStats(StatsGroup):
         except KeyError:
             raise ReportError(
                 "No GitLab token set in the [{0}] section".format(option))
-        self.gitlab = GitLab(self.url, self.token)
+        # Check SSL verification
+        try:
+            self.ssl_verify = distutils.util.strtobool(config["ssl_verify"])
+        except KeyError:
+            self.ssl_verify = GITLAB_SSL_VERIFY
+        self.gitlab = GitLab(self.url, self.token, self.ssl_verify)
         # Create the list of stats
         self.stats = [
             IssuesCreated(
