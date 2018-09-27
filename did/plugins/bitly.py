@@ -124,7 +124,7 @@ class BitlyStats(StatsGroup):
     """ Bit.ly """
 
     # Default order
-    order = 701
+    order = 750
 
     def __init__(self, option, name=None, parent=None, user=None):
         """ Process config, prepare investigator, construct stats """

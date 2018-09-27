@@ -124,7 +124,7 @@ class SentryGroupStats(StatsGroup):
     """ Sentry aggregated stats """
 
     # Default order
-    order = 601
+    order = 650
 
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
