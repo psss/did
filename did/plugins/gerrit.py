@@ -390,6 +390,6 @@ class GerritStats(StatsGroup):
             MergedChanges(option=option + '-merged', parent=self),
             SubmitedChanges(option=option + '-submitted', parent=self),
             PublishedDrafts(option=option + '-drafts', parent=self),
-            AddedPatches(option=option + '-added-patches', parent=self),
+            #AddedPatches(option=option + '-added-patches', parent=self),
             ReviewedChanges(option=option + '-reviewed', parent=self),
             ]

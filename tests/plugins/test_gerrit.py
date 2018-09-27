@@ -13,7 +13,7 @@ import did.base
 
 CONFIG = """
 [general]
-email = Bill Peck <bpeck@redhat.com>
+email = Dan Callaghan <dcallagh@redhat.com>
 
 [gerrit]
 type = gerrit
@@ -38,10 +38,10 @@ def test_gerrit_merged():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--gerrit-merged",
-        "--since", "2015-08-01",
-        "--until", "2015-08-31"])[0][0].stats[0].stats[1].stats
+        "--since", "2018-09-24",
+        "--until", "2018-09-30"])[0][0].stats[0].stats[1].stats
     assert any([
-        "GR#4347 - Fix jobs.rst" in unicode(change)
+        "GR#6299 - expand device.fw_version column" in unicode(change)
         for change in stats])
 
 
@@ -50,8 +50,8 @@ def test_gerrit_reviewed():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--gerrit-reviewed",
-        "--since", "2015-08-01",
-        "--until", "2015-08-31"])[0][0].stats[0].stats[5].stats
+        "--since", "2018-09-24",
+        "--until", "2018-09-30"])[0][0].stats[0].stats[4].stats
     assert any([
-        "GR#4380 - Fix memleak" in unicode(change)
+        "GR#6298 - redirect TESTOUT.log" in unicode(change)
         for change in stats])
