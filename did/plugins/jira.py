@@ -45,9 +45,6 @@ from did.utils import log, pretty, listed
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
 
-# Default identifier width
-DEFAULT_WIDTH = 4
-
 # Maximum number of results fetched at once
 MAX_RESULTS = 1000
 
@@ -82,7 +79,7 @@ class Issue(object):
     def __unicode__(self):
         """ Jira key and summary for displaying """
         return "{0}-{1} - {2}".format(
-            self.prefix, self.identifier.zfill(DEFAULT_WIDTH), self.summary)
+            self.prefix, self.identifier, self.summary)
 
     @staticmethod
     def search(query, stats):

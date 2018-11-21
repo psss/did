@@ -1,3 +1,4 @@
 bitly_api
 google-api-python-client
+oauth2client
 mock

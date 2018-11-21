@@ -9,15 +9,18 @@ Config example::
     url = https://gitlab.com/
     token = <authentication-token>
     login = <username>
+    ssl_verify = true
 
 The authentication token is required.
 Use ``login`` to override the user associated with the token.
 See the :doc:`config` documentation for details on using aliases.
+Use ``ssl_verify`` to enable/disable SSL verification (default: true)
 
 __ https://docs.gitlab.com/ce/api/
 
 """
 
+import distutils.util
 import requests
 import dateutil
 import itertools
@@ -32,10 +35,10 @@ GITLAB_API = 4
 # Identifier padding
 PADDING = 3
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 class GitLab(object):
     """ GitLab Investigator """
@@ -62,19 +65,22 @@ class GitLab(object):
     def _get_gitlab_api_json(self, endpoint):
         return self._get_gitlab_api(endpoint).json()
 
-    def _get_gitlab_api_list(self, endpoint, since=None, get_all_results=False):
+    def _get_gitlab_api_list(
+            self, endpoint, since=None, get_all_results=False):
         results = []
         result = self._get_gitlab_api(endpoint)
         results.extend(result.json())
-        if ('next' in result.links and 'url' in result.links['next'] and
+        while ('next' in result.links and 'url' in result.links['next'] and
                 get_all_results):
             result = self._get_gitlab_api_raw(result.links['next']['url'])
             json_result = result.json()
             results.extend(json_result)
-            # check if the last result is older than the since date
-            created_at = dateutil.parser.parse(json_result[-1]['created_at']).date()
-            if created_at < since.date:
-                return results
+            if since is not None:
+                # check if the last result is older than the since date
+                created_at = dateutil.parser.parse(
+                    json_result[-1]['created_at']).date()
+                if created_at < since.date:
+                    return results
         return results
 
     def get_user(self, username):
@@ -99,7 +105,8 @@ class GitLab(object):
     def get_project_mrs(self, project_id):
         if project_id not in self.project_mrs:
             query = 'projects/{0}/merge_requests'.format(project_id)
-            self.project_mrs[project_id] = self._get_gitlab_api_list(query, get_all_results=True)
+            self.project_mrs[project_id] = self._get_gitlab_api_list(
+                query, get_all_results=True)
         return self.project_mrs[project_id]
 
     def get_project_issue(self, project_id, issue_id):
@@ -110,12 +117,14 @@ class GitLab(object):
     def get_project_issues(self, project_id):
         if project_id not in self.project_issues:
             query = 'projects/{0}/issues'.format(project_id)
-            self.project_issues[project_id] = self._get_gitlab_api_list(query, get_all_results=True)
+            self.project_issues[project_id] = self._get_gitlab_api_list(
+                query, get_all_results=True)
         return self.project_issues[project_id]
 
-    def user_events(self, user_id, since):
+    def user_events(self, user_id, since, until):
         if GITLAB_API >= 4:
-            query = 'users/{0}/events'.format(user_id)
+            query = 'users/{0}/events?after={1}&before={2}'.format(
+                user_id, since, until)
             return self._get_gitlab_api_list(query, since, True)
         else:
             return []
@@ -125,7 +134,7 @@ class GitLab(object):
         if not self.user:
             self.user = self.get_user(user)
         if not self.events:
-            self.events = self.user_events(self.user['id'], since)
+            self.events = self.user_events(self.user['id'], since, until)
         result = []
         for event in self.events:
             created_at = dateutil.parser.parse(event['created_at']).date()
@@ -137,10 +146,10 @@ class GitLab(object):
         log.data(pretty(result))
         return result
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 class Issue(object):
     """ GitLab Issue """
@@ -152,7 +161,8 @@ class Issue(object):
         self.title = data['target_title']
 
     def iid(self):
-        return self.gitlabapi.get_project_issue(self.data['project_id'], self.data['target_id'])['iid']
+        return self.gitlabapi.get_project_issue(
+            self.data['project_id'], self.data['target_id'])['iid']
 
     def __unicode__(self):
         """ String representation """
@@ -164,16 +174,21 @@ class Issue(object):
 class MergeRequest(Issue):
 
     def iid(self):
-        return self.gitlabapi.get_project_mr(self.data['project_id'], self.data['target_id'])['iid']
+        return self.gitlabapi.get_project_mr(
+            self.data['project_id'], self.data['target_id'])['iid']
 
 
 class Note(Issue):
 
     def iid(self):
         if self.data['note']['noteable_type'] == 'Issue':
-            return self.gitlabapi.get_project_issue(self.data['project_id'], self.data['note']['noteable_id'])['iid']
+            return self.gitlabapi.get_project_issue(
+                self.data['project_id'],
+                self.data['note']['noteable_id'])['iid']
         elif self.data['note']['noteable_type'] == 'MergeRequest':
-            return self.gitlabapi.get_project_mr(self.data['project_id'], self.data['note']['noteable_id'])['iid']
+            return self.gitlabapi.get_project_mr(
+                self.data['project_id'],
+                self.data['note']['noteable_id'])['iid']
         else:
             return "unknown"
 
@@ -181,7 +196,6 @@ class Note(Issue):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 class IssuesCreated(Stats):
     """ Issue created """
@@ -262,10 +276,10 @@ class MergeRequestsClosed(Stats):
             MergeRequest(mr, self.parent.gitlab)
             for mr in results]
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 class GitLabStats(StatsGroup):
     """ GitLab work """
@@ -288,7 +302,12 @@ class GitLabStats(StatsGroup):
         except KeyError:
             raise ReportError(
                 "No GitLab token set in the [{0}] section".format(option))
-        self.gitlab = GitLab(self.url, self.token)
+        # Check SSL verification
+        try:
+            self.ssl_verify = distutils.util.strtobool(config["ssl_verify"])
+        except KeyError:
+            self.ssl_verify = GITLAB_SSL_VERIFY
+        self.gitlab = GitLab(self.url, self.token, self.ssl_verify)
         # Create the list of stats
         self.stats = [
             IssuesCreated(
