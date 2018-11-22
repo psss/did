@@ -1,191 +1,165 @@
 # coding: utf-8
 """
-Sentry stats such as commented, resolved issues
+Sentry stats such as commented and resolved issues.
 
 Configuration example::
 
     [sentry]
     type = sentry
-    url = http://sentry.usersys.redhat.com/api/0/
-    organization = baseos
+    url = https://sentry.io/api/0/
+    organization = team
     token = ...
 
-You need to generate authentication token
-at http://sentry.usersys.redhat.com/api/.
-The only scope you need to check is `org:read`.
+You need to generate authentication token at the server.
+The only scope you need to enable is `org:read`.
 """
 
 from __future__ import absolute_import, unicode_literals
 
-import json
-import urllib2
+import re
+import requests
+import dateutil
 
 from did.base import Config, ConfigError, ReportError
 from did.stats import Stats, StatsGroup
-from did.utils import log
+from did.utils import log, pretty, listed
 
+NEXT_PAGE = re.compile('<([^>]+)>; rel="next"; results="true"')
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Issue & Activity
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class Issue(object):
+    """ Sentry Issue """
+
+    def __init__(self, issue):
+        """ Initialize issue """
+        self.identifier = issue["shortId"]
+        self.title = issue["title"]
+
+    def __unicode__(self):
+        """ Unicode representation """
+        return "{0} - {1}".format(self.identifier, self.title)
+
+class Activity(object):
+    """ Sentry Activity """
+
+    def __init__(self, activity):
+        """ Initialize issue """
+        self.issue = Issue(activity['issue'])
+        self.user = activity['user']
+        self.kind = activity['type']
+        # Parse creation date
+        self.created = dateutil.parser.parse(activity["dateCreated"]).date()
+
+    def __unicode__(self):
+        """ Unicode representation """
+        return "{0} [{1}] {2}".format(self.created, self.kind, self.issue)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Sentry Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class SentryAPI(object):
+class Sentry(object):
     """ Sentry API """
 
-    def __init__(self, config):
+    def __init__(self, config, stats):
         """ Initialize API """
-        self.token = config['token']
+        self.url = config['url'].rstrip('/')
         self.organization = config['organization']
-        self.url = config['url']
-        self.cursor = ''
+        self.headers = {'Authorization': 'Bearer {0}'.format(config['token'])}
+        self._activities = None
+        self.stats = stats
 
-    def get_page(self):
-        """ Get organization activity in JSON representation """
-        url = (self.url + "organizations/" + self.organization
-                + "/activity/" + self.cursor)
-        headers = {'Authorization': 'Bearer {0}'.format(self.token)}
-        request = urllib2.Request(url, None, headers)
-        log.debug("Getting activity data from server.")
-        try:
-            response = urllib2.urlopen(request)
-        except urllib2.URLError as e:
-            log.error("An error encountered while getting data from server.")
-            log.debug(e)
-            raise ReportError("Could not get data. {0}.".format(str(e)))
+    def activities(self):
+        """ Return all activites (fetch only once) """
+        if self._activities is None:
+            self._activities = self._fetch_activities()
+        return self._activities
 
-        # get another page when paginating
-        link_header = response.info().getheader('Link').split(', ')
-        # will ALWAYS return prev and next in response
-        # if there is content on next page then results is set to true
-        if link_header[1].find('results="true"') > 0:
-            # set cursor for next page
-            self.cursor = '?&cursor=' + link_header[1].split('; ')[-1][8:-1]
-        else:
-            self.cursor = ''
-        return json.load(response)
+    def issues(self, kind, email):
+        """ Filter unique issues for given activity type and email """
+        return list(set([unicode(activity.issue)
+            for activity in self.activities()
+            if kind == activity.kind and activity.user['email'] == email]))
 
-    def get_data(self, since, until):
-        next_page = True
-        data = []
-        while next_page:
-            for activity in self.get_page():
-                # log.debug("Actvity: {0}".format(activity))
-                date = self.get_date(activity)
-                if (date > until):
-                    continue
-                if (date < since):
-                    next_page = False
-                    break
-                if (activity['type'] != "set_regression"):
-                    data.append(activity)
-        # erase cursor, so next stats will search from the start
-        self.cursor = ''
-        return data
-
-    @staticmethod
-    def get_date(activity):
-        return activity['dateCreated'][:10]
-
+    def _fetch_activities(self):
+        """ Get organization activity, handle pagination """
+        activities = []
+        # Prepare url of the first page
+        url = '{0}/organizations/{1}/activity/'.format(
+            self.url, self.organization)
+        while url:
+            # Fetch one page of activities
+            try:
+                log.debug('Fetching activity data: {0}'.format(url))
+                response = requests.get(url, headers=self.headers)
+                if not response.ok:
+                    log.error(response.text)
+                    raise ReportError('Failed to fetch Sentry activities.')
+                data = response.json()
+                log.data("Response headers:\n{0}".format(
+                    pretty(response.headers)))
+                log.debug("Fetched {0}.".format(listed(len(data), 'activity')))
+                log.data(pretty(data))
+                for activity in [Activity(item) for item in data]:
+                    # We've reached the last page, older records not relevant
+                    if activity.created < self.stats.options.since.date:
+                        return activities
+                    # Store only relevant activites (before until date)
+                    if activity.created < self.stats.options.until.date:
+                        activities.append(activity)
+            except requests.RequestException as error:
+                log.debug(error)
+                raise ReportError(
+                    'Failed to fetch Sentry activities from {0}'.format(url))
+            # Check for possible next page
+            try:
+                url = NEXT_PAGE.search(response.headers['Link']).groups()[0]
+            except AttributeError:
+                url = None
+        return activities
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Sentry Stats
+#  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class SentryStats(Stats):
+class ResolvedIssues(Stats):
+    """ Issues resolved """
+    def fetch(self):
+        log.info(u"Searching for issues resolved by {0}".format(self.user))
+        self.stats = self.parent.sentry.issues(
+            kind='set_resolved', email=self.user.email)
+
+class CommentedIssues(Stats):
+    """ Issues commented """
+    def fetch(self):
+        log.info(u"Searching issues commented by {0}".format(self.user))
+        self.stats = self.parent.sentry.issues(
+            kind='note', email=self.user.email)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Stats Group
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class SentryStats(StatsGroup):
     """ Sentry stats """
-
-    def __init__(self, sentry, option, name=None, parent=None):
-        super(SentryStats, self).__init__(
-            option=option, name=name, parent=parent)
-        self.options = parent.options
-        self.sentry = sentry
-
-    def filter_data(self, kind=['set_resolved', 'note']):
-        stats = []
-        log.debug("Query: Date range {0} - {1}".format(
-            str(self.options.since.date), str(self.options.until.date)))
-        for activity in self.issues:
-            if activity['type'] == kind:
-                stats.append(activity)
-        return stats
-
-    def append(self, record):
-        """ Append only if unique """
-
-        if record not in self.stats:
-            self.stats.append(record)
-
-    @property
-    def issues(self):
-        """ All issues in sentry under group """
-
-        return self.sentry.get_data(str(self.options.since.date),
-            str(self.options.until.date))
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Sentry Stats
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-class ResolvedIssues(SentryStats):
-    """ Resolved Issues """
-
-    def fetch(self):
-        log.info(u"Searching for resolved issues by {0}".format(self.user))
-        for activity in self.filter_data('set_resolved'):
-            if activity['user']['email'] == self.user.email:
-                record = "{0} - {1}".format(
-                    activity['issue']['shortId'], activity['issue']['title'])
-                self.append(record)
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Sentry Stats
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class CommentedIssues(SentryStats):
-    """ Commented on issues """
-
-    def fetch(self):
-        log.info(u"Searching for comments on issues by {0}".format(self.user))
-        for activity in self.filter_data('note'):
-            if activity['user']['email'] == self.user.email:
-                record = "{0} - {1}".format(
-                    activity['issue']['shortId'], activity['issue']['title'])
-                self.append(record)
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Sentry Stats Group
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class SentryGroupStats(StatsGroup):
-    """ Sentry aggregated stats """
 
     # Default order
     order = 650
 
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
+        # Check config for required fields
         config = dict(Config().section(option))
-        # Check Sentry url
-        if "url" not in config:
-            raise ConfigError(
-                "No url set in the [{0}] section".format(option))
-        # Check Sentry organization
-        if "organization" not in config:
-            raise ConfigError(
-                "No organization set in the [{0}] section".format(option))
-        # Check Sentry token
-        if "token" not in config:
-            raise ConfigError(
-                "No token set in the [{0}] section".format(option))
-        # Set up the Sentry API
-        sentry = SentryAPI(config=config)
-        # Construct the list of stats
+        for field in ['url', 'organization', 'token']:
+            if field not in config:
+                raise ConfigError(
+                    "No {0} set in the [{1}] section".format(field, option))
+        # Set up the Sentry API and construct the list of stats
+        self.sentry = Sentry(config=config, stats=self)
         self.stats = [
-            ResolvedIssues(sentry=sentry, option=option + '-resolved',
-                           parent=self),
-            CommentedIssues(sentry=sentry, option=option + '-commented',
-                            parent=self),
+            ResolvedIssues(option=option + '-resolved', parent=self),
+            CommentedIssues(option=option + '-commented', parent=self),
             ]

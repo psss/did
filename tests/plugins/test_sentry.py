@@ -14,7 +14,7 @@ email = "Did Tester" <the.did.tester@gmail.com>
 
 [sentry]
 type = sentry
-url = http://sentry.io/api/0/
+url = https://sentry.io/api/0/
 organization = did-tester
 """
 
