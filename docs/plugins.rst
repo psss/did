@@ -91,6 +91,13 @@ rt
     :members:
     :undoc-members:
 
+pagure
+------
+
+.. automodule:: did.plugins.pagure
+    :members:
+    :undoc-members:
+
 trac
 ----
 

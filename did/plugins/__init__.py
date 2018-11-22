@@ -24,6 +24,8 @@ This is the default plugin order:
     +----------+-----+
     | gitlab   | 380 |
     +----------+-----+
+    | pagure   | 390 |
+    +----------+-----+
     | trac     | 400 |
     +----------+-----+
     | trello   | 450 |
