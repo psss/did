@@ -1,6 +1,6 @@
 Name: did
 Version: 0.10
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Summary: What did you do last week, month, year?
 License: GPLv2+
@@ -10,7 +10,7 @@ Source: https://github.com/psss/did/releases/download/%{version}/did-%{version}.
 
 BuildArch: noarch
 BuildRequires: python-devel
-Requires: python-kerberos python-nitrate python-dateutil python-urllib2_kerberos python-bugzilla
+Requires: python-gssapi python-nitrate python-dateutil python-urllib2-gssapi python-bugzilla
 %{?el6:Requires: python-argparse}
 
 %description
@@ -43,6 +43,9 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Mon Feb 19 2018 Robbie Harwood <rharwood@redhat.com> 0.10-2
+- Port to python-gssapi
+
 * Wed Jan 11 2017 Martin Frodl <mfrodl@redhat.com> 0.10-1
 - New plugin for Google Apps
 - Document how to generate documentation locally

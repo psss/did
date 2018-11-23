@@ -79,7 +79,7 @@ clean:
 run_docker: build_docker
 	@echo
 	@echo "Please note: this is a first cut at doing a container version as a result; known issues:"
-	@echo "* kerberos auth may not be working correctly"
+	@echo "* GSSAPI auth may not be working correctly"
 	@echo "* container runs as privileged to access the conf file"
 	@echo "* output directory may not be quite right"
 	@echo
