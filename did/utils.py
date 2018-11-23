@@ -26,7 +26,7 @@ LOG_ERROR = logging.ERROR
 LOG_WARN = logging.WARN
 LOG_INFO = logging.INFO
 LOG_DEBUG = logging.DEBUG
-LOG_CACHE = 7
+LOG_DETAILS = 7
 LOG_DATA = 4
 LOG_ALL = 1
 
@@ -182,7 +182,7 @@ class Logging(object):
         LOG_WARN: "yellow",
         LOG_INFO: "blue",
         LOG_DEBUG: "green",
-        LOG_CACHE: "cyan",
+        LOG_DETAILS: "cyan",
         LOG_DATA: "magenta",
     }
     # Environment variable mapping
@@ -190,7 +190,7 @@ class Logging(object):
         0: LOG_WARN,
         1: LOG_INFO,
         2: LOG_DEBUG,
-        3: LOG_CACHE,
+        3: LOG_DETAILS,
         4: LOG_DATA,
         5: LOG_ALL,
     }
@@ -221,8 +221,8 @@ class Logging(object):
                 levelname = "ALL"
             elif record.levelno == LOG_DATA:
                 levelname = "DATA"
-            elif record.levelno == LOG_CACHE:
-                levelname = "CACHE"
+            elif record.levelno == LOG_DETAILS:
+                levelname = "DETAILS"
             else:
                 levelname = record.levelname
             # Map log level to appropriate color
@@ -248,13 +248,16 @@ class Logging(object):
         # Save log levels in the logger itself (backward compatibility)
         for level in Logging.LEVELS:
             setattr(logger, level, getattr(logging, level))
-        # Additional logging constants and methods for cache and xmlrpc
+        # Additional logging constants and methods for details and data
         logger.DATA = LOG_DATA
-        logger.CACHE = LOG_CACHE
+        logger.DETAILS = LOG_DETAILS
         logger.ALL = LOG_ALL
-        logger.cache = lambda message: logger.log(LOG_CACHE, message) # NOQA
-        logger.data = lambda message: logger.log(LOG_DATA, message) # NOQA
-        logger.all = lambda message: logger.log(LOG_ALL, message) # NOQA
+        logger.details = lambda message: logger.log(
+            LOG_DETAILS, message) # NOQA
+        logger.data = lambda message: logger.log(
+            LOG_DATA, message) # NOQA
+        logger.all = lambda message: logger.log(
+            LOG_ALL, message) # NOQA
         return logger
 
     def set(self, level=None):
@@ -267,7 +270,7 @@ class Logging(object):
             DEBUG=0 ... LOG_WARN (default)
             DEBUG=1 ... LOG_INFO
             DEBUG=2 ... LOG_DEBUG
-            DEBUG=3 ... LOG_CACHE
+            DEBUG=3 ... LOG_DETAILS
             DEBUG=4 ... LOG_DATA
             DEBUG=5 ... LOG_ALL (log all messages)
         """

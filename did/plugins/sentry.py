@@ -109,6 +109,7 @@ class Sentry(object):
                         return activities
                     # Store only relevant activites (before until date)
                     if activity.created < self.stats.options.until.date:
+                        log.details("Activity: {0}".format(activity))
                         activities.append(activity)
             except requests.RequestException as error:
                 log.debug(error)
