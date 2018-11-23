@@ -10,7 +10,7 @@ Source: https://github.com/psss/did/releases/download/%{version}/did-%{version}.
 
 BuildArch: noarch
 BuildRequires: python-devel
-Requires: python-gssapi python-nitrate python-dateutil python-urllib2-gssapi python-bugzilla
+Requires: python-gssapi python-nitrate python-dateutil python2-requests-gssapi python-bugzilla
 %{?el6:Requires: python-argparse}
 
 %description

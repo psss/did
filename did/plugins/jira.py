@@ -34,12 +34,11 @@ Notes:
 from __future__ import absolute_import, unicode_literals
 
 import re
-import json
 import urllib
 import urllib2
-import cookielib
+import requests
 import dateutil.parser
-import urllib_gssapi
+from requests_gssapi import HTTPSPNEGOAuth, DISABLED
 
 from did.utils import log, pretty, listed
 from did.base import Config, ReportError
@@ -88,14 +87,14 @@ class Issue(object):
         issues = []
         # Fetch data from the server in batches of MAX_RESULTS issues
         for batch in range(MAX_BATCHES):
-            result = stats.parent.session.open(
+            response = stats.parent.session.get(
                 "{0}/rest/api/latest/search?{1}".format(
                     stats.parent.url, urllib.urlencode({
                         "jql": query,
                         "fields": "summary,comment",
                         "maxResults": MAX_RESULTS,
                         "startAt": batch * MAX_RESULTS})))
-            data = json.loads(result.read())
+            data = response.json()
             log.debug("Batch {0} result: {1} fetched".format(
                 batch, listed(data["issues"], "issue")))
             log.data(pretty(data))
@@ -244,23 +243,17 @@ class JiraStats(StatsGroup):
     def session(self):
         """ Initialize the session """
         if self._session is None:
-            # http://stackoverflow.com/questions/8811269/
-            # http://www.techchorus.net/using-cookie-jar-urllib2
-            cookie = cookielib.CookieJar()
-            self._session = urllib2.build_opener(
-                urllib2.HTTPSHandler(debuglevel=0),
-                urllib2.HTTPRedirectHandler,
-                urllib2.HTTPCookieProcessor(cookie),
-                urllib_gssapi.HTTPSPNEGOAuthHandler)
-
+            self._session = requests.Session()
             log.debug("Connecting to {0}".format(self.auth_url))
             if self.auth_type == 'basic':
-                req = urllib2.Request(self.auth_url)
-                req.add_data('{ "username" : "%s", "password" : "%s" }'
-                    % (self.auth_username, self.auth_password))
-                req.add_header("Content-type", "application/json")
-                req.add_header("Accept", "application/json")
-                self._session.open(req)
+                data = {
+                    "username" : self.auth_username,
+                    "password" : self.auth_password }
+                headers = {
+                    "Content-type": "application/json",
+                    "Accept": "application/json"}
+                self._session.get(self.auth_url, headers=headers, data=data)
             else:
-                self._session.open(self.auth_url)
+                gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
+                self._session.get(self.auth_url, auth=gssapi_auth)
         return self._session

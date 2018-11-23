@@ -45,7 +45,7 @@ __xrequires__ = {
     ],
     'gssapi': [
         'gssapi',
-        'urllib_gssapi',
+        'requests_gssapi',
     ],
     'google': [
         'google-api-python-client',
