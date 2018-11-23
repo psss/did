@@ -70,6 +70,13 @@ jira
     :members:
     :undoc-members:
 
+sentry
+------
+
+.. automodule:: did.plugins.sentry
+    :members:
+    :undoc-members:
+
 nitrate
 -------
 
