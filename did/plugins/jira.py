@@ -252,8 +252,14 @@ class JiraStats(StatsGroup):
                 headers = {
                     "Content-type": "application/json",
                     "Accept": "application/json"}
-                self._session.get(self.auth_url, headers=headers, data=data)
+                response = self._session.get(
+                    self.auth_url, headers=headers, data=data)
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
-                self._session.get(self.auth_url, auth=gssapi_auth)
+                response = self._session.get(self.auth_url, auth=gssapi_auth)
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as error:
+                log.error(error)
+                raise ReportError('Jira authentication failed.')
         return self._session
