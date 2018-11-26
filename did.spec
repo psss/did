@@ -9,9 +9,10 @@ URL: https://github.com/psss/did
 Source: https://github.com/psss/did/releases/download/%{version}/did-%{version}.tar.bz2
 
 BuildArch: noarch
-BuildRequires: python-devel
-Requires: python-gssapi python-nitrate python-dateutil python2-requests-gssapi python-bugzilla
-%{?el6:Requires: python-argparse}
+BuildRequires: git
+BuildRequires: python2-devel
+Requires: python2-gssapi python2-requests-gssapi
+Requires: python2-nitrate python2-dateutil python2-bugzilla
 
 %description
 Comfortably gather status report data (e.g. list of committed
@@ -19,7 +20,7 @@ changes) for given week, month, quarter, year or selected date
 range. By default all available stats for this week are reported.
 
 %prep
-%setup -q
+%autosetup -S git
 
 %build
 
