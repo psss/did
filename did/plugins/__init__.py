@@ -103,9 +103,28 @@ def detect():
     file. The 'section' is the name of the configuration section
     as well as the option used to enable those particular stats.
     """
+
+    # Load plugins and config
+    plugins = load()
+    config = Config()
+
+    # Make sure that all sections have a valid plugin type defined
+    for section in config.sections():
+        if section == 'general':
+            continue
+        try:
+            type_ = config.item(section, 'type')
+        except ConfigError:
+            raise ConfigError(
+                "Plugin type not defined in section '{0}'.".format(section))
+        if type_ not in plugins:
+            raise ConfigError(
+                "Invalid plugin type '{0}' in section '{1}'.".format(
+                    type_, section))
+
     # Detect classes inherited from StatsGroup and return them sorted
     stats = []
-    for plugin in load():
+    for plugin in plugins:
         module = getattr(PLUGINS, plugin)
         for object_name in dir(module):
             statsgroup = getattr(module, object_name)
@@ -117,14 +136,14 @@ def detect():
                 continue
             # Search config for sections with type matching the plugin,
             # use order provided there or class default otherwise
-            for section in Config().sections(kind=plugin):
+            for section in config.sections(kind=plugin):
                 try:
-                    order = int(Config().item(section, "order"))
+                    order = int(config.item(section, "order"))
                 except ConfigError:
                     order = statsgroup.order
                 except ValueError:
                     log.warn("Invalid {0} stats order: '{1}'".format(
-                        section, Config().item(section, "order")))
+                        section, config.item(section, "order")))
                     order = statsgroup.order
                 stats.append((section, statsgroup, order))
                 log.info("Found {0}, an instance of {1}, order {2}".format(
