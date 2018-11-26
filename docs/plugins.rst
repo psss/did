@@ -7,6 +7,13 @@
     :members:
     :undoc-members:
 
+bitly
+-----
+
+.. automodule:: did.plugins.bitly
+    :members:
+    :undoc-members:
+
 bugzilla
 --------
 
@@ -42,6 +49,13 @@ github
     :members:
     :undoc-members:
 
+gitlab
+------
+
+.. automodule:: did.plugins.gitlab
+    :members:
+    :undoc-members:
+
 google
 ------
 
@@ -70,17 +84,24 @@ jira
     :members:
     :undoc-members:
 
-sentry
-------
-
-.. automodule:: did.plugins.sentry
-    :members:
-    :undoc-members:
-
 nitrate
 -------
 
 .. automodule:: did.plugins.nitrate
+    :members:
+    :undoc-members:
+
+pagure
+------
+
+.. automodule:: did.plugins.pagure
+    :members:
+    :undoc-members:
+
+redmine
+-------
+
+.. automodule:: did.plugins.redmine
     :members:
     :undoc-members:
 
@@ -91,10 +112,10 @@ rt
     :members:
     :undoc-members:
 
-pagure
+sentry
 ------
 
-.. automodule:: did.plugins.pagure
+.. automodule:: did.plugins.sentry
     :members:
     :undoc-members:
 
@@ -116,12 +137,5 @@ wiki
 ----
 
 .. automodule:: did.plugins.wiki
-    :members:
-    :undoc-members:
-
-bitly
------
-
-.. automodule:: did.plugins.bitly
     :members:
     :undoc-members:
