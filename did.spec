@@ -1,6 +1,6 @@
 Name: did
-Version: 0.10
-Release: 2%{?dist}
+Version: 0.11
+Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
 License: GPLv2+
@@ -44,8 +44,39 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
-* Mon Feb 19 2018 Robbie Harwood <rharwood@redhat.com> 0.10-2
+* Mon Nov 26 2018 Petr Šplíchal <psplicha@redhat.com> 0.11-1
+- Validate plugin types in config [fix #148]
+- Use email for searching Jira issues [fix #122]
+- Handle authentication errors in the Jira plugin
+- Update shebang to explicitly use python2
+- Add a new section Questions to docs [fix #155]
+- Raise error on unsuccessful request [fix #154]
+- New plugin for Pagure stats [fix #153]
+- Use requests-gssapi for Jira stats
+- Fix problems with the Sentry plugin
+- Merge configurable ssl verify for gitlab [#136]
+- Merge the improved gitlab search [#137]
+- Merge the new redmine plugin [#135]
+- Some minor adjustments for the redmine plugin
+- GitHub stats about reviewed PRs [#127]
+- Remove zero-fill from Jira issues [fix #149]
+- Add oauth2client to docs requirements [fix #152]
+- Adjust until limit of the sentry plugin [fix #151]
+- Update test data for the sentry & google plugins
+- Update Python macros to new packaging standards
 - Port to python-gssapi
+- Fixed issue with failing tests
+- Remove the idonethis plugin
+- Merge the new sentry plugin
+- Add basic Redmine support
+- Add basic GitLab support
+- Add search for subscribed bugs
+- Add did.spec to MANIFEST.in
+- Merge fix for bugs patched when created [#109]
+- Merge the new Bugzilla query syntax [#111]
+- Fetch only needed stats during GitHub testing
+- Merge support for pull request separation [#114]
+- Show month name / week number by default [#106]
 
 * Wed Jan 11 2017 Martin Frodl <mfrodl@redhat.com> 0.10-1
 - New plugin for Google Apps
