@@ -24,6 +24,7 @@ Table of Contents
     Plugins <plugins>
     Modules <modules>
     Contribute <contribute>
+    Questions <questions>
 
 Indices and Tables
 ==================
