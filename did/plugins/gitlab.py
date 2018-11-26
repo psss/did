@@ -69,6 +69,7 @@ class GitLab(object):
             self, endpoint, since=None, get_all_results=False):
         results = []
         result = self._get_gitlab_api(endpoint)
+        result.raise_for_status()
         results.extend(result.json())
         while ('next' in result.links and 'url' in result.links['next'] and
                 get_all_results):
