@@ -110,7 +110,7 @@ class Issue(object):
         for comment in self.comments:
             created = dateutil.parser.parse(comment["created"]).date()
             try:
-                if (comment["author"]["name"] == user.login and
+                if (comment["author"]["emailAddress"] == user.email and
                         created >= options.since.date and
                         created < options.until.date):
                     return True
@@ -131,7 +131,7 @@ class JiraCreated(Stats):
         query = (
             "project = '{0}' AND creator = '{1}' AND "
             "created >= {2} AND created <= {3}".format(
-                self.parent.project, self.user.login,
+                self.parent.project, self.user.email,
                 self.options.since, self.options.until))
         self.stats = Issue.search(query, stats=self)
 
@@ -160,7 +160,7 @@ class JiraResolved(Stats):
         query = (
             "project = '{0}' AND assignee = '{1}' AND "
             "resolved >= {2} AND resolved <= {3}".format(
-                self.parent.project, self.user.login,
+                self.parent.project, self.user.email,
                 self.options.since, self.options.until))
         self.stats = Issue.search(query, stats=self)
 
