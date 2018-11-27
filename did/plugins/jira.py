@@ -261,5 +261,5 @@ class JiraStats(StatsGroup):
                 response.raise_for_status()
             except requests.exceptions.HTTPError as error:
                 log.error(error)
-                raise ReportError('Jira authentication failed.')
+                raise ReportError('Jira authentication failed. Try kinit.')
         return self._session

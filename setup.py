@@ -15,7 +15,6 @@ version = '.'.join([version, release])
 install_requires = [
     'python_dateutil',
     'requests',
-    'gssapi',
     ]
 extras_require = {
     'bitly': ['bitly_api'],
@@ -24,6 +23,7 @@ extras_require = {
     'google': ['google-api-python-client', 'oauth2client'],
     'jira': ['requests_gssapi'],
     'redmine': ['feedparser'],
+    'rt': ['gssapi'],
     'tests': ['pytest', 'python-coveralls'],
     }
 extras_require['all'] = [dependency

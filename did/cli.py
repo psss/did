@@ -12,7 +12,6 @@ from __future__ import unicode_literals, absolute_import
 import re
 import sys
 import argparse
-import gssapi
 from dateutil.relativedelta import relativedelta as delta
 
 import did.base
@@ -204,8 +203,3 @@ def main(arguments=None):
         utils.info("Create at least a minimum config file {0}:\n{1}".format(
             did.base.Config.path(), did.base.Config.example().strip()))
         raise
-
-    except gssapi.exceptions.GSSError as error:
-        log.debug(error.gen_msg())
-        raise did.base.ConfigError(
-            "GSSAPI authentication failed. Try kinit.")
