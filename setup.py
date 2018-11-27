@@ -1,82 +1,60 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# Author: "Chris Ward" <cward@redhat.com>
+# coding: utf-8
 
 import re
 from setuptools import setup
 
-# Parse the version and release from master spec file
-# RPM spec file is in the parent directory
-spec_pth = 'did.spec'
-with open(spec_pth) as f:
-    lines = "\n".join(l.rstrip() for l in f)
+# Parse version and release from the spec file
+with open('did.spec') as specfile:
+    lines = "\n".join(line.rstrip() for line in specfile)
     version = re.search('Version: (.+)', lines).group(1).rstrip()
     release = re.search('Release: (\d+)', lines).group(1).rstrip()
+version = '.'.join([version, release])
 
-# acceptable version schema: major.minor[.patch][sub]
-__version__ = '.'.join([version, release])
-__pkg__ = 'did'
-__pkgdir__ = {}
-__pkgs__ = [
-    'did',
-    'did.plugins',
-]
-__provides__ = ['did']
-__desc__ = 'did - What did you do last week, month, year?'
-__scripts__ = ['bin/did']
-__irequires__ = [
-    'python_dateutil==2.4.2',
-    'python-bugzilla',  # FIXME: make optional? see __xrequires__
-]
-__xrequires__ = {
-    # `install` usage: pip install did[tests,docs]
-    # `develop` usage: python setup.py -e .[tests,docs]
-    'tests': [
-        'pytest==2.7.2',
-    ],
-    'docs': [
-        'sphinx==1.3.1',
-    ],
-    'bootstrap': [
-        'sphinx_bootstrap_theme',
-    ],
-    'bitly': [
-        'bitly_api',
-    ],
-    'gssapi': [
-        'gssapi',
-        'requests_gssapi',
-    ],
-    'google': [
-        'google-api-python-client',
-        'oauth2client',
-    ],
-    'redmine': [
-        'feedparser',
-    ],
-}
+# Prepare install requires and extra requires
+install_requires = [
+    'python_dateutil',
+    'requests',
+    'gssapi',
+    ]
+extras_require = {
+    'bitly': ['bitly_api'],
+    'bugzilla': ['python-bugzilla'],
+    'docs': ['sphinx', 'mock', 'sphinx_rtd_theme'],
+    'google': ['google-api-python-client', 'oauth2client'],
+    'jira': ['requests_gssapi'],
+    'redmine': ['feedparser'],
+    'tests': ['pytest', 'python-coveralls'],
+    }
+extras_require['all'] = [dependency
+    for extra in extras_require.itervalues()
+    for dependency in extra]
 
-pip_src = 'https://pypi.python.org/packages/source'
-__deplinks__ = []
+# Prepare the long description from readme
+with open('README.rst') as readme:
+    description = readme.read()
 
-# README is in the parent directory
-readme_pth = 'README.rst'
-with open(readme_pth) as _file:
-    readme = _file.read()
-
-github = 'https://github.com/psss/did'
-download_url = '%s/archive/master.zip' % github
-
-default_setup = dict(
-    url=github,
-    license='GPLv2',
-    author='Petr Splichal',
-    author_email='psplicha@redhat.com',
-    maintainer='Chris Ward',
-    maintainer_email='cward@redhat.com',
-    download_url=download_url,
+setup(
+    name='did',
+    description='did - What did you do last week, month, year?',
     long_description=readme,
-    data_files=[],
+    url='https://github.com/psss/did',
+    download_url='https://github.com/psss/did/archive/master.zip',
+
+    version=version,
+    provides=['did'],
+    packages=['did', 'did.plugins'],
+    scripts=['bin/did'],
+    install_requires=install_requires,
+    extras_require=extras_require,
+
+    author='Petr Šplíchal',
+    author_email='psplicha@redhat.com',
+    maintainer='Petr Šplíchal',
+    maintainer_email='psplicha@redhat.com',
+    license='GPLv3',
+
+    keywords=['status', 'report', 'tasks', 'work'],
     classifiers=[
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Natural Language :: English',
@@ -84,18 +62,9 @@ default_setup = dict(
         'Topic :: Office/Business',
         'Topic :: Utilities',
     ],
-    keywords=['information', 'postgresql', 'tasks', 'snippets'],
-    dependency_links=__deplinks__,
-    description=__desc__,
-    install_requires=__irequires__,
-    extras_require=__xrequires__,
-    name=__pkg__,
-    package_dir=__pkgdir__,
-    packages=__pkgs__,
-    provides=__provides__,
-    scripts=__scripts__,
-    version=__version__,
-    zip_safe=False,  # we reference __file__; see [1]
-)
 
-setup(**default_setup)
+    data_files=[],
+    dependency_links=[],
+    package_dir={},
+    zip_safe=False,
+)
