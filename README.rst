@@ -122,9 +122,14 @@ Install directly from Fedora/Copr repository::
 
     yum install did
 
-or use PIP (sudo required if not in a virtualenv)::
+Or use pip to install from Python Package Index::
 
     pip install did
+
+You may want to install some or all extra requires::
+
+    pip install did[plugin]
+    pip install did[all]
 
 To build and execute in a docker container, run::
 
@@ -184,7 +189,7 @@ Git:
 https://github.com/psss/did
 
 Docs:
-http://did.readthedocs.org
+https://did.readthedocs.io
 
 Issues:
 https://github.com/psss/did/issues
@@ -193,10 +198,10 @@ Releases:
 https://github.com/psss/did/releases
 
 Copr:
-http://copr.fedoraproject.org/coprs/psss/did
+https://copr.fedoraproject.org/coprs/psss/did
 
 PIP:
-https://pypi.python.org/pypi/did
+https://pypi.org/project/did
 
 
 Authors

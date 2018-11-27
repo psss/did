@@ -25,6 +25,26 @@ __ https://github.com/psss/did/issues
 __ https://www.python.org/dev/peps/pep-0008/
 
 
+Start
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Clone the git repository, create a virtual environment and use
+``pip`` to install ``did`` with all necessary dependencies. This
+will also link python modules from the repo so that you can test
+directly the modified code::
+
+    git clone https://github.com/psss/did
+    cd did
+    mkvirtualenv did
+    pip install --editable .[all]
+
+Install `virtualenvwrapper`__ if you do not have it already on
+your system. It makes working with virtual environments much
+easier.
+
+__ https://virtualenvwrapper.readthedocs.io/
+
+
 Makefile
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -110,8 +130,7 @@ Install pytest and coverage using yum::
 
 or pip::
 
-    # sudo required if not in a virtualenv
-    pip install pytest coveralls
+    pip install .[tests]
 
 See Travis CI and Coveralls for the latest test/coverage results:
 
@@ -124,7 +143,7 @@ Docs
 
 For building documentation locally install necessary modules::
 
-    pip install sphinx sphinx_rtd_theme mock
+    pip install .[docs]
 
 Building documentation is then quite straightforward::
 
