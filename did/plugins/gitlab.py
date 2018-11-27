@@ -125,7 +125,7 @@ class GitLab(object):
     def user_events(self, user_id, since, until):
         if GITLAB_API >= 4:
             query = 'users/{0}/events?after={1}&before={2}'.format(
-                user_id, since, until)
+                user_id, since - 1, until)
             return self._get_gitlab_api_list(query, since, True)
         else:
             return []
