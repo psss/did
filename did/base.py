@@ -14,6 +14,7 @@ import StringIO
 import xmlrpclib
 import ConfigParser
 from dateutil.relativedelta import MO as MONDAY
+from datetime import timedelta
 from ConfigParser import NoOptionError, NoSectionError
 from dateutil.relativedelta import relativedelta as delta
 
@@ -199,6 +200,14 @@ class Date(object):
     def __unicode__(self):
         """ String format for printing """
         return unicode(self.date)
+
+    def __add__(self, addend):
+        """ 'addend' days after the date """
+        return self.date + timedelta(days=addend)
+
+    def __sub__(self, subtrahend):
+        """ 'subtrahend' days before the date """
+        return self.date - timedelta(days=subtrahend)
 
     @staticmethod
     def this_week():

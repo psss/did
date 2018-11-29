@@ -107,6 +107,11 @@ def test_Date_period():
         assert unicode(since) == "2014-03-01"
         assert unicode(until) == "2015-03-01"
         assert period == "the last fiscal year"
+    # Adding and subtracting days
+    assert unicode(Date('2018-11-29') + 1) == '2018-11-30'
+    assert unicode(Date('2018-11-29') + 2) == '2018-12-01'
+    assert unicode(Date('2018-12-02') - 1) == '2018-12-01'
+    assert unicode(Date('2018-12-02') - 2) == '2018-11-30'
     did.base.TODAY = today
 
 
