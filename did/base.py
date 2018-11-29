@@ -203,7 +203,7 @@ class Date(object):
 
     def __add__(self, addend):
         """ 'addend' days after the date """
-        return self.date + timedelta(deys=addend)
+        return self.date + timedelta(days=addend)
 
     def __sub__(self, subtrahend):
         """ 'subtrahend' days before the date """
