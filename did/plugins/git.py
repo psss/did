@@ -11,10 +11,13 @@ Config example::
     [tests]
     type = git
     tests = /home/psss/git/tests/*
+    tools = /home/psss/git/tools
+    ignore_non_git = true
 
 Note that using ``*`` you can enable multiple git repositories.
 """
 
+import distutils.util
 import os
 import re
 import subprocess
@@ -30,9 +33,10 @@ from did.stats import Stats, StatsGroup
 
 class GitRepo(object):
     """ Git repository investigator """
-    def __init__(self, path):
+    def __init__(self, path, ignore_non_git=False):
         """ Initialize the path. """
         self.path = path
+        self.ignore_non_git = ignore_non_git
 
     def commits(self, user, options):
         """ List commits for given user. """
@@ -72,6 +76,8 @@ class GitRepo(object):
                         summary, 8 * " ", directory))
                 return commits
         else:
+            if not os.path.exists(os.path.join(self.path, ".git")) and self.ignore_non_git:
+                return []
             log.debug(errors.strip())
             log.warn("Unable to check commits in '{0}'".format(self.path))
             return []
@@ -83,11 +89,11 @@ class GitRepo(object):
 
 class GitCommits(Stats):
     """ Git commits """
-    def __init__(self, option, name=None, parent=None, path=None):
+    def __init__(self, option, name=None, parent=None, path=None, ignore_non_git=False):
         super(GitCommits, self).__init__(
             option=option, name=name, parent=parent)
         self.path = path
-        self.repo = GitRepo(self.path)
+        self.repo = GitRepo(self.path, ignore_non_git)
 
     def fetch(self):
         self.stats = self.repo.commits(self.user, self.options)
@@ -115,7 +121,9 @@ class GitStats(StatsGroup):
     def __init__(self, option, name=None, parent=None, user=None):
         name = "Work on {0}".format(option)
         StatsGroup.__init__(self, option, name, parent, user)
-        for repo, path in did.base.Config().section(option):
+        config = dict(did.base.Config().section(option))
+        ignore_non_git = distutils.util.strtobool(config.pop('ignore_non_git', 'false'))
+        for repo, path in config.items():
             if path.endswith('/*'):
                 try:
                     directories = os.listdir(path[:-1])
@@ -131,7 +139,9 @@ class GitStats(StatsGroup):
                     self.stats.append(GitCommits(
                         option="{0}-{1}".format(repo, repo_dir),
                         parent=self, path=repo_path,
-                        name="Work on {0}/{1}".format(repo, repo_dir)))
+                        name="Work on {0}/{1}".format(repo, repo_dir),
+                        ignore_non_git=ignore_non_git)
+                    )
             else:
                 self.stats.append(GitCommits(
                     option=option + "-" + repo, parent=self, path=path,
