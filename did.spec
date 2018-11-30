@@ -11,7 +11,7 @@ Source: https://github.com/psss/did/releases/download/%{version}/did-%{version}.
 BuildArch: noarch
 BuildRequires: git
 BuildRequires: python2-devel
-Requires: python2-gssapi python2-requests-gssapi
+Requires: python2-requests-gssapi
 Requires: python2-nitrate python2-dateutil python2-bugzilla
 
 %description
