@@ -40,6 +40,16 @@ def test_help_example():
     with pytest.raises(SystemExit):
         did.cli.main(["--help"])
 
+def test_debug():
+    """ Check the debug mode """
+    did.base.Config(config=EXAMPLE)
+    with pytest.raises(SystemExit):
+        did.cli.main("--help --debug")
+
+def test_smoke():
+    """ Run the smoke test """
+    did.cli.main("--test")
+
 def test_invalid_arguments():
     """ Complain about invalid arguments """
     did.base.Config(config=MINIMAL)

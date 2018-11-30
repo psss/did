@@ -30,14 +30,14 @@ class Options(object):
         """ Prepare the parser. """
         self.parser = argparse.ArgumentParser(
             usage="did [this|last] [week|month|quarter|year] [options]")
-        self.arguments = arguments
+        self._prepare_arguments(arguments)
         self.opt = self.arg = None
 
         # Enable debugging output (even before options are parsed)
-        if "--debug" in sys.argv:
+        if "--debug" in self.arguments:
             log.setLevel(utils.LOG_DEBUG)
         # Use a simple test config if smoke test requested
-        if "--test" in sys.argv:
+        if "--test" in self.arguments:
             did.base.Config(did.base.TEST_CONFIG)
 
         # Get the default output width from the config (if available)
@@ -97,17 +97,21 @@ class Options(object):
             "--test", action="store_true",
             help="Run a simple smoke test against the github server")
 
-    def parse(self, arguments=None):
-        """ Parse the options. """
-        # Split arguments if given as string and run the parser
+    def _prepare_arguments(self, arguments):
+        """ Prepare arguments (both direct and from command line) """
+        # Split arguments if given as string
         if arguments is not None:
-            self.arguments = arguments
-        if (self.arguments is not None
-                and isinstance(self.arguments, basestring)):
-            self.arguments = self.arguments.split()
+            if isinstance(arguments, basestring):
+                self.arguments = arguments.split()
+            else:
+                self.arguments = arguments
         # Otherwise properly decode command line arguments
-        if self.arguments is None:
+        else:
             self.arguments = [arg.decode("utf-8") for arg in sys.argv[1:]]
+
+    def parse(self):
+        """ Parse the options. """
+        # Run the parser
         opt, arg = self.parser.parse_known_args(self.arguments)
         self.opt = opt
         self.arg = arg
@@ -169,7 +173,7 @@ def main(arguments=None):
     """
     try:
         # Parse options, initialize gathered stats
-        options, header = Options().parse(arguments)
+        options, header = Options(arguments).parse()
         gathered_stats = []
 
         # Check for user email addresses (command line or config)
