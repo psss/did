@@ -10,18 +10,16 @@ joy = Joy of the week ;-)
 [nitrate]
 type = nitrate
 
-[bz]
+[bugzilla]
 type = bugzilla
 prefix = BZ
 url = https://bugzilla.redhat.com/xmlrpc.cgi
 
 [tools]
 type = git
-apps = /home/psss/git/apps
-
-[tests]
-type = git
-tests = /home/psss/git/tests/*
+did = /home/psss/git/did
+edd = /home/psss/git/edd
+fmf = /home/psss/git/fmf
 
 [github]
 type = github
@@ -32,6 +30,19 @@ login = psss
 type = gerrit
 url = https://example.org/gerrit/#/
 prefix = GR
+
+[gitlab]
+type = gitlab
+url = https://gitlab.com/
+token = <authentication-token>
+login = <username>
+ssl_verify = true
+
+[pagure]
+type = pagure
+url = https://pagure.io/api/0/
+login = <username>
+token = <authentication-token>
 
 [trac]
 type = trac
@@ -47,11 +58,22 @@ type = rt
 prefix = RT
 url = https://tracker.org/rt/Search/Results.tsv
 
-[jboss]
+[redmine]
+type = redmine
+url = https://redmine.example.com/
+login = <user_id>
+
+[jira]
 type = jira
 prefix = JIRA
 project = ORG
 url = https://issues.jboss.org/
+
+[sentry]
+type = sentry
+url = https://sentry.io/api/0/
+organization = team
+token = ...
 
 [wiki]
 type = wiki
