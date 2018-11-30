@@ -37,7 +37,7 @@ with open('README.rst') as readme:
 setup(
     name='did',
     description='did - What did you do last week, month, year?',
-    long_description=readme,
+    long_description=description,
     url='https://github.com/psss/did',
     download_url='https://github.com/psss/did/archive/master.zip',
 
