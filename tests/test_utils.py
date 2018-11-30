@@ -3,6 +3,10 @@
 # Author: "Chris Ward" <cward@redhat.com>
 
 from __future__ import unicode_literals, absolute_import
+import pytest
+import os
+
+import did
 
 
 def test_utils_import():
@@ -53,6 +57,34 @@ def test_log():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utils
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def test_import_success():
+    import sys
+    from did.utils import _import
+    s = _import("sys", True)
+    assert s is sys
+
+    s = _import("blah", True)
+    assert s is None
+
+
+def test_find_base():
+    top = os.path.dirname(os.path.dirname(did.__file__))
+    assert top == did.utils._find_base(__file__)
+    assert top == did.utils._find_base(os.path.dirname(__file__))
+
+
+def test_load_components():
+    top = os.path.dirname(did.__file__)
+    assert did.utils.load_components(top) > 0
+    assert did.utils.load_components("did.plugins") > 0
+
+
+def test_import_failure():
+    from did.utils import _import
+    with pytest.raises(ImportError):
+        _import("blah", False)
+
 
 def test_header():
     from did.utils import header

@@ -15,9 +15,9 @@ import argparse
 from dateutil.relativedelta import relativedelta as delta
 
 import did.base
-import did.utils as utils
-from did.utils import log
+from did import utils
 from did.stats import UserStats
+from did.utils import log
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Options
@@ -173,6 +173,13 @@ def main(arguments=None):
     """
     try:
         # Parse options, initialize gathered stats
+        utils.load_components("did.plugins", continue_on_error=True)
+
+        custom_plugins = did.base.Config().custom_plugins
+        if custom_plugins:
+            custom_plugins = [p.strip() for p in utils.split(custom_plugins)]
+            utils.load_components(*custom_plugins, continue_on_error=True)
+
         options, header = Options(arguments).parse()
         gathered_stats = []
 
@@ -208,7 +215,7 @@ def main(arguments=None):
         # Return all gathered stats objects
         return gathered_stats, team_stats
 
-    except did.base.ConfigFileError as error:
+    except did.base.ConfigFileError:
         utils.info("Create at least a minimum config file {0}:\n{1}".format(
             did.base.Config.path(), did.base.Config.example().strip()))
         raise

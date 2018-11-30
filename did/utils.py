@@ -4,10 +4,12 @@
 
 from __future__ import unicode_literals, absolute_import
 
+import importlib
+import logging
 import os
+import pkgutil
 import re
 import sys
-import logging
 import unicodedata
 from pprint import pformat as pretty
 
@@ -38,6 +40,119 @@ EMAIL_REGEXP = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utils
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def _find_base(path):
+    """
+    Given a path to a python file or package, find the top level directory
+    that isn't a valid package.
+    """
+    if not os.path.isdir(path):
+        path = os.path.dirname(path)
+
+    if not os.path.exists(os.path.join(path, "__init__.py")):
+        return None
+
+    while os.path.exists(os.path.join(path, "__init__.py")):
+        path = os.path.dirname(path)
+
+    return path
+
+
+def _import(path, continue_on_error):
+    """ Eats or raises import exceptions based on ``continue_on_error``. """
+    log.debug("Importing %s" % path)
+    try:
+        # importlib is available in stdlib from 2.7+
+        return importlib.import_module(path)
+    except Exception as ex:
+        log.exception(ex)
+        if not continue_on_error:
+            raise
+
+
+def _load_components(path, include=".*", exclude="test",
+                     continue_on_error=True):
+    num_loaded = 0
+    if path.endswith(".py"):
+        path, _ = os.path.splitext(path)
+
+    path = path.rstrip("/").replace("/", ".")
+
+    package = _import(path, continue_on_error)
+    if not package:
+        return 0
+
+    num_loaded += 1
+
+    do_include = re.compile(include).search if include else lambda x: True
+    do_exclude = re.compile(exclude).search if exclude else lambda x: False
+
+    if not hasattr(package, "__path__"):
+        return num_loaded
+
+    prefix = package.__name__ + "."
+    for _, name, is_pkg in pkgutil.iter_modules(path=package.__path__,
+                                                prefix=prefix):
+        if not name.startswith(prefix):
+            name = prefix + name
+        if is_pkg:
+            num_loaded += _load_components(name, include, exclude,
+                                           continue_on_error)
+        else:
+            if do_include(name) and not do_exclude(name):
+                _import(name, continue_on_error)
+                num_loaded += 1
+
+    return num_loaded
+
+
+def load_components(*paths, **kwargs):
+    """
+    Loads all components on the paths. Each path should be a package or module.
+    All components beneath a path are loaded. This method works whether the
+    package or module is on the filesystem or in an .egg. If it's in an egg,
+    the egg must already be on the ``PYTHONPATH``.
+
+    Args:
+        paths (str): A package or module to load
+
+    Keyword Args:
+        include (str): A regular expression of packages and modules to include.
+            Defaults to '.*'
+        exclude (str): A regular expression of packges and modules to exclude.
+            Defaults to 'test'
+        continue_on_error (bool): If True, continue importing even if something
+            raises an ImportError. If False, raise the first ImportError.
+
+    Returns:
+        int: The total number of modules loaded.
+
+    Raises:
+        ImportError
+    """
+    continue_on_error = kwargs.get("continue_on_error", True)
+    num_loaded = 0
+    for path in paths:
+        tmp = os.path.expandvars(os.path.expanduser(path))
+        fs_path = os.path.realpath(tmp)
+        if os.path.exists(fs_path):
+            base = _find_base(fs_path)
+            if not base:
+                msg = "%s is not a valid python module or package." % path
+                if continue_on_error:
+                    log.info(msg)
+                    continue
+                else:
+                    raise ImportError(path)
+            if base not in sys.path:
+                sys.path.insert(0, base)
+
+            target = os.path.relpath(fs_path, base)
+            num_loaded += _load_components(target, **kwargs)
+        else:
+            num_loaded += _load_components(path, **kwargs)
+    return num_loaded
+
 
 def eprint(text):
     """ Print (optionaly encoded) text """
