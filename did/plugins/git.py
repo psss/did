@@ -6,13 +6,17 @@ Config example::
 
     [tools]
     type = git
-    apps = /home/psss/git/apps
+    did = /home/psss/git/did
+    edd = /home/psss/git/edd
+    fmf = /home/psss/git/fmf
 
     [tests]
     type = git
-    tests = /home/psss/git/tests/*
+    fedora = /home/psss/tests/fedora/*
+    rhel = /home/psss/tests/rhel/*
 
-Note that using ``*`` you can enable multiple git repositories.
+Note that using an ``*`` you can enable multiple git repositories at
+once. Non git directories from the expansion are silently ignored.
 """
 
 import os
@@ -44,7 +48,7 @@ class GitRepo(object):
         if options.verbose:
             command.append("--name-only")
         log.info(u"Checking commits in {0}".format(self.path))
-        log.debug(pretty(command))
+        log.details(pretty(command))
 
         # Get the commit messages
         try:
@@ -127,6 +131,11 @@ class GitStats(StatsGroup):
                     repo_path = path.replace('*', repo_dir)
                     # Check directories only
                     if not os.path.isdir(repo_path):
+                        continue
+                    # Silently ignore non-git directories
+                    if not os.path.exists(os.path.join(repo_path, ".git")):
+                        log.debug("Skipping non-git directory '{0}'.".format(
+                            repo_path))
                         continue
                     self.stats.append(GitCommits(
                         option="{0}-{1}".format(repo, repo_dir),
