@@ -14,4 +14,4 @@ cases. If you have additional certificates installed or have them
 stored in a different location exporting the following environment
 variable might help you::
 
-    REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt
+    export REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt
