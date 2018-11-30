@@ -114,8 +114,36 @@ class Stats(object):
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+class StatsGroupPlugin(type):
+    registry = {}
+    ignore = set([
+            "StatsGroupPlugin",
+            "StatsGroup",
+            "EmptyStatsGroup",
+            "UserStats",
+        ])
+
+    def __init__(cls, name, bases, attrs):
+        if name in StatsGroupPlugin.ignore:
+            return
+
+        plugin_name = cls.__module__.split(".")[-1]
+        registry = StatsGroupPlugin.registry
+
+        if plugin_name in registry:
+            orig = registry[plugin_name]
+            log.warn("%s overriding %s" % (cls.__module__, orig.__module__))
+
+        registry[plugin_name] = cls
+
+
+# For python3, remove __metaclass__ and redefine as:
+# class StatsGroup(six.with_metaclass(StatsGroupPlugin, Stats)):
 class StatsGroup(Stats):
     """ Stats group """
+
+    # autoregister all subclasses
+    __metaclass__ = StatsGroupPlugin
 
     # Default order
     order = 500
@@ -157,17 +185,13 @@ class StatsGroup(Stats):
 class UserStats(StatsGroup):
     """ User statistics in one place """
 
-    def __init__(self, user=None, options=None):
+    def __init__(self, user=None, options=None, config=None):
         """ Initialize stats objects. """
         super(UserStats, self).__init__(
             option="all", user=user, options=options)
-        self.stats = []
+        config = config or did.base.Config()
         try:
-            import did.plugins
-            for section, statsgroup in did.plugins.detect():
-                self.stats.append(statsgroup(
-                    option=section, parent=self,
-                    user=self.user.clone(section) if self.user else None))
+            self.stats = self.configured_plugins(config)
         except did.base.ConfigFileError as error:
             # Missing config file is OK if building options (--help).
             # Otherwise raise the expection to suggest config example.
@@ -176,6 +200,31 @@ class UserStats(StatsGroup):
                 log.debug("This is OK for now as we're just building options.")
             else:
                 raise
+
+    def configured_plugins(self, cfg):
+        results = []
+        for section in cfg.sections():
+            if section == "general":
+                continue
+
+            data = dict(cfg.section(section, skip=set()))
+            type_ = data.get("type")
+
+            if not type_:
+                msg = "Plugin type not defined in section '{0}'."
+                raise did.base.ConfigError(msg.format(section))
+
+            if type_ not in StatsGroupPlugin.registry:
+                raise did.base.ConfigError(
+                    "Invalid plugin type '{0}' in section '{1}'.".format(
+                        type_, section))
+
+            user = self.user.clone(section) if self.user else None
+            statsgroup = StatsGroupPlugin.registry[type_]
+            obj = statsgroup(option=section, parent=self, user=user)
+            obj.order = data.get("order", statsgroup.order)
+            results.append(obj)
+        return sorted(results, key=lambda x: x.order)
 
     def add_option(self, parser):
         """ Add options for each stats group. """

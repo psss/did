@@ -109,6 +109,13 @@ class Config(object):
                 "Unable to read the config file '{0}'.".format(path))
 
     @property
+    def custom_plugins(self):
+        try:
+            return self.parser.get("general", "custom_plugins")
+        except:
+            return None
+
+    @property
     def email(self):
         """ User email(s) """
         try:
