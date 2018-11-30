@@ -13,6 +13,18 @@ Comfortably gather status report data (e.g. list of committed
 changes) for given week, month, quarter, year or selected date
 range. By default all available stats for this week are reported.
 
+Based on the config, ``did`` explores user's activity for given
+tools in provided time frame. For example checks all configured
+git repositories for the list of commits or contacts Bugzilla to
+search for bugs created, modified or closed.
+
+Some information (like git commits) is gathered from the local
+file system, but usually individual plugins are contacting remote
+API of the tool to query for the latest data. For tools which
+provide a public API there is no need for authentication. Some
+plugins support Kerberos, other need to create an authentication
+token. See individual plugin documentation for details.
+
 
 Synopsis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
