@@ -19,7 +19,6 @@ import did.utils as utils
 from did.utils import log
 from did.stats import UserStats
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Options
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,6 +36,9 @@ class Options(object):
         # Enable debugging output (even before options are parsed)
         if "--debug" in sys.argv:
             log.setLevel(utils.LOG_DEBUG)
+        # Use a simple test config if smoke test requested
+        if "--test" in sys.argv:
+            did.base.Config(did.base.TEST_CONFIG)
 
         # Get the default output width from the config (if available)
         try:
@@ -91,6 +93,9 @@ class Options(object):
         group.add_argument(
             "--debug", action="store_true",
             help="Turn on debugging output, do not catch exceptions")
+        group.add_argument(
+            "--test", action="store_true",
+            help="Run a simple smoke test against the github server")
 
     def parse(self, arguments=None):
         """ Parse the options. """

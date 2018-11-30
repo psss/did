@@ -35,6 +35,17 @@ MAX_WIDTH = 79
 # Today's date
 TODAY = datetime.date.today()
 
+TEST_CONFIG = """
+[general]
+width = 79
+email = Petr Šplíchal <psplicha@redhat.com>
+
+[github]
+type = github
+url = https://api.github.com/
+login = psss
+"""
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Exceptions
