@@ -246,14 +246,8 @@ class JiraStats(StatsGroup):
             self._session = requests.Session()
             log.debug("Connecting to {0}".format(self.auth_url))
             if self.auth_type == 'basic':
-                data = {
-                    "username" : self.auth_username,
-                    "password" : self.auth_password }
-                headers = {
-                    "Content-type": "application/json",
-                    "Accept": "application/json"}
-                response = self._session.get(
-                    self.auth_url, headers=headers, data=data)
+                basic_auth = (self.auth_username, self.auth_password)
+                response = self._session.get(self.auth_url, auth=basic_auth)
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
                 response = self._session.get(self.auth_url, auth=gssapi_auth)
