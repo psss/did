@@ -12,7 +12,7 @@ Config example::
     ssl_verify = true
 
 The authentication token is required.
-Use ``login`` to override the user associated with the token.
+Use ``login`` to override user name detected from the email address.
 See the :doc:`config` documentation for details on using aliases.
 Use ``ssl_verify`` to enable/disable SSL verification (default: true)
 
@@ -63,7 +63,10 @@ class GitLab(object):
         return self._get_gitlab_api_raw(url)
 
     def _get_gitlab_api_json(self, endpoint):
-        return self._get_gitlab_api(endpoint).json()
+        log.debug("Query: {0}".format(endpoint))
+        result = self._get_gitlab_api(endpoint).json()
+        log.data(pretty(result))
+        return result
 
     def _get_gitlab_api_list(
             self, endpoint, since=None, get_all_results=False):
@@ -87,10 +90,11 @@ class GitLab(object):
     def get_user(self, username):
         query = 'users?username={0}'.format(username)
         result = self._get_gitlab_api_json(query)
-        if result:
+        try:
             return result[0]
-        else:
-            return None
+        except IndexError:
+            raise ReportError(
+                "Unable to find user '{0}' on GitLab.".format(username))
 
     def get_project(self, project_id):
         if project_id not in self.projects:
@@ -144,7 +148,6 @@ class GitLab(object):
                     since.date <= created_at and until.date >= created_at):
                 result.append(event)
         log.debug("Result: {0} fetched".format(listed(len(result), "item")))
-        log.data(pretty(result))
         return result
 
 
