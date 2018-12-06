@@ -41,7 +41,7 @@ by configuring the ``storage`` option.
 import os
 import httplib2
 
-from apiclient import discovery
+from googleapiclient import discovery
 from oauth2client import tools
 from oauth2client.file import Storage
 from oauth2client.client import OAuth2WebServerFlow
