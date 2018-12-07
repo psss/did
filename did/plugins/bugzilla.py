@@ -243,7 +243,7 @@ class Bug(object):
             # Description (comment #0) is not considered as a comment
             if comment["count"] == 0:
                 continue
-            if (comment["author"] == user.email and
+            if (comment.get('author', comment.get('creator')) == user.email and
                     comment["creation_time"] >= self.options.since.date and
                     comment["creation_time"] < self.options.until.date):
                 return True
