@@ -38,6 +38,7 @@ def test_config_basic_auth():
                     auth_type = basic
                     auth_username = tom
                     auth_password = motak
+                    ssl_verify = 0
                     """)
     stats = JiraStats("jira")
 
@@ -63,6 +64,11 @@ def test_config_gss_and_password():
     assert_conf_error(CONFIG + "\n"
                       + "auth_type = gss\n"
                       + "auth_password = tom\n")
+
+def test_config_invaliad_ssl_verify():
+    """  Test ssl_verify with wrong bool value """
+    assert_conf_error(CONFIG + "\n"
+                      + "ssl_verify = ss\n")
 
 def assert_conf_error(config, expected_error=ReportError):
     """  Test given configuration and check that given error type is raised """
