@@ -49,7 +49,7 @@ from did.utils import log, pretty, listed, split
 from did.stats import Stats, StatsGroup
 
 DEFAULT_FILTERS = [
-    "createCard", "updateCard",
+    "commentCard", "createCard", "updateCard",
     "updateCard:idList", "updateCard:closed",
     "updateCheckItemStateOnCard"]
 
@@ -256,6 +256,7 @@ class TrelloStatsGroup(StatsGroup):
             'Boards': {},
             'Lists': {},
             'Cards': {
+                'commentCard': TrelloCards,
                 'updateCard': TrelloCards,
                 'updateCard:closed': TrelloCardsClosed,
                 'updateCard:idList': TrelloCardsMoved,
