@@ -1,7 +1,7 @@
 # coding: utf-8
 
 """
-Google Apps stats such as attended events or sent emails
+Google Apps stats such as attended events, completed tasks or sent emails
 
 Config example::
 
@@ -9,14 +9,14 @@ Config example::
     type = google
     client_id = <client_id>
     client_secret = <client_secret>
-    apps = calendar
+    apps = calendar,tasks
     storage = /home/diduser/.did/google-api-credentials.json
 
 To retrieve data via Google API, you will need to create access credentials
 (``client_id`` and ``client_secret``) first. Perform the following steps to
 create such a pair:
 
-    1. Open https://console.developers.google.com/flows/enableapi?apiid=calendar
+    1. Open https://console.developers.google.com/flows/enableapi?apiid=calendar,tasks
     2. In the drop-down menu, select *Create project* and click *Continue*
     3. Click *Go to credentials*
     4. In the *Where will you be calling the API from?* drop-down menu, choose
@@ -30,7 +30,7 @@ create such a pair:
 
 The ``apps`` configuration option defines the scope of user data the
 application will request (read-only) access to. Currently, the only supported
-value is ``calendar``.
+values are ``calendar`` and ``tasks``.
 
 During the first run, user will be asked to grant the plugin access rights to
 selected apps. If the user approves the request, this decision is remembered by
@@ -41,7 +41,7 @@ by configuring the ``storage`` option.
 import os
 import httplib2
 
-from apiclient import discovery
+from googleapiclient import discovery
 from oauth2client import tools
 from oauth2client.file import Storage
 from oauth2client.client import OAuth2WebServerFlow
@@ -151,6 +151,37 @@ class Event(object):
         return False
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Google Tasks
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class GoogleTasks(object):
+    """ Google Tasks functions """
+    def __init__(self, http):
+        self.service = discovery.build("tasks", "v1", http=http)
+
+    def tasks(self, **kwargs):
+        """ Fetch tasks specified criteria """
+        tasks_result = self.service.tasks().list(**kwargs).execute()
+        return [Task(task) for task in tasks_result.get("items", [])]
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Task
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class Task(object):
+    """ Google Tasks task """
+    def __init__(self, dict):
+        """ Create Task object from dictionary returned by Google API """
+        self.__dict__ = dict
+
+    def __unicode__(self):
+        """ String representation """
+        return self.title if hasattr(self, "title") else "(No title)"
+
+    def __getitem__(self, name):
+        return self.__dict__.get(name, None)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -165,6 +196,7 @@ class GoogleStatsBase(Stats):
         except AttributeError:
             log.debug("Failed to initialize time range, skipping")
         self._events = None
+        self._tasks = None
 
     @property
     def events(self):
@@ -174,6 +206,16 @@ class GoogleStatsBase(Stats):
                 calendarId="primary", singleEvents=True, orderBy="startTime",
                 timeMin=self.since, timeMax=self.until)
         return self._events
+
+    @property
+    def tasks(self):
+        """ All completed taskswithin specified time range """
+        if self._tasks is None:
+            self._tasks = self.parent.tasks.tasks(
+                tasklist="@default", showCompleted="true", showHidden="true",
+                completedMin=self.since, completedMax=self.until)
+        log.info(u"NB TASKS {0}".format(len(self._tasks)))
+        return self._tasks
 
 class GoogleEventsOrganized(GoogleStatsBase):
     """ Events organized """
@@ -192,6 +234,12 @@ class GoogleEventsAttended(GoogleStatsBase):
             event for event in self.events
             if event.attended_by(self.user.email)
             ]
+
+class GoogleTasksCompleted(GoogleStatsBase):
+    """ Tasks completed """
+    def fetch(self):
+        log.info(u"Searching for completed tasks by {0}".format(self.user))
+        self.stats = self.tasks
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Google Stats Group
@@ -216,10 +264,13 @@ class GoogleStatsGroup(StatsGroup):
 
         http = authorized_http(client_id, client_secret, apps, storage)
         self.calendar = GoogleCalendar(http)
+        self.tasks = GoogleTasks(http)
 
         self.stats = [
             GoogleEventsOrganized(
                 option=option + "-events-organized", parent=self),
             GoogleEventsAttended(
                 option=option + "-events-attended", parent=self),
+            GoogleTasksCompleted(
+                option=option + "-tasks-completed", parent=self),
             ]
