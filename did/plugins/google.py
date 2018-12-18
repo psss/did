@@ -12,6 +12,12 @@ Config example::
     apps = calendar
     storage = /home/diduser/.did/google-api-credentials.json
 
+Make sure you have additional dependencies of the google plugin
+installed on your system::
+
+    sudo dnf install python2-google-api-client      # Fedora
+    pip install did[google]                         # pip
+
 To retrieve data via Google API, you will need to create access credentials
 (``client_id`` and ``client_secret``) first. Perform the following steps to
 create such a pair:
