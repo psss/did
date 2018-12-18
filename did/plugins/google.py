@@ -215,7 +215,7 @@ class GoogleStatsBase(Stats):
 
     @property
     def tasks(self):
-        """ All completed taskswithin specified time range """
+        """ All completed tasks within specified time range """
         if self._tasks is None:
             self._tasks = self.parent.tasks.tasks(
                 tasklist="@default", showCompleted="true", showHidden="true",
