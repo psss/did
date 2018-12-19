@@ -64,6 +64,11 @@ def test_config_gss_and_password():
                       + "auth_type = gss\n"
                       + "auth_password = tom\n")
 
+def test_config_invaliad_ssl_verify():
+    """  Test ssl_verify with wrong bool value """
+    assert_conf_error(CONFIG + "\n"
+                      + "ssl_verify = ss\n")
+
 def assert_conf_error(config, expected_error=ReportError):
     """  Test given configuration and check that given error type is raised """
     did.base.Config(config)
@@ -73,4 +78,3 @@ def assert_conf_error(config, expected_error=ReportError):
     except ReportError as e:
         error = e
     assert type(error) == expected_error
-    

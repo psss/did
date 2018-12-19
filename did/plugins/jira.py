@@ -9,6 +9,7 @@ Configuration example (GSS authentication)::
     prefix = JIRA
     project = ORG
     url = https://issues.jboss.org/
+    ssl_verify = true
 
 Configuration example (basic authentication)::
 
@@ -23,7 +24,8 @@ Configuration example (basic authentication)::
     auth_password = password
 
 Notes:
-
+* Optional parameter ``ssl_verify`` can be used to enable/disable
+  SSL verification (default: true)
 * ``auth_url`` parameter is optional. If not provided,
   ``url + "/step-auth-gss"`` will be used for authentication.
 * ``auth_type`` parameter is optional, default value is 'gss'.
@@ -38,7 +40,9 @@ import urllib
 import urllib2
 import requests
 import dateutil.parser
+import distutils.util
 from requests_gssapi import HTTPSPNEGOAuth, DISABLED
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 from did.utils import log, pretty, listed
 from did.base import Config, ReportError
@@ -52,6 +56,9 @@ MAX_BATCHES = 100
 
 # Supported authentication types
 AUTH_TYPES = ["gss", "basic"]
+
+# Enable ssl verify
+SSL_VERIFY = True
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
@@ -219,6 +226,17 @@ class JiraStats(StatsGroup):
                 raise ReportError(
                     "`auth_password` is only valid for basic authentication"
                     + " (section [{0}])".format(option))
+        # SSL verification
+        if "ssl_verify" in config:
+            try:
+                self.ssl_verify = distutils.util.strtobool(
+                    config["ssl_verify"])
+            except Exception as error:
+                raise ReportError(
+                    "Error when parsing 'ssl_verify': {0}".format(error))
+        else:
+            self.ssl_verify = SSL_VERIFY
+
         # Make sure we have project set
         if "project" not in config:
             raise ReportError(
@@ -245,12 +263,18 @@ class JiraStats(StatsGroup):
         if self._session is None:
             self._session = requests.Session()
             log.debug("Connecting to {0}".format(self.auth_url))
+            # Disable SSL warning when ssl_verify is False
+            if not self.ssl_verify:
+                requests.packages.urllib3.disable_warnings(
+                    InsecureRequestWarning)
             if self.auth_type == 'basic':
                 basic_auth = (self.auth_username, self.auth_password)
-                response = self._session.get(self.auth_url, auth=basic_auth)
+                response = self._session.get(
+                    self.auth_url, auth=basic_auth, verify=self.ssl_verify)
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
-                response = self._session.get(self.auth_url, auth=gssapi_auth)
+                response = self._session.get(
+                    self.auth_url, auth=gssapi_auth, verify=self.ssl_verify)
             try:
                 response.raise_for_status()
             except requests.exceptions.HTTPError as error:

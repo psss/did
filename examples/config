@@ -68,6 +68,7 @@ type = jira
 prefix = JIRA
 project = ORG
 url = https://issues.jboss.org/
+ssl_verify = true
 
 [sentry]
 type = sentry
