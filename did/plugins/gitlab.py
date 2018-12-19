@@ -11,7 +11,8 @@ Config example::
     login = <username>
     ssl_verify = true
 
-The authentication token is required.
+The authentication token is required. Create it in the GitLab web
+interface (select ``api`` as the desired scope).
 Use ``login`` to override user name detected from the email address.
 See the :doc:`config` documentation for details on using aliases.
 Use ``ssl_verify`` to enable/disable SSL verification (default: true)
