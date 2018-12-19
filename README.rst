@@ -223,7 +223,7 @@ Petr Šplíchal, Karel Šrot, Lukáš Zachar, Matěj Cepl, Ondřej Pták,
 Chris Ward, Tomáš Hofman, Martin Mágr, Stanislav Kozina, Paul
 Belanger, Eduard Trott, Martin Frodl, Randy Barlow, Alois Mahdal,
 Evgeni Golov, Stanislav Ochotnický, Maroš Kopec, Robbie Harwood,
-Christopher Sams and Thomas Heute.
+Christopher Sams, Thomas Heute and Giulio Fidente.
 
 
 Copyright
