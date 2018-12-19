@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-# @Author: Eduard Trott
-# Test Board: https://trello.com/b/sH1cMiyg/public-test-board
+# coding: utf-8
+# Test Board: https://trello.com/b/YcOfywBd/did-testing
 
 """ Tests for the Trello plugin """
 
@@ -14,14 +13,14 @@ import did.base
 #  Constants
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-INTERVAL = "--since 2015-10-01 --until 2015-10-03"
+INTERVAL = "--since 2018-12-19 --until 2018-12-19"
 
 CONFIG = """
 [general]
-email = "Eduard Trott" <etrott@redhat.com>
+email = "Did Tester" <the.did.tester@gmail.com>
 [trello]
 type = trello
-user = maybelinot
+user = didtester
 """
 
 
@@ -35,7 +34,7 @@ def test_trello_cards_created():
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0].stats
     print stats
     assert any([
-        "Card2" in unicode(stat) for stat in stats])
+        "CreatedCard" in unicode(stat) for stat in stats])
 
 
 def test_trello_cards_updated():
@@ -44,7 +43,7 @@ def test_trello_cards_updated():
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[1].stats
     print stats
     assert any([
-        "Card4"
+        "UpdatedCard"
         in unicode(stat) for stat in stats])
 
 
@@ -54,32 +53,42 @@ def test_trello_cards_closed():
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[2].stats
     print stats
     assert any([
-        "Archived Card: closed"
+        "ClosedCard: closed"
+        in unicode(stat) for stat in stats])
+
+
+def test_trello_cards_commented():
+    """ Commented cards """
+    did.base.Config(CONFIG)
+    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[3].stats
+    print stats
+    assert any([
+        "CommentedCard"
         in unicode(stat) for stat in stats])
 
 
 def test_trello_cards_moved():
     """ Moved cards """
     did.base.Config(CONFIG)
-    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[3].stats
+    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[4].stats
     print stats
     assert any([
-        "[Card3] moved from [List1] to [List3]"
+        "[MovedCard] moved from [new] to [active]"
         in unicode(stat) for stat in stats])
 
 
 def test_trello_checklists_checkitem():
     """ Completed Checkitems in checklists """
     did.base.Config(CONFIG)
-    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[4].stats
+    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[5].stats
     print stats
     # print[unicode(stat) for stat in stats]
     assert any([
-        "Card1: CheckItem3"
+        "ChecklistCard: CheckItem"
         in unicode(stat) for stat in stats])
 
 
-def test_trello_missing_apikey():
+def test_trello_missing_username():
     """ Missing username """
     did.base.Config("[trello]\ntype = trello")
     with pytest.raises(did.base.ReportError):

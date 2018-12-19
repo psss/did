@@ -49,7 +49,7 @@ from did.utils import log, pretty, listed, split
 from did.stats import Stats, StatsGroup
 
 DEFAULT_FILTERS = [
-    "createCard", "updateCard",
+    "commentCard", "createCard", "updateCard",
     "updateCard:idList", "updateCard:closed",
     "updateCheckItemStateOnCard"]
 
@@ -149,12 +149,28 @@ class TrelloCardsCreated(TrelloStats):
 #  Trello updateCard
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class TrelloCards(TrelloStats):
+class TrelloCardsUpdated(TrelloStats):
     """ Trello cards updated"""
 
     def fetch(self):
         log.info(
             "Searching for cards updated in %s by %s",
+            self.parent.option, self.user)
+        actions = [
+            act['data']['card']['name']
+            for act in self.trello.get_actions(
+                filters=self.filt,
+                since=self.options.since.date,
+                before=self.options.until.date)]
+        self.stats = sorted(list(set(actions)))
+
+
+class TrelloCardsCommented(TrelloStats):
+    """ Trello cards commented"""
+
+    def fetch(self):
+        log.info(
+            "Searching for cards commented in %s by %s",
             self.parent.option, self.user)
         actions = [
             act['data']['card']['name']
@@ -256,7 +272,8 @@ class TrelloStatsGroup(StatsGroup):
             'Boards': {},
             'Lists': {},
             'Cards': {
-                'updateCard': TrelloCards,
+                'commentCard': TrelloCardsCommented,
+                'updateCard': TrelloCardsUpdated,
                 'updateCard:closed': TrelloCardsClosed,
                 'updateCard:idList': TrelloCardsMoved,
                 'createCard': TrelloCardsCreated},
