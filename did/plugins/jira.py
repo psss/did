@@ -23,9 +23,9 @@ Configuration example (basic authentication)::
     auth_username = username
     auth_password = password
 
-
 Notes:
-Use ``ssl_verify`` to enable/disable SSL verification (default: true)
+* Optional parameter ``ssl_verify`` can be used to enable/disable
+  SSL verification (default: true)
 * ``auth_url`` parameter is optional. If not provided,
   ``url + "/step-auth-gss"`` will be used for authentication.
 * ``auth_type`` parameter is optional, default value is 'gss'.
@@ -39,10 +39,10 @@ import re
 import urllib
 import urllib2
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import dateutil.parser
 import distutils.util
 from requests_gssapi import HTTPSPNEGOAuth, DISABLED
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 from did.utils import log, pretty, listed
 from did.base import Config, ReportError
@@ -67,13 +67,12 @@ SSL_VERIFY = True
 class Issue(object):
     """ Jira issue investigator """
 
-    def __init__(self, issue=None, prefix=None, ssl_verify=SSL_VERIFY):
+    def __init__(self, issue=None, prefix=None):
         """ Initialize issue """
         if issue is None:
             return
         self.issue = issue
         self.key = issue["key"]
-        self.ssl_verify = ssl_verify
         self.summary = issue["fields"]["summary"]
         self.comments = issue["fields"]["comment"]["comments"]
         matched = re.match(r"(\w+)-(\d+)", self.key)
@@ -230,9 +229,11 @@ class JiraStats(StatsGroup):
         # SSL verification
         if "ssl_verify" in config:
             try:
-                self.ssl_verify = distutils.util.strtobool(config["ssl_verify"])
-            except Exception as e:
-                raise ReportError("Error when parse `ssl_verify`: %s" %str(e))
+                self.ssl_verify = distutils.util.strtobool(
+                    config["ssl_verify"])
+            except Exception as error:
+                raise ReportError(
+                    "Error when parsing 'ssl_verify': {0}".format(error))
         else:
             self.ssl_verify = SSL_VERIFY
 
@@ -264,13 +265,16 @@ class JiraStats(StatsGroup):
             log.debug("Connecting to {0}".format(self.auth_url))
             # Disable SSL warning when ssl_verify is False
             if not self.ssl_verify:
-                requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+                requests.packages.urllib3.disable_warnings(
+                    InsecureRequestWarning)
             if self.auth_type == 'basic':
                 basic_auth = (self.auth_username, self.auth_password)
-                response = self._session.get(self.auth_url, auth=basic_auth, verify=self.ssl_verify)
+                response = self._session.get(
+                    self.auth_url, auth=basic_auth, verify=self.ssl_verify)
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
-                response = self._session.get(self.auth_url, auth=gssapi_auth, verify=self.ssl_verify)
+                response = self._session.get(
+                    self.auth_url, auth=gssapi_auth, verify=self.ssl_verify)
             try:
                 response.raise_for_status()
             except requests.exceptions.HTTPError as error:

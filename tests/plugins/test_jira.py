@@ -38,7 +38,6 @@ def test_config_basic_auth():
                     auth_type = basic
                     auth_username = tom
                     auth_password = motak
-                    ssl_verify = 0
                     """)
     stats = JiraStats("jira")
 
@@ -79,4 +78,3 @@ def assert_conf_error(config, expected_error=ReportError):
     except ReportError as e:
         error = e
     assert type(error) == expected_error
-    
