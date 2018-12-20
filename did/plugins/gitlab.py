@@ -29,6 +29,7 @@ import itertools
 from did.utils import log, pretty, listed
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 GITLAB_SSL_VERIFY = True
 GITLAB_API = 4
@@ -309,9 +310,12 @@ class GitLabStats(StatsGroup):
                 "No GitLab token set in the [{0}] section".format(option))
         # Check SSL verification
         try:
-            self.ssl_verify = distutils.util.strtobool(config["ssl_verify"])
+            self.ssl_verify = bool(distutils.util.strtobool(
+                config["ssl_verify"]))
         except KeyError:
             self.ssl_verify = GITLAB_SSL_VERIFY
+        if not self.ssl_verify:
+            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
         self.gitlab = GitLab(self.url, self.token, self.ssl_verify)
         # Create the list of stats
         self.stats = [
