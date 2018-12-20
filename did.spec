@@ -1,5 +1,5 @@
 Name: did
-Version: 0.11
+Version: 0.12
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -45,6 +45,38 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Thu Dec 20 2018 Petr Šplíchal <psplicha@redhat.com> 0.12-1
+- Add missing redmine dependency [fix #177]
+- Fix GitLab plugin's ssl_verify option [fix #168]
+- Document GitLab access token scope
+- Merge ssl_verify support for Jira [#169]
+- Merge support for Trello commented cards [#170]
+- Fix commented cards title, improve the test suite
+- Add a simple test for completed tasks, update auth
+- Merge support for completed Google tasks [#173]
+- Merge fix for the Google dependencies [#166]
+- Document additional google dependencies
+- Adding support for Google tasks
+- Add commentCard to trello DEFAULT_FILTERS
+- Allow to set 'ssl_verify' config for jira plugin
+- Support 'creator' in bugzilla plugin [fix #167]
+- Give a nice error when user not found [fix #159]
+- Fix jira basic authentication [fix #163]
+- Fix long_description in setup.py
+- Update pip installation instructions
+- Update the example config with recent plugins
+- Describe in more detail how the tool works
+- Silently ignore non-git directories [fix #143]
+- Separate arguments preparation, add test coverage
+- New option --test to run a simple smoke test
+- Remove python2-gssapi from Requires
+- Make REQUESTS_CA_BUNDLE example copy-paste-able
+- Merge fix for the gitlab --since issue [fix #156]
+- Remove gssapi dependency from the main cli module
+- Quick start section, update install instructions
+- Simplify setup.py, update requires
+- Fix --since issue in gitlab plugin
+
 * Mon Nov 26 2018 Petr Šplíchal <psplicha@redhat.com> 0.11-1
 - Validate plugin types in config [fix #148]
 - Use email for searching Jira issues [fix #122]
