@@ -13,7 +13,7 @@ BuildRequires: git
 BuildRequires: python2-devel
 Requires: python2-requests-gssapi
 Requires: python2-nitrate python2-dateutil python2-bugzilla
-Requires: python-feedparser
+Requires: python%{?fedora:2}-feedparser
 
 %description
 Comfortably gather status report data (e.g. list of committed
