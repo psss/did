@@ -208,7 +208,7 @@ class AbandonedChanges(GerritUnit):
 class MergedChanges(GerritUnit):
     # curl -s 'https://REPOURL/changes/?q=status:merged'
     """
-    Changes succesfully merged
+    Changes successfully merged
     """
     def fetch(self):
         log.info(u"Searching for changes abandoned by {0}".format(self.user))
