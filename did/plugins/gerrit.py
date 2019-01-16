@@ -168,6 +168,10 @@ class GerritUnit(Stats):
                 age = (TODAY - self.since_date).days
                 common_query_options += '+-age:{0}d'.format(age)
 
+        common_query_options += '+since:{0}+until:{1}'.format(
+            self.get_gerrit_date(self.options.since),
+            self.get_gerrit_date(self.options.until))
+
         if isinstance(common_query_options, basestring) and \
                 len(common_query_options) > 0:
             query_string += common_query_options
