@@ -314,7 +314,7 @@ class ReviewedChanges(GerritUnit):
         self.stats = []
         reviewer = self.user.login
         tickets = GerritUnit.fetch(
-            self, 'reviewer:{0}+is:closed&q=reviewer:{0}+is:open'.format(
+            self, 'reviewer:{0}+-owner:{0}'.format(
                 self.user.login),
             '', limit_since=True)
         for tck in tickets:
