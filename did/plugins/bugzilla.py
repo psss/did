@@ -4,9 +4,13 @@
 Bugzilla stats such as filed, fixed or verified bugs
 
 This plugin uses ``python-bugzilla`` module to gather the stats.
-Use the ``bugzilla login`` command to initialize Bugzilla cookies
-which then will be used for authentication. Reports will contain
-only publicly available issues if cookies are not properly set.
+By default reports contain only publicly available issues. Use the
+``bugzilla login`` command to initialize Bugzilla cookies or get
+an API key from the Preferences_ and store it in the config file
+``.config/python-bugzilla/bugzillarc``::
+
+    [bugzilla.redhat.com]
+    api_key=YOUR-API-KEY
 
 Config example::
 
@@ -34,6 +38,8 @@ Available options:
     --bz-subscribed     Bugs subscribed
     --bz-closed         Bugs closed
     --bz                All above
+
+.. _Preferences: https://bugzilla.redhat.com/userprefs.cgi?tab=apikey
 """
 
 from __future__ import absolute_import, unicode_literals
