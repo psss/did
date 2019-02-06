@@ -146,7 +146,7 @@ class GerritUnit(Stats):
             to eliminate items created after since option.
         """
         work_list = []
-        log.info(u"Searching for changes abandoned by {0}".format(self.user))
+        log.info(u"Searching for changes by {0}".format(self.user))
         log.debug('query_string = {0}, common_query_options = {1}'.format(
             query_string, common_query_options))
 
@@ -215,7 +215,7 @@ class MergedChanges(GerritUnit):
     Changes successfully merged
     """
     def fetch(self):
-        log.info(u"Searching for changes abandoned by {0}".format(self.user))
+        log.info(u"Searching for changes merged by {0}".format(self.user))
         self.stats = GerritUnit.fetch(self, 'status:merged')
         log.debug(u"self.stats = {0}".format(self.stats))
 
