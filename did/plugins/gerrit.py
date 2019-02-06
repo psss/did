@@ -234,20 +234,19 @@ class SubmitedChanges(GerritUnit):
     """
     def fetch(self):
         log.info(u"Searching for changes opened by {0}".format(self.user))
-        self.stats = GerritUnit.fetch(self, 'status:open', limit_since=True)
+        self.stats = GerritUnit.fetch(self, 'status:open -is:wip',
+            limit_since=True)
         log.debug(u"self.stats = {0}".format(self.stats))
 
-
-class PublishedDrafts(GerritUnit):
-    # curl -s 'https://REPOURL/changes/?q=is:draft'
+class WIPChanges(GerritUnit):
     """
-    Draft changes published
+    Work in progress changes
     """
     def fetch(self):
-        log.info(u"Searching for drafts published by {0}".format(self.user))
-        self.stats = GerritUnit.fetch(self, 'is:draft', limit_since=True)
+        log.info(u"Searching for WIP changes opened by {0}".format(self.user))
+        self.stats = GerritUnit.fetch(self, 'status:open is:wip',
+            limit_since=True)
         log.debug(u"self.stats = {0}".format(self.stats))
-
 
 class AddedPatches(GerritUnit):
     # curl -s 'https://REPOURL\
@@ -393,7 +392,7 @@ class GerritStats(StatsGroup):
             AbandonedChanges(option=option + '-abandoned', parent=self),
             MergedChanges(option=option + '-merged', parent=self),
             SubmitedChanges(option=option + '-submitted', parent=self),
-            PublishedDrafts(option=option + '-drafts', parent=self),
+            WIPChanges(option=option + '-wip', parent=self),
             #AddedPatches(option=option + '-added-patches', parent=self),
             ReviewedChanges(option=option + '-reviewed', parent=self),
             ]
