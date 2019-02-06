@@ -50,8 +50,8 @@ def test_gerrit_reviewed():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--gerrit-reviewed",
-        "--since", "2018-09-24",
-        "--until", "2018-09-30"])[0][0].stats[0].stats[4].stats
+        "--since", "2018-10-20",
+        "--until", "2018-10-30"])[0][0].stats[0].stats[4].stats
     assert any([
-        "GR#6298 - redirect TESTOUT.log" in unicode(change)
+        "GR#6313 - Make beah default harness" in unicode(change)
         for change in stats])
