@@ -223,8 +223,8 @@ Petr Šplíchal, Karel Šrot, Lukáš Zachar, Matěj Cepl, Ondřej Pták,
 Chris Ward, Tomáš Hofman, Martin Mágr, Stanislav Kozina, Paul
 Belanger, Eduard Trott, Martin Frodl, Randy Barlow, Alois Mahdal,
 Evgeni Golov, Stanislav Ochotnický, Maroš Kopec, Robbie Harwood,
-Christopher Sams, Thomas Heute, Giulio Fidente, Han Han and Qiao
-Zhao.
+Christopher Sams, Thomas Heute, Giulio Fidente, Han Han, Qiao
+Zhao and Henrique Ferreiro.
 
 
 Copyright
