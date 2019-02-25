@@ -271,7 +271,8 @@ class VerifiedBugs(Stats):
     """
     Bugs verified
 
-    Bugs with ``QA Contact`` field set to given user and having
+    Bugs with ``QA Contact`` field set to given user
+    or changed by the given user and having
     their status changed to ``VERIFIED``.
     """
     def fetch(self):
@@ -294,10 +295,33 @@ class VerifiedBugs(Stats):
             "o4": "changedbefore",
             "v4": str(self.options.until)
             }
+        query2 = {
+            # User changed the bug state
+            "f1": "bug_status",
+            "o1": "changedby",
+            "v1": self.user.email,
+            # Status changed to VERIFIED
+            "f2": "bug_status",
+            "o2": "changedto",
+            "v2": "VERIFIED",
+            # Since date
+            "f3": "bug_status",
+            "o3": "changedafter",
+            "v3": str(self.options.since),
+            # Until date
+            "f4": "bug_status",
+            "o4": "changedbefore",
+            "v4": str(self.options.until)
+            }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
                 query, options=self.options)
             if bug.verified()]
+        id_list = [bug.id for bug in self.stats]
+        for bug in self.parent.bugzilla.search(
+                query2, options=self.options):
+            if bug.id not in id_list and bug.verified():
+                self.stats.append(bug)
 
 
 class ReturnedBugs(Stats):
