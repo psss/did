@@ -271,28 +271,35 @@ class VerifiedBugs(Stats):
     """
     Bugs verified
 
-    Bugs with ``QA Contact`` field set to given user and having
-    their status changed to ``VERIFIED``.
+    Bugs with ``QA Contact`` field set to given user or changed by the
+    given user and having their status changed to ``VERIFIED``.
     """
     def fetch(self):
         log.info(u"Searching for bugs verified by {0}".format(self.user))
         query = {
-            # User is the QA contact
-            "f1": "qa_contact",
-            "o1": "equals",
-            "v1": self.user.email,
             # Status changed to VERIFIED
-            "f2": "bug_status",
-            "o2": "changedto",
-            "v2": "VERIFIED",
+            "f1": "bug_status",
+            "o1": "changedto",
+            "v1": "VERIFIED",
             # Since date
-            "f3": "bug_status",
-            "o3": "changedafter",
-            "v3": str(self.options.since),
+            "f2": "bug_status",
+            "o2": "changedafter",
+            "v2": str(self.options.since),
             # Until date
-            "f4": "bug_status",
-            "o4": "changedbefore",
-            "v4": str(self.options.until)
+            "f3": "bug_status",
+            "o3": "changedbefore",
+            "v3": str(self.options.until),
+            # Operator OR
+            "f4": "OP",
+            "j4": "OR",
+            # User is the QA contact
+            "f5": "qa_contact",
+            "o5": "equals",
+            "v5": self.user.email,
+            # User changed the bug state
+            "f6": "bug_status",
+            "o6": "changedby",
+            "v6": self.user.email,
             }
         self.stats = [
             bug for bug in self.parent.bugzilla.search(
