@@ -98,15 +98,11 @@ class IssuesCreated(Stats):
     def fetch(self):
         log.info(u'Searching for issues created by {0}'.format(self.user))
         issues = [Issue(issue) for issue in self.parent.pagure.search(
-            query='user/{0}/issues?assignee=false&since={1}'.format(
-                self.user.login, self.options.since),
+            query='user/{0}/issues?assignee=false&created={1}..{2}'.format(
+                self.user.login, self.options.since, self.options.until),
             pagination='pagination_issues_created',
             result_field='issues_created')]
-        self.stats = sorted([
-            issue for issue in issues
-            if issue.created < self.options.until.date
-            and issue.created >= self.options.since.date],
-            key=lambda i: unicode(i))
+        self.stats = sorted(issues, key=lambda i: unicode(i))
 
 class IssuesClosed(Stats):
     """ Issues closed """
@@ -130,14 +126,25 @@ class PullRequestsCreated(Stats):
         log.info(u'Searching for pull requests created by {0}'.format(
             self.user))
         issues = [Issue(issue) for issue in self.parent.pagure.search(
-            query='user/{0}/requests/filed?status=all'.format(self.user.login),
+            query='user/{0}/requests/filed?status=all&created={1}..{2}'.format(
+                self.user.login, self.options.since, self.options.until),
             pagination='pagination',
             result_field='requests')]
-        self.stats = sorted([
-            issue for issue in issues
-            if issue.created < self.options.until.date
-            and issue.created >= self.options.since.date],
-            key=lambda i: unicode(i))
+        self.stats = sorted(issues, key=lambda i: unicode(i))
+
+# FIXME: Blocked by https://pagure.io/pagure/issue/4329
+#class PullRequestsClosed(Stats):
+#    """ Pull requests closed """
+#    def fetch(self):
+#        log.info(u'Searching for pull requests closed by {0}'.format(
+#            self.user))
+#        issues = [Issue(issue) for issue in self.parent.pagure.search(
+#            query='user/{0}/requests/actionable?'
+#                'status=all&closed={1}..{2}'.format(
+#                self.user.login, self.options.since, self.options.until),
+#            pagination='pagination',
+#            result_field='requests')]
+#        self.stats = sorted(issues, key=lambda i: unicode(i))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
@@ -175,4 +182,8 @@ class PagureStats(StatsGroup):
             PullRequestsCreated(
                 option=option + '-pull-requests-created', parent=self,
                 name='Pull requests created on {0}'.format(option)),
+# FIXME: Blocked by https://pagure.io/pagure/issue/4329
+#            PullRequestsClosed(
+#                option=option + '-pull-requests-closed', parent=self,
+#                name='Pull requests closed on {0}'.format(option)),
             ]
