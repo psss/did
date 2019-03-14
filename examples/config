@@ -28,7 +28,7 @@ login = psss
 
 [gerrit]
 type = gerrit
-url = https://example.org/gerrit/#/
+url = https://example.org/gerrit/
 prefix = GR
 
 [gitlab]

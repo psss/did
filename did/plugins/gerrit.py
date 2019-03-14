@@ -6,7 +6,7 @@ Config example::
 
     [gerrit]
     type = gerrit
-    url = https://example.org/gerrit/#/
+    url = https://example.org/gerrit/
     prefix = GR
 """
 

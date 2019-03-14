@@ -17,7 +17,7 @@ email = Dan Callaghan <dcallagh@redhat.com>
 
 [gerrit]
 type = gerrit
-url = https://gerrit.beaker-project.org/#/
+url = https://gerrit.beaker-project.org/
 prefix = GR
 """
 
