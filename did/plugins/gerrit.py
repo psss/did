@@ -34,13 +34,15 @@ class Change(object):
         self.id = ticket['_number']
         self.change_id = ticket['change_id']
         self.subject = ticket['subject']
+        self.project = ticket['project']
         self.ticket = ticket
         self.changelog = changelog
         self.prefix = prefix
 
     def __unicode__(self):
-        """ Consistent identifier and subject for displaying """
-        return u"{0}#{1} - {2}".format(self.prefix, self.id, self.subject)
+        """ Consistent identifier, project and subject for displaying """
+        return u"{0}#{1} - {2} - {3}".format(self.prefix, self.id,
+                                             self.project, self.subject)
 
     def __eq__(self, other):
         return unicode(self) == unicode(other)
