@@ -224,7 +224,7 @@ Chris Ward, Tomáš Hofman, Martin Mágr, Stanislav Kozina, Paul
 Belanger, Eduard Trott, Martin Frodl, Randy Barlow, Alois Mahdal,
 Evgeni Golov, Stanislav Ochotnický, Maroš Kopec, Robbie Harwood,
 Christopher Sams, Thomas Heute, Giulio Fidente, Han Han, Qiao
-Zhao, Henrique Ferreiro and Jakub Vávra.
+Zhao, Henrique Ferreiro, Jakub Vávra and Luigi Toscano.
 
 
 Copyright
