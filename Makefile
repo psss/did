@@ -73,6 +73,7 @@ clean:
 	find . -type d -name "__pycache__" -delete
 	cd docs && make clean
 	rm -f .coverage tags
+	rm -rf .cache .pytest_cache
 
 
 # Docker
