@@ -55,3 +55,26 @@ def test_gerrit_reviewed():
     assert any([
         "GR#6313 - beaker - Make beah default harness" in unicode(change)
         for change in stats])
+
+
+def test_gerrit_wip():
+    """ Check wip changes """
+    did.base.Config(CONFIG)
+    stats = did.cli.main([
+        "--gerrit-wip",
+        "--since", "2015-05-01",
+        "--until", "2016-10-31"])[0][0].stats[0].stats[3].stats
+    assert any([
+        "GR#4211 - beaker - WIP JSONAPI for system pools" in unicode(change)
+        for change in stats])
+
+
+def test_gerrit_wip_disabled():
+    """ Check wip changes when the wip feature is disabled """
+    CONFIG_NO_WIP = CONFIG + 'wip = False\n'
+    did.base.Config(CONFIG_NO_WIP)
+    stats = did.cli.main([
+        "--gerrit-wip",
+        "--since", "2015-05-01",
+        "--until", "2016-10-31"])[0][0].stats[0].stats[3].stats
+    assert stats == []

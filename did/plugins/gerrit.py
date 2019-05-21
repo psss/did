@@ -8,6 +8,9 @@ Config example::
     type = gerrit
     url = https://example.org/gerrit/
     prefix = GR
+    # optional, True by default; set to False if the gerrit server
+    # does not support wip as search criteria.
+    wip = True
 """
 
 import json
@@ -125,6 +128,7 @@ class GerritUnit(Stats):
         self.prefix = prefix if prefix is not None else parent.config['prefix']
         self.repo = Gerrit(baseurl=self.base_url, prefix=self.prefix)
         self.since_date = None
+        self.server_features = [] if not parent else parent.server_features
 
         Stats.__init__(self, option, name, parent)
 
@@ -236,7 +240,11 @@ class SubmitedChanges(GerritUnit):
     """
     def fetch(self):
         log.info(u"Searching for changes opened by {0}".format(self.user))
-        self.stats = GerritUnit.fetch(self, 'status:open -is:wip',
+        if 'wip' in self.server_features:
+            query_string = 'status:open -is:wip'
+        else:
+            query_string = 'status:open'
+        self.stats = GerritUnit.fetch(self, query_string,
             limit_since=True)
         log.debug(u"self.stats = {0}".format(self.stats))
 
@@ -246,6 +254,9 @@ class WIPChanges(GerritUnit):
     """
     def fetch(self):
         log.info(u"Searching for WIP changes opened by {0}".format(self.user))
+        if 'wip' not in self.server_features:
+            log.debug(u"WIP reviews are not supported by this server")
+            return []
         self.stats = GerritUnit.fetch(self, 'status:open is:wip',
             limit_since=True)
         log.debug(u"self.stats = {0}".format(self.stats))
@@ -389,6 +400,10 @@ class GerritStats(StatsGroup):
         if "prefix" not in self.config:
             raise ReportError(
                 "No prefix set in the [{0}] section".format(option))
+
+        self.server_features = []
+        if self.config.get('wip', True) == True:
+            self.server_features.append('wip')
 
         self.stats = [
             AbandonedChanges(option=option + '-abandoned', parent=self),
