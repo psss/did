@@ -296,6 +296,17 @@ class Date(object):
             until = Date("yesterday")
             until.date += delta(days=1)
             period = "yesterday"
+        elif "friday" in argument:
+            since = Date("today")
+            until = Date("today")
+            if "last" in argument:
+                since.date += delta(weekday=FR)
+                until.date += delta(weekday=FR)
+                period = "last friday"
+            else:
+                since.date += delta(weekday=FR(-1))
+                until.date += delta(weekday=FR(-1))
+                period = "next friday"
         elif "year" in argument:
             if "last" in argument:
                 since, until = Date.last_year()
