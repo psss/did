@@ -7,23 +7,35 @@ Configuration example (GSS authentication)::
     [jboss]
     type = jira
     prefix = JIRA
-    project = ORG
     url = https://issues.jboss.org/
     ssl_verify = true
 
-Configuration example (basic authentication)::
+Configuration example (basic authentication) with alternative username::
 
     [jboss]
     type = jira
     prefix = JIRA
-    project = ORG
+    login = alt_username
     url = https://issues.jboss.org/
     auth_url = https://issues.jboss.org/rest/auth/latest/session
     auth_type = basic
     auth_username = username
     auth_password = password
 
+Configuration example limiting report only to a single project::
+
+    [jboss]
+    type = jira
+    prefix = JIRA
+    project = ORG
+    url = https://issues.jboss.org/
+    ssl_verify = true
+
 Notes:
+* If your JIRA does not have scriptrunner installed you must set
+  ``use_scriptrunner`` to false
+* You must provide ``login`` variable that matches username if it
+  doesn't match email/JIRA account
 * Optional parameter ``ssl_verify`` can be used to enable/disable
   SSL verification (default: true)
 * ``auth_url`` parameter is optional. If not provided,
@@ -60,6 +72,7 @@ SSL_VERIFY = True
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Issue(object):
     """ Jira issue investigator """
@@ -137,10 +150,13 @@ class JiraCreated(Stats):
         log.info("Searching for issues created in {0} by {1}".format(
             self.parent.project, self.user))
         query = (
-            "project = '{0}' AND creator = '{1}' AND "
-            "created >= {2} AND created <= {3}".format(
-                self.parent.project, self.user.email,
+            "creator = '{0}' AND "
+            "created >= {1} AND created <= {2}".format(
+                self.user.email,
                 self.options.since, self.options.until))
+        if self.parent.project:
+            query = query + " AND project = '{0}'".format(
+                    self.parent.project)
         self.stats = Issue.search(query, stats=self)
 
 
@@ -149,15 +165,26 @@ class JiraUpdated(Stats):
     def fetch(self):
         log.info("Searching for issues updated in {0} by {1}".format(
             self.parent.project, self.user))
-        query = (
-            "project = '{0}' AND "
-            "updated >= {1} AND created <= {2}".format(
-                self.parent.project,
-                self.options.since, self.options.until))
-        # Filter only issues commented by given user
-        self.stats = [
-            issue for issue in Issue.search(query, stats=self)
-            if issue.updated(self.user, self.options)]
+        if self.parent.use_scriptrunner:
+            query = (
+                "issueFunction in commented"
+                "('by {0} after {1} before {2}')".format(
+                    self.parent.login or self.user.login,
+                    self.options.since, self.options.until))
+            if self.parent.project:
+                query = query + " AND project = '{0}'".format(
+                        self.parent.project)
+            self.stats = Issue.search(query, stats=self)
+        else:
+            query = (
+                "project = '{0}' AND "
+                "updated >= {1} AND created <= {2}".format(
+                    self.parent.project, self.options.since,
+                    self.options.until))
+            # Filter only issues commented by given user
+            self.stats = [
+                issue for issue in Issue.search(query, stats=self)
+                if issue.updated(self.user, self.options)]
 
 
 class JiraResolved(Stats):
@@ -166,10 +193,13 @@ class JiraResolved(Stats):
         log.info("Searching for issues resolved in {0} by {1}".format(
             self.parent.project, self.user))
         query = (
-            "project = '{0}' AND assignee = '{1}' AND "
-            "resolved >= {2} AND resolved <= {3}".format(
-                self.parent.project, self.user.email,
+            "assignee = '{0}' AND "
+            "resolved >= {1} AND resolved <= {2}".format(
+                self.user.email,
                 self.options.since, self.options.until))
+        if self.parent.project:
+            query = query + " AND project = '{0}'".format(
+                    self.parent.project)
         self.stats = Issue.search(query, stats=self)
 
 
@@ -239,10 +269,20 @@ class JiraStats(StatsGroup):
             self.ssl_verify = SSL_VERIFY
 
         # Make sure we have project set
-        if "project" not in config:
-            raise ReportError(
-                "No project set in the [{0}] section".format(option))
-        self.project = config["project"]
+        self.project = config.get("project", None)
+        if "use_scriptrunner" in config:
+            self.use_scriptrunner = distutils.util.strtobool(
+                    config["use_scriptrunner"])
+        else:
+            self.use_scriptrunner = True
+
+        if not self.use_scriptrunner and not self.project:
+            raise ReportError("When scriptrunner is disabled with "
+                              "`use_scriptrunner=False`, "
+                              "`project` has to be defined for each JIRA "
+                              "section")
+        self.login = config.get("login", None)
+
         # Check for custom prefix
         self.prefix = config["prefix"] if "prefix" in config else None
         # Create the list of stats
