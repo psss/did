@@ -144,6 +144,14 @@ class Bug(object):
             return u"{0}#{1} - {2}".format(
                 self.prefix, unicode(self.id).rjust(7, "0"), self.summary)
 
+    def __eq__(self, other):
+        """ Compare bugs by their id """
+        return self.id == other.id
+
+    def __hash__(self):
+        """ Use bug id for hashing """
+        return self.id
+
     @property
     def summary(self):
         """ Bug summary including resolution if enabled """
@@ -276,6 +284,7 @@ class VerifiedBugs(Stats):
     """
     def fetch(self):
         log.info(u"Searching for bugs verified by {0}".format(self.user))
+        # Common query options
         query = {
             # Status changed to VERIFIED
             "f1": "bug_status",
@@ -289,22 +298,27 @@ class VerifiedBugs(Stats):
             "f3": "bug_status",
             "o3": "changedbefore",
             "v3": str(self.options.until),
-            # Operator OR
-            "f4": "OP",
-            "j4": "OR",
-            # User is the QA contact
-            "f5": "qa_contact",
-            "o5": "equals",
-            "v5": self.user.email,
-            # User changed the bug state
-            "f6": "bug_status",
-            "o6": "changedby",
-            "v6": self.user.email,
             }
-        self.stats = [
-            bug for bug in self.parent.bugzilla.search(
-                query, options=self.options)
-            if bug.verified()]
+        # User is the QA contact
+        query.update({
+            "f4": "qa_contact",
+            "o4": "equals",
+            "v4": self.user.email,
+            })
+        bugs_by_contact = self.parent.bugzilla.search(
+            query, options=self.options)
+        # User changed the bug state
+        query.update({
+            "f4": "bug_status",
+            "o4": "changedby",
+            "v4": self.user.email,
+            })
+        bugs_by_changer = self.parent.bugzilla.search(
+            query, options=self.options)
+        # Merge the two queries
+        self.stats = list(set(
+            bug for bug in bugs_by_contact + bugs_by_changer
+            if bug.verified()))
 
 
 class ReturnedBugs(Stats):

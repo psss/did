@@ -124,19 +124,19 @@ def test_bugzilla_verified_chagedby():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--bz-verified",
-        "--email", "jvavra@redhat.com",
-        "--since", "2018-03-26",
-        "--until", "2018-03-27"])[0][0].stats[0].stats[5].stats
+        "--email", "psplicha@redhat.com",
+        "--since", "2010-01-06",
+        "--until", "2010-01-06"])[0][0].stats[0].stats[5].stats
     # Bug changed by user
-    assert any([bug.id == 1527935 for bug in stats])
+    assert any([bug.id == 547529 for bug in stats])
 
 def test_bugzilla_verified_qecontact():
     """ Check verified bugs based on qe contact """
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--bz-verified",
-        "--email", "desktop-qa-list@redhat.com",
-        "--since", "2019-02-06",
-        "--until", "2019-02-08"])[0][0].stats[0].stats[5].stats
+        "--email", "psplicha@redhat.com",
+        "--since", "2010-07-20",
+        "--until", "2010-07-20"])[0][0].stats[0].stats[5].stats
     # Bug changed by user
-    assert any([bug.id == 1666809 for bug in stats])
+    assert any([bug.id == 604724 for bug in stats])
