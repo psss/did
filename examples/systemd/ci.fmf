@@ -1,0 +1,24 @@
+
+# Common configuration
+discover:
+    how: fmf
+    repository: "https://github.com/systemd-rhel/tests"
+prepare:
+    how: ansible
+    playbooks:
+        - ci/rhel-8.yml
+execute:
+    how: beakerlib
+
+# Individual testsets
+/pull-request/smoke:
+    summary:
+        Basic set of quick smoke tests for systemd
+    discover+:
+        filter: "tier: 1 & distros: rhel-8"
+
+/pull-request/functional:
+    summary:
+        Tier two functional tests
+    discover+:
+        filter: "tier: 2 & distros: rhel-8"

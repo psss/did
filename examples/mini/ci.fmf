@@ -1,0 +1,4 @@
+/test/build/smoke:
+    execute:
+        commands:
+            - binary --test
