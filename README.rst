@@ -94,9 +94,9 @@ Install the latest version from the Copr repository::
     dnf copr enable psss/tmt
     dnf install tmt
 
-or use PIP (sudo required if not in a virtualenv)::
+or use PIP (you can omit the ``--user`` flag if in a virtualenv)::
 
-    pip install tmt
+    pip install --user tmt
 
 See documentation for more details about installation options.
 
