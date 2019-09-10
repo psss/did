@@ -21,6 +21,11 @@ def test_mini():
     assert 'Found 1 testset.' in result.output
     assert 'Testset: /ci/test/build/smoke' in result.output
 
+def test_no_motadata():
+    """ No metadata found """
+    result = runner.invoke(tmt.cli.main, ['--path', PATH])
+    assert result.exception
+
 def test_step():
     """ Select desired step"""
     for step in tmt.steps.STEPS:

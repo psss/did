@@ -71,7 +71,12 @@ def finish():
 
 @main.resultcallback()
 def finito(*args, **kwargs):
-    tree = tmt.Tree(tree_path)
+    try:
+        tree = tmt.Tree(tree_path)
+    except fmf.utils.RootError:
+        raise fmf.utils.RootError(
+            "No metadata found in the '{0}' directory.".format(tree_path))
+
     click.echo(click.style('Found {0}.'.format(
         fmf.utils.listed(tree.testsets, 'testset')), fg='magenta'))
     for testset in tree.testsets:
