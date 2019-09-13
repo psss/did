@@ -21,6 +21,13 @@ steps
     :members:
     :undoc-members:
 
+utils
+-----
+
+.. automodule:: tmt.utils
+    :members:
+    :undoc-members:
+
 cli
 ---
 
