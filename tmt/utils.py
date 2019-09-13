@@ -13,8 +13,12 @@ import re
 
 def ascii(text):
     """ Transliterate special unicode characters into pure ascii """
-    if not isinstance(text, unicode):
-        text = unicode(text)
+    try:
+        if not isinstance(text, unicode):
+            text = unicode(text)
+    except NameError:
+        if not isinstance(text, str):
+            text = str(text)
     return unicodedata.normalize('NFKD', text).encode('ascii','ignore')
 
 
@@ -189,6 +193,8 @@ class StructuredField(object):
         """ True when any section is defined """
         return len(self._order) > 0
 
+    __bool__ = __nonzero__
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     #  StructuredField Private
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -196,7 +202,7 @@ class StructuredField(object):
     def _load_version_zero(self, text):
         """ Load version 0 format """
         # Attempt to split the text according to the section tag
-        section = re.compile("\n?^\[([^\]]+)\]\n", re.MULTILINE)
+        section = re.compile(r"\n?^\[([^\]]+)\]\n", re.MULTILINE)
         parts = section.split(text)
         # If just one part ---> no sections present, just plain text
         if len(parts) == 1:
@@ -217,8 +223,8 @@ class StructuredField(object):
         """ Load version 1+ format """
         # The text must exactly match the format
         format = re.compile(
-                "(.*)^\[structured-field-start\][ \t]*\n"
-                "(.*)\n\[structured-field-end\][ \t]*\n(.*)",
+                r"(.*)^\[structured-field-start\][ \t]*\n"
+                r"(.*)\n\[structured-field-end\][ \t]*\n(.*)",
                 re.DOTALL + re.MULTILINE)
         # No match ---> plain text or broken structured field
         matched = format.search(text)
@@ -236,11 +242,12 @@ class StructuredField(object):
         if self._footer:
             log.debug(u"Parsed footer:\n{0}".format(self._footer))
         # Split the content on the section names
-        section = re.compile("\n\[([^\]]+)\][ \t]*\n", re.MULTILINE)
+        section = re.compile(r"\n\[([^\]]+)\][ \t]*\n", re.MULTILINE)
         parts = section.split(matched.groups()[1])
         # Detect the version
         try:
-            self.version(int(re.search("version (\d+)", parts[0]).groups()[0]))
+            self.version(int(re.search(
+                r"version (\d+)", parts[0]).groups()[0]))
             log.debug("Detected StructuredField version {0}".format(
                     self.version()))
         except AttributeError:
@@ -249,7 +256,7 @@ class StructuredField(object):
                     "Unable to detect StructuredField version")
         # Convert to dictionary, remove escapes and save the order
         keys = parts[1::2]
-        escape = re.compile("^\[structured-field-escape\]", re.MULTILINE)
+        escape = re.compile(r"^\[structured-field-escape\]", re.MULTILINE)
         values = [escape.sub("", value) for value in parts[2::2]]
         for key, value in zip(keys, values):
             self.set(key, value)
@@ -273,7 +280,7 @@ class StructuredField(object):
         """ Save version 1+ format """
         result = []
         # Regular expression for escaping section-like lines
-        escape = re.compile("^(\[.+\])$", re.MULTILINE)
+        escape = re.compile(r"^(\[.+\])$", re.MULTILINE)
         # Header
         if self._header:
             result.append(self._header)
@@ -298,7 +305,7 @@ class StructuredField(object):
         for line in content.split("\n"):
             # Remove comments and skip empty lines
             line = re.sub("#.*", "", line)
-            if re.match("^\s*$", line):
+            if re.match(r"^\s*$", line):
                 continue
             # Parse key and value
             matched = re.search("([^=]+)=(.*)", line)
@@ -352,11 +359,16 @@ class StructuredField(object):
         if version is not None:
             self.version(version)
         # Make sure we got a text, convert to unicode if necessary
-        if not isinstance(text, basestring):
-            raise StructuredFieldError(
-                    "Invalid StructuredField, expecting string or unicode")
-        if not isinstance(text, unicode):
-            text = text.decode("utf8")
+        try:
+            if not isinstance(text, basestring):
+                raise StructuredFieldError(
+                        "Invalid StructuredField, expecting string or unicode")
+            if not isinstance(text, unicode):
+                text = text.decode("utf8")
+        except NameError:
+            if not isinstance(text, str):
+                raise StructuredFieldError(
+                        "Invalid StructuredField, expecting string")
         # Remove possible carriage returns
         text = re.sub("\r\n", "\n", text)
         # Make sure the text has a new line at the end
@@ -414,10 +426,14 @@ class StructuredField(object):
         """ Update content of given section or section item """
         # Convert to string if necessary, keep lists untouched
         if not isinstance(content, list):
-            if not isinstance(content, basestring):
-                content = unicode(content)
-            elif not isinstance(content, unicode):
-                content = content.decode("utf8")
+            try:
+                if not isinstance(content, basestring):
+                    content = unicode(content)
+                elif not isinstance(content, unicode):
+                    content = content.decode("utf8")
+            except:
+                if not isinstance(content, str):
+                    content = str(content)
         # Set the whole section content
         if item is None:
             # Add new line if missing

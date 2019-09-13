@@ -264,14 +264,14 @@ class test_structured_field(unittest.TestCase):
         original.set("name", "value")
         # Test with both space and tab appended after the section tag
         for char in [" ", "\t"]:
-            spaced = re.sub("\]\n", "]{0}\n".format(char), original.save())
+            spaced = re.sub(r"\]\n", "]{0}\n".format(char), original.save())
             copy = StructuredField(spaced)
             self.assertEqual(original.get("name"), copy.get("name"))
 
     def test_carriage_returns(self):
         """ Carriage returns """
         text1 = "\n".join([self.start, self.sections, self.end])
-        text2 = re.sub("\n", "\r\n", text1)
+        text2 = re.sub(r"\n", "\r\n", text1)
         field1 = StructuredField(text1)
         field2 = StructuredField(text2)
         self.assertEqual(field1.save(), field2.save())
