@@ -29,24 +29,24 @@ class Step(object):
 
 
 class Discover(Step):
-    """ Gather information about test cases to be run """
+    """ Gather and show information about test cases to be executed """
 
 
 class Provision(Step):
-    """ Information about environment needed for testing """
+    """ Provision an environment for testing (or use localhost) """
 
 
 class Prepare(Step):
-    """ Additional configuration of the test environment """
+    """ Configure environment for testing (e.g. ansible playbook) """
 
 
 class Execute(Step):
-    """ Execution of individual test cases """
+    """ Run the tests (using the specified framework and its settings) """
 
 
 class Report(Step):
-    """ Notifications about the test progress and results """
+    """ Provide an overview of test results and send notifications """
 
 
 class Finish(Step):
-    """ Actions performed after test execution is completed """
+    """ Additional actions to be performed after the test execution """

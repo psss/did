@@ -35,37 +35,37 @@ def main(ctx, path):
 
 @main.command()
 def discover():
-    """ Gather information about test cases to be run """
+    """ Gather and show information about test cases to be executed """
     tmt.steps.Discover.enabled = True
 
 
 @main.command()
 def provision():
-    """ Information about environment needed for testing """
+    """ Provision an environment for testing (or use localhost) """
     tmt.steps.Provision.enabled = True
 
 
 @main.command()
 def prepare():
-    """ Additional configuration of the test environment """
+    """ Configure environment for testing (like ansible playbook) """
     tmt.steps.Prepare.enabled = True
 
 
 @main.command()
 def execute():
-    """ Execution of individual test cases """
+    """ Run the tests (using the specified framework and its settings) """
     tmt.steps.Execute.enabled = True
 
 
 @main.command()
 def report():
-    """ Notifications about the test progress and results """
+    """ Provide an overview of test results and send notifications """
     tmt.steps.Report.enabled = True
 
 
 @main.command()
 def finish():
-    """ Actions performed after test execution is completed """
+    """ Additional actions to be performed after the test execution """
     tmt.steps.Finish.enabled = True
 
 

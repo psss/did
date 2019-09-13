@@ -43,25 +43,32 @@ available options.
 Options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here is the list of the most frequently used options.
+Here is the list of the most frequently used commands and options.
 
 Steps
 ------
 
-Select steps to be executed.
+The following steps are planned to be implemented. See the L2
+Metadata specification for detailed description of individual
+test steps. For now here is at least a brief overview:
 
 discover
-    gather info about test cases to be run
+    gather and show information about test cases to be executed
+
 provision
-    what environment is needed for testing, how it should provisioned
+    provision an environment for testing (or use localhost)
+
 prepare
-    additional configuration needed for testing (e.g. ansible playbook)
+    configure environment for testing (e.g. ansible playbook)
+
 execute
-    test execution itself (e.g. framework and its settings)
+    run the tests (using the specified framework and its settings)
+
 report
-    adjusting notifications about the test progress and results
+    provide an overview of test results and send notifications
+
 finish
-    actions to be performed after the test execution has been completed
+    additional actions to be performed after the test execution
 
 
 Utils
