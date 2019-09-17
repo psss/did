@@ -11,6 +11,8 @@ import click
 
 tree_path = '.'
 
+# Disable unicode_literals warning
+click.disable_unicode_literals_warning = True
 
 @click.group(chain=True, invoke_without_command=True)
 @click.pass_context
