@@ -7,13 +7,13 @@ Config example::
     [redmine]
     type = redmine
     url = https://redmine.example.com/
-    login = <user_id>
+    login = <user_db_id>
     activity_days = 30
 
-Use ``login`` to set the user id in Redmine. See the :doc:`config` docs for
-details on using aliases.  Use ``activity_days`` to override the default 30
-days of activity paging, this has to match to the server side setting,
-otherwise the plugin will miss entries.
+Use ``login`` to set the database user id in Redmine (number not login name).
+See the :doc:`config` docs for details on using aliases.  Use ``activity_days``
+to override the default 30 days of activity paging, this has to match to the
+server side setting, otherwise the plugin will miss entries.
 
 """
 
