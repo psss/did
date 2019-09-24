@@ -137,7 +137,7 @@ class PullRequestsClosed(Stats):
                 Issue(issue) for issue in self.parent.github.search(query)]
 
 class PullRequestsReviewed(Stats):
-    """ Pull requests closed """
+    """ Pull requests reviewed """
     def fetch(self):
         log.info(u"Searching for pull requests reviewed by {0}".format(
             self.user))
