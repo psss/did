@@ -4,6 +4,7 @@ from __future__ import unicode_literals, absolute_import
 
 import os
 import tmt.cli
+import tempfile
 
 from click.testing import CliRunner
 
@@ -16,20 +17,22 @@ runner = CliRunner()
 
 def test_mini():
     """ Minimal smoke test """
-    result = runner.invoke(tmt.cli.main, ['--path', MINI])
+    result = runner.invoke(tmt.cli.main, ['--path', MINI, 'run'])
     assert result.exit_code == 0
     assert 'Found 1 testset.' in result.output
     assert 'Testset: /ci/test/build/smoke' in result.output
 
-def test_no_motadata():
+def test_no_metadata():
     """ No metadata found """
-    result = runner.invoke(tmt.cli.main, ['--path', PATH])
+    tmp = tempfile.mkdtemp()
+    result = runner.invoke(tmt.cli.main, ['--path', tmp, 'run'])
     assert result.exception
+    os.rmdir(tmp)
 
 def test_step():
     """ Select desired step"""
     for step in tmt.steps.STEPS:
-        result = runner.invoke(tmt.cli.main, ['--path', MINI, step])
+        result = runner.invoke(tmt.cli.main, ['--path', MINI, 'run', step])
         assert result.exit_code == 0
         assert step.capitalize() in result.output
         if step != 'provision':
@@ -37,7 +40,7 @@ def test_step():
 
 def test_systemd():
     """ Check systemd example """
-    result = runner.invoke(tmt.cli.main, ['--path', SYSTEMD])
+    result = runner.invoke(tmt.cli.main, ['--path', SYSTEMD, 'run'])
     assert result.exit_code == 0
     assert 'Found 2 testsets.' in result.output
     assert 'Tier two functional tests' in result.output

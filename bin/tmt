@@ -9,7 +9,7 @@ import fmf.utils
 
 try:
     tmt.cli.main()
-except fmf.utils.GeneralError as error:
+except tmt.utils.GeneralError as error:
     if "--debug" in sys.argv:
         raise
     fmf.utils.log.error(error)

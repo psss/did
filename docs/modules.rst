@@ -34,3 +34,10 @@ cli
 .. automodule:: tmt.cli
     :members:
     :undoc-members:
+
+convert
+-------
+
+.. automodule:: tmt.convert
+    :members:
+    :undoc-members:

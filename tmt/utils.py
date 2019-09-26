@@ -5,11 +5,30 @@
 from __future__ import unicode_literals, absolute_import
 
 from collections import OrderedDict
-from fmf.utils import log
 import unicodedata
+import fmf.utils
 import pprint
+import shlex
 import re
 
+log = fmf.utils.Logging('tmt').logger
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Exceptions
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class GeneralError(Exception):
+    """ General error """
+
+class ConvertError(GeneralError):
+    """ Metadata conversion error """
+
+class StructuredFieldError(GeneralError):
+    """ StructuredField parsing error """
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Utilities
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def ascii(text):
     """ Transliterate special unicode characters into pure ascii """
@@ -22,15 +41,34 @@ def ascii(text):
     return unicodedata.normalize('NFKD', text).encode('ascii','ignore')
 
 
-class GeneralError(Exception):
-    """ General Error """
-    pass
+def variables_to_dictionary(variables):
+    """
+    Convert shell-like variables into a dictionary
 
+    Accepts single string or list of strings. Allowed forms are:
+    'X=1'
+    'X=1 Y=2 Z=3'
+    ['X=1', 'Y=2', 'Z=3']
+    ['X=1 Y=2 Z=3', 'A=1 B=2 C=3']
+    'TXT="Some text with spaces in it"'
+    """
+    if not isinstance(variables, list):
+        variables = [variables]
+    result = dict()
+    for variable in variables:
+        if variable is None:
+            continue
+        for var in shlex.split(variable):
+            matched = re.match("([^=]+)=(.*)", var)
+            if not matched:
+                raise GeneralError("Invalid parameter {0}".format(var))
+            name, value = matched.groups()
+            result[name] = value
+    return result
 
-class StructuredFieldError(GeneralError):
-    """ StructuredField parsing error """
-    pass
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  StructuredField
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class StructuredField(object):
     """

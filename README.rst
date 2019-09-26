@@ -26,15 +26,15 @@ Examples
 
 By default all steps are executed for each testset detected::
 
-    tmt
+    tmt run
 
 You can select which steps should be performed::
 
-    tmt discover
+    tmt run discover
 
 Multiple steps can be provided as well::
 
-    tmt prepare execute
+    tmt run prepare execute
 
 Check help message of individual commands for the full list of
 available options.
@@ -45,12 +45,13 @@ Options
 
 Here is the list of the most frequently used commands and options.
 
-Steps
-------
+Run
+---
 
-The following steps are planned to be implemented. See the L2
-Metadata specification for detailed description of individual
-test steps. For now here is at least a brief overview:
+The `run` command is used to execute test steps. By default all
+test steps are run. See the L2 Metadata specification for detailed
+description of individual steps. For now here is at least a brief
+overview:
 
 discover
     gather and show information about test cases to be executed
@@ -69,6 +70,19 @@ report
 
 finish
     additional actions to be performed after the test execution
+
+Note: This is only preview / draft of future functionality.
+Features described above are not implemented yet.
+
+
+Test
+----
+
+Check available tests, inspect their metadata, gather old metadata
+from various sources and stored them in the new fmf format.
+
+test convert
+    migrate test metadata from the old format to `fmf`
 
 
 Utils

@@ -14,6 +14,7 @@ Table of Contents
     :maxdepth: 1
 
     Overview <overview>
+    Commands <commands>
     Examples <examples>
     Modules <modules>
     Contribute <contribute>
