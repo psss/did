@@ -48,4 +48,5 @@ class Tree(object):
     def __init__(self, path='.'):
         """ Initialize testsets for given directory path """
         self.tree = fmf.Tree(path)
-        self.testsets = [Testset(testset) for testset in self.tree.climb()]
+        self.testsets = [Testset(testset)
+            for testset in self.tree.prune(keys=['execute'])]
