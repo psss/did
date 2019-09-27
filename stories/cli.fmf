@@ -40,6 +40,9 @@ story: As a user I want to have an intuitive command line interface
     /convert:
         requirement+: Convert old metadata
         examples: tmt test convert
+        implemented: /tmt/convert
+        tested: /tests/test_convert
+        documented: /docs/commands#test
     /coverage:
         requirement+: Test coverage overview
         examples: tmt test coverage
