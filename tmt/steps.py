@@ -4,6 +4,8 @@
 
 from __future__ import unicode_literals, absolute_import
 
+from click import echo, style
+
 import fmf
 import click
 import pprint
@@ -24,7 +26,7 @@ class Step(object):
         """ Execute the test step """
         if not self.enabled:
             return
-        print(click.style('{0}:'.format(self.__class__.__name__), fg='blue'))
+        echo(style('{0}:'.format(self.__class__.__name__), fg='blue'))
         pprint.pprint(self.data)
 
 
