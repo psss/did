@@ -1,0 +1,91 @@
+story: As a user I want to have an intuitive command line interface
+
+/run:
+    /default:
+        requirement: Default should cover the most common use case
+        description: Run all relevant tests on the default environment
+        examples: tmt run
+    /discover:
+        requirement: Select or adjust the discover step
+        examples: tmt run discover
+    /provision:
+        requirement: Select or adjust the provision step
+        examples: tmt run provision prepare
+    /prepare:
+        requirement: Select or adjust the prepare step
+        examples: tmt run provision prepare
+    /execute:
+        requirement: Select or adjust the execute step
+        examples: tmt run execute --how=beakerlib
+    /report:
+        requirement: Select or adjust the report step
+        examples: tmt run report
+    /finish:
+        requirement: Select or adjust the finish step
+        examples: tmt run finish
+    /shortcuts:
+        requirement: Provide shortcuts for the most common scenarios
+        examples:
+            - tmt run provision --how=podman --image=fedora:rawhide
+            - tmt run --container=fedora:rawhide
+
+/test:
+    requirement: 'Handle test case metadata: '
+    /ls:
+        requirement+: List available tests
+        examples: tmt test ls
+    /show:
+        requirement+: Show test metadata
+        examples: tmt test show
+    /convert:
+        requirement+: Convert old metadata
+        examples: tmt test convert
+    /coverage:
+        requirement+: Test coverage overview
+        examples: tmt test coverage
+    /filter:
+        requirement+: Filter available tests
+        examples:
+            - tmt test ls --max-duration 5m
+            - tmt test ls --disabled
+            - tmt test ls --tier 1
+
+/testset:
+    requirement: 'Handle testset metadata: '
+    /ls:
+        requirement+: List available testsets
+        examples: tmt testset ls
+    /show:
+        requirement+: Show testset configuration
+        examples: tmt testset show
+    /filter:
+        requirement+: Filter available testsets
+        examples: tmt testset show --artifact=pull-request
+
+/requirement:
+    requirement: 'Handle requirements: '
+    /ls:
+        requirement+: List available requirements
+        examples: tmt requirement ls
+    /show:
+        requirement+: Show requirement details
+        examples: tmt requirement show
+    /filter:
+        requirement+: Filter available requirements
+        examples:
+            - tmt requirement --implemented
+            - tmt requirement --tested
+            - tmt requirement --documented
+
+/coverage:
+    requirement: 'Show coverage overview: '
+    /test:
+        requirement+: Test coverage
+        description: Alias for /stories/cli/test/coverage
+        examples: tmt coverage test
+    /implementation:
+        requirement+: Implementation coverage
+        examples: tmt coverage implementation
+    /documentation:
+        requirement+: Documentation coverage
+        examples: tmt coverage documenation
