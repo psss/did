@@ -73,15 +73,15 @@ def read(path, makefile, nitrate, purpose):
         echo(style('test: ', fg='green') + test)
         # Summary
         data['summary'] = re.search(
-            'echo "Description:\s*(.*)"', content).group(1)
+            r'echo "Description:\s*(.*)"', content).group(1)
         echo(style('description: ', fg='green') + data['summary'])
         # Component
         data['component'] = re.search(
-            'echo "RunFor:\s*(.*)"', content).group(1)
+            r'echo "RunFor:\s*(.*)"', content).group(1)
         echo(style('component: ', fg='green') + data['component'])
         # Duration
         data['duration'] = re.search(
-            'echo "TestTime:\s*(.*)"', content).group(1)
+            r'echo "TestTime:\s*(.*)"', content).group(1)
         echo(style('duration: ', fg='green') + data['duration'])
 
     # Purpose (extract everything after the header as a description)
