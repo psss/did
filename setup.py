@@ -52,11 +52,11 @@ setup(
     author_email='psplicha@redhat.com',
     maintainer='Petr Šplíchal',
     maintainer_email='psplicha@redhat.com',
-    license='GPLv3',
+    license='GPLv2+',
 
     keywords=['status', 'report', 'tasks', 'work'],
     classifiers=[
-        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
         'Natural Language :: English',
         'Programming Language :: Python :: 2.7',
         'Topic :: Office/Business',
