@@ -16,12 +16,12 @@ Source: https://github.com/psss/tmt/releases/download/%{version}/tmt-%{version}.
 # Fedora or RHEL 8+
 %if 0%{?fedora} || 0%{?rhel} > 7
 %bcond_with oldreqs
-%bcond_without englocale
+%bcond_with englocale
 %else
 # The automatic runtime dependency generator doesn't exist yet
 %bcond_without oldreqs
 # The C.UTF-8 locale doesn't exist, Python defaults to C (ASCII)
-%bcond_with englocale
+%bcond_without englocale
 %endif
 
 # Main tmt package requires the Python module
