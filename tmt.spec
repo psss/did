@@ -100,5 +100,5 @@ export LANG=en_US.utf-8
 
 
 %changelog
-* Thu Sep 05 2019 Petr Šplíchal <psplicha@redhat.com> - 0.1-1
+* Mon Sep 30 2019 Petr Šplíchal <psplicha@redhat.com> - 0.1-1
 - Initial packaging
