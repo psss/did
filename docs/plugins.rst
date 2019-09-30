@@ -21,6 +21,13 @@ bugzilla
     :members:
     :undoc-members:
 
+confluence
+--------
+
+.. automodule:: did.plugins.confluence
+    :members:
+    :undoc-members:
+
 footer
 ------
 
