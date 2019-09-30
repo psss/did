@@ -4,6 +4,7 @@
 
 from __future__ import unicode_literals, absolute_import
 
+from io import open
 from click import echo, style
 from tmt.utils import ConvertError, StructuredFieldError
 
@@ -62,7 +63,7 @@ def read(path, makefile, nitrate, purpose):
         echo(style('Makefile ', fg='blue'), nl=False)
         makefile_path = os.path.join(path, 'Makefile')
         try:
-            with open(makefile_path) as makefile:
+            with open(makefile_path, encoding='utf-8') as makefile:
                 content = makefile.read()
         except IOError:
             raise ConvertError("Unable to open '{0}'.".format(makefile_path))
@@ -88,7 +89,7 @@ def read(path, makefile, nitrate, purpose):
         echo(style('Purpose ', fg='blue'), nl=False)
         purpose_path = os.path.join(path, 'PURPOSE')
         try:
-            with open(purpose_path) as purpose:
+            with open(purpose_path, encoding='utf-8') as purpose:
                 content = purpose.read()
         except IOError:
             raise ConvertError("Unable to open '{0}'.".format(purpose_path))
@@ -145,7 +146,7 @@ def write(path, data):
     # Store all metadata into a new main.fmf file
     fmf_path = os.path.join(path, 'main.fmf')
     try:
-        with open(fmf_path, 'w') as fmf_file:
+        with open(fmf_path, 'w', encoding='utf-8') as fmf_file:
             yaml.safe_dump(
                     data, fmf_file,
                     encoding='utf-8', allow_unicode=True,

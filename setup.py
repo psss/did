@@ -2,10 +2,11 @@
 # coding: utf-8
 
 import re
+from io import open
 from setuptools import setup
 
 # Parse the version and release from the spec file
-with open('tmt.spec') as specfile:
+with open('tmt.spec', encoding='utf-8') as specfile:
     lines = "\n".join(line.rstrip() for line in specfile)
     version = re.search('Version: (.+)', lines).group(1).rstrip()
     release = re.search('Release: (\d+)', lines).group(1).rstrip()
@@ -28,7 +29,7 @@ __deplinks__ = []
 
 # README is in the parent directory
 readme = 'README.rst'
-with open(readme) as _file:
+with open(readme, encoding='utf-8') as _file:
     readme = _file.read()
 
 github = 'https://github.com/psss/tmt'
