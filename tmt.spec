@@ -60,6 +60,8 @@ BuildRequires: python2-devel
 BuildRequires: python2-setuptools
 %if %{with oldreqs}
 BuildRequires: pytest
+BuildRequires: python2-fmf
+BuildRequires: python2-click
 %else
 BuildRequires: python2dist(pytest)
 BuildRequires: python2dist(pyyaml)
