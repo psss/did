@@ -1,5 +1,5 @@
 Name: did
-Version: 0.12
+Version: 0.13
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -45,6 +45,25 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Tue Oct 01 2019 Petr Šplíchal <psplicha@redhat.com> - 0.13-1
+- Support for the full file path config [#140]
+- Add the 'last friday' command [#197]
+- New plugin with basic confluence support [#199]
+- Improve redmine documentation [#195]
+- Add a new 'wip' option for gerrit [#194]
+- Include project name in gerrit stats [#192]
+- Fix the configuration examples for gerrit
+- Simplify Pagure search for created issues
+- Extended query for verified bugs [fix #189]
+- Fix for reviewed gerrit changes [#188]
+- Add gerrit work-in-progress changes [#187]
+- Fix for gerrit log strings [#186]
+- Improve gerrit search limit [#185]
+- Document API key auth for bugzilla [fix #180]
+- Mock bugzilla module to fix generating docs
+- Update feedparser requires
+- Fix for gerrit plugin typo [#179]
+
 * Thu Dec 20 2018 Petr Šplíchal <psplicha@redhat.com> 0.12-1
 - Add missing redmine dependency [fix #177]
 - Fix GitLab plugin's ssl_verify option [fix #168]
