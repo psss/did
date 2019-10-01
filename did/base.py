@@ -170,7 +170,9 @@ class Config(object):
         filename = "config"
         matched = re.search("--confi?g?[ =](\S+)", " ".join(sys.argv))
         if matched:
-            filename = matched.groups()[0]
+            filepath, filename = os.path.split(matched.groups()[0])
+            if filepath:
+                directory = filepath
         return directory.rstrip("/") + "/" + filename
 
     @staticmethod
