@@ -71,7 +71,7 @@ clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type f -name "*,cover" -delete
 	find . -type d -name "__pycache__" -delete
-	cd docs && make clean
+	rm -rf docs/_build
 	rm -f .coverage tags
 	rm -rf .cache .pytest_cache
 
