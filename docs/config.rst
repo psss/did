@@ -17,6 +17,28 @@ might want to add the following line into ``.bashrc``::
     export DID_DIR=~/.config/did/
 
 
+General
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Minimum config file should contain at least a ``general`` section
+with an email address which will be used for searching. Option
+``width`` specifies the maximum width of the report::
+
+    [general]
+    email = Petr Šplíchal <psplicha@redhat.com>
+    width = 79
+
+In order to load additional plugins from your custom locations
+provide paths to be searched in the ``plugins`` option::
+
+    [general]
+    email = Petr Šplíchal <psplicha@redhat.com>
+    plugins = ~/.did/plugins
+
+Each path should be a package or module. This method works whether
+the package or module is on the filesystem or in an ``.egg``.
+
+
 Email
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
