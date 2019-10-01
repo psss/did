@@ -13,7 +13,7 @@ import optparse
 import StringIO
 import xmlrpclib
 import ConfigParser
-from dateutil.relativedelta import MO as MONDAY
+from dateutil.relativedelta import MO as MONDAY, FR as FRIDAY
 from datetime import timedelta
 from ConfigParser import NoOptionError, NoSectionError
 from dateutil.relativedelta import relativedelta as delta
@@ -299,14 +299,10 @@ class Date(object):
         elif "friday" in argument:
             since = Date("today")
             until = Date("today")
-            if "last" in argument:
-                since.date += delta(weekday=FR)
-                until.date += delta(weekday=FR)
-                period = "last friday"
-            else:
-                since.date += delta(weekday=FR(-1))
-                until.date += delta(weekday=FR(-1))
-                period = "next friday"
+            since.date += delta(weekday=FRIDAY(-1))
+            until.date += delta(weekday=FRIDAY(-1))
+            until.date += delta(days=1)
+            period = "the last friday"
         elif "year" in argument:
             if "last" in argument:
                 since, until = Date.last_year()
