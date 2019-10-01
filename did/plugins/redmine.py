@@ -35,9 +35,9 @@ class Activity(object):
         self.data = data
         self.title = data.title
 
-    def __unicode__(self):
+    def __str__(self):
         """ String representation """
-        return u"{0}".format(self.title)
+        return "{0}".format(self.title)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,7 +47,7 @@ class Activity(object):
 class RedmineActivity(Stats):
     """ Redmine Activity Stats """
     def fetch(self):
-        log.info(u"Searching for activity by {0}".format(self.user))
+        log.info("Searching for activity by {0}".format(self.user))
         results = []
 
         from_date = self.options.until.date

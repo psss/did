@@ -33,12 +33,9 @@ Notes:
   basic authentication.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import re
-import urllib
-import urllib2
 import requests
+import urllib.parse
 import dateutil.parser
 import distutils.util
 from requests_gssapi import HTTPSPNEGOAuth, DISABLED
@@ -82,7 +79,7 @@ class Issue(object):
         else:
             self.prefix = matched.groups()[0]
 
-    def __unicode__(self):
+    def __str__(self):
         """ Jira key and summary for displaying """
         return "{0}-{1} - {2}".format(
             self.prefix, self.identifier, self.summary)
@@ -96,7 +93,7 @@ class Issue(object):
         for batch in range(MAX_BATCHES):
             response = stats.parent.session.get(
                 "{0}/rest/api/latest/search?{1}".format(
-                    stats.parent.url, urllib.urlencode({
+                    stats.parent.url, urllib.parse.urlencode({
                         "jql": query,
                         "fields": "summary,comment",
                         "maxResults": MAX_RESULTS,

@@ -1,8 +1,6 @@
 # coding: utf-8
 """ Tests for the Gerrit plugin """
 
-from __future__ import unicode_literals, absolute_import
-
 import did.cli
 import did.base
 
@@ -20,7 +18,6 @@ type = gerrit
 url = https://gerrit.beaker-project.org/
 prefix = GR
 """
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests
@@ -41,7 +38,7 @@ def test_gerrit_merged():
         "--since", "2018-09-24",
         "--until", "2018-09-30"])[0][0].stats[0].stats[1].stats
     assert any([
-        "GR#6299 - beaker - expand device.fw_version column" in unicode(change)
+        "GR#6299 - beaker - expand device.fw_version column" in str(change)
         for change in stats])
 
 
@@ -53,7 +50,7 @@ def test_gerrit_reviewed():
         "--since", "2018-10-20",
         "--until", "2018-10-30"])[0][0].stats[0].stats[4].stats
     assert any([
-        "GR#6313 - beaker - Make beah default harness" in unicode(change)
+        "GR#6313 - beaker - Make beah default harness" in str(change)
         for change in stats])
 
 
@@ -65,7 +62,7 @@ def test_gerrit_wip():
         "--since", "2015-05-01",
         "--until", "2016-10-31"])[0][0].stats[0].stats[3].stats
     assert any([
-        "GR#4211 - beaker - WIP JSONAPI for system pools" in unicode(change)
+        "GR#4211 - beaker - WIP JSONAPI for system pools" in str(change)
         for change in stats])
 
 

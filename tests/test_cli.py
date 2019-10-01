@@ -1,8 +1,6 @@
 # coding: utf-8
 """ Tests for the command line script """
 
-from __future__ import unicode_literals, absolute_import
-
 import os
 import re
 import pytest
@@ -22,7 +20,6 @@ MINIMAL = did.base.Config.example()
 EXAMPLE = "".join(open(PATH + "/../examples/config").readlines())
 # Substitute example git paths for real life directories
 EXAMPLE = re.sub(r"\S+/git/[a-z]+", PATH, EXAMPLE)
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests

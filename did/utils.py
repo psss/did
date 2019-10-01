@@ -2,8 +2,6 @@
 
 """ Logging, config, constants & utilities """
 
-from __future__ import unicode_literals, absolute_import
-
 import importlib
 import logging
 import os
@@ -167,7 +165,7 @@ def eprint(text):
 
 def header(text):
     """ Show text as a header. """
-    eprint(u"\n{0}\n {1}\n{0}".format(79 * "~", text))
+    eprint("\n{0}\n {1}\n{0}".format(79 * "~", text))
 
 
 def shorted(text, width=79):
@@ -175,7 +173,7 @@ def shorted(text, width=79):
     if len(text) <= width:
         return text
     # We remove any word after first overlapping non-word character
-    return u"{0}...".format(re.sub(r"\W+\w*$", "", text[:width - 2]))
+    return "{0}...".format(re.sub(r"\W+\w*$", "", text[:width - 2]))
 
 
 def item(text, level=0, options=None):
@@ -192,7 +190,7 @@ def item(text, level=0, options=None):
         indent = 1
     # Shorten the text if necessary to match the desired maximum width
     width = options.width - indent - 2 if options.width else 333
-    eprint(u"{0}* {1}".format(u" " * indent, shorted(unicode(text), width)))
+    eprint("{0}* {1}".format(" " * indent, shorted(str(text), width)))
 
 
 def pluralize(singular=None):
@@ -224,7 +222,7 @@ def listed(items, singular=None, plural=None, max=None, quote=""):
     """
 
     # Convert items to list if necessary
-    items = range(items) if isinstance(items, int) else list(items)
+    items = list(range(items)) if isinstance(items, int) else list(items)
     more = " more"
     # Description mode expected when singular provided but no maximum set
     if singular is not None and max is None:
@@ -278,9 +276,10 @@ def split(values, separator=re.compile("[ ,]+")):
 
 def ascii(text):
     """ Transliterate special unicode characters into pure ascii """
-    if not isinstance(text, unicode):
-        text = unicode(text)
-    return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
+    if not isinstance(text, str):
+        text = str(text)
+    return unicodedata.normalize(
+        'NFKD', text).encode('ascii', 'ignore').decode('utf-8')
 
 
 def info(message, newline=True):
@@ -354,7 +353,7 @@ class Logging(object):
                 level = color(" " + levelname + " ", "lightwhite", colour)
             else:
                 level = "[{0}]".format(levelname)
-            return u"{0} {1}".format(level, record.getMessage())
+            return "{0} {1}".format(level, record.getMessage())
 
     @staticmethod
     def _create_logger(name='did', level=None):
@@ -400,7 +399,7 @@ class Logging(object):
         else:
             try:
                 Logging._level = Logging.MAPPING[int(os.environ["DEBUG"])]
-            except StandardError:
+            except KeyError:
                 Logging._level = logging.WARN
         self.logger.setLevel(Logging._level)
 
@@ -484,7 +483,7 @@ class Coloring(object):
             # Detect from the environment variable COLOR
             try:
                 mode = int(os.environ["COLOR"])
-            except StandardError:
+            except KeyError:
                 mode = COLOR_AUTO
         elif mode < 0 or mode > 2:
             raise RuntimeError("Invalid color mode '{0}'".format(mode))

@@ -1,9 +1,7 @@
 language: python
 python:
-  - "2.7"
-# not py3 compatible yet; still uses OptionParse and some deps are borked for py3
-#  - "3.3"
-#  - "3.4"
+  - "3.6"
+  - "3.7"
 before_install:
   - "pip install -U pip setuptools virtualenv python-coveralls"
 install:

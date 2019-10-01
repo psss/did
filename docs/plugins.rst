@@ -7,13 +7,6 @@
     :members:
     :undoc-members:
 
-bitly
------
-
-.. automodule:: did.plugins.bitly
-    :members:
-    :undoc-members:
-
 bugzilla
 --------
 

@@ -47,13 +47,13 @@ class GitRepo(object):
         command.append("--until='{0} 00:00:00'".format(options.until))
         if options.verbose:
             command.append("--name-only")
-        log.info(u"Checking commits in {0}".format(self.path))
+        log.info("Checking commits in {0}".format(self.path))
         log.details(pretty(command))
 
         # Get the commit messages
         try:
             process = subprocess.Popen(
-                command, cwd=self.path,
+                command, cwd=self.path, encoding='utf-8',
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as error:
             log.debug(error)
@@ -67,9 +67,9 @@ class GitRepo(object):
                 return []
             else:
                 if not options.verbose:
-                    return unicode(output, "utf8").split("\n")
+                    return output.split("\n")
                 commits = []
-                for commit in unicode(output, "utf8").split("\n\n"):
+                for commit in output.split("\n\n"):
                     summary = commit.split("\n")[0]
                     directory = re.sub("/[^/]+$", "", commit.split("\n")[1])
                     commits.append("{0}\n{1}* {2}".format(

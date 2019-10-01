@@ -1,8 +1,6 @@
 # coding: utf-8
 """ Tests for the Bugzilla plugin """
 
-from __future__ import unicode_literals, absolute_import
-
 import did.cli
 import did.base
 
@@ -27,7 +25,6 @@ def test_bugzilla_linus():
         --bz-filed --until today""")[0][0].stats[0].stats[0].stats
     assert any([bug.id == 439858 for bug in stats])
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Week Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,7 +34,6 @@ def test_bugzilla_week():
     did.base.Config(CONFIG)
     stats = did.cli.main("--email psplicha@redhat.com")
     assert stats
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Fixed Bugs
@@ -61,7 +57,6 @@ def test_bugzilla_fixed():
         --until 2015-04-16""")[0][0].stats[0].stats[3].stats
     assert any([bug.id == 1174186 for bug in stats])
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Returned Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,7 +79,6 @@ def test_bugzilla_returned():
         --until 2015-06-09""")[0][0].stats[0].stats[4].stats
     assert not any([bug.id == 1229704 for bug in stats])
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Subscribed Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -99,7 +93,6 @@ def test_bugzilla_subscribed():
         "--until", "2016-06-12"])[0][0].stats[0].stats[7].stats
     assert any([bug.id == 1343546 for bug in stats])
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Closed Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -113,7 +106,7 @@ def test_bugzilla_closed():
         "--since", "2012-12-06",
         "--until", "2012-12-06"])[0][0].stats[0].stats[8].stats
     assert any([bug.id == 862231 for bug in stats])
-    assert any(["[duplicate]" in unicode(bug) for bug in stats])
+    assert any(["[duplicate]" in str(bug) for bug in stats])
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Verified Bugs

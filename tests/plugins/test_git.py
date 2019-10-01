@@ -1,8 +1,6 @@
 # coding: utf-8
 """ Tests for the git plugin """
 
-from __future__ import unicode_literals, absolute_import
-
 import os
 import pytest
 import did.cli
@@ -25,7 +23,6 @@ email = "Petr Splichal" <psplicha@redhat.com>
 type = git
 did = {0}
 """
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Smoke
@@ -56,7 +53,6 @@ def test_git_team():
     did.cli.main(INTERVAL + emails + "--total")
     did.cli.main(INTERVAL + emails + "--merge")
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Content
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,7 +76,6 @@ def test_git_nothing():
     did.base.Config(CONFIG.format(GIT_PATH))
     stats = did.cli.main("--until 2015-01-01")[0][0].stats[0].stats[0].stats
     assert stats == []
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Errors

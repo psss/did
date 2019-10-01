@@ -80,10 +80,6 @@ token = ...
 type = wiki
 wiki test = http://moinmo.in/
 
-[bitly]
-type = bitly
-token = <token>
-
 [projects]
 type = items
 header = Work on projects

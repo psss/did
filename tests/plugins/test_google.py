@@ -1,8 +1,6 @@
 # coding: utf-8
 """ Tests for the Google plugin """
 
-from __future__ import unicode_literals, absolute_import
-
 import pytest
 import did.cli
 import did.base
@@ -35,16 +33,16 @@ def test_google_events_organized():
     did.base.Config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0].stats
     summaries = [stat["summary"] for stat in stats]
-    assert(summaries == [u'Pick up dry cleaning', u'Dentist'])
+    assert(summaries == ['Pick up dry cleaning', 'Dentist'])
 
 def test_google_events_attended():
     did.base.Config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[1].stats
     summaries = [stat["summary"] for stat in stats]
-    assert(summaries == [u'Party!'])
+    assert(summaries == ['Party!'])
 
 def test_google_tasks_completed():
     did.base.Config(CONFIG)
     stats = did.cli.main(INTERVAL2)[0][0].stats[0].stats[2].stats
     summaries = [stat["title"] for stat in stats]
-    assert(summaries == [u'The First Task'])
+    assert(summaries == ['The First Task'])

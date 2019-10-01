@@ -1,8 +1,6 @@
 # coding: utf-8
 """ Tests for the GitHub plugin """
 
-from __future__ import unicode_literals, absolute_import
-
 import pytest
 import did.cli
 import did.base
@@ -41,7 +39,7 @@ def test_github_issues_created():
     option = "--gh-issues-created "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
     assert any([
-        "psss/did#017 - What did you do" in unicode(stat) for stat in stats])
+        "psss/did#017 - What did you do" in str(stat) for stat in stats])
 
 def test_github_issues_closed():
     """ Closed issues """
@@ -49,7 +47,7 @@ def test_github_issues_closed():
     option = "--gh-issues-closed "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[1].stats
     assert any([
-        "psss/did#017 - What did you do" in unicode(stat) for stat in stats])
+        "psss/did#017 - What did you do" in str(stat) for stat in stats])
 
 def test_github_pull_requests_created():
     """ Created pull requests """
@@ -60,7 +58,7 @@ def test_github_pull_requests_created():
     stats = did.cli.main(
         option + INTERVAL + EMAIL)[0][0].stats[0].stats[2].stats
     assert any([
-        "psss/did#112 - Fixed test for Trac plugin" in unicode(stat)
+        "psss/did#112 - Fixed test for Trac plugin" in str(stat)
         for stat in stats])
 
 def test_github_pull_requests_closed():
@@ -70,7 +68,7 @@ def test_github_pull_requests_closed():
     INTERVAL = "--since 2015-09-22 --until 2015-09-22"
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[3].stats
     assert any([
-        "psss/did#037 - Skip CI users" in unicode(stat) for stat in stats])
+        "psss/did#037 - Skip CI users" in str(stat) for stat in stats])
 
 def test_github_pull_requests_reviewed():
     """ Reviewed pull requests """
@@ -78,7 +76,7 @@ def test_github_pull_requests_reviewed():
     option = "--gh-pull-requests-reviewed "
     INTERVAL = "--since 2017-02-22 --until 2017-02-23"
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[4].stats
-    assert any(["Katello/katello-client-bootstrap#164" in unicode(stat)
+    assert any(["Katello/katello-client-bootstrap#164" in str(stat)
         for stat in stats])
 
 def test_github_invalid_token():
@@ -102,5 +100,5 @@ def test_github_unicode():
     stats = did.cli.main(
         option + INTERVAL + EMAIL)[0][0].stats[0].stats[2].stats
     assert any([
-        u"Boundary events lose it’s documentation" in unicode(stat)
+        "Boundary events lose it’s documentation" in str(stat)
         for stat in stats])

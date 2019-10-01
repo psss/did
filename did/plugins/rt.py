@@ -10,11 +10,8 @@ Config example::
     url = https://tracker.org/rt/Search/Results.tsv
 """
 
-from __future__ import absolute_import, unicode_literals
-
-import httplib
-import urllib
-import urlparse
+import http.client
+import urllib.parse
 import gssapi
 
 from base64 import b64encode, b64decode
@@ -34,7 +31,7 @@ class RequestTracker(object):
     def __init__(self, parent):
         """ Initialize url and parent """
         self.parent = parent
-        self.url = urlparse.urlsplit(parent.url)
+        self.url = urllib.parse.urlsplit(parent.url)
         self.url_string = parent.url
 
     def get(self, path):
@@ -46,7 +43,7 @@ class RequestTracker(object):
         data = b64encode(ctx.step()).decode()
 
         # Make the connection
-        connection = httplib.HTTPSConnection(self.url.netloc, 443)
+        connection = http.client.HTTPSConnection(self.url.netloc, 443)
         log.debug("GET {0}".format(path))
         connection.putrequest("GET", path)
         connection.putheader("Authorization", "Negotiate {0}".format(data))
@@ -68,11 +65,11 @@ class RequestTracker(object):
         # Prepare the path
         log.debug("Query: {0}".format(query))
         path = self.url.path + '?Format=__id__+__Subject__'
-        path += "&Order=ASC&OrderBy=id&Query=" + urllib.quote(query)
+        path += "&Order=ASC&OrderBy=id&Query=" + urllib.parse.quote(query)
 
         # Get the tickets
         lines = self.get(path)
-        log.info(u"Fetched tickets: {0}".format(len(lines)))
+        log.info("Fetched tickets: {0}".format(len(lines)))
         return [self.parent.ticket(line, self.parent) for line in lines]
 
 
@@ -88,9 +85,9 @@ class Ticket(object):
         self.id, self.subject = record.split("\t")
         self.parent = parent
 
-    def __unicode__(self):
+    def __str__(self):
         """ Consistent identifier and subject for displaying """
-        return u"{0}#{1} - {2}".format(
+        return "{0}#{1} - {2}".format(
             self.parent.prefix, self.id, self.subject)
 
 
@@ -101,7 +98,7 @@ class Ticket(object):
 class ReportedTickets(Stats):
     """ Tickets reported """
     def fetch(self):
-        log.info(u"Searching for tickets reported by {0}".format(self.user))
+        log.info("Searching for tickets reported by {0}".format(self.user))
         query = "Requestor.EmailAddress = '{0}'".format(self.user.email)
         query += " AND Created > '{0}'".format(self.options.since)
         query += " AND Created < '{0}'".format(self.options.until)
@@ -111,7 +108,7 @@ class ReportedTickets(Stats):
 class ResolvedTickets(Stats):
     """ Tickets resolved """
     def fetch(self):
-        log.info(u"Searching for tickets resolved by {0}".format(self.user))
+        log.info("Searching for tickets resolved by {0}".format(self.user))
         query = "Owner.EmailAddress = '{0}'".format(self.user.email)
         query += "AND Resolved > '{0}'".format(self.options.since)
         query += "AND Resolved < '{0}'".format(self.options.until)

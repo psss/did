@@ -15,8 +15,6 @@ See the :doc:`config` documentation for details on using aliases.
 The authentication token is optional.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 import requests
 
@@ -84,9 +82,9 @@ class Issue(object):
             self.closed = None
         log.details('[{0}] {1}'.format(self.created, self))
 
-    def __unicode__(self):
+    def __str__(self):
         """ String representation """
-        return u'{0}#{1} - {2}'.format(
+        return '{0}#{1} - {2}'.format(
             self.project, self.identifier, self.title)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -96,18 +94,18 @@ class Issue(object):
 class IssuesCreated(Stats):
     """ Issues created """
     def fetch(self):
-        log.info(u'Searching for issues created by {0}'.format(self.user))
+        log.info('Searching for issues created by {0}'.format(self.user))
         issues = [Issue(issue) for issue in self.parent.pagure.search(
             query='user/{0}/issues?assignee=false&created={1}..{2}'.format(
                 self.user.login, self.options.since, self.options.until),
             pagination='pagination_issues_created',
             result_field='issues_created')]
-        self.stats = sorted(issues, key=lambda i: unicode(i))
+        self.stats = sorted(issues, key=lambda i: str(i))
 
 class IssuesClosed(Stats):
     """ Issues closed """
     def fetch(self):
-        log.info(u'Searching for issues closed by {0}'.format(self.user))
+        log.info('Searching for issues closed by {0}'.format(self.user))
         issues = [Issue(issue) for issue in self.parent.pagure.search(
             query='user/{0}/issues?status=all&author=false&since={1}'.format(
                 self.user.login, self.options.since),
@@ -118,19 +116,19 @@ class IssuesClosed(Stats):
             if issue.closed
             and issue.closed < self.options.until.date
             and issue.closed >= self.options.since.date],
-            key=lambda i: unicode(i))
+            key=lambda i: str(i))
 
 class PullRequestsCreated(Stats):
     """ Pull requests created """
     def fetch(self):
-        log.info(u'Searching for pull requests created by {0}'.format(
+        log.info('Searching for pull requests created by {0}'.format(
             self.user))
         issues = [Issue(issue) for issue in self.parent.pagure.search(
             query='user/{0}/requests/filed?status=all&created={1}..{2}'.format(
                 self.user.login, self.options.since, self.options.until),
             pagination='pagination',
             result_field='requests')]
-        self.stats = sorted(issues, key=lambda i: unicode(i))
+        self.stats = sorted(issues, key=lambda i: str(i))
 
 # FIXME: Blocked by https://pagure.io/pagure/issue/4329
 #class PullRequestsClosed(Stats):

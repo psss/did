@@ -1,8 +1,6 @@
 # coding: utf-8
 """ Tests for the Sentry plugin """
 
-from __future__ import unicode_literals, absolute_import
-
 import pytest
 
 import did.cli
@@ -46,7 +44,6 @@ def test_invalid_token():
     did.base.Config(BAD_TOKEN_CONFIG)
     with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Acceptance tests

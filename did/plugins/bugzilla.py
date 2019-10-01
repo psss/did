@@ -42,10 +42,8 @@ Available options:
 .. _Preferences: https://bugzilla.redhat.com/userprefs.cgi?tab=apikey
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import bugzilla
-import xmlrpclib
+import xmlrpc.client
 
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
@@ -86,10 +84,10 @@ class Bugzilla(object):
         # Fetch bug info
         try:
             result = self.server.query(query)
-        except xmlrpclib.Fault as error:
+        except xmlrpc.client.Fault as error:
             # Ignore non-existent users (this is necessary for users with
             # several email aliases to allow them using --merge/--total)
-            if "not a valid username" in unicode(error):
+            if "not a valid username" in str(error):
                 log.debug(error)
                 return []
             # Otherwise suggest to bake bugzilla cookies
@@ -102,16 +100,16 @@ class Bugzilla(object):
         bugs = dict((bug.id, bug) for bug in result)
         # Fetch bug history
         log.debug("Fetching bug history")
-        result = self.server._proxy.Bug.history({'ids': bugs.keys()})
+        result = self.server._proxy.Bug.history({'ids': list(bugs.keys())})
         log.debug(pretty(result))
         history = dict((bug["id"], bug["history"]) for bug in result["bugs"])
         # Fetch bug comments
         log.debug("Fetching bug comments")
-        result = self.server._proxy.Bug.comments({'ids': bugs.keys()})
+        result = self.server._proxy.Bug.comments({'ids': list(bugs.keys())})
         log.debug(pretty(result))
         comments = dict(
             (int(bug), data["comments"])
-            for bug, data in result["bugs"].items())
+            for bug, data in list(result["bugs"].items()))
         # Create bug objects
         return [
             self.parent.bug(
@@ -136,13 +134,13 @@ class Bug(object):
         self.prefix = parent.prefix
         self.parent = parent
 
-    def __unicode__(self):
+    def __str__(self):
         """ Consistent identifier and summary for displaying """
         if self.options.format == "wiki":
-            return u"<<Bug({0})>> - {1}".format(self.id, self.summary)
+            return "<<Bug({0})>> - {1}".format(self.id, self.summary)
         else:
-            return u"{0}#{1} - {2}".format(
-                self.prefix, unicode(self.id).rjust(7, "0"), self.summary)
+            return "{0}#{1} - {2}".format(
+                self.prefix, str(self.id).rjust(7, "0"), self.summary)
 
     def __eq__(self, other):
         """ Compare bugs by their id """
@@ -283,7 +281,7 @@ class VerifiedBugs(Stats):
     given user and having their status changed to ``VERIFIED``.
     """
     def fetch(self):
-        log.info(u"Searching for bugs verified by {0}".format(self.user))
+        log.info("Searching for bugs verified by {0}".format(self.user))
         # Common query options
         query = {
             # Status changed to VERIFIED
@@ -330,7 +328,7 @@ class ReturnedBugs(Stats):
     correct or complete.
     """
     def fetch(self):
-        log.info(u"Searching for bugs returned by {0}".format(self.user))
+        log.info("Searching for bugs returned by {0}".format(self.user))
         query = {
             # User is not the assignee
             "f1": "assigned_to",
@@ -366,7 +364,7 @@ class FiledBugs(Stats):
     Newly created bugs by given user, marked as the ``Reporter``.
     """
     def fetch(self):
-        log.info(u"Searching for bugs filed by {0}".format(self.user))
+        log.info("Searching for bugs filed by {0}".format(self.user))
         query = {
             # User is the reporter
             "f1": "reporter",
@@ -394,7 +392,7 @@ class FixedBugs(Stats):
     """
 
     def fetch(self):
-        log.info(u"Searching for bugs fixed by {0}".format(self.user))
+        log.info("Searching for bugs fixed by {0}".format(self.user))
         query = {
             # User is the assignee
             "f1": "assigned_to",
@@ -430,7 +428,7 @@ class ClosedBugs(Stats):
     """
 
     def fetch(self):
-        log.info(u"Searching for bugs closed by {0}".format(self.user))
+        log.info("Searching for bugs closed by {0}".format(self.user))
         query = {
             # Status changed by the user
             "f1": "bug_status",
@@ -467,7 +465,7 @@ class PostedBugs(Stats):
     change to ``POST`` and given user set as ``Assignee``.
     """
     def fetch(self):
-        log.info(u"Searching for bugs posted by {0}".format(self.user))
+        log.info("Searching for bugs posted by {0}".format(self.user))
         query = {
             # User is the assignee
             "f1": "assigned_to",
@@ -501,7 +499,7 @@ class PatchedBugs(Stats):
     to the bug or pushed to a feature git branch).
     """
     def fetch(self):
-        log.info(u"Searching for bugs patched by {0}".format(self.user))
+        log.info("Searching for bugs patched by {0}".format(self.user))
         query = {
             # Keywords field changed by the user
             "f1": "keywords",
@@ -565,7 +563,7 @@ class CommentedBugs(Stats):
     All bugs commented by given user in requested time frame.
     """
     def fetch(self):
-        log.info(u"Searching for bugs commented by {0}".format(self.user))
+        log.info("Searching for bugs commented by {0}".format(self.user))
         query = {
             # Commented by the user
             "f1": "longdesc",
@@ -593,7 +591,7 @@ class SubscribedBugs(Stats):
     All bugs subscribed by given user in requested time frame.
     """
     def fetch(self):
-        log.info(u"Searching for bugs subscribed by {0}".format(self.user))
+        log.info("Searching for bugs subscribed by {0}".format(self.user))
         query = {
             # Subscribed by the user
             "f1": "cc",

@@ -21,7 +21,7 @@ __ https://developer.github.com/guides/getting-started/#authentication
 
 import re
 import json
-import urllib2
+import urllib.request, urllib.error
 from requests.exceptions import RequestException
 
 from did.utils import log, pretty, listed
@@ -54,11 +54,11 @@ class GitHub(object):
         url = self.url + "/" + query
         log.debug("GitHub query: {0}".format(url))
         try:
-            request = urllib2.Request(url, headers=self.headers)
-            response = urllib2.urlopen(request)
+            request = urllib.request.Request(url, headers=self.headers)
+            response = urllib.request.urlopen(request)
             log.debug("Response headers:\n{0}".format(
-                unicode(response.info()).strip()))
-        except urllib2.URLError as error:
+                str(response.info()).strip()))
+        except urllib.error.URLError as error:
             log.debug(error)
             raise ReportError(
                 "GitHub search on {0} failed.".format(self.url))
@@ -83,11 +83,11 @@ class Issue(object):
         self.project = matched.groups()[1]
         self.id = matched.groups()[2]
 
-    def __unicode__(self):
+    def __str__(self):
         """ String representation """
-        return u"{0}/{1}#{2} - {3}".format(
+        return "{0}/{1}#{2} - {3}".format(
             self.owner, self.project,
-            unicode(self.id).zfill(PADDING), self.data["title"])
+            str(self.id).zfill(PADDING), self.data["title"])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,7 +97,7 @@ class Issue(object):
 class IssuesCreated(Stats):
     """ Issues created """
     def fetch(self):
-        log.info(u"Searching for issues created by {0}".format(self.user))
+        log.info("Searching for issues created by {0}".format(self.user))
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:issue"
@@ -107,7 +107,7 @@ class IssuesCreated(Stats):
 class IssuesClosed(Stats):
     """ Issues closed """
     def fetch(self):
-        log.info(u"Searching for issues closed by {0}".format(self.user))
+        log.info("Searching for issues closed by {0}".format(self.user))
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:issue"
@@ -117,7 +117,7 @@ class IssuesClosed(Stats):
 class PullRequestsCreated(Stats):
     """ Pull requests created """
     def fetch(self):
-        log.info(u"Searching for pull requests created by {0}".format(
+        log.info("Searching for pull requests created by {0}".format(
             self.user))
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
@@ -128,7 +128,7 @@ class PullRequestsCreated(Stats):
 class PullRequestsClosed(Stats):
     """ Pull requests closed """
     def fetch(self):
-        log.info(u"Searching for pull requests closed by {0}".format(
+        log.info("Searching for pull requests closed by {0}".format(
             self.user))
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
@@ -139,7 +139,7 @@ class PullRequestsClosed(Stats):
 class PullRequestsReviewed(Stats):
     """ Pull requests reviewed """
     def fetch(self):
-        log.info(u"Searching for pull requests reviewed by {0}".format(
+        log.info("Searching for pull requests reviewed by {0}".format(
             self.user))
         query = "search/issues?q=reviewed-by:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)

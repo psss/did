@@ -14,8 +14,6 @@ You need to generate authentication token at the server.
 The only scope you need to enable is `org:read`.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import re
 import requests
 import dateutil
@@ -38,7 +36,7 @@ class Issue(object):
         self.identifier = issue["shortId"]
         self.title = issue["title"]
 
-    def __unicode__(self):
+    def __str__(self):
         """ Unicode representation """
         return "{0} - {1}".format(self.identifier, self.title)
 
@@ -53,7 +51,7 @@ class Activity(object):
         # Parse creation date
         self.created = dateutil.parser.parse(activity["dateCreated"]).date()
 
-    def __unicode__(self):
+    def __str__(self):
         """ Unicode representation """
         return "{0} [{1}] {2}".format(self.created, self.kind, self.issue)
 
@@ -80,7 +78,7 @@ class Sentry(object):
 
     def issues(self, kind, email):
         """ Filter unique issues for given activity type and email """
-        return list(set([unicode(activity.issue)
+        return list(set([str(activity.issue)
             for activity in self.activities()
             if kind == activity.kind and activity.user['email'] == email]))
 
@@ -129,14 +127,14 @@ class Sentry(object):
 class ResolvedIssues(Stats):
     """ Issues resolved """
     def fetch(self):
-        log.info(u"Searching for issues resolved by {0}".format(self.user))
+        log.info("Searching for issues resolved by {0}".format(self.user))
         self.stats = self.parent.sentry.issues(
             kind='set_resolved', email=self.user.email)
 
 class CommentedIssues(Stats):
     """ Issues commented """
     def fetch(self):
-        log.info(u"Searching issues commented by {0}".format(self.user))
+        log.info("Searching issues commented by {0}".format(self.user))
         self.stats = self.parent.sentry.issues(
             kind='note', email=self.user.email)
 

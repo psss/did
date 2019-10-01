@@ -17,7 +17,6 @@ install_requires = [
     'requests',
     ]
 extras_require = {
-    'bitly': ['bitly_api'],
     'bugzilla': ['python-bugzilla'],
     'docs': ['sphinx', 'mock', 'sphinx_rtd_theme'],
     'google': ['google-api-python-client', 'oauth2client'],
@@ -27,7 +26,7 @@ extras_require = {
     'tests': ['pytest', 'python-coveralls'],
     }
 extras_require['all'] = [dependency
-    for extra in extras_require.itervalues()
+    for extra in extras_require.values()
     for dependency in extra]
 
 # Prepare the long description from readme
@@ -59,7 +58,8 @@ setup(
         'License :: OSI Approved :: '
             'GNU General Public License v2 or later (GPLv2+)',
         'Natural Language :: English',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Office/Business',
         'Topic :: Utilities',
     ],

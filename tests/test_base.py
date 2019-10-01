@@ -1,17 +1,9 @@
 # coding: utf-8
 
-from __future__ import unicode_literals, absolute_import
-
 import pytest
 import datetime
 import did.base
 from did.base import Config, ConfigError
-
-def test_base_import():
-    # simple test that import works
-    from did import base
-    assert base
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Config
@@ -39,7 +31,6 @@ def test_Config_width():
     config = Config("[general]\nwidth = 123\n")
     assert config.width == 123
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Date
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,68 +47,68 @@ def test_Date_period():
     # yesterday
     for argument in ["yesterday"]:
         since, until, period = Date.period(argument)
-        assert unicode(since) == "2015-10-02"
-        assert unicode(until) == "2015-10-03"
+        assert str(since) == "2015-10-02"
+        assert str(until) == "2015-10-03"
         assert period == "yesterday"
     # This week
     for argument in ["", "week", "this week"]:
         since, until, period = Date.period(argument)
-        assert unicode(since) == "2015-09-28"
-        assert unicode(until) == "2015-10-05"
+        assert str(since) == "2015-09-28"
+        assert str(until) == "2015-10-05"
         assert period == "the week 40"
     # Last week
     for argument in ["last", "last week"]:
         since, until, period = Date.period(argument)
-        assert unicode(since) == "2015-09-21"
-        assert unicode(until) == "2015-09-28"
+        assert str(since) == "2015-09-21"
+        assert str(until) == "2015-09-28"
         assert period == "the week 39"
     # Last Friday
     for argument in ["last friday"]:
         since, until, period = Date.period(argument)
-        assert unicode(since) == "2015-10-02"
-        assert unicode(until) == "2015-10-03"
+        assert str(since) == "2015-10-02"
+        assert str(until) == "2015-10-03"
         assert period == "the last friday"
     # This month
     for argument in ["month", "this month"]:
         since, until, period = Date.period(argument)
-        assert unicode(since) == "2015-10-01"
-        assert unicode(until) == "2015-11-01"
+        assert str(since) == "2015-10-01"
+        assert str(until) == "2015-11-01"
         assert period == "October"
     # Last month
     for argument in ["last month"]:
         since, until, period = Date.period(argument)
-        assert unicode(since) == "2015-09-01"
-        assert unicode(until) == "2015-10-01"
+        assert str(since) == "2015-09-01"
+        assert str(until) == "2015-10-01"
         assert period == "September"
     # This quarter
     for argument in ["quarter", "this quarter"]:
         since, until, period = Date.period(argument)
-        assert unicode(since) == "2015-09-01"
-        assert unicode(until) == "2015-12-01"
+        assert str(since) == "2015-09-01"
+        assert str(until) == "2015-12-01"
         assert period == "this quarter"
     # Last quarter
     for argument in ["last quarter"]:
         since, until, period = Date.period(argument)
-        assert unicode(since) == "2015-06-01"
-        assert unicode(until) == "2015-09-01"
+        assert str(since) == "2015-06-01"
+        assert str(until) == "2015-09-01"
         assert period == "the last quarter"
     # This year
     for argument in ["year", "this year"]:
         since, until, period = Date.period(argument)
-        assert unicode(since) == "2015-03-01"
-        assert unicode(until) == "2016-03-01"
+        assert str(since) == "2015-03-01"
+        assert str(until) == "2016-03-01"
         assert period == "this fiscal year"
     # Last year
     for argument in ["last year"]:
         since, until, period = Date.period(argument)
-        assert unicode(since) == "2014-03-01"
-        assert unicode(until) == "2015-03-01"
+        assert str(since) == "2014-03-01"
+        assert str(until) == "2015-03-01"
         assert period == "the last fiscal year"
     # Adding and subtracting days
-    assert unicode(Date('2018-11-29') + 1) == '2018-11-30'
-    assert unicode(Date('2018-11-29') + 2) == '2018-12-01'
-    assert unicode(Date('2018-12-02') - 1) == '2018-12-01'
-    assert unicode(Date('2018-12-02') - 2) == '2018-11-30'
+    assert str(Date('2018-11-29') + 1) == '2018-11-30'
+    assert str(Date('2018-11-29') + 2) == '2018-12-01'
+    assert str(Date('2018-12-02') - 1) == '2018-12-01'
+    assert str(Date('2018-12-02') - 2) == '2018-11-30'
     did.base.TODAY = today
 
 
@@ -150,14 +141,14 @@ def test_User():
     assert user.email == "some@email.org"
     assert user.login == "some"
     assert user.name == None
-    assert unicode(user) == "some@email.org"
+    assert str(user) == "some@email.org"
 
     # Full email format
     user = User("Some Body <some@email.org>")
     assert user.email == "some@email.org"
     assert user.login == "some"
     assert user.name == "Some Body"
-    assert unicode(user) == "Some Body <some@email.org>"
+    assert str(user) == "Some Body <some@email.org>"
 
     # Invalid alias definition
     try:
@@ -191,8 +182,6 @@ def test_User():
     user = User("some@email.org; bz: bzlogin")
     clone = user.clone("bz")
     assert clone.login == "bzlogin"
-
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Exceptions

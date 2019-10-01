@@ -1,8 +1,6 @@
 # coding: utf-8
 """ Tests for the trac plugin """
 
-from __future__ import unicode_literals, absolute_import
-
 import did.cli
 import did.base
 
@@ -17,7 +15,6 @@ type = trac
 url = https://fedorahosted.org/design-team/rpc
 prefix = DT
 """
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests
@@ -40,7 +37,7 @@ def test_trac_created():
         --since 2016-08-08
         --until 2016-08-08""")[0][0].stats[0].stats[0].stats
     assert any([
-        "DT#0468 - Re-brand of pulp logo" in unicode(change)
+        "DT#0468 - Re-brand of pulp logo" in str(change)
         for change in stats])
 
 
@@ -54,4 +51,4 @@ def test_trac_closed():
         --since 2016-09-22
         --until 2016-09-22""")[0][0].stats[0].stats[3].stats
     assert any([
-        "DT#0437 - Icon for openQA" in unicode(change) for change in stats])
+        "DT#0437 - Icon for openQA" in str(change) for change in stats])

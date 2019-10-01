@@ -28,11 +28,9 @@ Notes:
   basic authentication.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import re
-import urllib
 import requests
+import urllib.parse
 import distutils.util
 from requests_gssapi import HTTPSPNEGOAuth, DISABLED
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -71,7 +69,7 @@ class Confluence(object):
         for batch in range(MAX_BATCHES):
             response = stats.parent.session.get(
                 "{0}/rest/api/content/search?{1}".format(
-                    stats.parent.url, urllib.urlencode({
+                    stats.parent.url, urllib.parse.urlencode({
                         "cql": query,
                         "limit": MAX_RESULTS,
                         "expand": expand,
@@ -95,7 +93,7 @@ class ConfluencePage(Confluence):
         """ Initialize the page """
         self.title = page['title']
 
-    def __unicode__(self):
+    def __str__(self):
         """ Page title for displaying """
         return "{}".format(self.title)
 
@@ -112,7 +110,7 @@ class ConfluenceComment(Confluence):
         self.body = re.sub('</p><p>', ' ', self.body)
         self.body = re.sub('<[^<]+?>', '', self.body)
 
-    def __unicode__(self):
+    def __str__(self):
         """ Confluence title & comment snippet for displaying """
         return "{}: {}".format(self.title, self.body)
 

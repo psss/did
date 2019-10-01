@@ -8,8 +8,6 @@ Config example::
     type = nitrate
 """
 
-from __future__ import absolute_import
-
 from did.stats import Stats, StatsGroup
 from did.utils import log
 
@@ -24,7 +22,7 @@ class TestPlans(Stats):
     """ Test plans created """
     def fetch(self):
         import nitrate
-        log.info(u"Searching for test plans created by {0}".format(self.user))
+        log.info("Searching for test plans created by {0}".format(self.user))
         self.stats.extend(nitrate.TestPlan.search(
             is_active=True,
             author__email=self.user.email,
@@ -36,7 +34,7 @@ class TestRuns(Stats):
     """ Test runs finished """
     def fetch(self):
         import nitrate
-        log.info(u"Searching for test runs finished by {0}".format(self.user))
+        log.info("Searching for test runs finished by {0}".format(self.user))
         self.stats.extend(nitrate.TestRun.search(
             default_tester__email=self.user.email,
             stop_date__gt=str(self.options.since),
@@ -101,7 +99,7 @@ class NitrateStats(StatsGroup):
         """ All test cases created by the user """
         import nitrate
         if self._cases is None:
-            log.info(u"Searching for cases created by {0}".format(self.user))
+            log.info("Searching for cases created by {0}".format(self.user))
             self._cases = [
                 case for case in nitrate.TestCase.search(
                     author__email=self.user.email,
@@ -115,7 +113,7 @@ class NitrateStats(StatsGroup):
         """ All test case copies created by the user """
         import nitrate
         if self._copies is None:
-            log.info(u"Searching for cases copied by {0}".format(self.user))
+            log.info("Searching for cases copied by {0}".format(self.user))
             self._copies = [
                 case for case in nitrate.TestCase.search(
                     author__email=self.user.email,

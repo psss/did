@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# Author: "Chris Ward" <cward@redhat.com>
-
-from __future__ import unicode_literals, absolute_import
-
+# coding: utf-8
 
 def test_Stats():
     # simple test that import works

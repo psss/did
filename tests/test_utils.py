@@ -1,19 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# Author: "Chris Ward" <cward@redhat.com>
+# coding: utf-8
 
-from __future__ import unicode_literals, absolute_import
 import pytest
 import os
 
 import did
-
-
-def test_utils_import():
-    # simple test that import works
-    from did import utils
-    assert utils
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -52,7 +42,6 @@ def test_log():
     from did.utils import log
     assert log
     log.name == 'did'
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utils
@@ -128,7 +117,6 @@ def test_ascii():
     assert ascii("ěščřžýáíé") == "escrzyaie"
     assert ascii(0) == "0"
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Logging
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -148,7 +136,6 @@ def test_info():
 def test_Logging():
     from did.utils import Logging
     assert Logging
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Coloring

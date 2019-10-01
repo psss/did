@@ -2,9 +2,7 @@
 
 """ Stats & StatsGroup, the core of the data gathering """
 
-from __future__ import unicode_literals, absolute_import
-
-import xmlrpclib
+import xmlrpc.client
 
 import did.base
 from did import utils
@@ -77,7 +75,7 @@ class Stats(object):
             return
         try:
             self.fetch()
-        except (xmlrpclib.Fault, did.base.ConfigError) as error:
+        except (xmlrpc.client.Fault, did.base.ConfigError) as error:
             log.error(error)
             self._error = True
             # Raise the exception if debugging
@@ -137,13 +135,8 @@ class StatsGroupPlugin(type):
         registry[plugin_name] = cls
 
 
-# For python3, remove __metaclass__ and redefine as:
-# class StatsGroup(six.with_metaclass(StatsGroupPlugin, Stats)):
-class StatsGroup(Stats):
+class StatsGroup(Stats, metaclass=StatsGroupPlugin):
     """ Stats group """
-
-    # Autoregister all subclasses
-    __metaclass__ = StatsGroupPlugin
 
     # Default order
     order = 500

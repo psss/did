@@ -7,8 +7,6 @@ This module takes care of processing command line options and
 running the main loop which gathers all individual stats.
 """
 
-from __future__ import unicode_literals, absolute_import
-
 import re
 import sys
 import argparse
@@ -101,13 +99,13 @@ class Options(object):
         """ Prepare arguments (both direct and from command line) """
         # Split arguments if given as string
         if arguments is not None:
-            if isinstance(arguments, basestring):
+            if isinstance(arguments, str):
                 self.arguments = arguments.split()
             else:
                 self.arguments = arguments
-        # Otherwise properly decode command line arguments
+        # Otherwise process command line arguments
         else:
-            self.arguments = [arg.decode("utf-8") for arg in sys.argv[1:]]
+            self.arguments = sys.argv[1:]
 
     def parse(self):
         """ Parse the options. """

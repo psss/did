@@ -133,7 +133,7 @@ class Event(object):
         """ Create Event object from dictionary returned by Google API """
         self.__dict__ = dict
 
-    def __unicode__(self):
+    def __str__(self):
         """ String representation """
         return self.summary if hasattr(self, "summary") else "(No title)"
 
@@ -220,13 +220,13 @@ class GoogleStatsBase(Stats):
             self._tasks = self.parent.tasks.tasks(
                 tasklist="@default", showCompleted="true", showHidden="true",
                 completedMin=self.since, completedMax=self.until)
-        log.info(u"NB TASKS {0}".format(len(self._tasks)))
+        log.info("NB TASKS {0}".format(len(self._tasks)))
         return self._tasks
 
 class GoogleEventsOrganized(GoogleStatsBase):
     """ Events organized """
     def fetch(self):
-        log.info(u"Searching for events organized by {0}".format(self.user))
+        log.info("Searching for events organized by {0}".format(self.user))
         self.stats = [
             event for event in self.events
             if event.organized_by(self.user.email)
@@ -235,7 +235,7 @@ class GoogleEventsOrganized(GoogleStatsBase):
 class GoogleEventsAttended(GoogleStatsBase):
     """ Events attended """
     def fetch(self):
-        log.info(u"Searching for events attended by {0}".format(self.user))
+        log.info("Searching for events attended by {0}".format(self.user))
         self.stats = [
             event for event in self.events
             if event.attended_by(self.user.email)
@@ -244,7 +244,7 @@ class GoogleEventsAttended(GoogleStatsBase):
 class GoogleTasksCompleted(GoogleStatsBase):
     """ Tasks completed """
     def fetch(self):
-        log.info(u"Searching for completed tasks by {0}".format(self.user))
+        log.info("Searching for completed tasks by {0}".format(self.user))
         self.stats = self.tasks
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

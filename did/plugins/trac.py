@@ -11,7 +11,7 @@ Config example::
 """
 
 import re
-import xmlrpclib
+import xmlrpc.client
 
 from did.utils import log, pretty
 from did.base import Config, ReportError
@@ -38,7 +38,7 @@ class Trac(object):
         self.summary = self.attributes["summary"]
         self.resolution = self.attributes["resolution"]
 
-    def __unicode__(self):
+    def __str__(self):
         """ Consistent identifier and summary for displaying """
         # Show only interesting resolutions to be more concise
         if self.resolution and self.resolution in INTERESTING_RESOLUTIONS:
@@ -47,14 +47,14 @@ class Trac(object):
             resolution = ""
         # Urlify the identifier when using the wiki format
         if self.options.format == "wiki":
-            identifier = u"[[{0}/ticket/{1}|{2}#{3}]]".format(
+            identifier = "[[{0}/ticket/{1}|{2}#{3}]]".format(
                 self.parent.url, self.id,
                 self.parent.prefix, str(self.id).zfill(4))
         else:
-            identifier = u"{0}#{1}".format(
+            identifier = "{0}#{1}".format(
                 self.parent.prefix, str(self.id).zfill(4))
         # Join identifier with summary and optional resolution
-        return u"{0} - {1}{2}".format(identifier, self.summary, resolution)
+        return "{0} - {1}{2}".format(identifier, self.summary, resolution)
 
     @staticmethod
     def search(query, parent, options):
@@ -64,21 +64,21 @@ class Trac(object):
         log.debug("Search query: {0}".format(query))
         try:
             result = parent.proxy.ticket.query(query)
-        except xmlrpclib.Fault as error:
+        except xmlrpc.client.Fault as error:
             log.error("An error encountered, while searching for tickets.")
             raise ReportError(error)
-        except xmlrpclib.ProtocolError as error:
+        except xmlrpc.client.ProtocolError as error:
             log.debug(error)
             log.error("Trac url: {0}".format(parent.url))
             raise ReportError(
                 "Unable to contact Trac server. Is the url above correct?")
         log.debug("Search result: {0}".format(result))
         # Fetch tickets and their history using multicall
-        multicall = xmlrpclib.MultiCall(parent.proxy)
+        multicall = xmlrpc.client.MultiCall(parent.proxy)
         for ticket_id in sorted(result):
             multicall.ticket.get(ticket_id)
             multicall.ticket.changeLog(ticket_id)
-        log.debug(u"Fetching trac tickets and their history")
+        log.debug("Fetching trac tickets and their history")
         result = list(multicall())
         tickets = result[::2]
         changelogs = result[1::2]
@@ -137,7 +137,7 @@ class TracCommon(Stats):
 class TracCreated(TracCommon):
     """ Created tickets """
     def fetch(self):
-        log.info(u"Searching for tickets created by {0}".format(self.user))
+        log.info("Searching for tickets created by {0}".format(self.user))
         query = "reporter=~{0}&time={1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         self.stats = Trac.search(query, self.parent, self.options)
@@ -146,7 +146,7 @@ class TracCreated(TracCommon):
 class TracAccepted(TracCommon):
     """ Accepted tickets """
     def fetch(self):
-        log.info(u"Searching for tickets accepted by {0}".format(self.user))
+        log.info("Searching for tickets accepted by {0}".format(self.user))
         query = "time=..{2}&modified={1}..&owner=~{0}".format(
                 self.user.login, self.options.since, self.options.until)
         self.stats = [
@@ -157,7 +157,7 @@ class TracAccepted(TracCommon):
 class TracUpdated(TracCommon):
     """ Updated tickets """
     def fetch(self):
-        log.info(u"Searching for tickets updated by {0}".format(self.user))
+        log.info("Searching for tickets updated by {0}".format(self.user))
         query = "time=..{2}&modified={1}..".format(
             self.user.login, self.options.since, self.options.until)
         self.stats = [
@@ -168,7 +168,7 @@ class TracUpdated(TracCommon):
 class TracClosed(TracCommon):
     """ Closed tickets """
     def fetch(self):
-        log.info(u"Searching for tickets closed by {0}".format(self.user))
+        log.info("Searching for tickets closed by {0}".format(self.user))
         query = "owner=~{0}&time=..{2}&modified={1}..".format(
             self.user.login, self.options.since, self.options.until)
         self.stats = [
@@ -195,7 +195,7 @@ class TracStats(StatsGroup):
             raise ReportError(
                 "No trac url set in the [{0}] section".format(option))
         self.url = re.sub("/rpc$", "", config["url"])
-        self.proxy = xmlrpclib.ServerProxy(self.url + "/rpc")
+        self.proxy = xmlrpc.client.ServerProxy(self.url + "/rpc")
         # Make sure we have prefix set
         if "prefix" not in config:
             raise ReportError(
