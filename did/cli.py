@@ -178,9 +178,10 @@ def main(arguments=None):
         # Parse options, initialize gathered stats
         utils.load_components("did.plugins", continue_on_error=True)
 
-        custom_plugins = did.base.Config().custom_plugins
+        custom_plugins = did.base.Config().plugins
         if custom_plugins:
-            custom_plugins = [p.strip() for p in utils.split(custom_plugins)]
+            custom_plugins = [
+                plugin.strip() for plugin in utils.split(custom_plugins)]
             utils.load_components(*custom_plugins, continue_on_error=True)
 
         options, header = Options(arguments).parse()

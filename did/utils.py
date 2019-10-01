@@ -70,8 +70,9 @@ def _import(path, continue_on_error):
             raise
 
 
-def _load_components(path, include=".*", exclude="test",
-                     continue_on_error=True):
+def _load_components(
+    path, include=".*", exclude="test", continue_on_error=True):
+    """ Import modules, handle include/exclude filtering """
     num_loaded = 0
     if path.endswith(".py"):
         path, _ = os.path.splitext(path)
@@ -91,13 +92,13 @@ def _load_components(path, include=".*", exclude="test",
         return num_loaded
 
     prefix = package.__name__ + "."
-    for _, name, is_pkg in pkgutil.iter_modules(path=package.__path__,
-                                                prefix=prefix):
+    for _, name, is_pkg in pkgutil.iter_modules(
+            path=package.__path__, prefix=prefix):
         if not name.startswith(prefix):
             name = prefix + name
         if is_pkg:
-            num_loaded += _load_components(name, include, exclude,
-                                           continue_on_error)
+            num_loaded += _load_components(
+                name, include, exclude, continue_on_error)
         else:
             if do_include(name) and not do_exclude(name):
                 _import(name, continue_on_error)
@@ -108,21 +109,24 @@ def _load_components(path, include=".*", exclude="test",
 
 def load_components(*paths, **kwargs):
     """
-    Loads all components on the paths. Each path should be a package or module.
-    All components beneath a path are loaded. This method works whether the
-    package or module is on the filesystem or in an .egg. If it's in an egg,
-    the egg must already be on the ``PYTHONPATH``.
+    Load all components on the paths
+
+    Each path should be a package or module. All components beneath a
+    path are loaded. This method works whether the package or module is
+    on the filesystem or in an .egg. If it's in an egg, the egg must
+    already be on the ``PYTHONPATH``.
 
     Args:
         paths (str): A package or module to load
 
     Keyword Args:
-        include (str): A regular expression of packages and modules to include.
-            Defaults to '.*'
-        exclude (str): A regular expression of packges and modules to exclude.
-            Defaults to 'test'
-        continue_on_error (bool): If True, continue importing even if something
-            raises an ImportError. If False, raise the first ImportError.
+        include (str): A regular expression of packages and modules to
+            include. Defaults to '.*'
+        exclude (str): A regular expression of packges and modules to
+            exclude. Defaults to 'test'
+        continue_on_error (bool): If True, continue importing even if
+            something raises an ImportError. If False, raise the first
+            ImportError.
 
     Returns:
         int: The total number of modules loaded.

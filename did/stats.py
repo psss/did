@@ -142,7 +142,7 @@ class StatsGroupPlugin(type):
 class StatsGroup(Stats):
     """ Stats group """
 
-    # autoregister all subclasses
+    # Autoregister all subclasses
     __metaclass__ = StatsGroupPlugin
 
     # Default order
@@ -201,13 +201,13 @@ class UserStats(StatsGroup):
             else:
                 raise
 
-    def configured_plugins(self, cfg):
+    def configured_plugins(self, config):
         results = []
-        for section in cfg.sections():
+        for section in config.sections():
             if section == "general":
                 continue
 
-            data = dict(cfg.section(section, skip=set()))
+            data = dict(config.section(section, skip=set()))
             type_ = data.get("type")
 
             if not type_:
