@@ -63,8 +63,8 @@ master_doc = 'index'
 master_man = 'man.1'
 
 # General information about the project.
-project = u''
-copyright = u'2015, Petr Šplíchal'
+project = u'tmt'
+copyright = u'2019, Red Hat'
 author = u'Petr Šplíchal'
 
 # The version info for the project you're documenting, acts as replacement for
