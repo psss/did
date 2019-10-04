@@ -1,0 +1,7 @@
+summary:
+    Essential command line features
+discover:
+    how: fmf
+    repository: https://github.com/psss/fmf
+execute:
+    how: beakerlib

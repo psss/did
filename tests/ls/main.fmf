@@ -1,0 +1,2 @@
+summary: List available tests and testsets
+description: Make sure that 'tmt test ls' and 'tmt testset ls' work.

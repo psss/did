@@ -1,0 +1,3 @@
+test: ./test.sh
+contact: Petr Šplíchal <psplicha@redhat.com>
+duration: 5m

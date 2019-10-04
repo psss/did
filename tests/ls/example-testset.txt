@@ -1,0 +1,5 @@
+/smoke:
+    discover:
+        how: fmf
+    execute:
+        how: shell

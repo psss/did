@@ -2,6 +2,9 @@ story:
     As a command line user I want to have all essential
     documentation at hand.
 
+tested: /tests/docs
+implemented: /tmt/cli
+
 /help:
     story:
         Main command and all its subcommands should provide --help
