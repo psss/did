@@ -1,94 +1,252 @@
 story: As a user I want to have an intuitive command line interface
 
 /run:
+    story: 'I want to execute tests easily'
+
     /default:
-        requirement: Default should cover the most common use case
-        description: Run all relevant tests on the default environment
+        story: 'Default should cover the most common use case'
+        description:
+            Run all relevant tests on the default environment.
+            Default environment should be something safe which
+            should not modify user environment. Perhaps something
+            like 'x86_64 virtual machine from the testing farm'?
         examples: tmt run
+
     /discover:
-        requirement: Select or adjust the discover step
-        examples: tmt run discover
-    /provision:
-        requirement: Select or adjust the provision step
-        examples: tmt run provision prepare
-    /prepare:
-        requirement: Select or adjust the prepare step
-        examples: tmt run provision prepare
-    /execute:
-        requirement: Select or adjust the execute step
-        examples: tmt run execute --how=beakerlib
-    /report:
-        requirement: Select or adjust the report step
-        examples: tmt run report
-    /finish:
-        requirement: Select or adjust the finish step
-        examples: tmt run finish
-    /shortcuts:
-        requirement: Provide shortcuts for the most common scenarios
+        story: 'Select or adjust the discover step'
+        description:
+            Defines which tests should be executed.
         examples:
+            - tmt run discover
+            - tmt run discover --how=fmf
+            - tmt run discover --how=fmf --repo=url
+            - tmt run discover --how=list
+            - tmt run discover --how=shell
+            - tmt run discover --how=nitrate
+
+    /provision:
+        story: 'Select or adjust the provision step'
+        description:
+            Describes what environment is needed for testing and
+            how it should provisioned.
+        examples:
+            - tmt run provision
+            - tmt run provision --how=testing-farm
+            - tmt run provision --how=testing-farm --memory-min=8GB
+            - tmt run provision --how=openstack
+            - tmt run provision --how=container
+            - tmt run provision --how=podman
+            - tmt run provision --how=docker
             - tmt run provision --how=podman --image=fedora:rawhide
+            - tmt run provision --how=beaker --distro=rhel-8
+            - tmt run provision --how=beaker --arch=s390x
+            - tmt run provision --how=local
+            - tmt run provision --how=qemu
+            - tmt run provision --how=vagrant
+
+    /prepare:
+        story: 'Select or adjust the prepare step'
+        description:
+            Additional configuration of the provisioned
+            environment needed for testing.
+        examples:
+            - tmt run prepare
+            - tmt run prepare --how=ansible
+            - tmt run prepare --how=ansible --playbook=server.yaml
+
+    /execute:
+        story: 'Select or adjust the execute step'
+        description:
+            Specification of the testing framework which should
+            execute tests.
+        examples:
+            - tmt run execute
+            - tmt run execute --how=shell
+            - tmt run execute --how=beakerlib
+            - tmt run execute --how=restraint
+
+    /report:
+        story: 'Select or adjust the report step'
+        description:
+            Adjusting notifications about the test progress and
+            results.
+        examples:
+            - tmt run report
+            - tmt run report --email=email@example.com
+            - tmt run report --irc=room
+
+    /finish:
+        story: 'Select or adjust the finish step'
+        description:
+            Additional actions to be performed after the test
+            execution has been completed. Counterpart of the
+            prepare step useful for various cleanup actions.
+        examples:
+            - tmt run finish
+
+    /select-steps:
+        story: 'Select multiple steps to be executed'
+
+        /pick:
+            story: 'Choose steps to be executed'
+            examples:
+                - tmt run provision prepare
+                - tmt run discover provision prepare
+        /until:
+            story: 'Run all steps until the given one'
+            examples:
+                - tmt run --until prepare
+                - tmt run --until execute
+        /all:
+            story: 'Run all test steps, customize some'
+            examples:
+                - tmt run --all provision --how=container
+
+    /shortcuts:
+        story: 'Provide shortcuts for common scenarios'
+        examples:
             - tmt run --container=fedora:rawhide
+            - tmt run --container=fedora:rawhide --cap-add=SYS_ADMIN
+
+    /filter-testset:
+        story: 'Select testsets for execution'
+        examples:
+            - tmt run testset NAME
+            - tmt run testset --filter=FILTER
+            - tmt run testset --grep=REGEXP
+
+    /filter-test:
+        story: 'Select tests for execution'
+        # TODO: Should this be rather covered by the discover step?
+        examples:
+            - tmt run test NAME
+            - tmt run test --filter=FILTER
+            - tmt run test --grep=REGEXP
+            - tmt run testset NAME2 test NAME1
+
+    /keep:
+        story: Store test step status, keep machines running
+        examples:
+            - tmt run --keep provision prepare
+            - tmt run --keep discover execute
+            - tmt run --keep execute
+            - tmt run --keep execute
 
 /test:
-    requirement: 'Handle test case metadata: '
+    story: 'I want to comfortably work with tests'
+
     /ls:
-        requirement+: List available tests
+        story: 'List available tests'
         examples: tmt test ls
+
     /show:
-        requirement+: Show test metadata
+        story: 'Show test metadata'
         examples: tmt test show
+
+    /lint:
+        story: 'Check against the L1 metadata specification'
+        description:
+            Verify that test metadata are aligned with the
+            specification, e.g. that all required attributes are
+            present and that all attributes have correct type.
+        examples: tmt test lint
+
     /convert:
-        requirement+: Convert old metadata
+        story: 'Convert old test metadata'
         examples: tmt test convert
         implemented: /tmt/convert
         tested: /tests/test_convert
         documented: /docs/commands#test
+
     /coverage:
-        requirement+: Test coverage overview
+        story: 'Test coverage overview'
+        description:
+            Show current status of test coverage.
+            Alias for /stories/cli/story/coverage/test
         examples: tmt test coverage
+
     /filter:
-        requirement+: Filter available tests
+        story: 'Filter available tests'
         examples:
-            - tmt test ls --max-duration 5m
-            - tmt test ls --disabled
-            - tmt test ls --tier 1
+            - tmt test ls REGEXP
+            - tmt test ls --max-duration=5m
+            - tmt test ls --enabled
+            - tmt test ls --tier=1
 
 /testset:
-    requirement: 'Handle testset metadata: '
+    story: 'I want to comfortably work with testsets'
+
     /ls:
-        requirement+: List available testsets
+        story: 'List available testsets'
         examples: tmt testset ls
+
     /show:
-        requirement+: Show testset configuration
+        story: 'Show testset configuration'
         examples: tmt testset show
-    /filter:
-        requirement+: Filter available testsets
-        examples: tmt testset show --artifact=pull-request
 
-/requirement:
-    requirement: 'Handle requirements: '
-    /ls:
-        requirement+: List available requirements
-        examples: tmt requirement ls
-    /show:
-        requirement+: Show requirement details
-        examples: tmt requirement show
     /filter:
-        requirement+: Filter available requirements
+        story: 'Filter available testsets'
         examples:
-            - tmt requirement --implemented
-            - tmt requirement --tested
-            - tmt requirement --documented
+            - tmt testset ls REGEXP
+            - tmt testset show --artifact=pull-request
 
-/coverage:
-    requirement: 'Show coverage overview: '
-    /test:
-        requirement+: Test coverage
-        description: Alias for /stories/cli/test/coverage
-        examples: tmt coverage test
-    /implementation:
-        requirement+: Implementation coverage
-        examples: tmt coverage implementation
-    /documentation:
-        requirement+: Documentation coverage
-        examples: tmt coverage documenation
+/story:
+    story: 'I want to comfortably work with stories'
+
+    /ls:
+        story: 'List available stories'
+        examples: tmt story ls
+
+    /show:
+        story: 'Show story details'
+        examples: tmt story show
+
+    /filter:
+        story: 'Search available stories'
+        examples:
+            - tmt story --implemented
+            - tmt story --unimplemented
+            - tmt story --tested
+            - tmt story --untested
+            - tmt story --documented
+            - tmt story --undocumented
+
+    /coverage:
+        story: 'Show coverage overview: '
+
+        /overview:
+            story+: 'General overview'
+            description:
+                Complete overview of the story coverage including
+                implementation, testing and documentation status.
+            examples: tmt story coverage
+
+        /test:
+            story+: 'Test coverage'
+            examples: tmt story coverage test
+
+        /implementation:
+            story+: 'Implementation coverage'
+            examples: tmt story coverage implementation
+
+        /documentation:
+            story+: 'Documentation coverage'
+            examples: tmt story coverage documenation
+
+    /export:
+        story: 'I need to convert stories into a beautiful format'
+
+        /rst:
+            story+: 'Export stories into reStructuredText'
+            description:
+                So that they can be included in tmt documentation.
+            examples: tmt story export --rst
+
+
+        /html:
+            story+: 'Export stories into html'
+            description:
+                So that they can be quickly reviewed in a web
+                browser. Optionally a simple python httpd server
+                could be started to serve the page or pages.
+            examples: tmt story export --html --server

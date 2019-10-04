@@ -1,0 +1,76 @@
+story:
+    As a tool developer I want an API which will allow me to
+    comfortably access the L1 and L2 metadata
+
+/test:
+    story: I want to easily access L1 metadata
+
+    /attributes:
+        story: 'Access test attributes: '
+        /name:
+            story+: name
+            examples: test.name
+        /test:
+            story+: test
+            examples: test.test
+        /path:
+            story+: path
+            examples: test.path
+            description:
+                Path to the test execution directory.
+                Defaults to the object name.
+
+    /explore:
+        story: 'Explore available tests: '
+        /list:
+            story+: List all available tests
+            examples: Test.search()
+        /search:
+            story+: Select tests by filter
+            examples: Test.search(artifact='pull-request')
+
+/testset:
+    story: I want to easily access L2 metadata
+
+    /explore:
+        story: 'Explore available testsets: '
+        /list:
+            story+: List all available testsets
+            examples: TestSet.search()
+        /search:
+            story+: Select testsets by filter
+            examples: TestSet.search(name='/testsets/smoke')
+
+    /steps:
+        story: 'Access test steps: '
+        /discover:
+            story+: discover
+            examples: testset.discover
+        /provision:
+            story+: provision
+            examples: testset.provision
+        /prepare:
+            story+: prepare
+            examples: testset.prepare
+        /execute:
+            story+: execute
+            description: Default implementation is 'shell'.
+            examples: testset.execute
+        /report:
+            story+: report
+            examples: testset.report
+        /finish:
+            story+: finish
+            examples: testset.finish
+
+    /attributes:
+        story: 'Access additional attributes: '
+        /summary:
+            story+: Short testset description
+            examples: testset.summary
+        /artifact:
+            story+: Artifacts for which testset is executed
+            examples: testset.gate
+        /gate:
+            story+: Gates for which the testset is relevant
+            examples: testset.artifact

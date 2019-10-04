@@ -1,0 +1,37 @@
+story:
+    As a command line user I want to have all essential
+    documentation at hand.
+
+/help:
+    story:
+        Main command and all its subcommands should provide --help
+    description:
+        All available options should be easily discoverable.
+    examples:
+        - tmt --help
+        - tmt run --help
+        - tmt test convert --help
+
+/man:
+    story:
+        There should be a 'tmt' man page availabe in the package
+    description:
+        Man page should contain brief introduction about the tool
+        and a list of essential commands and options.
+    examples:
+        - man tmt
+
+/examples:
+    story:
+        A couple of instructive examples should be included in the
+        package for easy first experimenting
+    description:
+        Examples should be stored under the /usr/share/doc
+        directory.
+    examples: |
+        cd /usr/share/doc/tmt/examples
+        ls
+        cd mini
+        tmt test ls
+        tmt testset ls
+        tmt run
