@@ -151,6 +151,19 @@ story: As a user I want to have an intuitive command line interface
             present and that all attributes have correct type.
         examples: tmt test lint
 
+    /create:
+        story: 'Create a new test skeleton'
+        description:
+            Provide an easy way how to create a new test. Ideally
+            with support for multiple test skeletons. Similarly as
+            beaker-wizard (which should be obsoleted by this) the
+            tool should prompt for required values if not provided
+            on the command line.
+        examples:
+            - tmt test create
+            - tmt test create /tests/area/feature
+            - tmt test create /tests/area/feature --skeleton beakerlib
+            - tmt test create /tests/area/feature --duration=1h
     /convert:
         story: 'Convert old test metadata'
         examples: tmt test convert
