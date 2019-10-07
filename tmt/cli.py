@@ -128,6 +128,16 @@ def ls(names):
     return 'test ls'
 
 
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@test.command()
+def show(names):
+    """ Show test details. """
+    for test in tree.tests(names=names):
+        test.show()
+        echo()
+    return 'test show'
+
+
 @click.option(
     '--nitrate / --no-nitrate', default=True,
     help='Import test metadata from Nitrate')
@@ -189,6 +199,16 @@ def ls(names):
     for testset in tree.testsets(names=names):
         testset.ls()
     return 'testset ls'
+
+
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@testset.command()
+def show(names):
+    """ Show testset details. """
+    for testset in tree.testsets(names=names):
+        testset.show()
+        echo()
+    return 'testset show'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

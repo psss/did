@@ -9,6 +9,7 @@ from click import echo, style
 import fmf
 import click
 import pprint
+import tmt.utils
 
 STEPS = ['discover', 'provision', 'prepare', 'execute', 'report', 'finish']
 
@@ -18,9 +19,13 @@ class Step(object):
     # Test steps need to be explicitly enabled
     enabled = False
 
-    def __init__(self, data):
+    def __init__(self, data={}):
         """ Store step data """
         self.data = data
+
+    def __str__(self):
+        """ Step name """
+        return self.__class__.__name__.lower()
 
     def go(self):
         """ Execute the test step """
@@ -29,10 +34,22 @@ class Step(object):
         echo(style('{0}:'.format(self.__class__.__name__), fg='blue'))
         pprint.pprint(self.data)
 
+    def show(self, keys=[]):
+        """ Show step details """
+        if not self.data:
+            return
+        for key in keys or self.data:
+            try:
+                tmt.utils.format(key, self.data[key])
+            except KeyError:
+                pass
 
 class Discover(Step):
     """ Gather and show information about test cases to be executed """
 
+    def show(self):
+        """ Show discover details """
+        super(Discover, self).show(keys=['how', 'filter', 'repository'])
 
 class Provision(Step):
     """ Provision an environment for testing (or use localhost) """
@@ -44,6 +61,16 @@ class Prepare(Step):
 
 class Execute(Step):
     """ Run the tests (using the specified framework and its settings) """
+
+    def __init__(self, data):
+        """ Initialize the execute step """
+        super(Execute, self).__init__(data)
+        if not 'how' in self.data:
+            self.data['how'] = 'shell'
+
+    def show(self):
+        """ Show execute details """
+        super(Execute, self).show(keys=['how', 'script', 'isolate'])
 
 
 class Report(Step):

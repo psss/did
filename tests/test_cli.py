@@ -20,7 +20,7 @@ def test_mini():
     result = runner.invoke(tmt.cli.main, ['--path', MINI, 'run'])
     assert result.exit_code == 0
     assert 'Found 1 testset.' in result.output
-    assert 'Testset: /ci/test/build/smoke' in result.output
+    assert '/ci/test/build/smoke' in result.output
 
 def test_no_metadata():
     """ No metadata found """

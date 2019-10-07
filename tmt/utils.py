@@ -3,6 +3,7 @@
 """ Test Metadata Utilities """
 
 from __future__ import unicode_literals, absolute_import
+from click import style, echo, wrap_text
 
 from collections import OrderedDict
 import unicodedata
@@ -19,6 +20,9 @@ log = fmf.utils.Logging('tmt').logger
 
 class GeneralError(Exception):
     """ General error """
+
+class SpecificationError(GeneralError):
+    """ Metadata specification error """
 
 class ConvertError(GeneralError):
     """ Metadata conversion error """
@@ -65,6 +69,33 @@ def variables_to_dictionary(variables):
             name, value = matched.groups()
             result[name] = value
     return result
+
+
+def verdict(decision, good='yes', bad='no'):
+    """ Return verdict in green or red based on the decision """
+    if decision:
+        return style(good, fg='green')
+    else:
+        return style(bad, fg='red')
+
+
+def format(key, value=None, indent=12, key_color='green', value_color='black'):
+    """ Nicely format and indent a key-value pair """
+    indent_string = (indent + 1) * ' '
+    echo(style('{} '.format(key.rjust(indent, ' ')), fg=key_color), nl=False)
+    if isinstance(value, bool):
+        echo(verdict(value))
+    elif isinstance(value, list):
+        echo(fmf.utils.listed(value))
+    elif isinstance(value, str):
+        echo(wrap_text(
+            value,
+            width=72,
+            preserve_paragraphs=True,
+            initial_indent=indent_string,
+            subsequent_indent=indent_string).lstrip())
+    else:
+        echo(value)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  StructuredField

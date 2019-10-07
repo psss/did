@@ -23,7 +23,6 @@ class Node(object):
         """ Initialize the node """
         self.node = node
         self.name = node.name
-        self.summary = node.get('summary')
 
     def __str__(self):
         """ Node name """
@@ -40,19 +39,55 @@ class Node(object):
         """ List node """
         echo(style(self.name, fg='red'))
 
-    def show(self):
-        """ Show node details """
-        echo(style('{}: {}'.format(self.__class__.__name__, self), fg='green'))
-        if self.summary:
-            echo(style('Summary: {}'.format(self.summary), fg='green'))
-
 
 class Test(Node):
     """ Test object (L1 Metadata) """
 
+    # Supported attributes (listed in display order)
+    _keys = [
+        'summary',
+        'description',
+        'contact',
+        'component',
+        'test',
+        'path',
+        'duration',
+        'environment',
+        'relevancy',
+        'tags',
+        'tier',
+        'result',
+        'enabled',
+        ]
+
     def __init__(self, node):
         """ Initialize test """
         super(Test, self).__init__(node)
+        # Get all supported attributes
+        for key in self._keys:
+            setattr(self, key, self.node.get(key))
+        # Path defaults to the node name
+        if self.path is None:
+            self.path = self.name
+        # Handle other default values
+        if self.enabled is None:
+            disabled = self.node.get('disabled')
+            if disabled is not None:
+                self.enabled = not disabled
+            else:
+                self.enabled = True
+        if self.result is None:
+            self.result = 'respect'
+
+    def show(self):
+        """ Show test details """
+        self.ls()
+        for key in self._keys:
+            value = getattr(self, key)
+            if value is None:
+                continue
+            else:
+                tmt.utils.format(key, value)
 
 
 class Testset(Node):
@@ -61,6 +96,7 @@ class Testset(Node):
     def __init__(self, node):
         """ Initialize testset steps """
         super(Testset, self).__init__(node)
+        self.summary = node.get('summary')
 
         # Initialize test steps
         self.discover = tmt.steps.Discover(self.node.get('discover'))
@@ -80,6 +116,17 @@ class Testset(Node):
             if not isinstance(gates, list):
                 gates = [gates]
 
+    def show(self):
+        """ Show testset details """
+        self.ls()
+        if self.summary:
+            tmt.utils.format('summary', self.summary)
+        for step in tmt.steps.STEPS:
+            step = getattr(self, step)
+            if step.data:
+                tmt.utils.format(str(step), key_color='blue')
+                step.show()
+
     def go(self):
         """ Execute the testset """
         self.discover.go()
@@ -96,6 +143,7 @@ class Story(Node):
     def __init__(self, node):
         """ Initialize test """
         super(Story, self).__init__(node)
+        self.summary = node.get('summary')
 
 
 class Tree(object):
