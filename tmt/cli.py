@@ -18,11 +18,17 @@ log = fmf.utils.Logging('tmt').logger
 # Shared metadata tree
 tree = None
 
+
+class KeepOrderGroup(click.Group):
+    """ Custom group to prevent alphabetical sorting """
+    def list_commands(self, context):
+        return self.commands.keys()
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Main
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group()
+@click.group(cls=KeepOrderGroup)
 @click.option(
     '--path', metavar='PATH',
     default='.', show_default=True,
@@ -41,7 +47,7 @@ def main(path):
 #  Run
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(chain=True, invoke_without_command=True)
+@click.group(chain=True, invoke_without_command=True, cls=KeepOrderGroup)
 @click.pass_context
 def run(context):
     """ Run test steps. """
@@ -103,7 +109,7 @@ def finish():
 #  Test
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group()
+@click.group(cls=KeepOrderGroup)
 def test():
     """
     Manage tests (L1 metadata).
@@ -175,7 +181,7 @@ def convert(paths, makefile, nitrate, purpose):
 #  Testset
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group()
+@click.group(cls=KeepOrderGroup)
 def testset():
     """
     Manage testsets (L2 metadata).
@@ -211,7 +217,7 @@ def show(names):
 #  Story
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group()
+@click.group(cls=KeepOrderGroup)
 def story():
     """
     Manage user stories.
