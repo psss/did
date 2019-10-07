@@ -138,6 +138,8 @@ story: As a user I want to have an intuitive command line interface
     /ls:
         story: 'List available tests'
         examples: tmt test ls
+        implemented: /tmt/cli
+        tested: /tests/ls
 
     /show:
         story: 'Show test metadata'
@@ -192,6 +194,8 @@ story: As a user I want to have an intuitive command line interface
     /ls:
         story: 'List available testsets'
         examples: tmt testset ls
+        implemented: /tmt/cli
+        tested: /tests/ls
 
     /show:
         story: 'Show testset configuration'
@@ -209,6 +213,8 @@ story: As a user I want to have an intuitive command line interface
     /ls:
         story: 'List available stories'
         examples: tmt story ls
+        implemented: /tmt/cli
+        tested: /tests/ls
 
     /show:
         story: 'Show story details'

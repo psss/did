@@ -3,6 +3,7 @@
 """ Command line interface for the Test Metadata Tool """
 
 from __future__ import unicode_literals, absolute_import, print_function
+from click import echo, style
 
 import fmf.utils
 import click
@@ -47,7 +48,7 @@ def main(path):
 @click.group(chain=True, invoke_without_command=True)
 @click.pass_context
 def run(context):
-    """ Run test steps (discover, prepare, execute...) """
+    """ Run test steps. """
     # All test steps are enabled if no step selected
     enabled = context.invoked_subcommand is None
     tmt.steps.Discover.enabled = enabled
@@ -107,16 +108,24 @@ def finish():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @click.group()
-@click.pass_context
-def test(context):
+def test():
     """
-    Handle test metadata (investigate, filter, convert).
+    Manage tests (L1 metadata).
 
-    Check available tests, inspect their metadata, gather old metadata from
-    various sources and stored them in the new fmf format.
+    Check available tests, inspect their metadata.
+    Convert old metadata into the new fmf format.
     """
 
 main.add_command(test)
+
+
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@test.command()
+def ls(names):
+    """ List available tests. """
+    for test in tree.tests(names=names):
+        test.ls()
+    return 'test ls'
 
 
 @click.option(
@@ -157,15 +166,68 @@ def convert(paths, makefile, nitrate, purpose):
     return 'convert'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Testset
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@click.group()
+def testset():
+    """
+    Manage testsets (L2 metadata).
+
+    \b
+    Search for available testsets.
+    Explore detailed test step configuration.
+    """
+
+main.add_command(testset)
+
+
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@testset.command()
+def ls(names):
+    """ List available testsets. """
+    for testset in tree.testsets(names=names):
+        testset.ls()
+    return 'testset ls'
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Story
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@click.group()
+def story():
+    """
+    Manage user stories.
+
+    \b
+    Check available user stories.
+    Explore coverage (test, implementation, documentation).
+    """
+
+main.add_command(story)
+
+
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@story.command()
+def ls(names):
+    """ List available stories. """
+    for story in tree.stories(names=names):
+        story.ls()
+    return 'story ls'
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Go
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def go():
     """ Go and do test steps for selected testsets """
-    click.echo(click.style('Found {0}.'.format(
-        fmf.utils.listed(tree.testsets, 'testset')), fg='magenta'))
-    for testset in tree.testsets:
-        click.echo(click.style('\nTestset: {0}'.format(testset), fg='green'))
+    echo(style('Found {0}.'.format(
+        fmf.utils.listed(tree.testsets(), 'testset')), fg='magenta'))
+    for testset in tree.testsets():
+        echo()
+        testset.show()
         testset.go()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

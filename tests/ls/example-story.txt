@@ -1,0 +1,3 @@
+/stories/cli/story/ls:
+    story: 'List available stories'
+    examples: tmt story ls

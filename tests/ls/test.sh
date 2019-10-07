@@ -11,6 +11,7 @@ rlJournalStart
         rlRun "TmpDir=\$(mktemp -d)" 0 "Creating tmp directory"
         rlRun "cp example-test.txt $TmpDir/test.fmf"
         rlRun "cp example-testset.txt $TmpDir/testset.fmf"
+        rlRun "cp example-story.txt $TmpDir/story.fmf"
         rlRun "pushd $TmpDir"
         rlRun "fmf init"
         rlRun "set -o pipefail"
@@ -25,6 +26,12 @@ rlJournalStart
     rlPhaseStartTest "Test listing available testsets"
         rlRun "tmt testset ls | tee output"
         rlAssertGrep "/testset/smoke" "output"
+        rlAssertNotGrep "/test/basic/smoke" "output"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Test listing available stories"
+        rlRun "tmt story ls | tee output"
+        rlAssertGrep "/stories/cli/story/ls" "output"
         rlAssertNotGrep "/test/basic/smoke" "output"
     rlPhaseEnd
 
