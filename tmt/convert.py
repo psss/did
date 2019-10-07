@@ -2,8 +2,6 @@
 
 """ Convert metadata into the new format """
 
-from __future__ import unicode_literals, absolute_import
-
 from io import open
 from click import echo, style
 from tmt.utils import ConvertError, StructuredFieldError

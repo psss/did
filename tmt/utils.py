@@ -2,7 +2,6 @@
 
 """ Test Metadata Utilities """
 
-from __future__ import unicode_literals, absolute_import
 from click import style, echo, wrap_text
 
 from collections import OrderedDict

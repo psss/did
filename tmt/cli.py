@@ -2,7 +2,6 @@
 
 """ Command line interface for the Test Metadata Tool """
 
-from __future__ import unicode_literals, absolute_import, print_function
 from click import echo, style
 
 import fmf.utils
@@ -18,9 +17,6 @@ log = fmf.utils.Logging('tmt').logger
 
 # Shared metadata tree
 tree = None
-
-# Disable unicode_literals warning
-click.disable_unicode_literals_warning = True
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Main

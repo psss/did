@@ -17,10 +17,8 @@ tmp:
 
 # Run the test suite, optionally with coverage
 test: tmp
-	python2 -m pytest tests
 	python3 -m pytest tests
 smoke: tmp
-	python2 -m pytest tests/test_smoke.py
 	python3 -m pytest tests/test_smoke.py
 coverage: tmp
 	coverage run --source=tmt,bin -m py.test tests

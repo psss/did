@@ -2,7 +2,6 @@
 
 """ Base Metadata Classes """
 
-from __future__ import unicode_literals, absolute_import
 from click import echo, style
 
 import fmf
