@@ -15,7 +15,8 @@ import tmt.steps
 
 log = fmf.utils.Logging('tmt').logger
 
-tree_path = '.'
+# Shared metadata tree
+tree = None
 
 # Disable unicode_literals warning
 click.disable_unicode_literals_warning = True
@@ -31,8 +32,13 @@ click.disable_unicode_literals_warning = True
     help='Path to the metadata tree.')
 def main(path):
     """ Test Metadata Tool """
-    global tree_path
-    tree_path = path
+    # Initialize metadata tree
+    try:
+        global tree
+        tree = tmt.Tree(path)
+    except fmf.utils.RootError:
+        raise tmt.utils.GeneralError(
+            "No metadata found in the '{0}' directory.".format(tree_path))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Run
@@ -156,16 +162,8 @@ def convert(paths, makefile, nitrate, purpose):
 
 def go():
     """ Go and do test steps for selected testsets """
-    # Initialize metadata tree, check available testsets
-    try:
-        tree = tmt.Tree(tree_path)
-    except fmf.utils.RootError:
-        raise tmt.utils.GeneralError(
-            "No metadata found in the '{0}' directory.".format(tree_path))
     click.echo(click.style('Found {0}.'.format(
         fmf.utils.listed(tree.testsets, 'testset')), fg='magenta'))
-
-    # Go and do selected steps for each testset
     for testset in tree.testsets:
         click.echo(click.style('\nTestset: {0}'.format(testset), fg='green'))
         testset.go()
