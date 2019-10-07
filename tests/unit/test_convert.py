@@ -10,7 +10,7 @@ from click.testing import CliRunner
 
 # Prepare path to examples
 PATH = os.path.dirname(os.path.realpath(__file__))
-CONVERT = os.path.join(PATH, "../examples/convert")
+CONVERT = os.path.join(PATH, "../../examples/convert")
 
 runner = CliRunner()
 

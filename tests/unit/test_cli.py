@@ -8,8 +8,8 @@ from click.testing import CliRunner
 
 # Prepare path to examples
 PATH = os.path.dirname(os.path.realpath(__file__))
-MINI = os.path.join(PATH, "../examples/mini")
-SYSTEMD = os.path.join(PATH, "../examples/systemd")
+MINI = os.path.join(PATH, "../../examples/mini")
+SYSTEMD = os.path.join(PATH, "../../examples/systemd")
 
 runner = CliRunner()
 
