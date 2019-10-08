@@ -49,6 +49,15 @@ srpm: tarball
 packages: rpm srpm
 
 
+# Packit stuff
+packit-tarball: tarball
+	mv $(TMP)/SOURCES/$(PACKAGE).tar.gz .
+packit-path:
+	@printf "$(PACKAGE).tar.gz"
+packit-version:
+	@printf "$(VERSION)"
+
+
 # Python packaging
 wheel:
 	python setup.py bdist_wheel

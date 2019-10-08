@@ -7,7 +7,7 @@ License: MIT
 BuildArch: noarch
 
 URL: https://github.com/psss/tmt
-Source: https://github.com/psss/tmt/releases/download/%{version}/tmt-%{version}.tar.gz
+Source0: https://github.com/psss/tmt/releases/download/%{version}/tmt-%{version}.tar.gz
 
 # Depending on the distro, we set some defaults.
 # Note that the bcond macros are named for the CLI option they create.
