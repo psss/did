@@ -60,7 +60,7 @@ class Test(Node):
         ]
 
     def __init__(self, node):
-        """ Initialize test """
+        """ Initialize the test """
         super(Test, self).__init__(node)
         # Get all supported attributes
         for key in self._keys:
@@ -93,7 +93,7 @@ class Testset(Node):
     """ Testset object (L2 Metadata) """
 
     def __init__(self, node):
-        """ Initialize testset steps """
+        """ Initialize the testset """
         super(Testset, self).__init__(node)
         self.summary = node.get('summary')
 
@@ -139,10 +139,31 @@ class Testset(Node):
 class Story(Node):
     """ User story object """
 
+    # Supported attributes (listed in display order)
+    _keys = [
+        'summary',
+        'story',
+        'description',
+        'examples',
+        ]
+
     def __init__(self, node):
-        """ Initialize test """
+        """ Initialize the story """
         super(Story, self).__init__(node)
         self.summary = node.get('summary')
+        # Get all supported attributes
+        for key in self._keys:
+            setattr(self, key, self.node.get(key))
+
+    def show(self):
+        """ Show story details """
+        self.ls()
+        for key in self._keys:
+            value = getattr(self, key)
+            if value is not None:
+                # Do not wrap examples
+                wrap = key != 'examples'
+                tmt.utils.format(key, value, wrap=wrap)
 
 
 class Tree(object):

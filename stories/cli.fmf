@@ -144,6 +144,7 @@ story: As a user I want to have an intuitive command line interface
     /show:
         story: 'Show test metadata'
         examples: tmt test show
+        implemented: /tmt/cli
 
     /lint:
         story: 'Check against the L1 metadata specification'
@@ -200,6 +201,7 @@ story: As a user I want to have an intuitive command line interface
     /show:
         story: 'Show testset configuration'
         examples: tmt testset show
+        implemented: /tmt/cli
 
     /filter:
         story: 'Filter available testsets'
@@ -219,6 +221,7 @@ story: As a user I want to have an intuitive command line interface
     /show:
         story: 'Show story details'
         examples: tmt story show
+        implemented: /tmt/cli
 
     /filter:
         story: 'Search available stories'

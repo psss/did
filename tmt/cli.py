@@ -239,6 +239,17 @@ def ls(names):
     return 'story ls'
 
 
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@story.command()
+def show(names):
+    """ Show story details. """
+    for story in tree.stories(names=names):
+        story.show()
+        echo()
+    return 'story show'
+
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Go
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

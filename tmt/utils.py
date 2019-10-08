@@ -78,21 +78,37 @@ def verdict(decision, good='yes', bad='no'):
         return style(bad, fg='red')
 
 
-def format(key, value=None, indent=12, key_color='green', value_color='black'):
+def format(
+        key, value=None,
+        indent=12, width=72, wrap=True,
+        key_color='green', value_color='black'):
     """ Nicely format and indent a key-value pair """
     indent_string = (indent + 1) * ' '
+    # Key
     echo(style('{} '.format(key.rjust(indent, ' ')), fg=key_color), nl=False)
+    # Bool
     if isinstance(value, bool):
-        echo(verdict(value))
+        echo('yes' if value else 'no')
+    # List
     elif isinstance(value, list):
-        echo(fmf.utils.listed(value))
+        listed_text = fmf.utils.listed(value)
+        has_spaces = any([item.find(' ') > -1 for item in value])
+        # Use listed output only for short lists without spaces
+        if len(listed_text) < width - indent and not has_spaces:
+            echo(listed_text)
+        # Otherwise just place each item on a new line
+        else:
+            echo(('\n' + indent_string).join(value))
+    # Text
     elif isinstance(value, str):
-        echo(wrap_text(
-            value,
-            width=72,
-            preserve_paragraphs=True,
-            initial_indent=indent_string,
-            subsequent_indent=indent_string).lstrip())
+        if wrap:
+            echo(wrap_text(
+                value, width=width,
+                preserve_paragraphs=True,
+                initial_indent=indent_string,
+                subsequent_indent=indent_string).lstrip())
+        else:
+            echo(('\n' + indent_string).join(value.rstrip().split('\n')))
     else:
         echo(value)
 
