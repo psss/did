@@ -140,6 +140,16 @@ def show(names):
     return 'test show'
 
 
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@test.command()
+def lint(names):
+    """ Check tests against the L1 metadata specification. """
+    for test in tree.tests(names=names):
+        test.lint()
+        echo()
+    return 'test lint'
+
+
 @click.option(
     '--nitrate / --no-nitrate', default=True,
     help='Import test metadata from Nitrate')

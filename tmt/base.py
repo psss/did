@@ -9,6 +9,8 @@ import pprint
 
 import tmt.steps
 
+from tmt.utils import verdict
+
 
 class Node(object):
     """
@@ -87,6 +89,17 @@ class Test(Node):
                 continue
             else:
                 tmt.utils.format(key, value)
+
+
+    def lint(self):
+        """ Check test against the L1 metadata specification. """
+        self.ls()
+        echo(verdict(self.test is not None, 'test script must be defined'))
+        echo(verdict(self.path is not None, 'directory path must be defined'))
+        if self.summary is None:
+            echo(verdict(2, 'summary is very useful for quick inspection'))
+        elif len(self.summary) > 50:
+            echo(verdict(2, 'summary should not exceed 50 characters'))
 
 
 class Testset(Node):

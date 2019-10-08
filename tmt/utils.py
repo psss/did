@@ -70,12 +70,26 @@ def variables_to_dictionary(variables):
     return result
 
 
-def verdict(decision, good='yes', bad='no'):
-    """ Return verdict in green or red based on the decision """
-    if decision:
-        return style(good, fg='green')
+def verdict(decision, comment=None, good='pass', bad='fail', problem='warn'):
+    """
+    Return verdict in green or red based on the decision
+
+    0 or False ... good (green)
+    1 or True .... bad (red)
+    otherwise .... problem (yellow)
+    """
+
+    if decision == 0:
+        text = style(bad, fg='red')
+    elif decision == 1:
+        text = style(good, fg='green')
     else:
-        return style(bad, fg='red')
+        text = style(problem, fg='yellow')
+    if comment:
+        return text + ' ' + comment
+    else:
+        return text
+
 
 
 def format(
