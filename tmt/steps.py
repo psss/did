@@ -29,8 +29,7 @@ class Step(object):
         """ Execute the test step """
         if not self.enabled:
             return
-        echo(style('{0}:'.format(self.__class__.__name__), fg='blue'))
-        pprint.pprint(self.data)
+        tmt.utils.format(str(self), 'not implemented', key_color='blue')
 
     def show(self, keys=[]):
         """ Show step details """

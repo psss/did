@@ -38,9 +38,11 @@ class Node(object):
         else:
             return self.name
 
-    def ls(self):
+    def ls(self, summary=False):
         """ List node """
         echo(style(self.name, fg='red'))
+        if summary and self.summary:
+            tmt.utils.format('summary', self.summary)
 
 
 class Test(Node):
@@ -190,9 +192,7 @@ class Testset(Node):
 
     def show(self):
         """ Show testset details """
-        self.ls()
-        if self.summary:
-            tmt.utils.format('summary', self.summary)
+        self.ls(summary=True)
         for step in tmt.steps.STEPS:
             step = getattr(self, step)
             if step.data:

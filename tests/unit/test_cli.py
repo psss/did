@@ -32,7 +32,7 @@ def test_step():
     for step in tmt.steps.STEPS:
         result = runner.invoke(tmt.cli.main, ['--path', MINI, 'run', step])
         assert result.exit_code == 0
-        assert step.capitalize() in result.output
+        assert step in result.output
         if step != 'provision':
             assert 'Provision' not in result.output
 

@@ -281,12 +281,12 @@ def show(names):
 
 def go():
     """ Go and do test steps for selected testsets """
-    echo(style('Found {0}.'.format(
+    echo(style('Found {0}.\n'.format(
         fmf.utils.listed(tree.testsets(), 'testset')), fg='magenta'))
     for testset in tree.testsets():
-        echo()
-        testset.show()
+        testset.ls(summary=True)
         testset.go()
+        echo()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Finito
