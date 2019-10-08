@@ -9,6 +9,7 @@ import click
 import os
 
 import tmt
+import tmt.base
 import tmt.utils
 import tmt.convert
 import tmt.steps
@@ -148,6 +149,20 @@ def lint(names):
         test.lint()
         echo()
     return 'test lint'
+
+
+@click.argument('name')
+@click.option(
+    '-t', '--template', help='Test skeleton (shell or beakerlib).',
+    metavar='TEMPLATE', prompt=True)
+@click.option(
+    '-f', '--force', help='Force overwriting existing files.',
+    is_flag=True)
+@test.command()
+def create(name, template, force):
+    """ Create a new test based on given template. """
+    tmt.base.Test.create(name, template, force)
+    return 'test create'
 
 
 @click.option(

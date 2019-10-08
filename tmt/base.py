@@ -2,14 +2,16 @@
 
 """ Base Metadata Classes """
 
-from click import echo, style
-
+import os
 import fmf
 import pprint
 
+import tmt.cli
 import tmt.steps
+import tmt.templates
 
 from tmt.utils import verdict
+from click import echo, style
 
 
 class Node(object):
@@ -79,6 +81,64 @@ class Test(Node):
                 self.enabled = True
         if self.result is None:
             self.result = 'respect'
+
+    @staticmethod
+    def create(name, template, force):
+        """ Create a new test """
+        root = tmt.cli.tree.root
+
+        # Create directory
+        directory_path = os.path.join(root, name.lstrip('/'))
+        if os.path.isdir(directory_path):
+            echo("Directory '{}' already exists.".format(directory_path))
+        else:
+            try:
+                os.makedirs(directory_path, exist_ok=True)
+                echo("Directory '{}' created.".format(directory_path))
+            except OSError as error:
+                raise tmt.utils.GeneralError(
+                    "Failed to create test directory '{}' ({})".format(
+                        directory_path, error))
+
+        # Create metadata
+        metadata_path = os.path.join(directory_path, 'main.fmf')
+        action = 'created'
+        if os.path.exists(metadata_path):
+            if force:
+                action = 'overwritten'
+            else:
+                raise tmt.utils.GeneralError(
+                    "File '{}' already exists.".format(metadata_path))
+        try:
+            with open(metadata_path, 'w') as metadata:
+                metadata.write(tmt.templates.TEST_METADATA)
+            echo("Metadata '{}' {}.".format(metadata_path, action))
+        except OSError as error:
+            raise tmt.utils.GeneralError(
+                "Failed to create test metadata '{}' ({})".format(
+                    metadata_path, error))
+
+        # Create script
+        script_path = os.path.join(directory_path, 'test.sh')
+        action = 'created'
+        if os.path.exists(script_path):
+            if force:
+                action = 'overwritten'
+            else:
+                raise tmt.utils.GeneralError(
+                    "File '{}' already exists.".format(script_path))
+        try:
+            with open(script_path, 'w') as script:
+                if template == 'shell':
+                    script.write(tmt.templates.TEST_SHELL)
+                if template == 'beakerlib':
+                    script.write(tmt.templates.TEST_BEAKERLIB)
+            os.chmod(script_path, 0o755)
+            echo("Script '{}' {}.".format(script_path, action))
+        except OSError as error:
+            raise tmt.utils.GeneralError(
+                "Failed to create test script '{}' ({})".format(
+                    script_path, error))
 
     def show(self):
         """ Show test details """
@@ -185,6 +245,7 @@ class Tree(object):
     def __init__(self, path='.'):
         """ Initialize testsets for given directory path """
         self.tree = fmf.Tree(path)
+        self.root = self.tree.root
 
     def tests(self, keys=[], names=[], filters=[], conditions=[]):
         """ Search available tests """

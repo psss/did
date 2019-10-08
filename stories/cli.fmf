@@ -167,6 +167,7 @@ story: As a user I want to have an intuitive command line interface
             - tmt test create /tests/area/feature
             - tmt test create /tests/area/feature --skeleton beakerlib
             - tmt test create /tests/area/feature --duration=1h
+        implemented: /tmt/cli
     /convert:
         story: 'Convert old test metadata'
         examples: tmt test convert

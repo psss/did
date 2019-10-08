@@ -41,3 +41,11 @@
         examples:
             - tmt test show -q
             - tmt test show --quiet
+
+    /force:
+        summary: Force dangerous operations like overwriting files
+        examples:
+            - tmt test create -f
+            - tmt test create --force
+        related:
+            - /stories/cli/test/create
