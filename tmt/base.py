@@ -218,6 +218,9 @@ class Story(Node):
         'story',
         'description',
         'examples',
+        'implemented',
+        'tested',
+        'documented',
         ]
 
     def __init__(self, node):
@@ -227,6 +230,24 @@ class Story(Node):
         # Get all supported attributes
         for key in self._keys:
             setattr(self, key, self.node.get(key))
+
+    def _match(
+        self, implemented, tested, documented,
+        unimplemented, untested, undocumented):
+        """ Return true if story matches given conditions """
+        if implemented and not self.implemented:
+            return False
+        if tested and not self.tested:
+            return False
+        if documented and not self.documented:
+            return False
+        if unimplemented and self.implemented:
+            return False
+        if untested and self.tested:
+            return False
+        if undocumented and self.documented:
+            return False
+        return True
 
     def show(self):
         """ Show story details """

@@ -252,24 +252,55 @@ def story():
 main.add_command(story)
 
 
+@click.option(
+    '--undocumented', is_flag=True, help='Undocumented stories only.')
+@click.option(
+    '--untested', is_flag=True, help='Untested stories only.')
+@click.option(
+    '--unimplemented', is_flag=True, help='Unimplemented stories only.')
+@click.option(
+    '--documented', is_flag=True, help='Documented stories only.')
+@click.option(
+    '--tested', is_flag=True, help='Tested stories only.')
+@click.option(
+    '--implemented', is_flag=True, help='Implemented stories only.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
 @story.command()
-def ls(names):
+def ls(
+    names, implemented, tested, documented,
+    unimplemented, untested, undocumented):
     """ List available stories. """
     for story in tree.stories(names=names):
-        story.ls()
+        if story._match(implemented, tested, documented,
+                unimplemented, untested, undocumented):
+            story.ls()
     return 'story ls'
 
 
+@click.option(
+    '--undocumented', is_flag=True, help='Undocumented stories only.')
+@click.option(
+    '--untested', is_flag=True, help='Untested stories only.')
+@click.option(
+    '--unimplemented', is_flag=True, help='Unimplemented stories only.')
+@click.option(
+    '--documented', is_flag=True, help='Documented stories only.')
+@click.option(
+    '--tested', is_flag=True, help='Tested stories only.')
+@click.option(
+    '--implemented', is_flag=True, help='Implemented stories only.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
 @story.command()
-def show(names):
+def show(
+    names, implemented, tested, documented,
+    unimplemented, untested, undocumented):
     """ Show story details. """
     for story in tree.stories(names=names):
-        story.show()
-        echo()
+        if story._match(implemented, tested, documented,
+                unimplemented, untested, undocumented):
+            story.show()
+            echo()
     return 'story show'
-
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
