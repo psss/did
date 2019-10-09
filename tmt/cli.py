@@ -65,7 +65,7 @@ def main(path):
 
 @click.group(chain=True, invoke_without_command=True, cls=CustomGroup)
 @click.option(
-    '--all', 'all_', help='Run all steps, customize some', is_flag=True)
+    '-a', '--all', 'all_', help='Run all steps, customize some', is_flag=True)
 @click.pass_context
 def run(context, all_):
     """ Run test steps. """
@@ -279,11 +279,11 @@ main.add_command(story)
 @click.option(
     '--unimplemented', is_flag=True, help='Unimplemented stories only.')
 @click.option(
-    '--documented', is_flag=True, help='Documented stories only.')
+    '-d', '--documented', is_flag=True, help='Documented stories only.')
 @click.option(
-    '--tested', is_flag=True, help='Tested stories only.')
+    '-t', '--tested', is_flag=True, help='Tested stories only.')
 @click.option(
-    '--implemented', is_flag=True, help='Implemented stories only.')
+    '-i', '--implemented', is_flag=True, help='Implemented stories only.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
 @story.command()
 def ls(
@@ -304,11 +304,11 @@ def ls(
 @click.option(
     '--unimplemented', is_flag=True, help='Unimplemented stories only.')
 @click.option(
-    '--documented', is_flag=True, help='Documented stories only.')
+    '-d', '--documented', is_flag=True, help='Documented stories only.')
 @click.option(
-    '--tested', is_flag=True, help='Tested stories only.')
+    '-t', '--tested', is_flag=True, help='Tested stories only.')
 @click.option(
-    '--implemented', is_flag=True, help='Implemented stories only.')
+    '-i', '--implemented', is_flag=True, help='Implemented stories only.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
 @story.command()
 def show(
