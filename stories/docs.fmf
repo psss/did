@@ -2,8 +2,6 @@ story:
     As a command line user I want to have all essential
     documentation at hand.
 
-tested: /tests/docs
-implemented: /tmt/cli
 
 /help:
     story:
@@ -14,6 +12,8 @@ implemented: /tmt/cli
         - tmt --help
         - tmt run --help
         - tmt test convert --help
+    tested: /tests/docs
+    implemented: /tmt/cli
 
 /man:
     story:
@@ -23,6 +23,8 @@ implemented: /tmt/cli
         and a list of essential commands and options.
     examples:
         - man tmt
+    tested: /tests/docs
+    implemented: README.rst
 
 /examples:
     story:
@@ -38,3 +40,16 @@ implemented: /tmt/cli
         tmt test ls
         tmt testset ls
         tmt run
+    tested: /tests/docs
+    implemented: /examples
+
+/guide:
+    summary: Provide a Quick Start Guide covering common scenarios
+    story:
+        As a user migrating from old tools I want to quickly
+        learn how to achieve my common daily tasks with the new
+        tooling.
+    examples:
+        - How do I do '1minutetip fedora' with tmt?
+        - How do I do 'wow --reserve' with tmt?
+        - How do I do 'make run' with tmt?
