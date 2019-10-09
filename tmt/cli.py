@@ -64,11 +64,13 @@ def main(path):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @click.group(chain=True, invoke_without_command=True, cls=CustomGroup)
+@click.option(
+    '--all', 'all_', help='Run all steps, customize some', is_flag=True)
 @click.pass_context
-def run(context):
+def run(context, all_):
     """ Run test steps. """
     # All test steps are enabled if no step selected
-    enabled = context.invoked_subcommand is None
+    enabled = context.invoked_subcommand is None or all_
     tmt.steps.Discover.enabled = enabled
     tmt.steps.Provision.enabled = enabled
     tmt.steps.Prepare.enabled = enabled

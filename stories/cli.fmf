@@ -101,6 +101,7 @@ story: As a user I want to have an intuitive command line interface
             story: 'Run all test steps, customize some'
             examples:
                 - tmt run --all provision --how=container
+            implemented: /tmt/cli
 
     /shortcuts:
         story: 'Provide shortcuts for common scenarios'
