@@ -106,7 +106,7 @@ available options.
 Install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The tmt package will be available in Fedora and EPEL::
+The tmt package is available in Fedora and EPEL::
 
     dnf install tmt
 

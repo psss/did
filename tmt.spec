@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.1
+Version: 0.2
 Release: 1%{?dist}
 
 Summary: Test Metadata Tool
@@ -100,5 +100,28 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Wed Oct 09 2019 Petr Šplíchal <psplicha@redhat.com> - 0.2-1
+- Enable Packit building and Testing Farm testing
+- Provide one-letter versions for select options
+- Implement 'tmt run --all' to run all test steps
+- Support command abbreviation, add related stories
+- Add the Quick Start Guide story to documention
+- Add coverage options to tmt story ls and show
+- Initialize metadata tree only when accessed
+- Remove show functionality from the 'run' command
+- Implement 'tmt test create' with basic templates
+- Implement 'tmt test lint' with some basic checks
+- Add user stories for core options and attributes
+- Implement 'tmt story show', couple of adjustments
+- Prevent alphabetical sorting of commands in help
+- Move unit tests into a separate directory
+- Align examples with the latest specification
+- Implement 'tmt show' for test and testset
+- Implement ls for test, testset and story commands
+- Add 'tmt test create' command to user stories
+- Add an initial set of basic tests
+- Update cli user stories, add api & docs stories
+- Add a couple of dreams for the bright future :-)
+
 * Mon Sep 30 2019 Petr Šplíchal <psplicha@redhat.com> - 0.1-1
 - Initial packaging
