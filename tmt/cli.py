@@ -37,12 +37,9 @@ class KeepOrderGroup(click.Group):
 def main(path):
     """ Test Metadata Tool """
     # Initialize metadata tree
-    try:
-        global tree
-        tree = tmt.Tree(path)
-    except fmf.utils.RootError:
-        raise tmt.utils.GeneralError(
-            "No metadata found in the '{0}' directory.".format(tree_path))
+    global tree
+    tree = tmt.Tree(path)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Run

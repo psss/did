@@ -244,8 +244,25 @@ class Tree(object):
 
     def __init__(self, path='.'):
         """ Initialize testsets for given directory path """
-        self.tree = fmf.Tree(path)
-        self.root = self.tree.root
+        self._path = path
+        self._tree = None
+
+    @property
+    def tree(self):
+        """ Initialize tree only when accessed """
+        if self._tree is None:
+            try:
+                self._tree = fmf.Tree(self._path)
+            except fmf.utils.RootError:
+                raise tmt.utils.GeneralError(
+                    "No metadata found in the '{0}' directory.".format(
+                        self._path))
+        return self._tree
+
+    @property
+    def root(self):
+        """ Metadata root """
+        return self.tree.root
 
     def tests(self, keys=[], names=[], filters=[], conditions=[]):
         """ Search available tests """
