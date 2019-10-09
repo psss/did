@@ -273,3 +273,28 @@ story: As a user I want to have an intuitive command line interface
                 browser. Optionally a simple python httpd server
                 could be started to serve the page or pages.
             examples: tmt story export --html --server
+
+/usability:
+    story:
+        As a user I want to type as little as possible.
+
+    /abbreviation:
+
+        /commands:
+            summary: Allow command abbreviation
+            examples:
+                - tmt story show
+                - tmt st sh
+                - tmt s s
+            implemented: /tmt/cli
+
+        /options:
+            summary: Allow option abbreviation
+            examples:
+                - tmt story ls --implemented
+                - tmt story ls --impl
+                - tmt story ls --i
+
+    /completion:
+        summary: Support bash completion
+        examples: tmt st<tabl> sh<tab>

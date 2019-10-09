@@ -3,11 +3,12 @@
 """ Command line interface for the Test Metadata Tool """
 
 from click import echo, style
+from fmf.utils import listed
 
-import fmf.utils
 import click
 import os
 
+import fmf
 import tmt
 import tmt.base
 import tmt.utils
@@ -20,16 +21,33 @@ log = fmf.utils.Logging('tmt').logger
 tree = None
 
 
-class KeepOrderGroup(click.Group):
-    """ Custom group to prevent alphabetical sorting """
+class CustomGroup(click.Group):
+    """ Custom Click Group """
+
     def list_commands(self, context):
+        """ Prevent alphabetical sorting """
         return self.commands.keys()
+
+    def get_command(self, context, cmd_name):
+        """ Allow command shortening """
+        found = click.Group.get_command(self, context, cmd_name)
+        if found is not None:
+            return found
+        matches = [command for command in self.list_commands(context)
+                   if command.startswith(cmd_name)]
+        if not matches:
+            return None
+        elif len(matches) == 1:
+            return click.Group.get_command(self, context, matches[0])
+        context.fail('Did you mean {}?'.format(
+            listed(sorted(matches), join='or')))
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Main
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(cls=KeepOrderGroup)
+@click.group(cls=CustomGroup)
 @click.option(
     '--path', metavar='PATH',
     default='.', show_default=True,
@@ -45,7 +63,7 @@ def main(path):
 #  Run
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(chain=True, invoke_without_command=True, cls=KeepOrderGroup)
+@click.group(chain=True, invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 def run(context):
     """ Run test steps. """
@@ -107,7 +125,7 @@ def finish():
 #  Test
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(cls=KeepOrderGroup)
+@click.group(cls=CustomGroup)
 def test():
     """
     Manage tests (L1 metadata).
@@ -203,7 +221,7 @@ def convert(paths, makefile, nitrate, purpose):
 #  Testset
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(cls=KeepOrderGroup)
+@click.group(cls=CustomGroup)
 def testset():
     """
     Manage testsets (L2 metadata).
@@ -239,7 +257,7 @@ def show(names):
 #  Story
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(cls=KeepOrderGroup)
+@click.group(cls=CustomGroup)
 def story():
     """
     Manage user stories.
@@ -310,7 +328,7 @@ def show(
 def go():
     """ Go and do test steps for selected testsets """
     echo(style('Found {0}.\n'.format(
-        fmf.utils.listed(tree.testsets(), 'testset')), fg='magenta'))
+        listed(tree.testsets(), 'testset')), fg='magenta'))
     for testset in tree.testsets():
         testset.ls(summary=True)
         testset.go()
@@ -325,8 +343,8 @@ def finito(commands, *args, **kwargs):
     """ Process the main callback """
     # Show all commands that have been provided
     log.info('Detected {0}{1}.'.format(
-        fmf.utils.listed(commands, 'command'),
-        (': ' + fmf.utils.listed(commands)) if commands else ''))
+        listed(commands, 'command'),
+        (': ' + listed(commands)) if commands else ''))
 
     # Run test steps if any explicitly requested or no command given at all
     if not commands or any([step in commands for step in tmt.steps.STEPS]):
