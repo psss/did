@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.2
+Version: 0.3
 Release: 1%{?dist}
 
 Summary: Test Metadata Tool
@@ -100,6 +100,16 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Thu Oct 10 2019 Petr Šplíchal <psplicha@redhat.com> - 0.3-1
+- Fix uncovered story filter logic, show total
+- Rename testsets to plans, simplify playbooks
+- Fix basic testset repo, install dependencies
+- Implement 'tmt init', add the corresponding story
+- Show overview of available tests, plans, stories
+- Implement 'tmt story coverage', update coverage
+- Implement 'tmt story --covered / --uncovered'
+- Rename testsest to plan to avoid common prefix
+
 * Wed Oct 09 2019 Petr Šplíchal <psplicha@redhat.com> - 0.2-1
 - Enable Packit building and Testing Farm testing
 - Provide one-letter versions for select options
