@@ -279,6 +279,10 @@ main.add_command(story)
 @click.option(
     '--unimplemented', is_flag=True, help='Unimplemented stories only.')
 @click.option(
+    '-u', '--uncovered', is_flag=True, help='Uncovered stories only.')
+@click.option(
+    '-c', '--covered', is_flag=True, help='Covered stories only.')
+@click.option(
     '-d', '--documented', is_flag=True, help='Documented stories only.')
 @click.option(
     '-t', '--tested', is_flag=True, help='Tested stories only.')
@@ -287,12 +291,12 @@ main.add_command(story)
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
 @story.command()
 def ls(
-    names, implemented, tested, documented,
-    unimplemented, untested, undocumented):
+    names, implemented, tested, documented, covered,
+    unimplemented, untested, undocumented, uncovered):
     """ List available stories. """
     for story in tree.stories(names=names):
-        if story._match(implemented, tested, documented,
-                unimplemented, untested, undocumented):
+        if story._match(implemented, tested, documented, covered,
+                unimplemented, untested, undocumented, uncovered):
             story.ls()
     return 'story ls'
 
@@ -304,6 +308,10 @@ def ls(
 @click.option(
     '--unimplemented', is_flag=True, help='Unimplemented stories only.')
 @click.option(
+    '-u', '--uncovered', is_flag=True, help='Uncovered stories only.')
+@click.option(
+    '-c', '--covered', is_flag=True, help='Covered stories only.')
+@click.option(
     '-d', '--documented', is_flag=True, help='Documented stories only.')
 @click.option(
     '-t', '--tested', is_flag=True, help='Tested stories only.')
@@ -312,11 +320,11 @@ def ls(
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
 @story.command()
 def show(
-    names, implemented, tested, documented,
-    unimplemented, untested, undocumented):
+    names, implemented, tested, documented, covered,
+    unimplemented, untested, undocumented, uncovered):
     """ Show story details. """
     for story in tree.stories(names=names):
-        if story._match(implemented, tested, documented,
+        if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented):
             story.show()
             echo()

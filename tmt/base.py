@@ -232,8 +232,8 @@ class Story(Node):
             setattr(self, key, self.node.get(key))
 
     def _match(
-        self, implemented, tested, documented,
-        unimplemented, untested, undocumented):
+        self, implemented, tested, documented, covered,
+        unimplemented, untested, undocumented, uncovered):
         """ Return true if story matches given conditions """
         if implemented and not self.implemented:
             return False
@@ -246,6 +246,11 @@ class Story(Node):
         if untested and self.tested:
             return False
         if undocumented and self.documented:
+            return False
+        if uncovered and (self.implemented or self.tested or self.documented):
+            return False
+        if covered and not (
+                self.implemented and self.tested and self.documented):
             return False
         return True
 
