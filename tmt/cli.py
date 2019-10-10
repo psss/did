@@ -325,10 +325,80 @@ def show(
     """ Show story details. """
     for story in tree.stories(names=names):
         if story._match(implemented, tested, documented, covered,
-                unimplemented, untested, undocumented):
+                unimplemented, untested, undocumented, uncovered):
             story.show()
             echo()
     return 'story show'
+
+
+@click.option(
+    '--undocumented', is_flag=True, help='Undocumented stories only.')
+@click.option(
+    '--untested', is_flag=True, help='Untested stories only.')
+@click.option(
+    '--unimplemented', is_flag=True, help='Unimplemented stories only.')
+@click.option(
+    '--uncovered', is_flag=True, help='Uncovered stories only.')
+@click.option(
+    '--covered', is_flag=True, help='Covered stories only.')
+@click.option(
+    '--documented', is_flag=True, help='Documented stories only.')
+@click.option(
+    '--tested', is_flag=True, help='Tested stories only.')
+@click.option(
+    '--implemented', is_flag=True, help='Implemented stories only.')
+@click.option(
+    '-d', '--docs', is_flag=True, help='Show docs coverage.')
+@click.option(
+    '-t', '--test', is_flag=True, help='Show test coverage.')
+@click.option(
+    '-c', '--code', is_flag=True, help='Show code coverage.')
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@story.command()
+def coverage(
+    names, code, test, docs,
+    implemented, tested, documented, covered,
+    unimplemented, untested, undocumented, uncovered):
+    """ Show code, test and docs coverage for given stories """
+
+    def headfoot(text):
+        """ Format simple header/footer """
+        echo(style(text.rjust(4) + ' ', fg='blue'), nl=False)
+
+    header = False
+    total = code_coverage = test_coverage = docs_coverage = 0
+    if not any([code, test, docs]):
+        code = test = docs = True
+    for story in tree.stories(names=names):
+        # Header
+        if not header:
+            if code:
+                headfoot('code')
+            if test:
+                headfoot('test')
+            if docs:
+                headfoot('docs')
+            headfoot('story')
+            echo()
+            header = True
+        # Coverage
+        if story._match(implemented, tested, documented, covered,
+                unimplemented, untested, undocumented, uncovered):
+            status = story.coverage(code, test, docs)
+        total += 1
+        code_coverage += status[0]
+        test_coverage += status[1]
+        docs_coverage += status[2]
+    # Summary
+    if code:
+        headfoot('{}%'.format(round(100 * code_coverage / total)))
+    if test:
+        headfoot('{}%'.format(round(100 * test_coverage / total)))
+    if docs:
+        headfoot('{}%'.format(round(100 * docs_coverage / total)))
+    echo()
+
+    return 'story coverage'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

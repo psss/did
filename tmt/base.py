@@ -264,6 +264,20 @@ class Story(Node):
                 wrap = key != 'examples'
                 tmt.utils.format(key, value, wrap=wrap)
 
+    def coverage(self, code, test, docs):
+        """ Show story coverage """
+        if code:
+            code = bool(self.implemented)
+            echo(verdict(code, good='done', bad='todo') + ' ', nl=False)
+        if test:
+            test = bool(self.tested)
+            echo(verdict(test, good='done', bad='todo') + ' ', nl=False)
+        if docs:
+            docs = bool(self.documented)
+            echo(verdict(docs, good='done', bad='todo') + ' ', nl=False)
+        echo(self)
+        return (code, test, docs)
+
 
 class Tree(object):
     """ Test Metadata Tree """

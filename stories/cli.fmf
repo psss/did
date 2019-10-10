@@ -236,26 +236,37 @@ story: As a user I want to have an intuitive command line interface
             - tmt story --undocumented
 
     /coverage:
-        story: 'Show coverage overview: '
+        summary: 'Show story coverage'
+        story:
+            As a developer I want to easily view which stories
+            have been implemented, are covered by tests and
+            documented and which still need work to be done.
+        implemented: /tmt/cli
 
         /overview:
-            story+: 'General overview'
+            summary: 'General coverage overview'
             description:
                 Complete overview of the story coverage including
                 implementation, testing and documentation status.
             examples: tmt story coverage
 
+        /code:
+            summary: 'View code implementation status'
+            examples:
+                - tmt story coverage -c
+                - tmt story coverage --code
+
         /test:
-            story+: 'Test coverage'
-            examples: tmt story coverage test
+            summary: 'View test coverage status'
+            examples:
+                - tmt story coverage -t
+                - tmt story coverage --test
 
-        /implementation:
-            story+: 'Implementation coverage'
-            examples: tmt story coverage implementation
-
-        /documentation:
-            story+: 'Documentation coverage'
-            examples: tmt story coverage documenation
+        /docs:
+            summary: 'View documentation status'
+            examples:
+                - tmt story coverage -d
+                - tmt story coverage --docs
 
     /export:
         story: 'I need to convert stories into a beautiful format'

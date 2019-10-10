@@ -91,7 +91,6 @@ def verdict(decision, comment=None, good='pass', bad='fail', problem='warn'):
         return text
 
 
-
 def format(
         key, value=None,
         indent=12, width=72, wrap=True,
