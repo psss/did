@@ -224,6 +224,16 @@ class Plan(Node):
                 tmt.utils.format(str(step), key_color='blue')
                 step.show()
 
+    def lint(self):
+        """ Check plan against the L2 metadata specification. """
+        self.ls()
+        execute = self.node.get('execute')
+        echo(verdict(execute is not None, 'execute step must be defined'))
+        if self.summary is None:
+            echo(verdict(2, 'summary is very useful for quick inspection'))
+        elif len(self.summary) > 50:
+            echo(verdict(2, 'summary should not exceed 50 characters'))
+
     def go(self):
         """ Execute the plan """
         self.discover.go()

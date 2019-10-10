@@ -149,7 +149,7 @@ story: As a user I want to have an intuitive command line interface
         implemented: /tmt/cli
 
     /lint:
-        story: 'Check against the L1 metadata specification'
+        story: 'Check test against the L1 metadata specification'
         description:
             Verify that test metadata are aligned with the
             specification, e.g. that all required attributes are
@@ -213,6 +213,15 @@ story: As a user I want to have an intuitive command line interface
         examples:
             - tmt plan ls REGEXP
             - tmt plan show --artifact=pull-request
+
+    /lint:
+        story: 'Check plan against the L2 metadata specification'
+        description:
+            Verify that plan metadata are aligned with the
+            specification, e.g. that all required attributes are
+            present and that all attributes have correct type.
+        examples: tmt plan lint
+        implemented: /tmt/cli
 
 /story:
     story: 'I want to comfortably work with stories'

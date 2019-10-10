@@ -277,6 +277,16 @@ def show(names):
     return 'plan show'
 
 
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@plan.command()
+def lint(names):
+    """ Check plans against the L2 metadata specification. """
+    for plan in tree.plans(names=names):
+        plan.lint()
+        echo()
+    return 'plan lint'
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Story
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
