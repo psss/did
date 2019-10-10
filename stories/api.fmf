@@ -10,15 +10,18 @@ story:
         /name:
             story+: name
             examples: test.name
+            implemented: /tmt/base
         /test:
             story+: test
             examples: test.test
+            implemented: /tmt/base
         /path:
             story+: path
             examples: test.path
             description:
                 Path to the test execution directory.
                 Defaults to the object name.
+            implemented: /tmt/base
 
     /explore:
         story: 'Explore available tests: '
@@ -68,9 +71,12 @@ story:
         /summary:
             story+: Short plan description
             examples: plan.summary
+            implemented: /tmt/base
         /artifact:
             story+: Artifacts for which plan is executed
             examples: plan.gate
+            implemented: /tmt/base
         /gate:
             story+: Gates for which the plan is relevant
             examples: plan.artifact
+            implemented: /tmt/base

@@ -92,6 +92,7 @@ story: As a user I want to have an intuitive command line interface
             examples:
                 - tmt run provision prepare
                 - tmt run discover provision prepare
+            implemented: /tmt/cli
         /until:
             story: 'Run all steps until the given one'
             examples:
@@ -154,6 +155,7 @@ story: As a user I want to have an intuitive command line interface
             specification, e.g. that all required attributes are
             present and that all attributes have correct type.
         examples: tmt test lint
+        implemented: /tmt/cli
 
     /create:
         story: 'Create a new test skeleton'
@@ -169,6 +171,7 @@ story: As a user I want to have an intuitive command line interface
             - tmt test create /tests/area/feature --skeleton beakerlib
             - tmt test create /tests/area/feature --duration=1h
         implemented: /tmt/cli
+
     /convert:
         story: 'Convert old test metadata'
         examples: tmt test convert
@@ -234,6 +237,7 @@ story: As a user I want to have an intuitive command line interface
             - tmt story --untested
             - tmt story --documented
             - tmt story --undocumented
+        implemented: /tmt/cli
 
     /coverage:
         summary: 'Show story coverage'
@@ -290,6 +294,7 @@ story: As a user I want to have an intuitive command line interface
     story: As a user I want to start using tmt in my git repository.
     summary: Initialize a new metadata tree
     examples: tmt init
+    implemented: /tmt/cli
 
 /usability:
     story:
