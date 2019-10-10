@@ -10,7 +10,7 @@ prepare:
 execute:
     how: beakerlib
 
-# Individual testsets
+# Individual plans
 /pull-request/smoke:
     summary:
         Basic set of quick smoke tests for systemd

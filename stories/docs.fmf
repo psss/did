@@ -38,7 +38,7 @@ story:
         ls
         cd mini
         tmt test ls
-        tmt testset ls
+        tmt plan ls
         tmt run
     tested: /tests/docs
     implemented: /examples

@@ -1,7 +1,7 @@
 /attributes:
     story:
         I want to have common core attributes used consistently
-        across tests, testsets and stories.
+        across tests, plans and stories.
 
     /summary:
         summary: Concise summary describing purpose of the object

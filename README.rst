@@ -24,7 +24,7 @@ Command line usage is straightforward::
 Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default all steps are executed for each testset detected::
+By default all steps are executed for each plan detected::
 
     tmt run
 

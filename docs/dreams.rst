@@ -15,7 +15,7 @@ integration should be a joy. Just a couple of concise commands::
     git clone https://some.git/repo
     cd repo
     tmt init
-    tmt testset create --beakerlib /testsets/basic
+    tmt plan create --beakerlib /plan/basic
 
 This would be done only once in order to prepare everything needed
 for testing. The everyday workflow would be much shorter::
@@ -38,7 +38,7 @@ repo should be short, user friendly and straightforward::
 
     tmt run
     tmt run test .
-    tmt run testset /testsets/smoke
+    tmt run plan /plan/smoke
 
 
 Environment

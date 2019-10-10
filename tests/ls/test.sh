@@ -10,7 +10,7 @@ rlJournalStart
         rlAssertRpm "tmt"
         rlRun "TmpDir=\$(mktemp -d)" 0 "Creating tmp directory"
         rlRun "cp example-test.txt $TmpDir/test.fmf"
-        rlRun "cp example-testset.txt $TmpDir/testset.fmf"
+        rlRun "cp example-plan.txt $TmpDir/plan.fmf"
         rlRun "cp example-story.txt $TmpDir/story.fmf"
         rlRun "pushd $TmpDir"
         rlRun "fmf init"
@@ -20,12 +20,12 @@ rlJournalStart
     rlPhaseStartTest "Test listing available tests"
         rlRun "tmt test ls | tee output"
         rlAssertGrep "/test/basic/smoke" "output"
-        rlAssertNotGrep "/testset/smoke" "output"
+        rlAssertNotGrep "/plan/smoke" "output"
     rlPhaseEnd
 
-    rlPhaseStartTest "Test listing available testsets"
-        rlRun "tmt testset ls | tee output"
-        rlAssertGrep "/testset/smoke" "output"
+    rlPhaseStartTest "Test listing available plans"
+        rlRun "tmt plan ls | tee output"
+        rlAssertGrep "/plan/smoke" "output"
         rlAssertNotGrep "/test/basic/smoke" "output"
     rlPhaseEnd
 
