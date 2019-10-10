@@ -414,10 +414,10 @@ def coverage(
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
             status = story.coverage(code, test, docs)
-        total += 1
-        code_coverage += status[0]
-        test_coverage += status[1]
-        docs_coverage += status[2]
+            total += 1
+            code_coverage += status[0]
+            test_coverage += status[1]
+            docs_coverage += status[2]
     # Summary
     if code:
         headfoot('{}%'.format(round(100 * code_coverage / total)))
@@ -425,6 +425,7 @@ def coverage(
         headfoot('{}%'.format(round(100 * test_coverage / total)))
     if docs:
         headfoot('{}%'.format(round(100 * docs_coverage / total)))
+    headfoot('from {}'.format(listed(total, 'story')))
     echo()
 
     return 'story coverage'

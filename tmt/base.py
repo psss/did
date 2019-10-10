@@ -272,7 +272,7 @@ class Story(Node):
             return False
         if undocumented and self.documented:
             return False
-        if uncovered and (self.implemented or self.tested or self.documented):
+        if uncovered and self.implemented and self.tested and self.documented:
             return False
         if covered and not (
                 self.implemented and self.tested and self.documented):
