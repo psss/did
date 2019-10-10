@@ -84,6 +84,19 @@ class Test(Node):
         if self.result is None:
             self.result = 'respect'
 
+
+    @staticmethod
+    def overview():
+        """ Show overview of available tests """
+        tests = [
+            style(str(test), fg='red') for test in tmt.cli.tree.tests()]
+        echo(style(
+            'Found {}{}{}.'.format(
+                fmf.utils.listed(tests, 'test'),
+                ': ' if tests else '',
+                fmf.utils.listed(tests, max=12)
+            ), fg='blue'))
+
     @staticmethod
     def create(name, template, force):
         """ Create a new test """
@@ -190,6 +203,18 @@ class Plan(Node):
             if not isinstance(gates, list):
                 gates = [gates]
 
+    @staticmethod
+    def overview():
+        """ Show overview of available plans """
+        plans = [
+            style(str(plan), fg='red') for plan in tmt.cli.tree.plans()]
+        echo(style(
+            'Found {}{}{}.'.format(
+                fmf.utils.listed(plans, 'plan'),
+                ': ' if plans else '',
+                fmf.utils.listed(plans, max=12)
+            ), fg='blue'))
+
     def show(self):
         """ Show plan details """
         self.ls(summary=True)
@@ -253,6 +278,18 @@ class Story(Node):
                 self.implemented and self.tested and self.documented):
             return False
         return True
+
+    @staticmethod
+    def overview():
+        """ Show overview of available stories """
+        stories = [
+            style(str(story), fg='red') for story in tmt.cli.tree.stories()]
+        echo(style(
+            'Found {}{}{}.'.format(
+                fmf.utils.listed(stories, 'story'),
+                ': ' if stories else '',
+                fmf.utils.listed(stories, max=12)
+            ), fg='blue'))
 
     def show(self):
         """ Show story details """

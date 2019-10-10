@@ -47,17 +47,24 @@ class CustomGroup(click.Group):
 #  Main
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(cls=CustomGroup)
+@click.group(invoke_without_command=True, cls=CustomGroup)
+@click.pass_context
 @click.option(
-    '--path', metavar='PATH',
-    default='.', show_default=True,
+    '--path', metavar='PATH', default='.', show_default=True,
     help='Path to the metadata tree.')
-def main(path):
+def main(context, path):
     """ Test Metadata Tool """
     # Initialize metadata tree
     global tree
     tree = tmt.Tree(path)
 
+    # Show overview of available tests, plans and stories
+    if context.invoked_subcommand is None:
+        tmt.base.Test.overview()
+        tmt.base.Plan.overview()
+        tmt.base.Story.overview()
+
+    return 'tmt'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Run
@@ -127,14 +134,21 @@ def finish():
 #  Test
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(cls=CustomGroup)
-def test():
+@click.group(invoke_without_command=True, cls=CustomGroup)
+@click.pass_context
+def test(context):
     """
     Manage tests (L1 metadata).
 
     Check available tests, inspect their metadata.
     Convert old metadata into the new fmf format.
     """
+
+    # Show overview of available tests
+    if context.invoked_subcommand is None:
+        tmt.base.Test.overview()
+
+    return 'test'
 
 main.add_command(test)
 
@@ -223,8 +237,9 @@ def convert(paths, makefile, nitrate, purpose):
 #  Plan
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(cls=CustomGroup)
-def plan():
+@click.group(invoke_without_command=True, cls=CustomGroup)
+@click.pass_context
+def plan(context):
     """
     Manage test plans (L2 metadata).
 
@@ -232,6 +247,13 @@ def plan():
     Search for available plans.
     Explore detailed test step configuration.
     """
+
+    # Show overview of available plans
+    if context.invoked_subcommand is None:
+        tmt.base.Plan.overview()
+
+    return 'plan'
+
 
 main.add_command(plan)
 
@@ -259,8 +281,9 @@ def show(names):
 #  Story
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(cls=CustomGroup)
-def story():
+@click.group(invoke_without_command=True, cls=CustomGroup)
+@click.pass_context
+def story(context):
     """
     Manage user stories.
 
@@ -268,6 +291,12 @@ def story():
     Check available user stories.
     Explore coverage (test, implementation, documentation).
     """
+
+    # Show overview of available stories
+    if context.invoked_subcommand is None:
+        tmt.base.Story.overview()
+
+    return 'test'
 
 main.add_command(story)
 

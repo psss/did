@@ -1,5 +1,5 @@
 """ Test Metadata Tool """
 
-from tmt.base import Tree
+from tmt.base import Tree, Test, Plan, Story
 
-__all__ = ["Tree"]
+__all__ = ['Tree', 'Test', 'Plan', 'Story']
