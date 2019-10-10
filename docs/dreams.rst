@@ -54,14 +54,35 @@ simple and there should be plenty of options to choose freely::
     tmt run --mock=fedora-31-x86_64
 
 
-Debugging
+Interactive investigation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Investigating test failures and debugging test code should be
-comfortable and as fast as possible::
+Obtaining an environment where you could interactively
+investigate test failures should be
+as comfortable and as fast as possible::
 
     tmt run --keep discover provision prepare
     tmt run --keep execute
     tmt run --keep execute
     ...
     tmt run --keep report finish
+
+
+Hands-free debugging
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A very common loop of modifying the source code
+and reexecuting the test
+should be accessible without subsequent user interaction with the program::
+
+    tmt debug  # <and keep it running>
+    # <observe the execution results>
+    # <open an editor in a separate pane/window/...>
+    # <modify the file>
+    # <save the changes>
+    # <observe the updated execution results>
+    # ...
+
+Prioritize latency
+and reuse as much as possible from the previous execution.
+Ideally, start the reexecution from the modified line itself.
