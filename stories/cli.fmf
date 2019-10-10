@@ -109,12 +109,12 @@ story: As a user I want to have an intuitive command line interface
             - tmt run --container=fedora:rawhide
             - tmt run --container=fedora:rawhide --cap-add=SYS_ADMIN
 
-    /filter-testset:
-        story: 'Select testsets for execution'
+    /filter-plan:
+        story: 'Select plans for execution'
         examples:
-            - tmt run testset NAME
-            - tmt run testset --filter=FILTER
-            - tmt run testset --grep=REGEXP
+            - tmt run plan NAME
+            - tmt run plan --filter=FILTER
+            - tmt run plan --grep=REGEXP
 
     /filter-test:
         story: 'Select tests for execution'
@@ -123,7 +123,7 @@ story: As a user I want to have an intuitive command line interface
             - tmt run test NAME
             - tmt run test --filter=FILTER
             - tmt run test --grep=REGEXP
-            - tmt run testset NAME2 test NAME1
+            - tmt run plan NAME2 test NAME1
 
     /keep:
         story: Store test step status, keep machines running
@@ -191,25 +191,25 @@ story: As a user I want to have an intuitive command line interface
             - tmt test ls --enabled
             - tmt test ls --tier=1
 
-/testset:
-    story: 'I want to comfortably work with testsets'
+/plan:
+    story: 'I want to comfortably work with plans'
 
     /ls:
-        story: 'List available testsets'
-        examples: tmt testset ls
+        story: 'List available plans'
+        examples: tmt plan ls
         implemented: /tmt/cli
         tested: /tests/ls
 
     /show:
-        story: 'Show testset configuration'
-        examples: tmt testset show
+        story: 'Show plan configuration'
+        examples: tmt plan show
         implemented: /tmt/cli
 
     /filter:
-        story: 'Filter available testsets'
+        story: 'Filter available plans'
         examples:
-            - tmt testset ls REGEXP
-            - tmt testset show --artifact=pull-request
+            - tmt plan ls REGEXP
+            - tmt plan show --artifact=pull-request
 
 /story:
     story: 'I want to comfortably work with stories'

@@ -220,39 +220,39 @@ def convert(paths, makefile, nitrate, purpose):
     return 'convert'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Testset
+#  Plan
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @click.group(cls=CustomGroup)
-def testset():
+def plan():
     """
-    Manage testsets (L2 metadata).
+    Manage test plans (L2 metadata).
 
     \b
-    Search for available testsets.
+    Search for available plans.
     Explore detailed test step configuration.
     """
 
-main.add_command(testset)
+main.add_command(plan)
 
 
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@testset.command()
+@plan.command()
 def ls(names):
-    """ List available testsets. """
-    for testset in tree.testsets(names=names):
-        testset.ls()
-    return 'testset ls'
+    """ List available plans. """
+    for plan in tree.plans(names=names):
+        plan.ls()
+    return 'plan ls'
 
 
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@testset.command()
+@plan.command()
 def show(names):
-    """ Show testset details. """
-    for testset in tree.testsets(names=names):
-        testset.show()
+    """ Show plan details. """
+    for plan in tree.plans(names=names):
+        plan.show()
         echo()
-    return 'testset show'
+    return 'plan show'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -328,12 +328,12 @@ def show(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def go():
-    """ Go and do test steps for selected testsets """
+    """ Go and do test steps for selected plans """
     echo(style('Found {0}.\n'.format(
-        listed(tree.testsets(), 'testset')), fg='magenta'))
-    for testset in tree.testsets():
-        testset.ls(summary=True)
-        testset.go()
+        listed(tree.plans(), 'plan')), fg='magenta'))
+    for plan in tree.plans():
+        plan.ls(summary=True)
+        plan.go()
         echo()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

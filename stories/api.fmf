@@ -29,48 +29,48 @@ story:
             story+: Select tests by filter
             examples: Test.search(artifact='pull-request')
 
-/testset:
+/plan:
     story: I want to easily access L2 metadata
 
     /explore:
-        story: 'Explore available testsets: '
+        story: 'Explore available plans: '
         /list:
-            story+: List all available testsets
-            examples: TestSet.search()
+            story+: List all available plans
+            examples: Plan.search()
         /search:
-            story+: Select testsets by filter
-            examples: TestSet.search(name='/testsets/smoke')
+            story+: Select plans by filter
+            examples: Plan.search(name='/plans/smoke')
 
     /steps:
         story: 'Access test steps: '
         /discover:
             story+: discover
-            examples: testset.discover
+            examples: plan.discover
         /provision:
             story+: provision
-            examples: testset.provision
+            examples: plan.provision
         /prepare:
             story+: prepare
-            examples: testset.prepare
+            examples: plan.prepare
         /execute:
             story+: execute
             description: Default implementation is 'shell'.
-            examples: testset.execute
+            examples: plan.execute
         /report:
             story+: report
-            examples: testset.report
+            examples: plan.report
         /finish:
             story+: finish
-            examples: testset.finish
+            examples: plan.finish
 
     /attributes:
         story: 'Access additional attributes: '
         /summary:
-            story+: Short testset description
-            examples: testset.summary
+            story+: Short plan description
+            examples: plan.summary
         /artifact:
-            story+: Artifacts for which testset is executed
-            examples: testset.gate
+            story+: Artifacts for which plan is executed
+            examples: plan.gate
         /gate:
-            story+: Gates for which the testset is relevant
-            examples: testset.artifact
+            story+: Gates for which the plan is relevant
+            examples: plan.artifact

@@ -19,7 +19,7 @@ class Node(object):
     General node object
 
     Corresponds to given fmf.Tree node.
-    Implements common Test, Testset and Story methods.
+    Implements common Test, Plan and Story methods.
     """
 
     def __init__(self, node):
@@ -164,12 +164,12 @@ class Test(Node):
             echo(verdict(2, 'summary should not exceed 50 characters'))
 
 
-class Testset(Node):
-    """ Testset object (L2 Metadata) """
+class Plan(Node):
+    """ Plan object (L2 Metadata) """
 
     def __init__(self, node):
-        """ Initialize the testset """
-        super(Testset, self).__init__(node)
+        """ Initialize the plan """
+        super(Plan, self).__init__(node)
         self.summary = node.get('summary')
 
         # Initialize test steps
@@ -191,7 +191,7 @@ class Testset(Node):
                 gates = [gates]
 
     def show(self):
-        """ Show testset details """
+        """ Show plan details """
         self.ls(summary=True)
         for step in tmt.steps.STEPS:
             step = getattr(self, step)
@@ -200,7 +200,7 @@ class Testset(Node):
                 step.show()
 
     def go(self):
-        """ Execute the testset """
+        """ Execute the plan """
         self.discover.go()
         self.provision.go()
         self.prepare.go()
@@ -264,7 +264,7 @@ class Tree(object):
     """ Test Metadata Tree """
 
     def __init__(self, path='.'):
-        """ Initialize testsets for given directory path """
+        """ Initialize path and tree """
         self._path = path
         self._tree = None
 
@@ -291,10 +291,10 @@ class Tree(object):
         return [Test(test) for test in self.tree.prune(
             keys=keys, names=names, filters=filters, conditions=conditions)]
 
-    def testsets(self, keys=[], names=[], filters=[], conditions=[]):
-        """ Search available testsets """
+    def plans(self, keys=[], names=[], filters=[], conditions=[]):
+        """ Search available plans """
         keys.append('execute')
-        return [Testset(testset) for testset in self.tree.prune(
+        return [Plan(plan) for plan in self.tree.prune(
             keys=keys, names=names, filters=filters, conditions=conditions)]
 
     def stories(self, keys=[], names=[], filters=[], conditions=[]):
