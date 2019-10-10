@@ -5,7 +5,6 @@ discover:
     repository: https://github.com/psss/tmt
 prepare:
     how: ansible
-    playbooks:
-        - testsets/packages.yml
+    playbooks: plans/packages.yml
 execute:
     how: beakerlib
