@@ -286,6 +286,11 @@ story: As a user I want to have an intuitive command line interface
                 could be started to serve the page or pages.
             examples: tmt story export --html --server
 
+/init:
+    story: As a user I want to start using tmt in my git repository.
+    summary: Initialize a new metadata tree
+    examples: tmt init
+
 /usability:
     story:
         As a user I want to type as little as possible.

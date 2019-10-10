@@ -429,6 +429,24 @@ def coverage(
 
     return 'story coverage'
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Init
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@click.argument('path', default='.')
+@main.command()
+def init(path):
+    """ Initialize the tree root. """
+
+    try:
+        root = fmf.Tree.init(path)
+    except fmf.utils.GeneralError as error:
+        raise tmt.utils.GeneralError(
+                "Failed to initialize tree root in '{}': {}".format(
+                    path, error))
+    echo("Tree root '{}' initialized.".format(root))
+
+    return 'init'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Go
