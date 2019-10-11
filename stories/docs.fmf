@@ -2,12 +2,14 @@ story:
     As a command line user I want to have all essential
     documentation at hand.
 
-
 /help:
     story:
-        Main command and all its subcommands should provide --help
+        As a command line user I want to quickly check all
+        available options and supported commands.
     description:
-        All available options should be easily discoverable.
+        All available options should be easily discoverable
+        directly from the command line using the ``--help``
+        option.
     examples:
         - tmt --help
         - tmt run --help
@@ -17,8 +19,10 @@ story:
 
 /man:
     story:
-        There should be a 'tmt' man page availabe in the package
+        As a command line user I want to check the man page to get
+        a basic overview about the tool.
     description:
+        There should be a manual page availabe in the package.
         Man page should contain brief introduction about the tool
         and a list of essential commands and options.
     examples:
@@ -28,11 +32,11 @@ story:
 
 /examples:
     story:
-        A couple of instructive examples should be included in the
-        package for easy first experimenting
+        As a new user I would like to experiment with the tool.
     description:
-        Examples should be stored under the /usr/share/doc
-        directory.
+        A couple of instructive examples should be included in the
+        package for easy first experimenting. Examples should be
+        stored under the ``/usr/share/doc`` directory.
     examples: |
         cd /usr/share/doc/tmt/examples
         ls
@@ -44,11 +48,14 @@ story:
     implemented: /examples
 
 /guide:
-    summary: Provide a Quick Start Guide covering common scenarios
     story:
         As a user migrating from old tools I want to quickly
         learn how to achieve my common daily tasks with the new
         tooling.
+    description:
+        Provide a Quick Start Guide describing the most common
+        scenarios and showing mapping of old command to the new
+        syntax.
     examples:
         - How do I do '1minutetip fedora' with tmt?
         - How do I do 'wow --reserve' with tmt?

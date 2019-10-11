@@ -238,3 +238,23 @@ man_pages = [
 
 # If true, show URL addresses after external links.
 #man_show_urls = False
+
+
+# Generate stories
+import tmt
+
+tree = tmt.Tree('.')
+
+areas = {
+    'docs': 'Documentation Stories',
+    'cli': 'Command Line Stories',
+    'api': 'API Stories',
+    'core': 'Core Stories',
+    }
+
+for area in areas:
+    with open('{}.rst'.format(area), 'w') as doc:
+        doc.write('{}\n{}\n'.format(areas[area], '=' * len(areas[area])))
+        root = '/stories/{}'.format(area)
+        for story in tree.stories(names=[root], whole=True):
+            doc.write(story.export(title=story.name != root))

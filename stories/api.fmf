@@ -1,22 +1,20 @@
 story:
     As a tool developer I want an API which will allow me to
-    comfortably access the L1 and L2 metadata
+    comfortably access the L1 and L2 metadata.
 
 /test:
-    story: I want to easily access L1 metadata
+    story:
+        As a tool developer I want to easily access L1 metadata.
 
     /attributes:
-        story: 'Access test attributes: '
+        summary: 'Access test attributes'
         /name:
-            story+: name
             examples: test.name
             implemented: /tmt/base
         /test:
-            story+: test
             examples: test.test
             implemented: /tmt/base
         /path:
-            story+: path
             examples: test.path
             description:
                 Path to the test execution directory.
@@ -24,59 +22,54 @@ story:
             implemented: /tmt/base
 
     /explore:
-        story: 'Explore available tests: '
+        summary: 'Explore available tests'
         /list:
-            story+: List all available tests
+            summary: List all available tests
             examples: Test.search()
         /search:
-            story+: Select tests by filter
+            summary: Select tests by filter
             examples: Test.search(artifact='pull-request')
 
 /plan:
-    story: I want to easily access L2 metadata
+    story:
+        As a tool developer I want to easily access L2 metadata.
 
     /explore:
-        story: 'Explore available plans: '
+        summary: 'Explore available plans'
         /list:
-            story+: List all available plans
+            summary: List all available plans
             examples: Plan.search()
         /search:
-            story+: Select plans by filter
+            summary: Select plans by filter
             examples: Plan.search(name='/plans/smoke')
 
     /steps:
-        story: 'Access test steps: '
+        summary: 'Access test steps'
         /discover:
-            story+: discover
             examples: plan.discover
         /provision:
-            story+: provision
             examples: plan.provision
         /prepare:
-            story+: prepare
             examples: plan.prepare
         /execute:
-            story+: execute
             description: Default implementation is 'shell'.
             examples: plan.execute
         /report:
-            story+: report
             examples: plan.report
         /finish:
-            story+: finish
             examples: plan.finish
 
     /attributes:
-        story: 'Access additional attributes: '
+        summary: 'Access plan attributes'
         /summary:
-            story+: Short plan description
+            summary: Short plan description
             examples: plan.summary
             implemented: /tmt/base
         /artifact:
-            story+: Artifacts for which plan is executed
-            examples: plan.gate
+            summary: Artifacts for which plan is executed
+            examples: plan.artifact
             implemented: /tmt/base
         /gate:
-            story+: Gates for which the plan is relevant
-            examples: plan.artifact
+            summary: Gates for which the plan is relevant
+            examples: plan.gate
             implemented: /tmt/base

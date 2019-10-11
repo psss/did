@@ -29,7 +29,7 @@ class Step(object):
         """ Execute the test step """
         if not self.enabled:
             return
-        tmt.utils.format(str(self), 'not implemented', key_color='blue')
+        echo(tmt.utils.format(str(self), 'not implemented', key_color='blue'))
 
     def show(self, keys=[]):
         """ Show step details """
@@ -37,7 +37,7 @@ class Step(object):
             return
         for key in keys or self.data:
             try:
-                tmt.utils.format(key, self.data[key])
+                echo(tmt.utils.format(key, self.data[key]))
             except KeyError:
                 pass
 

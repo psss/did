@@ -1,7 +1,7 @@
 story: As a user I want to have an intuitive command line interface
 
 /run:
-    story: 'I want to execute tests easily'
+    story: 'As a user I want to execute tests easily'
 
     /default:
         story: 'Default should cover the most common use case'
@@ -148,7 +148,7 @@ story: As a user I want to have an intuitive command line interface
         examples: tmt run debug
 
 /test:
-    story: 'I want to comfortably work with tests'
+    story: 'As a user I want to comfortably work with tests'
 
     /ls:
         story: 'List available tests'
@@ -208,7 +208,7 @@ story: As a user I want to have an intuitive command line interface
             - tmt test ls --tier=1
 
 /plan:
-    story: 'I want to comfortably work with plans'
+    story: 'As a user I want to comfortably work with plans'
 
     /ls:
         story: 'List available plans'
@@ -237,7 +237,7 @@ story: As a user I want to have an intuitive command line interface
         implemented: /tmt/cli
 
 /story:
-    story: 'I want to comfortably work with stories'
+    story: 'As a developer I want to comfortably work with stories'
 
     /ls:
         story: 'List available stories'
@@ -298,14 +298,16 @@ story: As a user I want to have an intuitive command line interface
         story: 'I need to convert stories into a beautiful format'
 
         /rst:
-            story+: 'Export stories into reStructuredText'
+            story: 'Export stories into reStructuredText'
             description:
                 So that they can be included in tmt documentation.
             examples: tmt story export --rst
-
+            implemented:
+                - /tmt/cli
+                - /tmt/base
 
         /html:
-            story+: 'Export stories into html'
+            story: 'Export stories into html'
             description:
                 So that they can be quickly reviewed in a web
                 browser. Optionally a simple python httpd server

@@ -3,6 +3,7 @@
 """ Base Metadata Classes """
 
 import os
+import re
 import fmf
 import pprint
 
@@ -42,7 +43,7 @@ class Node(object):
         """ List node """
         echo(style(self.name, fg='red'))
         if summary and self.summary:
-            tmt.utils.format('summary', self.summary)
+            echo(tmt.utils.format('summary', self.summary))
 
 
 class Test(Node):
@@ -163,7 +164,7 @@ class Test(Node):
             if value is None:
                 continue
             else:
-                tmt.utils.format(key, value)
+                echo(tmt.utils.format(key, value))
 
 
     def lint(self):
@@ -221,7 +222,7 @@ class Plan(Node):
         for step in tmt.steps.STEPS:
             step = getattr(self, step)
             if step.data:
-                tmt.utils.format(str(step), key_color='blue')
+                echo(tmt.utils.format(str(step), key_color='blue'))
                 step.show()
 
     def lint(self):
@@ -309,7 +310,7 @@ class Story(Node):
             if value is not None:
                 # Do not wrap examples
                 wrap = key != 'examples'
-                tmt.utils.format(key, value, wrap=wrap)
+                echo(tmt.utils.format(key, value, wrap=wrap))
 
     def coverage(self, code, test, docs):
         """ Show story coverage """
@@ -324,6 +325,44 @@ class Story(Node):
             echo(verdict(docs, good='done', bad='todo') + ' ', nl=False)
         echo(self)
         return (code, test, docs)
+
+    def export(self, format_='rst', title=True):
+        """ Export story data into requested format """
+
+        output = ''
+
+        # Title
+        if title:
+            depth = len(re.findall('/', self.name)) - 1
+            title = re.sub('.*/', '', self.name)
+            output += '\n{}\n{}\n'.format(title, '=~^:-'[depth] * len(title))
+
+        # Summary, story and description
+        if self.summary and self.summary != self.node.parent.get('summary'):
+            output += '\n{}\n'.format(self.summary)
+        if self.story != self.node.parent.get('story'):
+            output += '\n*{}*\n'.format(self.story.strip())
+        if self.description:
+            output += '\n{}\n'.format(self.description)
+
+        # Examples
+        if self.examples:
+            output += '\nExamples::\n\n'
+            output += tmt.utils.format(
+                '', self.examples, wrap=False, indent=4,
+                key_color=None, value_color=None) + '\n'
+
+        # Status
+        if self.node.children:
+            return output
+        status = []
+        for coverage in ['implemented', 'tested', 'documented']:
+            if getattr(self, coverage):
+                status.append(coverage)
+        output += "\nStatus: {}\n".format(
+            fmf.utils.listed(status) if status else 'idea')
+
+        return output
 
 
 class Tree(object):
@@ -363,8 +402,10 @@ class Tree(object):
         return [Plan(plan) for plan in self.tree.prune(
             keys=keys, names=names, filters=filters, conditions=conditions)]
 
-    def stories(self, keys=[], names=[], filters=[], conditions=[]):
+    def stories(
+            self, keys=[], names=[], filters=[], conditions=[], whole=False):
         """ Search available stories """
         keys.append('story')
         return [Story(story) for story in self.tree.prune(
-            keys=keys, names=names, filters=filters, conditions=conditions)]
+            keys=keys, names=names,
+            filters=filters, conditions=conditions, whole=whole)]

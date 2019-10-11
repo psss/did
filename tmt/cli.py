@@ -398,7 +398,7 @@ def coverage(
     names, code, test, docs,
     implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered):
-    """ Show code, test and docs coverage for given stories """
+    """ Show code, test and docs coverage for given stories. """
 
     def headfoot(text):
         """ Format simple header/footer """
@@ -439,6 +439,42 @@ def coverage(
     echo()
 
     return 'story coverage'
+
+
+@click.option(
+    '--undocumented', is_flag=True, help='Undocumented stories only.')
+@click.option(
+    '--untested', is_flag=True, help='Untested stories only.')
+@click.option(
+    '--unimplemented', is_flag=True, help='Unimplemented stories only.')
+@click.option(
+    '-u', '--uncovered', is_flag=True, help='Uncovered stories only.')
+@click.option(
+    '-c', '--covered', is_flag=True, help='Covered stories only.')
+@click.option(
+    '-d', '--documented', is_flag=True, help='Documented stories only.')
+@click.option(
+    '-t', '--tested', is_flag=True, help='Tested stories only.')
+@click.option(
+    '-i', '--implemented', is_flag=True, help='Implemented stories only.')
+@click.option(
+    '--format', 'format_', default='rst', show_default=True, metavar='FORMAT',
+    help='Output format.')
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@story.command()
+def export(
+    names, format_,
+    implemented, tested, documented, covered,
+    unimplemented, untested, undocumented, uncovered):
+    """ Export selected stories into desired format. """
+
+    for story in tree.stories(names=names, whole=True):
+        if story._match(implemented, tested, documented, covered,
+                unimplemented, untested, undocumented, uncovered):
+            echo(story.export(format_))
+
+    return 'story export'
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Init

@@ -17,6 +17,7 @@ Table of Contents
     Commands <commands>
     Dreams <dreams>
     Examples <examples>
+    Stories <stories>
     Modules <modules>
     Contribute <contribute>
 
