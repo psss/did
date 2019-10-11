@@ -17,7 +17,7 @@ __pkg__ = 'tmt'
 __pkgdir__ = {}
 __pkgs__ = ['tmt']
 __provides__ = ['tmt']
-__desc__ = 'Test Metadata Tool'
+__desc__ = 'Test Management Tool'
 __scripts__ = ['bin/tmt']
 __irequires__ = [
     'fmf',

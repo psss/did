@@ -23,7 +23,7 @@ rlJournalStart
 
     rlPhaseStartTest
         rlRun "tmt --help | tee output" 0 "Check help message"
-		rlAssertGrep "Test Metadata Tool" "output"
+		rlAssertGrep "Test Management Tool" "output"
     rlPhaseEnd
 
     rlPhaseStartCleanup

@@ -1,6 +1,6 @@
 # coding: utf-8
 
-""" Command line interface for the Test Metadata Tool """
+""" Command line interface for the Test Management Tool """
 
 from click import echo, style
 from fmf.utils import listed
@@ -53,7 +53,7 @@ class CustomGroup(click.Group):
     '--path', metavar='PATH', default='.', show_default=True,
     help='Path to the metadata tree.')
 def main(context, path):
-    """ Test Metadata Tool """
+    """ Test Management Tool """
     # Initialize metadata tree
     global tree
     tree = tmt.Tree(path)

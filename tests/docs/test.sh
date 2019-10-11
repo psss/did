@@ -16,7 +16,7 @@ rlJournalStart
 
     rlPhaseStartTest "help"
         rlRun "tmt --help | tee help" 0 "Run help"
-        rlAssertGrep "Test Metadata Tool" "help"
+        rlAssertGrep "Test Management Tool" "help"
     rlPhaseEnd
 
     rlPhaseStartTest "man"

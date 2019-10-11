@@ -2,7 +2,7 @@ Name: tmt
 Version: 0.3
 Release: 1%{?dist}
 
-Summary: Test Metadata Tool
+Summary: Test Management Tool
 License: MIT
 BuildArch: noarch
 

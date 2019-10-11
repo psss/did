@@ -15,7 +15,7 @@ TEST_SHELL = """
 
 tmp=$(mktemp)
 tmt --help > $tmp
-grep -C3 'Test Metadata Tool' $tmp
+grep -C3 'Test Management Tool' $tmp
 rm $tmp
 """.lstrip()
 
@@ -39,7 +39,7 @@ rlJournalStart
 
     rlPhaseStartTest
         rlRun "tmt --help | tee output" 0 "Check help message"
-        rlAssertGrep "Test Metadata Tool" "output"
+        rlAssertGrep "Test Management Tool" "output"
     rlPhaseEnd
 
     rlPhaseStartCleanup

@@ -3,7 +3,7 @@
     tmt
 ======================
 
-Test Metadata Tool
+Test Management Tool
 
 
 Description

@@ -1,4 +1,4 @@
-""" Test Metadata Tool """
+""" Test Management Tool """
 
 from tmt.base import Tree, Test, Plan, Story
 
