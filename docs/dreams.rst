@@ -5,7 +5,7 @@
 A couple of dreams for the future...
 
 
-Creation
+Test Creation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creating a new test, executing it and enabling in the continuous
@@ -30,7 +30,7 @@ for testing. The everyday workflow would be much shorter::
     git push
 
 
-Execution
+Test Execution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Executing a test, a set of tests, or all tests available in the
@@ -41,7 +41,7 @@ repo should be short, user friendly and straightforward::
     tmt run plan /plan/smoke
 
 
-Environment
+Environment Selection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Selecting the environment where tests will be executed should be
@@ -54,35 +54,35 @@ simple and there should be plenty of options to choose freely::
     tmt run --mock=fedora-31-x86_64
 
 
-Interactive investigation
+Interactive Investigation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Obtaining an environment where you could interactively
-investigate test failures should be
-as comfortable and as fast as possible::
+Obtaining a test environment to interactively investigate test
+failures and easily develop tests should be as comfortable and as
+fast as possible::
 
-    tmt run --keep discover provision prepare
-    tmt run --keep execute
-    tmt run --keep execute
+    tmt run discover provision prepare
+    tmt run execute
+    tmt run execute
     ...
-    tmt run --keep report finish
+    tmt run report finish
 
 
-Hands-free debugging
+Hands-Free Debugging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A very common loop of modifying the source code
-and reexecuting the test
-should be accessible without subsequent user interaction with the program::
+A very common loop of modifying the source code and re-executing
+the test should be accessible without subsequent user interaction
+with the tool::
 
-    tmt debug  # <and keep it running>
-    # <observe the execution results>
-    # <open an editor in a separate pane/window/...>
-    # <modify the file>
-    # <save the changes>
-    # <observe the updated execution results>
-    # ...
+    tmt run debug
 
-Prioritize latency
-and reuse as much as possible from the previous execution.
-Ideally, start the reexecution from the modified line itself.
+* run the tool once, keep it running
+* observe the execution results
+* open an editor in a separate window
+* modify the file, save the changes
+* observe the updated execution results
+* ...
+
+Prioritize latency and reuse as much as possible from the previous
+execution. Ideally, start the re-execution from the modified line.

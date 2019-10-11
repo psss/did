@@ -134,6 +134,13 @@ story: As a user I want to have an intuitive command line interface
             - tmt run --keep execute
             - tmt run --keep execute
 
+    /debug:
+        summary: Handsfree debugging
+        story:
+            As a test developer I want to automatically execute
+            tests upon saving the updated test code to disk.
+        examples: tmt run debug
+
 /test:
     story: 'I want to comfortably work with tests'
 
