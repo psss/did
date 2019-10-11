@@ -49,3 +49,10 @@
             - tmt test create --force
         related:
             - /stories/cli/test/create
+
+    /format:
+        summary: Provide machine readable output in given format
+        examples:
+            - tmt test ls --format json
+            - tmt plan show --format yaml
+            - tmt story export --format rst
