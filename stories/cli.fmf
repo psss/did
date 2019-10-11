@@ -106,9 +106,15 @@ story: As a user I want to have an intuitive command line interface
 
     /shortcuts:
         story: 'Provide shortcuts for common scenarios'
-        examples:
-            - tmt run --container=fedora:rawhide
-            - tmt run --container=fedora:rawhide --cap-add=SYS_ADMIN
+        /container:
+            examples:
+                - tmt run --container=fedora:rawhide
+                - tmt run --container=fedora:rawhide --cap-add=SYS_ADMIN
+        /mock:
+            examples:
+                - tmt --mock fedora-31-x86_64
+                - tmt --mock fedora-31-x86_64 --no-clean --enable-network
+                - tmt --mock fedora-31-x86_64 --enablerepo=updates-testing
 
     /filter-plan:
         story: 'Select plans for execution'
