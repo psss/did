@@ -20,7 +20,7 @@ rm $tmp
 """.lstrip()
 
 
-TEST_BEAKERLIB = """
+TEST_BEAKERLIB = r"""
 #!/bin/bash
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
 
