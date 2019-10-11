@@ -56,3 +56,8 @@
             - tmt test ls --format json
             - tmt plan show --format yaml
             - tmt story export --format rst
+
+    /debug:
+        summary: Print out everything tmt is doing
+        examples:
+            - tmt --debug
