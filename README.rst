@@ -9,8 +9,28 @@ Test Management Tool
 Description
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``tmt`` Python module and command line tool implement the test
-metadata specification (L1 and L2) and allows easy test execution.
+The ``tmt`` python module and command line tool implement the L1
+and L2 Metadata Specification which allows to store all needed
+test execution data directly within a git repository. In this way
+it makes tests independent on any external test management system.
+
+The Flexible Metadata Format ``fmf`` is used to store data in both
+human and machine readable way close to the source code. Thanks to
+inheritance and elasticity metadata are organized in the structure
+efficiently, preventing unnecessary duplication.
+
+Command line tool allows to easily create new tests, convert old
+metadata, list and filter available tests and verify them against
+the L1 specification. Plans are used to group tests and precisely
+define individual test steps defined by the L2 specification, like
+environment preparation. Stories are used to track implementation,
+test and documentation coverage for individual features.
+
+Last but not least, the tool provides a user-friendly way how to
+run, debug and develop tests directly from your laptop across many
+different test environments. This is currently a proof-of-concept
+so many features are still on the way. Check stories to see which
+functionality has already been implemented.
 
 
 Synopsis
@@ -24,17 +44,41 @@ Command line usage is straightforward::
 Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By default all steps are executed for each plan detected::
+Run all or selected steps for each plan::
 
     tmt run
-
-You can select which steps should be performed::
-
     tmt run discover
-
-Multiple steps can be provided as well::
-
     tmt run prepare execute
+
+List tests, show details, check against the specification::
+
+    tmt test ls
+    tmt test show
+    tmt test lint
+
+Create a new test, convert old metadata::
+
+    tmt test create
+    tmt test convert
+
+List plans, show details, check against the specification::
+
+    tmt plan ls
+    tmt plan show
+    tmt plan lint
+
+List stories, check details, show coverage status::
+
+    tmt story ls
+    tmt story show
+    tmt story coverage
+
+Many commands support regular expression filtering and other
+specific options::
+
+    tmt story ls cli
+    tmt story show create
+    tmt story coverage --implemented
 
 Check help message of individual commands for the full list of
 available options.
@@ -78,11 +122,50 @@ Features described above are not implemented yet.
 Test
 ----
 
-Check available tests, inspect their metadata, gather old metadata
-from various sources and stored them in the new fmf format.
+Manage tests (L1 metadata). Check available tests, inspect their
+metadata, gather old metadata from various sources and stored them
+in the new fmf format.
 
-test convert
-    migrate test metadata from the old format to `fmf`
+ls
+    List available tests.
+show
+    Show test details.
+lint
+    Check tests against the L1 metadata specification.
+create
+    Create a new test based on given template.
+convert
+    Convert old test metadata into the new fmf format.
+
+
+Plan
+----
+
+Manage test plans (L2 metadata). Search for available plans.
+Explore detailed test step configuration.
+
+ls
+    List available plans.
+show
+    Show plan details.
+lint
+    Check plans against the L2 metadata specification.
+
+
+Story
+-----
+
+Manage user stories. Check available user stories. Explore
+coverage (test, implementation, documentation).
+
+ls
+    List available stories.
+show
+    Show story details.
+coverage
+    Show code, test and docs coverage for given stories.
+export
+    Export selected stories into desired format.
 
 
 Utils
@@ -90,7 +173,7 @@ Utils
 
 Various utility options.
 
---path PATHS
+--path PATH
     Path to the metadata tree (default: current directory)
 
 --verbose
@@ -131,6 +214,9 @@ https://github.com/psss/tmt
 Docs:
 http://tmt.readthedocs.io/
 
+Stories:
+https://tmt.readthedocs.io/en/latest/stories.html
+
 Issues:
 https://github.com/psss/tmt/issues
 
@@ -151,6 +237,9 @@ https://coveralls.io/github/psss/tmt
 
 Specification:
 https://pagure.io/fedora-ci/metadata
+
+Flexible Metadata Format
+http://fmf.readthedocs.io/
 
 
 Authors
