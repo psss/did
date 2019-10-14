@@ -156,7 +156,7 @@ https://pagure.io/fedora-ci/metadata
 Authors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Petr Šplíchal, Alexander Sosedkin and Lukáš Zachar.
+Petr Šplíchal, Miro Hrončok, Alexander Sosedkin and Lukáš Zachar.
 
 
 Copyright
