@@ -104,6 +104,18 @@ story: As a user I want to have an intuitive command line interface
                 - tmt run --all provision --how=container
             implemented: /tmt/cli
 
+	/git-rebase:
+	    story: 'Provide way similar to git rebase --interactive'
+	    description: Provide user with list of steps and let him edit them.
+		Allow adding commands between, or at least interactive "pause".
+		When user would be finished with single step, just continue recipe.
+		Do not force him to remember all steps when working with them.
+		Make it possible to repeat single step or abort current run.
+		Make it possible repeat some steps just by repeating lines with task.
+	    examples:
+		- tmt run --all --interactive
+		- tmt run --continue
+
     /shortcuts:
         story: 'Provide shortcuts for common scenarios'
         /container:
