@@ -1,0 +1,9 @@
+story: As a Fedora user I want to easily install tmt on my system.
+
+/minimal:
+    summary: Minimal tmt installation with core features only
+    examples: dnf install tmt
+
+/all:
+    summary: Install tmt with all available plugins and dependencies
+    examples: dnf install tmt-all

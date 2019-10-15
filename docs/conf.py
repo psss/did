@@ -250,6 +250,7 @@ areas = {
     'cli': 'Command Line',
     'api': 'API',
     'core': 'Core',
+    'install': 'Installation',
     }
 
 os.makedirs('stories', exist_ok=True)
