@@ -250,6 +250,16 @@ story: As a user I want to have an intuitive command line interface
         examples: tmt plan lint
         implemented: /tmt/cli
 
+    /create:
+        story: 'As a developer I want to easily enable CI'
+        description:
+            Provide a super-easy and user-friendly way how to
+            enable tests in the CI. Several templates should be
+            supported to cover common use cases.
+        examples:
+            - tmt plan create /plans/smoke --template=mini
+            - tmt plan create /plans/features --template=full
+
 /story:
     story: 'As a developer I want to comfortably work with stories'
 
