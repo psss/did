@@ -20,6 +20,10 @@ class Step(object):
     def __init__(self, data={}):
         """ Store step data """
         self.data = data
+        try:
+            self.summary = data.get('summary')
+        except AttributeError:
+            self.summary = None
 
     def __str__(self):
         """ Step name """
@@ -35,7 +39,10 @@ class Step(object):
         """ Show step details """
         if not self.data:
             return
+        echo(tmt.utils.format(str(self), self.summary or '', key_color='blue'))
         for key in keys or self.data:
+            if key == 'summary':
+                continue
             try:
                 echo(tmt.utils.format(key, self.data[key]))
             except KeyError:
@@ -46,7 +53,8 @@ class Discover(Step):
 
     def show(self):
         """ Show discover details """
-        super(Discover, self).show(keys=['how', 'filter', 'repository'])
+        super(Discover, self).show(
+            keys=['how', 'filter', 'repository', 'tests'])
 
 class Provision(Step):
     """ Provision an environment for testing (or use localhost) """
