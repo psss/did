@@ -1,0 +1,31 @@
+
+# common settings
+discover:
+    summary: Postinstall checks
+    how: list
+    tests: check1, check2, check3
+provision:
+    summary: Special RTT provisioning
+    how: rtt-magic
+execute:
+    how: shell
+
+# pxe install
+/pxe:
+    summary: "Test pxe installation"
+    provision+:
+        method: pxe
+    /simple:
+        provision+:
+            setup: simple
+    /complex:
+        provision+:
+            setup: complex
+
+# http install
+/http:
+    summary: "Test http installation"
+    provision+:
+        method: http
+    discover+:
+        tests: check1, check2

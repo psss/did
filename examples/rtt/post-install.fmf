@@ -1,0 +1,8 @@
+test: ./test.sh
+
+/check1:
+    summary: Post installation check one
+/check2:
+    summary: Post installation check two
+/check3:
+    summary: Post installation check three
