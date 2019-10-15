@@ -245,7 +245,8 @@ http://fmf.readthedocs.io/
 Authors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Petr Šplíchal, Miro Hrončok, Alexander Sosedkin and Lukáš Zachar.
+Petr Šplíchal, Miro Hrončok, Alexander Sosedkin, Lukáš Zachar and
+Petr Menšík.
 
 
 Copyright
