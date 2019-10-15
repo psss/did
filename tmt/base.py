@@ -222,7 +222,7 @@ class Plan(Node):
         for step in tmt.steps.STEPS:
             step = getattr(self, step)
             if step.data:
-                echo(tmt.utils.format(str(step), key_color='blue'))
+                echo(tmt.utils.format(str(step), '', key_color='blue'))
                 step.show()
 
     def lint(self):
