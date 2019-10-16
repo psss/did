@@ -32,6 +32,11 @@ class Node(object):
         """ Node name """
         return self.name
 
+    def _sources(self):
+        """ Show source files """
+        echo(tmt.utils.format(
+            'sources', self.node.sources, key_color='magenta'))
+
     def name_and_summary(self):
         """ Node name and optional summary """
         if self.summary:
@@ -121,7 +126,7 @@ class Test(Node):
             path=script_path, content=content,
             name='test script', force=force, mode=0o755)
 
-    def show(self):
+    def show(self, verbose):
         """ Show test details """
         self.ls()
         for key in self._keys:
@@ -130,6 +135,8 @@ class Test(Node):
                 continue
             else:
                 echo(tmt.utils.format(key, value))
+        if verbose:
+            self._sources()
 
     def lint(self):
         """ Check test against the L1 metadata specification. """
@@ -199,13 +206,15 @@ class Plan(Node):
             path=plan_path, content=content,
             name='plan', force=force)
 
-    def show(self):
+    def show(self, verbose):
         """ Show plan details """
         self.ls(summary=True)
         for step in tmt.steps.STEPS:
             step = getattr(self, step)
             if step.data:
                 step.show()
+        if verbose:
+            self._sources()
 
     def lint(self):
         """ Check plan against the L2 metadata specification. """
@@ -303,7 +312,7 @@ class Story(Node):
                 fmf.utils.listed(stories, max=12)
             ), fg='blue'))
 
-    def show(self):
+    def show(self, verbose):
         """ Show story details """
         self.ls()
         for key in self._keys:
@@ -312,6 +321,8 @@ class Story(Node):
                 # Do not wrap examples
                 wrap = key != 'examples'
                 echo(tmt.utils.format(key, value, wrap=wrap))
+        if verbose:
+            self._sources()
 
     def coverage(self, code, test, docs):
         """ Show story coverage """

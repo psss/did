@@ -164,11 +164,14 @@ def ls(names):
 
 
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@click.option(
+    '-v', '--verbose', is_flag=True,
+    help='Show source files where metadata are stored.')
 @test.command()
-def show(names):
+def show(names, verbose):
     """ Show test details. """
     for test in tree.tests(names=names):
-        test.show()
+        test.show(verbose)
         echo()
     return 'test show'
 
@@ -271,11 +274,14 @@ def ls(names):
 
 
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@click.option(
+    '-v', '--verbose', is_flag=True,
+    help='Show source files where metadata are stored.')
 @plan.command()
-def show(names):
+def show(names, verbose):
     """ Show plan details. """
     for plan in tree.plans(names=names):
-        plan.show()
+        plan.show(verbose)
         echo()
     return 'plan show'
 
@@ -360,6 +366,9 @@ def ls(
 
 
 @click.option(
+    '-v', '--verbose', is_flag=True,
+    help='Show source files where metadata are stored.')
+@click.option(
     '--undocumented', is_flag=True, help='Undocumented stories only.')
 @click.option(
     '--untested', is_flag=True, help='Untested stories only.')
@@ -379,12 +388,12 @@ def ls(
 @story.command()
 def show(
     names, implemented, tested, documented, covered,
-    unimplemented, untested, undocumented, uncovered):
+    unimplemented, untested, undocumented, uncovered, verbose):
     """ Show story details. """
     for story in tree.stories(names=names):
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
-            story.show()
+            story.show(verbose)
             echo()
     return 'story show'
 
