@@ -287,6 +287,21 @@ def lint(names):
     return 'plan lint'
 
 
+@click.argument('name')
+@click.option(
+    '-t', '--template', help='Plan template (mini or full).',
+    metavar='TEMPLATE', prompt=True)
+@click.option(
+    '-f', '--force', help='Force overwriting existing files.',
+    is_flag=True)
+@plan.command()
+def create(name, template, force):
+    """ Create a new plan based on given template. """
+    tmt.base.Plan.create(name, template, force)
+    return 'test create'
+
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Story
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

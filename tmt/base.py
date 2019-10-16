@@ -85,7 +85,6 @@ class Test(Node):
         if self.result is None:
             self.result = 'respect'
 
-
     @staticmethod
     def overview():
         """ Show overview of available tests """
@@ -105,56 +104,23 @@ class Test(Node):
 
         # Create directory
         directory_path = os.path.join(root, name.lstrip('/'))
-        if os.path.isdir(directory_path):
-            echo("Directory '{}' already exists.".format(directory_path))
-        else:
-            try:
-                os.makedirs(directory_path, exist_ok=True)
-                echo("Directory '{}' created.".format(directory_path))
-            except OSError as error:
-                raise tmt.utils.GeneralError(
-                    "Failed to create test directory '{}' ({})".format(
-                        directory_path, error))
+        tmt.utils.create_directory(directory_path, 'test directory')
 
         # Create metadata
         metadata_path = os.path.join(directory_path, 'main.fmf')
-        action = 'created'
-        if os.path.exists(metadata_path):
-            if force:
-                action = 'overwritten'
-            else:
-                raise tmt.utils.GeneralError(
-                    "File '{}' already exists.".format(metadata_path))
-        try:
-            with open(metadata_path, 'w') as metadata:
-                metadata.write(tmt.templates.TEST_METADATA)
-            echo("Metadata '{}' {}.".format(metadata_path, action))
-        except OSError as error:
-            raise tmt.utils.GeneralError(
-                "Failed to create test metadata '{}' ({})".format(
-                    metadata_path, error))
+        tmt.utils.create_file(
+            path=metadata_path, content=tmt.templates.TEST_METADATA,
+            name='test metadata', force=force)
 
         # Create script
         script_path = os.path.join(directory_path, 'test.sh')
-        action = 'created'
-        if os.path.exists(script_path):
-            if force:
-                action = 'overwritten'
-            else:
-                raise tmt.utils.GeneralError(
-                    "File '{}' already exists.".format(script_path))
-        try:
-            with open(script_path, 'w') as script:
-                if template == 'shell':
-                    script.write(tmt.templates.TEST_SHELL)
-                if template == 'beakerlib':
-                    script.write(tmt.templates.TEST_BEAKERLIB)
-            os.chmod(script_path, 0o755)
-            echo("Script '{}' {}.".format(script_path, action))
-        except OSError as error:
-            raise tmt.utils.GeneralError(
-                "Failed to create test script '{}' ({})".format(
-                    script_path, error))
+        if template == 'shell':
+            content = tmt.templates.TEST_SHELL
+        elif template == 'beakerlib':
+            content = tmt.templates.TEST_BEAKERLIB
+        tmt.utils.create_file(
+            path=script_path, content=content,
+            name='test script', force=force, mode=0o755)
 
     def show(self):
         """ Show test details """
@@ -165,7 +131,6 @@ class Test(Node):
                 continue
             else:
                 echo(tmt.utils.format(key, value))
-
 
     def lint(self):
         """ Check test against the L1 metadata specification. """
@@ -215,6 +180,25 @@ class Plan(Node):
                 ': ' if plans else '',
                 fmf.utils.listed(plans, max=12)
             ), fg='blue'))
+
+    @staticmethod
+    def create(name, template, force):
+        """ Create a new test """
+        # Prepare paths
+        root = tmt.cli.tree.root
+        (directory, plan) = os.path.split(name)
+        directory_path = os.path.join(root, directory.lstrip('/'))
+        plan_path = os.path.join(directory_path, plan + '.fmf')
+
+        # Create directory & plan
+        tmt.utils.create_directory(directory_path, 'plan directory')
+        if template == 'mini':
+            content = tmt.templates.PLAN_MINI
+        elif template == 'full':
+            content = tmt.templates.PLAN_FULL
+        tmt.utils.create_file(
+            path=plan_path, content=content,
+            name='plan', force=force)
 
     def show(self):
         """ Show plan details """

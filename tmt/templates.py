@@ -48,3 +48,25 @@ rlJournalStart
     rlPhaseEnd
 rlJournalEnd
 """.lstrip()
+
+
+PLAN_MINI = """
+summary:
+    Just a basic smoke test
+execute:
+    script: tmt --help
+""".lstrip()
+
+
+PLAN_FULL = """
+summary:
+    Essential command line features
+discover:
+    how: fmf
+    repository: https://github.com/psss/tmt
+prepare:
+    how: ansible
+    playbooks: plans/packages.yml
+execute:
+    how: beakerlib
+""".lstrip()

@@ -10,6 +10,7 @@ import fmf.utils
 import pprint
 import shlex
 import re
+import os
 
 log = fmf.utils.Logging('tmt').logger
 
@@ -128,6 +129,37 @@ def format(
     else:
         output += str(value)
     return output
+
+
+def create_directory(path, name):
+    """ Create a new directory, handle errors """
+
+    if os.path.isdir(path):
+        echo("Directory '{}' already exists.".format(path))
+        return
+    try:
+        os.makedirs(path, exist_ok=True)
+        echo("Directory '{}' created.".format(path))
+    except OSError as error:
+        raise GeneralError("Failed to create {} '{}' ({})".format(
+            name, path, error))
+
+
+def create_file(path, content, name, force=False, mode=0o664):
+    """ Create a new file, handle errors """
+    action = 'created'
+    if os.path.exists(path):
+        if force:
+            action = 'overwritten'
+        else:
+            raise GeneralError("File '{}' already exists.".format(path))
+    try:
+        with open(path, 'w') as file_:
+            file_.write(content)
+        echo("{} '{}' {}.".format(name.capitalize(), path, action))
+    except OSError as error:
+        raise GeneralError("Failed to create {} '{}' ({})".format(
+            name, path, error))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  StructuredField

@@ -259,6 +259,7 @@ story: As a user I want to have an intuitive command line interface
         examples:
             - tmt plan create /plans/smoke --template=mini
             - tmt plan create /plans/features --template=full
+        implemented: /tmt/cli
 
 /story:
     story: 'As a developer I want to comfortably work with stories'
