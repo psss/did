@@ -14,6 +14,7 @@ import tmt.base
 import tmt.utils
 import tmt.convert
 import tmt.steps
+import tmt.templates
 
 log = fmf.utils.Logging('tmt').logger
 
@@ -182,10 +183,12 @@ def lint(names):
     return 'test lint'
 
 
+_test_templates = listed(tmt.templates.TEST, join='or')
 @click.argument('name')
 @click.option(
-    '-t', '--template', help='Test skeleton (shell or beakerlib).',
-    metavar='TEMPLATE', prompt=True)
+    '-t', '--template', metavar='TEMPLATE',
+    help='Test template ({}).'.format(_test_templates),
+    prompt='Template ({})'.format(_test_templates))
 @click.option(
     '-f', '--force', help='Force overwriting existing files.',
     is_flag=True)
@@ -287,10 +290,12 @@ def lint(names):
     return 'plan lint'
 
 
+_plan_templates = listed(tmt.templates.PLAN, join='or')
 @click.argument('name')
 @click.option(
-    '-t', '--template', help='Plan template (mini or full).',
-    metavar='TEMPLATE', prompt=True)
+    '-t', '--template', metavar='TEMPLATE',
+    help='Plan template ({}).'.format(_plan_templates),
+    prompt='Template ({})'.format(_plan_templates))
 @click.option(
     '-f', '--force', help='Force overwriting existing files.',
     is_flag=True)
@@ -298,8 +303,7 @@ def lint(names):
 def create(name, template, force):
     """ Create a new plan based on given template. """
     tmt.base.Plan.create(name, template, force)
-    return 'test create'
-
+    return 'plan create'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -383,6 +387,22 @@ def show(
             story.show()
             echo()
     return 'story show'
+
+
+_story_templates = listed(tmt.templates.STORY, join='or')
+@click.argument('name')
+@click.option(
+    '-t', '--template', metavar='TEMPLATE',
+    prompt='Template ({})'.format(_story_templates),
+    help='Story template ({}).'.format(_story_templates))
+@click.option(
+    '-f', '--force', help='Force overwriting existing files.',
+    is_flag=True)
+@story.command()
+def create(name, template, force):
+    """ Create a new story based on given template. """
+    tmt.base.Story.create(name, template, force)
+    return 'story create'
 
 
 @click.option(

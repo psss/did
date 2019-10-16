@@ -286,6 +286,17 @@ story: As a user I want to have an intuitive command line interface
             - tmt story --undocumented
         implemented: /tmt/cli
 
+    /create:
+        story: 'As a developer I want to easily create new story.'
+        description:
+            Provide an easy way how to create a new story.
+            Several templates should be provided to choose from.
+        examples:
+            - tmt story create /stories/area/story
+            - tmt story create /stories/area/story --template mini
+            - tmt story create /stories/area/story --template mini --force
+        implemented: /tmt/cli
+
     /coverage:
         summary: 'Show story coverage'
         story:

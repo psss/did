@@ -2,6 +2,11 @@
 
 """ Default Templates """
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Test Templates
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+TEST = dict()
 
 TEST_METADATA = """
 summary: Concise summary describing what the test does
@@ -9,8 +14,7 @@ contact: Name Surname <email@example.com>
 test: ./test.sh
 """.lstrip()
 
-
-TEST_SHELL = """
+TEST['shell'] = """
 #!/bin/sh -eux
 
 tmp=$(mktemp)
@@ -19,8 +23,7 @@ grep -C3 'Test Management Tool' $tmp
 rm $tmp
 """.lstrip()
 
-
-TEST_BEAKERLIB = r"""
+TEST['beakerlib'] = r"""
 #!/bin/bash
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
 
@@ -49,16 +52,20 @@ rlJournalStart
 rlJournalEnd
 """.lstrip()
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Plan Templates
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PLAN_MINI = """
+PLAN = dict()
+
+PLAN['mini'] = """
 summary:
     Just a basic smoke test
 execute:
     script: tmt --help
 """.lstrip()
 
-
-PLAN_FULL = """
+PLAN['full'] = """
 summary:
     Essential command line features
 discover:
@@ -69,4 +76,32 @@ prepare:
     playbooks: plans/packages.yml
 execute:
     how: beakerlib
+""".lstrip()
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Story Templates
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+STORY = dict()
+
+STORY['mini'] = """
+story: As a user I want to do this and that.
+examples: One example is worth thousand words.
+""".lstrip()
+
+STORY['full'] = """
+summary:
+    Short description summarizing the story.
+story:
+    As a user I want to do this and that
+    so that I can achieve this.
+description:
+    Text describing all important aspects of the object.
+    Usually spans across several paragraphs. It should not
+    contain detailed examples. Those should be stored
+    under the 'examples' attribute.
+examples:
+    One example is worth thousand words. Providing a few,
+    well selected, examples helps to understand quickly
+    and get inspiration for initial experimenting.
 """.lstrip()

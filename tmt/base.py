@@ -100,10 +100,8 @@ class Test(Node):
     @staticmethod
     def create(name, template, force):
         """ Create a new test """
-        root = tmt.cli.tree.root
-
         # Create directory
-        directory_path = os.path.join(root, name.lstrip('/'))
+        directory_path = os.path.join(tmt.cli.tree.root, name.lstrip('/'))
         tmt.utils.create_directory(directory_path, 'test directory')
 
         # Create metadata
@@ -114,10 +112,11 @@ class Test(Node):
 
         # Create script
         script_path = os.path.join(directory_path, 'test.sh')
-        if template == 'shell':
-            content = tmt.templates.TEST_SHELL
-        elif template == 'beakerlib':
-            content = tmt.templates.TEST_BEAKERLIB
+        try:
+            content = tmt.templates.TEST[template]
+        except KeyError:
+            raise tmt.utils.GeneralError(
+                "Invalid template '{}'.".format(template))
         tmt.utils.create_file(
             path=script_path, content=content,
             name='test script', force=force, mode=0o755)
@@ -183,19 +182,19 @@ class Plan(Node):
 
     @staticmethod
     def create(name, template, force):
-        """ Create a new test """
+        """ Create a new plan """
         # Prepare paths
-        root = tmt.cli.tree.root
         (directory, plan) = os.path.split(name)
-        directory_path = os.path.join(root, directory.lstrip('/'))
+        directory_path = os.path.join(tmt.cli.tree.root, directory.lstrip('/'))
         plan_path = os.path.join(directory_path, plan + '.fmf')
 
         # Create directory & plan
         tmt.utils.create_directory(directory_path, 'plan directory')
-        if template == 'mini':
-            content = tmt.templates.PLAN_MINI
-        elif template == 'full':
-            content = tmt.templates.PLAN_FULL
+        try:
+            content = tmt.templates.PLAN[template]
+        except KeyError:
+            raise tmt.utils.GeneralError(
+                "Invalid template '{}'.".format(template))
         tmt.utils.create_file(
             path=plan_path, content=content,
             name='plan', force=force)
@@ -272,6 +271,25 @@ class Story(Node):
                 self.implemented and self.tested and self.documented):
             return False
         return True
+
+    @staticmethod
+    def create(name, template, force):
+        """ Create a new story """
+        # Prepare paths
+        (directory, story) = os.path.split(name)
+        directory_path = os.path.join(tmt.cli.tree.root, directory.lstrip('/'))
+        story_path = os.path.join(directory_path, story + '.fmf')
+
+        # Create directory & story
+        tmt.utils.create_directory(directory_path, 'story directory')
+        try:
+            content = tmt.templates.STORY[template]
+        except KeyError:
+            raise tmt.utils.GeneralError(
+                "Invalid template '{}'.".format(template))
+        tmt.utils.create_file(
+            path=story_path, content=content,
+            name='story', force=force)
 
     @staticmethod
     def overview():
