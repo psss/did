@@ -1,5 +1,5 @@
 Name: did
-Version: 0.13
+Version: 0.14
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -47,6 +47,18 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Thu Oct 17 2019 Petr Šplíchal <psplicha@redhat.com> - 0.14-1
+- Update spec file for Python 3
+- Update shebang to explicitly use python3
+- Fix mixed tabs and spaces in docs/conf.py
+- Goodbye Python 2! Thanks and have a good night ;-)
+- Cleanup built docs directly
+- Do not remove python's egg when doing the cleanup
+- Document the custom plugin configuration
+- A couple of custom plugins feature adjustments
+- Support for custom plugin location [#160]
+- Fix typo in the license classifier
+
 * Tue Oct 01 2019 Petr Šplíchal <psplicha@redhat.com> - 0.13-1
 - Support for the full file path config [#140]
 - Add the 'last friday' command [#197]
