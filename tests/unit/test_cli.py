@@ -24,16 +24,19 @@ def test_mini():
 def test_init():
     """ Tree initialization """
     tmp = tempfile.mkdtemp()
-    result = runner.invoke(tmt.cli.main, ['init', tmp])
+    original_directory = os.getcwd()
+    os.chdir(tmp)
+    result = runner.invoke(tmt.cli.main, ['init'])
     assert 'initialized' in result.output
-    result = runner.invoke(tmt.cli.main, ['init', tmp])
+    result = runner.invoke(tmt.cli.main, ['init'])
     assert 'already exists' in result.output
-    result = runner.invoke(tmt.cli.main, ['init', tmp, '--mini'])
+    result = runner.invoke(tmt.cli.main, ['init', '--mini'])
     assert 'tests/example' in result.output
-    result = runner.invoke(tmt.cli.main, ['init', tmp, '--mini'])
+    result = runner.invoke(tmt.cli.main, ['init', '--mini'])
     assert result.exception
-    result = runner.invoke(tmt.cli.main, ['init', tmp, '--full', '--force'])
+    result = runner.invoke(tmt.cli.main, ['init', '--full', '--force'])
     assert 'overwritten' in result.output
+    os.chdir(original_directory)
     shutil.rmtree(tmp)
 
 def test_no_metadata():
