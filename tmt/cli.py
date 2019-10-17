@@ -10,7 +10,6 @@ import os
 
 import fmf
 import tmt
-import tmt.base
 import tmt.utils
 import tmt.convert
 import tmt.steps
@@ -61,9 +60,9 @@ def main(context, path):
 
     # Show overview of available tests, plans and stories
     if context.invoked_subcommand is None:
-        tmt.base.Test.overview()
-        tmt.base.Plan.overview()
-        tmt.base.Story.overview()
+        tmt.Test.overview()
+        tmt.Plan.overview()
+        tmt.Story.overview()
 
     return 'tmt'
 
@@ -147,7 +146,7 @@ def test(context):
 
     # Show overview of available tests
     if context.invoked_subcommand is None:
-        tmt.base.Test.overview()
+        tmt.Test.overview()
 
     return 'test'
 
@@ -198,7 +197,7 @@ _test_templates = listed(tmt.templates.TEST, join='or')
 @test.command()
 def create(name, template, force):
     """ Create a new test based on given template. """
-    tmt.base.Test.create(name, template, force)
+    tmt.Test.create(name, template, force)
     return 'test create'
 
 
@@ -256,7 +255,7 @@ def plan(context):
 
     # Show overview of available plans
     if context.invoked_subcommand is None:
-        tmt.base.Plan.overview()
+        tmt.Plan.overview()
 
     return 'plan'
 
@@ -308,7 +307,7 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
 @plan.command()
 def create(name, template, force):
     """ Create a new plan based on given template. """
-    tmt.base.Plan.create(name, template, force)
+    tmt.Plan.create(name, template, force)
     return 'plan create'
 
 
@@ -329,7 +328,7 @@ def story(context):
 
     # Show overview of available stories
     if context.invoked_subcommand is None:
-        tmt.base.Story.overview()
+        tmt.Story.overview()
 
     return 'test'
 

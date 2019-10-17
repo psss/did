@@ -101,7 +101,6 @@ description:
     contain detailed examples. Those should be stored
     under the 'examples' attribute.
 examples:
-    One example is worth thousand words. Providing a few,
-    well selected, examples helps to understand quickly
-    and get inspiration for initial experimenting.
+    - One example is worth thousand words.
+    - Of course, there can be more than one.
 """.lstrip()
