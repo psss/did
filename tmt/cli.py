@@ -7,6 +7,7 @@ from fmf.utils import listed
 
 import click
 import os
+import re
 
 import fmf
 import tmt
@@ -30,6 +31,8 @@ class CustomGroup(click.Group):
 
     def get_command(self, context, cmd_name):
         """ Allow command shortening """
+        # Support both story & stories
+        cmd_name = re.sub('story', 'stories', cmd_name)
         found = click.Group.get_command(self, context, cmd_name)
         if found is not None:
             return found
@@ -136,7 +139,7 @@ def finish():
 
 @click.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
-def test(context):
+def tests(context):
     """
     Manage tests (L1 metadata).
 
@@ -150,11 +153,11 @@ def test(context):
 
     return 'test'
 
-main.add_command(test)
+main.add_command(tests)
 
 
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@test.command()
+@tests.command()
 def ls(names):
     """ List available tests. """
     for test in tree.tests(names=names):
@@ -166,7 +169,7 @@ def ls(names):
 @click.option(
     '-v', '--verbose', is_flag=True,
     help='Show source files where metadata are stored.')
-@test.command()
+@tests.command()
 def show(names, verbose):
     """ Show test details. """
     for test in tree.tests(names=names):
@@ -176,7 +179,7 @@ def show(names, verbose):
 
 
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@test.command()
+@tests.command()
 def lint(names):
     """ Check tests against the L1 metadata specification. """
     for test in tree.tests(names=names):
@@ -194,7 +197,7 @@ _test_templates = listed(tmt.templates.TEST, join='or')
 @click.option(
     '-f', '--force', help='Force overwriting existing files.',
     is_flag=True)
-@test.command()
+@tests.command()
 def create(name, template, force):
     """ Create a new test based on given template. """
     tmt.Test.create(name, template, force)
@@ -211,7 +214,7 @@ def create(name, template, force):
     '--makefile / --no-makefile', default=True,
     help='Convert Beaker Makefile metadata')
 @click.argument('paths', nargs=-1, metavar='[PATH]...')
-@test.command()
+@tests.command()
 def convert(paths, makefile, nitrate, purpose):
     """
     Convert old test metadata into the new fmf format.
@@ -244,7 +247,7 @@ def convert(paths, makefile, nitrate, purpose):
 
 @click.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
-def plan(context):
+def plans(context):
     """
     Manage test plans (L2 metadata).
 
@@ -260,11 +263,11 @@ def plan(context):
     return 'plan'
 
 
-main.add_command(plan)
+main.add_command(plans)
 
 
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@plan.command()
+@plans.command()
 def ls(names):
     """ List available plans. """
     for plan in tree.plans(names=names):
@@ -276,7 +279,7 @@ def ls(names):
 @click.option(
     '-v', '--verbose', is_flag=True,
     help='Show source files where metadata are stored.')
-@plan.command()
+@plans.command()
 def show(names, verbose):
     """ Show plan details. """
     for plan in tree.plans(names=names):
@@ -286,7 +289,7 @@ def show(names, verbose):
 
 
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@plan.command()
+@plans.command()
 def lint(names):
     """ Check plans against the L2 metadata specification. """
     for plan in tree.plans(names=names):
@@ -304,7 +307,7 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
 @click.option(
     '-f', '--force', help='Force overwriting existing files.',
     is_flag=True)
-@plan.command()
+@plans.command()
 def create(name, template, force):
     """ Create a new plan based on given template. """
     tmt.Plan.create(name, template, force)
@@ -317,7 +320,7 @@ def create(name, template, force):
 
 @click.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
-def story(context):
+def stories(context):
     """
     Manage user stories.
 
@@ -332,7 +335,7 @@ def story(context):
 
     return 'test'
 
-main.add_command(story)
+main.add_command(stories)
 
 
 @click.option(
@@ -352,7 +355,7 @@ main.add_command(story)
 @click.option(
     '-i', '--implemented', is_flag=True, help='Implemented stories only.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@story.command()
+@stories.command()
 def ls(
     names, implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered):
@@ -384,7 +387,7 @@ def ls(
 @click.option(
     '-i', '--implemented', is_flag=True, help='Implemented stories only.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@story.command()
+@stories.command()
 def show(
     names, implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, verbose):
@@ -406,7 +409,7 @@ _story_templates = listed(tmt.templates.STORY, join='or')
 @click.option(
     '-f', '--force', help='Force overwriting existing files.',
     is_flag=True)
-@story.command()
+@stories.command()
 def create(name, template, force):
     """ Create a new story based on given template. """
     tmt.base.Story.create(name, template, force)
@@ -436,7 +439,7 @@ def create(name, template, force):
 @click.option(
     '-c', '--code', is_flag=True, help='Show code coverage.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@story.command()
+@stories.command()
 def coverage(
     names, code, test, docs,
     implemented, tested, documented, covered,
@@ -504,7 +507,7 @@ def coverage(
     '--format', 'format_', default='rst', show_default=True, metavar='FORMAT',
     help='Output format.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@story.command()
+@stories.command()
 def export(
     names, format_,
     implemented, tested, documented, covered,
