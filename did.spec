@@ -10,10 +10,13 @@ Source: https://github.com/psss/did/releases/download/%{version}/did-%{version}.
 
 BuildArch: noarch
 BuildRequires: git
-BuildRequires: python2-devel
-Requires: python2-requests-gssapi
-Requires: python2-nitrate python2-dateutil python2-bugzilla
-Requires: python%{?fedora:2}-feedparser
+BuildRequires: python3-devel
+Requires: python3-requests-gssapi
+Requires: python3-dateutil
+Requires: python3-bugzilla
+Requires: python3-feedparser
+Requires: python3-httplib2
+Requires: python3-google-api-client
 
 %description
 Comfortably gather status report data (e.g. list of committed
@@ -28,20 +31,19 @@ range. By default all available stats for this week are reported.
 %install
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{_mandir}/man1
-mkdir -p %{buildroot}%{python2_sitelib}/did
-mkdir -p %{buildroot}%{python2_sitelib}/did/plugins
+mkdir -p %{buildroot}%{python3_sitelib}/did
+mkdir -p %{buildroot}%{python3_sitelib}/did/plugins
 install -pm 755 bin/did %{buildroot}%{_bindir}/did
-install -pm 644 did/*.py %{buildroot}%{python2_sitelib}/did
-install -pm 644 did/plugins/*.py %{buildroot}%{python2_sitelib}/did/plugins
+install -pm 644 did/*.py %{buildroot}%{python3_sitelib}/did
+install -pm 644 did/plugins/*.py %{buildroot}%{python3_sitelib}/did/plugins
 install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 
 
 %files
 %{_mandir}/man1/*
 %{_bindir}/did
-%{python2_sitelib}/*
+%{python3_sitelib}/*
 %doc README.rst examples
-%{!?_licensedir:%global license %%doc}
 %license LICENSE
 
 %changelog
