@@ -1,0 +1,87 @@
+story: 'As a user I want to execute tests easily'
+
+/default:
+    story: 'Default should cover the most common use case'
+    description:
+        Run all relevant tests on the default environment.
+        Default environment should be something safe which
+        should not modify user environment. Perhaps something
+        like 'x86_64 virtual machine from the testing farm'?
+    examples: tmt run
+
+/select:
+    story: 'Select multiple steps to be executed'
+
+    /pick:
+        story: 'Choose steps to be executed'
+        examples:
+            - tmt run provision prepare
+            - tmt run discover provision prepare
+        implemented: /tmt/cli
+    /until:
+        story: 'Run all steps until the given one'
+        examples:
+            - tmt run --until prepare
+            - tmt run --until execute
+    /all:
+        story: 'Run all test steps, customize some'
+        examples:
+            - tmt run --all provision --how=container
+        implemented: /tmt/cli
+
+/interactive:
+    story: 'Provide way similar to git rebase --interactive'
+    description:
+        Provide users with list of steps and let them edit them.
+        Allow adding commands between, or at least interactive "pause".
+        When user would be finished with single step, just continue recipe.
+        Do not force users to remember all steps when working with them.
+        Make it possible to repeat single step or abort current run.
+        Allow repeating some steps just by repeating lines with task.
+    examples:
+        - tmt run --all --interactive
+        - tmt run --continue
+        - tmt run --abort
+
+/shortcuts:
+    story: 'Provide shortcuts for common scenarios'
+    /container:
+        examples:
+            - tmt run --container=fedora:rawhide
+            - tmt run --container=fedora:rawhide --cap-add=SYS_ADMIN
+    /mock:
+        examples:
+            - tmt --mock fedora-31-x86_64
+            - tmt --mock fedora-31-x86_64 --no-clean --enable-network
+            - tmt --mock fedora-31-x86_64 --enablerepo=updates-testing
+
+/filter:
+    /plan:
+        story: 'Select plans for execution'
+        examples:
+            - tmt run plan NAME
+            - tmt run plan --filter=FILTER
+            - tmt run plan --grep=REGEXP
+    /test:
+        story: 'Select tests for execution'
+        # TODO: Should this be rather covered by the discover step?
+        examples:
+            - tmt run test NAME
+            - tmt run test --filter=FILTER
+            - tmt run test --grep=REGEXP
+            - tmt run plan NAME2 test NAME1
+
+/keep:
+    story: Store test step status, keep machines running
+    examples:
+        - tmt run --keep provision prepare
+        - tmt run --keep discover execute
+        - tmt run --keep execute
+        - tmt run --keep execute
+
+/debug:
+    summary: Handsfree debugging
+    story:
+        As a test developer I want to automatically execute
+        tests upon saving the updated test code to disk.
+    examples: tmt run debug

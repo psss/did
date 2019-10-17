@@ -1,0 +1,71 @@
+/discover:
+    story: 'Select or adjust the discover step'
+    description:
+        Defines which tests should be executed.
+    examples:
+        - tmt run discover
+        - tmt run discover --how=fmf
+        - tmt run discover --how=fmf --repo=url
+        - tmt run discover --how=list
+        - tmt run discover --how=shell
+        - tmt run discover --how=nitrate
+
+/provision:
+    story: 'Select or adjust the provision step'
+    description:
+        Describes what environment is needed for testing and
+        how it should provisioned.
+    examples:
+        - tmt run provision
+        - tmt run provision --how=testing-farm
+        - tmt run provision --how=testing-farm --memory-min=8GB
+        - tmt run provision --how=openstack
+        - tmt run provision --how=container
+        - tmt run provision --how=podman
+        - tmt run provision --how=docker
+        - tmt run provision --how=podman --image=fedora:rawhide
+        - tmt run provision --how=beaker --distro=rhel-8
+        - tmt run provision --how=beaker --arch=s390x
+        - tmt run provision --how=local
+        - tmt run provision --how=qemu
+        - tmt run provision --how=vagrant
+
+/prepare:
+    story: 'Select or adjust the prepare step'
+    description:
+        Additional configuration of the provisioned
+        environment needed for testing.
+    examples:
+        - tmt run prepare
+        - tmt run prepare --how=ansible
+        - tmt run prepare --how=ansible --playbook=server.yaml
+
+/execute:
+    story: 'Select or adjust the execute step'
+    description:
+        Specification of the testing framework which should
+        execute tests.
+    examples:
+        - tmt run execute
+        - tmt run execute --how=shell
+        - tmt run execute --how=beakerlib
+        - tmt run execute --how=restraint
+
+/report:
+    story: 'Select or adjust the report step'
+    description:
+        Adjusting notifications about the test progress and
+        results.
+    examples:
+        - tmt run report
+        - tmt run report --email=email@example.com
+        - tmt run report --irc=room
+
+/finish:
+    story: 'Select or adjust the finish step'
+    description:
+        Additional actions to be performed after the test
+        execution has been completed. Counterpart of the
+        prepare step useful for various cleanup actions.
+    examples:
+        - tmt run finish

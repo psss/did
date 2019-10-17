@@ -1,0 +1,87 @@
+story: 'As a developer I want to comfortably work with stories'
+
+/ls:
+    story: 'List available stories'
+    examples: tmt story ls
+    implemented: /tmt/cli
+    tested: /tests/ls
+
+/show:
+    story: 'Show story details'
+    examples: tmt story show
+    implemented: /tmt/cli
+
+/filter:
+    story: 'Search available stories'
+    examples:
+        - tmt story --implemented
+        - tmt story --unimplemented
+        - tmt story --tested
+        - tmt story --untested
+        - tmt story --documented
+        - tmt story --undocumented
+    implemented: /tmt/cli
+
+/create:
+    story: 'As a developer I want to easily create new story.'
+    description:
+        Provide an easy way how to create a new story.
+        Several templates should be provided to choose from.
+    examples:
+        - tmt story create /stories/area/story
+        - tmt story create /stories/area/story --template mini
+        - tmt story create /stories/area/story --template mini --force
+    implemented: /tmt/cli
+
+/coverage:
+    summary: 'Show story coverage'
+    story:
+        As a developer I want to easily view which stories
+        have been implemented, are covered by tests and
+        documented and which still need work to be done.
+    implemented: /tmt/cli
+
+    /overview:
+        summary: 'General coverage overview'
+        description:
+            Complete overview of the story coverage including
+            implementation, testing and documentation status.
+        examples: tmt story coverage
+
+    /code:
+        summary: 'View code implementation status'
+        examples:
+            - tmt story coverage -c
+            - tmt story coverage --code
+
+    /test:
+        summary: 'View test coverage status'
+        examples:
+            - tmt story coverage -t
+            - tmt story coverage --test
+
+    /docs:
+        summary: 'View documentation status'
+        examples:
+            - tmt story coverage -d
+            - tmt story coverage --docs
+
+/export:
+    story: 'I need to convert stories into a beautiful format'
+
+    /rst:
+        story: 'Export stories into reStructuredText'
+        description:
+            So that they can be included in tmt documentation.
+        examples: tmt story export --rst
+        implemented:
+            - /tmt/cli
+            - /tmt/base
+
+    /html:
+        story: 'Export stories into html'
+        description:
+            So that they can be quickly reviewed in a web
+            browser. Optionally a simple python httpd server
+            could be started to serve the page or pages.
+        examples: tmt story export --html --server

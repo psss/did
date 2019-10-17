@@ -1,0 +1,23 @@
+story:
+    As a user I want to type as little as possible.
+
+/abbreviation:
+
+    /commands:
+        summary: Allow command abbreviation
+        examples:
+            - tmt story show
+            - tmt st sh
+            - tmt s s
+        implemented: /tmt/cli
+
+    /options:
+        summary: Allow option abbreviation
+        examples:
+            - tmt story ls --implemented
+            - tmt story ls --impl
+            - tmt story ls --i
+
+/completion:
+    summary: Support bash completion
+    examples: tmt st<tabl> sh<tab>
