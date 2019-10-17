@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import os
+import shutil
 import tmt.cli
 import tempfile
 
@@ -19,6 +20,21 @@ def test_mini():
     assert result.exit_code == 0
     assert 'Found 1 plan.' in result.output
     assert '/ci/test/build/smoke' in result.output
+
+def test_init():
+    """ Tree initialization """
+    tmp = tempfile.mkdtemp()
+    result = runner.invoke(tmt.cli.main, ['init', tmp])
+    assert 'initialized' in result.output
+    result = runner.invoke(tmt.cli.main, ['init', tmp])
+    assert 'already exists' in result.output
+    result = runner.invoke(tmt.cli.main, ['init', tmp, '--mini'])
+    assert 'tests/example' in result.output
+    result = runner.invoke(tmt.cli.main, ['init', tmp, '--mini'])
+    assert result.exception
+    result = runner.invoke(tmt.cli.main, ['init', tmp, '--full', '--force'])
+    assert 'overwritten' in result.output
+    shutil.rmtree(tmp)
 
 def test_no_metadata():
     """ No metadata found """

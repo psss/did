@@ -1,6 +1,7 @@
 story: As a user I want to start using tmt in my git repository.
 summary: Initialize a new metadata tree
 implemented: /tmt/cli
+tested: /tests/unit
 
 /empty:
     summary: Create an empty metadata tree

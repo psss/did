@@ -529,28 +529,34 @@ def export(
 @click.argument('path', default='.')
 @click.option('--mini', is_flag=True, help='Create simple set of examples.')
 @click.option('--full', is_flag=True, help='Create full set of examples.')
+@click.option(
+    '-f', '--force', is_flag=True, help='Create full set of examples.')
 @main.command()
-def init(path, mini, full):
+def init(path, mini, full, force):
     """ Initialize the tree root. """
 
     # Initialize the FMF metadata tree root
     try:
-        root = fmf.Tree.init(path)
-    except fmf.utils.GeneralError as error:
-        raise tmt.utils.GeneralError(
+        tree = fmf.Tree(path)
+        echo("Tree root '{}' already exists.".format(tree.root))
+    except fmf.utils.RootError:
+        try:
+            root = fmf.Tree.init(path)
+        except fmf.utils.GeneralError as error:
+            raise tmt.utils.GeneralError(
                 "Failed to initialize tree root in '{}': {}".format(
                     path, error))
-    echo("Tree root '{}' initialized.".format(root))
+        echo("Tree root '{}' initialized.".format(root))
 
     # Populate the tree with example objects if requested
     if mini:
-        tmt.Test.create('/tests/example', 'shell')
-        tmt.Plan.create('/plans/example', 'mini')
-        tmt.Story.create('/stories/example', 'mini')
+        tmt.Test.create('/tests/example', 'shell', force)
+        tmt.Plan.create('/plans/example', 'mini', force)
+        tmt.Story.create('/stories/example', 'mini', force)
     if full:
-        tmt.Test.create('/tests/example', 'shell')
-        tmt.Plan.create('/plans/example', 'full')
-        tmt.Story.create('/stories/example', 'full')
+        tmt.Test.create('/tests/example', 'shell', force)
+        tmt.Plan.create('/plans/example', 'full', force)
+        tmt.Story.create('/stories/example', 'full', force)
 
     return 'init'
 
