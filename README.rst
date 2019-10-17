@@ -251,8 +251,11 @@ https://coveralls.io/github/psss/tmt
 Specification:
 https://pagure.io/fedora-ci/metadata
 
-Flexible Metadata Format
+Flexible Metadata Format:
 http://fmf.readthedocs.io/
+
+Packit & Testing Farm:
+https://packit.dev/testing-farm/
 
 
 Authors
