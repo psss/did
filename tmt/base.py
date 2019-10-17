@@ -103,7 +103,7 @@ class Test(Node):
             ), fg='blue'))
 
     @staticmethod
-    def create(name, template, force):
+    def create(name, template, force=False):
         """ Create a new test """
         # Create directory
         directory_path = os.path.join(tmt.cli.tree.root, name.lstrip('/'))
@@ -188,7 +188,7 @@ class Plan(Node):
             ), fg='blue'))
 
     @staticmethod
-    def create(name, template, force):
+    def create(name, template, force=False):
         """ Create a new plan """
         # Prepare paths
         (directory, plan) = os.path.split(name)
@@ -282,7 +282,7 @@ class Story(Node):
         return True
 
     @staticmethod
-    def create(name, template, force):
+    def create(name, template, force=False):
         """ Create a new story """
         # Prepare paths
         (directory, story) = os.path.split(name)

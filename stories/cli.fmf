@@ -353,8 +353,19 @@ story: As a user I want to have an intuitive command line interface
 /init:
     story: As a user I want to start using tmt in my git repository.
     summary: Initialize a new metadata tree
-    examples: tmt init
     implemented: /tmt/cli
+
+    /empty:
+        summary: Create an empty metadata tree
+        examples: tmt init
+
+    /mini:
+        summary: Create a tree with simple examples
+        examples: tmt init --mini
+
+    /full:
+        summary: Create a tree with full examples
+        examples: tmt init --full
 
 /usability:
     story:
