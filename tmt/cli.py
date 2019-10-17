@@ -7,7 +7,6 @@ from fmf.utils import listed
 
 import click
 import os
-import re
 
 import fmf
 import tmt
@@ -32,7 +31,7 @@ class CustomGroup(click.Group):
     def get_command(self, context, cmd_name):
         """ Allow command shortening """
         # Support both story & stories
-        cmd_name = re.sub('story', 'stories', cmd_name)
+        cmd_name = cmd_name.replace('story', 'stories')
         found = click.Group.get_command(self, context, cmd_name)
         if found is not None:
             return found
