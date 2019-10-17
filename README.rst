@@ -198,11 +198,24 @@ Install the latest version from the Copr repository::
     dnf copr enable psss/tmt
     dnf install tmt
 
-or use PIP (you can omit the ``--user`` flag if in a virtualenv)::
+Use PIP (you can omit the ``--user`` flag if in a virtualenv)::
 
     pip install --user tmt
 
-See documentation for more details about installation options.
+
+Develop
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to experiment, play with the latest bits and develop
+improvements it is best to use a virtual environment::
+
+    mkvirtualenv tmt
+    git clone https://github.com/psss/tmt
+    cd tmt
+    pip install -e .
+
+Install ``python3-virtualenvwrapper`` to easily create and enable
+virtual environments using ``mkvirtualenv`` and ``workon``.
 
 
 Links
