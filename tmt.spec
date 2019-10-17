@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.3
+Version: 0.4
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -100,6 +100,35 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Thu Oct 17 2019 Petr Šplíchal <psplicha@redhat.com> - 0.4-1
+- Add tests for 'tmt init', allow overwritting
+- Use plural commands to prevent confusion [fix #10]
+- Add a link to Packit & Testing Farm documentation
+- Add a simple develop section to the readme
+- Split cli stories into multiple files
+- Cleanup convert example, simplify story example
+- Implement initialization with creating examples
+- Implement 'tmt {test,plan,story} show --verbose'
+- Implement 'tmt story create', add basic templates
+- Implement 'tmt plan create' plus initial templates
+- Add a new story for creating plans (enable CI)
+- Add basic rpm installation stories
+- Show test steps summary in plan show if provided
+- Add a Release Test Team installation tests example
+- Suggest git-like moving forward in tasks
+- Fix step names in 'tmt plan show' output
+- Update documentation overview with latest changes
+- Add story introduction, cleanup generated files
+- Generate documentation for user stories
+- Use raw string to prevent invalid escape sequence
+- Test Management Tool, it's not metadata only
+- Add a story for core option --debug
+- Add a story for the mock shortcut [fix #5, fix #6]
+- Add a story for core option --format
+- Propose a dream for hands-free debugging
+- Rename remaining testset occurences to plan
+- Implement 'tmt plan lint' with initial checks
+
 * Thu Oct 10 2019 Petr Šplíchal <psplicha@redhat.com> - 0.3-1
 - Fix uncovered story filter logic, show total
 - Rename testsets to plans, simplify playbooks
