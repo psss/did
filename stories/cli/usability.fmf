@@ -21,3 +21,4 @@ story:
 /completion:
     summary: Support bash completion
     examples: tmt st<tabl> sh<tab>
+    implemented: /tmt.spec
