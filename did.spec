@@ -48,6 +48,7 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 
 %changelog
 * Thu Oct 17 2019 Petr Šplíchal <psplicha@redhat.com> - 0.14-1
+- Fix 'did --test' when no config is present
 - Update spec file for Python 3
 - Update shebang to explicitly use python3
 - Fix mixed tabs and spaces in docs/conf.py

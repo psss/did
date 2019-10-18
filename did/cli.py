@@ -173,15 +173,18 @@ def main(arguments=None):
     with the list of all gathered stats objects.
     """
     try:
-        # Parse options, initialize gathered stats
+        # Load standard and custom plugins
         utils.load_components("did.plugins", continue_on_error=True)
+        try:
+            custom_plugins = did.base.Config().plugins
+            if custom_plugins:
+                custom_plugins = [
+                    plugin.strip() for plugin in utils.split(custom_plugins)]
+                utils.load_components(*custom_plugins, continue_on_error=True)
+        except did.base.ConfigFileError:
+            pass
 
-        custom_plugins = did.base.Config().plugins
-        if custom_plugins:
-            custom_plugins = [
-                plugin.strip() for plugin in utils.split(custom_plugins)]
-            utils.load_components(*custom_plugins, continue_on_error=True)
-
+        # Parse options, initialize gathered stats
         options, header = Options(arguments).parse()
         gathered_stats = []
 
