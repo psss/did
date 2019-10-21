@@ -12,6 +12,6 @@ description:
     multiple components a dedicated field is needed. Should be a
     ``list of strings``.
 
-examples: |
+example: |
     component: [libselinux, checkpolicy]
     fmf ls --filter 'tier: 1 | component: checkpolicy'

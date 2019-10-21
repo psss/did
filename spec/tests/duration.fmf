@@ -10,7 +10,7 @@ description:
     running test is killed by the test harness. Use the same
     format as the ``sleep`` command. Should be a ``string``.
 
-examples: |
+example: |
     duration: 3m
     duration: 2h
     duration: 1d

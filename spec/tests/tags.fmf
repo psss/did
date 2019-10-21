@@ -9,5 +9,5 @@ description:
     select a subset of objects. Tags are case-sensitive. Using
     lowercase is recommended. Should be a ``list``.
 
-examples: |
+example: |
     tags: [security, fast]

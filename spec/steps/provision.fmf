@@ -23,7 +23,7 @@ description: |
     qemu-kvm
         run a vm using qemu-kvm
 
-examples: |
+example: |
     provision:
         memory:
             min: '1 GB'

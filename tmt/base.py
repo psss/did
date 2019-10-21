@@ -244,7 +244,7 @@ class Story(Node):
         'summary',
         'story',
         'description',
-        'examples',
+        'example',
         'implemented',
         'tested',
         'documented',
@@ -319,7 +319,7 @@ class Story(Node):
             value = getattr(self, key)
             if value is not None:
                 # Do not wrap examples
-                wrap = key != 'examples'
+                wrap = key != 'example'
                 echo(tmt.utils.format(key, value, wrap=wrap))
         if verbose:
             self._sources()
@@ -358,10 +358,10 @@ class Story(Node):
             output += '\n{}\n'.format(self.description)
 
         # Examples
-        if self.examples:
+        if self.example:
             output += '\nExamples::\n\n'
             output += tmt.utils.format(
-                '', self.examples, wrap=False, indent=4,
+                '', self.example, wrap=False, indent=4,
                 key_color=None, value_color=None) + '\n'
 
         # Status

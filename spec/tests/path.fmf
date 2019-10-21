@@ -15,7 +15,7 @@ description:
     with slash. If path is not defined, object name (identifier)
     is used by default.
 
-examples: |
+example: |
     path: /protocols/https
 
 links:

@@ -20,7 +20,7 @@ description: |
     tcms
         Test Case Management System
 
-examples: |
+example: |
     discover:
         how: 'fmf'
         filter: 'tier: 1'

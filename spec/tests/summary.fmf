@@ -9,7 +9,7 @@ description:
     crucial to have a short summary of what the test does. Should
     be a ``string`` (one line, up to 50 characters).
 
-examples: |
+example: |
     summary: Test wget recursive download options
 
 links:

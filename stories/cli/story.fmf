@@ -2,18 +2,18 @@ story: 'As a developer I want to comfortably work with stories'
 
 /ls:
     story: 'List available stories'
-    examples: tmt story ls
+    example: tmt story ls
     implemented: /tmt/cli
     tested: /tests/ls
 
 /show:
     story: 'Show story details'
-    examples: tmt story show
+    example: tmt story show
     implemented: /tmt/cli
 
 /filter:
     story: 'Search available stories'
-    examples:
+    example:
         - tmt story --implemented
         - tmt story --unimplemented
         - tmt story --tested
@@ -27,7 +27,7 @@ story: 'As a developer I want to comfortably work with stories'
     description:
         Provide an easy way how to create a new story.
         Several templates should be provided to choose from.
-    examples:
+    example:
         - tmt story create /stories/area/story
         - tmt story create /stories/area/story --template mini
         - tmt story create /stories/area/story --template mini --force
@@ -46,23 +46,23 @@ story: 'As a developer I want to comfortably work with stories'
         description:
             Complete overview of the story coverage including
             implementation, testing and documentation status.
-        examples: tmt story coverage
+        example: tmt story coverage
 
     /code:
         summary: 'View code implementation status'
-        examples:
+        example:
             - tmt story coverage -c
             - tmt story coverage --code
 
     /test:
         summary: 'View test coverage status'
-        examples:
+        example:
             - tmt story coverage -t
             - tmt story coverage --test
 
     /docs:
         summary: 'View documentation status'
-        examples:
+        example:
             - tmt story coverage -d
             - tmt story coverage --docs
 
@@ -73,7 +73,7 @@ story: 'As a developer I want to comfortably work with stories'
         story: 'Export stories into reStructuredText'
         description:
             So that they can be included in tmt documentation.
-        examples: tmt story export --rst
+        example: tmt story export --rst
         implemented:
             - /tmt/cli
             - /tmt/base
@@ -84,4 +84,4 @@ story: 'As a developer I want to comfortably work with stories'
             So that they can be quickly reviewed in a web
             browser. Optionally a simple python httpd server
             could be started to serve the page or pages.
-        examples: tmt story export --html --server
+        example: tmt story export --html --server

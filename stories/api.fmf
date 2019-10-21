@@ -9,13 +9,13 @@ story:
     /attributes:
         summary: 'Access test attributes'
         /name:
-            examples: test.name
+            example: test.name
             implemented: /tmt/base
         /test:
-            examples: test.test
+            example: test.test
             implemented: /tmt/base
         /path:
-            examples: test.path
+            example: test.path
             description:
                 Path to the test execution directory.
                 Defaults to the object name.
@@ -25,10 +25,10 @@ story:
         summary: 'Explore available tests'
         /list:
             summary: List all available tests
-            examples: Test.search()
+            example: Test.search()
         /search:
             summary: Select tests by filter
-            examples: Test.search(artifact='pull-request')
+            example: Test.search(artifact='pull-request')
 
 /plan:
     story:
@@ -38,38 +38,38 @@ story:
         summary: 'Explore available plans'
         /list:
             summary: List all available plans
-            examples: Plan.search()
+            example: Plan.search()
         /search:
             summary: Select plans by filter
-            examples: Plan.search(name='/plans/smoke')
+            example: Plan.search(name='/plans/smoke')
 
     /steps:
         summary: 'Access test steps'
         /discover:
-            examples: plan.discover
+            example: plan.discover
         /provision:
-            examples: plan.provision
+            example: plan.provision
         /prepare:
-            examples: plan.prepare
+            example: plan.prepare
         /execute:
             description: Default implementation is 'shell'.
-            examples: plan.execute
+            example: plan.execute
         /report:
-            examples: plan.report
+            example: plan.report
         /finish:
-            examples: plan.finish
+            example: plan.finish
 
     /attributes:
         summary: 'Access plan attributes'
         /summary:
             summary: Short plan description
-            examples: plan.summary
+            example: plan.summary
             implemented: /tmt/base
         /artifact:
             summary: Artifacts for which plan is executed
-            examples: plan.artifact
+            example: plan.artifact
             implemented: /tmt/base
         /gate:
             summary: Gates for which the plan is relevant
-            examples: plan.gate
+            example: plan.gate
             implemented: /tmt/base

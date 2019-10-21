@@ -4,19 +4,19 @@ story:
 
 /verbose:
     summary: Enable verbose output of the command
-    examples:
+    example:
         - tmt test show -v
         - tmt test show --verbose
 
 /quiet:
     summary: Enable quiet mode of the command
-    examples:
+    example:
         - tmt test show -q
         - tmt test show --quiet
 
 /force:
     summary: Force dangerous operations like overwriting files
-    examples:
+    example:
         - tmt test create -f
         - tmt test create --force
     related:
@@ -24,12 +24,12 @@ story:
 
 /format:
     summary: Provide machine readable output in given format
-    examples:
+    example:
         - tmt test ls --format json
         - tmt plan show --format yaml
         - tmt story export --format rst
 
 /debug:
     summary: Print out everything tmt is doing
-    examples:
+    example:
         - tmt --debug

@@ -2,13 +2,13 @@ story: 'As a user I want to comfortably work with tests'
 
 /ls:
     story: 'List available tests'
-    examples: tmt test ls
+    example: tmt test ls
     implemented: /tmt/cli
     tested: /tests/ls
 
 /show:
     story: 'Show test metadata'
-    examples: tmt test show
+    example: tmt test show
     implemented: /tmt/cli
 
 /lint:
@@ -17,7 +17,7 @@ story: 'As a user I want to comfortably work with tests'
         Verify that test metadata are aligned with the
         specification, e.g. that all required attributes are
         present and that all attributes have correct type.
-    examples: tmt test lint
+    example: tmt test lint
     implemented: /tmt/cli
 
 /create:
@@ -28,7 +28,7 @@ story: 'As a user I want to comfortably work with tests'
         beaker-wizard (which should be obsoleted by this) the
         tool should prompt for required values if not provided
         on the command line.
-    examples:
+    example:
         - tmt test create
         - tmt test create /tests/area/feature
         - tmt test create /tests/area/feature --skeleton beakerlib
@@ -37,7 +37,7 @@ story: 'As a user I want to comfortably work with tests'
 
 /convert:
     story: 'Convert old test metadata'
-    examples: tmt test convert
+    example: tmt test convert
     implemented: /tmt/convert
     tested: /tests/test_convert
     documented: /docs/commands#test
@@ -47,11 +47,11 @@ story: 'As a user I want to comfortably work with tests'
     description:
         Show current status of test coverage.
         Alias for /stories/cli/story/coverage/test
-    examples: tmt test coverage
+    example: tmt test coverage
 
 /filter:
     story: 'Filter available tests'
-    examples:
+    example:
         - tmt test ls REGEXP
         - tmt test ls --max-duration=5m
         - tmt test ls --enabled

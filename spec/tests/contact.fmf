@@ -11,7 +11,7 @@ description:
     Should be a ``string`` or a ``list of strings`` (email address
     format with name and surname).
 
-examples: |
+example: |
     contact: Name Surname <email@address.org>
 
     contact:

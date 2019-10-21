@@ -12,7 +12,7 @@ description:
     parameters grows. This might be useful for virtual test cases
     as well. Should be a ``dictionary``.
 
-examples: |
+example: |
     environment:
         PACKAGE: python37
         PYTHON: python3.7

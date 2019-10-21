@@ -12,7 +12,7 @@ description:
     test written long time ago. Should be a ``string`` (multi
     line, plain text).
 
-examples: |
+example: |
     description:
         This test checks all available wget options related to
         downloading files recursively. First a tree directory

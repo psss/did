@@ -16,7 +16,7 @@ description: |
     Each testset can define one or more gates it should be blocking.
     Attached is an example of configuring multiple gates.
 
-examples: |
+example: |
     /test:
         /pull-request:
             /pep:

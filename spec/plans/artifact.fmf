@@ -17,3 +17,6 @@ description: |
 
     Based on the artifact it is possible to detect some
     environment constraints such as architecture or base compose.
+
+example: |
+    artifact: pull-request

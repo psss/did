@@ -13,7 +13,7 @@ description: |
     restraint
         use the restraint harness to execute beakerlib tests
 
-examples: |
+example: |
     execute:
         how: beakerlib
 
@@ -22,7 +22,7 @@ examples: |
     description:
         Optional boolean attribute `isolate` can be used to
         request a clean test environment for each test.
-    examples: |
+    example: |
         execute:
             how: beakerlib
             isolate: true
@@ -37,7 +37,7 @@ examples: |
             you can omit the `how` keyword and just define the
             `script` to be run.  This is how a minimal smoke test
             for the `fmf` command line can look like:
-        examples: |
+        example: |
             execute:
                 script: fmf --help
 
@@ -47,7 +47,7 @@ examples: |
             You can also include several commands as a list.
             Executor will run commands one-by-one and check exit
             code of each.
-        examples: |
+        example: |
             execute:
                 script:
                     - dnf -y install httpd curl
@@ -60,7 +60,7 @@ examples: |
             Providing a multi-line shell script is also
             supported. In that case executor will store given
             script into a file and execute.
-        examples: |
+        example: |
             execute:
                 script: |
                     dnf -y install httpd curl

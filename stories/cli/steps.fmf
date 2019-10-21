@@ -2,7 +2,7 @@
     story: 'Select or adjust the discover step'
     description:
         Defines which tests should be executed.
-    examples:
+    example:
         - tmt run discover
         - tmt run discover --how=fmf
         - tmt run discover --how=fmf --repo=url
@@ -15,7 +15,7 @@
     description:
         Describes what environment is needed for testing and
         how it should provisioned.
-    examples:
+    example:
         - tmt run provision
         - tmt run provision --how=testing-farm
         - tmt run provision --how=testing-farm --memory-min=8GB
@@ -35,7 +35,7 @@
     description:
         Additional configuration of the provisioned
         environment needed for testing.
-    examples:
+    example:
         - tmt run prepare
         - tmt run prepare --how=ansible
         - tmt run prepare --how=ansible --playbook=server.yaml
@@ -45,7 +45,7 @@
     description:
         Specification of the testing framework which should
         execute tests.
-    examples:
+    example:
         - tmt run execute
         - tmt run execute --how=shell
         - tmt run execute --how=beakerlib
@@ -56,7 +56,7 @@
     description:
         Adjusting notifications about the test progress and
         results.
-    examples:
+    example:
         - tmt run report
         - tmt run report --email=email@example.com
         - tmt run report --irc=room
@@ -67,5 +67,5 @@
         Additional actions to be performed after the test
         execution has been completed. Counterpart of the
         prepare step useful for various cleanup actions.
-    examples:
+    example:
         - tmt run finish

@@ -13,5 +13,5 @@ description:
     a dedicated field for this functionality as well. Should be a
     ``string``.
 
-examples: |
+example: |
     tier: 1

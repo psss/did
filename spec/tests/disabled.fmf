@@ -11,5 +11,5 @@ description:
     execution. Should be a ``boolean``. The default value is
     ``no``.
 
-examples: |
+example: |
     disabled: yes

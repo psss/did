@@ -5,7 +5,7 @@ description:
     has been completed.  Counterpart of the ``prepare`` step
     useful for various cleanup actions.
 
-examples: |
+example: |
     finish:
         how: shell
         command: upload-logs.sh

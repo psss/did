@@ -17,7 +17,7 @@ description: |
         Prepare system using shell commands
     description:
         Execute arbitratry shell commands to set up the system.
-    examples: |
+    example: |
         prepare:
             how: shell
             script: dnf install -y httpd
@@ -32,7 +32,7 @@ description: |
         attribute ``roles`` can be used to enable additional
         roles.  Role can be either an ansible galaxy role name,
         git url or a path to file with detailed requirements.
-    examples: |
+    example: |
         prepare:
             how: ansible
             roles:

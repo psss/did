@@ -2,18 +2,18 @@ story: 'As a user I want to comfortably work with plans'
 
 /ls:
     story: 'List available plans'
-    examples: tmt plan ls
+    example: tmt plan ls
     implemented: /tmt/cli
     tested: /tests/ls
 
 /show:
     story: 'Show plan configuration'
-    examples: tmt plan show
+    example: tmt plan show
     implemented: /tmt/cli
 
 /filter:
     story: 'Filter available plans'
-    examples:
+    example:
         - tmt plan ls REGEXP
         - tmt plan show --artifact=pull-request
 
@@ -23,7 +23,7 @@ story: 'As a user I want to comfortably work with plans'
         Verify that plan metadata are aligned with the
         specification, e.g. that all required attributes are
         present and that all attributes have correct type.
-    examples: tmt plan lint
+    example: tmt plan lint
     implemented: /tmt/cli
 
 /create:
@@ -32,7 +32,7 @@ story: 'As a user I want to comfortably work with plans'
         Provide a super-easy and user-friendly way how to
         enable tests in the CI. Several templates should be
         supported to cover common use cases.
-    examples:
+    example:
         - tmt plan create /plans/smoke --template=mini
         - tmt plan create /plans/features --template=full
     implemented: /tmt/cli

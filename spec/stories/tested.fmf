@@ -6,5 +6,5 @@ description:
     Should be an fmf object name or path to the file where the
     relevant test code is stored.
 
-examples: |
+example: |
     tested: /tests/basic

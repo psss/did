@@ -5,12 +5,12 @@ tested: /tests/unit
 
 /empty:
     summary: Create an empty metadata tree
-    examples: tmt init
+    example: tmt init
 
 /mini:
     summary: Create a tree with simple examples
-    examples: tmt init --mini
+    example: tmt init --mini
 
 /full:
     summary: Create a tree with full examples
-    examples: tmt init --full
+    example: tmt init --full

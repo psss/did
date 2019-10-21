@@ -5,5 +5,5 @@ description:
     well selected, examples helps to understand quickly
     and get inspiration for initial experimenting.
 
-examples: |
+example: |
     example: tmt run discover

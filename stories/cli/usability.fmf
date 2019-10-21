@@ -5,7 +5,7 @@ story:
 
     /commands:
         summary: Allow command abbreviation
-        examples:
+        example:
             - tmt story show
             - tmt st sh
             - tmt s s
@@ -13,12 +13,12 @@ story:
 
     /options:
         summary: Allow option abbreviation
-        examples:
+        example:
             - tmt story ls --implemented
             - tmt story ls --impl
             - tmt story ls --i
 
 /completion:
     summary: Support bash completion
-    examples: tmt st<tabl> sh<tab>
+    example: tmt st<tabl> sh<tab>
     implemented: /tmt.spec

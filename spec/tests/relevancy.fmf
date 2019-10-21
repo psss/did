@@ -16,7 +16,7 @@ description: >
     Relevancy consists of a set of rules of the form ``condition:
     decision``. Should be a ``list``.
 
-examples: |
+example: |
     relevancy:
        - "distro < f-28: False"
        - "distro = rhel-7 & arch = ppc64: False"

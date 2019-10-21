@@ -7,7 +7,7 @@ description:
     summary should do.
 
 
-examples: |
+example: |
     /pull-request:
         /pep:
             summary: All code must comply with the PEP8 style guide
