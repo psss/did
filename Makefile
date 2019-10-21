@@ -70,7 +70,8 @@ upload:
 tags:
 	find tmt -name '*.py' | xargs ctags --python-kinds=-i
 clean:
-	rm -rf $(TMP) build docs/{_build,stories} dist .cache .pytest_cache
+	rm -rf $(TMP) build dist .cache .pytest_cache
+	rm -rf docs/_build docs/stories docs/spec
 	find . -type f -name "*.py[co]" -delete
 	find . -type f -name "*,cover" -delete
 	find . -type d -name "__pycache__" -delete

@@ -1,0 +1,69 @@
+summary: Test framework which should execute tests
+
+description: |
+    Execute discovered tests on provisioned boxes with optional
+    support for parallelization.
+
+    Examples of execution implementation:
+
+    shell
+        execute arbitratry shell commands, check exit code (default)
+    beakerlib
+        run beakerlib tests, check the journal for test results
+    restraint
+        use the restraint harness to execute beakerlib tests
+
+examples: |
+    execute:
+        how: beakerlib
+
+/isolate:
+    summary: Run tests in an isolated environment
+    description:
+        Optional boolean attribute `isolate` can be used to
+        request a clean test environment for each test.
+    examples: |
+        execute:
+            how: beakerlib
+            isolate: true
+
+/shell:
+    summary: Execute shell scripts
+
+    /default:
+        summary: Shell is the default executor
+        description: |
+            The `shell` implementation is the default one.  Thus
+            you can omit the `how` keyword and just define the
+            `script` to be run.  This is how a minimal smoke test
+            for the `fmf` command line can look like:
+        examples: |
+            execute:
+                script: fmf --help
+
+    /multi:
+        summary: Multiple shell commands
+        description:
+            You can also include several commands as a list.
+            Executor will run commands one-by-one and check exit
+            code of each.
+        examples: |
+            execute:
+                script:
+                    - dnf -y install httpd curl
+                    - systemctl start httpd
+                    - echo foo > /var/www/html/index.html
+                    - curl http://localhost/ | grep foo
+    /script:
+        summary: Multi-line shell script
+        description:
+            Providing a multi-line shell script is also
+            supported. In that case executor will store given
+            script into a file and execute.
+        examples: |
+            execute:
+                script: |
+                    dnf -y install httpd curl
+                    systemctl start httpd
+                    echo foo > /var/www/html/index.html
+                    curl http://localhost/ | grep foo

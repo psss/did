@@ -1,0 +1,25 @@
+summary:
+    Test Case Relevancy rules used for filtering relevant test
+    cases
+
+story:
+    As a tester I want to skip execution of a particular test case
+    in given test environment.
+
+description: >
+    Sometimes a test case is only relevant for specific
+    environment.  Test Case Relevancy allows to filter irrelevant
+    test cases out.
+
+    Environment is defined by one or more environment dimensions
+    such as product, distro, collection, variant, arch, component.
+    Relevancy consists of a set of rules of the form ``condition:
+    decision``. Should be a ``list``.
+
+examples: |
+    relevancy:
+       - "distro < f-28: False"
+       - "distro = rhel-7 & arch = ppc64: False"
+
+links:
+    - https://docs.fedoraproject.org/en-US/ci/test-case-relevancy/

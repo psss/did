@@ -1,0 +1,7 @@
+summary:
+    User story describing the feature to be implemented
+
+examples: |
+    story:
+        As a user I want the application to do this and that
+        so that I can achieve this and that.

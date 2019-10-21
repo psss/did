@@ -246,17 +246,22 @@ import tmt
 tree = tmt.Tree('.')
 
 areas = {
-    'docs': 'Documentation',
-    'cli': 'Command Line',
-    'api': 'API',
-    'core': 'Core',
-    'install': 'Installation',
+    '/stories/docs': 'Documentation',
+    '/stories/cli': 'Command Line',
+    '/stories/api': 'API',
+    '/stories/core': 'Core',
+    '/stories/install': 'Installation',
+    '/spec/core': 'Core',
+    '/spec/tests': 'Tests',
+    '/spec/plans': 'Plans',
+    '/spec/steps': 'Steps',
+    '/spec/stories': 'Stories',
     }
 
 os.makedirs('stories', exist_ok=True)
+os.makedirs('spec', exist_ok=True)
 for area in areas:
-    with open('stories/{}.rst'.format(area), 'w') as doc:
+    with open('{}.rst'.format(area.lstrip('/')), 'w') as doc:
         doc.write('{}\n{}\n'.format(areas[area], '=' * len(areas[area])))
-        root = '/stories/{}'.format(area)
-        for story in tree.stories(names=[root], whole=True):
-            doc.write(story.export(title=story.name != root))
+        for story in tree.stories(names=[area], whole=True):
+            doc.write(story.export(title=story.name != area))

@@ -1,0 +1,14 @@
+summary: Report test results
+
+description:
+    Adjusting notifications about the test progress and results.
+
+    email
+        send email notification
+    irc
+        notify on irc chat
+
+examples: |
+    report:
+        email:
+            - email@address.org

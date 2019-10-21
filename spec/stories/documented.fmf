@@ -1,0 +1,10 @@
+summary:
+    Documentation status
+
+description:
+    Defines whether a user story has been documented. Should be an
+    fmf object name or path to the file where the relevant code is
+    stored.
+
+examples: |
+    documented: /docs/commands

@@ -1,0 +1,17 @@
+summary: Relevant fedora/rhel source package names
+
+story:
+    As a SELinux tester testing the 'checkpolicy' component I want
+    to run Tier 1 tests for all SELinux components plus all
+    checkpolicy tests.
+
+description:
+    It's useful to be able to easily select all tests relevant for
+    given component or package. As they do not always have to be
+    stored in the same repository and because many tests cover
+    multiple components a dedicated field is needed. Should be a
+    ``list of strings``.
+
+examples: |
+    component: [libselinux, checkpolicy]
+    fmf ls --filter 'tier: 1 | component: checkpolicy'

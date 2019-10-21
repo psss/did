@@ -1,0 +1,9 @@
+summary: Instructive examples of real-life usage.
+
+description:
+    One example is worth thousand words. Providing a few,
+    well selected, examples helps to understand quickly
+    and get inspiration for initial experimenting.
+
+examples: |
+    example: tmt run discover

@@ -1,0 +1,48 @@
+summary: Gates relevant for testing
+
+description: |
+    Multiple gates can be defined in the process of releasing a change.
+    Currently we define the following gates:
+
+    merge-pull-request
+        block merging a pull request into a git branch
+    add-build-to-update
+        attaching a build to an erratum / bodhi update
+    add-build-to-compose
+        block adding a build to a compose
+    release-update
+        block releasing an erratum / bodhi update
+
+    Each testset can define one or more gates it should be blocking.
+    Attached is an example of configuring multiple gates.
+
+examples: |
+    /test:
+        /pull-request:
+            /pep:
+                summary: All code must comply with the PEP8 style guide
+                # Do not allow ugly code to be merged into master
+                gate:
+                    - merge-pull-request
+            /lint:
+                summary: Run pylint to catch common problems (no gating)
+        /build:
+            /smoke:
+                summary: Basic smoke test (Tier1)
+                # Basic smoke test is used by three gates
+                gate:
+                    - merge-pull-request
+                    - add-build-to-update
+                    - add-build-to-compose
+            /features:
+                summary: Verify important features
+        /update:
+            # This enables the 'release-update' gate for all three testsets
+            gate:
+                - release-update
+            /basic:
+                summary: Run all Tier1, Tier2 and Tier3 tests
+            /security:
+                summary: Security tests (extra job to get quick results)
+            /integration:
+                summary: Integration tests with related components

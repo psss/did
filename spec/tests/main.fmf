@@ -1,0 +1,11 @@
+story:
+    As a tester I want to store test metadata close to the test
+    source code.
+
+description: |
+    These test metadata are closely related to individual tests
+    so it makes sense to store them directly with the test code.
+    For each attribute we standardize a clear, unique and well
+    chosen name and type. Each definition contains at least one
+    apt example of the usage and a user story illustrating the
+    motivation.

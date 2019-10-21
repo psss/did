@@ -1,0 +1,11 @@
+summary: Finishing tasks
+
+description:
+    Additional actions to be performed after the test execution
+    has been completed.  Counterpart of the ``prepare`` step
+    useful for various cleanup actions.
+
+examples: |
+    finish:
+        how: shell
+        command: upload-logs.sh

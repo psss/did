@@ -1,0 +1,20 @@
+# Basic example of an rpmdiff per-package config
+/test:
+    /build:
+        /rpmdiff-essential:
+            summary: Essential rpmdiff tests (used for gating)
+            execute:
+                how: rpmdiff
+                tests:
+                    - ABI symbols
+                    - File permissions
+            gate:
+                - add-build-to-update
+                - add-build-to-compose
+        /rpmdiff-additional:
+            summary: Additional rpmdiff tests (informational)
+            execute:
+                how: rpmdiff
+                tests:
+                    - File list
+                    - Specfile checks

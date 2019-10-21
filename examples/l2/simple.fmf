@@ -1,0 +1,16 @@
+# Simple use cases should be super simple to write
+/test:
+    /pull-request:
+        /validate:
+            prepare:
+                requires: python3-pep8
+            execute:
+                how: shell
+                command: pep8 *.py
+    /build:
+        /smoke:
+            discover:
+                how: fmf
+                repo: https://src.fedoraproject.org/tests/tar.git
+            execute:
+                how: restraint

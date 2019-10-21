@@ -1,0 +1,26 @@
+summary: Discover test relevant for execution
+
+description: |
+    Gather information about the test cases which are supposed to
+    be run. This includes list of test cases with corresponding
+    L1 metadata. From the test case metadata constraints for test
+    enviroment can be detected:
+
+    * Architectures supported
+    * Disk and memory constraints
+    * Product relevancy
+    * Environment variables
+
+    Examples of metadata storage:
+
+    list
+        Manual list of test cases
+    fmf
+        Flexible Metadata Format filter
+    tcms
+        Test Case Management System
+
+examples: |
+    discover:
+        how: 'fmf'
+        filter: 'tier: 1'

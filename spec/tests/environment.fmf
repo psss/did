@@ -1,0 +1,18 @@
+summary: Environment variables to be set before running the test
+
+story:
+    As a tester I need to pass environment variables to my test
+    script to properly execute the desired test scenario.
+
+description:
+    Test scripts might require certain environment variables to be
+    set.  Although this can be done on the shell command line as
+    part of the ``test`` attribute it makes sense to have a
+    dedicated field for this, especially when the number of
+    parameters grows. This might be useful for virtual test cases
+    as well. Should be a ``dictionary``.
+
+examples: |
+    environment:
+        PACKAGE: python37
+        PYTHON: python3.7

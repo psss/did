@@ -1,0 +1,31 @@
+summary: Provision a system for testing
+
+description: |
+    Describes what environment is needed for testing and how it
+    should provisioned.  Provides a generic and extensible way to
+    write down essential hardware requirements.  For example one
+    consistent way how to specify "at least 2 GB of RAM" for all
+    supported provisioners.
+
+    * Possible grouping of test cases based on test case relevancy
+    * Might fail if cannot provision according to the constraints
+
+    Examples of provisioning implementation:
+
+    localhost
+        run directly on the local machine
+    openstack
+        create vm in using OpenStack
+    beaker
+        reserve machine using Beaker
+    podman
+        create a container using podman
+    qemu-kvm
+        run a vm using qemu-kvm
+
+examples: |
+    provision:
+        memory:
+            min: '1 GB'
+        arch:
+            - 'x86_64'

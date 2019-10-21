@@ -1,0 +1,19 @@
+# Basic structure of artifacts and related testsets
+/test:
+    /pull-request:
+        /pep:
+            summary: All code must comply with the PEP8 style guide
+        /lint:
+            summary: Run pylint to catch common problems (no gating)
+    /build:
+        /smoke:
+            summary: Basic smoke test (Tier1)
+        /features:
+            summary: Verify important features
+    /update:
+        /basic:
+            summary: Run all Tier1, Tier2 and Tier3 tests
+        /security:
+            summary: Security tests (extra job to get quick results)
+        /integration:
+            summary: Integration tests with related components

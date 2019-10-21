@@ -1,0 +1,20 @@
+summary: Concise summary describing the plan
+
+description:
+    Should shortly describe purpose of the test plan. One-line
+    ``string`` with up to 50 characters. It is challenging to be
+    both concise and descriptive, but that is what a well-written
+    summary should do.
+
+
+examples: |
+    /pull-request:
+        /pep:
+            summary: All code must comply with the PEP8 style guide
+        /lint:
+            summary: Run pylint to catch common problems (no gating)
+    /build:
+        /smoke:
+            summary: Basic smoke test (Tier1)
+        /features:
+            summary: Verify important features

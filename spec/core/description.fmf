@@ -1,0 +1,7 @@
+summary: Detailed description of the object
+
+description:
+    Multiline ``string`` describing all important aspects of
+    the object. Usually spans across several paragraphs. For
+    detailed examples using a dedicated attributes 'examples'
+    should be considered.

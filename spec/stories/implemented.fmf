@@ -1,0 +1,10 @@
+summary:
+    Implementation status
+
+description:
+    Defines whether a user story has been implemented in the code.
+    Should be an fmf object name or path to the file where the
+    relevant code is stored.
+
+examples: |
+    implemented: /tmt/base

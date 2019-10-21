@@ -347,7 +347,7 @@ class Story(Node):
         if title:
             depth = len(re.findall('/', self.name)) - 1
             title = re.sub('.*/', '', self.name)
-            output += '\n{}\n{}\n'.format(title, '=~^:-'[depth] * len(title))
+            output += '\n{}\n{}\n'.format(title, '=~^:-><'[depth] * len(title))
 
         # Summary, story and description
         if self.summary and self.summary != self.node.parent.get('summary'):
@@ -365,14 +365,13 @@ class Story(Node):
                 key_color=None, value_color=None) + '\n'
 
         # Status
-        if self.node.children:
-            return output
-        status = []
-        for coverage in ['implemented', 'tested', 'documented']:
-            if getattr(self, coverage):
-                status.append(coverage)
-        output += "\nStatus: {}\n".format(
-            fmf.utils.listed(status) if status else 'idea')
+        if not self.node.children:
+            status = []
+            for coverage in ['implemented', 'tested', 'documented']:
+                if getattr(self, coverage):
+                    status.append(coverage)
+            output += "\nStatus: {}\n".format(
+                fmf.utils.listed(status) if status else 'idea')
 
         return output
 

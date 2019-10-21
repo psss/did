@@ -1,0 +1,32 @@
+# Multiple tool support for test discovery & execution
+/test:
+    /build:
+        # Standard Test Inteface
+        /sti:
+            execute:
+                how: sti
+                playbooks:
+                    - 'tests.yml'
+                tags:
+                    - 'classic'
+        # Simple shell script
+        /shell:
+            execute:
+                how: shell
+                path: 'tests'
+                test: './test.sh'
+                environment:
+                    PYTHON: 'python2'
+        # Workflow Tomorrow
+        /wow:
+            execute:
+                how: wow
+                options: '--plan 1234 --tags Tier1'
+        # Flexible Metadata Format + Restraint
+        /fmf:
+            discover:
+                how: fmf
+                filter: 'tier: 1, 2'
+                repository: https://src.fedoraproject.org/tests/python
+            execute:
+                how: restraint

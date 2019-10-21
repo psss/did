@@ -1,0 +1,42 @@
+summary: Prepare system for testing
+
+description: |
+    Additional configuration of the provisioned environment needed
+    for testing.
+
+    * Install artifact (customizable according to user needs)
+        * Conflicts between rpms
+        * Optionally add debuginfo
+        * Install with devel module
+    * Additional setup possible if needed
+        * Inject arbitrary commands
+        * Before/after artifact installation
+
+/shell:
+    summary:
+        Prepare system using shell commands
+    description:
+        Execute arbitratry shell commands to set up the system.
+    examples: |
+        prepare:
+            how: shell
+            script: dnf install -y httpd
+
+/ansible:
+    summary:
+        Apply ansible playbook to get the desired final state.
+    description:
+        One or more playbooks can be provided as a list under the
+        ``playbooks`` attribute.  Each of them will be applied
+        using ``ansible-playbook`` in the given order.  Optional
+        attribute ``roles`` can be used to enable additional
+        roles.  Role can be either an ansible galaxy role name,
+        git url or a path to file with detailed requirements.
+    examples: |
+        prepare:
+            how: ansible
+            roles:
+                - nginxinc.nginx
+            playbooks:
+                - common.yml
+                - rhel7.yml

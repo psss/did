@@ -1,0 +1,8 @@
+summary: Order in which the object should be handled
+
+description:
+    Sometimes it is important in which order objects are
+    processed. For example when running tests we need to
+    execute some tests first or when exporting stories we need
+    to arrange content in the right sequence to create a
+    meaningful documentation. Should be and ``integer``.

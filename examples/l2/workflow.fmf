@@ -1,0 +1,59 @@
+# Workflow steps: discover, provision, prepare, execute, report
+/test:
+    # Discover relevant tests
+    discover:
+        how: fmf
+    # System requirements
+    provision:
+        memory:
+            min: '1 GB'
+        arch:
+            - 'x86_64'
+    # Machine configuration
+    prepare:
+        ansible:
+            - 'setup.yml'
+    # Test execution
+    execute:
+        how: restraint
+    # Result reporting
+    report:
+        contact: email@address.org
+
+    # Build testing
+    /build:
+        /smoke:
+            summary: Basic smoke test (Tier1)
+            discover+:
+                filter: 'tier: 1'
+        /features:
+            summary: Verify important features
+            discover+:
+                filter: 'tag: functional'
+
+    # Errata testing
+    /update:
+        provision+:
+            arch:
+                - x86_64
+                - ppc64
+                - s390x
+        /basic:
+            summary: Run all Tier1, Tier2 and Tier3 tests
+            discover+:
+                filter: 'tier: 1, 2, 3'
+        /security:
+            summary: Security tests (extra job to get quick results)
+            discover+:
+                filter: 'tag: security'
+        /integration:
+            summary: Integration tests with related components
+            discover+:
+                filter: 'tag: integration'
+            provision+:
+                memory:
+                    min: '4 GB'
+                    max: '8 GB'
+            prepare:
+                ansible:
+                    - 'integration.yml'

@@ -1,0 +1,10 @@
+summary:
+    Test coverage status
+
+description:
+    Defines whether a user story has been covered by tests.
+    Should be an fmf object name or path to the file where the
+    relevant test code is stored.
+
+examples: |
+    tested: /tests/basic

@@ -1,0 +1,20 @@
+# Tests which need a fresh test bed for each
+/test/build/smoke:
+    summary: Basic smoke test
+    # List tests manually
+    discover:
+        how: list
+        tests:
+            - test/one
+            - test/two
+            - test/three
+    # Setup with ansible
+    prepare:
+        how: ansible
+        playbooks:
+            - 'dependencies.yml'
+            - 'selenium.yml'
+    # Use restraint with isolation enabled
+    execute:
+        how: restraint
+        isolate: true
