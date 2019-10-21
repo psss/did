@@ -20,7 +20,7 @@ __provides__ = ['tmt']
 __desc__ = 'Test Management Tool'
 __scripts__ = ['bin/tmt']
 __irequires__ = [
-    'fmf',
+    'fmf>=0.9.2',
     'click',
 ]
 
