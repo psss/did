@@ -67,6 +67,7 @@ export LANG=en_US.utf-8
 # create bash completion script
 _TMT_COMPLETE=source %{__python3} bin/tmt > tmt-complete.sh || true
 
+
 %install
 %if %{with englocale}
 export LANG=en_US.utf-8

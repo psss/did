@@ -261,8 +261,8 @@ https://packit.dev/testing-farm/
 Authors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Petr Šplíchal, Miro Hrončok, Alexander Sosedkin, Lukáš Zachar and
-Petr Menšík.
+Petr Šplíchal, Miro Hrončok, Alexander Sosedkin, Lukáš Zachar,
+Petr Menšík, and Leoš Pol.
 
 
 Copyright
