@@ -262,7 +262,7 @@ Authors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Petr Šplíchal, Miro Hrončok, Alexander Sosedkin, Lukáš Zachar,
-Petr Menšík, and Leoš Pol.
+Petr Menšík, Leoš Pol and Miroslav Vadkerti.
 
 
 Copyright
