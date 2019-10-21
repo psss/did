@@ -529,7 +529,7 @@ def export(
 @click.option('--mini', is_flag=True, help='Create simple set of examples.')
 @click.option('--full', is_flag=True, help='Create full set of examples.')
 @click.option(
-    '-f', '--force', is_flag=True, help='Create full set of examples.')
+    '-f', '--force', is_flag=True, help='Overwrite existing files.')
 @main.command()
 def init(path, mini, full, force):
     """ Initialize the tree root. """
