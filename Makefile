@@ -3,8 +3,8 @@ TMP = $(CURDIR)/tmp
 VERSION = $(shell grep ^Version did.spec | sed 's/.* //')
 PACKAGE = did-$(VERSION)
 FILES = LICENSE README.rst \
-		Makefile did.spec \
-		examples did bin
+		Makefile did.spec setup.py \
+		examples did bin tests
 ifndef USERNAME
     USERNAME = echo $$USER
 endif

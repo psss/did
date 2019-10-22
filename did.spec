@@ -6,17 +6,21 @@ Summary: What did you do last week, month, year?
 License: GPLv2+
 
 URL: https://github.com/psss/did
-Source: https://github.com/psss/did/releases/download/%{version}/did-%{version}.tar.bz2
+Source0: %{url}/releases/download/%{version}/did-%{version}.tar.bz2
 
 BuildArch: noarch
-BuildRequires: git
+BuildRequires: git-core
+BuildRequires: python3-bugzilla
+BuildRequires: python3-dateutil
 BuildRequires: python3-devel
-Requires: python3-requests-gssapi
-Requires: python3-dateutil
+BuildRequires: python3-httplib2
+BuildRequires: python3-pytest
+BuildRequires: python3-requests-gssapi
 Requires: python3-bugzilla
-Requires: python3-feedparser
 Requires: python3-httplib2
-Requires: python3-google-api-client
+Requires: python3-requests-gssapi
+
+%?python_enable_dependency_generator
 
 %description
 Comfortably gather status report data (e.g. list of committed
@@ -27,27 +31,27 @@ range. By default all available stats for this week are reported.
 %autosetup -S git
 
 %build
+%py3_build
 
 %install
-mkdir -p %{buildroot}%{_bindir}
+%py3_install
 mkdir -p %{buildroot}%{_mandir}/man1
-mkdir -p %{buildroot}%{python3_sitelib}/did
-mkdir -p %{buildroot}%{python3_sitelib}/did/plugins
-install -pm 755 bin/did %{buildroot}%{_bindir}/did
-install -pm 644 did/*.py %{buildroot}%{python3_sitelib}/did
-install -pm 644 did/plugins/*.py %{buildroot}%{python3_sitelib}/did/plugins
 install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 
+%check
+%{__python3} -m pytest -vv tests/test*.py -k 'not smoke'
 
 %files
 %{_mandir}/man1/*
 %{_bindir}/did
-%{python3_sitelib}/*
+%{python3_sitelib}/%{name}/
+%{python3_sitelib}/%{name}-*.egg-info/
 %doc README.rst examples
 %license LICENSE
 
 %changelog
-* Thu Oct 17 2019 Petr Šplíchal <psplicha@redhat.com> - 0.14-1
+* Thu Oct 22 2019 Petr Šplíchal <psplicha@redhat.com> - 0.14-1
+- Include setup.py, use auto build/install, enable tests
 - Fix 'did --test' when no config is present
 - Update spec file for Python 3
 - Update shebang to explicitly use python3
