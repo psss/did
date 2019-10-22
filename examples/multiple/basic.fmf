@@ -1,0 +1,20 @@
+summary:
+    Support for multiple configurations
+description:
+    All steps support multiple configurations. In this way it is
+    possible for example to discover tests from multiple repos.
+    The 'execute' steps supports only a single configuration.
+discover:
+  - how: fmf
+    filter: 'tier: 1'
+    repository: https://repository.one/
+  - how: fmf
+    filter: 'tier: 2'
+    repository: https://repository.two/
+prepare:
+  - how: ansible
+    playbooks: plans/packages.yml
+  - how: shell
+    script: dnf -y install package
+execute:
+    how: beakerlib
