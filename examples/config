@@ -58,11 +58,6 @@ type = rt
 prefix = RT
 url = https://tracker.org/rt/Search/Results.tsv
 
-[redmine]
-type = redmine
-url = https://redmine.example.com/
-login = <user_id>
-
 [jira]
 type = jira
 prefix = JIRA
