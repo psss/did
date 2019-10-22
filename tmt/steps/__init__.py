@@ -1,6 +1,6 @@
 # coding: utf-8
 
-""" Base Metadata Classes """
+""" Step Classes """
 
 from click import echo, style
 
@@ -63,47 +63,3 @@ class Step(object):
                 echo(tmt.utils.format(key, self.data[key]))
             except KeyError:
                 pass
-
-class Discover(Step):
-    """ Gather and show information about test cases to be executed """
-    name = 'discover'
-
-    def show(self):
-        """ Show discover details """
-        super(Discover, self).show(
-            keys=['how', 'filter', 'repository', 'tests'])
-
-
-class Provision(Step):
-    """ Provision an environment for testing (or use localhost) """
-    name = 'provision'
-
-
-class Prepare(Step):
-    """ Configure environment for testing (e.g. ansible playbook) """
-    name = 'prepare'
-
-
-class Execute(Step):
-    """ Run the tests (using the specified framework and its settings) """
-    name = 'execute'
-
-    def __init__(self, data, plan):
-        """ Initialize the execute step """
-        super(Execute, self).__init__(data, plan)
-        if not 'how' in self.data:
-            self.data['how'] = 'shell'
-
-    def show(self):
-        """ Show execute details """
-        super(Execute, self).show(keys=['how', 'script', 'isolate'])
-
-
-class Report(Step):
-    """ Provide an overview of test results and send notifications """
-    name = 'report'
-
-
-class Finish(Step):
-    """ Additional actions to be performed after the test execution """
-    name = 'finish'

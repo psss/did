@@ -85,12 +85,12 @@ def run(context, all_, id_):
     run = tmt.Run(id_, tree)
     # All test steps are enabled if no step selected
     enabled = context.invoked_subcommand is None or all_
-    tmt.steps.Discover.enabled = enabled
-    tmt.steps.Provision.enabled = enabled
-    tmt.steps.Prepare.enabled = enabled
-    tmt.steps.Execute.enabled = enabled
-    tmt.steps.Report.enabled = enabled
-    tmt.steps.Finish.enabled = enabled
+    tmt.steps.discover.Discover.enabled = enabled
+    tmt.steps.provision.Provision.enabled = enabled
+    tmt.steps.prepare.Prepare.enabled = enabled
+    tmt.steps.execute.Execute.enabled = enabled
+    tmt.steps.report.Report.enabled = enabled
+    tmt.steps.finish.Finish.enabled = enabled
     # Update metadata tree path
 
 main.add_command(run)
@@ -99,42 +99,42 @@ main.add_command(run)
 @run.command()
 def discover():
     """ Gather and show information about test cases to be executed """
-    tmt.steps.Discover.enabled = True
+    tmt.steps.discover.Discover.enabled = True
     return 'discover'
 
 
 @run.command()
 def provision():
     """ Provision an environment for testing (or use localhost) """
-    tmt.steps.Provision.enabled = True
+    tmt.steps.provision.Provision.enabled = True
     return 'provision'
 
 
 @run.command()
 def prepare():
     """ Configure environment for testing (like ansible playbook) """
-    tmt.steps.Prepare.enabled = True
+    tmt.steps.prepare.Prepare.enabled = True
     return 'prepare'
 
 
 @run.command()
 def execute():
     """ Run the tests (using the specified framework and its settings) """
-    tmt.steps.Execute.enabled = True
+    tmt.steps.execute.Execute.enabled = True
     return 'execute'
 
 
 @run.command()
 def report():
     """ Provide an overview of test results and send notifications """
-    tmt.steps.Report.enabled = True
+    tmt.steps.report.Report.enabled = True
     return 'report'
 
 
 @run.command()
 def finish():
     """ Additional actions to be performed after the test execution """
-    tmt.steps.Finish.enabled = True
+    tmt.steps.finish.Finish.enabled = True
     return 'finish'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -11,6 +11,13 @@ import tmt.cli
 import tmt.steps
 import tmt.templates
 
+import tmt.steps.discover
+import tmt.steps.provision
+import tmt.steps.prepare
+import tmt.steps.execute
+import tmt.steps.report
+import tmt.steps.finish
+
 from tmt.utils import verdict
 from click import echo, style
 
@@ -163,12 +170,18 @@ class Plan(Node):
         self._workdir = None
 
         # Initialize test steps
-        self.discover = tmt.steps.Discover(self.node.get('discover'), self)
-        self.provision = tmt.steps.Provision(self.node.get('provision'), self)
-        self.prepare = tmt.steps.Prepare(self.node.get('prepare'), self)
-        self.execute = tmt.steps.Execute(self.node.get('execute'), self)
-        self.report = tmt.steps.Report(self.node.get('report'), self)
-        self.finish = tmt.steps.Finish(self.node.get('finish'), self)
+        self.discover = tmt.steps.discover.Discover(
+            self.node.get('discover'), self)
+        self.provision = tmt.steps.provision.Provision(
+            self.node.get('provision'), self)
+        self.prepare = tmt.steps.prepare.Prepare(
+            self.node.get('prepare'), self)
+        self.execute = tmt.steps.execute.Execute(
+            self.node.get('execute'), self)
+        self.report = tmt.steps.report.Report(
+            self.node.get('report'), self)
+        self.finish = tmt.steps.finish.Finish(
+            self.node.get('finish'), self)
 
         # Relevant artifacts & gates (convert to list if needed)
         self.artifacts = node.get('artifacts')
