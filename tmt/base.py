@@ -14,6 +14,9 @@ import tmt.templates
 from tmt.utils import verdict
 from click import echo, style
 
+# Default workdir root
+WORKDIR_ROOT = '/var/tmp/tmt'
+
 
 class Node(object):
     """
@@ -152,18 +155,20 @@ class Test(Node):
 class Plan(Node):
     """ Plan object (L2 Metadata) """
 
-    def __init__(self, node):
+    def __init__(self, node, run=None):
         """ Initialize the plan """
         super(Plan, self).__init__(node)
         self.summary = node.get('summary')
+        self.run = run
+        self._workdir = None
 
         # Initialize test steps
-        self.discover = tmt.steps.Discover(self.node.get('discover'))
-        self.provision = tmt.steps.Provision(self.node.get('provision'))
-        self.prepare = tmt.steps.Prepare(self.node.get('prepare'))
-        self.execute = tmt.steps.Execute(self.node.get('execute'))
-        self.report = tmt.steps.Report(self.node.get('report'))
-        self.finish = tmt.steps.Finish(self.node.get('finish'))
+        self.discover = tmt.steps.Discover(self.node.get('discover'), self)
+        self.provision = tmt.steps.Provision(self.node.get('provision'), self)
+        self.prepare = tmt.steps.Prepare(self.node.get('prepare'), self)
+        self.execute = tmt.steps.Execute(self.node.get('execute'), self)
+        self.report = tmt.steps.Report(self.node.get('report'), self)
+        self.finish = tmt.steps.Finish(self.node.get('finish'), self)
 
         # Relevant artifacts & gates (convert to list if needed)
         self.artifacts = node.get('artifacts')
@@ -205,6 +210,15 @@ class Plan(Node):
         tmt.utils.create_file(
             path=plan_path, content=content,
             name='plan', force=force)
+
+    @property
+    def workdir(self):
+        """ Get the workdir, create if does not exist """
+        if self._workdir is None:
+            self._workdir = os.path.join(
+                self.run.workdir, self.name.lstrip('/'))
+            tmt.utils.create_directory(self._workdir, 'workdir', quiet=True)
+        return self._workdir
 
     def show(self, verbose):
         """ Show plan details """
@@ -420,3 +434,62 @@ class Tree(object):
         return [Story(story) for story in self.tree.prune(
             keys=keys, names=names,
             filters=filters, conditions=conditions, whole=whole)]
+
+
+class Run(object):
+    """
+    Test run
+
+    Takes care of the work directory preparation.
+    """
+
+    def __init__(self, id_=None, tree=None):
+        """ Initialize tree, workdir and plans """
+        # Save the tree
+        self.tree = tree if tree else tmt.Tree('.')
+        # Prepare the workdir
+        self.workdir = self._workdir(id_)
+        # Initialize plans
+        self.plans = [Plan(plan, run=self)
+            for plan in self.tree.tree.prune(keys=['execute'])]
+
+    def _workdir(self, id_):
+        """
+        Initialize the work directory
+
+        Workdir under WORKDIR_ROOT is used/created if 'id' is provided.
+        If 'id' is a path, that directory is used instead. Otherwise a
+        new workdir is created under WORKDIR_ROOT.
+        """
+        # Construct the workdir
+        if id_ is not None:
+            # Use provided directory if path given
+            if '/' in id_:
+                workdir = id_
+            # Construct directory name under workdir root
+            else:
+                if isinstance(id_, int):
+                    id_ = str(id_).rjust(3, '0')
+                directory = 'run-{}'.format(id_)
+                workdir = os.path.join(WORKDIR_ROOT, directory)
+        else:
+            # Generate a unique run id
+            for id_ in range(1, 1000):
+                directory = 'run-{}'.format(str(id_).rjust(3, '0'))
+                workdir = os.path.join(WORKDIR_ROOT, directory)
+                if not os.path.exists(workdir):
+                    break
+
+        # Create the workdir
+        echo("Using '{}' as the workdir.".format(workdir))
+        tmt.utils.create_directory(workdir, 'workdir', quiet=True)
+        return workdir
+
+    def go(self):
+        """ Go and do test steps for selected plans """
+        echo(style('Found {0}.\n'.format(
+            fmf.utils.listed(self.tree.plans(), 'plan')), fg='magenta'))
+        for plan in self.plans:
+            plan.ls(summary=True)
+            plan.go()
+            echo()

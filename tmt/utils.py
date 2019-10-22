@@ -131,22 +131,23 @@ def format(
     return output
 
 
-def create_directory(path, name):
+def create_directory(path, name, quiet=False):
     """ Create a new directory, handle errors """
-
+    say = log.debug if quiet else echo
     if os.path.isdir(path):
-        echo("Directory '{}' already exists.".format(path))
+        say("Directory '{}' already exists.".format(path))
         return
     try:
         os.makedirs(path, exist_ok=True)
-        echo("Directory '{}' created.".format(path))
+        say("Directory '{}' created.".format(path))
     except OSError as error:
         raise GeneralError("Failed to create {} '{}' ({})".format(
             name, path, error))
 
 
-def create_file(path, content, name, force=False, mode=0o664):
+def create_file(path, content, name, force=False, mode=0o664, quiet=False):
     """ Create a new file, handle errors """
+    say = log.debug if quiet else echo
     action = 'created'
     if os.path.exists(path):
         if force:
@@ -156,7 +157,7 @@ def create_file(path, content, name, force=False, mode=0o664):
     try:
         with open(path, 'w') as file_:
             file_.write(content)
-        echo("{} '{}' {}.".format(name.capitalize(), path, action))
+        say("{} '{}' {}.".format(name.capitalize(), path, action))
     except OSError as error:
         raise GeneralError("Failed to create {} '{}' ({})".format(
             name, path, error))

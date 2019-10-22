@@ -17,8 +17,9 @@ import tmt.templates
 
 log = fmf.utils.Logging('tmt').logger
 
-# Shared metadata tree
+# Shared metadata tree and run
 tree = None
+run = None
 
 
 class CustomGroup(click.Group):
@@ -75,9 +76,13 @@ def main(context, path):
 @click.group(chain=True, invoke_without_command=True, cls=CustomGroup)
 @click.option(
     '-a', '--all', 'all_', help='Run all steps, customize some', is_flag=True)
+@click.option('--id', 'id_', help='Run id (name or directory path)')
 @click.pass_context
-def run(context, all_):
+def run(context, all_, id_):
     """ Run test steps. """
+    # Initialize
+    global run
+    run = tmt.Run(id_, tree)
     # All test steps are enabled if no step selected
     enabled = context.invoked_subcommand is None or all_
     tmt.steps.Discover.enabled = enabled
@@ -560,19 +565,6 @@ def init(path, mini, full, force):
     return 'init'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Go
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-def go():
-    """ Go and do test steps for selected plans """
-    echo(style('Found {0}.\n'.format(
-        listed(tree.plans(), 'plan')), fg='magenta'))
-    for plan in tree.plans():
-        plan.ls(summary=True)
-        plan.go()
-        echo()
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Finito
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -586,4 +578,4 @@ def finito(commands, *args, **kwargs):
 
     # Run test steps if any explicitly requested or no command given at all
     if not commands or any([step in commands for step in tmt.steps.STEPS]):
-        go()
+        run.go()
