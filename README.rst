@@ -215,7 +215,12 @@ improvements it is best to use a virtual environment::
     pip install -e .
 
 Install ``python3-virtualenvwrapper`` to easily create and enable
-virtual environments using ``mkvirtualenv`` and ``workon``.
+virtual environments using ``mkvirtualenv`` and ``workon``. You
+can also easily install optional dependencies in this way::
+
+    pip install .[docs]
+    pip install .[tests]
+    pip install .[all]
 
 
 Links

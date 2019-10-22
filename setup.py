@@ -19,10 +19,19 @@ __pkgs__ = ['tmt']
 __provides__ = ['tmt']
 __desc__ = 'Test Management Tool'
 __scripts__ = ['bin/tmt']
-__irequires__ = [
+
+# Prepare install requires and extra requires
+install_requires = [
     'fmf>=0.9.2',
     'click',
 ]
+extras_require = {
+    'docs': ['sphinx', 'sphinx_rtd_theme'],
+    'tests': ['pytest', 'python-coveralls'],
+}
+extras_require['all'] = [dependency
+    for extra in extras_require.values()
+    for dependency in extra]
 
 pip_src = 'https://pypi.python.org/packages/source'
 __deplinks__ = []
@@ -55,7 +64,8 @@ default_setup = dict(
     keywords=['metadata', 'testing'],
     dependency_links=__deplinks__,
     description=__desc__,
-    install_requires=__irequires__,
+    install_requires=install_requires,
+    extras_require=extras_require,
     name=__pkg__,
     package_dir=__pkgdir__,
     packages=__pkgs__,
