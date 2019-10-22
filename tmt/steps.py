@@ -18,6 +18,9 @@ class Step(object):
     # Test steps need to be explicitly enabled
     enabled = False
 
+    # Required name of the step
+    name = 'unknown-step'
+
     def __init__(self, data={}, plan=None):
         """ Store step data """
         self.data = data
@@ -30,7 +33,7 @@ class Step(object):
 
     def __str__(self):
         """ Step name """
-        return self.__class__.__name__.lower()
+        return self.name
 
     @property
     def workdir(self):
@@ -63,22 +66,27 @@ class Step(object):
 
 class Discover(Step):
     """ Gather and show information about test cases to be executed """
+    name = 'discover'
 
     def show(self):
         """ Show discover details """
         super(Discover, self).show(
             keys=['how', 'filter', 'repository', 'tests'])
 
+
 class Provision(Step):
     """ Provision an environment for testing (or use localhost) """
+    name = 'provision'
 
 
 class Prepare(Step):
     """ Configure environment for testing (e.g. ansible playbook) """
+    name = 'prepare'
 
 
 class Execute(Step):
     """ Run the tests (using the specified framework and its settings) """
+    name = 'execute'
 
     def __init__(self, data, plan):
         """ Initialize the execute step """
@@ -93,7 +101,9 @@ class Execute(Step):
 
 class Report(Step):
     """ Provide an overview of test results and send notifications """
+    name = 'report'
 
 
 class Finish(Step):
     """ Additional actions to be performed after the test execution """
+    name = 'finish'
