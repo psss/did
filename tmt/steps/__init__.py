@@ -17,6 +17,7 @@ class Step(object):
     """ Common parent of all test steps """
     # Test steps need to be explicitly enabled
     enabled = False
+    how = False
 
     # Required name of the step
     name = 'unknown-step'
