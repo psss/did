@@ -23,9 +23,9 @@ class Step(object):
 
     def __init__(self, data={}, plan=None):
         """ Store step data """
-        # Store data, convert to list if needed
+        # Store data, convert to list if single config defined
         self.data = data
-        if not isinstance(self.data, list):
+        if self.data is not None and not isinstance(self.data, list):
             self.data = [self.data]
         self.plan = plan
         self._workdir = None
@@ -58,11 +58,14 @@ class Step(object):
         """ Show step details """
         if not self.data:
             return
-        echo(tmt.utils.format(str(self), self.summary or '', key_color='blue'))
-        for key in keys or self.data:
-            if key == 'summary':
-                continue
-            try:
-                echo(tmt.utils.format(key, self.data[key]))
-            except KeyError:
-                pass
+        configs = self.data if isinstance(self.data, list) else [self.data]
+        for config in configs:
+            echo(tmt.utils.format(
+                str(self), self.summary or '', key_color='blue'))
+            for key in keys or config:
+                if key == 'summary':
+                    continue
+                try:
+                    echo(tmt.utils.format(key, config[key]))
+                except KeyError:
+                    pass
