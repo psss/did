@@ -23,7 +23,10 @@ class Step(object):
 
     def __init__(self, data={}, plan=None):
         """ Store step data """
+        # Store data, convert to list if needed
         self.data = data
+        if not isinstance(self.data, list):
+            self.data = [self.data]
         self.plan = plan
         self._workdir = None
         try:
