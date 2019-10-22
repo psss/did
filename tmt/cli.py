@@ -104,9 +104,11 @@ def discover():
 
 
 @run.command()
-def provision():
+@click.option('--how', help="Force 'how' attribute for all provisioning steps.")
+def provision(how):
     """ Provision an environment for testing (or use localhost) """
     tmt.steps.provision.Provision.enabled = True
+    tmt.steps.provision.Provision.how = how
     return 'provision'
 
 
