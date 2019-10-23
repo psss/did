@@ -7,7 +7,6 @@ import re
 import fmf
 import pprint
 
-import tmt.cli
 import tmt.steps
 import tmt.templates
 
@@ -101,10 +100,10 @@ class Test(Node):
             self.result = 'respect'
 
     @staticmethod
-    def overview():
+    def overview(tree):
         """ Show overview of available tests """
         tests = [
-            style(str(test), fg='red') for test in tmt.cli.tree.tests()]
+            style(str(test), fg='red') for test in tree.tests()]
         echo(style(
             'Found {}{}{}.'.format(
                 fmf.utils.listed(tests, 'test'),
@@ -113,10 +112,10 @@ class Test(Node):
             ), fg='blue'))
 
     @staticmethod
-    def create(name, template, force=False):
+    def create(name, template, tree, force=False):
         """ Create a new test """
         # Create directory
-        directory_path = os.path.join(tmt.cli.tree.root, name.lstrip('/'))
+        directory_path = os.path.join(tree.root, name.lstrip('/'))
         tmt.utils.create_directory(directory_path, 'test directory')
 
         # Create metadata
@@ -194,10 +193,10 @@ class Plan(Node):
                 gates = [gates]
 
     @staticmethod
-    def overview():
+    def overview(tree):
         """ Show overview of available plans """
         plans = [
-            style(str(plan), fg='red') for plan in tmt.cli.tree.plans()]
+            style(str(plan), fg='red') for plan in tree.plans()]
         echo(style(
             'Found {}{}{}.'.format(
                 fmf.utils.listed(plans, 'plan'),
@@ -206,11 +205,11 @@ class Plan(Node):
             ), fg='blue'))
 
     @staticmethod
-    def create(name, template, force=False):
+    def create(name, template, tree, force=False):
         """ Create a new plan """
         # Prepare paths
         (directory, plan) = os.path.split(name)
-        directory_path = os.path.join(tmt.cli.tree.root, directory.lstrip('/'))
+        directory_path = os.path.join(tree.root, directory.lstrip('/'))
         plan_path = os.path.join(directory_path, plan + '.fmf')
 
         # Create directory & plan
@@ -309,11 +308,11 @@ class Story(Node):
         return True
 
     @staticmethod
-    def create(name, template, force=False):
+    def create(name, template, tree, force=False):
         """ Create a new story """
         # Prepare paths
         (directory, story) = os.path.split(name)
-        directory_path = os.path.join(tmt.cli.tree.root, directory.lstrip('/'))
+        directory_path = os.path.join(tree.root, directory.lstrip('/'))
         story_path = os.path.join(directory_path, story + '.fmf')
 
         # Create directory & story
@@ -328,10 +327,10 @@ class Story(Node):
             name='story', force=force)
 
     @staticmethod
-    def overview():
+    def overview(tree):
         """ Show overview of available stories """
         stories = [
-            style(str(story), fg='red') for story in tmt.cli.tree.stories()]
+            style(str(story), fg='red') for story in tree.stories()]
         echo(style(
             'Found {}{}{}.'.format(
                 fmf.utils.listed(stories, 'story'),

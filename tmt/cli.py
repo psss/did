@@ -63,9 +63,9 @@ def main(context, path):
 
     # Show overview of available tests, plans and stories
     if context.invoked_subcommand is None:
-        tmt.Test.overview()
-        tmt.Plan.overview()
-        tmt.Story.overview()
+        tmt.Test.overview(tree)
+        tmt.Plan.overview(tree)
+        tmt.Story.overview(tree)
 
     return 'tmt'
 
@@ -155,7 +155,7 @@ def tests(context):
 
     # Show overview of available tests
     if context.invoked_subcommand is None:
-        tmt.Test.overview()
+        tmt.Test.overview(tree)
 
     return 'test'
 
@@ -206,7 +206,7 @@ _test_templates = listed(tmt.templates.TEST, join='or')
 @tests.command()
 def create(name, template, force):
     """ Create a new test based on given template. """
-    tmt.Test.create(name, template, force)
+    tmt.Test.create(name, template, tree, force)
     return 'test create'
 
 
@@ -264,7 +264,7 @@ def plans(context):
 
     # Show overview of available plans
     if context.invoked_subcommand is None:
-        tmt.Plan.overview()
+        tmt.Plan.overview(tree)
 
     return 'plan'
 
@@ -316,7 +316,7 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
 @plans.command()
 def create(name, template, force):
     """ Create a new plan based on given template. """
-    tmt.Plan.create(name, template, force)
+    tmt.Plan.create(name, template, tree, force)
     return 'plan create'
 
 
@@ -337,7 +337,7 @@ def stories(context):
 
     # Show overview of available stories
     if context.invoked_subcommand is None:
-        tmt.Story.overview()
+        tmt.Story.overview(tree)
 
     return 'test'
 
@@ -418,7 +418,7 @@ _story_templates = listed(tmt.templates.STORY, join='or')
 @stories.command()
 def create(name, template, force):
     """ Create a new story based on given template. """
-    tmt.base.Story.create(name, template, force)
+    tmt.base.Story.create(name, template, tree, force)
     return 'story create'
 
 
@@ -556,13 +556,13 @@ def init(path, mini, full, force):
 
     # Populate the tree with example objects if requested
     if mini:
-        tmt.Test.create('/tests/example', 'shell', force)
-        tmt.Plan.create('/plans/example', 'mini', force)
-        tmt.Story.create('/stories/example', 'mini', force)
+        tmt.Test.create('/tests/example', 'shell', tree, force)
+        tmt.Plan.create('/plans/example', 'mini', tree, force)
+        tmt.Story.create('/stories/example', 'mini', tree, force)
     if full:
-        tmt.Test.create('/tests/example', 'shell', force)
-        tmt.Plan.create('/plans/example', 'full', force)
-        tmt.Story.create('/stories/example', 'full', force)
+        tmt.Test.create('/tests/example', 'shell', tree, force)
+        tmt.Plan.create('/plans/example', 'full', tree, force)
+        tmt.Story.create('/stories/example', 'full', tree, force)
 
     return 'init'
 
