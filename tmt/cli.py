@@ -76,13 +76,15 @@ def main(context, path):
 @click.group(chain=True, invoke_without_command=True, cls=CustomGroup)
 @click.option(
     '-a', '--all', 'all_', help='Run all steps, customize some', is_flag=True)
+@click.option(
+    '-v', '--verbose', help='Show detailed information', is_flag=True)
 @click.option('--id', 'id_', help='Run id (name or directory path)')
 @click.pass_context
-def run(context, all_, id_):
+def run(context, all_, id_, verbose):
     """ Run test steps. """
     # Initialize
     global run
-    run = tmt.Run(id_, tree)
+    run = tmt.Run(id_, tree, verbose)
     # All test steps are enabled if no step selected
     enabled = context.invoked_subcommand is None or all_
     tmt.steps.discover.Discover.enabled = enabled

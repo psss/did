@@ -52,7 +52,9 @@ class Step(object):
         if not self.enabled:
             return
         echo(tmt.utils.format(str(self), 'not implemented', key_color='blue'))
-        echo(tmt.utils.format('workdir', self.workdir, key_color='magenta'))
+        if self.plan.run.verbose:
+            echo(tmt.utils.format(
+                'workdir', self.workdir, key_color='magenta'))
 
     def show(self, keys=[]):
         """ Show step details """

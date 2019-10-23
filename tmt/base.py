@@ -22,6 +22,7 @@ from click import echo, style
 
 # Default workdir root
 WORKDIR_ROOT = '/var/tmp/tmt'
+WORKDIR_MAX = 1000
 
 
 class Node(object):
@@ -455,8 +456,9 @@ class Run(object):
     Takes care of the work directory preparation.
     """
 
-    def __init__(self, id_=None, tree=None):
+    def __init__(self, id_=None, tree=None, verbose=False):
         """ Initialize tree, workdir and plans """
+        self.verbose = verbose
         # Save the tree
         self.tree = tree if tree else tmt.Tree('.')
         # Prepare the workdir
@@ -486,14 +488,17 @@ class Run(object):
                 workdir = os.path.join(WORKDIR_ROOT, directory)
         else:
             # Generate a unique run id
-            for id_ in range(1, 1000):
+            for id_ in range(1, WORKDIR_MAX + 1):
                 directory = 'run-{}'.format(str(id_).rjust(3, '0'))
                 workdir = os.path.join(WORKDIR_ROOT, directory)
                 if not os.path.exists(workdir):
                     break
+            if id_ == WORKDIR_MAX:
+                raise tmt.utils.GeneralError(
+                    "Cleanup the '{}' directory.".format(WORKDIR_ROOT))
 
         # Create the workdir
-        echo("Using '{}' as the workdir.".format(workdir))
+        echo(style("Workdir: ", fg='magenta') + workdir)
         tmt.utils.create_directory(workdir, 'workdir', quiet=True)
         return workdir
 
