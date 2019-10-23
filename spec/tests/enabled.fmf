@@ -9,7 +9,7 @@ description:
     immediately there should be an easy way how to temporarily
     mark it as disabled so that it's skipped during the test suite
     execution. Should be a ``boolean``. The default value is
-    ``no``.
+    ``yes``.
 
 example: |
-    disabled: yes
+    enabled: no
