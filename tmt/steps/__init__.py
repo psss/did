@@ -51,7 +51,7 @@ class Step(object):
         """ Execute the test step """
         if not self.enabled:
             return
-        echo(tmt.utils.format(str(self), 'not implemented', key_color='blue'))
+        echo(tmt.utils.format(str(self), self.summary or '', key_color='blue'))
         if self.plan.run.verbose:
             echo(tmt.utils.format(
                 'workdir', self.workdir, key_color='magenta'))

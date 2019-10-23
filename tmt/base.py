@@ -136,7 +136,7 @@ class Test(Node):
             path=script_path, content=content,
             name='test script', force=force, mode=0o755)
 
-    def show(self, verbose):
+    def show(self, verbose=False):
         """ Show test details """
         self.ls()
         for key in self._keys:
@@ -227,13 +227,13 @@ class Plan(Node):
     @property
     def workdir(self):
         """ Get the workdir, create if does not exist """
-        if self._workdir is None:
+        if self._workdir is None and self.run is not None:
             self._workdir = os.path.join(
                 self.run.workdir, self.name.lstrip('/'))
             tmt.utils.create_directory(self._workdir, 'workdir', quiet=True)
         return self._workdir
 
-    def show(self, verbose):
+    def show(self, verbose=False):
         """ Show plan details """
         self.ls(summary=True)
         for step in tmt.steps.STEPS:
@@ -339,7 +339,7 @@ class Story(Node):
                 fmf.utils.listed(stories, max=12)
             ), fg='blue'))
 
-    def show(self, verbose):
+    def show(self, verbose=False):
         """ Show story details """
         self.ls()
         for key in self._keys:
