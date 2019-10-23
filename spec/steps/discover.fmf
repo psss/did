@@ -13,12 +13,28 @@ description: |
 
     Examples of metadata storage:
 
-    list
-        Manual list of test cases
+    shell
+        Manual list of shell test cases
     fmf
         Flexible Metadata Format filter
-    tcms
-        Test Case Management System
+
+    For each ``repository`` the discover step should produce a
+    ``repository.yaml`` file with the list of tests in the
+    following format::
+
+        /test/one:
+            test: ./test.sh
+            path: /test/path
+            duration: 5m
+            environment:
+                X: 1
+                Y: 2
+                Z: 3
+
+        /test/two:
+            test: ./test.sh
+            path: /test/path
+            duration: 10m
 
 example: |
     discover:
