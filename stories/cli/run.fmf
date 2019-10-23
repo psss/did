@@ -85,3 +85,12 @@ story: 'As a user I want to execute tests easily'
         As a test developer I want to automatically execute
         tests upon saving the updated test code to disk.
     example: tmt run debug
+
+/smoke:
+    story:
+        As a developer I want to do a quick smoke test of my
+        freshly built rpm package.
+    example: |
+        tmt run --all \
+        prepare --artifact=tmt-0.4-1.fc29.noarch.rpm \
+        execute --script='tmt --help'
