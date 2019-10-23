@@ -57,7 +57,9 @@ def test_step():
 
 def test_systemd():
     """ Check systemd example """
-    result = runner.invoke(tmt.cli.main, ['--path', SYSTEMD, 'run'])
+    result = runner.invoke(tmt.cli.main, ['--path', SYSTEMD, 'plan'])
     assert result.exit_code == 0
-    assert 'Found 2 plans.' in result.output
+    assert 'Found 2 plans' in result.output
+    result = runner.invoke(tmt.cli.main, ['--path', SYSTEMD, 'plan', 'show'])
+    assert result.exit_code == 0
     assert 'Tier two functional tests' in result.output
