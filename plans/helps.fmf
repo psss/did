@@ -1,0 +1,13 @@
+summary:
+    Check help messages
+discover:
+    how: shell
+    tests:
+    - name: /help/main
+      test: tmt --help
+    - name: /help/test
+      test: tmt test --help
+    - name: /help/plan
+      test: tmt plan --help
+execute:
+    how: shell
