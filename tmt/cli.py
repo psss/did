@@ -539,20 +539,34 @@ def export(
     '-f', '--force', is_flag=True, help='Overwrite existing files.')
 @main.command()
 def init(path, mini, full, force):
-    """ Initialize the tree root. """
+    """
+    Initialize a new tmt tree.
 
-    # Initialize the FMF metadata tree root
+    By default tree is created in the current directory.
+    Provide a PATH to create it in a different location.
+    """
+
+    # Check for existing tree
+    path = os.path.realpath(path)
     try:
         tree = fmf.Tree(path)
-        echo("Tree root '{}' already exists.".format(tree.root))
     except fmf.utils.RootError:
+        tree = None
+    else:
+        # Are we creating a new tree under the existing one?
+        if path == tree.root:
+            echo("Tree '{}' already exists.".format(tree.root))
+        else:
+            tree = None
+    # Create a new tree
+    if tree is None:
         try:
             root = fmf.Tree.init(path)
         except fmf.utils.GeneralError as error:
             raise tmt.utils.GeneralError(
-                "Failed to initialize tree root in '{}': {}".format(
+                "Failed to initialize tree in '{}': {}".format(
                     path, error))
-        echo("Tree root '{}' initialized.".format(root))
+        echo("Tree '{}' initialized.".format(path))
 
     # Populate the tree with example objects if requested
     if mini:
