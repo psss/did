@@ -3,6 +3,8 @@ summary:
 discover:
     how: fmf
     repository: https://github.com/psss/tmt
+provision:
+    how: local
 prepare:
     how: ansible
     playbooks: plans/packages.yml
