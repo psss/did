@@ -1,3 +1,8 @@
+import os
+import random
+import string
+
+
 class ProvisionBase(object):
     def __init__(self, data, step, instance_name=None):
         self.instance_name = instance_name or ''.join(random.choices(string.ascii_letters, k=16))
