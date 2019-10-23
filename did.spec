@@ -16,6 +16,7 @@ BuildRequires: python3-devel
 BuildRequires: python3-httplib2
 BuildRequires: python3-pytest
 BuildRequires: python3-requests-gssapi
+BuildRequires: python3-setuptools
 Requires: python3-bugzilla
 Requires: python3-httplib2
 Requires: python3-requests-gssapi
