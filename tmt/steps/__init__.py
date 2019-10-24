@@ -19,9 +19,6 @@ class Step(object):
     _context = None
     _workdir = None
 
-    # Test steps need to be explicitly enabled
-    enabled = False
-
     # Default implementation for all steps is shell
     # except for provision (virtual) and report (display)
     how = 'shell'

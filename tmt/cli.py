@@ -15,12 +15,9 @@ import tmt.convert
 import tmt.steps
 import tmt.templates
 
-log = fmf.utils.Logging('tmt').logger
-
-# Shared metadata tree and run
-tree = None
-run = None
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Custom Group
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class CustomGroup(click.Group):
     """ Custom Click Group """
@@ -58,9 +55,10 @@ class CustomGroup(click.Group):
 def main(context, path):
     """ Test Management Tool """
     # Initialize metadata tree
-    global tree
     tree = tmt.Tree(path)
     tree._context = context
+    context.obj = tmt.base.Common()
+    context.obj.tree = tree
 
     # Show overview of available tests, plans and stories
     if context.invoked_subcommand is None:
@@ -85,17 +83,9 @@ def main(context, path):
 def run(context, all_, id_, verbose):
     """ Run test steps. """
     # Initialize
-    global run
-    run = tmt.Run(id_, tree)
+    run = tmt.Run(id_, context.obj.tree)
     run._context = context
-    # All test steps are enabled if no step selected
-    enabled = context.invoked_subcommand is None or all_
-    tmt.steps.discover.Discover.enabled = enabled
-    tmt.steps.provision.Provision.enabled = enabled
-    tmt.steps.prepare.Prepare.enabled = enabled
-    tmt.steps.execute.Execute.enabled = enabled
-    tmt.steps.report.Report.enabled = enabled
-    tmt.steps.finish.Finish.enabled = enabled
+    context.obj.run = run
 
 main.add_command(run)
 
@@ -106,7 +96,7 @@ main.add_command(run)
     '--how', metavar='METHOD', help='Use specified method for provisioning.')
 def discover(context, how):
     """ Gather and show information about test cases to be executed """
-    tmt.steps.discover.Discover.enabled = True
+    tmt.base.Plan._enabled_steps.add('discover')
     tmt.steps.discover.Discover._context = context
     return 'discover'
 
@@ -117,7 +107,7 @@ def discover(context, how):
     '--how', metavar='METHOD', help='Use specified method for provisioning.')
 def provision(context, how):
     """ Provision an environment for testing (or use localhost) """
-    tmt.steps.provision.Provision.enabled = True
+    tmt.base.Plan._enabled_steps.add('provision')
     tmt.steps.provision.Provision._context = context
     return 'provision'
 
@@ -128,7 +118,7 @@ def provision(context, how):
     '--how', metavar='METHOD', help='Use specified method for provisioning.')
 def prepare(context, how):
     """ Configure environment for testing (like ansible playbook) """
-    tmt.steps.prepare.Prepare.enabled = True
+    tmt.base.Plan._enabled_steps.add('prepare')
     tmt.steps.prepare.Prepare._context = context
     return 'prepare'
 
@@ -139,7 +129,7 @@ def prepare(context, how):
     '--how', metavar='METHOD', help='Use specified method for provisioning.')
 def execute(context, how):
     """ Run the tests (using the specified framework and its settings) """
-    tmt.steps.execute.Execute.enabled = True
+    tmt.base.Plan._enabled_steps.add('execute')
     tmt.steps.execute.Execute._context = context
     return 'execute'
 
@@ -150,7 +140,7 @@ def execute(context, how):
     '--how', metavar='METHOD', help='Use specified method for provisioning.')
 def report(context, how):
     """ Provide an overview of test results and send notifications """
-    tmt.steps.report.Report.enabled = True
+    tmt.base.Plan._enabled_steps.add('report')
     tmt.steps.report.Report._context = context
     return 'report'
 
@@ -161,9 +151,19 @@ def report(context, how):
     '--how', metavar='METHOD', help='Use specified method for provisioning.')
 def finish(context, how):
     """ Additional actions to be performed after the test execution """
-    tmt.steps.finish.Finish.enabled = True
+    tmt.base.Plan._enabled_steps.add('finish')
     tmt.steps.finish.Finish._context = context
     return 'finish'
+
+
+@run.resultcallback()
+@click.pass_context
+def finito(context, commands, *args, **kwargs):
+    """ Run tests if run defined """
+    try:
+        context.obj.run.go()
+    except AttributeError:
+        pass
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Test
@@ -181,7 +181,7 @@ def tests(context):
 
     # Show overview of available tests
     if context.invoked_subcommand is None:
-        tmt.Test.overview(tree)
+        tmt.Test.overview(context.obj.tree)
 
     return 'test'
 
@@ -194,7 +194,7 @@ main.add_command(tests)
 def ls(context, names):
     """ List available tests. """
     tmt.Test._context = context
-    for test in tree.tests(names=names):
+    for test in context.obj.tree.tests(names=names):
         test.ls()
     return 'test ls'
 
@@ -208,7 +208,7 @@ def ls(context, names):
 def show(context, names, verbose):
     """ Show test details. """
     tmt.Test._context = context
-    for test in tree.tests(names=names):
+    for test in context.obj.tree.tests(names=names):
         test.show()
         echo()
     return 'test show'
@@ -220,7 +220,7 @@ def show(context, names, verbose):
 def lint(context, names):
     """ Check tests against the L1 metadata specification. """
     tmt.Test._context = context
-    for test in tree.tests(names=names):
+    for test in context.obj.tree.tests(names=names):
         test.lint()
         echo()
     return 'test lint'
@@ -240,7 +240,7 @@ _test_templates = listed(tmt.templates.TEST, join='or')
 def create(context, name, template, force):
     """ Create a new test based on given template. """
     tmt.Test._context = context
-    tmt.Test.create(name, template, tree, force)
+    tmt.Test.create(name, template, context.obj.tree, force)
     return 'test create'
 
 
@@ -301,7 +301,7 @@ def plans(context):
 
     # Show overview of available plans
     if context.invoked_subcommand is None:
-        tmt.Plan.overview(tree)
+        tmt.Plan.overview(context.obj.tree)
 
     return 'plan'
 
@@ -315,7 +315,7 @@ main.add_command(plans)
 def ls(context, names):
     """ List available plans. """
     tmt.Plan._context = context
-    for plan in tree.plans(names=names):
+    for plan in context.obj.tree.plans(names=names):
         plan.ls()
     return 'plan ls'
 
@@ -329,7 +329,7 @@ def ls(context, names):
 def show(context, names, verbose):
     """ Show plan details. """
     tmt.Plan._context = context
-    for plan in tree.plans(names=names):
+    for plan in context.obj.tree.plans(names=names):
         plan.show()
         echo()
     return 'plan show'
@@ -341,7 +341,7 @@ def show(context, names, verbose):
 def lint(context, names):
     """ Check plans against the L2 metadata specification. """
     tmt.Plan._context = context
-    for plan in tree.plans(names=names):
+    for plan in context.obj.tree.plans(names=names):
         plan.lint()
         echo()
     return 'plan lint'
@@ -361,7 +361,7 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
 def create(context, name, template, force):
     """ Create a new plan based on given template. """
     tmt.Plan._context = context
-    tmt.Plan.create(name, template, tree, force)
+    tmt.Plan.create(name, template, context.obj.tree, force)
     return 'plan create'
 
 
@@ -383,7 +383,7 @@ def stories(context):
 
     # Show overview of available stories
     if context.invoked_subcommand is None:
-        tmt.Story.overview(tree)
+        tmt.Story.overview(context.obj.tree)
 
     return 'test'
 
@@ -414,7 +414,7 @@ def ls(
     unimplemented, untested, undocumented, uncovered):
     """ List available stories. """
     tmt.Story._context = context
-    for story in tree.stories(names=names):
+    for story in context.obj.tree.stories(names=names):
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
             story.ls()
@@ -448,7 +448,7 @@ def show(
     unimplemented, untested, undocumented, uncovered, verbose):
     """ Show story details. """
     tmt.Story._context = context
-    for story in tree.stories(names=names):
+    for story in context.obj.tree.stories(names=names):
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
             story.show()
@@ -470,7 +470,7 @@ _story_templates = listed(tmt.templates.STORY, join='or')
 def create(context, name, template, force):
     """ Create a new story based on given template. """
     tmt.Story._context = context
-    tmt.base.Story.create(name, template, tree, force)
+    tmt.base.Story.create(name, template, context.obj.tree, force)
     return 'story create'
 
 
@@ -514,7 +514,7 @@ def coverage(
     total = code_coverage = test_coverage = docs_coverage = 0
     if not any([code, test, docs]):
         code = test = docs = True
-    for story in tree.stories(names=names):
+    for story in context.obj.tree.stories(names=names):
         # Header
         if not header:
             if code:
@@ -576,7 +576,7 @@ def export(
     """ Export selected stories into desired format. """
     tmt.Story._context = context
 
-    for story in tree.stories(names=names, whole=True):
+    for story in context.obj.tree.stories(names=names, whole=True):
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
             echo(story.export(format_))
@@ -589,12 +589,13 @@ def export(
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @main.command()
+@click.pass_context
 @click.argument('path', default='.')
 @click.option('--mini', is_flag=True, help='Create simple set of examples.')
 @click.option('--full', is_flag=True, help='Create full set of examples.')
 @click.option(
     '-f', '--force', is_flag=True, help='Overwrite existing files.')
-def init(path, mini, full, force):
+def init(context, path, mini, full, force):
     """
     Initialize a new tmt tree.
 
@@ -635,19 +636,3 @@ def init(path, mini, full, force):
         tmt.Story.create('/stories/example', 'full', tree, force)
 
     return 'init'
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Finito
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-@main.resultcallback()
-def finito(commands, *args, **kwargs):
-    """ Process the main callback """
-    # Show all commands that have been provided
-    log.info('Detected {0}{1}.'.format(
-        listed(commands, 'command'),
-        (': ' + listed(commands)) if commands else ''))
-
-    # Run test steps if any explicitly requested or no command given at all
-    if not commands or any([step in commands for step in tmt.steps.STEPS]):
-        run.go()

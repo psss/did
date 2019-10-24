@@ -25,6 +25,11 @@ WORKDIR_ROOT = '/var/tmp/tmt'
 WORKDIR_MAX = 1000
 
 
+class Common(object):
+    """ Common shared stuff """
+    pass
+
+
 class Node(object):
     """
     General node object
@@ -173,6 +178,9 @@ class Test(Node):
 class Plan(Node):
     """ Plan object (L2 Metadata) """
 
+    # Enabled steps
+    _enabled_steps = set()
+
     def __init__(self, node, run=None):
         """ Initialize the plan """
         super(Plan, self).__init__(node)
@@ -244,11 +252,23 @@ class Plan(Node):
             tmt.utils.create_directory(self._workdir, 'workdir', quiet=True)
         return self._workdir
 
+    def steps(self, enabled=True, disabled=False, names=False):
+        """
+        Iterate over enabled / all steps
+
+        Yields instances of all enabled steps by default. Use 'names' to
+        yield step names only and 'disabled=True' to iterate over all.
+        """
+        for name in tmt.steps.STEPS:
+            step = name if names else getattr(self, name)
+            if (enabled and name in self._enabled_steps
+                    or disabled and step not in self._enabled_steps):
+                yield step
+
     def show(self):
         """ Show plan details """
         self.ls(summary=True)
-        for step in tmt.steps.STEPS:
-            step = getattr(self, step)
+        for step in self.steps(disabled=True):
             step.show()
         if self.verbose:
             self._sources()
@@ -266,14 +286,11 @@ class Plan(Node):
     def go(self):
         """ Execute the plan """
         # Wake up all steps
-        for step in tmt.steps.STEPS:
-            step = getattr(self, step)
+        for step in self.steps(disabled=True):
             step.wake()
-        # Run all steps
-        for step in tmt.steps.STEPS:
-            step = getattr(self, step)
-            if step.enabled:
-                step.go()
+        # Run enabled steps
+        for step in self.steps():
+            step.go()
 
 
 class Story(Node):
@@ -471,7 +488,6 @@ class Run(object):
 
     Takes care of the work directory preparation.
     """
-
     # Command line context
     _context = None
 
@@ -481,9 +497,15 @@ class Run(object):
         self.tree = tree if tree else tmt.Tree('.')
         # Prepare the workdir
         self.workdir = self._workdir(id_)
-        # Initialize plans
-        self.plans = [Plan(plan, run=self)
-            for plan in self.tree.tree.prune(keys=['execute'])]
+        self._plans = None
+
+    @property
+    def plans(self):
+        """ Test plans for execution """
+        if self._plans is None:
+            self._plans = [Plan(plan, run=self) for plan in
+                self.tree.tree.prune(keys=['execute'])]
+        return self._plans
 
     @property
     def verbose(self):
@@ -529,8 +551,12 @@ class Run(object):
 
     def go(self):
         """ Go and do test steps for selected plans """
+        # Enable all steps if none selected or --all provided
+        if self._context.params.get('all_') or not Plan._enabled_steps:
+            Plan._enabled_steps = set(tmt.steps.STEPS)
+        # Show summary and iterate over plan
         echo(style('Found {0}.\n'.format(
-            fmf.utils.listed(self.tree.plans(), 'plan')), fg='magenta'))
+            fmf.utils.listed(self.plans, 'plan')), fg='magenta'))
         for plan in self.plans:
             plan.ls(summary=True)
             plan.go()
