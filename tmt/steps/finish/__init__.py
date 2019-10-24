@@ -7,4 +7,3 @@ import tmt
 
 class Finish(tmt.steps.Step):
     """ Additional actions to be performed after the test execution """
-    name = 'finish'

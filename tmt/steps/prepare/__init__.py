@@ -7,4 +7,3 @@ import tmt
 
 class Prepare(tmt.steps.Step):
     """ Configure environment for testing (e.g. ansible playbook) """
-    name = 'prepare'

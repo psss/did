@@ -99,7 +99,7 @@ def format(
     """ Nicely format and indent a key-value pair """
     indent_string = (indent + 1) * ' '
     # Key
-    output = '{} '.format(key.rjust(indent, ' '))
+    output = '{} '.format(str(key).rjust(indent, ' '))
     if key_color is not None:
         output = style(output, fg=key_color)
     # Bool

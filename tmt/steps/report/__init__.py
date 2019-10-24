@@ -7,4 +7,6 @@ import tmt
 
 class Report(tmt.steps.Step):
     """ Provide an overview of test results and send notifications """
-    name = 'report'
+
+    # Default implementation for report is display
+    how = 'display'

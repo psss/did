@@ -15,7 +15,15 @@ description: |
     will be executed or skip ``provision`` and ``prepare`` when
     quickly testing on localhost.  Each step can be supported by
     multiple implementations.  Special keyword ``how`` defines
-    which implementation should be used.
+    which implementation should be used. Default implementations
+    are as follows:
+
+     * discover: shell
+     * provision: virtual
+     * prepare: shell
+     * execute: shell
+     * report: display
+     * finish: shell
 
     The following directory structure is used to store work data
     under ``/var/lib/tmt`` for each run::

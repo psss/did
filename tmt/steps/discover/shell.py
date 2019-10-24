@@ -14,6 +14,7 @@ class DiscoverShell(object):
         self.repository = data.get('repository')
         self.destination = data.get('destination')
         self.filter = data.get('filter')
+        self.tests = []
 
     def clone(self):
         """ Prepare the repository """

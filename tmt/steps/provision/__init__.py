@@ -11,31 +11,32 @@ from tmt.utils import SpecificationError
 
 
 class Provision(tmt.steps.Step):
-    """
-    Provision step
+    """ Provision step """
 
-    Note: provision.how contains forced how step from command-line
-    """
-    name = 'provision'
+    # Default implementation for provision is a virtual machine
+    how = 'virtual'
 
     def __init__(self, data, plan):
         super(Provision, self).__init__(data, plan)
-
         # List of provisioned guests
         self.guests = []
 
-        if not self.data or not self.plan.run:
-            return
-
-        # choose correct plugin
-        for item in self.data:
-            if item.get('how') == 'local':
-                self.guests.append(ProvisionLocalhost(item, self))
+    def wake(self):
+        """ Wake up the step (process workdir and command line) """
+        super(Provision, self).wake()
+        # Choose the plugin
+        for step in self.data:
+            how = step.get('how')
+            if how == 'local':
+                self.guests.append(ProvisionLocalhost(step, self))
+            elif how == 'virtual':
+                pass
             else:
-                raise SpecificationError("Unknown how '{}'".format(how))
+                raise SpecificationError(
+                    "Unknown provision method '{}'.".format(how))
 
     def go(self):
-        """ provision all resources """
+        """ Provision all resources """
         super(Provision, self).go()
 
         for guest in self.guests:

@@ -15,29 +15,35 @@ STEPS = ['discover', 'provision', 'prepare', 'execute', 'report', 'finish']
 
 class Step(object):
     """ Common parent of all test steps """
+    # Command line context and workdir
+    _context = None
+    _workdir = None
+
     # Test steps need to be explicitly enabled
     enabled = False
-    how = False
 
-    # Required name of the step
-    name = 'unknown-step'
+    # Default implementation for all steps is shell
+    # except for provision (virtual) and report (display)
+    how = 'shell'
 
     def __init__(self, data={}, plan=None):
         """ Store step data """
-        # Store data, convert to list if single config defined
-        self.data = data
-        if self.data is not None and not isinstance(self.data, list):
-            self.data = [self.data]
+        # Initialize data
         self.plan = plan
-        self._workdir = None
-        try:
-            self.summary = data.get('summary')
-        except AttributeError:
-            self.summary = None
+        self.data = data
+        if self.data is None:
+            self.data = [{}]
+        # Convert to list if single config defined
+        elif not isinstance(self.data, list):
+            self.data = [self.data]
+        # Set how to the default if not specified
+        for step in self.data:
+            if step.get('how') is None:
+                step['how'] = self.how
 
     def __str__(self):
         """ Step name """
-        return self.name
+        return self.__class__.__name__.lower()
 
     @property
     def workdir(self):
@@ -48,27 +54,51 @@ class Step(object):
             tmt.utils.create_directory(self._workdir, 'workdir', quiet=True)
         return self._workdir
 
+    @property
+    def verbose(self):
+        """ Verbose mode output, by default off """
+        return self.plan.run and self.plan.run.verbose
+
+    def load(self):
+        """ Load step data from the workdir """
+        pass
+
+    def wake(self):
+        """ Wake up the step (process workdir and command line) """
+        # Check workdir for possible stored data
+        self.load()
+
+        # Override data with command line input
+        if self._context is None:
+            return
+        for step in self.data:
+            how = self._context.params.get('how')
+            if how is not None:
+                step['how'] = how
+
     def go(self):
         """ Execute the test step """
-        if not self.enabled:
-            return
-        echo(tmt.utils.format(str(self), self.summary or '', key_color='blue'))
-        if self.plan.run.verbose:
+        # Show step header
+        echo(tmt.utils.format(str(self), '', key_color='blue'))
+        # Show workdir in verbose mode
+        if self.verbose:
             echo(tmt.utils.format(
                 'workdir', self.workdir, key_color='magenta'))
 
     def show(self, keys=[]):
         """ Show step details """
-        if not self.data:
-            return
-        configs = self.data if isinstance(self.data, list) else [self.data]
-        for config in configs:
+        for step in self.data:
+            # Show empty steps only in verbose mode
+            if len(step.keys()) == 1 and not self.verbose:
+                continue
+            # Step name (and optional header)
             echo(tmt.utils.format(
-                str(self), self.summary or '', key_color='blue'))
-            for key in keys or config:
+                self, step.get('summary') or '', key_color='blue'))
+            # Show all or requested step attributes
+            for key in keys or step:
                 if key == 'summary':
                     continue
                 try:
-                    echo(tmt.utils.format(key, config[key]))
+                    echo(tmt.utils.format(key, step[key]))
                 except KeyError:
                     pass

@@ -33,6 +33,9 @@ class Node(object):
     Implements common Test, Plan and Story methods.
     """
 
+    # Command line context
+    _context = None
+
     def __init__(self, node):
         """ Initialize the node """
         self.node = node
@@ -46,6 +49,14 @@ class Node(object):
         """ Show source files """
         echo(tmt.utils.format(
             'sources', self.node.sources, key_color='magenta'))
+
+    @property
+    def verbose(self):
+        """ Verbose mode output, by default off """
+        try:
+            return self._context.params.get('verbose')
+        except AttributeError:
+            return False
 
     def name_and_summary(self):
         """ Node name and optional summary """
@@ -136,7 +147,7 @@ class Test(Node):
             path=script_path, content=content,
             name='test script', force=force, mode=0o755)
 
-    def show(self, verbose=False):
+    def show(self):
         """ Show test details """
         self.ls()
         for key in self._keys:
@@ -145,7 +156,7 @@ class Test(Node):
                 continue
             else:
                 echo(tmt.utils.format(key, value))
-        if verbose:
+        if self.verbose:
             self._sources()
 
     def lint(self):
@@ -233,14 +244,13 @@ class Plan(Node):
             tmt.utils.create_directory(self._workdir, 'workdir', quiet=True)
         return self._workdir
 
-    def show(self, verbose=False):
+    def show(self):
         """ Show plan details """
         self.ls(summary=True)
         for step in tmt.steps.STEPS:
             step = getattr(self, step)
-            if step.data:
-                step.show()
-        if verbose:
+            step.show()
+        if self.verbose:
             self._sources()
 
     def lint(self):
@@ -255,12 +265,15 @@ class Plan(Node):
 
     def go(self):
         """ Execute the plan """
-        self.discover.go()
-        self.provision.go()
-        self.prepare.go()
-        self.execute.go()
-        self.report.go()
-        self.finish.go()
+        # Wake up all steps
+        for step in tmt.steps.STEPS:
+            step = getattr(self, step)
+            step.wake()
+        # Run all steps
+        for step in tmt.steps.STEPS:
+            step = getattr(self, step)
+            if step.enabled:
+                step.go()
 
 
 class Story(Node):
@@ -339,7 +352,7 @@ class Story(Node):
                 fmf.utils.listed(stories, max=12)
             ), fg='blue'))
 
-    def show(self, verbose=False):
+    def show(self):
         """ Show story details """
         self.ls()
         for key in self._keys:
@@ -348,7 +361,7 @@ class Story(Node):
                 # Do not wrap examples
                 wrap = key != 'example'
                 echo(tmt.utils.format(key, value, wrap=wrap))
-        if verbose:
+        if self.verbose:
             self._sources()
 
     def coverage(self, code, test, docs):
@@ -406,6 +419,9 @@ class Story(Node):
 class Tree(object):
     """ Test Metadata Tree """
 
+    # Command line context
+    _context = None
+
     def __init__(self, path='.'):
         """ Initialize path and tree """
         self._path = path
@@ -456,9 +472,11 @@ class Run(object):
     Takes care of the work directory preparation.
     """
 
-    def __init__(self, id_=None, tree=None, verbose=False):
+    # Command line context
+    _context = None
+
+    def __init__(self, id_=None, tree=None):
         """ Initialize tree, workdir and plans """
-        self.verbose = verbose
         # Save the tree
         self.tree = tree if tree else tmt.Tree('.')
         # Prepare the workdir
@@ -466,6 +484,13 @@ class Run(object):
         # Initialize plans
         self.plans = [Plan(plan, run=self)
             for plan in self.tree.tree.prune(keys=['execute'])]
+
+    @property
+    def verbose(self):
+        """ Verbose mode output, by default off """
+        if self._context is not None:
+            return self._context.params.get('verbose')
+        return False
 
     def _workdir(self, id_):
         """

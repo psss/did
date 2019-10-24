@@ -10,24 +10,25 @@ from tmt.steps.discover.shell import DiscoverShell
 
 class Discover(tmt.steps.Step):
     """ Gather and show information about test cases to be executed """
-    name = 'discover'
 
     def __init__(self, data, plan):
         """ Store supported attributes, check for sanity """
         super(Discover, self).__init__(data, plan)
         self.workers = []
-        if not self.data or not self.plan.run:
-            return
-        for data in self.data:
-            how = data.get('how')
+
+    def wake(self):
+        """ Wake up the step (process workdir and command line) """
+        super(Discover, self).wake()
+        # Choose the plugin
+        for step in self.data:
+            how = step.get('how')
             if how == 'fmf':
-                self.workers.append(DiscoverFmf(data, self))
+                self.workers.append(DiscoverFmf(step, self))
             elif how == 'shell':
-                self.workers.append(DiscoverShell(data, self))
+                self.workers.append(DiscoverShell(step, self))
             else:
                 raise tmt.utils.SpecificationError(
-                    "Unknown discover method '{}' in plan '{}'.".format(
-                        how, self.plan))
+                    "Unknown discover method '{}'.".format(how))
 
     def show(self):
         """ Show discover details """
@@ -36,8 +37,6 @@ class Discover(tmt.steps.Step):
 
     def go(self):
         """ Execute the test step """
-        if not self.enabled:
-            return
         super(Discover, self).go()
         self.tests = []
         for worker in self.workers:
