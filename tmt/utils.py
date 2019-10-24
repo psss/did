@@ -15,6 +15,27 @@ import os
 log = fmf.utils.Logging('tmt').logger
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Common
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class Common(object):
+    """ Common shared stuff """
+
+    # Command line context
+    _context = None
+
+    @classmethod
+    def _opt(cls, option, default=None):
+        """ Get an option from the command line context """
+        if cls._context is None:
+            return None
+        return cls._context.params.get(option, default)
+
+    def opt(self, option, default=None):
+        """ Get an option from the command line context """
+        return self.__class__._opt(option, default)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Exceptions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

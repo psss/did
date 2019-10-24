@@ -8,6 +8,7 @@ import fmf
 import pprint
 
 import tmt.steps
+import tmt.utils
 import tmt.templates
 
 import tmt.steps.discover
@@ -25,21 +26,13 @@ WORKDIR_ROOT = '/var/tmp/tmt'
 WORKDIR_MAX = 1000
 
 
-class Common(object):
-    """ Common shared stuff """
-    pass
-
-
-class Node(object):
+class Node(tmt.utils.Common):
     """
     General node object
 
     Corresponds to given fmf.Tree node.
     Implements common Test, Plan and Story methods.
     """
-
-    # Command line context
-    _context = None
 
     def __init__(self, node):
         """ Initialize the node """
@@ -54,14 +47,6 @@ class Node(object):
         """ Show source files """
         echo(tmt.utils.format(
             'sources', self.node.sources, key_color='magenta'))
-
-    @property
-    def verbose(self):
-        """ Verbose mode output, by default off """
-        try:
-            return self._context.params.get('verbose')
-        except AttributeError:
-            return False
 
     def name_and_summary(self):
         """ Node name and optional summary """
@@ -161,7 +146,7 @@ class Test(Node):
                 continue
             else:
                 echo(tmt.utils.format(key, value))
-        if self.verbose:
+        if self.opt('verbose'):
             self._sources()
 
     def lint(self):
@@ -270,7 +255,7 @@ class Plan(Node):
         self.ls(summary=True)
         for step in self.steps(disabled=True):
             step.show()
-        if self.verbose:
+        if self.opt('verbose'):
             self._sources()
 
     def lint(self):
@@ -378,7 +363,7 @@ class Story(Node):
                 # Do not wrap examples
                 wrap = key != 'example'
                 echo(tmt.utils.format(key, value, wrap=wrap))
-        if self.verbose:
+        if self.opt('verbose'):
             self._sources()
 
     def coverage(self, code, test, docs):
@@ -433,11 +418,8 @@ class Story(Node):
         return output
 
 
-class Tree(object):
+class Tree(tmt.utils.Common):
     """ Test Metadata Tree """
-
-    # Command line context
-    _context = None
 
     def __init__(self, path='.'):
         """ Initialize path and tree """
@@ -482,14 +464,12 @@ class Tree(object):
             filters=filters, conditions=conditions, whole=whole)]
 
 
-class Run(object):
+class Run(tmt.utils.Common):
     """
     Test run
 
     Takes care of the work directory preparation.
     """
-    # Command line context
-    _context = None
 
     def __init__(self, id_=None, tree=None):
         """ Initialize tree, workdir and plans """
@@ -503,16 +483,10 @@ class Run(object):
     def plans(self):
         """ Test plans for execution """
         if self._plans is None:
-            self._plans = [Plan(plan, run=self) for plan in
-                self.tree.tree.prune(keys=['execute'])]
+            self._plans = [
+                Plan(plan, run=self) for plan in self.tree.tree.prune(
+                    keys=['execute'], names=Plan._opt('names', []))]
         return self._plans
-
-    @property
-    def verbose(self):
-        """ Verbose mode output, by default off """
-        if self._context is not None:
-            return self._context.params.get('verbose')
-        return False
 
     def _workdir(self, id_):
         """
@@ -552,7 +526,7 @@ class Run(object):
     def go(self):
         """ Go and do test steps for selected plans """
         # Enable all steps if none selected or --all provided
-        if self._context.params.get('all_') or not Plan._enabled_steps:
+        if self.opt('all_') or not Plan._enabled_steps:
             Plan._enabled_steps = set(tmt.steps.STEPS)
         # Show summary and iterate over plan
         echo(style('Found {0}.\n'.format(

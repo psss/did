@@ -13,10 +13,9 @@ import tmt.utils
 STEPS = ['discover', 'provision', 'prepare', 'execute', 'report', 'finish']
 
 
-class Step(object):
+class Step(tmt.utils.Common):
     """ Common parent of all test steps """
     # Command line context and workdir
-    _context = None
     _workdir = None
 
     # Default implementation for all steps is shell
@@ -54,7 +53,7 @@ class Step(object):
     @property
     def verbose(self):
         """ Verbose mode output, by default off """
-        return self.plan.run and self.plan.run.verbose
+        return self.plan.run and self.plan.run.opt('verbose')
 
     def load(self):
         """ Load step data from the workdir """
@@ -66,10 +65,8 @@ class Step(object):
         self.load()
 
         # Override data with command line input
-        if self._context is None:
-            return
         for step in self.data:
-            how = self._context.params.get('how')
+            how = self.opt('how')
             if how is not None:
                 step['how'] = how
 

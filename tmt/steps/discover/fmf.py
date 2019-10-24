@@ -44,8 +44,8 @@ class DiscoverFmf(object):
         # Prepare the workdir path (based on destination)
         if self.repository:
             if not self.destination:
-                self.destination = re.sub('^.*/', '', self.repository)
-                self.destination = re.sub('\.git$', '', self.destination)
+                self.destination = re.sub(r'^.*/', '', self.repository)
+                self.destination = re.sub(r'\.git$', '', self.destination)
         elif not self.destination:
             self.destination = os.path.basename(self.step.plan.run.tree.root)
         self.workdir = os.path.join(self.step.workdir, self.destination)
@@ -82,5 +82,7 @@ class DiscoverFmf(object):
         self.clone()
         self.tree = fmf.Tree(self.workdir)
         self.tests = [
-            tmt.Test(test) for test in
-            self.tree.prune(keys=['test'], filters=self.filter or [])]
+            tmt.Test(test) for test in self.tree.prune(
+                keys=['test'],
+                filters=self.filter or [],
+                names=tmt.base.Test._opt('names', []))]

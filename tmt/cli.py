@@ -42,7 +42,6 @@ class CustomGroup(click.Group):
         context.fail('Did you mean {}?'.format(
             listed(sorted(matches), join='or')))
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Main
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,7 +56,7 @@ def main(context, path):
     # Initialize metadata tree
     tree = tmt.Tree(path)
     tree._context = context
-    context.obj = tmt.base.Common()
+    context.obj = tmt.utils.Common()
     context.obj.tree = tree
 
     # Show overview of available tests, plans and stories
@@ -65,8 +64,6 @@ def main(context, path):
         tmt.Test.overview(tree)
         tmt.Plan.overview(tree)
         tmt.Story.overview(tree)
-
-    return 'tmt'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Run
@@ -109,7 +106,6 @@ def provision(context, how):
     """ Provision an environment for testing (or use localhost) """
     tmt.base.Plan._enabled_steps.add('provision')
     tmt.steps.provision.Provision._context = context
-    return 'provision'
 
 
 @run.command()
@@ -120,7 +116,6 @@ def prepare(context, how):
     """ Configure environment for testing (like ansible playbook) """
     tmt.base.Plan._enabled_steps.add('prepare')
     tmt.steps.prepare.Prepare._context = context
-    return 'prepare'
 
 
 @run.command()
@@ -131,7 +126,6 @@ def execute(context, how):
     """ Run the tests (using the specified framework and its settings) """
     tmt.base.Plan._enabled_steps.add('execute')
     tmt.steps.execute.Execute._context = context
-    return 'execute'
 
 
 @run.command()
@@ -142,7 +136,6 @@ def report(context, how):
     """ Provide an overview of test results and send notifications """
     tmt.base.Plan._enabled_steps.add('report')
     tmt.steps.report.Report._context = context
-    return 'report'
 
 
 @run.command()
@@ -153,17 +146,33 @@ def finish(context, how):
     """ Additional actions to be performed after the test execution """
     tmt.base.Plan._enabled_steps.add('finish')
     tmt.steps.finish.Finish._context = context
-    return 'finish'
+
+
+@run.command()
+@click.pass_context
+@click.option(
+    '--name', 'names', multiple=True, metavar='REGEXP',
+    help='Regular expression to match plan name.')
+def plans(context, names):
+    """ Select plans which should be executed. """
+    tmt.base.Plan._context = context
+
+
+@run.command()
+@click.pass_context
+@click.option('--name', 'names', multiple=True, metavar='REGEXP',
+    help='Regular expression to match test name.')
+def tests(context, names):
+    """ Select tests which should be executed. """
+    tmt.base.Test._context = context
 
 
 @run.resultcallback()
 @click.pass_context
 def finito(context, commands, *args, **kwargs):
     """ Run tests if run defined """
-    try:
+    if hasattr(context.obj, 'run'):
         context.obj.run.go()
-    except AttributeError:
-        pass
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Test
@@ -183,8 +192,6 @@ def tests(context):
     if context.invoked_subcommand is None:
         tmt.Test.overview(context.obj.tree)
 
-    return 'test'
-
 main.add_command(tests)
 
 
@@ -196,7 +203,6 @@ def ls(context, names):
     tmt.Test._context = context
     for test in context.obj.tree.tests(names=names):
         test.ls()
-    return 'test ls'
 
 
 @tests.command()
@@ -211,7 +217,6 @@ def show(context, names, verbose):
     for test in context.obj.tree.tests(names=names):
         test.show()
         echo()
-    return 'test show'
 
 
 @tests.command()
@@ -223,7 +228,6 @@ def lint(context, names):
     for test in context.obj.tree.tests(names=names):
         test.lint()
         echo()
-    return 'test lint'
 
 
 _test_templates = listed(tmt.templates.TEST, join='or')
@@ -241,7 +245,6 @@ def create(context, name, template, force):
     """ Create a new test based on given template. """
     tmt.Test._context = context
     tmt.Test.create(name, template, context.obj.tree, force)
-    return 'test create'
 
 
 @tests.command()
@@ -281,7 +284,6 @@ def convert(context, paths, makefile, nitrate, purpose):
         # Gather old metadata and store them as fmf
         data = tmt.convert.read(path, makefile, nitrate, purpose)
         tmt.convert.write(path, data)
-    return 'convert'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Plan
@@ -303,8 +305,6 @@ def plans(context):
     if context.invoked_subcommand is None:
         tmt.Plan.overview(context.obj.tree)
 
-    return 'plan'
-
 
 main.add_command(plans)
 
@@ -317,7 +317,6 @@ def ls(context, names):
     tmt.Plan._context = context
     for plan in context.obj.tree.plans(names=names):
         plan.ls()
-    return 'plan ls'
 
 
 @plans.command()
@@ -332,7 +331,6 @@ def show(context, names, verbose):
     for plan in context.obj.tree.plans(names=names):
         plan.show()
         echo()
-    return 'plan show'
 
 
 @plans.command()
@@ -344,7 +342,6 @@ def lint(context, names):
     for plan in context.obj.tree.plans(names=names):
         plan.lint()
         echo()
-    return 'plan lint'
 
 
 _plan_templates = listed(tmt.templates.PLAN, join='or')
@@ -362,7 +359,6 @@ def create(context, name, template, force):
     """ Create a new plan based on given template. """
     tmt.Plan._context = context
     tmt.Plan.create(name, template, context.obj.tree, force)
-    return 'plan create'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -384,8 +380,6 @@ def stories(context):
     # Show overview of available stories
     if context.invoked_subcommand is None:
         tmt.Story.overview(context.obj.tree)
-
-    return 'test'
 
 main.add_command(stories)
 
@@ -418,7 +412,6 @@ def ls(
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
             story.ls()
-    return 'story ls'
 
 
 @stories.command()
@@ -453,7 +446,6 @@ def show(
                 unimplemented, untested, undocumented, uncovered):
             story.show()
             echo()
-    return 'story show'
 
 
 _story_templates = listed(tmt.templates.STORY, join='or')
@@ -471,7 +463,6 @@ def create(context, name, template, force):
     """ Create a new story based on given template. """
     tmt.Story._context = context
     tmt.base.Story.create(name, template, context.obj.tree, force)
-    return 'story create'
 
 
 @stories.command()
@@ -544,8 +535,6 @@ def coverage(
     headfoot('from {}'.format(listed(total, 'story')))
     echo()
 
-    return 'story coverage'
-
 
 @stories.command()
 @click.pass_context
@@ -580,8 +569,6 @@ def export(
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
             echo(story.export(format_))
-
-    return 'story export'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -634,5 +621,3 @@ def init(context, path, mini, full, force):
         tmt.Test.create('/tests/example', 'shell', tree, force)
         tmt.Plan.create('/plans/example', 'full', tree, force)
         tmt.Story.create('/stories/example', 'full', tree, force)
-
-    return 'init'
