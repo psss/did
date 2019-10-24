@@ -605,24 +605,24 @@ def init(path, mini, full, force):
     # Check for existing tree
     path = os.path.realpath(path)
     try:
-        tree = fmf.Tree(path)
-    except fmf.utils.RootError:
-        tree = None
-    else:
+        tree = tmt.Tree(path)
         # Are we creating a new tree under the existing one?
         if path == tree.root:
             echo("Tree '{}' already exists.".format(tree.root))
         else:
             tree = None
+    except tmt.utils.GeneralError:
+        tree = None
     # Create a new tree
     if tree is None:
         try:
-            tree = fmf.Tree.init(path)
+            fmf.Tree.init(path)
+            tree = tmt.Tree(path)
         except fmf.utils.GeneralError as error:
             raise tmt.utils.GeneralError(
                 "Failed to initialize tree in '{}': {}".format(
                     path, error))
-        echo("Tree '{}' initialized.".format(path))
+        echo("Tree '{}' initialized.".format(tree.root))
 
     # Populate the tree with example objects if requested
     if mini:

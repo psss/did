@@ -36,6 +36,14 @@ def test_init():
     assert result.exception
     result = runner.invoke(tmt.cli.main, ['init', '--full', '--force'])
     assert 'overwritten' in result.output
+    # tmt init --mini in a clean directory
+    os.system('rm -rf .fmf *')
+    result = runner.invoke(tmt.cli.main, ['init', '--mini'])
+    assert 'tests/example' in result.output
+    # tmt init --full in a clean directory
+    os.system('rm -rf .fmf *')
+    result = runner.invoke(tmt.cli.main, ['init', '--full'])
+    assert 'tests/example' in result.output
     os.chdir(original_directory)
     shutil.rmtree(tmp)
 
