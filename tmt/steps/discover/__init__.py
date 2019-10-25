@@ -34,9 +34,15 @@ class Discover(tmt.steps.Step):
 
     def go(self):
         """ Execute all steps """
+        # Nothing to do if already done
+        if self.status() == 'done':
+            return
+        # Go!
+        self.status('going')
         super(Discover, self).go()
         for step in self.steps:
             step.go()
+        self.status('done')
 
     def tests(self):
         """ Return a list of all tests """

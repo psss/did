@@ -49,6 +49,9 @@ class Step(tmt.utils.Common):
             # Ensure that each config has a name
             if 'name' not in data and len(self.data) > 1:
                 raise GeneralError(f"Missing '{self}' name in '{self.plan}'.")
+        # Get or set the status
+        if self.status is None:
+            self.status('todo')
 
     @property
     def verbose(self):

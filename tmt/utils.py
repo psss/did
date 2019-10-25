@@ -30,7 +30,7 @@ class Common(object):
     Takes care of command line context and workdir handling.
     """
 
-    # Command line context and workdir
+    # Command line context, workdir and status
     _context = None
     _workdir = None
 
@@ -71,6 +71,39 @@ class Common(object):
             subprocess.run(command, check=True, cwd=self.workdir)
         except subprocess.CalledProcessError as error:
             raise GeneralError(f"{message}\n{error}")
+
+    def read(self, path):
+        """ Read a file from the workdir """
+        path = os.path.join(self.workdir, path)
+        try:
+            with open(path) as data:
+                return data.read()
+        except OSError as error:
+            raise GeneralError(f"Failed to read '{path}'.\n{error}")
+
+    def write(self, path, data):
+        """ Write a file to the workdir """
+        path = os.path.join(self.workdir, path)
+        try:
+            with open(path, 'w') as target:
+                return target.write(data)
+        except OSError as error:
+            raise GeneralError(f"Failed to read '{path}'.\n{error}")
+
+    def status(self, status=None):
+        """ Get and set current status, store in workdir """
+        # Check for valid values
+        if status and status not in ['todo', 'done', 'going']:
+            raise GeneralError(f"Invalid status '{status}'.")
+        # Store status
+        if status:
+            self.write('status.txt', status + '\n')
+        # Read status
+        else:
+            try:
+                return self.read('status.txt').strip()
+            except GeneralError:
+                return None
 
     def _workdir_init(self, id_):
         """
