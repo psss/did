@@ -6,8 +6,6 @@ import tmt
 
 from click import echo
 
-from .localhost import ProvisionLocalhost
-from .vagrant import ProvisionVagrant
 from tmt.utils import SpecificationError
 
 
@@ -29,8 +27,10 @@ class Provision(tmt.steps.Step):
         for data in self.data:
             how = data.get('how')
             if how == 'local':
+                from .localhost import ProvisionLocalhost
                 self.guests.append(ProvisionLocalhost(data, self))
             else:
+                from .vagrant import ProvisionVagrant
                 self.guests.append(ProvisionVagrant(data, self))
 
     def go(self):

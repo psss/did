@@ -42,7 +42,7 @@ class ProvisionVagrant(ProvisionBase):
         super(ProvisionVagrant, self).__init__(data, step)
         self.vagrantfile = os.path.join(self.provision_dir, 'Vagrantfile')
 
-        self.debugon = False
+        self.debugon = bool(self.opt('verbose'))
 
         # Are we resuming?
         if os.path.exists(self.vagrantfile) and os.path.isfile(self.vagrantfile):

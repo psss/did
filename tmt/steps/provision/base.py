@@ -1,13 +1,15 @@
+import tmt
 import os
 import random
 import string
 
 
-class ProvisionBase(object):
+class ProvisionBase(tmt.utils.Common):
     def __init__(self, data, step, instance_name=None):
+        self.instance_name = instance_name or ''.join(random.choices(string.ascii_letters, k=16))
+        super(ProvisionBase, self).__init__(parent=step, name=self.instance_name)
         self.data = data
         self.step = step
-        self.instance_name = instance_name or ''.join(random.choices(string.ascii_letters, k=16))
         self.provision_dir = os.path.join(step.workdir, self.instance_name)
         os.mkdir(self.provision_dir)
 
