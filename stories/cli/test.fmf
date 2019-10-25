@@ -42,6 +42,11 @@ story: 'As a user I want to comfortably work with tests'
     tested: /tests/test_convert
     documented: /docs/commands#test
 
+/export:
+    story: 'I want to export test metadata into desired format.'
+    example: tmt test export --format yaml
+    implemented: /tmt/base
+
 /coverage:
     story: 'Test coverage overview'
     description:

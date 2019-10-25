@@ -3,6 +3,7 @@
 """ Test Metadata Utilities """
 
 from click import style, echo, wrap_text
+from yaml import FullLoader
 
 from collections import OrderedDict
 import unicodedata
@@ -10,7 +11,9 @@ import subprocess
 import fmf.utils
 import pprint
 import shlex
+import yaml
 import re
+import io
 import os
 
 log = fmf.utils.Logging('tmt').logger
@@ -210,6 +213,16 @@ def variables_to_dictionary(variables):
             name, value = matched.groups()
             result[name] = value
     return result
+
+
+def dictionary_to_yaml(data):
+    """ Convert dictionary into yaml """
+    output = io.StringIO()
+    yaml.safe_dump(
+        data, output,
+        encoding='utf-8', allow_unicode=True,
+        indent=4, default_flow_style=False)
+    return output.getvalue()
 
 
 def verdict(decision, comment=None, good='pass', bad='fail', problem='warn'):

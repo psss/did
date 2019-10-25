@@ -285,6 +285,19 @@ def convert(context, paths, makefile, nitrate, purpose):
         data = tmt.convert.read(path, makefile, nitrate, purpose)
         tmt.convert.write(path, data)
 
+@tests.command()
+@click.pass_context
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@click.option(
+    '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
+    help='Output format.')
+def export(context, names, format_):
+    """ Export test data into the desired format. """
+    tmt.Test._context = context
+    for test in context.obj.tree.tests(names=names):
+        echo(test.export(format_='yaml'))
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Plan
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

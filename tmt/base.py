@@ -30,6 +30,9 @@ class Node(tmt.utils.Common):
     Implements common Test, Plan and Story methods.
     """
 
+    # Supported attributes
+    _keys = ['name']
+
     def __init__(self, node, parent=None):
         """ Initialize the node """
         super(Node, self).__init__(parent=parent, name=node.name)
@@ -56,6 +59,13 @@ class Node(tmt.utils.Common):
         echo(style(self.name, fg='red'))
         if summary and self.summary:
             echo(tmt.utils.format('summary', self.summary))
+
+    def export(self, format_='yaml', keys=None):
+        """ Export data into requested format """
+        if keys is None:
+            keys = self._keys
+        data = dict([(key, getattr(self, key)) for key in keys])
+        return tmt.utils.dictionary_to_yaml(data)
 
 
 class Test(Node):
