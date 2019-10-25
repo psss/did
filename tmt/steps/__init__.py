@@ -53,11 +53,6 @@ class Step(tmt.utils.Common):
         if self.status is None:
             self.status('todo')
 
-    @property
-    def verbose(self):
-        """ Verbose mode output, by default off """
-        return self.plan.run and self.plan.run.opt('verbose')
-
     def load(self):
         """ Load step data from the workdir """
         pass
@@ -78,7 +73,7 @@ class Step(tmt.utils.Common):
         # Show step header
         echo(tmt.utils.format(str(self), '', key_color='blue'))
         # Show workdir in verbose mode
-        if self.verbose:
+        if self.opt('verbose'):
             echo(tmt.utils.format(
                 'workdir', self.workdir, key_color='magenta'))
 
@@ -86,13 +81,18 @@ class Step(tmt.utils.Common):
         """ Show step details """
         for step in self.data:
             # Show empty steps only in verbose mode
-            if len(step.keys()) == 1 and not self.verbose:
+            if (set(step.keys()) == set(['how', 'name'])
+                    and not self.opt('verbose')):
                 continue
             # Step name (and optional header)
             echo(tmt.utils.format(
                 self, step.get('summary') or '', key_color='blue'))
             # Show all or requested step attributes
             for key in keys or step:
+                # Skip showing the default name
+                if key == 'name' and step['name'] == 'one':
+                    continue
+                # Skip showing summary again
                 if key == 'summary':
                     continue
                 try:

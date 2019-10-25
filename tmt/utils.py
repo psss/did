@@ -52,8 +52,11 @@ class Common(object):
         return cls._context.params.get(option, default)
 
     def opt(self, option, default=None):
-        """ Get an option from the command line context (instance version) """
-        return self.__class__._opt(option, default)
+        """ Get an option from the command line context (check parents) """
+        if self._context is None:
+            if self.parent is not None:
+                return self.parent.opt(option, default)
+        return self._context.params.get(option, default)
 
     def run(self, command, message=None):
         """ Run command in the workdir, give message, handle errors """
