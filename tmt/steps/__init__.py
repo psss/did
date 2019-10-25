@@ -2,13 +2,14 @@
 
 """ Step Classes """
 
-from click import echo, style
-
 import os
 import fmf
 import click
 import pprint
 import tmt.utils
+
+from click import echo, style
+from tmt.utils import GeneralError
 
 STEPS = ['discover', 'provision', 'prepare', 'execute', 'report', 'finish']
 
@@ -21,20 +22,33 @@ class Step(tmt.utils.Common):
     how = 'shell'
 
     def __init__(self, data={}, plan=None, name=None):
-        """ Store step data """
+        """ Initialize and check the step data """
         super(Step, self).__init__(name=name, parent=plan)
         # Initialize data
         self.plan = plan
         self.data = data
+
+        # Create an empty step by default (can be updated from cli)
         if self.data is None:
-            self.data = [{}]
-        # Convert to list if single config defined
-        elif not isinstance(self.data, list):
+            self.data = [{'name': 'one'}]
+        # Convert to list if only a single config provided
+        elif isinstance(self.data, dict):
+            # Give it a name unless defined
+            if not self.data.get('name'):
+                self.data['name'] = 'one'
             self.data = [self.data]
-        # Set how to the default if not specified
-        for step in self.data:
-            if step.get('how') is None:
-                step['how'] = self.how
+        # Shout about invalid configuration
+        elif not isinstance(self.data, list):
+            raise GeneralError(f"Invalid '{self}' config in '{self.plan}'.")
+
+        # Final sanity checks
+        for data in self.data:
+            # Set 'how' to the default if not specified
+            if data.get('how') is None:
+                data['how'] = self.how
+            # Ensure that each config has a name
+            if 'name' not in data and len(self.data) > 1:
+                raise GeneralError(f"Missing '{self}' name in '{self.plan}'.")
 
     @property
     def verbose(self):
@@ -88,5 +102,15 @@ class Plugin(tmt.utils.Common):
     """ Common parent of all step plugins """
 
     def __init__(self, data={}, step=None, name=None):
-        """ Basic plugin initialization """
-        super(Step, self).__init__(name=name, parent=step)
+        """ Store plugin data """
+        super(Plugin, self).__init__(name=name, parent=step)
+        self.data = data
+        self.step = step
+
+    def go(self):
+        """ Go and perform the plugin task """
+        raise NotImplementedError
+
+    def dump(self):
+        """ Dump current step plugin data """
+        return self.data

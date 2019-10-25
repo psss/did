@@ -33,7 +33,7 @@ class Common(object):
     _context = None
     _workdir = None
 
-    def __init__(self, name=None, parent=None):
+    def __init__(self, parent=None, name=None):
         """ Initialize name and relation with the parent object """
         # Use lowercase class name as the default name
         self.name = name or self.__class__.__name__.lower()

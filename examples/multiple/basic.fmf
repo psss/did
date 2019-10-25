@@ -5,10 +5,12 @@ description:
     possible for example to discover tests from multiple repos.
     The 'execute' steps supports only a single configuration.
 discover:
-  - how: fmf
+  - name: one
+    how: fmf
     filter: 'tier: 1'
     repository: https://repository.one/
-  - how: fmf
+  - name: two
+    how: fmf
     filter: 'tier: 2'
     repository: https://repository.two/
 prepare:

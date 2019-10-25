@@ -32,7 +32,7 @@ class Node(tmt.utils.Common):
 
     def __init__(self, node, parent=None):
         """ Initialize the node """
-        super(Node, self).__init__(name=node.name, parent=parent)
+        super(Node, self).__init__(parent=parent, name=node.name)
         self.node = node
 
     def __str__(self):
@@ -455,6 +455,7 @@ class Run(tmt.utils.Common):
 
     def __init__(self, id_=None, tree=None):
         """ Initialize tree, workdir and plans """
+        super(Run, self).__init__()
         # Save the tree
         self.tree = tree if tree else tmt.Tree('.')
         # Prepare the workdir

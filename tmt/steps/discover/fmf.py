@@ -25,44 +25,37 @@ import fmf
 import tmt
 import shutil
 import subprocess
+import tmt.steps.discover
 
 from click import echo
 
-class DiscoverFmf(object):
+class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     """ Discover available tests from FMF metadata """
 
     def __init__(self, data, step):
         """ Check supported attributes """
-        self.step = step
-        # Test metadata tree details
+        super(DiscoverFmf, self).__init__(step=step, name=data['name'])
+        self.tree = None
+        # Convert data into attributes for easy handling
         self.repository = data.get('repository')
-        self.destination = data.get('destination')
         self.revision = data.get('revision')
-        self.filter = data.get('filter')
-        if self.filter and not isinstance(self.filter, list):
-            self.filter = [self.filter]
-        # Prepare the workdir path (based on destination)
-        if self.repository:
-            if not self.destination:
-                self.destination = re.sub(r'^.*/', '', self.repository)
-                self.destination = re.sub(r'\.git$', '', self.destination)
-        elif not self.destination:
-            self.destination = os.path.basename(self.step.plan.run.tree.root)
-        self.workdir = os.path.join(self.step.workdir, self.destination)
+        filtr = data.get('filter')
+        self.filters = filtr if isinstance(filtr, list) else [filtr]
 
-    def clone(self):
-        """ Prepare the repository """
+    def go(self):
+        """ Discover available tests """
+        testdir = os.path.join(self.workdir, 'tests')
         # Copy current repository to workdir
         if self.repository is None:
             directory = self.step.plan.run.tree.root
-            echo("Copying '{}' to '{}'.".format(directory, self.workdir))
-            shutil.copytree(directory, self.workdir)
+            echo("Copying '{}' to '{}'.".format(directory, testdir))
+            shutil.copytree(directory, testdir)
         # Clone git repository
         else:
-            echo("Cloning '{}' to '{}'.".format(self.repository, self.workdir))
-            command = 'git clone {} {}'.format(self.repository, self.workdir)
+            echo(f"Cloning '{self.repository}' to '{testdir}'.")
+            command = f'git clone {self.repository} {testdir}'
             try:
-                subprocess.check_call(command.split())
+                subprocess.run(command.split(), check=True)
             except subprocess.CalledProcessError as error:
                 raise tmt.utils.GeneralError(
                     "Failed to clone git repository '{}': {}".format(
@@ -70,19 +63,24 @@ class DiscoverFmf(object):
         # Checkout revision if requested
         if self.revision:
             try:
-                command = 'git checkout -f {}'.format(self.revision)
-                subprocess.check_call(command.split(), cwd=self.workdir)
+                command = f'git checkout -f {self.revision}'
+                subprocess.run(command.split(), cwd=testdir, check=True)
             except subprocess.CalledProcessError as error:
                 raise tmt.utils.GeneralError(
                     "Failed to checkout revision '{}': {}".format(
                         self.revision, error))
+        self.tests_tree = fmf.Tree(testdir)
 
-    def go(self):
-        """ Discover available tests """
-        self.clone()
-        self.tree = fmf.Tree(self.workdir)
-        self.tests = [
-            tmt.Test(test) for test in self.tree.prune(
+
+    def tests(self):
+        """ Return all discovered tests """
+        return [
+            tmt.Test(test) for test in self.tests_tree.prune(
                 keys=['test'],
                 filters=self.filter or [],
                 names=tmt.base.Test._opt('names', []))]
+
+    def dump(self):
+        """ Dump current step data """
+        self.data['filter'] = self.filters
+        return self.data
