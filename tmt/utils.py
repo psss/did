@@ -59,6 +59,8 @@ class Common(object):
         if self._context is None:
             if self.parent is not None:
                 return self.parent.opt(option, default)
+            else:
+                return None
         return self._context.params.get(option, default)
 
     def run(self, command, message=None):
@@ -223,6 +225,11 @@ def dictionary_to_yaml(data):
         encoding='utf-8', allow_unicode=True,
         indent=4, default_flow_style=False)
     return output.getvalue()
+
+
+def dict_to_shell(data):
+    """ Convert dictionary to list of key=value pairs """
+    return [f"{key}={shlex.quote(str(value))}" for key, value in data.items()]
 
 
 def verdict(decision, comment=None, good='pass', bad='fail', problem='warn'):

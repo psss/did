@@ -18,7 +18,7 @@ description: |
     which implementation should be used. Default implementations
     are as follows:
 
-     * discover: shell
+     * discover: fmf
      * provision: virtual
      * prepare: shell
      * execute: shell

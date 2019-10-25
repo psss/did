@@ -7,10 +7,23 @@ import tmt
 class Discover(tmt.steps.Step):
     """ Gather and show information about test cases to be executed """
 
+    # Default implementation for discover is fmf
+    how = 'fmf'
+
     def __init__(self, data, plan):
         """ Store supported attributes, check for sanity """
         super(Discover, self).__init__(data, plan)
         self.steps = []
+
+    def load(self):
+        """ Load step data from the workdir """
+        pass
+
+    def save(self):
+        """ Save step data to the workdir """
+        # Create 'tests.yaml' with the list of tests for the executor
+        tests = dict([test.export(format_='execute') for test in self.tests()])
+        self.write('tests.yaml', tmt.utils.dictionary_to_yaml(tests))
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """
@@ -42,14 +55,15 @@ class Discover(tmt.steps.Step):
         super(Discover, self).go()
         for step in self.steps:
             step.go()
+        self.save()
         self.status('done')
 
     def tests(self):
         """ Return a list of all tests """
-        tests = []
         for step in self.steps:
-            self.tests.extend(step.tests())
-        return tests
+            for test in step.tests():
+                test._repository = step
+                yield test
 
 
 class DiscoverPlugin(tmt.steps.Plugin):

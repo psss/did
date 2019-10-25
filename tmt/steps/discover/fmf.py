@@ -66,7 +66,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         return [
             tmt.Test(test) for test in self.tests_tree.prune(
                 keys=['test'],
-                filters=self.filter or [],
+                filters=self.filters or [],
                 names=tmt.base.Test._opt('names', []))]
 
     def dump(self):

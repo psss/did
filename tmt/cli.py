@@ -295,7 +295,7 @@ def export(context, names, format_):
     """ Export test data into the desired format. """
     tmt.Test._context = context
     for test in context.obj.tree.tests(names=names):
-        echo(test.export(format_='yaml'))
+        echo(test.export(format_=format_))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

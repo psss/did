@@ -1,0 +1,15 @@
+/plan:
+    summary:
+        Environment variable.
+    description:
+        Tests can be provided with a list of environment variables.
+    execute:
+        how: shell
+
+/test:
+    summary: Just a simple test
+    test: ./test.sh
+    environment:
+        x: That's nice!
+        y: a b c
+        z: 3

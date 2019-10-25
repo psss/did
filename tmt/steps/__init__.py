@@ -57,6 +57,10 @@ class Step(tmt.utils.Common):
         """ Load step data from the workdir """
         pass
 
+    def save(self):
+        """ Save step data to the workdir """
+        pass
+
     def wake(self):
         """ Wake up the step (process workdir and command line) """
         # Check workdir for possible stored data

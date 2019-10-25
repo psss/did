@@ -61,11 +61,18 @@ class Node(tmt.utils.Common):
             echo(tmt.utils.format('summary', self.summary))
 
     def export(self, format_='yaml', keys=None):
-        """ Export data into requested format """
+        """ Export data into requested format (yaml or dict) """
         if keys is None:
             keys = self._keys
         data = dict([(key, getattr(self, key)) for key in keys])
-        return tmt.utils.dictionary_to_yaml(data)
+        # Choose proper format
+        if format_ == 'dict':
+            return data
+        elif format_ == 'yaml':
+            return tmt.utils.dictionary_to_yaml(data)
+        else:
+            raise tmt.utils.GeneralError(
+                f"Invalid test export format '{format_}'.")
 
 
 class Test(Node):
@@ -164,6 +171,29 @@ class Test(Node):
             echo(verdict(2, 'summary is very useful for quick inspection'))
         elif len(self.summary) > 50:
             echo(verdict(2, 'summary should not exceed 50 characters'))
+
+    def export(self, format_='yaml', keys=None):
+        """
+        Export test data into requested format
+
+        In addition to 'yaml' and 'dict' it supports also a special
+        format 'execute' used by the execute step which returns
+        (test-name, test-data) tuples.
+        """
+        if format_ != 'execute':
+            return super(Test, self).export(format_, keys)
+
+        # Prepare special format for the executor
+        name = f'/{self._repository}{self.name}'
+        data = dict()
+        data['test'] = self.test
+        data['path'] = f'/{self._repository}{self.path}'
+        if self.duration is not None:
+            data['duration'] = self.duration
+        if self.environment is not None:
+            data['environment'] = ' '.join(
+                tmt.utils.dict_to_shell(self.environment))
+        return name, data
 
 
 class Plan(Node):
