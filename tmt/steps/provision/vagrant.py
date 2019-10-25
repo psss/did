@@ -272,11 +272,11 @@ class ProvisionVagrant(ProvisionBase):
         if self.image_uri:
             self.set_default('box', 'box_' + self.instance_name)
 
-            if re.search("\.box$", image) is None:
+            if re.search(r"\.box$", image) is None:
                 # an actual box file, Great!
                 pass
 
-            elif re.search("\.qcow2$", image) is None:
+            elif re.search(r"\.qcow2$", image) is None:
                 # do some qcow2 magic
                 self.data['box'] = '...'
                 raise SpecificationError("NYI: QCOW2 image")

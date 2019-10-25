@@ -16,7 +16,8 @@ runner = CliRunner()
 
 def test_mini():
     """ Minimal smoke test """
-    result = runner.invoke(tmt.cli.main, ['--path', MINI, 'run'])
+    result = runner.invoke(tmt.cli.main,
+        ['--path', MINI, 'run', 'provision', '--how=local'])
     assert result.exit_code == 0
     assert 'Found 1 plan.' in result.output
     assert '/ci/test/build/smoke' in result.output
@@ -57,11 +58,12 @@ def test_no_metadata():
 def test_step():
     """ Select desired step"""
     for step in tmt.steps.STEPS:
+        if step == 'provision':
+            continue
         result = runner.invoke(tmt.cli.main, ['--path', MINI, 'run', step])
         assert result.exit_code == 0
         assert step in result.output
-        if step != 'provision':
-            assert 'Provision' not in result.output
+        assert 'Provision' not in result.output
 
 def test_systemd():
     """ Check systemd example """
