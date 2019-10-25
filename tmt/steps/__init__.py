@@ -15,15 +15,14 @@ STEPS = ['discover', 'provision', 'prepare', 'execute', 'report', 'finish']
 
 class Step(tmt.utils.Common):
     """ Common parent of all test steps """
-    # Command line context and workdir
-    _workdir = None
 
     # Default implementation for all steps is shell
     # except for provision (virtual) and report (display)
     how = 'shell'
 
-    def __init__(self, data={}, plan=None):
+    def __init__(self, data={}, plan=None, name=None):
         """ Store step data """
+        super(Step, self).__init__(name=name, parent=plan)
         # Initialize data
         self.plan = plan
         self.data = data
@@ -36,19 +35,6 @@ class Step(tmt.utils.Common):
         for step in self.data:
             if step.get('how') is None:
                 step['how'] = self.how
-
-    def __str__(self):
-        """ Step name """
-        return self.__class__.__name__.lower()
-
-    @property
-    def workdir(self):
-        """ Get the workdir, create if does not exist """
-        if self._workdir is None:
-            self._workdir = os.path.join(
-                self.plan.workdir, str(self))
-            tmt.utils.create_directory(self._workdir, 'workdir', quiet=True)
-        return self._workdir
 
     @property
     def verbose(self):
@@ -96,3 +82,11 @@ class Step(tmt.utils.Common):
                     echo(tmt.utils.format(key, step[key]))
                 except KeyError:
                     pass
+
+
+class Plugin(tmt.utils.Common):
+    """ Common parent of all step plugins """
+
+    def __init__(self, data={}, step=None, name=None):
+        """ Basic plugin initialization """
+        super(Step, self).__init__(name=name, parent=step)

@@ -21,10 +21,6 @@ import tmt.steps.finish
 from tmt.utils import verdict
 from click import echo, style
 
-# Default workdir root
-WORKDIR_ROOT = '/var/tmp/tmt'
-WORKDIR_MAX = 1000
-
 
 class Node(tmt.utils.Common):
     """
@@ -34,10 +30,10 @@ class Node(tmt.utils.Common):
     Implements common Test, Plan and Story methods.
     """
 
-    def __init__(self, node):
+    def __init__(self, node, parent=None):
         """ Initialize the node """
+        super(Node, self).__init__(name=node.name, parent=parent)
         self.node = node
-        self.name = node.name
 
     def __str__(self):
         """ Node name """
@@ -168,10 +164,9 @@ class Plan(Node):
 
     def __init__(self, node, run=None):
         """ Initialize the plan """
-        super(Plan, self).__init__(node)
+        super(Plan, self).__init__(node, parent=run)
         self.summary = node.get('summary')
         self.run = run
-        self._workdir = None
 
         # Initialize test steps
         self.discover = tmt.steps.discover.Discover(
@@ -227,15 +222,6 @@ class Plan(Node):
         tmt.utils.create_file(
             path=plan_path, content=content,
             name='plan', force=force)
-
-    @property
-    def workdir(self):
-        """ Get the workdir, create if does not exist """
-        if self._workdir is None and self.run is not None:
-            self._workdir = os.path.join(
-                self.run.workdir, self.name.lstrip('/'))
-            tmt.utils.create_directory(self._workdir, 'workdir', quiet=True)
-        return self._workdir
 
     def steps(self, enabled=True, disabled=False, names=False):
         """
@@ -465,18 +451,15 @@ class Tree(tmt.utils.Common):
 
 
 class Run(tmt.utils.Common):
-    """
-    Test run
-
-    Takes care of the work directory preparation.
-    """
+    """ Test run, a container of plans """
 
     def __init__(self, id_=None, tree=None):
         """ Initialize tree, workdir and plans """
         # Save the tree
         self.tree = tree if tree else tmt.Tree('.')
         # Prepare the workdir
-        self.workdir = self._workdir(id_)
+        self._workdir_init(id_)
+        echo(style("Workdir: ", fg='magenta') + self.workdir)
         self._plans = None
 
     @property
@@ -487,41 +470,6 @@ class Run(tmt.utils.Common):
                 Plan(plan, run=self) for plan in self.tree.tree.prune(
                     keys=['execute'], names=Plan._opt('names', []))]
         return self._plans
-
-    def _workdir(self, id_):
-        """
-        Initialize the work directory
-
-        Workdir under WORKDIR_ROOT is used/created if 'id' is provided.
-        If 'id' is a path, that directory is used instead. Otherwise a
-        new workdir is created under WORKDIR_ROOT.
-        """
-        # Construct the workdir
-        if id_ is not None:
-            # Use provided directory if path given
-            if '/' in id_:
-                workdir = id_
-            # Construct directory name under workdir root
-            else:
-                if isinstance(id_, int):
-                    id_ = str(id_).rjust(3, '0')
-                directory = 'run-{}'.format(id_)
-                workdir = os.path.join(WORKDIR_ROOT, directory)
-        else:
-            # Generate a unique run id
-            for id_ in range(1, WORKDIR_MAX + 1):
-                directory = 'run-{}'.format(str(id_).rjust(3, '0'))
-                workdir = os.path.join(WORKDIR_ROOT, directory)
-                if not os.path.exists(workdir):
-                    break
-            if id_ == WORKDIR_MAX:
-                raise tmt.utils.GeneralError(
-                    "Cleanup the '{}' directory.".format(WORKDIR_ROOT))
-
-        # Create the workdir
-        echo(style("Workdir: ", fg='magenta') + workdir)
-        tmt.utils.create_directory(workdir, 'workdir', quiet=True)
-        return workdir
 
     def go(self):
         """ Go and do test steps for selected plans """

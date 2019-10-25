@@ -14,26 +14,92 @@ import os
 
 log = fmf.utils.Logging('tmt').logger
 
+# Default workdir root and max
+WORKDIR_ROOT = '/var/tmp/tmt'
+WORKDIR_MAX = 1000
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Common
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Common(object):
-    """ Common shared stuff """
+    """
+    Common shared stuff
 
-    # Command line context
+    Takes care of command line context and workdir handling.
+    """
+
+    # Command line context and workdir
     _context = None
+    _workdir = None
+
+    def __init__(self, name=None, parent=None):
+        """ Initialize name and relation with the parent object """
+        # Use lowercase class name as the default name
+        self.name = name or self.__class__.__name__.lower()
+        self.parent = parent
+
+    def __str__(self):
+        """ Name is the default string representation """
+        return self.name
 
     @classmethod
     def _opt(cls, option, default=None):
-        """ Get an option from the command line context """
+        """ Get an option from the command line context (class version) """
         if cls._context is None:
             return None
         return cls._context.params.get(option, default)
 
     def opt(self, option, default=None):
-        """ Get an option from the command line context """
+        """ Get an option from the command line context (instance version) """
         return self.__class__._opt(option, default)
+
+    def _workdir_init(self, id_):
+        """
+        Initialize the work directory
+
+        Workdir under WORKDIR_ROOT is used/created if 'id' is provided.
+        If 'id' is a path, that directory is used instead. Otherwise a
+        new workdir is created under WORKDIR_ROOT.
+        """
+        # Construct the workdir
+        if id_ is not None:
+            # Use provided directory if path given
+            if '/' in id_:
+                workdir = id_
+            # Construct directory name under workdir root
+            else:
+                if isinstance(id_, int):
+                    id_ = str(id_).rjust(3, '0')
+                directory = 'run-{}'.format(id_)
+                workdir = os.path.join(WORKDIR_ROOT, directory)
+        else:
+            # Generate a unique run id
+            for id_ in range(1, WORKDIR_MAX + 1):
+                directory = 'run-{}'.format(str(id_).rjust(3, '0'))
+                workdir = os.path.join(WORKDIR_ROOT, directory)
+                if not os.path.exists(workdir):
+                    break
+            if id_ == WORKDIR_MAX:
+                raise tmt.utils.GeneralError(
+                    "Cleanup the '{}' directory.".format(WORKDIR_ROOT))
+
+        # Create the workdir
+        create_directory(workdir, 'workdir', quiet=True)
+        self._workdir = workdir
+
+    @property
+    def workdir(self):
+        """ Get the workdir, create if does not exist """
+        if self._workdir is None:
+            # Need the parent workdir
+            if self.parent is None:
+                raise GeneralError('Parent workdir not available')
+            # Append name and create
+            self._workdir = os.path.join(
+                self.parent.workdir, self.name.lstrip('/'))
+            create_directory(self._workdir, 'workdir', quiet=True)
+        return self._workdir
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Exceptions
