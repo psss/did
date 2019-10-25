@@ -49,12 +49,12 @@ class CustomGroup(click.Group):
 @click.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @click.option(
-    '--path', metavar='PATH', default='.', show_default=True,
-    help='Path to the metadata tree.')
-def main(context, path):
+    '--root', metavar='PATH', default='.', show_default=True,
+    help='Path to the metadata tree root.')
+def main(context, root):
     """ Test Management Tool """
     # Initialize metadata tree
-    tree = tmt.Tree(path)
+    tree = tmt.Tree(root)
     tree._context = context
     context.obj = tmt.utils.Common()
     context.obj.tree = tree
