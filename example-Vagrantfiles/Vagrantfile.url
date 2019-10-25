@@ -1,0 +1,10 @@
+Vagrant.configure("2") do |config|
+  # mandatory name
+  config.vm.box = 'arbitrary'
+
+  # This can also be an array of multiple URLs. The URLs will be tried in order.
+  # Or can be local files, so f.e.: "file:///var/tmp/tmt/test.box".
+  config.vm.box_url = "https://download.fedoraproject.org/pub/fedora/linux/releases/30/Cloud/x86_64/images/Fedora-Cloud-Base-Vagrant-30-1.2.x86_64.vagrant-libvirt.box"
+
+  # + everything Vagrantfile.simple has +
+end
