@@ -6,6 +6,7 @@ from click import style, echo, wrap_text
 
 from collections import OrderedDict
 import unicodedata
+import subprocess
 import fmf.utils
 import pprint
 import shlex
@@ -54,6 +55,23 @@ class Common(object):
         """ Get an option from the command line context (instance version) """
         return self.__class__._opt(option, default)
 
+    def run(self, command, message=None):
+        """ Run command in the workdir, give message, handle errors """
+        # Use a generic message if none given, prepare error message
+        if not message:
+            message = "Run command '{}'.".format(
+                ' '.join(command) if isinstance(command, list) else command)
+        echo(message)
+        message = "Failed to " + message[0].lower() + message[1:]
+
+        # Split command if needed and run it
+        if isinstance(command, str):
+            command = command.split()
+        try:
+            subprocess.run(command, check=True, cwd=self.workdir)
+        except subprocess.CalledProcessError as error:
+            raise GeneralError(f"{message}\n{error}")
+
     def _workdir_init(self, id_):
         """
         Initialize the work directory
@@ -81,7 +99,7 @@ class Common(object):
                 if not os.path.exists(workdir):
                     break
             if id_ == WORKDIR_MAX:
-                raise tmt.utils.GeneralError(
+                raise GeneralError(
                     "Cleanup the '{}' directory.".format(WORKDIR_ROOT))
 
         # Create the workdir

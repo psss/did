@@ -24,7 +24,6 @@ import re
 import fmf
 import tmt
 import shutil
-import subprocess
 import tmt.steps.discover
 
 from click import echo
@@ -52,25 +51,15 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             shutil.copytree(directory, testdir)
         # Clone git repository
         else:
-            echo(f"Cloning '{self.repository}' to '{testdir}'.")
-            command = f'git clone {self.repository} {testdir}'
-            try:
-                subprocess.run(command.split(), check=True)
-            except subprocess.CalledProcessError as error:
-                raise tmt.utils.GeneralError(
-                    "Failed to clone git repository '{}': {}".format(
-                        self.repository, error))
+            self.run(
+                f"git clone {self.repository} {testdir}",
+                f"Clone '{self.repository}' to '{testdir}'.")
         # Checkout revision if requested
         if self.revision:
-            try:
-                command = f'git checkout -f {self.revision}'
-                subprocess.run(command.split(), cwd=testdir, check=True)
-            except subprocess.CalledProcessError as error:
-                raise tmt.utils.GeneralError(
-                    "Failed to checkout revision '{}': {}".format(
-                        self.revision, error))
+            self.run(
+                f"git checkout -f {self.revision}",
+                f"Checkout revision '{self.revision}'.")
         self.tests_tree = fmf.Tree(testdir)
-
 
     def tests(self):
         """ Return all discovered tests """
