@@ -149,7 +149,7 @@ class ProvisionVagrant(ProvisionBase):
             1) Disable default sync
             2) To sync plan workdir
         """
-        dir = self.step.workdir
+        dir = self.step.plan.workdir
         self.add_synced_folder(".", "/vagrant", 'disabled: true')
         self.add_synced_folder(dir, dir)
         # [. . . ]
