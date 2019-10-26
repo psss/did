@@ -63,11 +63,13 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
 
     def tests(self):
         """ Return all discovered tests """
+        # Prepare test name filter if provided
+        names = tmt.base.Test._opt('names', [])
+        if names:
+            names = [names]
         return [
             tmt.Test(test) for test in self.tests_tree.prune(
-                keys=['test'],
-                filters=self.filters or [],
-                names=tmt.base.Test._opt('names', []))]
+            keys=['test'], filters=self.filters or [], names=names)]
 
     def dump(self):
         """ Dump current step data """

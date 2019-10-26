@@ -507,9 +507,11 @@ class Run(tmt.utils.Common):
     def plans(self):
         """ Test plans for execution """
         if self._plans is None:
+            # Prepare plan name filter if provided
+            names = [Plan._opt('names')] if Plan._opt('names') else []
             self._plans = [
-                Plan(plan, run=self) for plan in self.tree.tree.prune(
-                    keys=['execute'], names=Plan._opt('names', []))]
+                Plan(plan, run=self) for plan in
+                self.tree.tree.prune(keys=['execute'], names=names)]
         return self._plans
 
     def go(self):

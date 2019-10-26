@@ -150,9 +150,7 @@ def finish(context, how):
 
 @run.command()
 @click.pass_context
-@click.option(
-    '--name', 'names', multiple=True, metavar='REGEXP',
-    help='Regular expression to match plan name.')
+@click.argument('names', nargs=1, metavar='REGEXP')
 def plans(context, names):
     """ Select plans which should be executed. """
     tmt.base.Plan._context = context
@@ -160,8 +158,7 @@ def plans(context, names):
 
 @run.command()
 @click.pass_context
-@click.option('--name', 'names', multiple=True, metavar='REGEXP',
-    help='Regular expression to match test name.')
+@click.argument('names', nargs=1, metavar='REGEXP')
 def tests(context, names):
     """ Select tests which should be executed. """
     tmt.base.Test._context = context
