@@ -55,13 +55,25 @@ class Common(object):
         return cls._context.params.get(option, default)
 
     def opt(self, option, default=None):
-        """ Get an option from the command line context (check parents) """
-        if self._context is None:
-            if self.parent is not None:
-                return self.parent.opt(option, default)
-            else:
-                return None
-        return self._context.params.get(option, default)
+        """
+        Get an option from the command line context
+
+        Checks also parent options. For flags (boolean values) parent's
+        True wins over child's False (e.g. run --verbose enables verbose
+        mode for all included plans and steps).
+        """
+        # Check local option
+        local = None
+        if self._context is not None:
+            local = self._context.params.get(option, default)
+        # Check parent option
+        parent = None
+        if self.parent:
+            parent = self.parent.opt(option, default)
+        # Special handling for flags (parent's yes wins)
+        if isinstance(parent, bool):
+            return parent if parent else local
+        return parent if parent is not None else local
 
     def run(self, command, message=None):
         """ Run command in the workdir, give message, handle errors """

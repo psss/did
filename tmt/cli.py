@@ -43,15 +43,92 @@ class CustomGroup(click.Group):
             listed(sorted(matches), join='or')))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Common Options
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def verbose_debug_quiet(function):
+    """ Verbose, debug and quiet output """
+
+    options = [
+        click.option(
+           '-v', '--verbose', is_flag=True,
+           help='I want to see more details. Please, be verbose.'),
+        click.option(
+           '-d', '--debug', is_flag=True,
+           help='Provide as much debugging details as possible.'),
+        click.option(
+            '-q', '--quiet', is_flag=True,
+            help='Be quiet. Exit code is just enough for me.'),
+        ]
+
+    for option in reversed(options):
+        function = option(function)
+    return function
+
+
+def force_dry(function):
+    """ Force and dry actions """
+
+    options = [
+        click.option(
+            '-f', '--force', is_flag=True,
+            help='Force overwriting existing stuff.'),
+        click.option(
+            '-n', '--dry', is_flag=True,
+            help='No changes, please. Run in dry mode.'),
+        ]
+
+    for option in reversed(options):
+        function = option(function)
+    return function
+
+
+def implemented_tested_documented(function):
+    """ Common story options """
+
+    options = [
+        click.option(
+            '-i', '--implemented', is_flag=True,
+            help='Implemented stories only.'),
+        click.option(
+            '-I', '--unimplemented', is_flag=True,
+            help='Unimplemented stories only.'),
+        click.option(
+            '-t', '--tested', is_flag=True,
+            help='Tested stories only.'),
+        click.option(
+            '-T', '--untested', is_flag=True,
+            help='Untested stories only.'),
+        click.option(
+            '-d', '--documented', is_flag=True,
+            help='Documented stories only.'),
+        click.option(
+            '-D', '--undocumented', is_flag=True,
+            help='Undocumented stories only.'),
+        click.option(
+            '-c', '--covered', is_flag=True,
+            help='Covered stories only.'),
+        click.option(
+            '-C', '--uncovered', is_flag=True,
+            help='Uncovered stories only.'),
+        ]
+
+    for option in reversed(options):
+        function = option(function)
+    return function
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Main
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @click.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @click.option(
-    '--root', metavar='PATH', default='.', show_default=True,
-    help='Path to the metadata tree root.')
-def main(context, root):
+    '-r', '--root', metavar='PATH', default='.', show_default=True,
+    help='Path to the tree root.')
+@verbose_debug_quiet
+def main(context, root, **kwargs):
     """ Test Management Tool """
     # Initialize metadata tree
     tree = tmt.Tree(root)
@@ -72,12 +149,12 @@ def main(context, root):
 @click.group(chain=True, invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @click.option(
-    '-a', '--all', 'all_', help='Run all steps, customize some', is_flag=True)
+    '-i', '--id', 'id_', help='Run id (name or directory path).', metavar="ID")
 @click.option(
-    '-v', '--verbose', help='Show detailed information', is_flag=True)
-@click.option(
-    '-i', '--id', 'id_', help='Run id (name or directory path)')
-def run(context, all_, id_, verbose):
+    '-a', '--all', 'all_', help='Run all steps, customize some.', is_flag=True)
+@verbose_debug_quiet
+@force_dry
+def run(context, all_, id_, **kwargs):
     """ Run test steps. """
     # Initialize
     run = tmt.Run(id_, context.obj.tree)
@@ -90,9 +167,12 @@ main.add_command(run)
 @run.command()
 @click.pass_context
 @click.option(
-    '--how', metavar='METHOD', help='Use specified method for provisioning.')
-def discover(context, how):
-    """ Gather and show information about test cases to be executed """
+    '-h', '--how', metavar='METHOD',
+    help='Use specified method to discover tests.')
+@verbose_debug_quiet
+@force_dry
+def discover(context, **kwargs):
+    """ Gather and show information about test cases to be executed. """
     tmt.base.Plan._enabled_steps.add('discover')
     tmt.steps.discover.Discover._context = context
     return 'discover'
@@ -101,9 +181,12 @@ def discover(context, how):
 @run.command()
 @click.pass_context
 @click.option(
-    '--how', metavar='METHOD', help='Use specified method for provisioning.')
-def provision(context, how):
-    """ Provision an environment for testing (or use localhost) """
+    '-h', '--how', metavar='METHOD',
+    help='Use specified method for provisioning.')
+@verbose_debug_quiet
+@force_dry
+def provision(context, **kwargs):
+    """ Provision an environment for testing (or use localhost). """
     tmt.base.Plan._enabled_steps.add('provision')
     tmt.steps.provision.Provision._context = context
 
@@ -111,9 +194,12 @@ def provision(context, how):
 @run.command()
 @click.pass_context
 @click.option(
-    '--how', metavar='METHOD', help='Use specified method for provisioning.')
-def prepare(context, how):
-    """ Configure environment for testing (like ansible playbook) """
+    '-h', '--how', metavar='METHOD',
+    help='Use specified method for environment preparation.')
+@verbose_debug_quiet
+@force_dry
+def prepare(context, **kwargs):
+    """ Configure environment for testing (like ansible playbook). """
     tmt.base.Plan._enabled_steps.add('prepare')
     tmt.steps.prepare.Prepare._context = context
 
@@ -121,9 +207,12 @@ def prepare(context, how):
 @run.command()
 @click.pass_context
 @click.option(
-    '--how', metavar='METHOD', help='Use specified method for provisioning.')
-def execute(context, how):
-    """ Run the tests (using the specified framework and its settings) """
+    '-h', '--how', metavar='METHOD',
+    help='Use specified method for test execution.')
+@verbose_debug_quiet
+@force_dry
+def execute(context, **kwargs):
+    """ Run the tests (using the specified framework and its settings). """
     tmt.base.Plan._enabled_steps.add('execute')
     tmt.steps.execute.Execute._context = context
 
@@ -131,9 +220,12 @@ def execute(context, how):
 @run.command()
 @click.pass_context
 @click.option(
-    '--how', metavar='METHOD', help='Use specified method for provisioning.')
-def report(context, how):
-    """ Provide an overview of test results and send notifications """
+    '-h', '--how', metavar='METHOD',
+    help='Use specified method for result reporting.')
+@verbose_debug_quiet
+@force_dry
+def report(context, **kwargs):
+    """ Provide an overview of test results and send notifications. """
     tmt.base.Plan._enabled_steps.add('report')
     tmt.steps.report.Report._context = context
 
@@ -141,9 +233,12 @@ def report(context, how):
 @run.command()
 @click.pass_context
 @click.option(
-    '--how', metavar='METHOD', help='Use specified method for provisioning.')
-def finish(context, how):
-    """ Additional actions to be performed after the test execution """
+    '-h', '--how', metavar='METHOD',
+    help='Use specified method for finishing tasks.')
+@verbose_debug_quiet
+@force_dry
+def finish(context, **kwargs):
+    """ Additional actions to be performed after the test execution. """
     tmt.base.Plan._enabled_steps.add('finish')
     tmt.steps.finish.Finish._context = context
 
@@ -151,7 +246,8 @@ def finish(context, how):
 @run.command()
 @click.pass_context
 @click.argument('names', nargs=1, metavar='REGEXP')
-def plans(context, names):
+@verbose_debug_quiet
+def plans(context, **kwargs):
     """ Select plans which should be executed. """
     tmt.base.Plan._context = context
 
@@ -159,7 +255,8 @@ def plans(context, names):
 @run.command()
 @click.pass_context
 @click.argument('names', nargs=1, metavar='REGEXP')
-def tests(context, names):
+@verbose_debug_quiet
+def tests(context, **kwargs):
     """ Select tests which should be executed. """
     tmt.base.Test._context = context
 
@@ -177,7 +274,8 @@ def finito(context, commands, *args, **kwargs):
 
 @click.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
-def tests(context):
+@verbose_debug_quiet
+def tests(context, **kwargs):
     """
     Manage tests (L1 metadata).
 
@@ -195,7 +293,8 @@ main.add_command(tests)
 @tests.command()
 @click.pass_context
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-def ls(context, names):
+@verbose_debug_quiet
+def ls(context, names, **kwargs):
     """ List available tests. """
     tmt.Test._context = context
     for test in context.obj.tree.tests(names=names):
@@ -204,11 +303,9 @@ def ls(context, names):
 
 @tests.command()
 @click.pass_context
+@verbose_debug_quiet
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@click.option(
-    '-v', '--verbose', is_flag=True,
-    help='Show source files where metadata are stored.')
-def show(context, names, verbose):
+def show(context, names, **kwargs):
     """ Show test details. """
     tmt.Test._context = context
     for test in context.obj.tree.tests(names=names):
@@ -219,7 +316,8 @@ def show(context, names, verbose):
 @tests.command()
 @click.pass_context
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-def lint(context, names):
+@verbose_debug_quiet
+def lint(context, names, **kwargs):
     """ Check tests against the L1 metadata specification. """
     tmt.Test._context = context
     for test in context.obj.tree.tests(names=names):
@@ -235,10 +333,9 @@ _test_templates = listed(tmt.templates.TEST, join='or')
     '-t', '--template', metavar='TEMPLATE',
     help='Test template ({}).'.format(_test_templates),
     prompt='Template ({})'.format(_test_templates))
-@click.option(
-    '-f', '--force', help='Force overwriting existing files.',
-    is_flag=True)
-def create(context, name, template, force):
+@verbose_debug_quiet
+@force_dry
+def create(context, name, template, **kwargs):
     """ Create a new test based on given template. """
     tmt.Test._context = context
     tmt.Test.create(name, template, context.obj.tree, force)
@@ -246,6 +343,7 @@ def create(context, name, template, force):
 
 @tests.command()
 @click.pass_context
+@click.argument('paths', nargs=-1, metavar='[PATH]...')
 @click.option(
     '--nitrate / --no-nitrate', default=True,
     help='Import test metadata from Nitrate')
@@ -255,8 +353,9 @@ def create(context, name, template, force):
 @click.option(
     '--makefile / --no-makefile', default=True,
     help='Convert Beaker Makefile metadata')
-@click.argument('paths', nargs=-1, metavar='[PATH]...')
-def convert(context, paths, makefile, nitrate, purpose):
+@verbose_debug_quiet
+@force_dry
+def convert(context, paths, makefile, nitrate, purpose, **kwargs):
     """
     Convert old test metadata into the new fmf format.
 
@@ -282,13 +381,17 @@ def convert(context, paths, makefile, nitrate, purpose):
         data = tmt.convert.read(path, makefile, nitrate, purpose)
         tmt.convert.write(path, data)
 
+
 @tests.command()
 @click.pass_context
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
 @click.option(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
     help='Output format.')
-def export(context, names, format_):
+@click.option(
+    '-d', '--debug', is_flag=True,
+    help='Provide as much debugging details as possible.')
+def export(context, names, format_, **kwargs):
     """ Export test data into the desired format. """
     tmt.Test._context = context
     for test in context.obj.tree.tests(names=names):
@@ -301,7 +404,8 @@ def export(context, names, format_):
 
 @click.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
-def plans(context):
+@verbose_debug_quiet
+def plans(context, **kwargs):
     """
     Manage test plans (L2 metadata).
 
@@ -315,14 +419,14 @@ def plans(context):
     if context.invoked_subcommand is None:
         tmt.Plan.overview(context.obj.tree)
 
-
 main.add_command(plans)
 
 
 @plans.command()
 @click.pass_context
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-def ls(context, names):
+@verbose_debug_quiet
+def ls(context, names, **kwargs):
     """ List available plans. """
     tmt.Plan._context = context
     for plan in context.obj.tree.plans(names=names):
@@ -332,10 +436,8 @@ def ls(context, names):
 @plans.command()
 @click.pass_context
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-@click.option(
-    '-v', '--verbose', is_flag=True,
-    help='Show source files where metadata are stored.')
-def show(context, names, verbose):
+@verbose_debug_quiet
+def show(context, names, **kwargs):
     """ Show plan details. """
     tmt.Plan._context = context
     for plan in context.obj.tree.plans(names=names):
@@ -346,7 +448,8 @@ def show(context, names, verbose):
 @plans.command()
 @click.pass_context
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
-def lint(context, names):
+@verbose_debug_quiet
+def lint(context, names, **kwargs):
     """ Check plans against the L2 metadata specification. """
     tmt.Plan._context = context
     for plan in context.obj.tree.plans(names=names):
@@ -362,14 +465,12 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
     '-t', '--template', metavar='TEMPLATE',
     help='Plan template ({}).'.format(_plan_templates),
     prompt='Template ({})'.format(_plan_templates))
-@click.option(
-    '-f', '--force', help='Force overwriting existing files.',
-    is_flag=True)
-def create(context, name, template, force):
+@verbose_debug_quiet
+@force_dry
+def create(context, name, template, **kwargs):
     """ Create a new plan based on given template. """
     tmt.Plan._context = context
     tmt.Plan.create(name, template, context.obj.tree, force)
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Story
@@ -377,7 +478,8 @@ def create(context, name, template, force):
 
 @click.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
-def stories(context):
+@verbose_debug_quiet
+def stories(context, **kwargs):
     """
     Manage user stories.
 
@@ -396,26 +498,12 @@ main.add_command(stories)
 
 @stories.command()
 @click.pass_context
-@click.option(
-    '--undocumented', is_flag=True, help='Undocumented stories only.')
-@click.option(
-    '--untested', is_flag=True, help='Untested stories only.')
-@click.option(
-    '--unimplemented', is_flag=True, help='Unimplemented stories only.')
-@click.option(
-    '-u', '--uncovered', is_flag=True, help='Uncovered stories only.')
-@click.option(
-    '-c', '--covered', is_flag=True, help='Covered stories only.')
-@click.option(
-    '-d', '--documented', is_flag=True, help='Documented stories only.')
-@click.option(
-    '-t', '--tested', is_flag=True, help='Tested stories only.')
-@click.option(
-    '-i', '--implemented', is_flag=True, help='Implemented stories only.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@implemented_tested_documented
+@verbose_debug_quiet
 def ls(
     context, names, implemented, tested, documented, covered,
-    unimplemented, untested, undocumented, uncovered):
+    unimplemented, untested, undocumented, uncovered, **kwargs):
     """ List available stories. """
     tmt.Story._context = context
     for story in context.obj.tree.stories(names=names):
@@ -426,29 +514,12 @@ def ls(
 
 @stories.command()
 @click.pass_context
-@click.option(
-    '-v', '--verbose', is_flag=True,
-    help='Show source files where metadata are stored.')
-@click.option(
-    '--undocumented', is_flag=True, help='Undocumented stories only.')
-@click.option(
-    '--untested', is_flag=True, help='Untested stories only.')
-@click.option(
-    '--unimplemented', is_flag=True, help='Unimplemented stories only.')
-@click.option(
-    '-u', '--uncovered', is_flag=True, help='Uncovered stories only.')
-@click.option(
-    '-c', '--covered', is_flag=True, help='Covered stories only.')
-@click.option(
-    '-d', '--documented', is_flag=True, help='Documented stories only.')
-@click.option(
-    '-t', '--tested', is_flag=True, help='Tested stories only.')
-@click.option(
-    '-i', '--implemented', is_flag=True, help='Implemented stories only.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@implemented_tested_documented
+@verbose_debug_quiet
 def show(
     context, names, implemented, tested, documented, covered,
-    unimplemented, untested, undocumented, uncovered, verbose):
+    unimplemented, untested, undocumented, uncovered, **kwargs):
     """ Show story details. """
     tmt.Story._context = context
     for story in context.obj.tree.stories(names=names):
@@ -466,44 +537,29 @@ _story_templates = listed(tmt.templates.STORY, join='or')
     '-t', '--template', metavar='TEMPLATE',
     prompt='Template ({})'.format(_story_templates),
     help='Story template ({}).'.format(_story_templates))
-@click.option(
-    '-f', '--force', help='Force overwriting existing files.',
-    is_flag=True)
-def create(context, name, template, force):
+@verbose_debug_quiet
+@force_dry
+def create(context, name, template, **kwargs):
     """ Create a new story based on given template. """
     tmt.Story._context = context
     tmt.base.Story.create(name, template, context.obj.tree, force)
 
 
 @stories.command()
+@click.option(
+    '--docs', is_flag=True, help='Show docs coverage.')
+@click.option(
+    '--test', is_flag=True, help='Show test coverage.')
+@click.option(
+    '--code', is_flag=True, help='Show code coverage.')
 @click.pass_context
-@click.option(
-    '--undocumented', is_flag=True, help='Undocumented stories only.')
-@click.option(
-    '--untested', is_flag=True, help='Untested stories only.')
-@click.option(
-    '--unimplemented', is_flag=True, help='Unimplemented stories only.')
-@click.option(
-    '--uncovered', is_flag=True, help='Uncovered stories only.')
-@click.option(
-    '--covered', is_flag=True, help='Covered stories only.')
-@click.option(
-    '--documented', is_flag=True, help='Documented stories only.')
-@click.option(
-    '--tested', is_flag=True, help='Tested stories only.')
-@click.option(
-    '--implemented', is_flag=True, help='Implemented stories only.')
-@click.option(
-    '-d', '--docs', is_flag=True, help='Show docs coverage.')
-@click.option(
-    '-t', '--test', is_flag=True, help='Show test coverage.')
-@click.option(
-    '-c', '--code', is_flag=True, help='Show code coverage.')
 @click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@implemented_tested_documented
+@verbose_debug_quiet
 def coverage(
     context, names, code, test, docs,
     implemented, tested, documented, covered,
-    unimplemented, untested, undocumented, uncovered):
+    unimplemented, untested, undocumented, uncovered, **kwargs):
     """ Show code, test and docs coverage for given stories. """
     tmt.Story._context = context
 
@@ -548,30 +604,18 @@ def coverage(
 
 @stories.command()
 @click.pass_context
-@click.option(
-    '--undocumented', is_flag=True, help='Undocumented stories only.')
-@click.option(
-    '--untested', is_flag=True, help='Untested stories only.')
-@click.option(
-    '--unimplemented', is_flag=True, help='Unimplemented stories only.')
-@click.option(
-    '-u', '--uncovered', is_flag=True, help='Uncovered stories only.')
-@click.option(
-    '-c', '--covered', is_flag=True, help='Covered stories only.')
-@click.option(
-    '-d', '--documented', is_flag=True, help='Documented stories only.')
-@click.option(
-    '-t', '--tested', is_flag=True, help='Tested stories only.')
-@click.option(
-    '-i', '--implemented', is_flag=True, help='Implemented stories only.')
+@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@implemented_tested_documented
 @click.option(
     '--format', 'format_', default='rst', show_default=True, metavar='FORMAT',
     help='Output format.')
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@click.option(
+    '-d', '--debug', is_flag=True,
+    help='Provide as much debugging details as possible.')
 def export(
     context, names, format_,
     implemented, tested, documented, covered,
-    unimplemented, untested, undocumented, uncovered):
+    unimplemented, untested, undocumented, uncovered, **kwargs):
     """ Export selected stories into desired format. """
     tmt.Story._context = context
 
@@ -590,9 +634,9 @@ def export(
 @click.argument('path', default='.')
 @click.option('--mini', is_flag=True, help='Create simple set of examples.')
 @click.option('--full', is_flag=True, help='Create full set of examples.')
-@click.option(
-    '-f', '--force', is_flag=True, help='Overwrite existing files.')
-def init(context, path, mini, full, force):
+@verbose_debug_quiet
+@force_dry
+def init(context, path, mini, full, force, **kwargs):
     """
     Initialize a new tmt tree.
 

@@ -7,12 +7,16 @@ story:
     example:
         - tmt test show -v
         - tmt test show --verbose
+    implemented: /tmt/cli
+    documented: /tmt/cli
 
 /quiet:
     summary: Enable quiet mode of the command
     example:
         - tmt test show -q
         - tmt test show --quiet
+    implemented: /tmt/cli
+    documented: /tmt/cli
 
 /force:
     summary: Force dangerous operations like overwriting files
@@ -21,6 +25,8 @@ story:
         - tmt test create --force
     related:
         - /stories/cli/test/create
+    implemented: /tmt/cli
+    documented: /tmt/cli
 
 /format:
     summary: Provide machine readable output in given format
@@ -28,8 +34,25 @@ story:
         - tmt test ls --format json
         - tmt plan show --format yaml
         - tmt story export --format rst
+    implemented: /tmt/cli
+    documented: /tmt/cli
 
 /debug:
     summary: Print out everything tmt is doing
     example:
-        - tmt --debug
+        - tmt run -d
+        - tmt run --debug
+    implemented: /tmt/cli
+    documented: /tmt/cli
+
+/dry:
+    summary: Run in dry mode, just let me know what would be done
+    story:
+        As a user I want to run commands in dry mode so that I can
+        see what would happen if I run the command but no actions
+        are performed or changes saved to disk.
+    example:
+        - tmt run -n
+        - tmt run --dry
+    implemented: /tmt/cli
+    documented: /tmt/cli
