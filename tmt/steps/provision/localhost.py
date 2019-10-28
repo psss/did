@@ -5,7 +5,7 @@ from tmt.steps.provision.base import ProvisionBase
 
 class ProvisionLocalhost(ProvisionBase):
     def go(self):
-        echo('provisioning localhost')
+        self.info('provisioning localhost')
 
     def save(self):
-        echo('saving localhost')
+        self.info('saving localhost')

@@ -22,6 +22,9 @@ log = fmf.utils.Logging('tmt').logger
 WORKDIR_ROOT = '/var/tmp/tmt'
 WORKDIR_MAX = 1000
 
+# Hierarchy indent
+INDENT = '    '
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Common
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,26 +78,84 @@ class Common(object):
             return parent if parent else local
         return parent if parent is not None else local
 
-    def run(self, command, message=None):
+    def _level(self):
+        """ Hierarchy level """
+        if self.parent is None:
+            return -1
+        else:
+            return self.parent._level() + 1
+
+    def _indent(self, key, value=None, color=None, shift=0):
+        """ Indent message according to the object hierarchy """
+        if color is not None:
+            key = style(key, fg=color)
+        if value is None:
+            message = key
+        else:
+            message = f'{key}: {value}'
+        echo(INDENT * (self._level() + shift) + message)
+
+    def info(self, key, value=None, color=None, shift=0):
+        """ Show a message unless in quiet mode """
+        if not self.opt('quiet'):
+            self._indent(key, value, color, shift)
+
+    def verbose(self, key, value=None, color=None, shift=0):
+        """ Show message if in verbose or debug mode """
+        if self.opt('verbose') or self.opt('debug'):
+            self._indent(key, value, color, shift)
+
+    def debug(self, key, value=None, color=None, shift=1):
+        """ Show message if in debug mode """
+        if self.opt('debug'):
+            self._indent(key, value, color, shift)
+
+    def run(self, command, message=None, cwd=None):
         """ Run command in the workdir, give message, handle errors """
         # Use a generic message if none given, prepare error message
         if not message:
             message = "Run command '{}'.".format(
                 ' '.join(command) if isinstance(command, list) else command)
-        echo(message)
+        self.debug(message)
         message = "Failed to " + message[0].lower() + message[1:]
 
-        # Split command if needed and run it
+        # Nothing more to do in dry mode
+        if self.opt('dry'):
+            return
+
+        # Split the command if needed
         if isinstance(command, str):
             command = command.split()
         try:
-            subprocess.run(command, check=True, cwd=self.workdir)
-        except subprocess.CalledProcessError as error:
+        # Open log and run the command
+            with open(os.path.join(self.workdir, 'log.txt'), 'a') as log:
+                process = subprocess.Popen(
+                    command, cwd=cwd or self.workdir,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                debug = self.opt('debug')
+                while process.poll() is None:
+                    line = process.stdout.readline().decode('utf-8')
+                    if line != '':
+                        log.write(line)
+                        log.flush()
+                        self.debug('out', line.rstrip('\n'), 'yellow')
+
+                    line = process.stderr.readline().decode('utf-8')
+                    if line != '':
+                        log.write(line)
+                        log.flush()
+                        self.debug('err', line.rstrip('\n'), 'yellow')
+        except OSError as error:
             raise GeneralError(f"{message}\n{error}")
+
+        # Handle the exit code
+        if process.returncode != 0:
+            raise GeneralError(message)
 
     def read(self, path):
         """ Read a file from the workdir """
         path = os.path.join(self.workdir, path)
+        self.debug(f"Read file '{path}'.")
         try:
             with open(path) as data:
                 return data.read()
@@ -104,11 +165,15 @@ class Common(object):
     def write(self, path, data):
         """ Write a file to the workdir """
         path = os.path.join(self.workdir, path)
+        self.debug(f"Write file '{path}'.")
+        # Dry mode
+        if self.opt('dry'):
+            return
         try:
             with open(path, 'w') as target:
                 return target.write(data)
         except OSError as error:
-            raise GeneralError(f"Failed to read '{path}'.\n{error}")
+            raise GeneralError(f"Failed to write '{path}'.\n{error}")
 
     def status(self, status=None):
         """ Get and set current status, store in workdir """

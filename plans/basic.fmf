@@ -3,6 +3,8 @@ summary:
 discover:
     how: fmf
     repository: https://github.com/psss/tmt
+    revision: devel
+    fiter: 'tier: 1'
 provision:
     how: local
 prepare:

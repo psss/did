@@ -74,12 +74,10 @@ class Step(tmt.utils.Common):
 
     def go(self):
         """ Execute the test step """
-        # Show step header
-        echo(tmt.utils.format(str(self), '', key_color='blue'))
+        # Show step header and how
+        self.info(self.name, color='blue')
         # Show workdir in verbose mode
-        if self.opt('verbose'):
-            echo(tmt.utils.format(
-                'workdir', self.workdir, key_color='magenta'))
+        self.debug('workdir', self.workdir, 'magenta')
 
     def show(self, keys=[]):
         """ Show step details """
@@ -108,7 +106,7 @@ class Step(tmt.utils.Common):
 class Plugin(tmt.utils.Common):
     """ Common parent of all step plugins """
 
-    def __init__(self, data={}, step=None, name=None):
+    def __init__(self, data, step=None, name=None):
         """ Store plugin data """
         super(Plugin, self).__init__(name=name, parent=step)
         self.data = data
@@ -116,7 +114,11 @@ class Plugin(tmt.utils.Common):
 
     def go(self):
         """ Go and perform the plugin task """
-        raise NotImplementedError
+        # Show the method
+        self.info('how', self.data['how'], 'green')
+        # Show name only if there are more steps
+        if self.name != 'one':
+            self.info('name', self.name, 'green')
 
     def dump(self):
         """ Dump current step plugin data """

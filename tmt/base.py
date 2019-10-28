@@ -19,6 +19,7 @@ import tmt.steps.report
 import tmt.steps.finish
 
 from tmt.utils import verdict
+from fmf.utils import listed
 from click import echo, style
 
 
@@ -121,9 +122,9 @@ class Test(Node):
             style(str(test), fg='red') for test in tree.tests()]
         echo(style(
             'Found {}{}{}.'.format(
-                fmf.utils.listed(tests, 'test'),
+                listed(tests, 'test'),
                 ': ' if tests else '',
-                fmf.utils.listed(tests, max=12)
+                listed(tests, max=12)
             ), fg='blue'))
 
     @staticmethod
@@ -239,9 +240,9 @@ class Plan(Node):
             style(str(plan), fg='red') for plan in tree.plans()]
         echo(style(
             'Found {}{}{}.'.format(
-                fmf.utils.listed(plans, 'plan'),
+                listed(plans, 'plan'),
                 ': ' if plans else '',
-                fmf.utils.listed(plans, max=12)
+                listed(plans, max=12)
             ), fg='blue'))
 
     @staticmethod
@@ -296,6 +297,11 @@ class Plan(Node):
 
     def go(self):
         """ Execute the plan """
+        # Show plan name and summary (one blank line to separate plans)
+        self.info('')
+        self.info(style(self.name, fg='red'))
+        if self.summary:
+            self.verbose('summary', self.summary, 'green')
         # Wake up all steps
         for step in self.steps(disabled=True):
             step.wake()
@@ -375,9 +381,9 @@ class Story(Node):
             style(str(story), fg='red') for story in tree.stories()]
         echo(style(
             'Found {}{}{}.'.format(
-                fmf.utils.listed(stories, 'story'),
+                listed(stories, 'story'),
                 ': ' if stories else '',
-                fmf.utils.listed(stories, max=12)
+                listed(stories, max=12)
             ), fg='blue'))
 
     def show(self):
@@ -439,7 +445,7 @@ class Story(Node):
                 if getattr(self, coverage):
                     status.append(coverage)
             output += "\nStatus: {}\n".format(
-                fmf.utils.listed(status) if status else 'idea')
+                listed(status) if status else 'idea')
 
         return output
 
@@ -500,7 +506,7 @@ class Run(tmt.utils.Common):
         self.tree = tree if tree else tmt.Tree('.')
         # Prepare the workdir
         self._workdir_init(id_)
-        echo(style("Workdir: ", fg='magenta') + self.workdir)
+        self.debug("Using tree '{self.tree.root}'.")
         self._plans = None
 
     @property
@@ -516,13 +522,12 @@ class Run(tmt.utils.Common):
 
     def go(self):
         """ Go and do test steps for selected plans """
+        # Show run id / workdir path
+        self.info(self.workdir, color='magenta')
         # Enable all steps if none selected or --all provided
         if self.opt('all_') or not Plan._enabled_steps:
             Plan._enabled_steps = set(tmt.steps.STEPS)
-        # Show summary and iterate over plan
-        echo(style('Found {0}.\n'.format(
-            fmf.utils.listed(self.plans, 'plan')), fg='magenta'))
+        # Show summary and iterate over plans
+        self.verbose('Found {0}.'.format(listed(self.plans, 'plan')))
         for plan in self.plans:
-            plan.ls(summary=True)
             plan.go()
-            echo()

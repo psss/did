@@ -27,49 +27,70 @@ import shutil
 import tmt.steps.discover
 
 from click import echo
+from fmf.utils import listed
 
 class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     """ Discover available tests from FMF metadata """
 
     def __init__(self, data, step):
         """ Check supported attributes """
-        super(DiscoverFmf, self).__init__(step=step, name=data['name'])
+        super(DiscoverFmf, self).__init__(
+            data=data, step=step, name=data['name'])
         self.tree = None
         # Convert data into attributes for easy handling
         self.repository = data.get('repository')
         self.revision = data.get('revision')
-        filtr = data.get('filter')
+        filtr = data.get('filter', [])
         self.filters = filtr if isinstance(filtr, list) else [filtr]
 
     def go(self):
         """ Discover available tests """
+        super(DiscoverFmf, self).go()
         testdir = os.path.join(self.workdir, 'tests')
-        # Copy current repository to workdir
-        if self.repository is None:
-            directory = self.step.plan.run.tree.root
-            echo("Copying '{}' to '{}'.".format(directory, testdir))
-            shutil.copytree(directory, testdir)
-        # Clone git repository
+        # Clone provided git repository
+        if self.repository:
+            self.info('repository', self.repository, 'green')
+            self.debug(f"Clone '{self.repository}' to '{testdir}'.")
+            self.run(f'git clone {self.repository} {testdir}')
+        # Copy current directory to workdir
         else:
-            self.run(
-                f"git clone {self.repository} {testdir}",
-                f"Clone '{self.repository}' to '{testdir}'.")
+            directory = self.step.plan.run.tree.root
+            self.info('directory', directory, 'green')
+            self.debug("Copy '{}' to '{}'.".format(directory, testdir))
+            shutil.copytree(directory, testdir)
         # Checkout revision if requested
         if self.revision:
-            self.run(
-                f"git checkout -f {self.revision}",
-                f"Checkout revision '{self.revision}'.")
+            self.info('revision', self.revision, 'green')
+            self.debug(f"Checkout revision '{self.revision}'.")
+            self.run(f"git checkout -f {self.revision}", cwd=testdir)
+        # Initialize the metadata tree
+        self.debug(f"Check metadata tree in '{testdir}'.")
+        if self.opt('dry'):
+            return
         self.tests_tree = fmf.Tree(testdir)
 
     def tests(self):
         """ Return all discovered tests """
+        # Show filters if provided
+        if self.filters:
+            for filter_ in self.filters:
+                self.info('filter', filter_, 'green')
+        # Nothing to do in dry mode
+        if self.opt('dry'):
+            return []
         # Prepare test name filter if provided
         names = tmt.base.Test._opt('names', [])
         if names:
             names = [names]
-        return [
+            self.debug(f'Test names provided on command line: {listed(names)}')
+        tests = [
             tmt.Test(test) for test in self.tests_tree.prune(
             keys=['test'], filters=self.filters or [], names=names)]
+        # Summary of selected tests, test list in verbose mode
+        self.info('tests', listed(len(tests), 'test') + ' selected', 'green')
+        for test in tests:
+            self.verbose(test.name, color='red', shift=1)
+        return tests
 
     def dump(self):
         """ Dump current step data """

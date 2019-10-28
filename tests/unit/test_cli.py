@@ -17,7 +17,7 @@ runner = CliRunner()
 def test_mini():
     """ Minimal smoke test """
     result = runner.invoke(tmt.cli.main,
-        ['--root', MINI, 'run', 'provision', '--how=local'])
+        ['--root', MINI, 'run', '--debug', 'provision', '--how=local'])
     assert result.exit_code == 0
     assert 'Found 1 plan.' in result.output
     assert '/ci/test/build/smoke' in result.output

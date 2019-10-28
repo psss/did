@@ -29,12 +29,12 @@ class Discover(tmt.steps.Step):
         """ Wake up the step (process workdir and command line) """
         super(Discover, self).wake()
         # Choose the plugin
-        from tmt.steps.discover.fmf import DiscoverFmf
-        from tmt.steps.discover.shell import DiscoverShell
         for data in self.data:
             if data['how'] == 'fmf':
+                from tmt.steps.discover.fmf import DiscoverFmf
                 self.steps.append(DiscoverFmf(data, step=self))
             elif data['how'] == 'shell':
+                from tmt.steps.discover.shell import DiscoverShell
                 self.steps.append(DiscoverShell(data, step=self))
             else:
                 raise tmt.utils.SpecificationError(
@@ -69,9 +69,9 @@ class Discover(tmt.steps.Step):
 class DiscoverPlugin(tmt.steps.Plugin):
     """ Common parent of discover plugins """
 
-    def __init__(self, data={}, step=None, name=None):
+    def __init__(self, data, step=None, name=None):
         """ Basic plugin initialization """
-        super(DiscoverPlugin, self).__init__(step=step, name=name)
+        super(DiscoverPlugin, self).__init__(data=data, step=step, name=name)
 
     def tests(self):
         """ Return discovered tests """
