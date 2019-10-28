@@ -21,6 +21,7 @@ class Discover(tmt.steps.Step):
 
     def save(self):
         """ Save step data to the workdir """
+        super(Discover, self).save()
         # Create 'tests.yaml' with the list of tests for the executor
         tests = dict([test.export(format_='execute') for test in self.tests()])
         self.write('tests.yaml', tmt.utils.dictionary_to_yaml(tests))

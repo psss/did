@@ -59,7 +59,7 @@ class Step(tmt.utils.Common):
 
     def save(self):
         """ Save step data to the workdir """
-        pass
+        self.write('steps.yaml', tmt.utils.dictionary_to_yaml(self.data))
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """
