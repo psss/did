@@ -67,7 +67,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         self.debug(f"Check metadata tree in '{testdir}'.")
         if self.opt('dry'):
             return
-        self.tests_tree = fmf.Tree(testdir)
+        self.tests_tree = tmt.Tree(testdir)
 
     def tests(self):
         """ Return all discovered tests """
@@ -79,13 +79,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if self.opt('dry'):
             return []
         # Prepare test name filter if provided
-        names = tmt.base.Test._opt('names', [])
-        if names:
-            names = [names]
-            self.debug(f'Test names provided on command line: {listed(names)}')
-        tests = [
-            tmt.Test(test) for test in self.tests_tree.prune(
-            keys=['test'], filters=self.filters or [], names=names)]
+        tests = self.tests_tree.tests(filters=self.filters)
         # Summary of selected tests, test list in verbose mode
         self.info('tests', listed(len(tests), 'test') + ' selected', 'green')
         for test in tests:

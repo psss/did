@@ -83,6 +83,24 @@ def force_dry(function):
     return function
 
 
+def name_filter_condition(function):
+    """ Common filter option """
+    options = [
+        click.argument(
+            'names', nargs=-1, metavar='[REGEXP]'),
+        click.option(
+            '--filter', 'filters', metavar='FILTER', multiple=True,
+            help="Apply advanced filter (see 'pydoc fmf.filter')."),
+        click.option(
+            '--condition', 'conditions', metavar="EXPR", multiple=True,
+            help="Use arbitrary Python expression for filtering."),
+        ]
+
+    for option in reversed(options):
+        function = option(function)
+    return function
+
+
 def implemented_tested_documented(function):
     """ Common story options """
 
@@ -245,7 +263,15 @@ def finish(context, **kwargs):
 
 @run.command()
 @click.pass_context
-@click.argument('names', nargs=1, metavar='REGEXP')
+@click.option(
+    '--name', 'names', metavar='REGEXP', multiple=True,
+    help="Regular expression to match plan name.")
+@click.option(
+    '--filter', 'filters', metavar='FILTER', multiple=True,
+    help="Apply advanced filter (see 'pydoc fmf.filter').")
+@click.option(
+    '--condition', 'conditions', metavar="EXPR", multiple=True,
+    help="Use arbitrary Python expression for filtering.")
 @verbose_debug_quiet
 def plans(context, **kwargs):
     """ Select plans which should be executed. """
@@ -254,7 +280,15 @@ def plans(context, **kwargs):
 
 @run.command()
 @click.pass_context
-@click.argument('names', nargs=1, metavar='REGEXP')
+@click.option(
+    '--name', 'names', metavar='REGEXP', multiple=True,
+    help="Regular expression to match test name.")
+@click.option(
+    '--filter', 'filters', metavar='FILTER', multiple=True,
+    help="Apply advanced filter (see 'pydoc fmf.filter').")
+@click.option(
+    '--condition', 'conditions', metavar="EXPR", multiple=True,
+    help="Use arbitrary Python expression for filtering.")
 @verbose_debug_quiet
 def tests(context, **kwargs):
     """ Select tests which should be executed. """
@@ -292,35 +326,35 @@ main.add_command(tests)
 
 @tests.command()
 @click.pass_context
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@name_filter_condition
 @verbose_debug_quiet
-def ls(context, names, **kwargs):
+def ls(context, **kwargs):
     """ List available tests. """
     tmt.Test._context = context
-    for test in context.obj.tree.tests(names=names):
+    for test in context.obj.tree.tests():
         test.ls()
 
 
 @tests.command()
 @click.pass_context
+@name_filter_condition
 @verbose_debug_quiet
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
-def show(context, names, **kwargs):
+def show(context, **kwargs):
     """ Show test details. """
     tmt.Test._context = context
-    for test in context.obj.tree.tests(names=names):
+    for test in context.obj.tree.tests():
         test.show()
         echo()
 
 
 @tests.command()
 @click.pass_context
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@name_filter_condition
 @verbose_debug_quiet
-def lint(context, names, **kwargs):
+def lint(context, **kwargs):
     """ Check tests against the L1 metadata specification. """
     tmt.Test._context = context
-    for test in context.obj.tree.tests(names=names):
+    for test in context.obj.tree.tests():
         test.lint()
         echo()
 
@@ -384,17 +418,17 @@ def convert(context, paths, makefile, nitrate, purpose, **kwargs):
 
 @tests.command()
 @click.pass_context
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@name_filter_condition
 @click.option(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
     help='Output format.')
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-def export(context, names, format_, **kwargs):
+def export(context, format_, **kwargs):
     """ Export test data into the desired format. """
     tmt.Test._context = context
-    for test in context.obj.tree.tests(names=names):
+    for test in context.obj.tree.tests():
         echo(test.export(format_=format_))
 
 
@@ -424,35 +458,35 @@ main.add_command(plans)
 
 @plans.command()
 @click.pass_context
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@name_filter_condition
 @verbose_debug_quiet
-def ls(context, names, **kwargs):
+def ls(context, **kwargs):
     """ List available plans. """
     tmt.Plan._context = context
-    for plan in context.obj.tree.plans(names=names):
+    for plan in context.obj.tree.plans():
         plan.ls()
 
 
 @plans.command()
 @click.pass_context
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@name_filter_condition
 @verbose_debug_quiet
-def show(context, names, **kwargs):
+def show(context, **kwargs):
     """ Show plan details. """
     tmt.Plan._context = context
-    for plan in context.obj.tree.plans(names=names):
+    for plan in context.obj.tree.plans():
         plan.show()
         echo()
 
 
 @plans.command()
 @click.pass_context
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@name_filter_condition
 @verbose_debug_quiet
-def lint(context, names, **kwargs):
+def lint(context, **kwargs):
     """ Check plans against the L2 metadata specification. """
     tmt.Plan._context = context
-    for plan in context.obj.tree.plans(names=names):
+    for plan in context.obj.tree.plans():
         plan.lint()
         echo()
 
@@ -498,15 +532,15 @@ main.add_command(stories)
 
 @stories.command()
 @click.pass_context
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@name_filter_condition
 @implemented_tested_documented
 @verbose_debug_quiet
 def ls(
-    context, names, implemented, tested, documented, covered,
+    context, implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
     """ List available stories. """
     tmt.Story._context = context
-    for story in context.obj.tree.stories(names=names):
+    for story in context.obj.tree.stories():
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
             story.ls()
@@ -514,15 +548,15 @@ def ls(
 
 @stories.command()
 @click.pass_context
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@name_filter_condition
 @implemented_tested_documented
 @verbose_debug_quiet
 def show(
-    context, names, implemented, tested, documented, covered,
+    context, implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
     """ Show story details. """
     tmt.Story._context = context
-    for story in context.obj.tree.stories(names=names):
+    for story in context.obj.tree.stories():
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
             story.show()
@@ -553,11 +587,11 @@ def create(context, name, template, **kwargs):
 @click.option(
     '--code', is_flag=True, help='Show code coverage.')
 @click.pass_context
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@name_filter_condition
 @implemented_tested_documented
 @verbose_debug_quiet
 def coverage(
-    context, names, code, test, docs,
+    context, code, test, docs,
     implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
     """ Show code, test and docs coverage for given stories. """
@@ -571,7 +605,7 @@ def coverage(
     total = code_coverage = test_coverage = docs_coverage = 0
     if not any([code, test, docs]):
         code = test = docs = True
-    for story in context.obj.tree.stories(names=names):
+    for story in context.obj.tree.stories():
         # Header
         if not header:
             if code:
@@ -604,7 +638,7 @@ def coverage(
 
 @stories.command()
 @click.pass_context
-@click.argument('names', nargs=-1, metavar='[REGEXP]...')
+@name_filter_condition
 @implemented_tested_documented
 @click.option(
     '--format', 'format_', default='rst', show_default=True, metavar='FORMAT',
@@ -613,13 +647,13 @@ def coverage(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
 def export(
-    context, names, format_,
+    context, format_,
     implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
     """ Export selected stories into desired format. """
     tmt.Story._context = context
 
-    for story in context.obj.tree.stories(names=names, whole=True):
+    for story in context.obj.tree.stories(whole=True):
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
             echo(story.export(format_))

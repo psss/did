@@ -477,19 +477,43 @@ class Tree(tmt.utils.Common):
 
     def tests(self, keys=[], names=[], filters=[], conditions=[]):
         """ Search available tests """
+        # Apply possible command line options
+        if Test._opt('names'):
+            names.extend(Test._opt('names'))
+        if Test._opt('filters'):
+            filters.extend(Test._opt('filters'))
+        if Test._opt('conditions'):
+            conditions.extend(Test._opt('conditions'))
+        # Build the list and convert to objects
         keys.append('test')
         return [Test(test) for test in self.tree.prune(
             keys=keys, names=names, filters=filters, conditions=conditions)]
 
-    def plans(self, keys=[], names=[], filters=[], conditions=[]):
+    def plans(self, keys=[], names=[], filters=[], conditions=[], run=None):
         """ Search available plans """
+        # Apply possible command line options
+        if Plan._opt('names'):
+            names.extend(Plan._opt('names'))
+        if Plan._opt('filters'):
+            filters.extend(Plan._opt('filters'))
+        if Plan._opt('conditions'):
+            conditions.extend(Plan._opt('conditions'))
+        # Build the list and convert to objects
         keys.append('execute')
-        return [Plan(plan) for plan in self.tree.prune(
+        return [Plan(plan, run=run) for plan in self.tree.prune(
             keys=keys, names=names, filters=filters, conditions=conditions)]
 
     def stories(
             self, keys=[], names=[], filters=[], conditions=[], whole=False):
         """ Search available stories """
+        # Apply possible command line options
+        if Story._opt('names'):
+            names.extend(Story._opt('names'))
+        if Story._opt('filters'):
+            filters.extend(Story._opt('filters'))
+        if Story._opt('conditions'):
+            conditions.extend(Story._opt('conditions'))
+        # Build the list and convert to objects
         keys.append('story')
         return [Story(story) for story in self.tree.prune(
             keys=keys, names=names,
@@ -513,11 +537,7 @@ class Run(tmt.utils.Common):
     def plans(self):
         """ Test plans for execution """
         if self._plans is None:
-            # Prepare plan name filter if provided
-            names = [Plan._opt('names')] if Plan._opt('names') else []
-            self._plans = [
-                Plan(plan, run=self) for plan in
-                self.tree.tree.prune(keys=['execute'], names=names)]
+            self._plans = self.tree.plans(run=self)
         return self._plans
 
     def go(self):
