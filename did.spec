@@ -1,6 +1,6 @@
 Name: did
 Version: 0.14
-Release: 1%{?dist}
+Release: 2%{?dist}
 
 Summary: What did you do last week, month, year?
 License: GPLv2+
@@ -51,7 +51,11 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
-* Thu Oct 22 2019 Petr Šplíchal <psplicha@redhat.com> - 0.14-1
+* Tue Oct 29 2019 Petr Šplíchal <psplicha@redhat.com> - 0.14-2
+- Include python3-setuptools in the BuildRequires
+- Use info level to log problems with plugin import
+
+* Tue Oct 22 2019 Petr Šplíchal <psplicha@redhat.com> - 0.14-1
 - Include setup.py, use auto build/install, enable tests
 - Fix 'did --test' when no config is present
 - Update spec file for Python 3
