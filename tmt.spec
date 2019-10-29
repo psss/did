@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.4
+Version: 0.5
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -106,6 +106,50 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Tue Oct 29 2019 Petr Šplíchal <psplicha@redhat.com> - 0.5-1
+- Implement common --filter and --condition options
+- Store step data during save()
+- Common logging methods, improve run() output
+- Implement common options and parent checking
+- Sync the whole plan workdir to the guest
+- Fix inheritance and enable --verbose mode.
+- Rename the main metadata tree option to --root
+- Adjust tests to skip provision, fix raw strings
+- Move example Vagrantfiles to examples
+- Implement ProvisionVagrant (#20)
+- Implement tests.yaml creation in discover
+- Implement 'tmt test export' with yaml support
+- Support checking parent options, fix plan show -v
+- Implement common methods status(), read(), write()
+- Implement run() to easily execute in the workdir
+- Implement DiscoverPlugin class, require step names
+- Move workdir handling into the Common class
+- Common class & filtering tests/plans for execution
+- Improve step handling, remove global variables
+- Fix 'tmt init --full' in a clean directory
+- Better handle defaults and command line options
+- Do not run systemd plan as it fetches remote repo
+- Add documentation generated files to gitignore
+- Get rid of the test attribute inconsistencies
+- Fix various issues in localhost provisioner skeleton
+- Update discover step story with example output
+- Add an example of a shell discover step
+- Add a simple smoke test story
+- Add base class for provisioner
+- Initial implementation of the discover step
+- Allow creating tmt tree under an existing one
+- Support multiple configs in Step.show()
+- Support and document optional dependencies install
+- Add an example of multiple configs
+- Convert step data to list, add execute check
+- Add --how option to provision command
+- Move step classes into separate directories
+- Implement class Run with workdir support
+- Add a workdir structure example
+- Separate metadata tree for L2 metadata examples
+- Add stories covering the Metadata Specification
+- Enable bash completion feature
+
 * Thu Oct 17 2019 Petr Šplíchal <psplicha@redhat.com> - 0.4-1
 - Add tests for 'tmt init', allow overwritting
 - Use plural commands to prevent confusion [fix #10]
