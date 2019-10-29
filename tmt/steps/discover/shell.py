@@ -11,8 +11,11 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
 
     def __init__(self, data, step):
         """ Check supported attributes """
-        super(DiscoverShell, self).__init__(step=step, name=data['name'])
-        self.tests = data.get('tests')
+        super(DiscoverShell, self).__init__(
+            data=data, step=step, name=data['name'])
 
     def go(self):
         """ Discover available tests """
+
+    def tests(self):
+        return []
