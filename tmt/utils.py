@@ -3,7 +3,6 @@
 """ Test Metadata Utilities """
 
 from click import style, echo, wrap_text
-from yaml import FullLoader
 
 from collections import OrderedDict
 import unicodedata
