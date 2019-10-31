@@ -40,3 +40,43 @@ class Provision(tmt.steps.Step):
         for guest in self.guests:
             guest.go()
             guest.save()
+
+    def execute(self, command):
+        for guest in self.guests:
+            guest.execute(command)
+
+    def load(self):
+        for guest in self.guests:
+            guest.load()
+
+    def save(self):
+        for guest in self.guests:
+            guest.save()
+
+    def show(self):
+        for guest in self.guests:
+            guest.show()
+
+    def sync_workdir_to_guest(self):
+        for guest in self.guests:
+            guest.sync_workdir_to_guest()
+
+    def sync_workdir_from_guest(self):
+        for guest in self.guests:
+            guest.sync_workdir_from_guest()
+
+    def copy_from_guest(self, target):
+        for guest in self.guests:
+            guest.copy_from_guest(target)
+
+    def destroy(self):
+        for guest in self.guests:
+            guest.destroy()
+
+    def prepare(self, how):
+        for guest in self.guests:
+            guest.prepare(how)
+
+    def clean(self):
+        for guest in self.guests:
+            guest.clean()
