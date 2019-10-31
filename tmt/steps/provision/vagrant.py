@@ -8,7 +8,7 @@ import os
 import re
 
 from tmt.steps.provision.base import ProvisionBase
-from tmt.utils import ConvertError, StructuredFieldError, SpecificationError
+from tmt.utils import ConvertError, StructuredFieldError, SpecificationError, GeneralError
 
 from click import echo
 from urllib.parse import urlparse
@@ -32,7 +32,6 @@ class ProvisionVagrant(ProvisionBase):
     default_image = 'centos/7'
     default_container = 'centos:7'
     default_indent = 16
-    image_uri = None
     timeout = 333
     eol = '\n'
 
@@ -44,40 +43,25 @@ class ProvisionVagrant(ProvisionBase):
         self.vagrantfile = os.path.join(self.provision_dir, 'Vagrantfile')
         self.vf_data = ''
 
-        # Are we resuming?
-        if os.path.exists(self.vagrantfile) and os.path.isfile(self.vagrantfile):
-            self.validate()
-            return
-
         # Check for working Vagrant
         self.run_vagrant('version')
 
         # Let's check what's needed
         self.check_how()
 
-        # TODO: where should this run?
-        self.init()
-
     def load(self):
         """ Load ProvisionVagrant step """
         #TODO: ensure this loads self.data[*]
-        # instancename and regenerates provision_dir and vagrantfile
         self.super.load()
 
     def save(self):
         """ Save ProvisionVagrant step """
         #TODO: ensure this saves self.data[*]
-        # instancename
         self.super.save()
-        #TypeError: save() takes 1 positional argument but 2 were given
-
-#    def wake(self):
-#        """ Prepare the Vagrantfile """
-#        self.super.wake(self)
-#        # capabilities? providers?
 
     def go(self):
         """ Execute actual provisioning """
+        self.init()
         self.info('Provisioning vagrant, Vagrantfile', self.vf_read())
         self.run_vagrant('up')
 
@@ -86,7 +70,8 @@ class ProvisionVagrant(ProvisionBase):
         self.run_vagrant('ssh', '-c', cmd)
 
     def show(self):
-        """ Show execute details """
+        """ Create and show the Vagrantfile """
+        self.init()
         self.super.show(keys=['how', 'box', 'image'])
         self.info('Vagrantfile', self.vf_read())
 
@@ -97,7 +82,8 @@ class ProvisionVagrant(ProvisionBase):
 
     def sync_workdir_from_guest(self):
         """ sync from guest to host """
-        raise ConvertError('NYI: cannot currently sync from guest.')
+        self.plugin_install('vagrant-rsync-back')
+        self.run_vagrant('rsync-back')
 
     def copy_from_guest(self, target):
         """ copy file/folder from guest to host's copy dir """
@@ -119,15 +105,32 @@ class ProvisionVagrant(ProvisionBase):
         """ remove instance """
         self.run_vagrant('destroy', '-f')
 
-    def prepare(self, name, path):
+    def prepare(self, how, what, name='prepare'):
         """ add single 'preparator' and run it """
-        raise ConvertError('NYI: cannot currently add preparators.')
-        self.add_config('provision', name, 'path')
+        if is_uri(what):
+            method = 'path'
+        else:
+            method = 'inline'
+
+        cmd = 'provision'
+
+        self.add_config(cmd,
+            quote(name),
+            self.kv('type', how),
+            self.kv('run', 'never'),
+            self.kv(method, what))
+
+        self.run_vagrant(cmd, f'--{cmd}-with', name)
 
 
     ## Additional API ##
     def init(self):
         """ Initialize Vagrantfile """
+        # Are we resuming?
+        if os.path.exists(self.vagrantfile) and os.path.isfile(self.vagrantfile):
+            self.validate()
+            return
+
         # Create a Vagrantfile
         self.create()
 
@@ -143,13 +146,6 @@ class ProvisionVagrant(ProvisionBase):
         self.info('Initialized new Vagrantfile', self.vf_read())
         self.validate()
 
-    def status(self):
-        """ Get vagrant's status """
-        raise ConvertError('NYI: cannot currently return status.')
-        # TODO: how to get stdout from self.run?
-        #csp = self.run_vagrant('status')
-        #return self.hr(csp.stdout)
-
     def clean(self):
         """ remove box and base box """
         self.run_vagrant('box', 'remove', '-f', self.data['box'])
@@ -162,6 +158,9 @@ class ProvisionVagrant(ProvisionBase):
     def reload(self):
         """ restart guest """
         self.run_vagrant('reload')
+
+    def plugin_install(self, plugin):
+        self.run_vagrant('plugin', 'install', plugin)
 
 
     ## Knowhow ##
@@ -176,17 +175,7 @@ class ProvisionVagrant(ProvisionBase):
 
         image = self.data['image']
 
-        try:
-            i = urlparse(image)
-            if not i.schema:
-                raise (i)
-            self.image_uri = i
-        except:
-            pass
-
-        self.info('image_uri', self.image_uri)
-
-        if self.image_uri:
+        if self.is_uri(image):
             self.set_default('box', 'box_' + self.instance_name)
 
             if re.search(r"\.box$", image) is None:
@@ -203,38 +192,44 @@ class ProvisionVagrant(ProvisionBase):
 
         else:
             self.set_default('box', image)
+            self.data['image'] = None
 
-        for x in ('how','box','image'):
+        for x in ('how', 'box', 'image'):
             self.info(x, self.data[x])
 
     def add_how(self):
-        target = f"how_{self.data['how']}"
-        self.debug(f"Relaying to: {target}")
+        """ Add provider (in Vagrant-speak) specifics """
         getattr(self,
-            target,
+            f"how_{self.data['how']}",
             lambda: 'generic',
             )()
 
     def how_virtual(self):
-        self.debug(f"generating: virtual")
-        # let's just do libvirt for now
+        self.debug("generating", "virtual")
+
+        image = self.data['image']
+
+        if image:
+            self.add_config(f"box_url = '{image}'")
+
+        # let's try libvirt as default for now
         self.how_libvirt()
 
     def how_generic():
-        self.debug(f"generating: generic")
-        self.add_provider_config(self.data['how'])
+        self.debug("generating", "generic")
+        self.add_provider(self.data['how'])
 
     def how_libvirt(self):
-        self.debug(f"generating: libvirt")
-        self.vf_backup()
+        self.debug("generating", "libvirt")
+        self.vf_backup("QEMU session")
         try:
-            self.debug(f"Trying QEMU session.")
-            self.add_provider_config('libvirt', 'qemu_use_session = true')
-        except:
+            self.add_provider('libvirt', 'qemu_use_session = true')
+        except GeneralError as error:
+            self.debug(error)
             self.vf_restore()
 
     def how_openstack(self):
-        self.debug(f"generating: openstack")
+        self.debug("generating", "openstack")
         raise SpecificationError('NYI: cannot currently run on openstack.')
 
     def how_docker(self):
@@ -244,11 +239,18 @@ class ProvisionVagrant(ProvisionBase):
         self.how_container()
 
     def how_container(self):
-        self.debug(f"generating: container")
+        self.debug("generating", "container")
         raise SpecificationError('NYI: cannot currently run containers.')
 
 
     ## END of API ##
+    def vagrant_status(self):
+        """ Get vagrant's status """
+        raise ConvertError('NYI: cannot currently return status.')
+        # TODO: how to get stdout from self.run?
+        #csp = self.run_vagrant('status')
+        #return self.hr(csp.stdout)
+
     def add_defaults(self):
         """ Adds default config entries
             1) Disable default sync
@@ -283,14 +285,20 @@ class ProvisionVagrant(ProvisionBase):
         self.add_config('synced_folder',
             self.quote(sync_from),
             self.quote(sync_to),
-            f'type: {self.quote(self.sync_type)}', *args)
+            self.kv('type', self.sync_type),
+            *args)
 
-    def add_provider_config(self, provider, *config):
+    def add_provider(self, provider, *config):
+        self.add_config_block('provider', provider, *config)
+
+    def add_config_block(self, name, block, *config):
+        """ Add config block into Vagrantfile
+        """
         config_str = ''
         for c in config:
-          config_str += f'{provider}.{c}; '
+            config_str += f'{block}.{c}; '
 
-        self.add_raw_config(f"provider '{provider}' do |{provider}| {config_str}; end")
+        self.add_raw_config(f"{name} '{block}' do |{block}| {config_str}end")
 
     def add_config(self, *config):
         """ Add config entry into Vagrantfile
@@ -318,7 +326,7 @@ class ProvisionVagrant(ProvisionBase):
             right before last 'end'.
             Prepends with `config_prefix`.
         """
-        self.info('Adding into Vagrantfile', [config])
+        self.info('Adding into Vagrantfile', config)
 
         vf_tmp = self.vf_read()
 
@@ -354,13 +362,18 @@ class ProvisionVagrant(ProvisionBase):
 
         self.validate()
 
-    def vf_backup(self):
+    def vf_backup(self, msg=''):
         """ backup Vagrantfile contents to vf_data """
+        if msg:
+            self.info("Trying", msg)
+        self.msg = msg
         self.vf_data = self.vf_read()
 
     def vf_restore(self):
         """ restore Vagrantfile contents frmo vf_data"""
-        self.debug('Restoring Vagrantfile from memory.')
+        if self.msg:
+            self.info('Reverting', self.msg, 'red')
+            self.msg = ''
         self.vf_write(self.vf_data)
 
 
@@ -377,34 +390,32 @@ class ProvisionVagrant(ProvisionBase):
         """
         self.msgout('debug', key, val, color)
 
-    def msgout(self, mtype, key = '', val = '', color = 'Red'):
+    def msgout(self, mtype, key = '', val = '', color = 'red'):
         """ args: key, value, indent, color
             all optional
         """
-        # Avoid unneccessary processing
-        if self.opt(mtype) or self.opt('debug'):
-            if type(val) is list and len(val):
-                ind_val = self.eol
-                for v in val:
-                    if v:
-                        ind_val += ' '*self.default_indent + self.hr(v) + self.eol
+        if type(val) is list and len(val):
+            ind_val = self.eol
+            for v in val:
+                if v:
+                    ind_val += ' '*self.default_indent + self.hr(v) + self.eol
 
-                val = ind_val
-            else:
-                val = self.hr(val)
+            val = ind_val
+        else:
+            val = self.hr(val)
 
-            emsg = lambda: RuntimeError(f"Message type unknown: {mtype}")
+        emsg = lambda: RuntimeError(f"Message type unknown: {mtype}")
 
-            if val:
-                getattr(self.super,
-                    mtype,
-                    emsg,
-                    )(key, val, color)
-            else:
-                getattr(self.super,
-                    mtype,
-                    emsg,
-                    )(key)
+        if val:
+            getattr(self.super,
+                mtype,
+                emsg,
+                )(key, val, color)
+        else:
+            getattr(self.super,
+                mtype,
+                emsg,
+                )(key)
 
     def hr(self, val):
         """ return human readable data """
@@ -452,3 +463,11 @@ class ProvisionVagrant(ProvisionBase):
 
     def quote(self, string):
         return f'"{string}"'
+
+    def is_uri(self, uri):
+        return getattr(urlparse(uri),
+            'schema',
+            None)
+
+    def kv(self, key, val):
+        return f'{key}: "{val}"'
