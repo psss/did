@@ -9,5 +9,8 @@ discover:
       test: tmt test --help
     - name: /help/plan
       test: tmt plan --help
+    - name: /help/smoke
+      test: ./smoke.sh
+      path: /tests/shell
 execute:
     how: shell
