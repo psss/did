@@ -42,6 +42,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         self.revision = data.get('revision')
         filtr = data.get('filter', [])
         self.filters = filtr if isinstance(filtr, list) else [filtr]
+        self._tests = []
 
     def go(self):
         """ Discover available tests """
@@ -63,28 +64,29 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.info('revision', self.revision, 'green')
             self.debug(f"Checkout revision '{self.revision}'.")
             self.run(f"git checkout -f {self.revision}", cwd=testdir)
-        # Initialize the metadata tree
-        self.debug(f"Check metadata tree in '{testdir}'.")
-        if self.opt('dry'):
-            return
-        self.tests_tree = tmt.Tree(testdir)
-
-    def tests(self):
-        """ Return all discovered tests """
         # Show filters if provided
         if self.filters:
             for filter_ in self.filters:
                 self.info('filter', filter_, 'green')
-        # Nothing to do in dry mode
+        # Initialize the metadata tree
+        self.debug(f"Check metadata tree in '{testdir}'.")
+        # Nothing more to do here when in dry mode
         if self.opt('dry'):
             return []
-        # Prepare test name filter if provided
-        tests = self.tests_tree.tests(filters=self.filters)
+        tests = tmt.Tree(testdir).tests(filters=self.filters)
+        # Modify test names and paths to make them unique
+        for test in tests:
+            test.name = f"/{self.name}{test.name}"
+            test.path = f"/{self.name}/tests{test.path}"
         # Summary of selected tests, test list in verbose mode
         self.info('tests', listed(len(tests), 'test') + ' selected', 'green')
         for test in tests:
             self.verbose(test.name, color='red', shift=1)
-        return tests
+        self._tests = tests
+
+    def tests(self):
+        """ Return all discovered tests """
+        return self._tests
 
     def dump(self):
         """ Dump current step data """

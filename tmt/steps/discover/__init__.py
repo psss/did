@@ -63,7 +63,6 @@ class Discover(tmt.steps.Step):
         """ Return a list of all tests """
         for step in self.steps:
             for test in step.tests():
-                test._repository = step
                 yield test
 
 

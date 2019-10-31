@@ -5,18 +5,23 @@ description:
     possible for example to discover tests from multiple repos.
     The 'execute' steps supports only a single configuration.
 discover:
-  - name: one
+  - name: tier0
+    how: fmf
+    filter: 'tier: 0'
+    repository: https://github.com/psss/tmt
+  - name: tier1
     how: fmf
     filter: 'tier: 1'
-    repository: https://repository.one/
-  - name: two
+    repository: https://github.com/psss/tmt
+  - name: all
     how: fmf
-    filter: 'tier: 2'
-    repository: https://repository.two/
+    repository: https://github.com/psss/tmt
 prepare:
   - how: ansible
+    name: packages
     playbooks: plans/packages.yml
   - how: shell
-    script: dnf -y install package
+    name: services
+    script: systemctl start service
 execute:
     how: beakerlib

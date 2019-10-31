@@ -185,10 +185,10 @@ class Test(Node):
             return super(Test, self).export(format_, keys)
 
         # Prepare special format for the executor
-        name = f'/{self._repository}{self.name}'
+        name = self.name
         data = dict()
         data['test'] = self.test
-        data['path'] = f'/{self._repository}{self.path}'
+        data['path'] = self.path
         if self.duration is not None:
             data['duration'] = self.duration
         if self.environment is not None:
