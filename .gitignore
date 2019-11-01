@@ -7,3 +7,4 @@ dist
 docs/_build
 docs/spec
 docs/stories
+__pycache__
