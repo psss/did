@@ -210,7 +210,7 @@ class ProvisionVagrant(ProvisionBase):
         image = self.data['image']
 
         if image:
-            self.add_config(f"box_url = '{image}'")
+            self.add_config_value("box_url", image)
 
         # let's try libvirt as default for now
         self.how_libvirt()
@@ -298,19 +298,24 @@ class ProvisionVagrant(ProvisionBase):
         for c in config:
             config_str += f'{block}.{c}; '
 
-        self.add_raw_config(f"{name} '{block}' do |{block}| {config_str}end")
+        self.add_config(f"{name} '{block}' do |{block}| {config_str}end")
+
+    def add_config_value(self, key, value):
+        """ Add config = value into Vagrantfile
+        """
+        self.add_config(f"{key} = '{value}'")
 
     def add_config(self, *config):
-        """ Add config entry into Vagrantfile
+        """ Add config entry into Vagrantfile right before last 'end',
+            and prepends it with `config_prefix`.
 
-              config = "string"
+            Adding arbitrary config entry:
+                config = "string"
 
-            or:
-
-              config = ['one', 'two', 'three']
+            or, with conversion:
+                config = ['one', 'two', 'three']
                 => one "two", three
 
-            see add_raw_config
         """
         if len(config) == 1:
             config = config[0]
@@ -319,13 +324,6 @@ class ProvisionVagrant(ProvisionBase):
         else:
             config = f'{config[0]} ' + ', '.join(config[1:])
 
-        self.add_raw_config(config)
-
-    def add_raw_config(self, config):
-        """ Add arbitrary config entry into Vagrantfile
-            right before last 'end'.
-            Prepends with `config_prefix`.
-        """
         self.info('Adding into Vagrantfile', config)
 
         vf_tmp = self.vf_read()
