@@ -15,7 +15,16 @@ with open('tmt.spec', encoding='utf-8') as specfile:
 __version__ = '.'.join([version, release])
 __pkg__ = 'tmt'
 __pkgdir__ = {}
-__pkgs__ = ['tmt']
+__pkgs__ = [
+    'tmt',
+    'tmt/steps',
+    'tmt/steps/discover',
+    'tmt/steps/provision',
+    'tmt/steps/prepare',
+    'tmt/steps/execute',
+    'tmt/steps/report',
+    'tmt/steps/finish',
+    ]
 __provides__ = ['tmt']
 __desc__ = 'Test Management Tool'
 __scripts__ = ['bin/tmt']
