@@ -15,10 +15,9 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         """ Check supported attributes """
         super(DiscoverShell, self).__init__(
             data=data, step=step, name=data['name'])
-        # Check provided tests
+        # Check provided tests, default to an empty list
         if 'tests' not in self.data:
-            raise tmt.utils.SpecificationError(
-                f"Missing 'tests' in '{self.step.plan.name}'.")
+            self.data['tests'] = []
         self._tests = []
 
     def go(self):

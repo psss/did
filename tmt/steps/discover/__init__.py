@@ -7,9 +7,6 @@ import tmt
 class Discover(tmt.steps.Step):
     """ Gather and show information about test cases to be executed """
 
-    # Default implementation for discover is fmf
-    how = 'fmf'
-
     def __init__(self, data, plan):
         """ Store supported attributes, check for sanity """
         super(Discover, self).__init__(data, plan)
