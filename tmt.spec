@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.5
+Version: 0.6
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -106,6 +106,17 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Mon Nov 04 2019 Petr Šplíchal <psplicha@redhat.com> - 0.6-1
+- List all python packages in the setup.py
+- Initial implementation of the execute step
+- Vagrant Provider output and provider handling
+- Relay API methods to instances in provision
+- Simple localhost provisioner (#28)
+- Implement shell discover, add a simple example
+- Fix test path, discover in go(), adjust example
+- Add run.sh for running the tests on guest
+- Add default config for libvirt to use QEMU session
+
 * Tue Oct 29 2019 Petr Šplíchal <psplicha@redhat.com> - 0.5-1
 - Implement common --filter and --condition options
 - Store step data during save()
