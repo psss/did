@@ -2,30 +2,32 @@ summary:
     Demonstrate various test discover options
 execute:
     how: beakerlib
+provision:
+    how: local
 
 /fmf:
     /directory:
         /mini:
+            summary: Minimal from directory
             discover:
-                summary: Minimal from directory
                 how: fmf
         /full:
+            summary: Full from directory
             discover:
-                summary: Full from directory
                 how: fmf
                 revision: devel
-                filter: 'tier:1'
+                filter: 'tier: 1'
 
     /repository:
         /mini:
+            summary: Minimal from repository
             discover:
-                summary: Minimal from repository
                 how: fmf
                 repository: https://github.com/psss/tmt
         /full:
+            summary: Full from repository
             discover:
-                summary: Full from repository
                 how: fmf
                 repository: https://github.com/psss/tmt
                 revision: devel
-                filter: 'tier:1'
+                filter: 'tier: 1'
