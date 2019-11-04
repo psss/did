@@ -10,6 +10,7 @@ import subprocess
 import fmf.utils
 import pprint
 import shlex
+import select
 import yaml
 import re
 import io
@@ -92,25 +93,81 @@ class Common(object):
             message = key
         else:
             message = f'{key}: {value}'
-        echo(INDENT * (self._level() + shift) + message)
+        return INDENT * (self._level() + shift) + message
+
+    def _log(self, message):
+        """ Append provided message to the current log """
+        with open(os.path.join(self.workdir, 'log.txt'), 'a') as log:
+            log.write(message + '\n')
 
     def info(self, key, value=None, color=None, shift=0):
         """ Show a message unless in quiet mode """
+        self._log(self._indent(key, value, color=None, shift=shift))
         if not self.opt('quiet'):
-            self._indent(key, value, color, shift)
+            echo(self._indent(key, value, color, shift))
 
     def verbose(self, key, value=None, color=None, shift=0):
         """ Show message if in verbose or debug mode """
+        self._log(self._indent(key, value, color=None, shift=shift))
         if self.opt('verbose') or self.opt('debug'):
-            self._indent(key, value, color, shift)
+            echo(self._indent(key, value, color, shift))
 
     def debug(self, key, value=None, color=None, shift=1):
         """ Show message if in debug mode """
+        self._log(self._indent(key, value, color=None, shift=shift))
         if self.opt('debug'):
-            self._indent(key, value, color, shift)
+            echo(self._indent(key, value, color, shift))
+
+    def _run(self, command, cwd):
+        """ Run command, capture the output """
+        # Create the process
+        process = subprocess.Popen(
+            command, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        descriptors = [process.stdout.fileno(), process.stderr.fileno()]
+        stdout = ''
+        stderr = ''
+
+        # Capture the output
+        while process.poll() is None:
+            # Check which file descriptors are ready for read
+            selected = select.select(descriptors, [], [])
+            for descriptor in selected[0]:
+                # Handle stdout
+                if descriptor == process.stdout.fileno():
+                    line = process.stdout.readline().decode('utf-8')
+                    stdout += line
+                    if line != '':
+                        self.debug('out', line.rstrip('\n'), 'yellow')
+                # Handle stderr
+                if descriptor == process.stderr.fileno():
+                    line = process.stderr.readline().decode('utf-8')
+                    stderr += line
+                    if line != '':
+                        self.debug('err', line.rstrip('\n'), 'yellow')
+
+        # Check for possible additional output
+        for line in process.stdout.readlines():
+            line = line.decode('utf-8')
+            stdout += line
+            self.debug('out', line.rstrip('\n'), 'yellow')
+        for line in process.stderr.readlines():
+            line = line.decode('utf-8')
+            stderr += line
+            self.debug('err', line.rstrip('\n'), 'yellow')
+
+        # Handle the exit code, return output
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(
+                process.returncode, ' '.join(command))
+        return stdout, stderr
 
     def run(self, command, message=None, cwd=None):
-        """ Run command in the workdir, give message, handle errors """
+        """
+        Run command, give message, handle errors
+
+        Command is run in the workdir be default.
+        Returns (stdout, stderr) tuple.
+        """
         # Use a generic message if none given, prepare error message
         if not message:
             message = "Run command '{}'.".format(
@@ -122,34 +179,13 @@ class Common(object):
         if self.opt('dry'):
             return
 
-        # Split the command if needed
+        # Prepare command, run it, handle the exit code
         if isinstance(command, str):
-            command = command.split()
+            command = shlex.split(command)
         try:
-        # Open log and run the command
-            with open(os.path.join(self.workdir, 'log.txt'), 'a') as log:
-                process = subprocess.Popen(
-                    command, cwd=cwd or self.workdir,
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                debug = self.opt('debug')
-                while process.poll() is None:
-                    line = process.stdout.readline().decode('utf-8')
-                    if line != '':
-                        log.write(line)
-                        log.flush()
-                        self.debug('out', line.rstrip('\n'), 'yellow')
-
-                    line = process.stderr.readline().decode('utf-8')
-                    if line != '':
-                        log.write(line)
-                        log.flush()
-                        self.debug('err', line.rstrip('\n'), 'yellow')
-        except OSError as error:
+            return self._run(command, cwd=cwd or self.workdir)
+        except (OSError, subprocess.CalledProcessError) as error:
             raise GeneralError(f"{message}\n{error}")
-
-        # Handle the exit code
-        if process.returncode != 0:
-            raise GeneralError(message)
 
     def read(self, path):
         """ Read a file from the workdir """

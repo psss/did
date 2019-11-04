@@ -299,7 +299,7 @@ class Plan(Node):
         """ Execute the plan """
         # Show plan name and summary (one blank line to separate plans)
         self.info('')
-        self.info(style(self.name, fg='red'))
+        self.info(self.name, color='red')
         if self.summary:
             self.verbose('summary', self.summary, 'green')
         # Wake up all steps
@@ -530,7 +530,7 @@ class Run(tmt.utils.Common):
         self.tree = tree if tree else tmt.Tree('.')
         # Prepare the workdir
         self._workdir_init(id_)
-        self.debug("Using tree '{self.tree.root}'.")
+        self.debug(f"Using tree '{self.tree.root}'.")
         self._plans = None
 
     @property
