@@ -369,7 +369,7 @@ _test_templates = listed(tmt.templates.TEST, join='or')
     prompt='Template ({})'.format(_test_templates))
 @verbose_debug_quiet
 @force_dry
-def create(context, name, template, **kwargs):
+def create(context, name, template, force, **kwargs):
     """ Create a new test based on given template. """
     tmt.Test._context = context
     tmt.Test.create(name, template, context.obj.tree, force)
@@ -501,7 +501,7 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
     prompt='Template ({})'.format(_plan_templates))
 @verbose_debug_quiet
 @force_dry
-def create(context, name, template, **kwargs):
+def create(context, name, template, force, **kwargs):
     """ Create a new plan based on given template. """
     tmt.Plan._context = context
     tmt.Plan.create(name, template, context.obj.tree, force)
@@ -573,7 +573,7 @@ _story_templates = listed(tmt.templates.STORY, join='or')
     help='Story template ({}).'.format(_story_templates))
 @verbose_debug_quiet
 @force_dry
-def create(context, name, template, **kwargs):
+def create(context, name, template, force, **kwargs):
     """ Create a new story based on given template. """
     tmt.Story._context = context
     tmt.base.Story.create(name, template, context.obj.tree, force)

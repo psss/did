@@ -48,6 +48,30 @@ def test_init():
     os.chdir(original_directory)
     shutil.rmtree(tmp)
 
+def test_create():
+    """ Test, plan and story creation """
+    # Create a test directory
+    tmp = tempfile.mkdtemp()
+    original_directory = os.getcwd()
+    os.chdir(tmp)
+    # Commands to test
+    commands = [
+        'init',
+        'test create -t beakerlib test',
+        'test create -t shell test',
+        'plan create -t mini test',
+        'plan create -t full test',
+        'story create -t mini test',
+        'story create -t full test',
+        ]
+    for command in commands:
+        result = runner.invoke(tmt.cli.main, command.split())
+        assert result.exit_code == 0
+        os.system('rm -rf *')
+    # Test directory cleanup
+    os.chdir(original_directory)
+    shutil.rmtree(tmp)
+
 def test_no_metadata():
     """ No metadata found """
     tmp = tempfile.mkdtemp()
