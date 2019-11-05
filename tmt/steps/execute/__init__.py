@@ -5,7 +5,9 @@
 import tmt
 import os
 import shutil
+
 from tmt.steps.execute import shell, beakerlib
+from tmt.utils import RUNNER
 
 
 class Execute(tmt.steps.Step):
@@ -50,17 +52,19 @@ class Execute(tmt.steps.Step):
         super(Execute, self).go()
         self.executor.go(self.plan.workdir)
 
-    def sync_run_sh(self):
-        """ Place run.sh script to workdir  """
-        # TODO: find better way to get source path of run.sh
-        src_path = os.path.dirname(tmt.steps.execute.__file__)
-        shutil.copy(os.path.join(src_path, 'run.sh'), self.workdir)
-        # sync added run.sh to quests
+    def sync_runner(self):
+        """ Place the runner script to workdir  """
+        # Detect location of the runner from path
+        stdout, stderr = self.run(
+            f'which {RUNNER}', f"Find the '{RUNNER}' script.", dry=True)
+        script_path = os.path.realpath(stdout.strip())
+        self.debug(f"Copy '{script_path}' to '{self.workdir}'.")
+        # Nothing more to do in dry mode
+        if self.opt('dry'):
+            return
+        shutil.copy(script_path, self.workdir)
+        # Sync added runner to guests
         self.plan.provision.sync_workdir_to_guest()
-
-    def run(self, *args, **kwargs):
-        """  """
-        return self.plan.provision.execute(*args, **kwargs)
 
     # API
     def requires(self):

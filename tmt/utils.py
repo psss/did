@@ -25,6 +25,10 @@ WORKDIR_MAX = 1000
 # Hierarchy indent
 INDENT = 4
 
+# Simple runner script name
+RUNNER = 'tmt-runner.sh'
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Common
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,11 +173,12 @@ class Common(object):
                 process.returncode, ' '.join(command))
         return stdout, stderr
 
-    def run(self, command, message=None, cwd=None):
+    def run(self, command, message=None, cwd=None, dry=False):
         """
         Run command, give message, handle errors
 
         Command is run in the workdir be default.
+        In dry mode commands are not executed unless dry=True.
         Returns (stdout, stderr) tuple.
         """
         # Use a generic message if none given, prepare error message
@@ -183,9 +188,9 @@ class Common(object):
         self.debug(message)
         message = "Failed to " + message[0].lower() + message[1:]
 
-        # Nothing more to do in dry mode
-        if self.opt('dry'):
-            return
+        # Nothing more to do in dry mode (unless requested)
+        if self.opt('dry') and not dry:
+            return None, None
 
         # Prepare command, run it, handle the exit code
         if isinstance(command, str):

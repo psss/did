@@ -1,6 +1,9 @@
-from tmt.steps.execute.base import ExecutorBase
+# coding: utf-8
 
 """ Shell Executor Provider Class """
+
+from tmt.steps.execute.base import ExecutorBase
+from tmt.utils import RUNNER
 
 
 class ExecutorShell(ExecutorBase):
@@ -14,8 +17,8 @@ class ExecutorShell(ExecutorBase):
         """ Run tests """
         super(ExecutorShell, self).go(plan_workdir)
         # we need run.sh synced to workdir
-        self.step.sync_run_sh()
-        cmd = f'{self.step.workdir}/run.sh -v {plan_workdir} {self.type}'
+        self.step.sync_runner()
+        cmd = f'{self.step.workdir}/{RUNNER} -v {plan_workdir} {self.type}'
         self.step.run(cmd)
 
     # API

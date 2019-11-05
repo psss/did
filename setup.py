@@ -27,7 +27,7 @@ __pkgs__ = [
     ]
 __provides__ = ['tmt']
 __desc__ = 'Test Management Tool'
-__scripts__ = ['bin/tmt']
+__scripts__ = ['bin/tmt', 'bin/tmt-runner.sh']
 
 # Prepare install requires and extra requires
 install_requires = [
