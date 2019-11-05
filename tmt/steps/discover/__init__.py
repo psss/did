@@ -40,7 +40,7 @@ class Discover(tmt.steps.Step):
 
     def show(self):
         """ Show discover details """
-        keys = ['how', 'repository', 'destination', 'revision', 'filter']
+        keys = ['how', 'repository', 'revision', 'filter']
         super(Discover, self).show(keys)
 
     def go(self):

@@ -1,0 +1,8 @@
+# Use local provision for easy quick testing
+provision:
+    how: local
+
+# Use virtual to test in a virtual machine
+#provision:
+#    how: virtual
+#    image: fedora/30-cloud-base

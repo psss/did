@@ -58,8 +58,9 @@ class Provision(tmt.steps.Step):
             guest.save()
 
     def show(self):
-        for guest in self.guests:
-            guest.show()
+        """ Show provision details """
+        keys = ['how', 'image']
+        super(Provision, self).show(keys)
 
     def sync_workdir_to_guest(self):
         for guest in self.guests:

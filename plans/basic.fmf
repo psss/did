@@ -4,9 +4,7 @@ discover:
     how: fmf
     repository: https://github.com/psss/tmt
     revision: devel
-    filter: 'tier: 1'
-provision:
-    how: local
+    filter: 'tier: 0,1'
 prepare:
     how: ansible
     playbooks: plans/packages.yml
