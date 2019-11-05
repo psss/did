@@ -53,6 +53,15 @@ metadata specification (L1 and L2) and allows easy test execution.
 This package contains the Python 3 module.
 
 
+%package all
+Summary: %{summary}
+Requires: vagrant vagrant-libvirt
+
+%description all
+All extra dependencies of the Test Management Tool. Install this
+package to have all available plugins ready for testing.
+
+
 %prep
 %setup -q
 
@@ -102,6 +111,10 @@ export LANG=en_US.utf-8
 %files -n python%{python3_pkgversion}-%{name}
 %{python3_sitelib}/%{name}/
 %{python3_sitelib}/%{name}-*.egg-info/
+%license LICENSE
+
+
+%files all
 %license LICENSE
 
 
