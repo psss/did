@@ -453,10 +453,10 @@ class Story(Node):
 class Tree(tmt.utils.Common):
     """ Test Metadata Tree """
 
-    def __init__(self, path='.'):
-        """ Initialize path and tree """
+    def __init__(self, path='.', tree=None):
+        """ Initialize tmt tree from directory path or given fmf tree """
         self._path = path
-        self._tree = None
+        self._tree = tree
 
     @property
     def tree(self):

@@ -23,7 +23,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
     def go(self):
         """ Discover available tests """
         super(DiscoverShell, self).go()
-        tests = []
+        tests = fmf.Tree(dict(summary='tests'))
         path = False
         for data in self.data['tests']:
             # Extract name, make sure it is present
@@ -32,6 +32,10 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             except KeyError:
                 raise tmt.utils.SpecificationError(
                     f"Missing test name in '{self.step.plan.name}'.")
+            # Make sure that the test script is defined
+            if 'test' not in data:
+                raise tmt.utils.SpecificationError(
+                    f"Missing test script in '{self.step.plan.name}'.")
             # Adjust path if necessary (defaults to '.')
             try:
                 data['path'] = f"/{self.name}/tests{data['path']}"
@@ -39,11 +43,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             except KeyError:
                 data['path'] = '.'
             # Create a simple fmf node, adjust its name
-            node = fmf.Tree(data)
-            node.name = name
-            # Create a tmt test
-            test = tmt.Test(node)
-            tests.append(test)
+            tests.child(name, data)
         # Copy current directory to workdir only if any path specified
         if path:
             directory = self.step.plan.run.tree.root
@@ -51,6 +51,8 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             self.info('directory', directory, 'green')
             self.debug("Copy '{}' to '{}'.".format(directory, testdir))
             shutil.copytree(directory, testdir)
+        # Use a tmt.Tree to apply possible command line filters
+        tests = tmt.Tree(tree=tests).tests()
         # Summary of selected tests, test list in verbose mode
         summary = fmf.utils.listed(len(tests), 'test') + ' selected'
         self.info('tests', summary, 'green')
