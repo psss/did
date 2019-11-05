@@ -444,6 +444,7 @@ def create_file(path, content, name, force=False, mode=0o664, quiet=False):
         with open(path, 'w') as file_:
             file_.write(content)
         say("{} '{}' {}.".format(name.capitalize(), path, action))
+        os.chmod(path, mode)
     except OSError as error:
         raise GeneralError("Failed to create {} '{}' ({})".format(
             name, path, error))
