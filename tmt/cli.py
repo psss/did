@@ -201,6 +201,9 @@ def discover(context, **kwargs):
 @click.option(
     '-h', '--how', metavar='METHOD',
     help='Use specified method for provisioning.')
+@click.option(
+    '-i', '--image', metavar='IMAGE',
+    help='Select virtual machine image to be used.')
 @verbose_debug_quiet
 @force_dry
 def provision(context, **kwargs):

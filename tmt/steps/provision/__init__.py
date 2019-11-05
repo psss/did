@@ -23,9 +23,13 @@ class Provision(tmt.steps.Step):
     def wake(self):
         """ Wake up the step (process workdir and command line) """
         super(Provision, self).wake()
+        image = self.opt('image')
         # Choose the plugin
         for data in self.data:
             how = data.get('how')
+            # Update the image if provided
+            if image is not None:
+                data['image'] = image
             if how == 'local':
                 from .localhost import ProvisionLocalhost
                 self.guests.append(ProvisionLocalhost(data, self))
