@@ -27,7 +27,7 @@ __pkgs__ = [
     ]
 __provides__ = ['tmt']
 __desc__ = 'Test Management Tool'
-__scripts__ = ['bin/tmt', 'bin/tmt-runner.sh']
+__scripts__ = ['bin/tmt']
 
 # Prepare install requires and extra requires
 install_requires = [
@@ -63,6 +63,8 @@ default_setup = dict(
     download_url=download_url,
     long_description=readme,
     data_files=[],
+    package_data = {
+        'tmt/steps/execute': ['run.sh']},
     classifiers=[
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',

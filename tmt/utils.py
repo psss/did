@@ -26,7 +26,7 @@ WORKDIR_MAX = 1000
 INDENT = 4
 
 # Simple runner script name
-RUNNER = 'tmt-runner.sh'
+RUNNER = 'run.sh'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

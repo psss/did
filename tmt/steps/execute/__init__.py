@@ -54,10 +54,8 @@ class Execute(tmt.steps.Step):
 
     def sync_runner(self):
         """ Place the runner script to workdir  """
-        # Detect location of the runner from path
-        stdout, stderr = self.run(
-            f'which {RUNNER}', f"Find the '{RUNNER}' script.", dry=True)
-        script_path = os.path.realpath(stdout.strip())
+        # Detect location of the runner
+        script_path = os.path.join(os.path.dirname(__file__), RUNNER)
         self.debug(f"Copy '{script_path}' to '{self.workdir}'.")
         # Nothing more to do in dry mode
         if self.opt('dry'):
