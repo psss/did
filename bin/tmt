@@ -10,7 +10,5 @@ import fmf.utils
 try:
     tmt.cli.main()
 except tmt.utils.GeneralError as error:
-    if "--debug" in sys.argv:
-        raise
     fmf.utils.log.error(error)
     raise SystemExit(1)
