@@ -23,7 +23,7 @@ WORKDIR_ROOT = '/var/tmp/tmt'
 WORKDIR_MAX = 1000
 
 # Hierarchy indent
-INDENT = '    '
+INDENT = 4
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Common
@@ -87,13 +87,21 @@ class Common(object):
 
     def _indent(self, key, value=None, color=None, shift=0):
         """ Indent message according to the object hierarchy """
+        level = self._level() + shift
+        indent = ' ' * INDENT * level
+        deeper = ' ' * INDENT * (level + 1)
         if color is not None:
             key = style(key, fg=color)
         if value is None:
             message = key
         else:
+            # Multiline content indented deeper
+            if isinstance(value, str):
+                lines = value.splitlines()
+                if len(lines) > 1:
+                    value = ''.join([f"\n{deeper}{line}" for line in lines])
             message = f'{key}: {value}'
-        return INDENT * (self._level() + shift) + message
+        return indent + message
 
     def _log(self, message):
         """ Append provided message to the current log """
