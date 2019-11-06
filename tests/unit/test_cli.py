@@ -32,7 +32,7 @@ def test_init():
     result = runner.invoke(tmt.cli.main, ['init'])
     assert 'already exists' in result.output
     result = runner.invoke(tmt.cli.main, ['init', '--mini'])
-    assert 'tests/example' in result.output
+    assert 'plans/example' in result.output
     result = runner.invoke(tmt.cli.main, ['init', '--mini'])
     assert result.exception
     result = runner.invoke(tmt.cli.main, ['init', '--full', '--force'])
@@ -40,7 +40,7 @@ def test_init():
     # tmt init --mini in a clean directory
     os.system('rm -rf .fmf *')
     result = runner.invoke(tmt.cli.main, ['init', '--mini'])
-    assert 'tests/example' in result.output
+    assert 'plans/example' in result.output
     # tmt init --full in a clean directory
     os.system('rm -rf .fmf *')
     result = runner.invoke(tmt.cli.main, ['init', '--full'])

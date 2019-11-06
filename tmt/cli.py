@@ -669,11 +669,15 @@ def export(
 @main.command()
 @click.pass_context
 @click.argument('path', default='.')
-@click.option('--mini', is_flag=True, help='Create simple set of examples.')
-@click.option('--full', is_flag=True, help='Create full set of examples.')
+@click.option(
+    '--mini', is_flag=True, help='Create a minimal plan.')
+@click.option(
+    '--base', is_flag=True, help='Create a plan and a test.')
+@click.option(
+    '--full', is_flag=True, help='Create a story, a plan and a test.')
 @verbose_debug_quiet
 @force_dry
-def init(context, path, mini, full, force, **kwargs):
+def init(context, path, mini, base, full, force, **kwargs):
     """
     Initialize a new tmt tree.
 
@@ -705,9 +709,10 @@ def init(context, path, mini, full, force, **kwargs):
 
     # Populate the tree with example objects if requested
     if mini:
-        tmt.Test.create('/tests/example', 'shell', tree, force)
         tmt.Plan.create('/plans/example', 'mini', tree, force)
-        tmt.Story.create('/stories/example', 'mini', tree, force)
+    if base:
+        tmt.Test.create('/tests/example', 'beakerlib', tree, force)
+        tmt.Plan.create('/plans/example', 'base', tree, force)
     if full:
         tmt.Test.create('/tests/example', 'shell', tree, force)
         tmt.Plan.create('/plans/example', 'full', tree, force)
