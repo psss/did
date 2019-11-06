@@ -1,6 +1,6 @@
 Name: tmt
 Version: 0.6
-Release: 1%{?dist}
+Release: 4%{?dist}
 
 Summary: Test Management Tool
 License: MIT
@@ -55,7 +55,8 @@ This package contains the Python 3 module.
 
 %package all
 Summary: %{summary}
-Requires: vagrant vagrant-libvirt
+Requires: tmt
+Requires: vagrant vagrant-libvirt python3-nitrate
 
 %description all
 All extra dependencies of the Test Management Tool. Install this
