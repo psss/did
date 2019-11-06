@@ -50,7 +50,18 @@ class Execute(tmt.steps.Step):
     def go(self):
         """ Execute the test step """
         super(Execute, self).go()
-        self.executor.go(self.plan.workdir)
+
+        try:
+            self.executor.go(self.plan.workdir)
+        except GeneralError as error:
+            self.info('Error occured during test execution.', color='red')
+            self.plan.provision.execute('cat nohup.out')
+
+        self.plan.provision.sync_workdir_from_guest()
+
+        for logname in ['stdout.log', 'stderr.log']:
+            logpath = os.path.join(self.workdir, logname)
+            self.debug(logname, open(logpath).read(), 'yellow')
 
     def sync_runner(self):
         """ Place the runner script to workdir  """
