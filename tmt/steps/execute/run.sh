@@ -169,14 +169,13 @@ tmt_run_shell () {
 tmt_run_beakerlib () {
     local result
     tmt_verbose 3 "beakerlib execute: $1"
-    bash -c "export BEAKERLIB_DIR='.' $1" 1>"$tmt_LOGOUT_F" 2>&1
+    bash -c "export BEAKERLIB_DIR=$(pwd); $1" 1>"$tmt_LOGOUT_F" 2>&1
 
     [[ -z "$tmt_VERBOSE" ]] || {
         tmt_verbose 2 "$tmt_JOURNAL_F:"
         cat "$tmt_JOURNAL_F" >&2
     }
-
-    result="$(grep '^OVERALL RESULT: ' "$tmt_JOURNAL_F")" \
+    result="$(grep 'OVERALL RESULT: ' "$tmt_JOURNAL_F")" \
         || { tmt_error "Result not found" ; return ; }
 
     # probably not needed

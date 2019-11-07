@@ -8,6 +8,7 @@ import shutil
 
 from tmt.steps.execute import shell, beakerlib
 from tmt.utils import RUNNER
+from fmf.utils import listed
 
 
 class Execute(tmt.steps.Step):
@@ -27,7 +28,8 @@ class Execute(tmt.steps.Step):
         """ Wake up the step (process workdir and command line) """
         super(Execute, self).wake()
         self._check_data()
-        self.executor = self.how_map[self.data['how']](self.data, self)
+        self.executor = self.how_map[self.data['how']](
+                self.data, self, name='one')
 
     def _check_data(self):
         """ Validate input data """
@@ -53,15 +55,32 @@ class Execute(tmt.steps.Step):
 
         try:
             self.executor.go(self.plan.workdir)
-        except GeneralError as error:
+        except tmt.utils.GeneralError as error:
             self.info('Error occured during test execution.', color='red')
             self.plan.provision.execute('cat nohup.out')
 
         self.plan.provision.sync_workdir_from_guest()
 
+        output = {}
         for logname in ['stdout.log', 'stderr.log']:
             logpath = os.path.join(self.workdir, logname)
-            self.debug(logname, open(logpath).read(), 'yellow')
+            output[logname] = open(logpath).read()
+            self.debug(logname, output[logname], 'yellow')
+
+        # Process the stdout.log
+        overview = output['stdout.log'].rstrip('\nD')
+        self.verbose('overview', overview, color='green', shift=1)
+        passed = 0
+        failed = 0
+        for character in output['stdout.log']:
+            if character == '.':
+                passed += 1
+            if character == 'F':
+                failed += 1
+        passed = listed(passed, 'test')
+        failed = listed(failed, 'test')
+        message = f"{passed} passed, {failed} failed"
+        self.info('result', message, color='green', shift=1)
 
     def sync_runner(self):
         """ Place the runner script to workdir  """
