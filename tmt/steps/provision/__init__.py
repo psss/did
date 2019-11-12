@@ -21,7 +21,6 @@ class Provision(tmt.steps.Step):
         # List of provisioned guests
         self.guests = []
         self.super = super(Provision, self)
-        self.path = os.path.join(self.workdir, 'guests.yaml')
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """
@@ -95,10 +94,12 @@ class Provision(tmt.steps.Step):
             guest.clean()
 
     def write(self, data):
-        self.super.write(self.path, self.dictionary_to_yaml(data))
+        path = os.path.join(self.workdir, 'guests.yaml')
+        self.super.write(path, self.dictionary_to_yaml(data))
 
     def read(self, current):
-        if os.path.exists(self.path) and os.path.isfile(self.path):
-            return self.super.read(self.path)
+        path = os.path.join(self.workdir, 'guests.yaml')
+        if os.path.exists(path) and os.path.isfile(path):
+            return self.super.read(path)
         else:
             return current

@@ -7,8 +7,6 @@ import os
 import shutil
 import subprocess
 
-from tmt.utils import ConvertError, StructuredFieldError, SpecificationError, GeneralError
-
 from click import echo
 
 class Prepare(tmt.steps.Step):

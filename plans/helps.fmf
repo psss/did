@@ -12,5 +12,8 @@ discover:
     - name: /help/smoke
       test: ./smoke.sh
       path: /tests/shell
+prepare:
+    how: shell
+    script: dnf copr enable -y psss/tmt && dnf install -y tmt
 execute:
     how: shell
