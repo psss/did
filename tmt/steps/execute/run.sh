@@ -94,40 +94,42 @@ tmt_run_test () {
     local duration="$4"
     local environment="$5"
     local execute
-
-    tmt_verbose 2 "run_test $name $test $path $duration $environment"
+    local cmd
 
     [[ -n "$name" ]] || {
-        tmt_error "Invalid test name: '$name'"
-        return 1
+        tmt_error "Invalid test name: '$name'" E
+        return
+    }
+    [[ -n "$test" ]] || {
+        tmt_error "[${name}] Missing test command." E
+        return
     }
     [[ -z "$path" ]] || {
         path="$(readlink -f "$tmt_TESTS_D/$path")"
         [[ -d "$path" ]] || {
-            tmt_error "[${name}]" "Could not find test dir: '$path'"
-            return 2
+            tmt_error "[${name}] Could not find test dir: '$path'" E
+            return
         }
         path="cd '$path' && "
     }
-    [[ -z "$environment" ]] || environment="env -i $environment "
     [[ -z "$duration" ]] || duration="timeout '$duration' "
+    [[ -z "$environment" ]] || environment="env -i $environment "
 
     local log_dir="${tmt_LOG_D}/$name"
     mkdir -p "$log_dir" || {
-        tmt_error "[${name}]" "Could not create log dir: '$log_dir'"
-        return 3
+        tmt_error "[${name}] Could not create log dir: '$log_dir'" E
+        return
     }
     cd "$log_dir" || {
-        tmt_error "[${name}]" "Could not cd: '$log_dir'"
-        return 4
+        tmt_error "[${name}] Could not cd: '$log_dir'" E
+        return
     }
     touch "$tmt_LOGOUT_F" "$tmt_LOGCODE_F" || {
-        tmt_error "[${name}]" "Could touch log files in '$log_dir'"
-        return 5
+        tmt_error "[${name}] Could touch log files in '$log_dir'" E
+        return
     }
 
-    local cmd="${path}${environment}${duration}${test}"
-    tmt_verbose 2 "tmt_run_${tmt_TYPE}" "$cmd"
+    cmd="${path}${environment}${duration}${test}"
 
     tmt_run_${tmt_TYPE} "$cmd"
     echo "$?" >"$tmt_LOGCODE_F"
@@ -157,26 +159,29 @@ tmt_abort () {
 }
 
 tmt_error () {
-    echo "Error:" "$@" >&2
+    echo "Error:" "$1" >&2
+
+    [[ -z "$2" ]] || echo -n "$2"
 }
 
 tmt_run_shell () {
-    tmt_verbose 3 "shell execute: $1"
+    tmt_verbose 2 "shell execute: $1"
     bash -c "$1" 1>"$tmt_LOGOUT_F" 2>&1
     return "$?"
 }
 
 tmt_run_beakerlib () {
     local result
-    tmt_verbose 3 "beakerlib execute: $1"
-    bash -c "export BEAKERLIB_DIR=$(pwd); $1" 1>"$tmt_LOGOUT_F" 2>&1
+    tmt_verbose 2 "beakerlib execute: $1"
+    bash -c "export BEAKERLIB_DIR='$(pwd)'; $1" 1>"$tmt_LOGOUT_F" 2>&1
 
-    [[ -z "$tmt_VERBOSE" ]] || {
-        tmt_verbose 2 "$tmt_JOURNAL_F:"
-        cat "$tmt_JOURNAL_F" >&2
-    }
-    result="$(grep 'OVERALL RESULT: ' "$tmt_JOURNAL_F")" \
-        || { tmt_error "Result not found" ; return ; }
+    #[[ -z "$tmt_VERBOSE" ]] || {
+    #    tmt_verbose 2 "$tmt_JOURNAL_F:"
+    #    cat "$tmt_JOURNAL_F" >&2
+    #}
+
+    result="$(grep '::   OVERALL RESULT: ' "$tmt_JOURNAL_F")" \
+        || { tmt_error "Result not found" ; return 1 ; }
 
     # probably not needed
     #result="$(cut -d' ' -f3- <<< "$result")"

@@ -9,6 +9,7 @@ import shutil
 from tmt.steps.execute import shell, beakerlib
 from tmt.utils import RUNNER
 from fmf.utils import listed
+from tmt.utils import GeneralError
 
 
 class Execute(tmt.steps.Step):
@@ -82,6 +83,7 @@ class Execute(tmt.steps.Step):
         message = f"{passed} passed, {failed} failed"
         self.info('result', message, color='green', shift=1)
 
+
     def sync_runner(self):
         """ Place the runner script to workdir  """
         # Detect location of the runner
@@ -93,6 +95,10 @@ class Execute(tmt.steps.Step):
         shutil.copy(script_path, self.workdir)
         # Sync added runner to guests
         self.plan.provision.sync_workdir_to_guest()
+
+    def execute(self, *args, **kwargs):
+        """ Execute command on provisioned machine """
+        return self.plan.provision.execute(*args, **kwargs)
 
     # API
     def requires(self):

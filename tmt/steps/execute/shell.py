@@ -19,13 +19,13 @@ class ExecutorShell(ExecutorBase):
         # we need run.sh synced to workdir
         self.step.sync_runner()
 
-        self.step.run(['nohup',
+        self.step.execute('nohup',
             f'{self.step.workdir}/{RUNNER}',
             '-v',
             plan_workdir,
             self.type,
             f'{self.step.workdir}/stdout.log',
-            f'{self.step.workdir}/stderr.log'])
+            f'{self.step.workdir}/stderr.log')
 
     # API
     def requires(self):

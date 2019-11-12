@@ -3,6 +3,7 @@
 """ Provision Step Classes """
 
 import tmt
+import os
 
 from click import echo
 
@@ -19,6 +20,8 @@ class Provision(tmt.steps.Step):
         super(Provision, self).__init__(data, plan)
         # List of provisioned guests
         self.guests = []
+        self.super = super(Provision, self)
+        self.path = os.path.join(self.workdir, 'guests.yaml')
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """
@@ -39,21 +42,26 @@ class Provision(tmt.steps.Step):
 
     def go(self):
         """ Provision all resources """
-        super(Provision, self).go()
+        self.super.go()
 
         for guest in self.guests:
             guest.go()
-            guest.save()
+            # this has to be fixed first
+            #guest.save()
 
-    def execute(self, command):
+    def execute(self, *args, **kwargs):
         for guest in self.guests:
-            guest.execute(command)
+            guest.execute(*args, **kwargs)
 
     def load(self):
+        self.guests = self.read(self.guests)
+
         for guest in self.guests:
             guest.load()
 
     def save(self):
+        self.write(self.guests)
+
         for guest in self.guests:
             guest.save()
 
@@ -78,10 +86,19 @@ class Provision(tmt.steps.Step):
         for guest in self.guests:
             guest.destroy()
 
-    def prepare(self, how):
+    def prepare(self, how, what):
         for guest in self.guests:
-            guest.prepare(how)
+            guest.prepare(how, what)
 
     def clean(self):
         for guest in self.guests:
             guest.clean()
+
+    def write(self, data):
+        self.super.write(self.path, self.dictionary_to_yaml(data))
+
+    def read(self, current):
+        if os.path.exists(self.path) and os.path.isfile(self.path):
+            return self.super.read(self.path)
+        else:
+            return current
