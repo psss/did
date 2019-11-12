@@ -27,7 +27,7 @@ class ProvisionBase(tmt.utils.Common):
         """ sync self.plan.workdir from guest to host """
         pass
 
-    def copy_from_guest(self):
+    def copy_from_guest(self, target):
         """ copy on guest to workdir and sync_workdir_from_guest
 
             arg: "/var/log/journal.log"
