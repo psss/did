@@ -180,7 +180,7 @@ class Task(object):
         """ Create Task object from dictionary returned by Google API """
         self.__dict__ = dict
 
-    def __unicode__(self):
+    def __str__(self):
         """ String representation """
         return self.title if hasattr(self, "title") else "(No title)"
 
