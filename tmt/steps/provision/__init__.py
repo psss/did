@@ -8,36 +8,57 @@ import os
 from click import echo
 
 from tmt.utils import SpecificationError
+from tmt.steps.provision import vagrant, localhost
 
 
 class Provision(tmt.steps.Step):
     """ Provision step """
+    name = 'provision'
 
-    # Default implementation for provision is a virtual machine
+    # supported provisioners are not loaded automatically, import them and map them in how_map
+    how_map = {
+        'vagrant': vagrant.ProvisionVagrant,
+        'libvirt': vagrant.ProvisionVagrant,
+        'virtual': vagrant.ProvisionVagrant,
+        'local': localhost.ProvisionLocalhost,
+        'localhost': localhost.ProvisionLocalhost
+    }
+
+    # default provisioner
     how = 'virtual'
 
     def __init__(self, data, plan):
-        super(Provision, self).__init__(data, plan)
         # List of provisioned guests
         self.guests = []
+
+        # Parent
         self.super = super(Provision, self)
+
+        # Initialize parent
+        self.super.__init__(data, plan)
+
+    def _check_data(self):
+        """ Validate input data """
+
+        # if not specified, use 'virtual' provisioner as default
+        for data in self.data:
+            how = data['how']
+            # is how supported?
+            if how not in self.how_map:
+                raise tmt.utils.SpecificationError("How '{}' in plan '{}' is not implemented".format(how, self.plan))
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """
         super(Provision, self).wake()
+
+        self._check_data()
         image = self.opt('image')
-        # Choose the plugin
+
+        # Add plugins for all guests
         for data in self.data:
-            how = data.get('how')
-            # Update the image if provided
-            if image is not None:
+            if image:
                 data['image'] = image
-            if how == 'local':
-                from .localhost import ProvisionLocalhost
-                self.guests.append(ProvisionLocalhost(data, self))
-            else:
-                from .vagrant import ProvisionVagrant
-                self.guests.append(ProvisionVagrant(data, self))
+            self.guests.append(self.how_map[data['how']](data, self))
 
     def go(self):
         """ Provision all resources """

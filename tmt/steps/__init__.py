@@ -69,7 +69,7 @@ class Step(tmt.utils.Common):
         # Override data with command line input
         for step in self.data:
             how = self.opt('how')
-            if how is not None:
+            if how:
                 step['how'] = how
 
     def go(self):
