@@ -195,13 +195,22 @@ class UserStats(StatsGroup):
                 raise
 
     def configured_plugins(self, config):
+        """ Create a StatsGroup instance for each configured plugin """
         results = []
+        items_created = False
         for section in config.sections():
             if section == "general":
                 continue
 
             data = dict(config.section(section, skip=set()))
             type_ = data.get("type")
+
+            # All 'items' stats are gathered under a single group
+            if type_ == 'items':
+                if items_created:
+                    continue
+                else:
+                    items_created = True
 
             if not type_:
                 msg = "Plugin type not defined in section '{0}'."
