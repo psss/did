@@ -25,17 +25,10 @@ def test_empty_plan():
 
 
 def test_defaults():
-    plan = mock.MagicMock()
     provision = Provision({}, PlanMock())
     provision.wake()
     for provision_data in provision.data:
         assert provision_data['how'] == 'virtual'
-
-
-def test_unsupported_provisioner():
-    provision = Provision({'how': 'not-a-valid-provisioner'}, PlanMock())
-    with pytest.raises(SpecificationError):
-            provision.wake()
 
 
 @pytest.mark.parametrize('how,provisioner', [
@@ -63,16 +56,6 @@ def test_localhost_execute():
         run.assert_called_once_with('a b c')
 
 
-def test_localhost_execute():
-    plan = PlanMock()
-    provision = Provision({'how': 'localhost'}, plan)
-    provision.wake()
-
-    with mock.patch('tmt.utils.Common.run') as run:
-        provision.execute('a', 'b', 'c')
-        run.assert_called_once_with('a b c')
-
-
 def test_localhost_prepare_ansible():
     plan = PlanMock()
     provision = Provision({'how': 'localhost'}, plan)
@@ -80,7 +63,9 @@ def test_localhost_prepare_ansible():
 
     with mock.patch('tmt.utils.Common.run') as run:
         provision.prepare('ansible', 'playbook.yml')
-        run.assert_called_once_with('ansible-playbook -c local -i localhost, playbook.yml', cwd=os.getcwd())
+        playbook = os.path.join(plan.run.tree.root, 'playbook.yml')
+        run.assert_called_once_with(
+            f'ansible-playbook -vb -c local -i localhost, {playbook}')
 
 
 def test_localhost_prepare_shell():
@@ -90,4 +75,4 @@ def test_localhost_prepare_shell():
 
     with mock.patch('tmt.utils.Common.run') as run:
         provision.prepare('shell', 'a b c')
-        run.assert_called_once_with('a b c', cwd=os.getcwd())
+        run.assert_called_once_with('a b c', cwd=plan.run.tree.root)

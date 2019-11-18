@@ -24,41 +24,32 @@ class Provision(tmt.steps.Step):
         'localhost': localhost.ProvisionLocalhost
     }
 
-    # default provisioner
+    # Default implementation for provision is a virtual machine
     how = 'virtual'
 
     def __init__(self, data, plan):
         # List of provisioned guests
         self.guests = []
-
-        # Parent
+        # Save parent and initialize it
         self.super = super(Provision, self)
-
-        # Initialize parent
         self.super.__init__(data, plan)
-
-    def _check_data(self):
-        """ Validate input data """
-
-        # if not specified, use 'virtual' provisioner as default
-        for data in self.data:
-            how = data['how']
-            # is how supported?
-            if how not in self.how_map:
-                raise tmt.utils.SpecificationError("How '{}' in plan '{}' is not implemented".format(how, self.plan))
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """
         super(Provision, self).wake()
 
-        self._check_data()
         image = self.opt('image')
 
         # Add plugins for all guests
         for data in self.data:
             if image:
                 data['image'] = image
-            self.guests.append(self.how_map[data['how']](data, self))
+            try:
+                self.guests.append(self.how_map[data['how']](data, self))
+            except KeyError:
+                # We default to vagrant provisioner (as there might be custom
+                # vagrant providers but we cannot detect them)
+                self.guests.append(vagrant.ProvisionVagrant(data, self))
 
     def go(self):
         """ Provision all resources """

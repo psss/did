@@ -20,17 +20,20 @@ class ProvisionLocalhost(ProvisionBase):
 
     def _prepare_ansible(self, what):
         """ Run ansible on localhost """
-        # note: we expect playbooks are placed relatively to the current directory
-        self.run(f'ansible-playbook -c local -i localhost, {what}', cwd=os.getcwd())
+        # Playbook paths should be relative to the metadata tree root
+        playbook = os.path.join(self.step.plan.run.tree.root, what)
+        # Run ansible against localhost, in verbose mode, enable --become
+        self.run(f'ansible-playbook -vb -c local -i localhost, {playbook}')
 
     def _prepare_shell(self, what):
         """ Run ansible on localhost """
-        # note: we expect playbooks are placed relatively to the current directory
-        self.run(what, cwd=os.getcwd())
+        # Set current working directory to the test metadata root
+        self.run(what, cwd=self.step.plan.run.tree.root)
 
     def prepare(self, how, what):
         """ Run prepare phase """
         try:
             self._prepare_map[how](what)
         except AttributeError as e:
-            raise SpecificationError(f"How '{how}' is not supported.")
+            raise SpecificationError(
+                f"Prepare method '{how}' is not supported.")
