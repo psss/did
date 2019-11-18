@@ -5,13 +5,13 @@ story: 'As a developer I want to comfortably work with stories'
     example: tmt story ls
     implemented: /tmt/cli
     tested: /tests/ls
-    documented: /docs/commands#subcmd-stories-ls
+    documented: /docs/examples#explore-stories
 
 /show:
     story: 'Show story details'
     example: tmt story show
     implemented: /tmt/cli
-    documented: /docs/commands#subcmd-stories-show
+    documented: /docs/examples#explore-stories
 
 /filter:
     story: 'Search available stories'
@@ -23,7 +23,7 @@ story: 'As a developer I want to comfortably work with stories'
         - tmt story --documented
         - tmt story --undocumented
     implemented: /tmt/cli
-    documented: /docs/commands#status-filtering
+    documented: /docs/examples#filter-stories
 
 /create:
     story: 'As a developer I want to easily create new story.'
@@ -35,7 +35,7 @@ story: 'As a developer I want to comfortably work with stories'
         - tmt story create /stories/area/story --template mini
         - tmt story create /stories/area/story --template mini --force
     implemented: /tmt/cli
-    documented: /docs/commands#subcmd-stories-create
+    documented: /docs/examples#create-stories
 
 /coverage:
     summary: 'Show story coverage'
@@ -44,7 +44,7 @@ story: 'As a developer I want to comfortably work with stories'
         have been implemented, are covered by tests and
         documented and which still need work to be done.
     implemented: /tmt/cli
-    documented: /docs/commands#subcmd-stories-coverage
+    documented: /docs/examples#story-coverage
 
     /overview:
         summary: 'General coverage overview'

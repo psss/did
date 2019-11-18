@@ -5,13 +5,13 @@ story: 'As a user I want to comfortably work with tests'
     example: tmt test ls
     implemented: /tmt/cli
     tested: /tests/ls
-    documented: /docs/commands#subcmd-tests-ls
+    documented: /docs/examples#explore-tests
 
 /show:
     story: 'Show test metadata'
     example: tmt test show
     implemented: /tmt/cli
-    documented: /docs/commands#subcmd-tests-show
+    documented: /docs/examples#explore-tests
 
 /lint:
     story: 'Check test against the L1 metadata specification'
@@ -21,7 +21,7 @@ story: 'As a user I want to comfortably work with tests'
         present and that all attributes have correct type.
     example: tmt test lint
     implemented: /tmt/cli
-    documented: /docs/commands#subcmd-tests-lint
+    documented: /docs/examples#lint-tests
 
 /create:
     story: 'Create a new test skeleton'
@@ -37,14 +37,14 @@ story: 'As a user I want to comfortably work with tests'
         - tmt test create /tests/area/feature --skeleton beakerlib
         - tmt test create /tests/area/feature --duration=1h
     implemented: /tmt/cli
-    documented: /docs/commands#subcmd-tests-create
+    documented: /docs/examples#create-tests
 
 /convert:
     story: 'Convert old test metadata'
     example: tmt test convert
     implemented: /tmt/convert
     tested: /tests/test_convert
-    documented: /docs/commands#subcmd-tests-convert
+    documented: /docs/examples#convert-tests
 
 /export:
     story: 'I want to export test metadata into desired format.'
@@ -65,4 +65,4 @@ story: 'As a user I want to comfortably work with tests'
         - tmt test ls --max-duration=5m
         - tmt test ls --enabled
         - tmt test ls --tier=1
-    documented: /docs/commands#ls-show-filtering
+    documented: /docs/examples#filter-tests
