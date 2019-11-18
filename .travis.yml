@@ -3,7 +3,7 @@ python:
   - "3.6"
   - "3.7"
 before_install:
-  - "pip install -U pip setuptools virtualenv python-coveralls fmf click"
+  - "pip install -U pip setuptools virtualenv python-coveralls fmf click mock"
   - "sudo apt-get -y install vagrant"
 script:
   - "coverage run --source=bin,tmt -m py.test $CAPTURE tests"
