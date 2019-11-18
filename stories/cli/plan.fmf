@@ -5,17 +5,20 @@ story: 'As a user I want to comfortably work with plans'
     example: tmt plan ls
     implemented: /tmt/cli
     tested: /tests/ls
+    documented: /docs/commands#subcmd-plans-ls
 
 /show:
     story: 'Show plan configuration'
     example: tmt plan show
     implemented: /tmt/cli
+    documented: /docs/commands#subcmd-plans-show
 
 /filter:
     story: 'Filter available plans'
     example:
         - tmt plan ls REGEXP
         - tmt plan show --artifact=pull-request
+    documented: /docs/commands#ls-show-filtering
 
 /lint:
     story: 'Check plan against the L2 metadata specification'
@@ -36,3 +39,4 @@ story: 'As a user I want to comfortably work with plans'
         - tmt plan create /plans/smoke --template=mini
         - tmt plan create /plans/features --template=full
     implemented: /tmt/cli
+    documented: /docs/commands#subcmd-plans-create

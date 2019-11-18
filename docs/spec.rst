@@ -1,3 +1,4 @@
+.. _specification:
 
 Metadata Specification
 ======================
