@@ -2,7 +2,7 @@
 """
 Jira stats such as created, updated or resolved issues
 
-Configuration example (GSS authentication)::
+Configuration example (Kerberos authentication)::
 
     [jboss]
     type = jira
@@ -27,7 +27,7 @@ Notes:
 * Optional parameter ``ssl_verify`` can be used to enable/disable
   SSL verification (default: true)
 * ``auth_url`` parameter is optional. If not provided,
-  ``url + "/step-auth-gss"`` will be used for authentication.
+  ``url + "/rest/auth/1/session"`` will be used for authentication.
 * ``auth_type`` parameter is optional, default value is 'gss'.
 * ``auth_username`` and ``auth_password`` are only valid for
   basic authentication.
@@ -38,7 +38,7 @@ import requests
 import urllib.parse
 import dateutil.parser
 import distutils.util
-from requests_gssapi import HTTPSPNEGOAuth, DISABLED
+from requests_kerberos import HTTPKerberosAuth, DISABLED
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 from did.utils import log, pretty, listed
@@ -192,7 +192,7 @@ class JiraStats(StatsGroup):
         if "auth_url" in config:
             self.auth_url = config["auth_url"]
         else:
-            self.auth_url = self.url + "/step-auth-gss"
+            self.auth_url = self.url + "/rest/auth/1/session"
         # Authentication type
         if "auth_type" in config:
             if config["auth_type"] not in AUTH_TYPES:
@@ -269,9 +269,9 @@ class JiraStats(StatsGroup):
                 response = self._session.get(
                     self.auth_url, auth=basic_auth, verify=self.ssl_verify)
             else:
-                gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
+                kerberos_auth = HTTPKerberosAuth(mutual_authentication=DISABLED)
                 response = self._session.get(
-                    self.auth_url, auth=gssapi_auth, verify=self.ssl_verify)
+                    self.auth_url, auth=kerberos_auth, verify=self.ssl_verify)
             try:
                 response.raise_for_status()
             except requests.exceptions.HTTPError as error:

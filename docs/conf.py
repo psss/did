@@ -38,7 +38,7 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
         return Mock()
 
-MOCK_MODULES = ['gssapi', 'requests_gssapi', 'bugzilla']
+MOCK_MODULES = ['gssapi', 'requests_gssapi', 'requests_kerberos', 'bugzilla']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # If extensions (or modules to document with autodoc) are in another directory,

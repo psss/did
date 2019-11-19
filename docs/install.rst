@@ -58,7 +58,7 @@ dependencies, for example::
 Note: For plugins depending on gssapi (jira & rt) there are some
 extra dependencies::
 
-    sudo yum install gcc krb5-devel python-devel    # Fedora
+    sudo yum install gcc krb5-devel python-devel python3-requests-kerberos    # Fedora
     sudo apt install gcc libkrb5-dev python-dev     # Ubuntu
 
 See the `pypi package index`__ for detailed package information.

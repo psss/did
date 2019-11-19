@@ -20,6 +20,7 @@ BuildRequires: python3-setuptools
 Requires: python3-bugzilla
 Requires: python3-httplib2
 Requires: python3-requests-gssapi
+Requires: python3-requests-kerberos
 
 %?python_enable_dependency_generator
 
