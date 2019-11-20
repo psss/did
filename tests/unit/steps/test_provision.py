@@ -1,15 +1,18 @@
-import mock
 import os
 import pytest
 import unittest
 import tempfile
 
+from mock import MagicMock, patch
+
 from tmt.steps.provision import Provision, localhost, vagrant
 from tmt.utils import GeneralError, SpecificationError
 
 
-class PlanMock(mock.MagicMock):
+class PlanMock(MagicMock):
     workdir = tempfile.mkdtemp()
+    # this is required with older mock
+    run = MagicMock(tree=MagicMock(root=''))
 
     def opt(self, *args, **kwargs):
         return {}
@@ -51,7 +54,7 @@ def test_localhost_execute():
     provision = Provision({'how': 'localhost'}, plan)
     provision.wake()
 
-    with mock.patch('tmt.utils.Common.run') as run:
+    with patch('tmt.utils.Common.run') as run:
         provision.execute('a', 'b', 'c')
         run.assert_called_once_with('a b c')
 
@@ -61,7 +64,7 @@ def test_localhost_prepare_ansible():
     provision = Provision({'how': 'localhost'}, plan)
     provision.wake()
 
-    with mock.patch('tmt.utils.Common.run') as run:
+    with patch('tmt.utils.Common.run') as run:
         provision.prepare('ansible', 'playbook.yml')
         playbook = os.path.join(plan.run.tree.root, 'playbook.yml')
         run.assert_called_once_with(
@@ -73,6 +76,6 @@ def test_localhost_prepare_shell():
     provision = Provision({'how': 'localhost'}, plan)
     provision.wake()
 
-    with mock.patch('tmt.utils.Common.run') as run:
+    with patch('tmt.utils.Common.run') as run:
         provision.prepare('shell', 'a b c')
         run.assert_called_once_with('a b c', cwd=plan.run.tree.root)
