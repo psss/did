@@ -68,3 +68,30 @@ example: |
             how: beaker
             family: Fedora31
             tag: released
+
+/connect:
+    summary: Connect to a provisioned box
+    description: |
+        Do not provision a new system. Instead, use provided
+        authentication data to connect to a running machine.
+
+        guest
+            hostname or ip address of the box
+        user
+            user name to be used to log in, ``root`` by default
+        password
+            user password to be used to log in
+        key
+            path to the file with private key
+
+    example: |
+        provision:
+            how: connect
+            guest: hostname or ip address
+            user: username
+            password: password
+
+        provision:
+            how: connect
+            guest: hostname or ip address
+            key: private-key-path
