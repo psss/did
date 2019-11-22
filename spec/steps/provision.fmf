@@ -2,26 +2,13 @@ summary: Provision a system for testing
 
 description: |
     Describes what environment is needed for testing and how it
-    should provisioned.  Provides a generic and extensible way to
-    write down essential hardware requirements.  For example one
-    consistent way how to specify "at least 2 GB of RAM" for all
-    supported provisioners.
+    should be provisioned. Provides a generic and an extensible
+    way to write down essential hardware requirements. For example
+    one consistent way how to specify "at least 2 GB of RAM" for
+    all supported provisioners.
 
     * Possible grouping of test cases based on test case relevancy
     * Might fail if cannot provision according to the constraints
-
-    Examples of provisioning implementation:
-
-    localhost
-        run directly on the local machine
-    openstack
-        create vm in using OpenStack
-    beaker
-        reserve machine using Beaker
-    podman
-        create a container using podman
-    qemu-kvm
-        run a vm using qemu-kvm
 
 example: |
     provision:
@@ -29,3 +16,55 @@ example: |
             min: '1 GB'
         arch:
             - 'x86_64'
+
+/virtual:
+    summary: Provision a virtual machine (default)
+    description:
+        Create a new virtual machine on the localhost using
+        libvirt or another provider which is enabled in vagrant.
+    example: |
+        provision:
+            how: virtual
+            image: fedora/31-cloud-base
+    implemented: /tmt/steps/provision/vagrant.py
+
+/local:
+    summary: Use the localhost for testing
+    description:
+        Do not provision any system. Tests will be executed
+        directly on the localhost. Note that for some actions like
+        installing additional packages you need root permission or
+        enabled sudo.
+    example: |
+        provision:
+            how: local
+    implemented: /tmt/steps/provision/localhost.py
+
+/container:
+    summary: Provision a container
+    description:
+        Download (if necessary) and start a new container using
+        podman or docker.
+    example: |
+        provision:
+            how: container
+            image: fedora:latest
+
+/openstack:
+    summary: Provision a virtual machine in OpenStack
+    description:
+        Create a virtual machine using OpenStack.
+    example: |
+        provision:
+            how: openstack
+            image: f31
+
+/beaker:
+    summary: Provision a machine in Beaker
+    description:
+        Reserve a machine from the Beaker pool.
+    example: |
+        provision:
+            how: beaker
+            family: Fedora31
+            tag: released
