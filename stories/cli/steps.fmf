@@ -30,6 +30,25 @@
         - tmt run provision --how=qemu
         - tmt run provision --how=vagrant
 
+    /default:
+        story: 'Use default config or provision a virtual machine'
+        example: tmt run provision
+        implemented: /tmt/steps/provision
+
+    /local:
+        story: 'Use localhost for testing'
+        example: tmt run provision --how=local
+        implemented: /tmt/steps/provision
+
+    /virtual:
+        story: 'Provision a virtual machine'
+        example: tmt run provision --how=virtual --image=fedora/31-cloud-base
+        implemented: /tmt/steps/provision
+
+    /container:
+        story: 'Provision a container'
+        example: tmt run provision --how=container --image=fedora:latest
+
 /prepare:
     story: 'Select or adjust the prepare step'
     description:
