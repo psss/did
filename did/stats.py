@@ -224,7 +224,14 @@ class UserStats(StatsGroup):
             user = self.user.clone(section) if self.user else None
             statsgroup = StatsGroupPlugin.registry[type_]
             obj = statsgroup(option=section, parent=self, user=user)
-            obj.order = data.get("order", statsgroup.order)
+            # Override default order if requested
+            if 'order' in data:
+                try:
+                    obj.order = int(data['order'])
+                except ValueError:
+                    raise did.base.GeneralError(
+                        f"Invalid order '{data['order']}' "
+                        f"in the '{section}' section.")
             results.append(obj)
         return sorted(results, key=lambda x: x.order)
 
