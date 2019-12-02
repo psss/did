@@ -194,7 +194,7 @@ def main(arguments=None):
         users = [did.base.User(email=email) for email in emails]
 
         # Print header and prepare team stats object for data merging
-        utils.eprint(header)
+        print(header)
         team_stats = UserStats(options=options)
         if options.merge:
             utils.header("Total Report")

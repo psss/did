@@ -156,16 +156,9 @@ def load_components(*paths, **kwargs):
     return num_loaded
 
 
-def eprint(text):
-    """ Print (optionaly encoded) text """
-    # When there's no terminal we need to explicitly encode strings.
-    # Otherwise this would cause problems when redirecting output.
-    print((text if sys.stdout.isatty() else text.encode("utf8")))
-
-
 def header(text):
     """ Show text as a header. """
-    eprint("\n{0}\n {1}\n{0}".format(79 * "~", text))
+    print("\n{0}\n {1}\n{0}".format(79 * "~", text))
 
 
 def shorted(text, width=79):
@@ -190,7 +183,7 @@ def item(text, level=0, options=None):
         indent = 1
     # Shorten the text if necessary to match the desired maximum width
     width = options.width - indent - 2 if options.width else 333
-    eprint("{0}* {1}".format(" " * indent, shorted(str(text), width)))
+    print("{0}* {1}".format(" " * indent, shorted(str(text), width)))
 
 
 def pluralize(singular=None):

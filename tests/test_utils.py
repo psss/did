@@ -121,11 +121,6 @@ def test_ascii():
 #  Logging
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_eprint():
-    from did.utils import eprint
-    assert eprint
-
-
 def test_info():
     from did.utils import info
     assert info
