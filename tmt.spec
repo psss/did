@@ -38,6 +38,7 @@ This package contains the command line tool.
 
 %package -n     python%{python3_pkgversion}-%{name}
 Summary:        %{summary}
+BuildRequires: vagrant
 BuildRequires: python%{python3_pkgversion}-devel
 BuildRequires: python%{python3_pkgversion}-setuptools
 BuildRequires: python%{python3_pkgversion}-pytest
