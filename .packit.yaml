@@ -1,0 +1,23 @@
+specfile_path: did.spec
+synced_files:
+- did.spec
+- .packit.yaml
+
+downstream_package_name: did
+upstream_package_name: did
+
+current_version_command: ["make", "packit-version"]
+
+actions:
+  create-archive:
+  - make packit-tarball
+  - make packit-path
+
+jobs:
+- job: copr_build
+  metadata:
+    targets:
+    - fedora-30-x86_64
+    - fedora-31-x86_64
+    - fedora-rawhide-x86_64
+  trigger: pull_request
