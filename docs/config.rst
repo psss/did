@@ -17,6 +17,8 @@ might want to add the following line into ``.bashrc``::
     export DID_DIR=~/.config/did/
 
 
+.. _general:
+
 General
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

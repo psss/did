@@ -5,6 +5,10 @@ Stats from this group will be included in the report if enabled in
 user config. Name of the plugin should match config section type.
 Attribute ``order`` defines the order in the final report.
 
+In addition to built-in plugins it is also possible to define your
+own stats. In order to enable such custom plugins add path to the
+python modules into the :ref:`general` section of the config file.
+
 This is the default plugin order:
 
     +----------+-----+

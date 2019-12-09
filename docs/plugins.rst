@@ -15,7 +15,7 @@ bugzilla
     :undoc-members:
 
 confluence
---------
+----------
 
 .. automodule:: did.plugins.confluence
     :members:
