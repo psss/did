@@ -49,6 +49,15 @@
         story: 'Provision a container'
         example: tmt run provision --how=container --image=fedora:latest
 
+    /connect:
+        story: 'Connect to a provisioned box'
+        description:
+            Do not provision a new system. Instead, use provided
+            authentication data to connect to a running machine.
+        example:
+            - tmt run provision --how=connect --guest=name-or-ip --user=login --password=secret
+            - tmt run provision --how=connect --guest=name-or-ip --key=private-key-path
+
 /prepare:
     story: 'Select or adjust the prepare step'
     description:
