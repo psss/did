@@ -19,6 +19,7 @@ BuildRequires: python3-requests-gssapi
 BuildRequires: python3-setuptools
 Requires: python3-bugzilla
 Requires: python3-httplib2
+Requires: python3-nitrate
 Requires: python3-requests-gssapi
 
 %?python_enable_dependency_generator
