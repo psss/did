@@ -15,12 +15,17 @@ rlJournalStart
         rlAssertRpm $PACKAGE
         rlRun "TMP=\$(mktemp -d)" 0 "Creating tmp directory"
         rlRun "pushd $TMP"
-        rlRun "echo $CONFIG > config"
+        rlRun "echo '$CONFIG' > config"
     rlPhaseEnd
 
-    rlPhaseStartTest
-        rlRun "did --help --config $TMP/config | tee output" 0 "Check help"
-        rlAssertGrep "week|month|quarter|year" "output"
+    rlPhaseStartTest "help"
+        rlRun "did --help --config $TMP/config | tee help" 0 "Check help"
+        rlAssertGrep "What did you do last week, month, year?" "help"
+    rlPhaseEnd
+
+    rlPhaseStartTest "man"
+        rlRun "man did | tee man" 0 "Check man page"
+        rlAssertGrep "What did you do last week, month, year?" "man"
     rlPhaseEnd
 
     rlPhaseStartCleanup

@@ -1,3 +1,0 @@
-summary: Basic smoke test
-description: Create a minimal config and check the help message.
-test: ./test.sh
