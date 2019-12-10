@@ -1,5 +1,5 @@
 Name: did
-Version: 0.15
+Version: 0.16
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -52,6 +52,17 @@ install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 %license LICENSE
 
 %changelog
+* Tue Dec 10 2019 Petr Šplíchal <psplicha@redhat.com> - 0.16-1
+- Convert smoke test into docs test, fix config file
+- Include a short summary in the help usage message
+- Enable simple smoke test in the testing farm
+- Add nitrate back into the package requires
+- Enable custom tarball in Packit to fix man page
+- Mention custom plugins config on the plugins page
+- Enable copr builds and add packit config
+- Custom eprint() is no more necessary [fix #211]
+- Convert custom section order to int [fix #212]
+
 * Thu Nov 14 2019 Petr Šplíchal <psplicha@redhat.com> - 0.15-1
 - Create a single StatsGroup for 'items' [fix #208]
 - Google plugin __unicode__ leftover
