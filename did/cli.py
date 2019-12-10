@@ -17,6 +17,17 @@ from did import utils
 from did.stats import UserStats
 from did.utils import log
 
+USAGE = """
+did [this|last] [week|month|quarter|year] [options]
+
+What did you do last week, month, year?
+
+Comfortably gather status report data for given week, month,
+quarter, year or selected date range. By default all available
+stats for this week are reported.
+""".strip()
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Options
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -26,8 +37,7 @@ class Options(object):
 
     def __init__(self, arguments=None):
         """ Prepare the parser. """
-        self.parser = argparse.ArgumentParser(
-            usage="did [this|last] [week|month|quarter|year] [options]")
+        self.parser = argparse.ArgumentParser(usage=USAGE)
         self._prepare_arguments(arguments)
         self.opt = self.arg = None
 
