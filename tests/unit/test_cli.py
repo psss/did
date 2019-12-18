@@ -84,7 +84,9 @@ def test_step():
     for step in tmt.steps.STEPS:
         if step == 'provision':
             continue
-        result = runner.invoke(tmt.cli.main, ['--root', MINI, 'run', step])
+        result = runner.invoke(tmt.cli.main, [
+            '--root', MINI, 'run', '--all', 'provision', '--how=local', step
+        ])
         assert result.exit_code == 0
         assert step in result.output
         assert 'Provision' not in result.output
