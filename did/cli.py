@@ -70,6 +70,8 @@ class Options(object):
         log.debug("Loading Sample Stats group to build Options")
         self.sample_stats = UserStats()
         self.sample_stats.add_option(self.parser)
+        log.info("Default command line: did {0}".format(" ".join(
+            [f'--{stat.option}' for stat in self.sample_stats.stats])))
 
         # Formating options
         group = self.parser.add_argument_group("Format")
