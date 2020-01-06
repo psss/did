@@ -36,7 +36,7 @@ install_requires = [
 ]
 extras_require = {
     'docs': ['sphinx', 'sphinx_rtd_theme'],
-    'tests': ['pytest', 'python-coveralls'],
+    'tests': ['pytest', 'python-coveralls', 'mock'],
 }
 extras_require['all'] = [dependency
     for extra in extras_require.values()
