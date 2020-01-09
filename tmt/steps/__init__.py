@@ -53,6 +53,13 @@ class Step(tmt.utils.Common):
         if self.status is None:
             self.status('todo')
 
+    @property
+    def enabled(self):
+        """ True if the step is enabled """
+        if self._context is None:
+            return None
+        return self.name in self._context.obj.steps
+
     def load(self):
         """ Load step data from the workdir """
         pass

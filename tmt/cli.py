@@ -153,6 +153,8 @@ def main(context, root, **kwargs):
     tree._context = context
     context.obj = tmt.utils.Common()
     context.obj.tree = tree
+    # List of enabled steps
+    context.obj.steps = set()
 
     # Show overview of available tests, plans and stories
     if context.invoked_subcommand is None:
@@ -191,7 +193,7 @@ main.add_command(run)
 @force_dry
 def discover(context, **kwargs):
     """ Gather and show information about test cases to be executed. """
-    tmt.base.Plan._enabled_steps.add('discover')
+    context.obj.steps.add('discover')
     tmt.steps.discover.Discover._context = context
     return 'discover'
 
@@ -208,7 +210,7 @@ def discover(context, **kwargs):
 @force_dry
 def provision(context, **kwargs):
     """ Provision an environment for testing (or use localhost). """
-    tmt.base.Plan._enabled_steps.add('provision')
+    context.obj.steps.add('provision')
     tmt.steps.provision.Provision._context = context
 
 
@@ -221,7 +223,7 @@ def provision(context, **kwargs):
 @force_dry
 def prepare(context, **kwargs):
     """ Configure environment for testing (like ansible playbook). """
-    tmt.base.Plan._enabled_steps.add('prepare')
+    context.obj.steps.add('prepare')
     tmt.steps.prepare.Prepare._context = context
 
 
@@ -234,7 +236,7 @@ def prepare(context, **kwargs):
 @force_dry
 def execute(context, **kwargs):
     """ Run the tests (using the specified framework and its settings). """
-    tmt.base.Plan._enabled_steps.add('execute')
+    context.obj.steps.add('execute')
     tmt.steps.execute.Execute._context = context
 
 
@@ -247,7 +249,7 @@ def execute(context, **kwargs):
 @force_dry
 def report(context, **kwargs):
     """ Provide an overview of test results and send notifications. """
-    tmt.base.Plan._enabled_steps.add('report')
+    context.obj.steps.add('report')
     tmt.steps.report.Report._context = context
 
 
@@ -260,7 +262,7 @@ def report(context, **kwargs):
 @force_dry
 def finish(context, **kwargs):
     """ Additional actions to be performed after the test execution. """
-    tmt.base.Plan._enabled_steps.add('finish')
+    context.obj.steps.add('finish')
     tmt.steps.finish.Finish._context = context
 
 

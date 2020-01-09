@@ -200,9 +200,6 @@ class Test(Node):
 class Plan(Node):
     """ Plan object (L2 Metadata) """
 
-    # Enabled steps
-    _enabled_steps = set()
-
     def __init__(self, node, run=None):
         """ Initialize the plan """
         super(Plan, self).__init__(node, parent=run)
@@ -272,10 +269,9 @@ class Plan(Node):
         yield step names only and 'disabled=True' to iterate over all.
         """
         for name in tmt.steps.STEPS:
-            step = name if names else getattr(self, name)
-            if (enabled and name in self._enabled_steps
-                    or disabled and step not in self._enabled_steps):
-                yield step
+            step = getattr(self, name)
+            if (enabled and step.enabled or disabled and not step.enabled):
+                yield name if names else step
 
     def show(self):
         """ Show plan details """
@@ -545,8 +541,8 @@ class Run(tmt.utils.Common):
         # Show run id / workdir path
         self.info(self.workdir, color='magenta')
         # Enable all steps if none selected or --all provided
-        if self.opt('all_') or not Plan._enabled_steps:
-            Plan._enabled_steps = set(tmt.steps.STEPS)
+        if self.opt('all_') or not self._context.obj.steps:
+            self._context.obj.steps = set(tmt.steps.STEPS)
         # Show summary and iterate over plans
         self.verbose('Found {0}.'.format(listed(self.plans, 'plan')))
         for plan in self.plans:
