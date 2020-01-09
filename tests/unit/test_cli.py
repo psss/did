@@ -92,6 +92,20 @@ def test_step():
         assert step in result.output
         assert 'execute' not in result.output
 
+def test_step_execute():
+    """ Test execute step"""
+    step = 'execute'
+
+    result = runner.invoke(
+        tmt.cli.main, ['--root', example('local'), 'run', step])
+
+    # Test execute empty with discover output missing
+    assert result.exit_code == 1
+    assert 'Could not find TESTS file' in result.output
+
+    assert step in result.output
+    assert 'provision' not in result.output
+
 def test_systemd():
     """ Check systemd example """
     result = runner.invoke(
