@@ -56,9 +56,10 @@ class Step(tmt.utils.Common):
     @property
     def enabled(self):
         """ True if the step is enabled """
-        if self._context is None:
+        try:
+            return self.name in self.plan.run._context.obj.steps
+        except AttributeError:
             return None
-        return self.name in self._context.obj.steps
 
     def load(self):
         """ Load step data from the workdir """
