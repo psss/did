@@ -14,6 +14,8 @@ discover:
       path: /tests/shell
 prepare:
     how: shell
-    script: dnf copr enable -y psss/tmt && dnf install -y tmt
+    script:
+    - sudo dnf copr enable -y psss/tmt
+    - sudo dnf install -y tmt
 execute:
     how: shell
