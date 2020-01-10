@@ -26,7 +26,7 @@ Source0: https://github.com/psss/tmt/releases/download/%{version}/tmt-%{version}
 
 # Main tmt package requires the Python module
 Requires: python%{python3_pkgversion}-%{name} == %{version}-%{release}
-Requires: git
+Requires: git-core
 
 %description
 The tmt Python module and command line tool implement the test
