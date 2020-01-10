@@ -402,15 +402,11 @@ class ProvisionVagrant(ProvisionBase):
         """
         if len(args) == 0:
             raise RuntimeError("vagrant has to run with args")
-        elif len(args) == 1:
-            args = args[0]
 
         cmd = self.prepend(args, self.executable)
 
         # TODO: timeout = self.timeout,
-        return self.run(
-            cmd,
-            cwd = self.provision_dir)
+        return self.run(cmd, cwd=self.provision_dir, shell=False)
 
     def add_synced_folder(self, sync_from, sync_to, *args):
         """ Add synced_folder entry into Vagrantfile """
