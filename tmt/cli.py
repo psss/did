@@ -210,7 +210,7 @@ def discover(context, **kwargs):
     '-b', '--box', metavar='BOX',
     help='Vagrant box name to use.')
 @click.option(
-    '-v', '--vagrantfile', metavar='VAGRANTFILE',
+    '--vagrantfile', metavar='VAGRANTFILE',
     help='Vagrantfile to override initialized one and default entries.')
 @click.option(
     '-m', '--memory', metavar='MEMORY',
@@ -241,10 +241,10 @@ def provision(context, **kwargs):
     '-h', '--how', metavar='METHOD',
     help='Use specified method for environment preparation.')
 @click.option(
-    '-i', '--script', metavar='SCRIPT',
+    '-s', '--script', metavar='SCRIPT',
     help='Scriplet or path or URI to a script to execute.')
 @click.option(
-    '-i', '--playbook', metavar='PLAYBOOK',
+    '-p', '--playbook', metavar='PLAYBOOK',
     help='Path or URI to ansible playbook to run.')
 @verbose_debug_quiet
 @force_dry
