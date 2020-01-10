@@ -1,0 +1,6 @@
+summary:
+    Basic smoke test
+provision:
+    how: local
+execute:
+    script: tmt --help
