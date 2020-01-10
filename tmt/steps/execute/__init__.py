@@ -73,16 +73,20 @@ class Execute(tmt.steps.Step):
         self.verbose('overview', overview, color='green', shift=1)
         passed = 0
         failed = 0
+        errors = 0
         for character in output['stdout.log']:
             if character == '.':
                 passed += 1
             if character == 'F':
                 failed += 1
+            if character == 'E':
+                errors += 1
         passed = listed(passed, 'test')
         failed = listed(failed, 'test')
         message = f"{passed} passed, {failed} failed"
         self.info('result', message, color='green', shift=1)
-
+        if errors >0:
+            raise tmt.utils.GeneralError(f"{errors} errors occured during tests.")
 
     def sync_runner(self):
         """ Place the runner script to workdir  """

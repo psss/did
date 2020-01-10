@@ -205,7 +205,28 @@ def discover(context, **kwargs):
     help='Use specified method for provisioning.')
 @click.option(
     '-i', '--image', metavar='IMAGE',
-    help='Select virtual machine image to be used.')
+    help='Select virtual machine image to use (URI or Box name).')
+@click.option(
+    '-b', '--box', metavar='BOX',
+    help='Vagrant box name to use.')
+@click.option(
+    '--vagrantfile', metavar='VAGRANTFILE',
+    help='Vagrantfile to override initialized one and default entries.')
+@click.option(
+    '-m', '--memory', metavar='MEMORY',
+    help='Set memory available to guest in MB.')
+@click.option(
+    '-u', '--user', metavar='USER',
+    help='Username to use for all guest operations.')
+@click.option(
+    '-p', '--password', metavar='PASSWORD',
+    help='Password to use for login into guest system.')
+@click.option(
+    '-k', '--key', metavar='PRIVATE_KEY',
+    help='Private key to use for login into guest system.')
+@click.option(
+    '-g', '--guest', metavar='GUEST',
+    help='Select remote host to connect to (how: connect)')
 @verbose_debug_quiet
 @force_dry
 def provision(context, **kwargs):
@@ -219,6 +240,12 @@ def provision(context, **kwargs):
 @click.option(
     '-h', '--how', metavar='METHOD',
     help='Use specified method for environment preparation.')
+@click.option(
+    '-s', '--script', metavar='SCRIPT',
+    help='Scriplet or path or URI to a script to execute.')
+@click.option(
+    '-p', '--playbook', metavar='PLAYBOOK',
+    help='Path or URI to ansible playbook to run.')
 @verbose_debug_quiet
 @force_dry
 def prepare(context, **kwargs):
