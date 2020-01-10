@@ -269,6 +269,7 @@ shift
 
 cd "$tmt_WD" || tmt_ abort "Failed to cd: $tmt_WD"
 [[ -r "$tmt_TESTS_F" ]] || tmt_abort "Could not find TESTS file: $tmt_TESTS_F"
+[[ `wc -l "$tmt_TESTS_F" | cut -d' ' -f1` -gt 1 ]] || tmt_abort "Missing tests. (`cat "$tmt_TESTS_F"`)"
 
 tmt_TESTS_D="$(readlink -f "${tmt_WD}/${tmt_TESTS_D}")"
 [[ -d "$tmt_TESTS_D" ]] || tmt_abort "Could not find Discover dir: $tmt_TESTS_D"

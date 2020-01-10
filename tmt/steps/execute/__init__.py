@@ -54,19 +54,21 @@ class Execute(tmt.steps.Step):
         """ Execute the test step """
         super(Execute, self).go()
 
+        lognames = ('stdout.log', 'stderr.log', 'nohup.out')
+
+        # Remove logs prior to write
+        for name in lognames:
+            logpath = os.path.join(self.workdir, name)
+            if os.path.exists(logpath):
+                os.remove(logpath)
+
         try:
             self.executor.go(self.plan.workdir)
         except tmt.utils.GeneralError as error:
-            self.info('Error occured during test execution.', color='red')
-            self.plan.provision.execute('cat nohup.out')
+            self.get_logs(lognames)
+            raise tmt.utils.GeneralError("Test execution failed.")
 
-        self.plan.provision.sync_workdir_from_guest()
-
-        output = {}
-        for logname in ['stdout.log', 'stderr.log']:
-            logpath = os.path.join(self.workdir, logname)
-            output[logname] = open(logpath).read()
-            self.debug(logname, output[logname], 'yellow')
+        output = self.get_logs(lognames)
 
         # Process the stdout.log
         overview = output['stdout.log'].rstrip('\nD')
@@ -103,6 +105,19 @@ class Execute(tmt.steps.Step):
     def execute(self, *args, **kwargs):
         """ Execute command on provisioned machine """
         return self.plan.provision.execute(*args, **kwargs)
+
+    def get_logs(self, lognames):
+        """ Get logs contents, also print them to info() """
+        self.plan.provision.sync_workdir_from_guest()
+
+        output = {}
+        for name in lognames:
+            path = os.path.join(self.workdir, name)
+            if os.path.exists(path) and os.path.isfile(path):
+                output[name] = open(path).read()
+                self.info(name, output[name], 'yellow')
+
+        return output
 
     # API
     def requires(self):
