@@ -13,7 +13,8 @@ discover:
       test: ./smoke.sh
       path: /tests/shell
 prepare:
-    how: shell
-    script: dnf copr enable -y psss/tmt && dnf install -y tmt
+    how: install
+    copr: psss/tmt
+    package: tmt
 execute:
     how: shell

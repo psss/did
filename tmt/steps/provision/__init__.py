@@ -38,12 +38,8 @@ class Provision(tmt.steps.Step):
         """ Wake up the step (process workdir and command line) """
         super(Provision, self).wake()
 
-        image = self.opt('image')
-
         # Add plugins for all guests
         for data in self.data:
-            if image:
-                data['image'] = image
             try:
                 self.guests.append(self.how_map[data['how']](data, self))
             except KeyError:

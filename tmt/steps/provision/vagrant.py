@@ -6,6 +6,7 @@ import tmt
 import subprocess
 import os
 import re
+import shutil
 
 from tmt.steps.provision.base import ProvisionBase
 from tmt.utils import ConvertError, SpecificationError, GeneralError
@@ -31,11 +32,16 @@ class ProvisionVagrant(ProvisionBase):
     config_prefix = '  config.'
     sync_type = 'rsync'
     default_image = 'fedora/31-cloud-base'
+    dummy_image = 'tknerr/managed-server-dummy'
     default_container = 'fedora:latest'
     default_indent = 16
+    default_user = 'root'
+    default_memory = 2048
     vf_name = 'Vagrantfile'
     timeout = 333
     eol = '\n'
+    display = ('how', 'image', 'key', 'guest', 'memory')
+
 
     ## Default API ##
     def __init__(self, data, step):
@@ -46,11 +52,11 @@ class ProvisionVagrant(ProvisionBase):
         self.vf_data = ''
         self.path = os.path.join(self.provision_dir, 'data.yaml')
 
-        # Check for working Vagrant
-        self.run_vagrant('version')
+        # Which opts do we recieve
+        self.opts('image', 'box', 'memory', 'user', 'password', 'key',
+            'guest', 'vagrantfile')
 
-        # Let's check what's needed
-        self.check_how()
+        self.debugon = self.opt('debug')
 
     def load(self):
         """ Load ProvisionVagrant step """
@@ -88,6 +94,7 @@ class ProvisionVagrant(ProvisionBase):
         self.plugin_install(command)
         return self.run_vagrant(command)
 
+    # TODO: move to base
     def copy_from_guest(self, target):
         """ copy file/folder from guest to host's copy dir """
         beg = f"[[ -d '{target}' ]]"
@@ -114,27 +121,17 @@ class ProvisionVagrant(ProvisionBase):
         name = 'prepare'
         cmd = 'provision'
 
-        # TODO: FIX
-        whatpath = os.path.join(self.step.plan.workdir,
-            'discover',
-            'one',
-            'tests',
-            what)
-
-        self.debug('Trying path', whatpath)
-
-        if os.path.exists(whatpath) and os.path.isfile(whatpath):
-            what = whatpath
-
+        # decide what to do
         if how == 'ansible':
             name = how
 
             self.add_config_block(cmd,
                 name,
                 f'become = true',
-                f'become_user = "root"',
-                f'playbook = "{what}"')
-           #TODO: run: 'never'
+                self.kve('become_user', self.data['user']),
+                self.kve('playbook', what))
+                # I'm not sure whether this is needed:
+                # run: 'never'
 
         else:
             if self.is_uri(what):
@@ -150,35 +147,48 @@ class ProvisionVagrant(ProvisionBase):
                 self.kv('run', 'never'),
                 self.kv(method, what))
 
-            # maybe?
-
         return self.run_vagrant(cmd, f'--{cmd}-with', name)
 
 
     ## Additional API ##
     def init(self):
-        """ Initialize Vagrantfile """
-        self.info('Provision dir', self.provision_dir)
+        """ Initialize ProvisionVagrant / run following:
+            1] check that Vagrant works
+            2] check for already-present or user-specified Vagrantfile
+            3] check input values and set defaults
+            4] create and populates Vagrantfile with
+                - provider-specific entries
+                - default config entries
+        """
+        self.debug('provision dir', self.provision_dir)
+
+         # Check for working Vagrant
+        self.run_vagrant('version')
+
+        # Let's check what's needed
+        self.check_input()
 
         # Are we resuming?
         if os.path.exists(self.vagrantfile) and os.path.isfile(self.vagrantfile):
             self.validate()
             return
 
-        # Create a Vagrantfile
-        self.create()
+        # Did we get a Vagranfile?
+        if 'vagrantfile' in self.data:
+            shutil.copyfile(self.data['vagrantfile'], self.vagrantfile)
+            return
 
         # Let's add what's needed
-        # Do this first to install provider
+        # Important: run this first to install provider
         self.add_how()
 
         # Add default entries to Vagrantfile
         self.add_defaults()
 
     def create(self):
-        """ Create default Vagrantfile with our modifications """
+        """ Initialize Vagrantfile """
         self.run_vagrant('init', '-fm', self.data['box'])
-        self.info('Initialized new Vagrantfile', self.vf_read())
+        self.debug('Initialized new Vagrantfile', self.vf_read())
 
     def clean(self):
         """ remove box and base box """
@@ -200,7 +210,8 @@ class ProvisionVagrant(ProvisionBase):
         command = ['plugin', 'install']
         try:
             # is it already present?
-            return self.run(f"bash -c \"{self.executable} {command[0]} list | grep '^{plugin}'\"")
+            run = f"{self.executable} {command[0]} list | grep '^{plugin} '"
+            return self.run(f"bash -c \"{run}\"")
         except GeneralError:
             pass
 
@@ -216,14 +227,13 @@ class ProvisionVagrant(ProvisionBase):
 
             if re.search(r"Conflicting dependency chains:", err) is None:
                 raise error
-
-            raise ConvertError('Dependency conflict detected.\n'
-                    'Please install vagrant plugins from one source only(hint: `dnf remove vagrant-libvirt`).')
+            raise ConvertError('Dependency conflict detected:\n'
+                'Please install vagrant plugins from one source only (hint: `dnf remove rubygem-fog-core`).')
 
     ## Knowhow ##
-    def check_how(self):
-        """ Decide what to do when HOW is ...
-            does not add anything into Vagrantfile yet
+    def check_input(self):
+        """ Initialize configuration(sets defaults), based on data (how, image).
+            does not create Vagrantfile or add anything into it.
         """
         self.debug('VagrantProvider', 'Checking initial status, setting defaults.')
 
@@ -251,39 +261,40 @@ class ProvisionVagrant(ProvisionBase):
             self.set_default('box', image)
             self.data['image'] = None
 
-        for x in ('how', 'box', 'image'):
-            self.info(f'    {x}', self.data[x])
+        self.set_default('memory', self.default_memory)
+
+        # General ssh config, used for 'managed' as well
+        self.set_default('user', self.default_user)
+
+        for key, val in self.data.items():
+            if self.debugon or key in self.display:
+                if not val is None:
+                    self.info(f'{key}', val)
 
     def add_how(self):
         """ Add provider (in Vagrant-speak) specifics """
         getattr(self,
             f"how_{self.data['how']}",
-            lambda: 'generic',
+            self.how_generic,
             )()
 
-    def how_virtual(self):
-        self.debug("generating", "virtual")
-
-        image = self.data['image']
-
-        if image:
-            self.add_config_value('vm', "box_url", image)
-
-        # let's try libvirt as default for now
-        self.how_libvirt()
-
-    def how_generic():
+    def how_generic(self):
         self.debug("generating", "generic")
+        self.create()
         self.add_provider(self.data['how'])
 
     def how_libvirt(self):
+        """ Add libvirt provider specifics into Vagrantfile
+             - try adding QEMU session entry
+        """
         name = 'libvirt'
         self.debug("generating", name)
 
         self.plugin_install(name)
 
-        self.add_provider(name, 'memory = 1024')
-        self.vf_backup("QEMU session")
+        self.gen_virtual(name)
+
+        self.vf_backup("QEMU user session")
         try:
             self.add_provider(name, 'qemu_use_session = true')
         except GeneralError as error:
@@ -291,22 +302,66 @@ class ProvisionVagrant(ProvisionBase):
             #self.debug(error)
             self.vf_restore()
 
+    def how_connect(self):
+        """ Defines a connection to guest
+            using managed provider from managed-servers plugin.
+            Recreates Vagrantfile with dummy box.
+        """
+        name = 'connect'
+        self.debug("generating", name)
+
+        guest = self.data['guest']
+        if guest is None:
+            raise SpecificationError('Guest is not specified.')
+        self.debug("guest", guest)
+
+        self.plugin_install(f"managed-servers")
+
+        self.data['box'] = self.dummy_image
+        self.create()
+
+        self.add_provider('managed', self.kve('server', guest))
+
+        # Let's use the config.ssh setup first; this is backup:
+        # => override.ssh.username
+        # => override.ssh.private_key_path = ".vagrant/machines/local_linux/virtualbox/private_key"
+
+    def how_container(self):
+        self.debug("generating", "container")
+        raise SpecificationError('NYI: cannot currently run containers.')
+
     def how_openstack(self):
         self.debug("generating", "openstack")
         raise SpecificationError('NYI: cannot currently run on openstack.')
 
+    # Aliases
     def how_docker(self):
         self.how_container()
 
     def how_podman(self):
         self.how_container()
 
-    def how_container(self):
-        self.debug("generating", "container")
-        raise SpecificationError('NYI: cannot currently run containers.')
+    def how_virtual(self):
+        self.how_libvirt()
 
 
     ## END of API ##
+    def gen_virtual(self, provider = ''):
+        """ Add config entry for VM
+            (re)creates Vagrantfile with
+             - box
+             - box_url
+             - memory and provider(if provider is set)
+        """
+        self.create()
+
+        image = self.data['image']
+        if image:
+            self.add_config('vm', self.kve("box_url", image))
+
+        if provider:
+            self.add_provider(provider, self.kve('memory', self.data['memory']))
+
     def vagrant_status(self):
         """ Get vagrant's status """
         raise ConvertError('NYI: cannot currently return status.')
@@ -315,32 +370,35 @@ class ProvisionVagrant(ProvisionBase):
         #return self.hr(csp.stdout)
 
     def add_defaults(self):
-        """ Adds default config entries
-            1) Disable default sync
-            2) To sync plan workdir
-            3) setup ssh
-            4) memory: 1024
+        """ Adds default /generic/ config entries into Vagrantfile:
+             - disable default sync
+             - add sync for plan.workdir
+             - add ssh config opts if set
+             - disable nfs check
         """
         self.add_synced_folder(".", "/vagrant", 'disabled: true')
 
         dir = self.step.plan.workdir
         self.add_synced_folder(dir, dir)
 
-        self.add_config_value('ssh', 'username', "root")
-        # probably not needed
-        #self.add_config_value('ssh', 'insert_key', 'true')
+        # Credentials are used for `how: connect` as well as for VMs
+        if 'user' in self.data:
+          self.add_config('ssh', self.kve('username', self.data['user']))
+        if 'password' in self.data:
+            self.add_config('ssh', self.kve('password', self.data['password']))
+        if 'key' in self.data:
+            self.add_config('ssh', self.kve('private_key_path', self.data['key']))
 
-        self.add_config_value('nfs', 'verify_installed', 'false')
+        self.add_config('nfs', 'verify_installed = false')
+
+        # Enabling this fails with `how: connect`
+        #self.add_config('ssh', 'insert_key = false')
 
     def run_vagrant(self, *args):
         """ Run vagrant command and raise an error if it fails
-
               args = 'command args'
-
             or
-
               args = ['comand', 'args']
-
         """
         if len(args) == 0:
             raise RuntimeError("vagrant has to run with args")
@@ -349,12 +407,13 @@ class ProvisionVagrant(ProvisionBase):
 
         cmd = self.prepend(args, self.executable)
 
-#            timeout = self.timeout,
+        # TODO: timeout = self.timeout,
         return self.run(
             cmd,
             cwd = self.provision_dir)
 
     def add_synced_folder(self, sync_from, sync_to, *args):
+        """ Add synced_folder entry into Vagrantfile """
         self.add_config('vm',
             'synced_folder',
             self.quote(sync_from),
@@ -363,10 +422,11 @@ class ProvisionVagrant(ProvisionBase):
             *args)
 
     def add_provider(self, provider, *config):
+        """ Add provider entry into Vagrantfile """
         self.add_config_block('provider', provider, *config)
 
     def add_config_block(self, name, block, *config):
-        """ Add config block into Vagrantfile
+        """ Add a config block into Vagrantfile
         """
         config_str = ''
         for c in config:
@@ -374,22 +434,15 @@ class ProvisionVagrant(ProvisionBase):
 
         self.add_config('vm', f"{name} '{block}' do |{block}| {config_str}end")
 
-    def add_config_value(self, type, key, value):
-        """ Add config = value into Vagrantfile
-        """
-        self.add_config(type, f"{key} = '{value}'")
-
     def add_config(self, type, *config):
         """ Add config entry into Vagrantfile right before last 'end',
             and prepends it with `config_prefix`.
 
             Adding arbitrary config entry:
                 config = "string"
-
             or, with conversion:
                 config = ['one', 'two', 'three']
                 => one "two", three
-
         """
         if len(config) == 1:
             config = config[0]
@@ -398,7 +451,7 @@ class ProvisionVagrant(ProvisionBase):
         else:
             config = f'{config[0]} ' + ', '.join(config[1:])
 
-        self.info('Adding into Vagrantfile', f"{type}.{config}")
+        self.debug('Adding into Vagrantfile', f"{type}.{config}", 'green')
 
         vf_tmp = self.vf_read()
 
@@ -406,6 +459,7 @@ class ProvisionVagrant(ProvisionBase):
         i = 0
         for line in reversed(vf_tmp):
             i -= 1
+            # TODO: avoid infinite loop in case of invalid Vagrantfile
             if (line.find('end') != -1):
                 break
 
@@ -417,7 +471,7 @@ class ProvisionVagrant(ProvisionBase):
 
     def vf_read(self):
         """ read Vagrantfile
-            also splits
+            also splits lines
         """
         return open(self.vagrantfile).read().splitlines()
 
@@ -437,12 +491,12 @@ class ProvisionVagrant(ProvisionBase):
     def vf_backup(self, msg=''):
         """ backup Vagrantfile contents to vf_data """
         if msg:
-            self.info("Trying", msg)
+            self.info("Trying to enable", msg)
         self.msg = msg
         self.vf_data = self.vf_read()
 
     def vf_restore(self):
-        """ restore Vagrantfile contents frmo vf_data"""
+        """ restore Vagrantfile contents from vf_data"""
         if self.msg:
             self.info('Reverting', self.msg, 'red')
             self.msg = ''
@@ -454,7 +508,7 @@ class ProvisionVagrant(ProvisionBase):
         """ info out!
             see msgout()
         """
-        self.msgout('debug', key, val, color)
+        self.msgout('info', key, val, color)
 
     def debug(self, key = '', val = '', color='yellow'):
         """ debugging, yay!
@@ -478,6 +532,7 @@ class ProvisionVagrant(ProvisionBase):
 
         emsg = lambda: RuntimeError(f"Message type unknown: {mtype}")
 
+        # Call super.debug or super.info
         if val:
             getattr(self.super,
                 mtype,
@@ -490,7 +545,12 @@ class ProvisionVagrant(ProvisionBase):
                 )(key)
 
     def hr(self, val):
-        """ return human readable data """
+        """ return human readable data
+             - converts bytes, tuples and lists
+             - separates entries with newlines
+             - runs recursively
+             - tries to add eol
+        """
         if type(val) is tuple or type(val) is list:
             ret = ''
             for v in val:
@@ -512,10 +572,16 @@ class ProvisionVagrant(ProvisionBase):
         return f'{val}{eol}'
 
     def set_default(self, where, default):
+        """ Set `self.data` entry if not set already or if empty """
         if not (where in self.data and self.data[where]):
             self.data[where] = default
 
     def prepend(self, thing, string):
+        """ modify object to prepend it with string
+            based on the type of object
+             - tuple, list, string
+             - adds a space for string
+        """
         if type(thing) is list:
             return thing.insert(0, string)
         elif type(thing) is tuple:
@@ -524,17 +590,48 @@ class ProvisionVagrant(ProvisionBase):
             return string + ' ' + thing
 
     def cmd_mkcp(self, target_dir, target):
+        """ return string containing shell
+            commands to create dir and copy a target in there
+        """
         target_dir = self.quote(target_dir)
         target = self.quote(target)
         return f'mkdir -p {target_dir}; cp -vafr {target} {target_dir}'
 
     def is_uri(self, uri):
+        """ Check if string is an URI-parsable
+            actually returns its 'scheme'
+        """
         return getattr(urlparse(uri),
-            'schema',
+            'scheme',
             None)
 
     def quote(self, string):
+        """ returns string decorated with dquot """
         return f'"{string}"'
 
-    def kv(self, key, val):
-        return f'{key}: "{val}"'
+    def kv(self, key, val, sep=': '):
+        """ returns key-value decrorated
+             - use separator
+             - quote val
+        """
+        return f'{key}{sep}{self.quote(val)}'
+
+    def kve(self, key, val, sep=' = '):
+        """ returns key equals value
+            see kv()
+        """
+        return self.kv(key, val, sep)
+
+    def opts(self, *keys):
+        """ Load opts into data[]
+            By the same key.
+            see opt()
+        """
+        for key in keys:
+            val = self.opt(key)
+            if val:
+                self.data[key] = val
+
+    def opt(self, key):
+        """ Return option specified on commandline """
+        return self.step.plan.provision.opt(key)
