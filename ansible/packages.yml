@@ -3,4 +3,4 @@
   - name: Install necessary dependencies
     dnf:
       state: present
-      name: fmf
+      name: tmt

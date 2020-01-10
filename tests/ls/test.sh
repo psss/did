@@ -13,7 +13,7 @@ rlJournalStart
         rlRun "cp example-plan.txt $TmpDir/plan.fmf"
         rlRun "cp example-story.txt $TmpDir/story.fmf"
         rlRun "pushd $TmpDir"
-        rlRun "fmf init"
+        rlRun "tmt init"
         rlRun "set -o pipefail"
     rlPhaseEnd
 

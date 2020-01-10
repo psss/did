@@ -7,6 +7,6 @@ discover:
     filter: 'tier: 0,1'
 prepare:
     how: ansible
-    playbooks: plans/packages.yml
+    playbooks: ansible/packages.yml
 execute:
     how: beakerlib
