@@ -9,15 +9,18 @@ from click.testing import CliRunner
 
 # Prepare path to examples
 PATH = os.path.dirname(os.path.realpath(__file__))
-MINI = os.path.join(PATH, "../../examples/mini")
-SYSTEMD = os.path.join(PATH, "../../examples/systemd")
+
+def example(name):
+    """ Return path to given example """
+    return os.path.join(PATH, "../../examples/", name)
 
 runner = CliRunner()
 
 def test_mini():
     """ Minimal smoke test """
     result = runner.invoke(tmt.cli.main,
-        ['--root', MINI, 'run', '--debug', 'provision', '--how=local'])
+        ['--root', example('mini'),
+        'run', '--debug', 'provision', '--how=local'])
     assert result.exit_code == 0
     assert 'Found 1 plan.' in result.output
     assert '/ci/test/build/smoke' in result.output
@@ -81,21 +84,20 @@ def test_no_metadata():
 
 def test_step():
     """ Select desired step"""
-    for step in tmt.steps.STEPS:
-        if step == 'provision':
-            continue
-        result = runner.invoke(tmt.cli.main, [
-            '--root', MINI, 'run', '--all', 'provision', '--how=local', step
-        ])
+    for step in ['discover', 'provision', 'prepare']:
+        result = runner.invoke(
+            tmt.cli.main, ['--root', example('local'), 'run', step])
         assert result.exit_code == 0
         assert step in result.output
-        assert 'Provision' not in result.output
+        assert 'execute' not in result.output
 
 def test_systemd():
     """ Check systemd example """
-    result = runner.invoke(tmt.cli.main, ['--root', SYSTEMD, 'plan'])
+    result = runner.invoke(
+        tmt.cli.main, ['--root', example('systemd'), 'plan'])
     assert result.exit_code == 0
     assert 'Found 2 plans' in result.output
-    result = runner.invoke(tmt.cli.main, ['--root', SYSTEMD, 'plan', 'show'])
+    result = runner.invoke(
+        tmt.cli.main, ['--root', example('systemd'), 'plan', 'show'])
     assert result.exit_code == 0
     assert 'Tier two functional tests' in result.output
