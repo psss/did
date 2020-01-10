@@ -68,6 +68,7 @@ def test_localhost_prepare_ansible():
         provision.prepare('ansible', 'playbook.yml')
         playbook = os.path.join(plan.run.tree.root, 'playbook.yml')
         run.assert_called_once_with(
+            f'stty cols 80 && '
             f'sudo ansible-playbook -v -c local -i localhost, {playbook}')
 
 
