@@ -34,19 +34,20 @@ def test_init():
     assert 'initialized' in result.output
     result = runner.invoke(tmt.cli.main, ['init'])
     assert 'already exists' in result.output
-    result = runner.invoke(tmt.cli.main, ['init', '--mini'])
+    result = runner.invoke(tmt.cli.main, ['init', '--template', 'mini'])
     assert 'plans/example' in result.output
-    result = runner.invoke(tmt.cli.main, ['init', '--mini'])
+    result = runner.invoke(tmt.cli.main, ['init', '--template', 'mini'])
     assert result.exception
-    result = runner.invoke(tmt.cli.main, ['init', '--full', '--force'])
+    result = runner.invoke(tmt.cli.main, ['init', '--template', 'full',
+                                          '--force'])
     assert 'overwritten' in result.output
-    # tmt init --mini in a clean directory
+    # tmt init --template mini in a clean directory
     os.system('rm -rf .fmf *')
-    result = runner.invoke(tmt.cli.main, ['init', '--mini'])
+    result = runner.invoke(tmt.cli.main, ['init', '--template', 'mini'])
     assert 'plans/example' in result.output
-    # tmt init --full in a clean directory
+    # tmt init --template full in a clean directory
     os.system('rm -rf .fmf *')
-    result = runner.invoke(tmt.cli.main, ['init', '--full'])
+    result = runner.invoke(tmt.cli.main, ['init', '--template', 'full'])
     assert 'tests/example' in result.output
     os.chdir(original_directory)
     shutil.rmtree(tmp)

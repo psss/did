@@ -695,23 +695,29 @@ def export(
 #  Init
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+_init_template_choices = ['empty', 'mini', 'base', 'full']
+_init_templates = listed(_init_template_choices, join='or')
 @main.command()
 @click.pass_context
 @click.argument('path', default='.')
 @click.option(
-    '--mini', is_flag=True, help='Create a minimal plan.')
-@click.option(
-    '--base', is_flag=True, help='Create a plan and a test.')
-@click.option(
-    '--full', is_flag=True, help='Create a story, a plan and a test.')
+    '-t', '--template', default='empty', metavar='TEMPLATE',
+    type=click.Choice(_init_template_choices),
+    help='Template ({}).'.format(_init_templates))
 @verbose_debug_quiet
 @force_dry
-def init(context, path, mini, base, full, force, **kwargs):
+def init(context, path, template, force, **kwargs):
     """
     Initialize a new tmt tree.
 
     By default tree is created in the current directory.
     Provide a PATH to create it in a different location.
+
+    \b
+    A tree can be optionally populated with example metadata:
+    * 'mini' template contains a minimal plan and no tests,
+    * 'base' template contains a plan and a beakerlib test,
+    * 'full' template contains a 'full' story, an 'full' plan and a shell test.
     """
 
     # Check for existing tree
@@ -737,12 +743,18 @@ def init(context, path, mini, base, full, force, **kwargs):
         echo("Tree '{}' initialized.".format(tree.root))
 
     # Populate the tree with example objects if requested
-    if mini:
+    if template == 'empty':
+        non_empty_choices = [c for c in _init_template_choices if c != 'empty']
+        echo("To populate it with example content, use --template with "
+             "{}.".format(listed(non_empty_choices, join='or')))
+    else:
+        echo("Applying template '{}'.".format(template, _init_templates))
+    if template == 'mini':
         tmt.Plan.create('/plans/example', 'mini', tree, force)
-    if base:
+    elif template == 'base':
         tmt.Test.create('/tests/example', 'beakerlib', tree, force)
         tmt.Plan.create('/plans/example', 'base', tree, force)
-    if full:
+    elif template == 'full':
         tmt.Test.create('/tests/example', 'shell', tree, force)
         tmt.Plan.create('/plans/example', 'full', tree, force)
         tmt.Story.create('/stories/example', 'full', tree, force)

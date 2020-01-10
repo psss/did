@@ -9,8 +9,12 @@ tested: /tests/unit
 
 /mini:
     summary: Create a tree with simple examples
-    example: tmt init --mini
+    example: tmt init --template mini
+
+/base:
+    summary: Create a tree with some examples
+    example: tmt init --template base
 
 /full:
     summary: Create a tree with full examples
-    example: tmt init --full
+    example: tmt init --template full

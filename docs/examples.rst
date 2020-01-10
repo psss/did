@@ -29,18 +29,21 @@ Before starting a new project initialize the metadata tree root::
 
     $ tmt init
     Tree '/tmp/try' initialized.
+    To populate it with example content, use --template with mini, base or full.
 
 You can also populate it with a minimal plan example::
 
-    $ tmt init --mini
+    $ tmt init --template mini
     Tree '/tmp/try' initialized.
+    Applying template 'mini'.
     Directory '/tmp/try/plans' created.
     Plan '/tmp/try/plans/example.fmf' created.
 
 Create a plan and a test::
 
-    $ tmt init --base
+    $ tmt init --template base
     Tree '/tmp/try' initialized.
+    Applying template 'base'.
     Directory '/tmp/try/tests/example' created.
     Test metadata '/tmp/try/tests/example/main.fmf' created.
     Test script '/tmp/try/tests/example/test.sh' created.
@@ -50,8 +53,9 @@ Create a plan and a test::
 Initialize with a richer example that also includes the story
 (overwriting existing files)::
 
-    $ tmt init --full --force
+    $ tmt init --template full --force
     Tree '/tmp/try' already exists.
+    Applying template 'full'.
     Directory '/tmp/try/tests/example' already exists.
     Test metadata '/tmp/try/tests/example/main.fmf' overwritten.
     Test script '/tmp/try/tests/example/test.sh' overwritten.
