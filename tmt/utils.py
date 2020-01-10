@@ -130,11 +130,12 @@ class Common(object):
         if self.opt('debug'):
             echo(self._indent(key, value, color, shift))
 
-    def _run(self, command, cwd):
+    def _run(self, command, cwd, shell):
         """ Run command, capture the output """
         # Create the process
         process = subprocess.Popen(
-            command, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            command, cwd=cwd, shell=shell,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         descriptors = [process.stdout.fileno(), process.stderr.fileno()]
         stdout = ''
         stderr = ''
@@ -169,11 +170,12 @@ class Common(object):
 
         # Handle the exit code, return output
         if process.returncode != 0:
-            raise subprocess.CalledProcessError(
-                process.returncode, ' '.join(command))
+            if isinstance(command, list):
+                command = ' '.join(command)
+            raise subprocess.CalledProcessError(process.returncode, command)
         return stdout, stderr
 
-    def run(self, command, message=None, cwd=None, dry=False):
+    def run(self, command, message=None, cwd=None, dry=False, shell=True):
         """
         Run command, give message, handle errors
 
@@ -183,8 +185,8 @@ class Common(object):
         """
         # Use a generic message if none given, prepare error message
         if not message:
-            message = "Run command '{}'.".format(
-                ' '.join(command) if isinstance(command, list) else command)
+            line = ' '.join(command) if isinstance(command, list) else command
+            message = f"Run command '{line}'."
         self.debug(message)
         message = "Failed to " + message[0].lower() + message[1:]
 
@@ -193,10 +195,8 @@ class Common(object):
             return None, None
 
         # Prepare command, run it, handle the exit code
-        if isinstance(command, str):
-            command = shlex.split(command)
         try:
-            return self._run(command, cwd=cwd or self.workdir)
+            return self._run(command, cwd=cwd or self.workdir, shell=shell)
         except (OSError, subprocess.CalledProcessError) as error:
             raise GeneralError(f"{message}\n{error}")
 
