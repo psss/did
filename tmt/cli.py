@@ -430,7 +430,7 @@ def convert(context, paths, makefile, nitrate, purpose, **kwargs):
     The following test metadata are converted for each source:
 
     \b
-    makefile ..... summary, component, duration
+    makefile ..... summary, component, duration, requires, rhtsrequires
     purpose ...... description
     nitrate ...... environment, relevancy
     """

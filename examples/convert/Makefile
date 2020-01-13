@@ -36,6 +36,7 @@ $(METADATA): Makefile
 	@echo "TestTime:        5m" >> $(METADATA)
 	@echo "RunFor:          tmt" >> $(METADATA)
 	@echo "Requires:        tmt" >> $(METADATA)
+	@echo "RhtsRequires:    fmf" >> $(METADATA
 	@echo "Priority:        Normal" >> $(METADATA)
 	@echo "License:         MIT" >> $(METADATA)
 	@echo "Confidential:    no" >> $(METADATA)

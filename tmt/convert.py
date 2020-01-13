@@ -81,6 +81,12 @@ def read(path, makefile, nitrate, purpose):
         data['duration'] = re.search(
             r'echo "TestTime:\s*(.*)"', content).group(1)
         echo(style('duration: ', fg='green') + data['duration'])
+        # Requires and RhtsRequires (optional)
+        requires_list = re.findall(r'echo "(?:Rhts)?Requires:\s*(.*)"', content)
+        requires_str = ' '.join(requires_list)
+        if requires_str != '':
+            data['requires'] = requires_str
+            echo(style('requires: ', fg='green') + data['requires'])
 
     # Purpose (extract everything after the header as a description)
     if purpose:
