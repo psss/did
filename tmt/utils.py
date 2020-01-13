@@ -170,7 +170,7 @@ class Common(object):
 
         # Handle the exit code, return output
         if process.returncode != 0:
-            if isinstance(command, list):
+            if isinstance(command, (list, tuple)):
                 command = ' '.join(command)
             raise subprocess.CalledProcessError(process.returncode, command)
         return stdout, stderr
@@ -185,7 +185,10 @@ class Common(object):
         """
         # Use a generic message if none given, prepare error message
         if not message:
-            line = ' '.join(command) if isinstance(command, list) else command
+            if isinstance(command, (list, tuple)):
+                line = ' '.join(command)
+            else:
+                line = command
             message = f"Run command '{line}'."
         self.debug(message)
         message = "Failed to " + message[0].lower() + message[1:]
