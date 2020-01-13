@@ -27,7 +27,7 @@ class ProvisionLocalhost(ProvisionBase):
         # Force column width to 80 chars, to mitigate issues with too long
         # lines due to indent. Column width is the same as with libvirt plugin.
         columns = 'stty cols 80'
-        self.run(f'{columns} && sudo {ansible}')
+        self.run(f'{columns}; sudo {ansible}')
 
     def _prepare_shell(self, what):
         """ Run ansible on localhost """
