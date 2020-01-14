@@ -28,6 +28,7 @@ example: |
             isolate: true
 
 /shell:
+    story: As a user I want to easily run shell script as a test.
     summary: Execute shell scripts
 
     /default:
@@ -40,6 +41,7 @@ example: |
         example: |
             execute:
                 script: fmf --help
+        implemented: /tmt/steps/discover/__init__.py
 
     /multi:
         summary: Multiple shell commands
@@ -54,6 +56,8 @@ example: |
                     - systemctl start httpd
                     - echo foo > /var/www/html/index.html
                     - curl http://localhost/ | grep foo
+        implemented: /tmt/steps/discover/__init__.py
+
     /script:
         summary: Multi-line shell script
         description:

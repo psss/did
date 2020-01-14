@@ -26,6 +26,22 @@ class Discover(tmt.steps.Step):
     def wake(self):
         """ Wake up the step (process workdir and command line) """
         super(Discover, self).wake()
+        # Check execute step for possible shell scripts
+        scripts = self.plan.execute.data[0].get('script')
+        if scripts:
+            if isinstance(scripts, str):
+                scripts = [scripts]
+            tests = []
+            for index in range(len(scripts)):
+                name = f'script-{str(index).zfill(2)}'
+                tests.append(dict(name=name, test=scripts[index]))
+            # Append new data if tests already defined
+            if self.data[0].get('tests'):
+                self.data.append(
+                    dict(how='shell', tests=tests, name='execute'))
+            # Otherwise override current empty definition
+            else:
+                self.data[0]['tests'] = tests
         # Choose the plugin
         for data in self.data:
             if data['how'] == 'fmf':
