@@ -19,3 +19,6 @@ prepare:
     - sudo dnf install -y tmt
 execute:
     how: shell
+artifact:
+    - build
+    - update
