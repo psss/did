@@ -444,8 +444,12 @@ def convert(context, paths, makefile, nitrate, purpose, **kwargs):
             raise tmt.utils.GeneralError(
                 "Path '{0}' is not a directory.".format(path))
         # Gather old metadata and store them as fmf
-        data = tmt.convert.read(path, makefile, nitrate, purpose)
-        tmt.convert.write(path, data)
+        data, testcase_data = tmt.convert.read(path, makefile, nitrate, purpose)
+        main_path = os.path.join(path, 'main.fmf')
+        tmt.convert.write(main_path, data)
+        for case in testcase_data:
+            case_path = os.path.join(path, str(case['tcms']) + '.fmf')
+            tmt.convert.write(case_path, case)
 
 
 @tests.command()
