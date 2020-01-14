@@ -100,7 +100,7 @@ def test_step_execute():
         tmt.cli.main, ['--root', example('local'), 'run', step])
 
     # Test execute empty with discover output missing
-    assert result.exit_code == 1
+    assert result.exit_code != 0
     assert 'Could not find TESTS file' in result.output
 
     assert step in result.output
