@@ -1,6 +1,6 @@
 Name: tmt
-Version: 0.6
-Release: 4%{?dist}
+Version: 0.7
+Release: 1%{?dist}
 
 Summary: Test Management Tool
 License: MIT
@@ -122,6 +122,67 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Tue Jan 14 2020 Petr Šplíchal <psplicha@redhat.com> - 0.7-4
+- Make the package build for epel7 and epel8
+- Implement test discover from execute shell script
+- Disable /plan/helps for running in cruncher (#74)
+- Do not fail ansible execution on 'stty cols' error
+- Use a list for storing converted requires
+- Add Requires to main.fmf when converting tests (#65)
+- Fix command debug output to join tuples as well. (#77)
+- Set 80 chars for ansible-playbook on localhost
+- Use tmt to init tree, extra folder for playbooks
+- Fix log and error handling in execute
+- Fail in run.sh if there are Missing tests.
+- Use sudo in prepare step to allow local execution
+- Fix run_vagrant() to work with shell=True
+- Use tmt init --template, not --mini|--base|--full (#69)
+- Add a simple local provision plan to examples
+- Simplify step selection test, simple local example
+- Fix conflicting options, revert copr config
+- Add `--guest` support for the provision step
+- Depend on git-core and not the full git package (#64)
+- Use shell=True as a default in utils' run()
+- Put quotes in `pip install .[*]` in README (#67)
+- Use parent run context to check for enabled steps
+- Improve the enabled steps implementation
+- Add 'mock' to the extra test requires [fix #63]
+- Add a new story for developing upgrade tests
+- Update fedora targets for packit
+- Add vagrant to BuildRequires (needed to run tests)
+- Add stories for connecting to a provisioned box
+- Separate the provision step into multiple stories
+- Fix provision tests to work with older mock (#51)
+- Install the latest mock module for testing
+- Default to vagrant provision, use the tree root
+- Update documentation coverage links
+- Move new docs to examples, adjust style & content
+- Add prepare functionality to local provision
+- Import examples from @psss's talk
+- Add an argument to ProvisionBase.copy_from_guest (#41)
+- Remove unused imports, fix crash, shell prepare
+- Initial prepare and finish steps implementation
+- Document the vagrant-rsync-back plugin workaround
+- Fix beakerlib execution, show overall results
+- Better execute with logs and better run.sh
+- Implement 'tmt init --base' with working examples
+- Add git to the main package requires
+- Add tmt & python3-nitrate to the tmt-all requires
+- Create subpackage 'tmt-all' with all dependencies
+- Use package_data to package the test runner
+- Apply requested file mode in create_file()
+- Run tmt tests local by default, fix provision show
+- Implement image selection using provision --image
+- Do not re-raise tmt exceptions in debug mode
+- Package the runner, dry mode in Common.run()
+- Support multiline output in common display methods
+- Enable command line filtering in discover.shell
+- Default discover method has to be 'shell'
+- Fix Common.run() to capture all output, log all
+- Fix broken test/plan/story create, add some tests
+- Better config handling in ProvisionVagrant.
+- Implement 'sync-back' and simple VagrantProvision.
+
 * Mon Nov 04 2019 Petr Šplíchal <psplicha@redhat.com> - 0.6-1
 - List all python packages in the setup.py
 - Initial implementation of the execute step
