@@ -76,9 +76,6 @@ export LANG=en_US.utf-8
 
 %py3_build
 
-# create bash completion script
-_TMT_COMPLETE=source %{__python3} bin/tmt > tmt-complete.sh || true
-
 
 %install
 %if %{with englocale}
@@ -90,7 +87,7 @@ export LANG=en_US.utf-8
 mkdir -p %{buildroot}%{_mandir}/man1
 mkdir -p %{buildroot}/etc/bash_completion.d/
 install -pm 644 tmt.1* %{buildroot}%{_mandir}/man1
-install -pm 644 tmt-complete.sh %{buildroot}/etc/bash_completion.d/
+install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 
 
 %check
@@ -108,7 +105,7 @@ export LANG=en_US.utf-8
 %{_bindir}/%{name}
 %doc README.rst examples
 %license LICENSE
-/etc/bash_completion.d/tmt-complete.sh
+/etc/bash_completion.d/tmt
 
 
 %files -n python%{python3_pkgversion}-%{name}

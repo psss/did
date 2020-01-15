@@ -1,0 +1,26 @@
+# The following command was used to generate this script:
+# _TMT_COMPLETE=source python3 bin/tmt > bin/complete
+# https://click.palletsprojects.com/en/7.x/bashcomplete/
+
+_tmt_completion() {
+    local IFS=$'
+'
+    COMPREPLY=( $( env COMP_WORDS="${COMP_WORDS[*]}" \
+                   COMP_CWORD=$COMP_CWORD \
+                   _TMT_COMPLETE=complete $1 ) )
+    return 0
+}
+
+_tmt_completionetup() {
+    local COMPLETION_OPTIONS=""
+    local BASH_VERSION_ARR=(${BASH_VERSION//./ })
+    # Only BASH version 4.4 and later have the nosort option.
+    if [ ${BASH_VERSION_ARR[0]} -gt 4 ] ||
+            ([ ${BASH_VERSION_ARR[0]} -eq 4 ] &&
+            [ ${BASH_VERSION_ARR[1]} -ge 4 ]); then
+        COMPLETION_OPTIONS="-o nosort"
+    fi
+    complete $COMPLETION_OPTIONS -F _tmt_completion tmt
+}
+
+_tmt_completionetup;
