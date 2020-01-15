@@ -52,13 +52,18 @@ except AttributeError:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def read(path, makefile, nitrate, purpose):
-    """ Read old metadata from various sources """
-    echo(style("Checking the '{0}' directory.".format(path), fg='red'))
+    """
+    Read old metadata from various sources
+
+    Returns tuple (common_data, individual_data) where 'common_data' are
+    metadata which belong to main.fmf and 'individual_data' contains
+    data for individual testcases (if multiple tcms testcases found).
+    """
 
     data = dict()
-    testcase_data = list()
+    echo(style("Checking the '{0}' directory.".format(path), fg='red'))
 
-    # Makefile (extract summary, component and duration)
+    # Makefile (extract summary, component, duration and requires)
     if makefile:
         echo(style('Makefile ', fg='blue'), nl=False)
         makefile_path = os.path.join(path, 'Makefile')
@@ -68,9 +73,9 @@ def read(path, makefile, nitrate, purpose):
         except IOError:
             raise ConvertError("Unable to open '{0}'.".format(makefile_path))
         echo("found in '{0}'.".format(makefile_path))
-        # Test
-        test = re.search('export TEST=(.*)\n', content).group(1)
-        echo(style('test: ', fg='green') + test)
+        # Beaker task name
+        beaker_task = re.search('export TEST=(.*)\n', content).group(1)
+        echo(style('test: ', fg='green') + beaker_task)
         # Summary
         data['summary'] = re.search(
             r'echo "Description:\s*(.*)"', content).group(1)
@@ -107,84 +112,90 @@ def read(path, makefile, nitrate, purpose):
 
     # Nitrate (extract contact, environment and relevancy)
     if nitrate:
-        data, testcase_data = read_nitrate(test, data)
+        common_data, individual_data = read_nitrate(beaker_task, data)
+    else:
+        common_data = data
+        individual_data = []
 
-    log.debug('Gathered main.fmf metadata:\n' + pprint.pformat(data))
-    log.debug('Gathered tcms case metadata:\n' + pprint.pformat(testcase_data))
-    return data, testcase_data
+    log.debug('Common metadata:\n' + pprint.pformat(common_data))
+    log.debug('Individual metadata:\n' + pprint.pformat(individual_data))
+    return common_data, individual_data
 
 
-def read_nitrate(test, data):
-        """ Read old metadata from nitrate test cases """
-        echo(style('Nitrate ', fg='blue'), nl=False)
-        if test is None:
-            raise ConvertError('No test name detected for nitrate search')
-        if TestCase is None:
-            raise ConvertError('Need nitrate module to import metadata')
-        # Find testcases that have CONFIRMED status
-        testcases = list(TestCase.search(script=test, case_status=2))
-        if not testcases:
-            raise ConvertError("No testcase found for '{0}'.".format(test))
-        elif len(testcases) > 1:
-            echo("Multiple test cases found for '{0}'.".format(test))
+def read_nitrate(beaker_task, common_data):
+    """ Read old metadata from nitrate test cases """
 
-        testcase_data = list()
+    # Check test case, make sure nitrate is available
+    echo(style('Nitrate ', fg='blue'), nl=False)
+    if beaker_task is None:
+        raise ConvertError('No test name detected for nitrate search')
+    if TestCase is None:
+        raise ConvertError('Need nitrate module to import metadata')
 
-        for testcase in testcases:
-            single_case_data = dict()
-            echo("test case found '{0}'.".format(testcase.identifier))
-            # Test identifier
-            single_case_data['tcms'] = testcase.identifier
-            # Test name
-            if testcase.summary:
-                single_case_data['testname'] = '{}'.format(
-                    testcase.summary)
-                echo(style('test name: ', fg='green') + single_case_data['testname'])
-            # Contact
-            if testcase.tester:
-                single_case_data['contact'] = '{} <{}>'.format(
-                    testcase.tester.name, testcase.tester.email)
-                echo(style('contact: ', fg='green') + single_case_data['contact'])
-            # Environment
-            if testcase.arguments:
-                single_case_data['environment'] = tmt.utils.variables_to_dictionary(
-                    testcase.arguments)
-                echo(style('environment:', fg='green'))
-                echo(pprint.pformat(single_case_data['environment']))
-            # Relevancy
-            field = tmt.utils.StructuredField(testcase.notes)
-            single_case_data['relevancy'] = field.get('relevancy')
+    # Find testcases that have CONFIRMED status
+    testcases = list(TestCase.search(script=beaker_task, case_status=2))
+    if not testcases:
+        raise ConvertError("No testcase found for '{0}'.".format(beaker_task))
+    elif len(testcases) > 1:
+        echo("Multiple test cases found for '{0}'.".format(beaker_task))
+
+    # Process individual test cases
+    individual_data = list()
+    for testcase in testcases:
+        data = dict()
+        echo("test case found '{0}'.".format(testcase.identifier))
+        # Test identifier
+        data['tcms'] = testcase.identifier
+        # Beaker task name (taken from summary)
+        if testcase.summary:
+            data['task'] = testcase.summary
+            echo(style('task: ', fg='green') + data['task'])
+        # Contact
+        if testcase.tester:
+            data['contact'] = '{} <{}>'.format(
+                testcase.tester.name, testcase.tester.email)
+            echo(style('contact: ', fg='green') + data['contact'])
+        # Environment
+        if testcase.arguments:
+            data['environment'] = tmt.utils.variables_to_dictionary(
+                testcase.arguments)
+            echo(style('environment:', fg='green'))
+            echo(pprint.pformat(data['environment']))
+        # Relevancy
+        field = tmt.utils.StructuredField(testcase.notes)
+        relevancy = field.get('relevancy')
+        if relevancy:
+            data['relevancy'] = relevancy
             echo(style('relevancy:', fg='green'))
-            echo(single_case_data['relevancy'].rstrip('\n'))
-            testcase_data.append(single_case_data)
+            echo(data['relevancy'].rstrip('\n'))
+        individual_data.append(data)
 
-        common_candidates = dict()
+    # Find common data from individual test cases
+    common_candidates = dict()
+    for testcase in individual_data:
+        if individual_data.index(testcase) == 0:
+            common_candidates = copy.copy(testcase)
+        else:
+            for key, value in testcase.items():
+                if key in common_candidates:
+                    if value != common_candidates[key]:
+                        common_candidates.pop(key)
 
-        # Find common data from individual test cases
-        for testcase in testcase_data:
-            if testcase_data.index(testcase) == 0:
-                common_candidates = copy.copy(testcase)
-            else:
-                for key, value in testcase.items():
-                    if key in common_candidates:
-                        if value != common_candidates[key]:
-                            common_candidates.pop(key)
+    # Add common data to main.fmf
+    for key, value in common_candidates.items():
+        common_data[key] = value
 
-        # Add common data to main.fmf
-        for key, value in common_candidates.items():
-            data[key] = value
+    # If there is only single testcase found there is no need to continue
+    if len(individual_data) <= 1:
+        return common_data, []
 
-        # If there is only single testcase found there is no need to continue
-        if len(testcase_data) <= 1:
-            return data, []
+    # Remove common data from individual fmfs
+    for common_key in common_candidates:
+        for testcase in individual_data:
+            if common_key in testcase:
+                testcase.pop(common_key)
 
-        # Remove common data from individual fmfs
-        for common_key in common_candidates:
-            for testcase in testcase_data:
-                if common_key in testcase:
-                    testcase.pop(common_key)
-
-        return data, testcase_data
+    return common_data, individual_data
 
 
 def write(path, data):
