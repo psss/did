@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.7
+Version: 0.8
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -119,6 +119,11 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Wed Jan 15 2020 Petr Šplíchal <psplicha@redhat.com> - 0.8-1
+- Do not create bash completion script during build
+- Require the same version, fix changelog entry
+- Create fmf for each tcms case when converting. (#78)
+
 * Tue Jan 14 2020 Petr Šplíchal <psplicha@redhat.com> - 0.7-1
 - Make the package build for epel7 and epel8
 - Implement test discover from execute shell script
