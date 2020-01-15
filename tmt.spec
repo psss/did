@@ -57,7 +57,7 @@ This package contains the Python 3 module.
 
 %package all
 Summary: %{summary}
-Requires: tmt
+Requires: tmt == %{version}-%{release}
 Requires: vagrant vagrant-libvirt python3-nitrate
 
 %description all
@@ -122,7 +122,7 @@ export LANG=en_US.utf-8
 
 
 %changelog
-* Tue Jan 14 2020 Petr Šplíchal <psplicha@redhat.com> - 0.7-4
+* Tue Jan 14 2020 Petr Šplíchal <psplicha@redhat.com> - 0.7-1
 - Make the package build for epel7 and epel8
 - Implement test discover from execute shell script
 - Disable /plan/helps for running in cruncher (#74)
