@@ -253,8 +253,8 @@ https://travis-ci.org/psss/tmt
 Coveralls:
 https://coveralls.io/github/psss/tmt
 
-Specification:
-https://pagure.io/fedora-ci/metadata
+Metadata Specification:
+https://tmt.readthedocs.io/en/latest/spec.html
 
 Flexible Metadata Format:
 http://fmf.readthedocs.io/
