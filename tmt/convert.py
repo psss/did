@@ -101,14 +101,15 @@ def read(path, makefile, nitrate, purpose):
         try:
             with open(purpose_path, encoding='utf-8') as purpose:
                 content = purpose.read()
+            echo("found in '{0}'.".format(purpose_path))
+            for header in ['PURPOSE', 'Description', 'Author']:
+                content = re.sub('^{0}.*\n'.format(header), '', content)
+            data['description'] = content.lstrip('\n')
+            echo(style('description:', fg='green'))
+            echo(data['description'].rstrip('\n'))
         except IOError:
-            raise ConvertError("Unable to open '{0}'.".format(purpose_path))
-        echo("found in '{0}'.".format(purpose_path))
-        for header in ['PURPOSE', 'Description', 'Author']:
-            content = re.sub('^{0}.*\n'.format(header), '', content)
-        data['description'] = content.lstrip('\n')
-        echo(style('description:', fg='green'))
-        echo(data['description'].rstrip('\n'))
+            log.warn("Unable to open '{0}'.".format(purpose_path))
+
 
     # Nitrate (extract contact, environment and relevancy)
     if nitrate:
@@ -143,6 +144,7 @@ def read_nitrate(beaker_task, common_data):
     individual_data = list()
     for testcase in testcases:
         data = dict()
+        relevancy = str()
         echo("test case found '{0}'.".format(testcase.identifier))
         # Test identifier
         data['tcms'] = testcase.identifier
@@ -163,11 +165,15 @@ def read_nitrate(beaker_task, common_data):
             echo(pprint.pformat(data['environment']))
         # Relevancy
         field = tmt.utils.StructuredField(testcase.notes)
-        relevancy = field.get('relevancy')
-        if relevancy:
-            data['relevancy'] = relevancy
-            echo(style('relevancy:', fg='green'))
-            echo(data['relevancy'].rstrip('\n'))
+        try:
+            relevancy = field.get('relevancy')
+            if relevancy:
+                data['relevancy'] = relevancy
+                echo(style('relevancy:', fg='green'))
+                echo(data['relevancy'].rstrip('\n'))
+        except tmt.utils.StructuredFieldError:
+            log.warn("No relevancy section found in Structured field.")
+
         individual_data.append(data)
 
     # Find common data from individual test cases
