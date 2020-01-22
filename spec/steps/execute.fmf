@@ -4,17 +4,9 @@ description: |
     Execute discovered tests on provisioned boxes with optional
     support for parallelization.
 
-    Examples of execution implementation:
-
-    shell
-        execute arbitratry shell commands, check exit code (default)
-    beakerlib
-        run beakerlib tests, check the journal for test results
-    restraint
-        use the restraint harness to execute beakerlib tests
-
-    For each ``plan`` the execute step should produce a ``results.yaml`` file
-    with the list of results for each test in the following format::
+    For each ``plan`` the execute step should produce a
+    ``results.yaml`` file with the list of results for each test
+    in the following format::
 
         /test/one:
             result: TEST_RESULT
@@ -24,14 +16,18 @@ description: |
             result: TEST_RESULT
             log: PATH
 
-    Where ``TEST_RESULT`` is the outcome of the test. It can have these values:
+    Where ``TEST_RESULT`` is the outcome of the test. It can have
+    these values:
 
-        * info - test finished and produced only information message
+        * info - test finished and produced only information
+          message
         * passed - test finished and passed
         * failed - test finished and failed
-        * error - a problem encountered during test execution, treated as failed
+        * error - a problem encountered during test execution,
+          treated as failed
 
-    Where ``PATH`` is the test log output path, relative to the execute step plan run directory.
+    Where ``PATH`` is the test log output path, relative to the
+    execute step plan run directory.
 
 example: |
     execute:
@@ -50,6 +46,10 @@ example: |
 /shell:
     story: As a user I want to easily run shell script as a test.
     summary: Execute shell scripts
+    description:
+        Execute arbitratry shell commands and check their exit
+        code which is used as a test result. This is the default
+        execute step implementation.
 
     /default:
         summary: Shell is the default executor
@@ -61,7 +61,7 @@ example: |
         example: |
             execute:
                 script: fmf --help
-        implemented: /tmt/steps/discover/__init__.py
+        implemented: /tmt/steps/execute/shell.py
 
     /multi:
         summary: Multiple shell commands
@@ -76,7 +76,7 @@ example: |
                     - systemctl start httpd
                     - echo foo > /var/www/html/index.html
                     - curl http://localhost/ | grep foo
-        implemented: /tmt/steps/discover/__init__.py
+        implemented: /tmt/steps/execute/shell.py
 
     /script:
         summary: Multi-line shell script
@@ -91,3 +91,13 @@ example: |
                     systemctl start httpd
                     echo foo > /var/www/html/index.html
                     curl http://localhost/ | grep foo
+
+/beakerlib:
+    story: As a user I want to easily run beakerlib tests.
+    summary: Execute beakerlib tests
+    description:
+        Run tests using the beakerlib shell-level integration
+        testing library. Check the exit code to ensure tests have
+        been executed successfully and the journal for test
+        results.
+    implemented: /tmt/steps/execute/beakerlib.py
