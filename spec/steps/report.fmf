@@ -1,7 +1,59 @@
 summary: Report test results
 
-description:
-    Adjusting notifications about the test progress and results.
+description: |
+    Create report for all the test results. The report is saved into ``report.yaml``
+    file with the following format::
+
+        result: OVERALL_RESULT
+        plans:
+            /plan/one:
+                result: PLAN_RESULT
+                tests:
+                    /test/one:
+                        result: TEST_RESULT
+                        log: LOG_PATH
+
+                    /test/two:
+                        result: TEST_RESULT
+                        log:
+                            - LOG_PATH
+                            - LOG_PATH
+                            - LOG_PATH
+            /plan/two:
+                result: PLAN_RESULT
+                    /test/one:
+                        result: TEST_RESULT
+                        log: LOG_PATH
+
+    Where ``OVERALL_RESULT`` is the overall result of all plan results. It is counted the same way
+    as ``PLAN_RESULT``.
+
+    Where ``TEST_RESULT`` is the same as in `execute`_ step definition:
+
+        * info - test finished and produced only information message
+        * passed - test finished and passed
+        * failed - test finished and failed
+        * error - a problem encountered during test execution
+
+    Note the priority  of test results is as written above, with ``info`` having the lowest priority 
+    and ``error`` has the highest. This is important for ``PLAN_RESULT``.
+
+    Where ``PLAN_RESULT`` is the overall result or all test results for the plan run. It has the same
+    values as ``TEST_RESULT``. Plan result is counted according to the priority of the test outcome
+    values. For example:
+
+        * if the test results are info, passed, passed - the plan result will be passed
+        * if the test results are info, passed, failed - the plan result will be failed
+        * if the test results are failed, error, passed - the plan result will be error
+
+    Where ``LOG_PATH`` is the test log output path, relative to the execute step plan run directory.
+    The log can be a single log path or a list of log paths, in case the test has produced more log
+    files.
+
+    This step also defines additional notification settings, which can be used by CI or reporting
+    systems to enable and customize notifications.
+
+    Namely the step currently understands these:
 
     email
         send email notification

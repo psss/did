@@ -13,6 +13,26 @@ description: |
     restraint
         use the restraint harness to execute beakerlib tests
 
+    For each ``plan`` the execute step should produce a ``results.yaml`` file
+    with the list of results for each test in the following format::
+
+        /test/one:
+            result: TEST_RESULT
+            log: PATH
+
+        /test/two:
+            result: TEST_RESULT
+            log: PATH
+
+    Where ``TEST_RESULT`` is the outcome of the test. It can have these values:
+
+        * info - test finished and produced only information message
+        * passed - test finished and passed
+        * failed - test finished and failed
+        * error - a problem encountered during test execution, treated as failed
+
+    Where ``PATH`` is the test log output path, relative to the execute step plan run directory.
+
 example: |
     execute:
         how: beakerlib
