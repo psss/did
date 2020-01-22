@@ -47,9 +47,51 @@ story: 'As a user I want to comfortably work with tests'
     documented: /docs/examples#convert-tests
 
 /export:
-    story: 'I want to export test metadata into desired format.'
-    example: tmt test export --format yaml
-    implemented: /tmt/base
+    story: 'I want to export test metadata.'
+
+    /format:
+        story: 'I want to export test metadata into given format.'
+        example: tmt test export --format yaml
+        implemented: /tmt/base
+
+    /nitrate:
+        story: 'I want to export test metadata into nitrate.'
+        example: tmt test export --nitrate
+        description: |
+            In order to keep metadata in sync with the old test
+            case management system we need to export selected set
+            of attributes back to nitrate. The full fmf object
+            identifier should be added to the structured field
+            under the key ``fmf``. A warning should be added to
+            the structured field informing users that the test
+            metadata are now maintained in git.
+
+            Below is the list of supported ``fmf`` attributes and
+            corresponding nitrate fields:
+
+            * component — components tab
+            * contact — default tester
+            * description — purpose-file in the structured field
+            * duration — estimated time
+            * enabled — status
+            * environment — arguments
+            * path — not synced
+            * relevancy — relevancy in the structured field
+            * result — not synced
+            * summary — description in the structured field
+            * tag — tags tab
+            * test — not synced
+            * tier — tags (e.g. ``1`` synced to the ``Tier1`` tag)
+
+            The following attributes, if present, should be
+            exported as well:
+
+            * extra-hardware — hardware in the structured field
+            * extra-pepa — pepa in the structured field
+
+            They have the ``extra`` prefix as they are not part of
+            the L1 Metadata Specification and are supposed to be
+            synced temporarily to keep backward compatibility.
 
 /coverage:
     story: 'Test coverage overview'
