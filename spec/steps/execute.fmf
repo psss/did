@@ -50,6 +50,10 @@ example: |
         Execute arbitratry shell commands and check their exit
         code which is used as a test result. This is the default
         execute step implementation.
+    example: |
+        execute:
+            how: shell
+            script: tmt --help
 
     /default:
         summary: Shell is the default executor
@@ -57,10 +61,10 @@ example: |
             The `shell` implementation is the default one.  Thus
             you can omit the `how` keyword and just define the
             `script` to be run.  This is how a minimal smoke test
-            for the `fmf` command line can look like:
+            for the `tmt` command line can look like:
         example: |
             execute:
-                script: fmf --help
+                script: tmt --help
         implemented: /tmt/steps/execute/shell.py
 
     /multi:
