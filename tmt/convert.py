@@ -143,6 +143,8 @@ def read_nitrate(beaker_task, common_data):
     individual_data = list()
     for testcase in testcases:
         data = dict()
+        extra_pepa = str()
+        extra_hardware = str()
         echo("test case found '{0}'.".format(testcase.identifier))
         # Test identifier
         data['tcms'] = testcase.identifier
@@ -161,6 +163,17 @@ def read_nitrate(beaker_task, common_data):
                 testcase.arguments)
             echo(style('environment:', fg='green'))
             echo(pprint.pformat(data['environment']))
+        # Tags
+        if testcase.tags:
+            data['tags'] = [tc.name for tc in testcase.tags]
+            echo(style('tags:', fg='green') + str(data['tags']))
+        # Status
+        if testcase.status.name == "CONFIRMED":
+            data['enabled'] = "yes"
+            echo(style('enabled: ', fg='green') + data['enabled'])
+        else:
+            data['enabled'] = "no"
+            echo(style('enabled: ', fg='green') + data['enabled'])
         # Relevancy
         field = tmt.utils.StructuredField(testcase.notes)
         relevancy = field.get('relevancy')
@@ -168,6 +181,23 @@ def read_nitrate(beaker_task, common_data):
             data['relevancy'] = relevancy
             echo(style('relevancy:', fg='green'))
             echo(data['relevancy'].rstrip('\n'))
+        # Extras: [pepa] and [hardware]
+        try:
+            extra_pepa = field.get('pepa')
+            if extra_pepa:
+                data['extra-pepa'] = extra_pepa
+                echo(style('extra-pepa:', fg='green'))
+                echo(data['extra-pepa'].rstrip('\n'))
+        except tmt.utils.StructuredFieldError:
+            pass
+        try:
+            extra_hardware = field.get('hardware')
+            if extra_hardware:
+                data['extra-hardware'] = extra_hardware
+                echo(style('extra-hardware:', fg='green'))
+                echo(data['extra-hardware'].rstrip('\n'))
+        except tmt.utils.StructuredFieldError:
+            pass
         individual_data.append(data)
 
     # Find common data from individual test cases
