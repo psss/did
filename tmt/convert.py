@@ -172,14 +172,23 @@ def read_nitrate(beaker_task, common_data):
 
     # Find common data from individual test cases
     common_candidates = dict()
+    histogram = dict()
     for testcase in individual_data:
         if individual_data.index(testcase) == 0:
             common_candidates = copy.copy(testcase)
+            for key in testcase:
+                histogram[key] = 1
         else:
             for key, value in testcase.items():
                 if key in common_candidates:
                     if value != common_candidates[key]:
                         common_candidates.pop(key)
+                if key in histogram:
+                    histogram[key] += 1
+
+    for key in histogram:
+        if key in common_candidates and histogram[key] < len(individual_data):
+            common_candidates.pop(key)
 
     # Add common data to main.fmf
     for key, value in common_candidates.items():
