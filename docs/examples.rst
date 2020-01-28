@@ -203,9 +203,12 @@ system is contacted to gather all related metadata::
     nitrate ...... environment, relevancy
 
 In order to fetch data from Nitrate you need to have ``nitrate``
-module installed. You can also use ``--no-nitrate`` to disable
-Nitrate integration. Use ``--no-makefile`` and ``--no-purpose``
-switches to disable the other two metadata sources.
+module installed. For each test case found in Nitrate separate fmf
+file is created with metadata unique to that case. Common metadata
+found in all test cases are stored in ``main.fmf``. You can use
+``--no-nitrate`` to disable Nitrate integration, ``--no-makefile``
+and ``--no-purpose`` switches to disable the other two metadata
+sources.
 
 Example output of metadata conversion::
 
