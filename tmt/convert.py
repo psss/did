@@ -91,8 +91,8 @@ def read(path, makefile, nitrate, purpose):
         # Requires and RhtsRequires (optional)
         requires = re.findall(r'echo "(?:Rhts)?Requires:\s*(.*)"', content)
         if requires:
-            data['requires'] = requires
-            echo(style('requires: ', fg='green') + ' '.join(data['requires']))
+            data['require'] = requires
+            echo(style('require: ', fg='green') + ' '.join(data['require']))
 
     # Purpose (extract everything after the header as a description)
     if purpose:
@@ -161,13 +161,40 @@ def read_nitrate(beaker_task, common_data):
                 testcase.arguments)
             echo(style('environment:', fg='green'))
             echo(pprint.pformat(data['environment']))
+        # Tags
+        if testcase.tags:
+            data['tag'] = sorted([tag.name for tag in testcase.tags])
+            echo(style('tag: ', fg='green') + str(data['tag']))
+        # Status
+        data['enabled'] = testcase.status.name == "CONFIRMED"
+        echo(style('enabled: ', fg='green') + str(data['enabled']))
         # Relevancy
         field = tmt.utils.StructuredField(testcase.notes)
-        relevancy = field.get('relevancy')
-        if relevancy:
-            data['relevancy'] = relevancy
-            echo(style('relevancy:', fg='green'))
-            echo(data['relevancy'].rstrip('\n'))
+        try:
+            relevancy = field.get('relevancy')
+            if relevancy:
+                data['relevancy'] = relevancy
+                echo(style('relevancy:', fg='green'))
+                echo(data['relevancy'].rstrip('\n'))
+        except tmt.utils.StructuredFieldError:
+            pass
+        # Extras: [pepa] and [hardware]
+        try:
+            extra_pepa = field.get('pepa')
+            if extra_pepa:
+                data['extra-pepa'] = extra_pepa
+                echo(style('extra-pepa:', fg='green'))
+                echo(data['extra-pepa'].rstrip('\n'))
+        except tmt.utils.StructuredFieldError:
+            pass
+        try:
+            extra_hardware = field.get('hardware')
+            if extra_hardware:
+                data['extra-hardware'] = extra_hardware
+                echo(style('extra-hardware:', fg='green'))
+                echo(data['extra-hardware'].rstrip('\n'))
+        except tmt.utils.StructuredFieldError:
+            pass
         individual_data.append(data)
 
     # Find common data from individual test cases
