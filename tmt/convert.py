@@ -91,8 +91,8 @@ def read(path, makefile, nitrate, purpose):
         # Requires and RhtsRequires (optional)
         requires = re.findall(r'echo "(?:Rhts)?Requires:\s*(.*)"', content)
         if requires:
-            data['requires'] = requires
-            echo(style('requires: ', fg='green') + ' '.join(data['requires']))
+            data['require'] = requires
+            echo(style('require: ', fg='green') + ' '.join(data['require']))
 
     # Purpose (extract everything after the header as a description)
     if purpose:
@@ -143,8 +143,6 @@ def read_nitrate(beaker_task, common_data):
     individual_data = list()
     for testcase in testcases:
         data = dict()
-        extra_pepa = str()
-        extra_hardware = str()
         echo("test case found '{0}'.".format(testcase.identifier))
         # Test identifier
         data['tcms'] = testcase.identifier
@@ -165,22 +163,21 @@ def read_nitrate(beaker_task, common_data):
             echo(pprint.pformat(data['environment']))
         # Tags
         if testcase.tags:
-            data['tags'] = [tc.name for tc in testcase.tags]
-            echo(style('tags:', fg='green') + str(data['tags']))
+            data['tag'] = sorted([tag.name for tag in testcase.tags])
+            echo(style('tag: ', fg='green') + str(data['tag']))
         # Status
-        if testcase.status.name == "CONFIRMED":
-            data['enabled'] = "yes"
-            echo(style('enabled: ', fg='green') + data['enabled'])
-        else:
-            data['enabled'] = "no"
-            echo(style('enabled: ', fg='green') + data['enabled'])
+        data['enabled'] = testcase.status.name == "CONFIRMED"
+        echo(style('enabled: ', fg='green') + str(data['enabled']))
         # Relevancy
         field = tmt.utils.StructuredField(testcase.notes)
-        relevancy = field.get('relevancy')
-        if relevancy:
-            data['relevancy'] = relevancy
-            echo(style('relevancy:', fg='green'))
-            echo(data['relevancy'].rstrip('\n'))
+        try:
+            relevancy = field.get('relevancy')
+            if relevancy:
+                data['relevancy'] = relevancy
+                echo(style('relevancy:', fg='green'))
+                echo(data['relevancy'].rstrip('\n'))
+        except tmt.utils.StructuredFieldError:
+            pass
         # Extras: [pepa] and [hardware]
         try:
             extra_pepa = field.get('pepa')
