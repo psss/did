@@ -2,8 +2,6 @@ summary:
     Essential command line features
 discover:
     how: fmf
-    repository: https://github.com/psss/tmt
-    revision: devel
     filter: 'tier: 0,1'
 prepare:
     how: ansible
