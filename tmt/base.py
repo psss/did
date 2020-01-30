@@ -388,8 +388,7 @@ class Story(Node):
         for key in self._keys:
             value = getattr(self, key)
             if value is not None:
-                # Do not wrap examples
-                wrap = key != 'example'
+                wrap = False if key == 'example' else 'auto'
                 echo(tmt.utils.format(key, value, wrap=wrap))
         if self.opt('verbose'):
             self._sources()

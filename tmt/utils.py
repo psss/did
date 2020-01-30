@@ -383,9 +383,17 @@ def verdict(decision, comment=None, good='pass', bad='fail', problem='warn'):
 
 def format(
         key, value=None,
-        indent=12, width=72, wrap=True,
+        indent=12, width=72, wrap='auto',
         key_color='green', value_color='black'):
-    """ Nicely format and indent a key-value pair """
+    """
+    Nicely format and indent a key-value pair
+
+    The following values for 'wrap' are supported:
+
+        True .... always reformat text and wrap long lines
+        False ... preserve text, no new line changes
+        auto .... wrap only if text contains a long line
+    """
     indent_string = (indent + 1) * ' '
     # Key
     output = '{} '.format(str(key).rjust(indent, ' '))
@@ -406,6 +414,11 @@ def format(
             output += ('\n' + indent_string).join(value)
     # Text
     elif isinstance(value, str):
+        # In 'auto' mode enable wrapping when long lines present
+        if wrap == 'auto':
+            wrap = any(
+                [len(line) + indent - 7 > width
+                for line in value.split('\n')])
         if wrap:
             output += (wrap_text(
                 value, width=width,
