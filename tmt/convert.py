@@ -85,9 +85,12 @@ def read(path, makefile, nitrate, purpose):
             r'echo "RunFor:\s*(.*)"', content).group(1)
         echo(style('component: ', fg='green') + data['component'])
         # Duration
-        data['duration'] = re.search(
-            r'echo "TestTime:\s*(.*)"', content).group(1)
-        echo(style('duration: ', fg='green') + data['duration'])
+        try:
+            data['duration'] = re.search(
+                r'echo "TestTime:\s*(.*)"', content).group(1)
+            echo(style('duration: ', fg='green') + data['duration'])
+        except AttributeError:
+            pass
         # Requires and RhtsRequires (optional)
         requires = re.findall(r'echo "(?:Rhts)?Requires:\s*(.*)"', content)
         if requires:
@@ -135,7 +138,8 @@ def read_nitrate(beaker_task, common_data):
     # Find testcases that have CONFIRMED status
     testcases = list(TestCase.search(script=beaker_task, case_status=2))
     if not testcases:
-        raise ConvertError("No testcase found for '{0}'.".format(beaker_task))
+        echo("No testcase found for '{0}'.".format(beaker_task))
+        return common_data, []
     elif len(testcases) > 1:
         echo("Multiple test cases found for '{0}'.".format(beaker_task))
 
