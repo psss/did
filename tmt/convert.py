@@ -104,14 +104,14 @@ def read(path, makefile, nitrate, purpose):
         try:
             with open(purpose_path, encoding='utf-8') as purpose:
                 content = purpose.read()
+            echo("found in '{0}'.".format(purpose_path))
+            for header in ['PURPOSE', 'Description', 'Author']:
+                content = re.sub('^{0}.*\n'.format(header), '', content)
+            data['description'] = content.lstrip('\n')
+            echo(style('description:', fg='green'))
+            echo(data['description'].rstrip('\n'))
         except IOError:
-            raise ConvertError("Unable to open '{0}'.".format(purpose_path))
-        echo("found in '{0}'.".format(purpose_path))
-        for header in ['PURPOSE', 'Description', 'Author']:
-            content = re.sub('^{0}.*\n'.format(header), '', content)
-        data['description'] = content.lstrip('\n')
-        echo(style('description:', fg='green'))
-        echo(data['description'].rstrip('\n'))
+            echo("not found.")
 
     # Nitrate (extract contact, environment and relevancy)
     if nitrate:
