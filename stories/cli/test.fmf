@@ -93,6 +93,11 @@ story: 'As a user I want to comfortably work with tests'
             the L1 Metadata Specification and are supposed to be
             synced temporarily to keep backward compatibility.
 
+            After a successful export, special tag ``fmf-export``
+            should be added to the nitrate test case in order to
+            allow easy search for migrated test cases directly
+            from the web interface.
+
 /coverage:
     story: 'Test coverage overview'
     description:
