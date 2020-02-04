@@ -37,7 +37,7 @@ This package contains the command line tool.
 
 
 %package -n     python%{python3_pkgversion}-%{name}
-Summary:        %{summary}
+Summary:        Python library for the %{summary}
 BuildRequires: python%{python3_pkgversion}-devel
 BuildRequires: python%{python3_pkgversion}-setuptools
 BuildRequires: python%{python3_pkgversion}-pytest
@@ -56,7 +56,7 @@ This package contains the Python 3 module.
 
 
 %package all
-Summary: %{summary}
+Summary: Extra dependencies for the Test Management Tool
 Requires: tmt == %{version}-%{release}
 Requires: vagrant vagrant-libvirt python3-nitrate
 
