@@ -132,12 +132,15 @@ story: 'As a user I want to execute tests easily'
 
 /restraint:
     story:
-        As a tester I want the option to execute tests using Restraint harness
+        As a tester I want the option to execute tests using the
+        Restraint harness.
     description:
-        Restraint is the default harness in beaker for RHEL8 and beyond. In
-        order to provide compatibility with beaker style tests, I would like
-        a way to invoke TMT using the Restaint harness. This would enable
-        Restraint tests to be invoked by TMT without modification. Some common
-        commands include rstrnt-reboot, rstrnt-abort, and rstrnt-report-result.
+        Restraint is the default harness in beaker for RHEL8 and
+        beyond. In order to provide compatibility with beaker
+        style tests, I would like a way to invoke ``tmt`` using
+        the Restaint harness. This would enable Restraint tests to
+        be invoked by ``tmt`` without modification. Some common
+        commands include ``rstrnt-reboot``, ``rstrnt-abort``, and
+        ``rstrnt-report-result``.
     example:
-        - tmt run execute -restraint
+        - tmt run --all execute --how restraint
