@@ -268,7 +268,7 @@ Authors
 
 Petr Šplíchal, Miro Hrončok, Alexander Sosedkin, Lukáš Zachar,
 Petr Menšík, Leoš Pol, Miroslav Vadkerti, Pavel Valena, Jakub
-Heger and Honza Horák.
+Heger, Honza Horák and Rachel Sibley.
 
 
 Copyright
