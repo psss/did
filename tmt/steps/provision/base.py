@@ -5,6 +5,8 @@ import string
 
 from click import echo
 
+from tmt.utils import quote
+
 class ProvisionBase(tmt.utils.Common):
     def __init__(self, data, step, instance_name=None):
         self.instance_name = instance_name or ''.join(random.choices(string.ascii_letters, k=16))
@@ -32,9 +34,28 @@ class ProvisionBase(tmt.utils.Common):
 
             arg: "/var/log/journal.log"
                => f"{provision_dir}/copy/var/log/journal.log
-
         """
-        pass
+        beg = f"[[ -d '{target}' ]]"
+        end = 'exit 0; set -xe; '
+
+        isdir = f"{beg} || {end}"
+        isntdir = f"{beg} && {end}"
+
+        target_dir = f'{self.provision_dir}/copy/{target}'
+        self.execute(isdir + self.cmd_mkcp(target_dir, f'{target}/.'))
+
+        target_dir = f'$(dirname "{self.provision_dir}/copy/{target}")'
+        self.execute(isntdir + self.cmd_mkcp(target_dir, target))
+
+        self.sync_workdir_from_guest()
+
+    def cmd_mkcp(self, target_dir, target):
+        """ return string containing shell
+            commands to create dir and copy a target in there
+        """
+        target_dir = quote(target_dir)
+        target = quote(target)
+        return f'mkdir -p {target_dir}; cp -vafr {target} {target_dir}'
 
     def go(self):
         """ do the actual provisioning """

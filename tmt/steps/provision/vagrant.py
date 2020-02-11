@@ -9,10 +9,9 @@ import re
 import shutil
 
 from tmt.steps.provision.base import ProvisionBase
-from tmt.utils import ConvertError, SpecificationError, GeneralError
+from tmt.utils import ConvertError, SpecificationError, GeneralError, quote
 
 from click import echo
-from shlex import quote
 from urllib.parse import urlparse
 
 
@@ -94,23 +93,6 @@ class ProvisionVagrant(ProvisionBase):
         self.plugin_install(command)
         return self.run_vagrant(command)
 
-    # TODO: move to base
-    def copy_from_guest(self, target):
-        """ copy file/folder from guest to host's copy dir """
-        beg = f"[[ -d '{target}' ]]"
-        end = 'exit 0; set -xe; '
-
-        isdir = f"{beg} || {end}"
-        isntdir = f"{beg} && {end}"
-
-        target_dir = f'{self.provision_dir}/copy/{target}'
-        self.execute(isdir + self.cmd_mkcp(target_dir, f'{target}/.'))
-
-        target_dir = f'$(dirname "{self.provision_dir}/copy/{target}")'
-        self.execute(isntdir + self.cmd_mkcp(target_dir, target))
-
-        self.sync_workdir_from_guest()
-
     def destroy(self):
         """ remove instance """
         return self.run_vagrant('destroy', '-f')
@@ -141,7 +123,7 @@ class ProvisionVagrant(ProvisionBase):
 
             self.add_config('vm',
                 cmd,
-                self.quote(name),
+                quote(name),
                 self.kv('type', how),
                 self.kv('privileged', 'true'),
                 self.kv('run', 'never'),
@@ -412,8 +394,8 @@ class ProvisionVagrant(ProvisionBase):
         """ Add synced_folder entry into Vagrantfile """
         self.add_config('vm',
             'synced_folder',
-            self.quote(sync_from),
-            self.quote(sync_to),
+            quote(sync_from),
+            quote(sync_to),
             self.kv('type', self.sync_type),
             *args)
 
@@ -585,14 +567,6 @@ class ProvisionVagrant(ProvisionBase):
         else:
             return string + ' ' + thing
 
-    def cmd_mkcp(self, target_dir, target):
-        """ return string containing shell
-            commands to create dir and copy a target in there
-        """
-        target_dir = self.quote(target_dir)
-        target = self.quote(target)
-        return f'mkdir -p {target_dir}; cp -vafr {target} {target_dir}'
-
     def is_uri(self, uri):
         """ Check if string is an URI-parsable
             actually returns its 'scheme'
@@ -601,16 +575,12 @@ class ProvisionVagrant(ProvisionBase):
             'scheme',
             None)
 
-    def quote(self, string):
-        """ returns string decorated with dquot """
-        return f'"{string}"'
-
     def kv(self, key, val, sep=': '):
         """ returns key-value decrorated
              - use separator
              - quote val
         """
-        return f'{key}{sep}{self.quote(val)}'
+        return f'{key}{sep}{quote(val)}'
 
     def kve(self, key, val, sep=' = '):
         """ returns key equals value

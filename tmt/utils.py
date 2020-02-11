@@ -308,6 +308,10 @@ class StructuredFieldError(GeneralError):
 #  Utilities
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+def quote(string):
+    """ Surround a string with double quotes """
+    return f'"{string}"'
+
 def ascii(text):
     """ Transliterate special unicode characters into pure ascii """
     try:
