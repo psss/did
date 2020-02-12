@@ -205,7 +205,7 @@ def discover(context, **kwargs):
     help='Use specified method for provisioning.')
 @click.option(
     '-i', '--image', metavar='IMAGE',
-    help='Select virtual machine image to use (URI or Box name).')
+    help='Select image to use. Possible valued depdend on the method.')
 @click.option(
     '-b', '--box', metavar='BOX',
     help='Vagrant box name to use.')
@@ -226,7 +226,11 @@ def discover(context, **kwargs):
     help='Private key to use for login into guest system.')
 @click.option(
     '-g', '--guest', metavar='GUEST',
-    help='Select remote host to connect to (how: connect)')
+    help='Select remote host to connect to (how: connect).')
+@click.option(
+    '--pull', is_flag=True,
+    help='Force pulling container image (how: container).')
+
 @verbose_debug_quiet
 @force_dry
 def provision(context, **kwargs):

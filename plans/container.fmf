@@ -1,0 +1,14 @@
+summary:
+    Simple test for container provisioner
+artifact:
+    - build
+    - update
+provision:
+    how: container
+    image: fedora:latest
+prepare:
+    how: ansible
+    playbooks:
+        - ansible/packages.yml
+execute:
+    script: tmt --help
