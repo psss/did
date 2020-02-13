@@ -54,6 +54,14 @@ The tmt Python module and command line tool implement the test
 metadata specification (L1 and L2) and allows easy test execution.
 This package contains the Python 3 module.
 
+%package container
+Summary: Container provisioner for the Test Management Tool
+Requires: tmt == %{version}-%{release}
+Requires: ansible podman
+
+%description container
+All dependencies of the Test Management Tool required to run tests
+in a container environment.
 
 %package all
 Summary: Extra dependencies for the Test Management Tool
@@ -111,6 +119,10 @@ export LANG=en_US.utf-8
 %files -n python%{python3_pkgversion}-%{name}
 %{python3_sitelib}/%{name}/
 %{python3_sitelib}/%{name}-*.egg-info/
+%license LICENSE
+
+
+%files container
 %license LICENSE
 
 

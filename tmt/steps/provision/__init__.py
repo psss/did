@@ -8,7 +8,7 @@ import os
 from click import echo
 
 from tmt.utils import SpecificationError
-from tmt.steps.provision import vagrant, localhost
+from tmt.steps.provision import vagrant, localhost, podman
 
 
 class Provision(tmt.steps.Step):
@@ -21,7 +21,9 @@ class Provision(tmt.steps.Step):
         'libvirt': vagrant.ProvisionVagrant,
         'virtual': vagrant.ProvisionVagrant,
         'local': localhost.ProvisionLocalhost,
-        'localhost': localhost.ProvisionLocalhost
+        'localhost': localhost.ProvisionLocalhost,
+        'container': podman.ProvisionPodman,
+        'podman': podman.ProvisionPodman,
     }
 
     # Default implementation for provision is a virtual machine
