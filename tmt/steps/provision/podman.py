@@ -75,7 +75,7 @@ class ProvisionPodman(ProvisionBase):
         """ Run ansible on localhost """
         # Set current working directory to the test metadata root
         self.info('preparing shell')
-        self.podman(what, cwd=self.step.plan.run.tree.root)
+        self.execute(what, cwd=self.step.plan.run.tree.root)
 
     def prepare(self, how, what):
         """ Run prepare phase """
