@@ -53,7 +53,7 @@ class ProvisionPodman(ProvisionBase):
         # Deduce container name from run id, as it can be a path,
         # make it podman container name friendly
         tmt_workdir = self.step.plan.workdir
-        self.container_name = 'tmt-' + tmt_workdir.replace('/', '-')
+        self.container_name = 'tmt' + tmt_workdir.replace('/', '-')
 
         # Run the container
         self.container_id = self.podman(
@@ -63,7 +63,7 @@ class ProvisionPodman(ProvisionBase):
 
     def execute(self, *args, **kwargs):
         self.info('args', self.join(args), 'red')
-        self.podman(f'exec {self.container_id} {self.join(args)}')
+        self.podman(f'exec {self.container_name} {self.join(args)}')
 
     def _prepare_ansible(self, what):
         """ Prepare using ansible """
@@ -73,7 +73,7 @@ class ProvisionPodman(ProvisionBase):
         # Set collumns to 80 characters
         self.run(
             f'stty cols 80; podman unshare ansible-playbook '
-            f'-v -c podman -i {self.container_id}, {playbook}')
+            f'-v -c podman -i {self.container_name}, {playbook}')
 
     def _prepare_shell(self, what):
         """ Prepare using shell """
@@ -88,3 +88,7 @@ class ProvisionPodman(ProvisionBase):
         except AttributeError as e:
             raise SpecificationError(
                 f"Prepare method '{how}' is not supported.")
+
+    def destroy(self):
+        """ Remove the container """
+        self.podman(f'container rm -f {self.container_name}')
