@@ -60,8 +60,8 @@ Requires: tmt == %{version}-%{release}
 Requires: ansible podman
 
 %description container
-All dependencies of the Test Management Tool required to run tests in a
-container environment.
+All dependencies of the Test Management Tool required to run tests
+in a container environment.
 
 %package all
 Summary: Extra dependencies for the Test Management Tool
@@ -119,6 +119,10 @@ export LANG=en_US.utf-8
 %files -n python%{python3_pkgversion}-%{name}
 %{python3_sitelib}/%{name}/
 %{python3_sitelib}/%{name}-*.egg-info/
+%license LICENSE
+
+
+%files container
 %license LICENSE
 
 
