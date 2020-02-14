@@ -10,7 +10,7 @@ If you want to run tests in virtual machine on Fedora 30 do not
 install ``tmt-all`` package. Install base ``tmt`` package instead
 and use the following commands to install necessary dependencies::
 
-    dnf install -y vagrant --setopt=install_weak_deps=False
+    dnf install -y vagrant libvirt rsync --setopt=install_weak_deps=False
     dnf install -y rubygem-{formatador,excon,builder,ruby-libvirt,nokogiri,multi_json}
 
 Then everything should work fine.
