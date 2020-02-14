@@ -20,18 +20,6 @@ class ProvisionPodman(ProvisionBase):
         self.image = self.option('image')
         self.pull = self.option('container_pull')
 
-        self.image_id = self.podman(
-            f'images -q {self.image}',
-            message=f'check for image {self.image}'
-        )
-
-        # Pull image if not available or pull forced
-        if not self.image_id or self.pull:
-            self.image_id = self.podman(
-                f'pull -q {self.image}',
-                message=f'pull image {self.image}'
-            )
-
     def podman(self, command, **kwargs):
         return self.run(f'podman {command}', **kwargs)[0].rstrip()
 
@@ -48,7 +36,18 @@ class ProvisionPodman(ProvisionBase):
 
         # Show which image we are using
         self.info('image', '{}{}'.format(
-            self.image, '(force pull)' if self.pull else ''), 'green')
+            self.image, ' (force pull)' if self.pull else ''), 'green')
+
+        # Check if the image is available
+        self.image_id = self.podman(
+            f'images -q {self.image}',
+            message=f'check for image {self.image}')
+
+        # Pull image if not available or pull forced
+        if not self.image_id or self.pull:
+            self.image_id = self.podman(
+                f'pull -q {self.image}',
+                message=f'pull image {self.image}')
 
         # Deduce container name from run id, as it can be a path,
         # make it podman container name friendly
