@@ -27,7 +27,8 @@ class Discover(tmt.steps.Step):
         """ Wake up the step (process workdir and command line) """
         super(Discover, self).wake()
         # Check execute step for possible shell scripts
-        scripts = self.plan.execute.data[0].get('script')
+        scripts = self.plan.execute.opt(
+            'script', self.plan.execute.data[0].get('script'))
         if scripts:
             if isinstance(scripts, str):
                 scripts = [scripts]

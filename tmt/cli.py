@@ -263,6 +263,9 @@ def prepare(context, **kwargs):
 @click.option(
     '-h', '--how', metavar='METHOD',
     help='Use specified method for test execution.')
+@click.option(
+    '-s', '--script', metavar='SCRIPT', multiple=True,
+    help='Script to execute.')
 @verbose_debug_quiet
 @force_dry
 def execute(context, **kwargs):
