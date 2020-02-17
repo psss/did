@@ -101,9 +101,9 @@ class Stats(object):
 
     def merge(self, other):
         """ Merge another stats. """
-        self.stats = set(self.stats)
-        self.stats.update(set(other.stats))
-        self.stats = list(self.stats)
+        for other_stat in other.stats:
+            if other_stat not in self.stats:
+                self.stats.append(other_stat)
         if other._error:
             self._error = True
 
