@@ -15,6 +15,7 @@ discover:
 prepare:
     how: shell
     script:
+    - sudo dnf install -y 'dnf-command(copr)'
     - sudo dnf copr enable -y psss/tmt
     - sudo dnf install -y tmt
 execute:
