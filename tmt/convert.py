@@ -168,7 +168,8 @@ def read_nitrate(beaker_task, common_data):
             echo(pprint.pformat(data['environment']))
         # Tags
         if testcase.tags:
-            data['tag'] = sorted([tag.name for tag in testcase.tags])
+            data['tag'] = sorted([
+                tag.name for tag in testcase.tags if tag.name != 'fmf-export'])
             echo(style('tag: ', fg='green') + str(data['tag']))
         # Component
         data['component'] = [comp.name for comp in testcase.components]
