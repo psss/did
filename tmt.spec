@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.8
+Version: 0.9
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -131,6 +131,57 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Mon Feb 24 2020 Petr Šplíchal <psplicha@redhat.com> - 0.9-1
+- Rename the 'test convert' command to 'test import'
+- Include 'path' when importing virtual test cases
+- Extract test script from Makefile during convert
+- Do not import 'fmf-export' tag from nitrate [#119]
+- Merge the improved component import [#115]
+- Several adjustments to the component import
+- Merge the improved requires parsing [#113]
+- Fix parsing multiple requires from Makefile
+- Fail nicely if executed without provision (#112)
+- Make sure the copr command is available in dnf
+- Fix handling defaults for options, adjust wording
+- Read 'components' from nitrate when converting
+- Read requires as list when converting tests
+- Make it possible to pass script on cmdline
+- Mention libvirt and rsync in Fedora 30 workaround
+- Move podman image check and pull under go()
+- Simple destroy implementation for podman provision
+- Add Fedora 30 installation instructions [fix #105]
+- Merge podman support for the provision step [#106]
+- Several adjustments to the podman implementation
+- Fix _prepare_shell in podman provisioner
+- Add podman provisioner
+- Update the test case relevancy specification (#102)
+- Move copy_from_guest to provision/base.py (#75)
+- Several minor adjustments to the restraint story
+- Add user story for restraint
+- Merge different summaries for subpackages [#97]
+- Remove macro from the tmt-all subpackage summary
+- Add different summaries for sub-packages
+- Mention 'fmf-export' tag in the test export story
+- Merge optional PURPOSE in test convert [#89]
+- Handle missing duration or nitrate case in convert
+- Add support for wrap='auto' in utils.format()
+- Use local fmf repository for the basic plan (#94)
+- Merge test import documentation updates [#90]
+- Merge tag, status, pepa & hardware for test import
+- Several test import adjustments related to #91
+- Fix deduplication bug when converting tests
+- Read more attributes from nitrate when converting
+- Update examples doc for converting tests
+- Update execute step examples for shell
+- Simplify packit configuration using 'fedora-all' (#88)
+- Optional attributes when converting.
+- Update execute and report step specification
+- Add spec for results.yaml and report.yaml (#66)
+- Add a story for exporting tests into nitrate (#83)
+- Add the 'require' attribute into the L1 Metadata
+- Update the Metadata Specification link in README
+- Improve 'tmt test convert' command implementation
+
 * Wed Jan 15 2020 Petr Šplíchal <psplicha@redhat.com> - 0.8-1
 - Do not create bash completion script during build
 - Require the same version, fix changelog entry
