@@ -66,7 +66,7 @@ class Execute(tmt.steps.Step):
             self.executor.go(self.plan.workdir)
         except tmt.utils.GeneralError as error:
             self.get_logs(lognames)
-            raise tmt.utils.GeneralError("Test execution failed.")
+            raise tmt.utils.GeneralError(f'Test execution failed: {error}')
 
         output = self.get_logs(lognames)
 

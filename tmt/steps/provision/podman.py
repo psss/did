@@ -2,7 +2,7 @@ import os
 
 from click import echo
 from tmt.steps.provision.base import ProvisionBase
-from tmt.utils import SpecificationError
+from tmt.utils import GeneralError, SpecificationError
 
 
 class ProvisionPodman(ProvisionBase):
@@ -19,6 +19,10 @@ class ProvisionPodman(ProvisionBase):
         # Get image from provision options
         self.image = self.option('image')
         self.pull = self.option('container_pull')
+
+        # Instances variables initialized later
+        self.container_name = None
+        self.container_id = None
 
     def podman(self, command, **kwargs):
         return self.run(f'podman {command}', **kwargs)[0].rstrip()
@@ -61,6 +65,10 @@ class ProvisionPodman(ProvisionBase):
             message=f'running container {self.image}')
 
     def execute(self, *args, **kwargs):
+        if not self.container_name:
+            raise GeneralError(
+                'Could not execute without provisioned container')
+
         self.info('args', self.join(args), 'red')
         self.podman(f'exec {self.container_name} {self.join(args)}')
 
