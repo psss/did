@@ -63,7 +63,7 @@ def read(path, makefile, nitrate, purpose):
     data = dict()
     echo(style("Checking the '{0}' directory.".format(path), fg='red'))
 
-    # Makefile (extract summary, duration and requires)
+    # Makefile (extract summary, test, duration and requires)
     if makefile:
         echo(style('Makefile ', fg='blue'), nl=False)
         makefile_path = os.path.join(path, 'Makefile')
@@ -75,11 +75,14 @@ def read(path, makefile, nitrate, purpose):
         echo("found in '{0}'.".format(makefile_path))
         # Beaker task name
         beaker_task = re.search('export TEST=(.*)\n', content).group(1)
-        echo(style('test: ', fg='green') + beaker_task)
+        echo(style('task: ', fg='green') + beaker_task)
         # Summary
         data['summary'] = re.search(
             r'echo "Description:\s*(.*)"', content).group(1)
-        echo(style('description: ', fg='green') + data['summary'])
+        echo(style('summary: ', fg='green') + data['summary'])
+        # Test script
+        data['test'] = re.search('^run:.*\n\t(.*)$', content, re.M).group(1)
+        echo(style('test: ', fg='green') + data['test'])
         # Component
         data['component'] = re.search(
             r'echo "RunFor:\s*(.*)"', content).group(1).split()
