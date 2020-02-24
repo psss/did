@@ -26,6 +26,6 @@ def test_convert():
     assert 'This is really that simple' in result.output
     node = fmf.Tree(path).find('/')
     assert node.get('summary') == 'Simple smoke test'
-    assert node.get('component') == 'tmt'
+    assert node.get('component') == ['tmt']
     assert 'This is really that simple.' in node.get('description')
     shutil.rmtree(tmp)

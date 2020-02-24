@@ -63,7 +63,7 @@ def read(path, makefile, nitrate, purpose):
     data = dict()
     echo(style("Checking the '{0}' directory.".format(path), fg='red'))
 
-    # Makefile (extract summary, component, duration and requires)
+    # Makefile (extract summary, duration and requires)
     if makefile:
         echo(style('Makefile ', fg='blue'), nl=False)
         makefile_path = os.path.join(path, 'Makefile')
@@ -82,8 +82,8 @@ def read(path, makefile, nitrate, purpose):
         echo(style('description: ', fg='green') + data['summary'])
         # Component
         data['component'] = re.search(
-            r'echo "RunFor:\s*(.*)"', content).group(1)
-        echo(style('component: ', fg='green') + data['component'])
+            r'echo "RunFor:\s*(.*)"', content).group(1).split()
+        echo(style('component: ', fg='green') + ' '.join(data['component']))
         # Duration
         try:
             data['duration'] = re.search(
@@ -170,6 +170,9 @@ def read_nitrate(beaker_task, common_data):
         if testcase.tags:
             data['tag'] = sorted([tag.name for tag in testcase.tags])
             echo(style('tag: ', fg='green') + str(data['tag']))
+        # Component
+        data['component'] = [comp.name for comp in testcase.components]
+        echo(style('component: ', fg='green') + ' '.join(data['component']))
         # Status
         data['enabled'] = testcase.status.name == "CONFIRMED"
         echo(style('enabled: ', fg='green') + str(data['enabled']))
