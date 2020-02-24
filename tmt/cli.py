@@ -28,6 +28,8 @@ class CustomGroup(click.Group):
 
     def get_command(self, context, cmd_name):
         """ Allow command shortening """
+        # Backward-compatible 'test convert' (just temporary for now FIXME)
+        cmd_name = cmd_name.replace('convert', 'import')
         # Support both story & stories
         cmd_name = cmd_name.replace('story', 'stories')
         found = click.Group.get_command(self, context, cmd_name)
@@ -414,7 +416,7 @@ def create(context, name, template, force, **kwargs):
     tmt.Test.create(name, template, context.obj.tree, force)
 
 
-@tests.command()
+@tests.command(name='import')
 @click.pass_context
 @click.argument('paths', nargs=-1, metavar='[PATH]...')
 @click.option(
@@ -428,9 +430,9 @@ def create(context, name, template, force, **kwargs):
     help='Convert Beaker Makefile metadata')
 @verbose_debug_quiet
 @force_dry
-def convert(context, paths, makefile, nitrate, purpose, **kwargs):
+def import_(context, paths, makefile, nitrate, purpose, **kwargs):
     """
-    Convert old test metadata into the new fmf format.
+    Import old test metadata into the new fmf format.
 
     Accepts one or more directories where old metadata are stored.
     By default all available sources and current directory are used.
