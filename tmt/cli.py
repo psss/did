@@ -434,9 +434,10 @@ def convert(context, paths, makefile, nitrate, purpose, **kwargs):
     The following test metadata are converted for each source:
 
     \b
-    makefile ..... summary, component, duration, requires, rhtsrequires
+    makefile ..... summary, component, duration, require
     purpose ...... description
-    nitrate ...... environment, relevancy
+    nitrate ...... contact, component, tag,
+                   environment, relevancy, enabled
     """
     tmt.Test._context = context
     if not paths:

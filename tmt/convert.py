@@ -80,6 +80,10 @@ def read(path, makefile, nitrate, purpose):
         data['summary'] = re.search(
             r'echo "Description:\s*(.*)"', content).group(1)
         echo(style('description: ', fg='green') + data['summary'])
+        # Component
+        data['component'] = re.search(
+            r'echo "RunFor:\s*(.*)"', content).group(1).split()
+        echo(style('component: ', fg='green') + ' '.join(data['component']))
         # Duration
         try:
             data['duration'] = re.search(
