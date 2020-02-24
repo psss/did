@@ -94,7 +94,8 @@ def read(path, makefile, nitrate, purpose):
         # Requires and RhtsRequires (optional)
         requires = re.findall(r'echo "(?:Rhts)?Requires:\s*(.*)"', content)
         if requires:
-            data['require'] = requires[0].split()
+            data['require'] = [
+                require for line in requires for require in line.split()]
             echo(style('require: ', fg='green') + ' '.join(data['require']))
 
     # Purpose (extract everything after the header as a description)
