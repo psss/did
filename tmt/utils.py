@@ -70,13 +70,13 @@ class Common(object):
         mode for all included plans and steps).
         """
         # Check local option
-        local = None
+        local = default
         if self._context is not None:
             local = self._context.params.get(option, default)
         # Check parent option
         parent = None
         if self.parent:
-            parent = self.parent.opt(option, default)
+            parent = self.parent.opt(option)
         # Special handling for flags (parent's yes wins)
         if isinstance(parent, bool):
             return parent if parent else local

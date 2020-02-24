@@ -265,7 +265,7 @@ def prepare(context, **kwargs):
     help='Use specified method for test execution.')
 @click.option(
     '-s', '--script', metavar='SCRIPT', multiple=True,
-    help='Script to execute.')
+    help='Shell script to be executed as a test.')
 @verbose_debug_quiet
 @force_dry
 def execute(context, **kwargs):
