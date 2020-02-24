@@ -453,6 +453,10 @@ def convert(context, paths, makefile, nitrate, purpose, **kwargs):
                 "Path '{0}' is not a directory.".format(path))
         # Gather old metadata and store them as fmf
         common, individual = tmt.convert.read(path, makefile, nitrate, purpose)
+        # Add path to common metadata if there are virtual test cases
+        if individual:
+            root = fmf.Tree(path).root
+            common['path'] = os.path.join( '/', os.path.relpath(path, root))
         # Store common metadata
         common_path = os.path.join(path, 'main.fmf')
         tmt.convert.write(common_path, common)
