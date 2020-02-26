@@ -61,7 +61,7 @@ def read(path, makefile, nitrate, purpose):
     """
 
     data = dict()
-    echo(style("Checking the '{0}' directory.".format(path), fg='red'))
+    echo("Checking the '{0}' directory.".format(path))
 
     # Makefile (extract summary, test, duration and requires)
     if makefile:
@@ -266,4 +266,4 @@ def write(path, data):
     except IOError:
         raise ConvertError("Unable to write '{0}'".format(path))
     echo(style(
-        "Metadata successfully stored into '{0}'.".format(path), fg='red'))
+        "Metadata successfully stored into '{0}'.".format(path), fg='magenta'))
