@@ -74,8 +74,11 @@ def read(path, makefile, nitrate, purpose):
             raise ConvertError("Unable to open '{0}'.".format(makefile_path))
         echo("found in '{0}'.".format(makefile_path))
         # Beaker task name
-        beaker_task = re.search('export TEST=(.*)\n', content).group(1)
-        echo(style('task: ', fg='green') + beaker_task)
+        try:
+            beaker_task = re.search('export TEST=(.*)\n', content).group(1)
+            echo(style('task: ', fg='green') + beaker_task)
+        except AttributeError:
+            raise ConvertError("Unable to parse 'TEST' from the Makefile.")
         # Summary
         data['summary'] = re.search(
             r'echo "Description:\s*(.*)"', content).group(1)
