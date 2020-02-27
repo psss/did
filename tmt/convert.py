@@ -161,7 +161,7 @@ def read_nitrate(beaker_task, common_data):
         # Beaker task name (taken from summary)
         if testcase.summary:
             data['extra-summary'] = testcase.summary
-            echo(style('summary: ', fg='green') + data['extra-summary'])
+            echo(style('extra-summary: ', fg='green') + data['extra-summary'])
         # Contact
         if testcase.tester:
             data['contact'] = '{} <{}>'.format(
