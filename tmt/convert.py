@@ -77,6 +77,7 @@ def read(path, makefile, nitrate, purpose):
         try:
             beaker_task = re.search('export TEST=(.*)\n', content).group(1)
             echo(style('task: ', fg='green') + beaker_task)
+            data['extra-task'] = beaker_task
         except AttributeError:
             raise ConvertError("Unable to parse 'TEST' from the Makefile.")
         # Summary
@@ -156,11 +157,11 @@ def read_nitrate(beaker_task, common_data):
         data = dict()
         echo("test case found '{0}'.".format(testcase.identifier))
         # Test identifier
-        data['tcms'] = testcase.identifier
+        data['extra-tcms'] = testcase.identifier
         # Beaker task name (taken from summary)
         if testcase.summary:
-            data['task'] = testcase.summary
-            echo(style('task: ', fg='green') + data['task'])
+            data['extra-summary'] = testcase.summary
+            echo(style('summary: ', fg='green') + data['extra-summary'])
         # Contact
         if testcase.tester:
             data['contact'] = '{} <{}>'.format(
