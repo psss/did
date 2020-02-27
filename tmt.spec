@@ -66,7 +66,7 @@ in a container environment.
 %package all
 Summary: Extra dependencies for the Test Management Tool
 Requires: tmt == %{version}-%{release}
-Requires: vagrant vagrant-libvirt python3-nitrate
+Requires: vagrant python3-nitrate
 
 %description all
 All extra dependencies of the Test Management Tool. Install this
