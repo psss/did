@@ -465,7 +465,7 @@ def import_(context, paths, makefile, nitrate, purpose, **kwargs):
         # Store individual data (as virtual tests)
         for testcase in individual:
             testcase_path = os.path.join(
-                path, str(testcase['extra-tcms']) + '.fmf')
+                path, str(testcase['extra-nitrate']) + '.fmf')
             tmt.convert.write(testcase_path, testcase)
 
 

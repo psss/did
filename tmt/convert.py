@@ -57,7 +57,7 @@ def read(path, makefile, nitrate, purpose):
 
     Returns tuple (common_data, individual_data) where 'common_data' are
     metadata which belong to main.fmf and 'individual_data' contains
-    data for individual testcases (if multiple tcms testcases found).
+    data for individual testcases (if multiple nitrate testcases found).
     """
 
     data = dict()
@@ -157,7 +157,7 @@ def read_nitrate(beaker_task, common_data):
         data = dict()
         echo("test case found '{0}'.".format(testcase.identifier))
         # Test identifier
-        data['extra-tcms'] = testcase.identifier
+        data['extra-nitrate'] = testcase.identifier
         # Beaker task name (taken from summary)
         if testcase.summary:
             data['extra-summary'] = testcase.summary
