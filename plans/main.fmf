@@ -1,8 +1,13 @@
-# Use local provision for easy quick testing
+# Run tests quickly on the local host
 provision:
     how: local
 
-# Use virtual to test in a virtual machine
+# Run tests in a virtual machine
 #provision:
 #    how: virtual
 #    image: fedora/30-cloud-base
+
+# Run tests in a container
+#provision:
+#    how: container
+#    image: fedora:latest
