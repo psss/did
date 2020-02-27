@@ -463,6 +463,8 @@ class Tree(tmt.utils.Common):
                 raise tmt.utils.GeneralError(
                     "No metadata found in the '{0}' directory.".format(
                         self._path))
+            except fmf.utils.FileError as error:
+                raise tmt.utils.GeneralError(f"Invalid yaml syntax: {error}")
         return self._tree
 
     @property
