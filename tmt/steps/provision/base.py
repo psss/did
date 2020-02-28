@@ -17,10 +17,6 @@ class ProvisionBase(tmt.utils.Common):
         self.provision_dir = os.path.join(step.workdir, self.instance_name)
         os.mkdir(self.provision_dir)
 
-    def execute(self, command):
-        """ executes one command in a guest """
-        pass
-
     def sync_workdir_to_guest(self):
         """ sync self.plan.workdir from host to guests """
         pass
