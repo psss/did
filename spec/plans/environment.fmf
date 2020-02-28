@@ -1,0 +1,15 @@
+summary: Environment variables
+
+description:
+    Specifies environment variables available in all steps. Plugins
+    need to include these environment variables while running
+    commands or other programs.
+
+example: |
+    /plan:
+        environment:
+            KOJI_TASK_ID: 42890031
+            RELEASE: f33
+        execute:
+            script:
+                - echo "Testing $KOJI_TASK_ID on relase $RELEASE"
