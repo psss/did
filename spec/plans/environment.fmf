@@ -1,10 +1,10 @@
 summary: Environment variables
 
 description:
-    Specifies environment variables available in all steps. Plugins
-    need to include these environment variables while running
-    commands or other programs.
-
+    Specifies environment variables available in all steps.
+    Plugins need to include these environment variables while
+    running commands or other programs. These environment
+    variables should override L1 ``environment`` if present.
 example: |
     /plan:
         environment:
@@ -12,4 +12,4 @@ example: |
             RELEASE: f33
         execute:
             script:
-                - echo "Testing $KOJI_TASK_ID on relase $RELEASE"
+                - echo "Testing $KOJI_TASK_ID on release $RELEASE"
