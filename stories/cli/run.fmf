@@ -94,17 +94,17 @@ story: 'As a user I want to execute tests easily'
     /plan:
         story: 'Select plans for execution'
         example:
-            - tmt run plan NAME
+            - tmt run plan --name=NAME
             - tmt run plan --filter=FILTER
             - tmt run plan --grep=REGEXP
     /test:
         story: 'Select tests for execution'
         # TODO: Should this be rather covered by the discover step?
         example:
-            - tmt run test NAME
+            - tmt run test --name=NAME
             - tmt run test --filter=FILTER
             - tmt run test --grep=REGEXP
-            - tmt run plan NAME2 test NAME1
+            - tmt run plan --name=NAME2 test --name=NAME1
 
 /keep:
     story: Store test step status, keep machines running
