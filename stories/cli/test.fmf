@@ -109,7 +109,7 @@ story: 'As a user I want to comfortably work with tests'
     story: 'Filter available tests'
     example:
         - tmt test ls REGEXP
-        - tmt test ls --max-duration=5m
-        - tmt test ls --enabled
-        - tmt test ls --tier=1
+        - tmt test show --filter tier:1
+        - tmt test show --condition 'tier < 2'
+    implemented: /tmt/base.py
     documented: /docs/examples#filter-tests

@@ -17,7 +17,8 @@ story: 'As a user I want to comfortably work with plans'
     story: 'Filter available plans'
     example:
         - tmt plan ls REGEXP
-        - tmt plan show --artifact=pull-request
+        - tmt plan show --filter artifact:build
+    implemented: /tmt/base.py
     documented: /docs/examples#explore-plans
 
 /lint:

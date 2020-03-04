@@ -7,6 +7,7 @@ story: 'As a user I want to execute tests easily'
         Default environment should be something safe which
         should not modify user environment. Perhaps something
         like 'x86_64 virtual machine from the testing farm'?
+    implemented: /tmt/base.py
     example: tmt run
 
 /select:
@@ -96,23 +97,25 @@ story: 'As a user I want to execute tests easily'
         example:
             - tmt run plan --name=NAME
             - tmt run plan --filter=FILTER
-            - tmt run plan --grep=REGEXP
+            - tmt run plan --condition=CONDITION
+        implemented: /tmt/base.py
     /test:
         story: 'Select tests for execution'
-        # TODO: Should this be rather covered by the discover step?
         example:
             - tmt run test --name=NAME
             - tmt run test --filter=FILTER
-            - tmt run test --grep=REGEXP
+            - tmt run test --condition=CONDITION
             - tmt run plan --name=NAME2 test --name=NAME1
+        implemented: /tmt/base.py
 
 /keep:
     story: Store test step status, keep machines running
     example:
-        - tmt run --keep provision prepare
-        - tmt run --keep discover execute
-        - tmt run --keep execute
-        - tmt run --keep execute
+        - tmt run --id ID provision prepare
+        - tmt run --id ID discover execute
+        - tmt run --id ID execute
+        - tmt run --id ID execute
+    implemented: /tmp/base.py
 
 /debug:
     summary: Handsfree debugging
