@@ -144,3 +144,18 @@ story: 'As a user I want to execute tests easily'
         ``rstrnt-report-result``.
     example:
         - tmt run --all execute --how restraint
+
+/latest:
+    story: 'As a user I want to rerun tests easily'
+
+    description: >
+        Execute previous run without the need to specify the
+        previous run id. The command is a shortcut for::
+
+            tmt run --id PREVIOUS_RUN
+
+        Note that ``tmt`` saves last run id on each new execution.
+
+    example:
+        - tmt run -l
+        - tmt run --latest
