@@ -186,15 +186,6 @@ Check help message of individual commands for the full list of
 available options.
 
 
-Requirements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you will be installing tmt from source, make sure to install
-these additional packages on your system.
-
-    dnf install libvirt-devel
-
-
 Install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -210,6 +201,12 @@ Install the latest version from the Copr repository::
 Use PIP (you can omit the ``--user`` flag if in a virtualenv)::
 
     pip install --user tmt
+
+You might need to install additional packages on your system
+before installing extra requires using pip::
+
+    dnf install libvirt-devel
+    pip install --user tmt[all]
 
 
 Develop
