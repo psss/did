@@ -44,6 +44,8 @@ BuildRequires: python%{python3_pkgversion}-pytest
 BuildRequires: python%{python3_pkgversion}-click
 BuildRequires: python%{python3_pkgversion}-fmf
 BuildRequires: python%{python3_pkgversion}-mock
+BuildRequires: python%{python3_pkgversion}-requests
+BuildRequires: python%{python3_pkgversion}-testcloud
 %{?python_provide:%python_provide python%{python3_pkgversion}-%{name}}
 %if %{with oldreqs}
 Requires:       python%{python3_pkgversion}-PyYAML
@@ -62,6 +64,15 @@ Requires: ansible podman
 %description container
 All dependencies of the Test Management Tool required to run tests
 in a container environment.
+
+%package testcloud
+Summary: Libvirt (via testcloud) provisioner for the Test Management Tool
+Requires: tmt == %{version}-%{release}
+Requires: ansible python%{python3_pkgversion}-testcloud openssh-clients rsync
+
+%description testcloud
+All dependencies of the Test Management Tool required to run tests
+in a libvirt environment provisioned using testcloud.
 
 %package all
 Summary: Extra dependencies for the Test Management Tool
@@ -123,6 +134,10 @@ export LANG=en_US.utf-8
 
 
 %files container
+%license LICENSE
+
+
+%files testcloud
 %license LICENSE
 
 

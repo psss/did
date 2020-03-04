@@ -186,6 +186,15 @@ Check help message of individual commands for the full list of
 available options.
 
 
+Requirements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you will be installing tmt from source, make sure to install
+these additional packages on your system.
+
+    dnf install libvirt-devel
+
+
 Install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
