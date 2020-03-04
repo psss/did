@@ -1,0 +1,18 @@
+discover:
+    how: fmf
+    repository: https://github.com/psss/tmt
+prepare:
+    how: ansible
+    playbooks: ansible/packages.yml
+execute:
+    how: beakerlib
+
+/basic:
+    summary: Quick set of basic functionality tests
+    discover+:
+        filter: tier:1
+
+/features:
+    summary: Detailed tests for individual features
+    discover+:
+        filter: tier:2

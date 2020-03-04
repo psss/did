@@ -313,6 +313,35 @@ Options ``-f`` or ``--force`` can be used to overwrite existing
 files.
 
 
+Inherit Plans
+------------------------------------------------------------------
+
+If several plans share similar content it is possible to use
+inheritance to prevent unnecessary duplication of the data::
+
+    discover:
+        how: fmf
+        repository: https://github.com/psss/tmt
+    prepare:
+        how: ansible
+        playbooks: ansible/packages.yml
+    execute:
+        how: beakerlib
+
+    /basic:
+        summary: Quick set of basic functionality tests
+        discover+:
+            filter: tier:1
+
+    /features:
+        summary: Detailed tests for individual features
+        discover+:
+            filter: tier:2
+
+Note that a ``+`` sign should be used if you want to extend the
+parent data instead of replacing them.
+
+
 
 Stories
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
