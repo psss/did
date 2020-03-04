@@ -239,6 +239,16 @@ man_pages = [
 # If true, show URL addresses after external links.
 #man_show_urls = False
 
+# Mock extra modules
+from mock import Mock as MagicMock
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+        return Mock()
+
+MOCK_MODULES = ['testcloud', 'testcloud.image', 'testcloud.instance']
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # Generate stories
 import tmt
