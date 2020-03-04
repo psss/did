@@ -261,18 +261,16 @@ class Plan(Node):
             path=plan_path, content=content,
             name='plan', force=force)
 
-    def steps(self, enabled=True, disabled=False, names=False, without=None):
+    def steps(self, enabled=True, disabled=False, names=False, skip=[]):
         """
         Iterate over enabled / all steps
 
         Yields instances of all enabled steps by default. Use 'names' to
         yield step names only and 'disabled=True' to iterate over all.
-        If you need to skip a step, pass the list of steps to skip via
-        'without'.
+        Use 'skip' to pass the list of steps to be skipped.
         """
-        without = without or []
         for name in tmt.steps.STEPS:
-            if name in without:
+            if name in skip:
                 continue
             step = getattr(self, name)
             if (enabled and step.enabled or disabled and not step.enabled):
@@ -308,7 +306,7 @@ class Plan(Node):
             step.wake()
         # Run enabled steps except 'finish'
         try:
-            for step in self.steps(without=['finish']):
+            for step in self.steps(skip=['finish']):
                 step.go()
         # Make sure we run 'finish' step always if enabled
         finally:
