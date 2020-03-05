@@ -48,6 +48,25 @@ class Node(tmt.utils.Common):
         echo(tmt.utils.format(
             'sources', self.node.sources, key_color='magenta'))
 
+    @classmethod
+    def _save_context(cls, context):
+        """ Save provided command line context for future use """
+        super(Node, cls)._save_context(context)
+
+        # Handle '.' as an alias for the current working directory
+        names = cls._opt('names')
+        if names is not None and '.' in names:
+            root = context.obj.tree.root
+            current = os.getcwd()
+            # Handle special case when directly in the metadata root
+            if current == root:
+                path = '/'
+            # Prepare path from the tree root to the current directory
+            else:
+                path = os.path.join('/', os.path.relpath(current, root))
+            cls._context.params['names'] = (
+                path if name == '.' else name for name in names)
+
     def name_and_summary(self):
         """ Node name and optional summary """
         if self.summary:

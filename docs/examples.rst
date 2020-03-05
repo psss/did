@@ -152,6 +152,12 @@ condition::
     $ tmt tests ls --condition 'tier > 0'
     /tests/ls
 
+In order to select tests under the current working directory use
+the single dot notation::
+
+    $ tmt test show .
+    $ tmt run test --name .
+
 
 Lint Tests
 ------------------------------------------------------------------
@@ -345,6 +351,7 @@ inheritance and merging attributes.
 
 .. _fmf features: https://fmf.readthedocs.io/en/latest/features.html
 
+
 Stories
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -419,6 +426,11 @@ available for binary status filtering::
      implemented /tmt/cli
       documented /tmt/cli
     ...
+
+In order to select stories under the current working directory use
+the single dot notation::
+
+    $ tmt story show .
 
 
 Story Coverage

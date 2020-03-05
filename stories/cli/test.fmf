@@ -107,7 +107,11 @@ story: 'As a user I want to comfortably work with tests'
 
 /filter:
     story: 'Filter available tests'
+    description:
+        Search tests using a regular expression or a filter.
+        Use ``.`` to select tests under the current directory.
     example:
+        - tmt test ls .
         - tmt test ls REGEXP
         - tmt test show --filter tier:1
         - tmt test show --condition 'tier < 2'

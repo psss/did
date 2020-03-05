@@ -15,7 +15,11 @@ story: 'As a user I want to comfortably work with plans'
 
 /filter:
     story: 'Filter available plans'
+    description:
+        Search plans using a regular expression or a filter.
+        Use ``.`` to select plans under the current directory.
     example:
+        - tmt plan ls .
         - tmt plan ls REGEXP
         - tmt plan show --filter artifact:build
     implemented: /tmt/base.py

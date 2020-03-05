@@ -152,7 +152,7 @@ def main(context, root, **kwargs):
     """ Test Management Tool """
     # Initialize metadata tree
     tree = tmt.Tree(root)
-    tree._context = context
+    tree._save_context(context)
     context.obj = tmt.utils.Common()
     context.obj.tree = tree
     # List of enabled steps
@@ -163,6 +163,7 @@ def main(context, root, **kwargs):
         tmt.Test.overview(tree)
         tmt.Plan.overview(tree)
         tmt.Story.overview(tree)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Run
@@ -179,8 +180,8 @@ def main(context, root, **kwargs):
 def run(context, all_, id_, **kwargs):
     """ Run test steps. """
     # Initialize
+    tmt.Run._save_context(context)
     run = tmt.Run(id_, context.obj.tree)
-    run._context = context
     context.obj.run = run
 
 main.add_command(run)
@@ -196,7 +197,7 @@ main.add_command(run)
 def discover(context, **kwargs):
     """ Gather and show information about test cases to be executed. """
     context.obj.steps.add('discover')
-    tmt.steps.discover.Discover._context = context
+    tmt.steps.discover.Discover._save_context(context)
     return 'discover'
 
 
@@ -238,7 +239,7 @@ def discover(context, **kwargs):
 def provision(context, **kwargs):
     """ Provision an environment for testing (or use localhost). """
     context.obj.steps.add('provision')
-    tmt.steps.provision.Provision._context = context
+    tmt.steps.provision.Provision._save_context(context)
 
 
 @run.command()
@@ -257,7 +258,7 @@ def provision(context, **kwargs):
 def prepare(context, **kwargs):
     """ Configure environment for testing (like ansible playbook). """
     context.obj.steps.add('prepare')
-    tmt.steps.prepare.Prepare._context = context
+    tmt.steps.prepare.Prepare._save_context(context)
 
 
 @run.command()
@@ -273,7 +274,7 @@ def prepare(context, **kwargs):
 def execute(context, **kwargs):
     """ Run the tests (using the specified framework and its settings). """
     context.obj.steps.add('execute')
-    tmt.steps.execute.Execute._context = context
+    tmt.steps.execute.Execute._save_context(context)
 
 
 @run.command()
@@ -286,7 +287,7 @@ def execute(context, **kwargs):
 def report(context, **kwargs):
     """ Provide an overview of test results and send notifications. """
     context.obj.steps.add('report')
-    tmt.steps.report.Report._context = context
+    tmt.steps.report.Report._save_context(context)
 
 
 @run.command()
@@ -299,7 +300,7 @@ def report(context, **kwargs):
 def finish(context, **kwargs):
     """ Additional actions to be performed after the test execution. """
     context.obj.steps.add('finish')
-    tmt.steps.finish.Finish._context = context
+    tmt.steps.finish.Finish._save_context(context)
 
 
 @run.command()
@@ -315,8 +316,13 @@ def finish(context, **kwargs):
     help="Use arbitrary Python expression for filtering.")
 @verbose_debug_quiet
 def plans(context, **kwargs):
-    """ Select plans which should be executed. """
-    tmt.base.Plan._context = context
+    """
+    Select plans which should be executed
+
+    Regular expression can be used to filter plans by name.
+    Use '.' to select plans under the current working directory.
+    """
+    tmt.base.Plan._save_context(context)
 
 
 @run.command()
@@ -332,8 +338,13 @@ def plans(context, **kwargs):
     help="Use arbitrary Python expression for filtering.")
 @verbose_debug_quiet
 def tests(context, **kwargs):
-    """ Select tests which should be executed. """
-    tmt.base.Test._context = context
+    """
+    Select tests which should be executed
+
+    Regular expression can be used to filter tests by name.
+    Use '.' to select tests under the current working directory.
+    """
+    tmt.base.Test._save_context(context)
 
 
 @run.resultcallback()
@@ -370,8 +381,13 @@ main.add_command(tests)
 @name_filter_condition
 @verbose_debug_quiet
 def ls(context, **kwargs):
-    """ List available tests. """
-    tmt.Test._context = context
+    """
+    List available tests
+
+    Regular expression can be used to filter tests by name.
+    Use '.' to select tests under the current working directory.
+    """
+    tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
         test.ls()
 
@@ -381,8 +397,13 @@ def ls(context, **kwargs):
 @name_filter_condition
 @verbose_debug_quiet
 def show(context, **kwargs):
-    """ Show test details. """
-    tmt.Test._context = context
+    """
+    Show test details
+
+    Regular expression can be used to filter tests by name.
+    Use '.' to select tests under the current working directory.
+    """
+    tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
         test.show()
         echo()
@@ -393,8 +414,13 @@ def show(context, **kwargs):
 @name_filter_condition
 @verbose_debug_quiet
 def lint(context, **kwargs):
-    """ Check tests against the L1 metadata specification. """
-    tmt.Test._context = context
+    """
+    Check tests against the L1 metadata specification
+
+    Regular expression can be used to filter tests for linting.
+    Use '.' to select tests under the current working directory.
+    """
+    tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
         test.lint()
         echo()
@@ -412,7 +438,7 @@ _test_templates = listed(tmt.templates.TEST, join='or')
 @force_dry
 def create(context, name, template, force, **kwargs):
     """ Create a new test based on given template. """
-    tmt.Test._context = context
+    tmt.Test._save_context(context)
     tmt.Test.create(name, template, context.obj.tree, force)
 
 
@@ -444,7 +470,7 @@ def import_(context, paths, makefile, nitrate, purpose, **kwargs):
     nitrate ...... contact, component, tag,
                    environment, relevancy, enabled
     """
-    tmt.Test._context = context
+    tmt.Test._save_context(context)
     if not paths:
         paths = ['.']
     for path in paths:
@@ -479,8 +505,13 @@ def import_(context, paths, makefile, nitrate, purpose, **kwargs):
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
 def export(context, format_, **kwargs):
-    """ Export test data into the desired format. """
-    tmt.Test._context = context
+    """
+    Export test data into the desired format
+
+    Regular expression can be used to filter tests by name.
+    Use '.' to select tests under the current working directory.
+    """
+    tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
         echo(test.export(format_=format_))
 
@@ -500,7 +531,7 @@ def plans(context, **kwargs):
     Search for available plans.
     Explore detailed test step configuration.
     """
-    tmt.Plan._context = context
+    tmt.Plan._save_context(context)
 
     # Show overview of available plans
     if context.invoked_subcommand is None:
@@ -514,8 +545,13 @@ main.add_command(plans)
 @name_filter_condition
 @verbose_debug_quiet
 def ls(context, **kwargs):
-    """ List available plans. """
-    tmt.Plan._context = context
+    """
+    List available plans
+
+    Regular expression can be used to filter plans by name.
+    Use '.' to select plans under the current working directory.
+    """
+    tmt.Plan._save_context(context)
     for plan in context.obj.tree.plans():
         plan.ls()
 
@@ -525,8 +561,13 @@ def ls(context, **kwargs):
 @name_filter_condition
 @verbose_debug_quiet
 def show(context, **kwargs):
-    """ Show plan details. """
-    tmt.Plan._context = context
+    """
+    Show plan details
+
+    Regular expression can be used to filter plans by name.
+    Use '.' to select plans under the current working directory.
+    """
+    tmt.Plan._save_context(context)
     for plan in context.obj.tree.plans():
         plan.show()
         echo()
@@ -537,8 +578,13 @@ def show(context, **kwargs):
 @name_filter_condition
 @verbose_debug_quiet
 def lint(context, **kwargs):
-    """ Check plans against the L2 metadata specification. """
-    tmt.Plan._context = context
+    """
+    Check plans against the L2 metadata specification
+
+    Regular expression can be used to filter plans by name.
+    Use '.' to select plans under the current working directory.
+    """
+    tmt.Plan._save_context(context)
     for plan in context.obj.tree.plans():
         plan.lint()
         echo()
@@ -556,7 +602,7 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
 @force_dry
 def create(context, name, template, force, **kwargs):
     """ Create a new plan based on given template. """
-    tmt.Plan._context = context
+    tmt.Plan._save_context(context)
     tmt.Plan.create(name, template, context.obj.tree, force)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -574,7 +620,7 @@ def stories(context, **kwargs):
     Check available user stories.
     Explore coverage (test, implementation, documentation).
     """
-    tmt.Story._context = context
+    tmt.Story._save_context(context)
 
     # Show overview of available stories
     if context.invoked_subcommand is None:
@@ -591,8 +637,13 @@ main.add_command(stories)
 def ls(
     context, implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
-    """ List available stories. """
-    tmt.Story._context = context
+    """
+    List available stories
+
+    Regular expression can be used to filter stories by name.
+    Use '.' to select stories under the current working directory.
+    """
+    tmt.Story._save_context(context)
     for story in context.obj.tree.stories():
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
@@ -607,8 +658,13 @@ def ls(
 def show(
     context, implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
-    """ Show story details. """
-    tmt.Story._context = context
+    """
+    Show story details
+
+    Regular expression can be used to filter stories by name.
+    Use '.' to select stories under the current working directory.
+    """
+    tmt.Story._save_context(context)
     for story in context.obj.tree.stories():
         if story._match(implemented, tested, documented, covered,
                 unimplemented, untested, undocumented, uncovered):
@@ -628,7 +684,7 @@ _story_templates = listed(tmt.templates.STORY, join='or')
 @force_dry
 def create(context, name, template, force, **kwargs):
     """ Create a new story based on given template. """
-    tmt.Story._context = context
+    tmt.Story._save_context(context)
     tmt.base.Story.create(name, template, context.obj.tree, force)
 
 
@@ -647,8 +703,13 @@ def coverage(
     context, code, test, docs,
     implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
-    """ Show code, test and docs coverage for given stories. """
-    tmt.Story._context = context
+    """
+    Show code, test and docs coverage for given stories
+
+    Regular expression can be used to filter stories by name.
+    Use '.' to select stories under the current working directory.
+    """
+    tmt.Story._save_context(context)
 
     def headfoot(text):
         """ Format simple header/footer """
@@ -703,8 +764,13 @@ def export(
     context, format_,
     implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
-    """ Export selected stories into desired format. """
-    tmt.Story._context = context
+    """
+    Export selected stories into desired format
+
+    Regular expression can be used to filter stories by name.
+    Use '.' to select stories under the current working directory.
+    """
+    tmt.Story._save_context(context)
 
     for story in context.obj.tree.stories(whole=True):
         if story._match(implemented, tested, documented, covered,

@@ -55,6 +55,11 @@ class Common(object):
         return self.name
 
     @classmethod
+    def _save_context(cls, context):
+        """ Save provided command line context for future use """
+        cls._context = context
+
+    @classmethod
     def _opt(cls, option, default=None):
         """ Get an option from the command line context (class version) """
         if cls._context is None:

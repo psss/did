@@ -15,13 +15,19 @@ story: 'As a developer I want to comfortably work with stories'
 
 /filter:
     story: 'Search available stories'
+    description:
+        Search stories using a regular expression, a filter or
+        coverage status. Use ``.`` to select stories under the
+        current directory.
     example:
-        - tmt story --implemented
-        - tmt story --unimplemented
-        - tmt story --tested
-        - tmt story --untested
-        - tmt story --documented
-        - tmt story --undocumented
+        - tmt story ls .
+        - tmt story ls REGEXP
+        - tmt story ls --implemented
+        - tmt story ls --unimplemented
+        - tmt story ls --tested
+        - tmt story ls --untested
+        - tmt story ls --documented
+        - tmt story ls --undocumented
     implemented: /tmt/cli
     documented: /docs/examples#filter-stories
 
