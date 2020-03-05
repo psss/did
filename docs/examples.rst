@@ -339,9 +339,11 @@ inheritance to prevent unnecessary duplication of the data::
             filter: tier:2
 
 Note that a ``+`` sign should be used if you want to extend the
-parent data instead of replacing them.
+parent data instead of replacing them. See the `fmf features`_
+documentation for a detailed description of the hierarchy,
+inheritance and merging attributes.
 
-
+.. _fmf features: https://fmf.readthedocs.io/en/latest/features.html
 
 Stories
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
