@@ -3,9 +3,39 @@
     Modules
 ===============
 
-.. automodule:: tmt
-    :members:
-    :undoc-members:
+
+Class Structure
+---------------
+
+Here's the overview of available classes::
+
+    Common
+    ├── Tree
+    ├── Node
+    │   ├── Plan
+    │   ├── Story
+    │   └── Test
+    ├── Step
+    │   ├── Discover
+    │   ├── Execute
+    │   ├── Finish
+    │   ├── Prepare
+    │   ├── Provision
+    │   └── Report
+    ├── Plugin
+    │   ├── DiscoverPlugin
+    │   │   ├── DiscoverFmf
+    │   │   └── DiscoverShell
+    │   ├── ExecutePlugin
+    │   ├── FinishPlugin
+    │   ├── PreparePlugin
+    │   ├── ProvisionPlugin
+    │   └── ReportPlugin
+    └── Run
+
+Note: The list is not complete. There is a plan to clean up plugin
+inheritance and naming.
+
 
 base
 ----
