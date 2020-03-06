@@ -49,6 +49,7 @@ example: |
         provision:
             how: container
             image: fedora:latest
+    implemented: /tmt/steps/provision/podman.py
 
 /openstack:
     summary: Provision a virtual machine in OpenStack
@@ -83,6 +84,7 @@ example: |
             user password to be used to log in
         key
             path to the file with private key
+    implemented: /tmt/steps/provision/vagrant.py
 
     example: |
         provision:

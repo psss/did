@@ -642,6 +642,40 @@ some of them it is possible to use the ``--all`` option::
     tmt run --all provision --how=local
 
 
+Provision Options
+------------------------------------------------------------------
+
+By default, tests are executed under a virtual machine so that
+your laptop is not affected by unexpected changes. The following
+commands are equivalent::
+
+    tmt run
+    tmt run -a provision -h virtual
+    tmt run --all provision --how=virtual
+
+You can also use an alternative virtual machine implementation
+using the ``testcloud`` provisioner::
+
+    tmt run --all provision --how=virtual.testcloud
+
+If you already have a box ready for testing with ``ssh`` enabled,
+use the ``connect`` method::
+
+    tmt run --all provision --how=connect --guest=name-or-ip --user=login --password=secret
+    tmt run --all provision --how=connect --guest=name-or-ip --key=private-key-path
+
+The ``container`` method allows to execute tests in a container
+using ``podman``::
+
+    tmt run --all provision --how=container --image=fedora:latest
+
+If you are confident that tests are safe you can execute them
+directly on your ``local`` host::
+
+    tmt run --all provision --how=local
+
+
+
 Debug Tests
 ------------------------------------------------------------------
 
