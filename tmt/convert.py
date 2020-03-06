@@ -51,7 +51,7 @@ except AttributeError:
 #  Convert
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def read(path, makefile, nitrate, purpose):
+def read(path, makefile, nitrate, purpose, disabled):
     """
     Read old metadata from various sources
 
@@ -123,7 +123,7 @@ def read(path, makefile, nitrate, purpose):
 
     # Nitrate (extract contact, environment and relevancy)
     if nitrate:
-        common_data, individual_data = read_nitrate(beaker_task, data)
+        common_data, individual_data = read_nitrate(beaker_task, data, disabled)
     else:
         common_data = data
         individual_data = []
@@ -133,7 +133,7 @@ def read(path, makefile, nitrate, purpose):
     return common_data, individual_data
 
 
-def read_nitrate(beaker_task, common_data):
+def read_nitrate(beaker_task, common_data, disabled):
     """ Read old metadata from nitrate test cases """
 
     # Check test case, make sure nitrate is available
@@ -143,10 +143,17 @@ def read_nitrate(beaker_task, common_data):
     if TestCase is None:
         raise ConvertError('Need nitrate module to import metadata')
 
-    # Find testcases that have CONFIRMED status
-    testcases = list(TestCase.search(script=beaker_task, case_status=2))
+    # Find all testcases
+    if disabled:
+        testcases = list(TestCase.search(script=beaker_task))
+    # Find testcases that do not have 'DISABLED' status
+    else:
+        testcases = list(TestCase.search(script=beaker_task, case_status__in=[1,2,4]))
     if not testcases:
-        echo("No testcase found for '{0}'.".format(beaker_task))
+        if disabled:
+            echo("No testcase found for '{0}'.".format(beaker_task))
+        else:
+            echo("No non-disabled testcase found for '{0}'.".format(beaker_task))
         return common_data, []
     elif len(testcases) > 1:
         echo("Multiple test cases found for '{0}'.".format(beaker_task))
