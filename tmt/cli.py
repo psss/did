@@ -430,7 +430,7 @@ def create(context, name, template, force, **kwargs):
     help='Convert Beaker Makefile metadata')
 @click.option(
     '--disabled', default=False, is_flag=True,
-    help='Import DISABLED test cases from Nitrate as well')
+    help='Import disabled test cases from Nitrate as well.')
 @verbose_debug_quiet
 @force_dry
 def import_(context, paths, makefile, nitrate, purpose, disabled, **kwargs):
@@ -457,7 +457,8 @@ def import_(context, paths, makefile, nitrate, purpose, disabled, **kwargs):
             raise tmt.utils.GeneralError(
                 "Path '{0}' is not a directory.".format(path))
         # Gather old metadata and store them as fmf
-        common, individual = tmt.convert.read(path, makefile, nitrate, purpose, disabled)
+        common, individual = tmt.convert.read(
+            path, makefile, nitrate, purpose, disabled)
         # Add path to common metadata if there are virtual test cases
         if individual:
             root = fmf.Tree(path).root

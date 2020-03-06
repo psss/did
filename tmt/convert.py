@@ -123,7 +123,8 @@ def read(path, makefile, nitrate, purpose, disabled):
 
     # Nitrate (extract contact, environment and relevancy)
     if nitrate:
-        common_data, individual_data = read_nitrate(beaker_task, data, disabled)
+        common_data, individual_data = read_nitrate(
+            beaker_task, data, disabled)
     else:
         common_data = data
         individual_data = []
@@ -148,12 +149,11 @@ def read_nitrate(beaker_task, common_data, disabled):
         testcases = list(TestCase.search(script=beaker_task))
     # Find testcases that do not have 'DISABLED' status
     else:
-        testcases = list(TestCase.search(script=beaker_task, case_status__in=[1,2,4]))
+        testcases = list(TestCase.search(
+            script=beaker_task, case_status__in=[1, 2, 4]))
     if not testcases:
-        if disabled:
-            echo("No testcase found for '{0}'.".format(beaker_task))
-        else:
-            echo("No non-disabled testcase found for '{0}'.".format(beaker_task))
+        echo("No {0}testcase found for '{1}'.".format(
+            '' if disabled else 'non-disabled ', beaker_task))
         return common_data, []
     elif len(testcases) > 1:
         echo("Multiple test cases found for '{0}'.".format(beaker_task))
