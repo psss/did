@@ -1,6 +1,5 @@
 import re
 import os
-import shlex
 import time
 
 import requests
@@ -9,6 +8,7 @@ import testcloud.instance
 
 from tmt.steps.provision.base import ProvisionBase
 from tmt.utils import GeneralError, SpecificationError, WORKDIR_ROOT
+from tmt.utils import dict_to_shell
 
 # Testcloud cache to our tmt's workdir root
 TESTCLOUD_DATA = os.path.join(WORKDIR_ROOT, 'testcloud')
@@ -136,7 +136,11 @@ def guess_image_url(name):
             'Fedora-Rawhide', 'Fedora-Cloud-Base-Rawhide')
         return f'{RAWHIDE_IMAGE_URL}/{compose_name}.x86_64.qcow2'
 
-    raise GeneralError("Could not map '{name}' to compose")
+    # try to check if given url is a local file
+    if os.path.exists(name):
+        return f'file://{name}'
+
+    raise GeneralError(f"Could not map '{name}' to compose.")
 
 
 class ProvisionTestcloud(ProvisionBase):
@@ -168,9 +172,22 @@ class ProvisionTestcloud(ProvisionBase):
         self.ssh_pubkey = os.path.join(self.provision_dir, 'id_rsa.pub')
 
         # Common ssh args
-        self.ssh_args = (
-            f'-i {self.ssh_key} -o StrictHostKeyChecking=no '
-            f'-o UserKnownHostsFile=/dev/null')
+        self.ssh_args = [
+            '-i', self.ssh_key,
+            '-oStrictHostKeyChecking=no', '-oUserKnownHostsFile=/dev/null'
+        ]
+        self.ssh_args_shell = self.join(self.ssh_args)
+
+        # Connection host
+        self.ssh_user_host = None
+
+        # Shell compatible environment variables, so they can be correctly
+        # passed to ssh's shell. Needs to be prepended with export and run
+        # as a separate command.
+        self.shell_env = ''
+        if self.opt('environment'):
+            env = ' '.join(dict_to_shell(self.opt('environment')))
+            self.shell_env = f'export {env};'
 
         # Make sure required directories exist
         os.makedirs(TESTCLOUD_DATA, exist_ok=True)
@@ -257,6 +274,7 @@ class ProvisionTestcloud(ProvisionBase):
 
         self.ip = self.instance.get_ip()
         self.instance.create_ip_file(self.ip)
+        self.ssh_user_host = f'{self.user}@{self.instance.get_ip()}'
 
         for i in range(1, DEFAULT_SSH_CONNECT_TIMEOUT):
             try:
@@ -270,21 +288,16 @@ class ProvisionTestcloud(ProvisionBase):
             raise GeneralError(
                 'Failed to login to the machine in {DEFAULT_BOOT_TIMEOUT}s')
 
-        self.info('instance', f'{self.user}@{self.instance.get_ip()}', 'green')
-
-    def _ssh_run(self, command, **kwargs):
-        # we need to quote the command
-        command = shlex.quote(command)
-        return self.run(
-            f'ssh {self.ssh_args} {self.user}@{self.instance.get_ip()} '
-            f'{command}', **kwargs)[0].rstrip()
+        self.info('instance', self.ssh_user_host, 'green')
 
     def execute(self, *args, **kwargs):
         if not self.instance:
             raise GeneralError(
                 'Could not execute without provisioned VM')
 
-        return self._ssh_run(f'{self.join(args)}')
+        return self.run(['ssh'] + self.ssh_args + [self.ssh_user_host] + [
+            f'{self.shell_env} {self.join(args)}'
+        ], shell=False)[0].rstrip()
 
     def _prepare_ansible(self, what):
         """ Prepare using ansible """
@@ -293,7 +306,7 @@ class ProvisionTestcloud(ProvisionBase):
         # Set collumns to 80 characters while running ansible
         self.run(
             f'stty cols 80; ansible-playbook '
-            f'--ssh-common-args="{self.ssh_args}" '
+            f'--ssh-common-args="{self.ssh_args_shell}" '
             f'-e ansible_python_interpreter=auto '
             f'-v -i {self.user}@{self.ip}, {playbook}')
 
@@ -313,15 +326,17 @@ class ProvisionTestcloud(ProvisionBase):
     def sync_workdir_to_guest(self):
         """ sync on demand """
         self.run(
-            f'rsync -Rrze "ssh {self.ssh_args}" '
+            f'rsync -Rrze "ssh {self.ssh_args_shell}" '
             f'{self.step.plan.workdir} {self.user}@{self.ip}:/')
 
     def sync_workdir_from_guest(self):
         """ sync from guest to host """
         self.run(
-            f'rsync -Rrze "ssh {self.ssh_args}" '
+            f'rsync -Rrze "ssh {self.ssh_args_shell}" '
             f'{self.user}@{self.ip}:{self.step.plan.workdir} /')
 
     def destroy(self):
         """ Remove the container """
-        self.instance.stop()
+        if self.instance:
+            self.info('instance', 'stopping', 'green')
+            self.instance.stop()

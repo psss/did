@@ -365,7 +365,20 @@ def dictionary_to_yaml(data):
 
 
 def dict_to_shell(data):
-    """ Convert dictionary to list of key=value pairs """
+    """
+    Convert dictionary or list/tuple of key=value pairs to list of key=value
+    pairs where value is quoted with shlex.quote.
+    """
+    if isinstance(data, list) or isinstance(data, tuple):
+        converted_data = []
+        for item in data:
+            splitted_item = item.split('=')
+            key = splitted_item[0]
+            value = shlex.quote('='.join(splitted_item[1:]))
+            converted_data.append(f'{key}={value}')
+
+        return converted_data
+
     return [f"{key}={shlex.quote(str(value))}" for key, value in data.items()]
 
 
