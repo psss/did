@@ -358,9 +358,49 @@ class JiraResolved(Stats):
         log.info("[%s] done issues resolved", self.option)
 
 
+class JiraTested(Stats):
+    """ Tested issues """
+
+    def fetch(self):
+        log.info(
+            "[%s] Searching for issues resolved in %s tested by %s",
+            self.option,
+            self.parent.project if self.parent.project is not None else "any project",
+            self.user)
+        query = (
+            f"tester = '{self.user.login or self.user.email}' "
+            f"AND resolved >= {self.options.since} "
+            f"AND resolved <= {self.options.until}"
+            )
+        if self.parent.project:
+            query = query + f" AND project in ({self.parent.project})"
+        self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
+        log.info("[%s] done issues tested", self.option)
+
+
+class JiraContributed(Stats):
+    """ Contributed issues """
+
+    def fetch(self):
+        log.info(
+            "[%s] Searching for issues resolved in %s with %s as contributor",
+            self.option,
+            self.parent.project if self.parent.project is not None else "any project",
+            self.user)
+        query = (
+            f"contributors in ('{self.user.login or self.user.email}') "
+            f"AND resolved >= {self.options.since} "
+            f"AND resolved <= {self.options.until}"
+            )
+        if self.parent.project:
+            query = query + f" AND project in ({self.parent.project})"
+        self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
+        log.info("[%s] done issues contributed to", self.option)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class JiraStats(StatsGroup):
     """ Jira stats """
@@ -486,6 +526,12 @@ class JiraStats(StatsGroup):
             JiraResolved(
                 option=f"{option}-resolved", parent=self,
                 name=f"Issues resolved in {option}"),
+            JiraTested(
+                option=f"{option}-tested", parent=self,
+                name=f"Issues tested in {option}"),
+            JiraContributed(
+                option=f"{option}-contributed", parent=self,
+                name=f"Issues to contributed in {option}"),
             JiraUpdated(
                 option=f"{option}-updated", parent=self,
                 name=f"Issues updated in {option}"),
