@@ -26,9 +26,6 @@ import tmt
 import shutil
 import tmt.steps.discover
 
-from click import echo
-from fmf.utils import listed
-
 class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     """ Discover available tests from FMF metadata """
 
@@ -36,7 +33,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         """ Check supported attributes """
         super(DiscoverFmf, self).__init__(
             data=data, step=step, name=data['name'])
-        self.tree = None
         # Convert data into attributes for easy handling
         self.repository = data.get('repository')
         self.revision = data.get('revision')
@@ -68,28 +64,15 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if self.filters:
             for filter_ in self.filters:
                 self.info('filter', filter_, 'green')
-        # Initialize the metadata tree (filter enabled tests only)
+        # Initialize the metadata tree, search for available tests
         self.debug(f"Check metadata tree in '{testdir}'.")
         if self.opt('dry'):
-            return []
-        tests = [
-            test for test in tmt.Tree(testdir).tests(filters=self.filters)
-            if test.enabled]
-        # Modify test names and paths to make them unique
-        for test in tests:
-            test.name = f"/{self.name}{test.name}"
-            test.path = f"/{self.name}/tests{test.path}"
-        # Summary of selected tests, test list in verbose mode
-        self.info('tests', listed(len(tests), 'test') + ' selected', 'green')
-        for test in tests:
-            self.verbose(test.name, color='red', shift=1)
-        self._tests = tests
+            return
+        self._tests = tmt.Tree(testdir).tests(filters=self.filters)
+        # Prefix test path with the 'tests' subdirectory
+        for test in self._tests:
+            test.path = f'/tests{test.path}'
 
     def tests(self):
         """ Return all discovered tests """
         return self._tests
-
-    def dump(self):
-        """ Dump current step data """
-        self.data['filter'] = self.filters
-        return self.data

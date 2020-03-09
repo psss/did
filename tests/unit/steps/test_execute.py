@@ -1,7 +1,13 @@
 import unittest
 
-from tmt.steps.execute import Execute, shell, beakerlib
+import tmt
+from tmt.steps.execute import shell, beakerlib
 from tmt.utils import SpecificationError
+
+# Ignore loading from workdir
+class Execute(tmt.steps.execute.Execute):
+    def load(self):
+        pass
 
 
 class TestExecute(unittest.TestCase):

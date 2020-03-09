@@ -107,7 +107,7 @@ class Provision(tmt.steps.Step):
 
     def write(self, data):
         path = os.path.join(self.workdir, 'guests.yaml')
-        self.super.write(path, self.dictionary_to_yaml(data))
+        self.super.write(path, self.dict_to_yaml(data))
 
     def read(self, current):
         path = os.path.join(self.workdir, 'guests.yaml')

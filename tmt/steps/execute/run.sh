@@ -28,7 +28,7 @@ tmt_VERBOSE=
 tmt_TYPE='shell'
 
 tmt_TESTS_D='discover'
-tmt_TESTS_F="${tmt_TESTS_D}/tests.yaml"
+tmt_TESTS_F="${tmt_TESTS_D}/run.yaml"
 
 tmt_LOG_D='execute'
 tmt_LOGOUT_F="out.log"

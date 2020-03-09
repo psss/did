@@ -39,9 +39,9 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
                     f"Missing test script in '{self.step.plan.name}'.")
             # Prepare path to the test working directory (tree root by default)
             try:
-                data['path'] = f"/{self.name}/tests{data['path']}"
+                data['path'] = f"/tests{data['path']}"
             except KeyError:
-                data['path'] = f"/{self.name}/tests"
+                data['path'] = f"/tests"
 
             # Create a simple fmf node, adjust its name
             tests.child(name, data)
@@ -55,11 +55,6 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
 
         # Use a tmt.Tree to apply possible command line filters
         tests = tmt.Tree(tree=tests).tests()
-        # Summary of selected tests, test list in verbose mode
-        summary = fmf.utils.listed(len(tests), 'test') + ' selected'
-        self.info('tests', summary, 'green')
-        for test in tests:
-            self.verbose(test.name, color='red', shift=1)
         self._tests = tests
 
     def tests(self):

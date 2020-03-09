@@ -11,6 +11,7 @@ import fmf.utils
 import pprint
 import shlex
 import select
+import shutil
 import yaml
 import re
 import io
@@ -40,7 +41,7 @@ class Common(object):
     Takes care of command line context and workdir handling.
     """
 
-    # Command line context, workdir and status
+    # Command line context and workdir
     _context = None
     _workdir = None
 
@@ -99,10 +100,13 @@ class Common(object):
         level = self._level() + shift
         indent = ' ' * INDENT * level
         deeper = ' ' * INDENT * (level + 1)
+        # Colorize
         if color is not None:
             key = style(key, fg=color)
+        # Handle key only
         if value is None:
             message = key
+        # Handle key + value
         else:
             # Multiline content indented deeper
             if isinstance(value, str):
@@ -216,7 +220,7 @@ class Common(object):
             with open(path) as data:
                 return data.read()
         except OSError as error:
-            raise GeneralError(f"Failed to read '{path}'.\n{error}")
+            raise FileError(f"Failed to read '{path}'.\n{error}")
 
     def write(self, path, data):
         """ Write a file to the workdir """
@@ -229,22 +233,7 @@ class Common(object):
             with open(path, 'w') as target:
                 return target.write(data)
         except OSError as error:
-            raise GeneralError(f"Failed to write '{path}'.\n{error}")
-
-    def status(self, status=None):
-        """ Get and set current status, store in workdir """
-        # Check for valid values
-        if status and status not in ['todo', 'done', 'going']:
-            raise GeneralError(f"Invalid status '{status}'.")
-        # Store status
-        if status:
-            self.write('status.txt', status + '\n')
-        # Read status
-        else:
-            try:
-                return self.read('status.txt').strip()
-            except GeneralError:
-                return None
+            raise FileError(f"Failed to write '{path}'.\n{error}")
 
     def _workdir_init(self, id_):
         """
@@ -280,16 +269,27 @@ class Common(object):
         create_directory(workdir, 'workdir', quiet=True)
         self._workdir = workdir
 
+    def _workdir_name(self):
+        """ Construct work directory name """
+        # Need the parent workdir
+        if self.parent is None:
+            raise GeneralError('Parent workdir not available.')
+        # Join parent name with self
+        return os.path.join(self.parent.workdir, self.name.lstrip('/'))
+
+    def _workdir_cleanup(self):
+        """ Clean up the work directory """
+        directory = self._workdir_name()
+        if os.path.isdir(directory):
+            self.debug(f"Clean up workdir '{directory}'.")
+            shutil.rmtree(directory)
+        self._workdir = None
+
     @property
     def workdir(self):
         """ Get the workdir, create if does not exist """
         if self._workdir is None:
-            # Need the parent workdir
-            if self.parent is None:
-                raise GeneralError('Parent workdir not available')
-            # Append name and create
-            self._workdir = os.path.join(
-                self.parent.workdir, self.name.lstrip('/'))
+            self._workdir = self._workdir_name()
             create_directory(self._workdir, 'workdir', quiet=True)
         return self._workdir
 
@@ -299,6 +299,9 @@ class Common(object):
 
 class GeneralError(Exception):
     """ General error """
+
+class FileError(GeneralError):
+    """ File operation error """
 
 class SpecificationError(GeneralError):
     """ Metadata specification error """
@@ -354,7 +357,7 @@ def variables_to_dictionary(variables):
     return result
 
 
-def dictionary_to_yaml(data):
+def dict_to_yaml(data):
     """ Convert dictionary into yaml """
     output = io.StringIO()
     yaml.safe_dump(
@@ -362,6 +365,11 @@ def dictionary_to_yaml(data):
         encoding='utf-8', allow_unicode=True,
         indent=4, default_flow_style=False)
     return output.getvalue()
+
+
+def yaml_to_dict(data):
+    """ Convert yaml into dictionary """
+    return yaml.safe_load(data)
 
 
 def shell_variables(data):
@@ -474,7 +482,7 @@ def create_directory(path, name, quiet=False):
         os.makedirs(path, exist_ok=True)
         say("Directory '{}' created.".format(path))
     except OSError as error:
-        raise GeneralError("Failed to create {} '{}' ({})".format(
+        raise FileError("Failed to create {} '{}' ({})".format(
             name, path, error))
 
 
@@ -486,14 +494,14 @@ def create_file(path, content, name, force=False, mode=0o664, quiet=False):
         if force:
             action = 'overwritten'
         else:
-            raise GeneralError("File '{}' already exists.".format(path))
+            raise FileError("File '{}' already exists.".format(path))
     try:
         with open(path, 'w') as file_:
             file_.write(content)
         say("{} '{}' {}.".format(name.capitalize(), path, action))
         os.chmod(path, mode)
     except OSError as error:
-        raise GeneralError("Failed to create {} '{}' ({})".format(
+        raise FileError("Failed to create {} '{}' ({})".format(
             name, path, error))
 
 
