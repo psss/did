@@ -349,7 +349,8 @@ class JiraResolved(Stats):
             self.parent.project if self.parent.project is not None else "any project",
             self.user)
         query = (
-            f"assignee = '{self.user.login or self.user.email}' "
+            f"(assignee = '{self.user.login or self.user.email}' "
+            f"OR tester = '{self.user.login or self.user.email}') "
             f"AND resolved >= {self.options.since} "
             f"AND resolved <= {self.options.until}"
             )
