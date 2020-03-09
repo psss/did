@@ -98,4 +98,5 @@ class ProvisionPodman(ProvisionBase):
 
     def destroy(self):
         """ Remove the container """
-        self.podman(f'container rm -f {self.container_name}')
+        if self.container_name:
+            self.podman(f'container rm -f {self.container_name}')
