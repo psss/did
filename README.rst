@@ -191,22 +191,20 @@ Install
 
 The tmt package is available in Fedora and EPEL::
 
-    dnf install tmt
+    sudo dnf install tmt
 
-Install the latest version from the Copr repository::
+Install the latest version from the ``copr`` repository::
 
-    dnf copr enable psss/tmt
-    dnf install tmt
+    sudo dnf copr enable psss/tmt
+    sudo dnf install tmt
 
-Use PIP (you can omit the ``--user`` flag if in a virtualenv)::
+When installing using ``pip`` you might need to install additional
+packages on your system::
 
+    sudo dnf install gcc python3-devel libvirt-devel
     pip install --user tmt
 
-You might need to install additional packages on your system
-before installing extra requires using pip::
-
-    dnf install libvirt-devel
-    pip install --user tmt[all]
+You can omit the ``--user`` flag if in a virtual environment.
 
 
 Develop
