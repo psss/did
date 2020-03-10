@@ -7,6 +7,7 @@ import subprocess
 import os
 import re
 import shutil
+from time import sleep
 
 from tmt.steps.provision.base import ProvisionBase
 from tmt.utils import ConvertError, SpecificationError, GeneralError, quote
@@ -40,6 +41,7 @@ class ProvisionVagrant(ProvisionBase):
     timeout = 333
     eol = '\n'
     display = ('how', 'image', 'key', 'guest', 'memory')
+    statuses = ('not reachable', 'running', 'not created', 'preparing')
 
 
     ## Default API ##
@@ -71,7 +73,12 @@ class ProvisionVagrant(ProvisionBase):
         """ Execute actual provisioning """
         self.init()
         self.info(f'Provisioning {self.executable}, {self.vf_name}', self.vf_read())
-        return self.run_vagrant('up')
+        ret = self.run_vagrant('up')
+
+        s = self.status()
+        if s != 'running':
+            raise GeneralError(f'Failed to provision(status: {s}), log:\n{out}\n{err}')
+        return ret
 
     def execute(self, *args, **kwargs):
         """ Execute remote command """
@@ -79,8 +86,7 @@ class ProvisionVagrant(ProvisionBase):
 
     def show(self):
         """ Create and show the Vagrantfile """
-        self.init()
-        self.super.show(keys=['how', 'box', 'image'])
+        self.super.show(keys=['how', 'box', 'image', 'memory', 'user', 'password'])
         self.info(self.vf_name, self.vf_read())
 
     def sync_workdir_to_guest(self):
@@ -95,13 +101,21 @@ class ProvisionVagrant(ProvisionBase):
 
     def destroy(self):
         """ remove instance """
-        return self.run_vagrant('destroy', '-f')
+        for i in range(1,5):
+            if i > 1 and self.status() == 'not created':
+                return
+            try:
+                return self.run_vagrant('destroy', '-f')
+            except GeneralError:
+                sleep(5)
 
     def prepare(self, how, what):
         """ add single 'preparator' and run it """
 
         name = 'prepare'
         cmd = 'provision'
+
+        self.vf_backup("Prepare")
 
         # decide what to do
         if how == 'ansible':
@@ -128,6 +142,12 @@ class ProvisionVagrant(ProvisionBase):
                 self.kv('privileged', 'true'),
                 self.kv('run', 'never'),
                 self.kv(method, what))
+
+        try:
+            self.validate()
+        except GeneralError as error:
+            self.vf_restore()
+            raise GeneralError(f'Invalid input for vagrant prepare ({how}):\n{what}')
 
         return self.run_vagrant(cmd, f'--{cmd}-with', name)
 
@@ -158,6 +178,7 @@ class ProvisionVagrant(ProvisionBase):
         # Did we get a Vagranfile?
         if 'vagrantfile' in self.data:
             shutil.copyfile(self.data['vagrantfile'], self.vagrantfile)
+            self.validate()
             return
 
         # Let's add what's needed
@@ -185,6 +206,15 @@ class ProvisionVagrant(ProvisionBase):
         """ restart guest machine """
         return self.run_vagrant('reload')
 
+    def status(self):
+        """ check guest status """
+        out, err = self.run_vagrant('status')
+
+        for sta in self.statuses:
+            if not re.search(f" {sta} ", out) is None:
+                return sta
+        return 'unknown'
+
     def plugin_install(self, name):
         """ Install a vagrant plugin if it's not installed yet.
         """
@@ -209,8 +239,9 @@ class ProvisionVagrant(ProvisionBase):
 
             if re.search(r"Conflicting dependency chains:", err) is None:
                 raise error
-            raise ConvertError('Dependency conflict detected:\n'
+            raise GeneralError('Dependency conflict detected:\n'
                 'Please install vagrant plugins from one source only (hint: `dnf remove rubygem-fog-core`).')
+
 
     ## Knowhow ##
     def check_input(self):
@@ -259,6 +290,7 @@ class ProvisionVagrant(ProvisionBase):
             f"how_{self.data['how']}",
             self.how_generic,
             )()
+        self.validate()
 
     def how_generic(self):
         self.debug("generating", "generic")
@@ -277,12 +309,14 @@ class ProvisionVagrant(ProvisionBase):
         self.gen_virtual(name)
 
         self.vf_backup("QEMU user session")
+        self.add_provider(name, 'qemu_use_session = true')
+
         try:
-            self.add_provider(name, 'qemu_use_session = true')
+            self.validate()
         except GeneralError as error:
+            self.vf_restore()
             # Not really an error
             #self.debug(error)
-            self.vf_restore()
 
     def how_connect(self):
         """ Defines a connection to guest
@@ -344,19 +378,13 @@ class ProvisionVagrant(ProvisionBase):
         if provider:
             self.add_provider(provider, self.kve('memory', self.data['memory']))
 
-    def vagrant_status(self):
-        """ Get vagrant's status """
-        raise ConvertError('NYI: cannot currently return status.')
-        # TODO: how to get stdout from self.run?
-        #csp = self.run_vagrant('status')
-        #return self.hr(csp.stdout)
-
     def add_defaults(self):
         """ Adds default /generic/ config entries into Vagrantfile:
              - disable default sync
              - add sync for plan.workdir
              - add ssh config opts if set
              - disable nfs check
+            and validates Vagrantfile
         """
         self.add_synced_folder(".", "/vagrant", 'disabled: true')
 
@@ -375,6 +403,7 @@ class ProvisionVagrant(ProvisionBase):
 
         # Enabling this fails with `how: connect`
         #self.add_config('ssh', 'insert_key = false')
+        self.validate()
 
     def run_vagrant(self, *args):
         """ Run vagrant command and raise an error if it fails
@@ -456,15 +485,12 @@ class ProvisionVagrant(ProvisionBase):
     def vf_write(self, vf_tmp):
         """ write into Vagrantfile
             str or list
-            runs validate()
         """
         if type(vf_tmp) is list:
             vf_tmp = self.eol.join(vf_tmp)
 
         with open(self.vagrantfile, 'w', newline=self.eol) as f:
             f.write(vf_tmp)
-
-        self.validate()
 
     def vf_backup(self, msg=''):
         """ backup Vagrantfile contents to vf_data """
