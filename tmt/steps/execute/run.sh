@@ -105,12 +105,10 @@ tmt_run_test () {
         tmt_error "[${name}] Missing test command." E
         return
     }
-    [[ -z "$path" ]] || {
-        path="$(readlink -f "$tmt_TESTS_D/$path")"
-        [[ -d "$path" ]] || {
-            tmt_error "[${name}] Could not find test dir: '$path'" E
-            return
-        }
+    path="$(readlink -f "$tmt_TESTS_D/$path")"
+    [[ -d "$path" ]] || {
+        tmt_error "[${name}] Could not find test dir: '$path'" E
+        return
     }
     [[ -z "$duration" ]] || {
       duration="timeout '$duration' "
