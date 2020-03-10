@@ -212,7 +212,7 @@ class Test(Node):
             data['duration'] = self.duration
         if self.environment is not None:
             data['environment'] = ' '.join(
-                tmt.utils.dict_to_shell(self.environment))
+                tmt.utils.shell_variables(self.environment))
         return name, data
 
 

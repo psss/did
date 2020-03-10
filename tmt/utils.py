@@ -364,11 +364,15 @@ def dictionary_to_yaml(data):
     return output.getvalue()
 
 
-def dict_to_shell(data):
+def shell_variables(data):
     """
-    Convert dictionary or list/tuple of key=value pairs to list of key=value
-    pairs where value is quoted with shlex.quote.
+    Prepare variables to be consumed by shell
+
+    Convert dictionary or list/tuple of key=value pairs to list of
+    key=value pairs where value is quoted with shlex.quote().
     """
+
+    # Convert from list/tuple
     if isinstance(data, list) or isinstance(data, tuple):
         converted_data = []
         for item in data:
@@ -376,9 +380,9 @@ def dict_to_shell(data):
             key = splitted_item[0]
             value = shlex.quote('='.join(splitted_item[1:]))
             converted_data.append(f'{key}={value}')
-
         return converted_data
 
+    # Convert from dictionary
     return [f"{key}={shlex.quote(str(value))}" for key, value in data.items()]
 
 

@@ -8,7 +8,7 @@ import testcloud.instance
 
 from tmt.steps.provision.base import ProvisionBase
 from tmt.utils import GeneralError, SpecificationError, WORKDIR_ROOT
-from tmt.utils import dict_to_shell
+from tmt.utils import shell_variables
 
 # Testcloud cache to our tmt's workdir root
 TESTCLOUD_DATA = os.path.join(WORKDIR_ROOT, 'testcloud')
@@ -136,7 +136,7 @@ def guess_image_url(name):
             'Fedora-Rawhide', 'Fedora-Cloud-Base-Rawhide')
         return f'{RAWHIDE_IMAGE_URL}/{compose_name}.x86_64.qcow2'
 
-    # try to check if given url is a local file
+    # Try to check if given url is a local file
     if os.path.exists(name):
         return f'file://{name}'
 
@@ -174,8 +174,9 @@ class ProvisionTestcloud(ProvisionBase):
         # Common ssh args
         self.ssh_args = [
             '-i', self.ssh_key,
-            '-oStrictHostKeyChecking=no', '-oUserKnownHostsFile=/dev/null'
-        ]
+            '-oStrictHostKeyChecking=no',
+            '-oUserKnownHostsFile=/dev/null',
+            ]
         self.ssh_args_shell = self.join(self.ssh_args)
 
         # Connection host
@@ -186,7 +187,7 @@ class ProvisionTestcloud(ProvisionBase):
         # as a separate command.
         self.shell_env = ''
         if self.opt('environment'):
-            env = ' '.join(dict_to_shell(self.opt('environment')))
+            env = ' '.join(shell_variables(self.opt('environment')))
             self.shell_env = f'export {env};'
 
         # Make sure required directories exist
@@ -293,11 +294,11 @@ class ProvisionTestcloud(ProvisionBase):
     def execute(self, *args, **kwargs):
         if not self.instance:
             raise GeneralError(
-                'Could not execute without provisioned VM')
+                'Could not execute without a provisioned VM.')
 
-        return self.run(['ssh'] + self.ssh_args + [self.ssh_user_host] + [
-            f'{self.shell_env} {self.join(args)}'
-        ], shell=False)[0].rstrip()
+        return self.run(
+            ['ssh'] + self.ssh_args + [self.ssh_user_host] +
+            [f'{self.shell_env} {self.join(args)}'], shell=False)[0].rstrip()
 
     def _prepare_ansible(self, what):
         """ Prepare using ansible """
