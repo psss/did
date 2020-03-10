@@ -63,6 +63,12 @@ def read(path, makefile, nitrate, purpose, disabled):
     data = dict()
     echo("Checking the '{0}' directory.".format(path))
 
+    # Make sure there is a metadata tree initialized
+    try:
+        tree = fmf.Tree(path)
+    except fmf.utils.RootError:
+        raise ConvertError("Initialize metadata tree using 'tmt init'.")
+
     # Makefile (extract summary, test, duration and requires)
     if makefile:
         echo(style('Makefile ', fg='blue'), nl=False)
@@ -259,11 +265,6 @@ def read_nitrate(beaker_task, common_data, disabled):
 
 def write(path, data):
     """ Write gathered metadata in the fmf format """
-    # Make sure there is a metadata tree initialized
-    try:
-        tree = fmf.Tree(os.path.dirname(path))
-    except fmf.utils.RootError:
-        raise ConvertError("Initialize metadata tree using 'fmf init'.")
     # Store metadata into a fmf file
     try:
         with open(path, 'w', encoding='utf-8') as fmf_file:
