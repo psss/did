@@ -63,10 +63,10 @@ class ProvisionPodman(ProvisionBase):
         self.container_name = 'tmt' + tmt_workdir.replace('/', '-')
 
         # Run the container, add environment variables
-        self.container_id = self.podman(['run'] + self.podman_env + [
-            '--name', self.container_name,
-            '-v', f'{tmt_workdir}:{tmt_workdir}:Z', '-itd', self.image
-        ], message=f'running container {self.image}')
+        self.container_id = self.podman(
+            ['run'] + self.podman_env + ['--name', self.container_name,
+            '-v', f'{tmt_workdir}:{tmt_workdir}:Z', '-itd', self.image],
+            message=f'running container {self.image}')
 
     def execute(self, *args, **kwargs):
         """ Execute given commands in podman via shell """
@@ -76,9 +76,9 @@ class ProvisionPodman(ProvisionBase):
 
         # Note that we MUST run commands via bash, so variables
         # work as expected
-        self.podman(['exec'] + self.podman_env + [
-            self.container_name, 'sh', '-c', self.join(args)
-        ], **kwargs)
+        self.podman(
+            ['exec'] + self.podman_env + [self.container_name,
+            'sh', '-c', self.join(args)], **kwargs)
 
     def _prepare_ansible(self, what):
         """ Prepare using ansible """
@@ -108,4 +108,4 @@ class ProvisionPodman(ProvisionBase):
     def destroy(self):
         """ Remove the container """
         if self.container_name:
-            self.podman(f'container rm -f {self.container_name}')
+            self.podman(['container', 'rm', '-f', self.container_name])

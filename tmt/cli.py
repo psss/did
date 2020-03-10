@@ -176,11 +176,8 @@ def main(context, root, **kwargs):
 @click.option(
     '-a', '--all', 'all_', help='Run all steps, customize some.', is_flag=True)
 @click.option(
-    '-e', '--environment',
-    help='Set environment variable. Can be specified multiple times.',
-    metavar='KEY=VALUE',
-    multiple='True'
-)
+    '-e', '--environment', metavar='KEY=VALUE', multiple='True',
+    help='Set environment variable. Can be specified multiple times.')
 @verbose_debug_quiet
 @force_dry
 def run(context, all_, id_, environment, **kwargs):
@@ -190,6 +187,7 @@ def run(context, all_, id_, environment, **kwargs):
     run = tmt.Run(id_, context.obj.tree)
     context.obj.run = run
 
+    # Check for sane environment variables
     for env in environment:
         if '=' not in env:
             raise tmt.utils.GeneralError(
