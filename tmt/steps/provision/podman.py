@@ -1,6 +1,5 @@
 import os
 
-from click import echo
 from tmt.steps.provision.base import ProvisionBase
 from tmt.utils import GeneralError, SpecificationError
 
@@ -24,8 +23,14 @@ class ProvisionPodman(ProvisionBase):
         self.container_name = None
         self.container_id = None
 
+        # Environment variables compatible with commands used
+        self.podman_env = [f'-e {env}' for env in self.opt('environment')]
+        self.shell_env = ' '.join(self.opt('environment'))
+
     def podman(self, command, **kwargs):
-        return self.run(f'podman {command}', **kwargs)[0].rstrip()
+        """ Run given command via podman """
+        return self.run(
+            ['podman'] + command, shell=False, **kwargs)[0].rstrip()
 
     def option(self, key):
         """ Return option specified on command line """
@@ -43,43 +48,47 @@ class ProvisionPodman(ProvisionBase):
             self.image, ' (force pull)' if self.pull else ''), 'green')
 
         # Check if the image is available
-        self.image_id = self.podman(
-            f'images -q {self.image}',
+        image_id = self.podman(
+            ['images', '-q', self.image],
             message=f'check for image {self.image}')
 
         # Pull image if not available or pull forced
-        if not self.image_id or self.pull:
-            self.image_id = self.podman(
-                f'pull -q {self.image}',
-                message=f'pull image {self.image}')
+        if not image_id or self.pull:
+            self.podman(
+                ['pull', '-q', self.image], message=f'pull image {self.image}')
 
         # Deduce container name from run id, as it can be a path,
         # make it podman container name friendly
         tmt_workdir = self.step.plan.workdir
         self.container_name = 'tmt' + tmt_workdir.replace('/', '-')
 
-        # Run the container
+        # Run the container, add environment variables
         self.container_id = self.podman(
-            f'run --name {self.container_name} '
-            f'-v {tmt_workdir}:{tmt_workdir}:Z -itd {self.image}',
+            ['run'] + self.podman_env + ['--name', self.container_name,
+            '-v', f'{tmt_workdir}:{tmt_workdir}:Z', '-itd', self.image],
             message=f'running container {self.image}')
 
     def execute(self, *args, **kwargs):
+        """ Execute given commands in podman via shell """
         if not self.container_name:
             raise GeneralError(
                 'Could not execute without provisioned container')
 
-        self.info('args', self.join(args), 'red')
-        self.podman(f'exec {self.container_name} {self.join(args)}')
+        # Note that we MUST run commands via bash, so variables
+        # work as expected
+        self.podman(
+            ['exec'] + self.podman_env + [self.container_name,
+            'sh', '-c', self.join(args)], **kwargs)
 
     def _prepare_ansible(self, what):
         """ Prepare using ansible """
         # Playbook paths should be relative to the metadata tree root
         playbook = os.path.join(self.step.plan.run.tree.root, what)
+
         # Run ansible playbook against localhost, in verbose mode
-        # Set collumns to 80 characters
+        # Set columns to 80 characters so it looks the same as with vagrant
         self.run(
-            f'stty cols 80; podman unshare ansible-playbook '
+            f'stty cols 80; {self.shell_env} podman unshare ansible-playbook '
             f'-v -c podman -i {self.container_name}, {playbook}')
 
     def _prepare_shell(self, what):
@@ -92,11 +101,11 @@ class ProvisionPodman(ProvisionBase):
         """ Run prepare phase """
         try:
             self._prepare_map[how](what)
-        except AttributeError as e:
+        except AttributeError:
             raise SpecificationError(
                 f"Prepare method '{how}' is not supported.")
 
     def destroy(self):
         """ Remove the container """
         if self.container_name:
-            self.podman(f'container rm -f {self.container_name}')
+            self.podman(['container', 'rm', '-f', self.container_name])
