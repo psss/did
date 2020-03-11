@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.9
+Version: 0.10
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,51 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Wed Mar 11 2020 Petr Šplíchal <psplicha@redhat.com> - 0.10-1
+- Merge fixed environment support in run.sh [#99]
+- Add container and testcloud to tmt-all requires (#157)
+- Rename dict_to_shell() to better match content
+- Make path mandatory in run.sh.
+- Handle execution better in run.sh
+- Implement --env for testcloud provisioner
+- Merge run --environment support for podman [#132]
+- Fix container destroy, plus some minor adjustments
+- Use cache 'unsafe' for testcloud (#150)
+- Add --env option and support in podman provisioner
+- Warn about missing metadata tree before importing
+- Move testcloud to base requires, update README (#153)
+- Destroy container in finish only if there is any
+- Merge tmt test import --nitrate --disabled [#146]
+- Adjust the disabled test import implementation
+- Add an overview of classes (where are we heading)
+- Import non-disabled tests
+- Add a 'Provision Options' section, update coverage
+- Support selecting objects under the current folder
+- Add a link to details about fmf inheritance
+- Move requirements under the Install section
+- Mock testcloud modules to successfully build docs
+- Include examples of plan inheritance [fix #127]
+- Update implementation coverage for cli stories
+- Add testcloud provisioner (#134)
+- Merge the new story for 'tmt run --latest' [#136]
+- Move run --latest story under run, fix code block
+- Fix invalid variable name in the convert example
+- Use 'skip' instead of 'without', simplify default
+- Add rerun cli shortcut
+- Make sure we run finish always
+- Update the docs making '--name=' necessary (#138)
+- Clarify environment priority, fix release typo
+- Add environment specification
+- Remove copr build job from packit (not necessary)
+- Use the 'extra-summary' in the output as well
+- Use 'nitrate' consistently for tcms-related stuff
+- Prefix all non-specification keys [fix #120]
+- Show a nice error for an invalid yaml [fix #121]
+- Move container plan to common provision examples
+- Remove tmt-all dependency on vagrant-libvirt
+- Do not use red for import info messages [fix #125]
+- Show a nice error for weird Makefiles [fix #108]
+
 * Mon Feb 24 2020 Petr Šplíchal <psplicha@redhat.com> - 0.9-1
 - Rename the 'test convert' command to 'test import'
 - Include 'path' when importing virtual test cases
