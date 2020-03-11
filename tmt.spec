@@ -76,7 +76,9 @@ in a libvirt environment provisioned using testcloud.
 
 %package all
 Summary: Extra dependencies for the Test Management Tool
-Requires: tmt == %{version}-%{release}
+Requires: tmt >= %{version}
+Requires: tmt-container >= %{version}
+Requires: tmt-testcloud >= %{version}
 Requires: vagrant python3-nitrate
 
 %description all
