@@ -95,6 +95,7 @@ tmt_run_test () {
     local environment="$5"
     local execute
     local cmd
+    local prefix
 
     [[ -n "$name" ]] || {
         tmt_error "Invalid test name: '$name'" E
@@ -104,16 +105,14 @@ tmt_run_test () {
         tmt_error "[${name}] Missing test command." E
         return
     }
-    [[ -z "$path" ]] || {
-        path="$(readlink -f "$tmt_TESTS_D/$path")"
-        [[ -d "$path" ]] || {
-            tmt_error "[${name}] Could not find test dir: '$path'" E
-            return
-        }
-        path="cd '$path' && "
+    path="$(readlink -f "$tmt_TESTS_D/$path")"
+    [[ -d "$path" ]] || {
+        tmt_error "[${name}] Could not find test dir: '$path'" E
+        return
     }
-    [[ -z "$duration" ]] || duration="timeout '$duration' "
-    [[ -z "$environment" ]] || environment="env -i $environment "
+    [[ -z "$duration" ]] || {
+      duration="timeout '$duration' "
+    }
 
     local log_dir="${tmt_LOG_D}/$name"
     mkdir -p "$log_dir" || {
@@ -129,9 +128,18 @@ tmt_run_test () {
         return
     }
 
-    cmd="${path}${environment}${duration}${test}"
+    # Let the nested shell handle environment vars
+    prefix="env >'${log_dir}/environment.txt'; "
 
-    tmt_run_${tmt_TYPE} "$cmd"
+    cmd="${prefix}${duration}${test}"
+
+    tmt_verbose 2 "path: $path"
+    tmt_verbose 2 "environment: $environment"
+    tmt_verbose 2 "duration: $duration"
+    tmt_verbose 2 "command: $test"
+    tmt_verbose 2 "type: ${tmt_TYPE}"
+
+    tmt_run_${tmt_TYPE} "$path" "$environment" "$cmd"
     echo "$?" >"$tmt_LOGCODE_F"
 
     grep -q '^0$' "$tmt_LOGCODE_F" \
@@ -152,28 +160,18 @@ tmt_run_test () {
     return 0
 }
 
-# Helpers
-tmt_abort () {
-    echo "Failure:" "$@" >&2
-    exit 1
-}
-
-tmt_error () {
-    echo "Error:" "$1" >&2
-
-    [[ -z "$2" ]] || echo -n "$2"
-}
-
+# Wrappers
 tmt_run_shell () {
-    tmt_verbose 2 "shell execute: $1"
-    bash -c "$1" 1>"$tmt_LOGOUT_F" 2>&1
+    bash -c "env -C '$1' -i $2 bash -c '$3'" 1>"$tmt_LOGOUT_F" 2>&1
     return "$?"
 }
-
 tmt_run_beakerlib () {
     local result
-    tmt_verbose 2 "beakerlib execute: $1"
-    bash -c "export BEAKERLIB_DIR='$(pwd)'; $1" 1>"$tmt_LOGOUT_F" 2>&1
+    local environment
+
+    environment="BEAKERLIB_DIR='$(pwd)' $2"
+
+    tmt_run_shell "$1" "$environment" "$3"
 
     #[[ -z "$tmt_VERBOSE" ]] || {
     #    tmt_verbose 2 "$tmt_JOURNAL_F:"
@@ -192,11 +190,20 @@ tmt_run_beakerlib () {
     return 1
 }
 
+# Helpers
+tmt_abort () {
+    echo "Failure:" "$@" >&2
+    exit 1
+}
+tmt_error () {
+    echo "Error:" "$1" >&2
+
+    [[ -z "$2" ]] || echo -n "$2"
+}
 tmt_trim () {
     sed -e 's/ *$//g' \
         -e 's/^ *//g'
 }
-
 tmt_verbose () {
     [[ -z "$tmt_VERBOSE" ]] || {
         local i="$1"
@@ -211,7 +218,6 @@ tmt_verbose () {
         echo "$p" "$@" >&2
     }
 }
-
 { set +xe; } &>/dev/null
 
 ### INIT checks
