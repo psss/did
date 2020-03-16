@@ -1,0 +1,32 @@
+story:
+    As a user I want to store configuration so that I don't have
+    to always provide my preferred default options on the command
+    line.
+
+description:
+    Configuration should be stored as an ``fmf`` metadata tree
+    according to ``L2 Metadata`` specification. Default values
+    from it would be used if value is not specified in the plan.
+
+/system:
+    summary: System wide configuration
+    description:
+        Global default values common for all users on the system
+        should be stored under the ``/etc/tmt`` folder. It is
+        overriden by user configuration if present.
+    example: |
+        provision:
+            how: container
+
+/user:
+    summary: User configuration
+    description:
+        Configuration for individual users should be stored under
+        the ``~/.config/tmt`` folder. Overrides global system
+        configuration.
+    example: |
+        provision:
+            image: fedora:33
+        report:
+            how: irc
+            channel: #tmt
