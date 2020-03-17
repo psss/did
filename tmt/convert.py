@@ -32,7 +32,6 @@ except ImportError:
 # Python 2 version
 try:
     yaml.SafeDumper.orig_represent_unicode = yaml.SafeDumper.represent_unicode
-
     def repr_unicode(dumper, data):
         if '\n' in data:
             return dumper.represent_scalar(
@@ -42,7 +41,6 @@ try:
 # Python 3 version
 except AttributeError:
     yaml.SafeDumper.orig_represent_str = yaml.SafeDumper.represent_str
-
     def repr_str(dumper, data):
         if '\n' in data:
             return dumper.represent_scalar(
@@ -53,7 +51,6 @@ except AttributeError:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Convert
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 def read(path, makefile, nitrate, purpose, disabled):
     """
@@ -78,14 +75,14 @@ def read(path, makefile, nitrate, purpose, disabled):
         echo(style('Makefile ', fg='blue'), nl=False)
         makefile_path = os.path.join(path, 'Makefile')
         try:
-            with open(makefile_path, encoding='utf-8') as makefile:
-                makefile_content = makefile.read()
+            with open(makefile_path, encoding='utf-8') as makefile_file:
+                makefile = makefile_file.read()
         except IOError:
             raise ConvertError("Unable to open '{0}'.".format(makefile_path))
         echo("found in '{0}'.".format(makefile_path))
 
-        testinfo_path = os.path.join(path, 'testinfo.desc')
         # If testinfo.desc exists read it to preserve content and remove it
+        testinfo_path = os.path.join(path, 'testinfo.desc')
         if os.path.isfile(testinfo_path):
             try:
                 with open(testinfo_path, encoding='utf-8') as testinfo:
@@ -97,71 +94,75 @@ def read(path, makefile, nitrate, purpose, disabled):
         else:
             old_testinfo = None
 
-        # Changes in order to make Makefile 'makeable' without extra dependecies
-        makefile_content = makefile_content.replace(
-            '$(METADATA)', 'testinfo.desc')
-        makefile_content = makefile_content.replace('include /usr/share/rhts/lib/rhts-make.include',
-                                                    '-include /usr/share/rhts/lib/rhts-make.include')
-        makefile_content = makefile_content.replace('rhts-lint testinfo.desc', '')
-        # Creating testinfo.desc file which has resolved variables
-        p = subprocess.run(["make", "testinfo.desc", "-C", path, "-f", "-"], input=makefile_content,
-                           encoding='ascii', stdout=subprocess.DEVNULL)  # , stderr=subprocess.DEVNULL)
-        if p.returncode:
+        # Make Makefile 'makeable' without extra dependecies
+        # (replace targets, make include optional and remove rhts-lint)
+        makefile = makefile.replace('$(METADATA)', 'testinfo.desc')
+        makefile = makefile.replace(
+            'include /usr/share/rhts/lib/rhts-make.include',
+            '-include /usr/share/rhts/lib/rhts-make.include')
+        makefile = makefile.replace('rhts-lint testinfo.desc', '')
+
+        # Create testinfo.desc file with resolved variables
+        try:
+            process = subprocess.run(
+                ["make", "testinfo.desc", "-C", path, "-f", "-"],
+                input=makefile, check=True, encoding='utf-8',
+                stdout=subprocess.DEVNULL)
+        except FileNotFoundError:
             raise ConvertError(
-                "Unable to 'make testinfo.desc' with '{0}'.".format(makefile_path))
+                "Install 'make' to convert metadata from Makefile.")
+        except subprocess.CalledProcessError:
+            raise ConvertError(
+                "Failed to convert metadata using 'make testinfo.desc'.")
 
         # Read testinfo.desc
         try:
-            with open(testinfo_path, encoding='utf-8') as testinfo:
-                testinfo_content = testinfo.read()
+            with open(testinfo_path, encoding='utf-8') as testinfo_file:
+                testinfo = testinfo_file.read()
         except IOError:
             raise ConvertError("Unable to open '{0}'.".format(testinfo_path))
 
         # Beaker task name
         try:
-            beaker_task = re.search(
-                'Name:\s*(.*)\n', testinfo_content).group(1)
+            beaker_task = re.search('Name:\s*(.*)\n', testinfo).group(1)
             echo(style('task: ', fg='green') + beaker_task)
             data['extra-task'] = beaker_task
         except AttributeError:
-            raise ConvertError(
-                "Unable to parse 'Name' from the testinfo.desc.")
+            raise ConvertError("Unable to parse 'Name' from testinfo.desc.")
         # Summary
         data['summary'] = re.search(
-            r'^Description:\s*(.*)\n', testinfo_content, re.M).group(1)
+            r'^Description:\s*(.*)\n', testinfo, re.M).group(1)
         echo(style('summary: ', fg='green') + data['summary'])
         # Test script
-        data['test'] = re.search(
-            '^run:.*\n\t(.*)$', makefile_content, re.M).group(1)
+        data['test'] = re.search('^run:.*\n\t(.*)$', makefile, re.M).group(1)
         echo(style('test: ', fg='green') + data['test'])
         # Component
         data['component'] = re.search(
-            r'^RunFor:\s*(.*)', testinfo_content, re.M).group(1).split()
+            r'^RunFor:\s*(.*)', testinfo, re.M).group(1).split()
         echo(style('component: ', fg='green') + ' '.join(data['component']))
         # Duration
         try:
             data['duration'] = re.search(
-                r'^TestTime:\s*(.*)', testinfo_content, re.M).group(1)
+                r'^TestTime:\s*(.*)', testinfo, re.M).group(1)
             echo(style('duration: ', fg='green') + data['duration'])
         except AttributeError:
             pass
         # Requires and RhtsRequires (optional)
-        requires = re.findall(
-            r'^(?:Rhts)?Requires:\s*(.*)', testinfo_content, re.M)
+        requires = re.findall(r'^(?:Rhts)?Requires:\s*(.*)', testinfo, re.M)
         if requires:
             data['require'] = [
                 require for line in requires for require in line.split()]
             echo(style('require: ', fg='green') + ' '.join(data['require']))
 
-        # testinfo.desc existed before import -> replace it with original content
+        # Restore the original testinfo.desc content (if existed)
         if old_testinfo:
             try:
-                with open(testinfo_path, mode='w', encoding='utf-8') as testinfo:
+                with open(testinfo_path, 'w', encoding='utf-8') as testinfo:
                     testinfo.write(old_testinfo)
             except IOError:
                 raise ConvertError(
                     "Unable to write '{0}'.".format(testinfo_path))
-        # testinfo.desc didn't exist before import -> remove it
+        # Remove created testinfo.desc otherwise
         else:
             os.remove(testinfo_path)
 
@@ -174,8 +175,7 @@ def read(path, makefile, nitrate, purpose, disabled):
                 content = purpose.read()
             echo("found in '{0}'.".format(purpose_path))
             for header in ['PURPOSE', 'Description', 'Author']:
-                content = re.sub(
-                    '^{0}.*\n'.format(header), '', content)
+                content = re.sub('^{0}.*\n'.format(header), '', content)
             data['description'] = content.lstrip('\n')
             echo(style('description:', fg='green'))
             echo(data['description'].rstrip('\n'))
