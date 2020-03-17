@@ -438,6 +438,11 @@ def format(
         # Otherwise just place each item on a new line
         else:
             output += ('\n' + indent_string).join(value)
+    # Dictionary
+    elif isinstance(value, dict):
+        # Place each key value pair on a separate line
+        output += ('\n' + indent_string).join(
+            f'{item[0]}: {item[1]}' for item in value.items())
     # Text
     elif isinstance(value, str):
         # In 'auto' mode enable wrapping when long lines present

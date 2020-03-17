@@ -192,7 +192,7 @@ class Test(Node):
         elif len(self.summary) > 50:
             echo(verdict(2, 'summary should not exceed 50 characters'))
 
-    def export(self, format_='yaml', keys=None):
+    def export(self, format_='yaml', keys=None, environment=None):
         """
         Export test data into requested format
 
@@ -210,7 +210,13 @@ class Test(Node):
         data['path'] = self.path
         if self.duration is not None:
             data['duration'] = self.duration
-        if self.environment is not None:
+        # Combine environment variables (plan overrides test)
+        if self.environment is not None or environment is not None:
+            combined_environment = dict()
+            if self.environment:
+                combined_environment.update(self.environment)
+            if environment:
+                combined_environment.update(environment)
             data['environment'] = ' '.join(
                 tmt.utils.shell_variables(self.environment))
         return name, data
@@ -248,6 +254,9 @@ class Plan(Node):
         if self.gates:
             if not isinstance(gates, list):
                 gates = [gates]
+
+        # Environment variables
+        self.environment = node.get('environment')
 
     @staticmethod
     def overview(tree):
@@ -300,6 +309,9 @@ class Plan(Node):
         self.ls(summary=True)
         for step in self.steps(disabled=True):
             step.show()
+        if self.environment is not None:
+            echo(tmt.utils.format(
+                'environment', self.environment, key_color='blue'))
         if self.opt('verbose'):
             self._sources()
 
