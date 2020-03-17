@@ -8,6 +8,7 @@ from tmt.utils import ConvertError, StructuredFieldError
 
 import fmf.utils
 import tmt.utils
+import subprocess
 import pprint
 import copy
 import yaml
@@ -74,42 +75,96 @@ def read(path, makefile, nitrate, purpose, disabled):
         echo(style('Makefile ', fg='blue'), nl=False)
         makefile_path = os.path.join(path, 'Makefile')
         try:
-            with open(makefile_path, encoding='utf-8') as makefile:
-                content = makefile.read()
+            with open(makefile_path, encoding='utf-8') as makefile_file:
+                makefile = makefile_file.read()
         except IOError:
             raise ConvertError("Unable to open '{0}'.".format(makefile_path))
         echo("found in '{0}'.".format(makefile_path))
+
+        # If testinfo.desc exists read it to preserve content and remove it
+        testinfo_path = os.path.join(path, 'testinfo.desc')
+        if os.path.isfile(testinfo_path):
+            try:
+                with open(testinfo_path, encoding='utf-8') as testinfo:
+                    old_testinfo = testinfo.read()
+                    os.remove(testinfo_path)
+            except IOError:
+                raise ConvertError(
+                    "Unable to open '{0}'.".format(testinfo_path))
+        else:
+            old_testinfo = None
+
+        # Make Makefile 'makeable' without extra dependecies
+        # (replace targets, make include optional and remove rhts-lint)
+        makefile = makefile.replace('$(METADATA)', 'testinfo.desc')
+        makefile = makefile.replace(
+            'include /usr/share/rhts/lib/rhts-make.include',
+            '-include /usr/share/rhts/lib/rhts-make.include')
+        makefile = makefile.replace('rhts-lint testinfo.desc', '')
+
+        # Create testinfo.desc file with resolved variables
+        try:
+            process = subprocess.run(
+                ["make", "testinfo.desc", "-C", path, "-f", "-"],
+                input=makefile, check=True, encoding='utf-8',
+                stdout=subprocess.DEVNULL)
+        except FileNotFoundError:
+            raise ConvertError(
+                "Install 'make' to convert metadata from Makefile.")
+        except subprocess.CalledProcessError:
+            raise ConvertError(
+                "Failed to convert metadata using 'make testinfo.desc'.")
+
+        # Read testinfo.desc
+        try:
+            with open(testinfo_path, encoding='utf-8') as testinfo_file:
+                testinfo = testinfo_file.read()
+        except IOError:
+            raise ConvertError("Unable to open '{0}'.".format(testinfo_path))
+
         # Beaker task name
         try:
-            beaker_task = re.search('export TEST=(.*)\n', content).group(1)
+            beaker_task = re.search('Name:\s*(.*)\n', testinfo).group(1)
             echo(style('task: ', fg='green') + beaker_task)
             data['extra-task'] = beaker_task
         except AttributeError:
-            raise ConvertError("Unable to parse 'TEST' from the Makefile.")
+            raise ConvertError("Unable to parse 'Name' from testinfo.desc.")
         # Summary
         data['summary'] = re.search(
-            r'echo "Description:\s*(.*)"', content).group(1)
+            r'^Description:\s*(.*)\n', testinfo, re.M).group(1)
         echo(style('summary: ', fg='green') + data['summary'])
         # Test script
-        data['test'] = re.search('^run:.*\n\t(.*)$', content, re.M).group(1)
+        data['test'] = re.search('^run:.*\n\t(.*)$', makefile, re.M).group(1)
         echo(style('test: ', fg='green') + data['test'])
         # Component
         data['component'] = re.search(
-            r'echo "RunFor:\s*(.*)"', content).group(1).split()
+            r'^RunFor:\s*(.*)', testinfo, re.M).group(1).split()
         echo(style('component: ', fg='green') + ' '.join(data['component']))
         # Duration
         try:
             data['duration'] = re.search(
-                r'echo "TestTime:\s*(.*)"', content).group(1)
+                r'^TestTime:\s*(.*)', testinfo, re.M).group(1)
             echo(style('duration: ', fg='green') + data['duration'])
         except AttributeError:
             pass
         # Requires and RhtsRequires (optional)
-        requires = re.findall(r'echo "(?:Rhts)?Requires:\s*(.*)"', content)
+        requires = re.findall(r'^(?:Rhts)?Requires:\s*(.*)', testinfo, re.M)
         if requires:
             data['require'] = [
                 require for line in requires for require in line.split()]
             echo(style('require: ', fg='green') + ' '.join(data['require']))
+
+        # Restore the original testinfo.desc content (if existed)
+        if old_testinfo:
+            try:
+                with open(testinfo_path, 'w', encoding='utf-8') as testinfo:
+                    testinfo.write(old_testinfo)
+            except IOError:
+                raise ConvertError(
+                    "Unable to write '{0}'.".format(testinfo_path))
+        # Remove created testinfo.desc otherwise
+        else:
+            os.remove(testinfo_path)
 
     # Purpose (extract everything after the header as a description)
     if purpose:
@@ -269,9 +324,9 @@ def write(path, data):
     try:
         with open(path, 'w', encoding='utf-8') as fmf_file:
             yaml.safe_dump(
-                    data, fmf_file,
-                    encoding='utf-8', allow_unicode=True,
-                    indent=4, default_flow_style=False)
+                data, fmf_file,
+                encoding='utf-8', allow_unicode=True,
+                indent=4, default_flow_style=False)
     except IOError:
         raise ConvertError("Unable to write '{0}'".format(path))
     echo(style(
