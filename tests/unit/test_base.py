@@ -18,6 +18,6 @@ def test_invalid_yaml_syntax():
         plan.write('bad line')
     result = runner.invoke(tmt.cli.main)
     assert isinstance(result.exception, tmt.utils.GeneralError)
-    assert result.exit_code == 1
+    assert result.exit_code != 0
     os.chdir(original_directory)
     shutil.rmtree(tmp)
