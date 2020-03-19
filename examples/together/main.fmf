@@ -1,0 +1,19 @@
+# It is also possible to combine both tests and plans definition
+# in just a single file which might be useful for small projects.
+
+/plan:
+    discover:
+        how: fmf
+    prepare:
+        how: ansible
+        playbooks: packages.yaml
+    execute:
+        how: shell
+
+/tests:
+    /smoke:
+        test: python3 -c "import time"
+        path: /
+    /full:
+        test: make check
+        path: /
