@@ -101,6 +101,9 @@ DOMAIN_TEMPLATE = """<domain type='kvm'>
 </domain>
 """
 
+# Default image
+DEFAULT_IMAGE = 'fedora'
+
 # VM defaults
 DEFAULT_MEMORY = 2048      # MiB
 DEFAULT_DISK_SIZE = 10     # GiB
@@ -152,10 +155,6 @@ class ProvisionTestcloud(ProvisionBase):
             'ansible': self._prepare_ansible,
             'shell': self._prepare_shell,
         }
-
-        # Get image from provision options
-        if not self.option('image'):
-            raise GeneralError('No image specified')
 
         # Initialize testcloud image
         self.image = None
@@ -219,7 +218,7 @@ class ProvisionTestcloud(ProvisionBase):
 
         # If image does not start with http/https/file, consider it a mapping
         # value and try to guess the URL
-        image_url = self.option('image')
+        image_url = self.option('image') or DEFAULT_IMAGE
         if not re.match(r'^(?:https?|file)://.*', image_url):
             image_url = guess_image_url(image_url)
 
