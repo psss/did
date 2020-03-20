@@ -239,8 +239,11 @@ def read_nitrate(beaker_task, common_data, disabled):
         if testcase.arguments:
             data['environment'] = tmt.utils.variables_to_dictionary(
                 testcase.arguments)
-            echo(style('environment:', fg='green'))
-            echo(pprint.pformat(data['environment']))
+            if not data['environment']:
+                data.pop('environment')
+            else:
+                echo(style('environment:', fg='green'))
+                echo(pprint.pformat(data['environment']))
         # Tags
         if testcase.tags:
             data['tag'] = sorted([
