@@ -34,11 +34,11 @@ install_requires = [
     'fmf>=0.9.2',
     'click',
     'requests',
-    'testcloud',
 ]
 extras_require = {
     'docs': ['sphinx', 'sphinx_rtd_theme'],
     'tests': ['pytest', 'python-coveralls', 'mock'],
+    'provision': ['testcloud'],
 }
 extras_require['all'] = [dependency
     for extra in extras_require.values()
