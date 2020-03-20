@@ -32,12 +32,15 @@ a regular user.
 Nitrate Migration
 ------------------------------------------------------------------
 
-If a nitrate testcase is ported to tmt then any changes made to it in nitrate
-might be lost.
-Location of metadata is described by ``[fmf]`` section of Structured field.
+After a nitrate test case is migrated to ``fmf`` git becomes the
+canonical source of the test case metadata. All further changes
+should be done in git and updates synchronized back to nitrate
+using ``tmt test export . --nitrate`` command. Otherwise direct
+changes in Nitrate might be lost.
 
-Below is the list of supported ``fmf`` attributes and
-corresponding nitrate fields:
+A unique identifier of the new test metadata location is stored in
+the ``[fmf]`` section of test case notes. Below is the list of
+attributes which are synchronized to corresponding nitrate fields:
 
 * component — components tab
 * contact — default tester
@@ -45,20 +48,16 @@ corresponding nitrate fields:
 * duration — estimated time
 * enabled — status
 * environment — arguments
-* path — not synced
 * relevancy — relevancy in the structured field
-* result — not synced
 * summary — description in the structured field
 * tag — tags tab
-* test — not synced
 * tier — tags (e.g. ``1`` synced to the ``Tier1`` tag)
 
-The following attributes, if present, should be
-exported as well:
+The following attributes, if present, are exported as well:
 
 * extra-hardware — hardware in the structured field
 * extra-pepa — pepa in the structured field
 
-They have the ``extra`` prefix as they are not part of
-the L1 Metadata Specification and are supposed to be
-synced temporarily to keep backward compatibility.
+They have the ``extra`` prefix as they are not part of the L1
+Metadata Specification and are supposed to be synced temporarily
+to keep backward compatibility.

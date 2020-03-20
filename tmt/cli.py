@@ -514,7 +514,7 @@ def import_(context, paths, makefile, nitrate, purpose, disabled, **kwargs):
 @name_filter_condition
 @click.option(
     '--nitrate', is_flag=True,
-    help='Export test metadata to Nitrate')
+    help='Export test metadata to Nitrate.')
 @click.option(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
     help='Output format.')
@@ -531,7 +531,7 @@ def export(context, format_, nitrate, **kwargs):
     tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
         if nitrate:
-            tmt.export.export_to_nitrate(test)
+            test.export(format_='nitrate')
         else:
             echo(test.export(format_=format_))
 

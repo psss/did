@@ -9,6 +9,7 @@ import pprint
 
 import tmt.steps
 import tmt.utils
+import tmt.export
 import tmt.templates
 
 import tmt.steps.discover
@@ -22,6 +23,7 @@ from tmt.utils import verdict
 from fmf.utils import listed
 from click import echo, style
 
+DEFAULT_TEST_DURATION = '5m'
 
 class Node(tmt.utils.Common):
     """
@@ -109,7 +111,7 @@ class Test(Node):
         'duration',
         'environment',
         'relevancy',
-        'tags',
+        'tag',
         'tier',
         'result',
         'enabled',
@@ -124,6 +126,17 @@ class Test(Node):
         # Path defaults to the node name
         if self.path is None:
             self.path = self.name
+        # Convert tag and component into a list
+        if self.tag is None:
+            self.tag = list()
+        if self.component is None:
+            self.component = list()
+        # Convert environment into a dictionary
+        if self.environment is None:
+            self.environment = dict()
+        # Default duration
+        if self.duration is None:
+            self.duration = DEFAULT_TEST_DURATION
         # Handle other default values
         if self.enabled is None:
             disabled = self.node.get('disabled')
@@ -200,26 +213,33 @@ class Test(Node):
         format 'execute' used by the execute step which returns
         (test-name, test-data) tuples.
         """
-        if format_ != 'execute':
-            return super(Test, self).export(format_, keys)
 
         # Prepare special format for the executor
-        name = self.name
-        data = dict()
-        data['test'] = self.test
-        data['path'] = self.path
-        if self.duration is not None:
-            data['duration'] = self.duration
-        # Combine environment variables (plan overrides test)
-        if self.environment is not None or environment is not None:
-            combined_environment = dict()
-            if self.environment:
-                combined_environment.update(self.environment)
-            if environment:
-                combined_environment.update(environment)
-            data['environment'] = ' '.join(
-                tmt.utils.shell_variables(self.environment))
-        return name, data
+        if format_ == 'execute':
+            name = self.name
+            data = dict()
+            data['test'] = self.test
+            data['path'] = self.path
+            if self.duration is not None:
+                data['duration'] = self.duration
+            # Combine environment variables (plan overrides test)
+            if self.environment is not None or environment is not None:
+                combined_environment = dict()
+                if self.environment:
+                    combined_environment.update(self.environment)
+                if environment:
+                    combined_environment.update(environment)
+                data['environment'] = ' '.join(
+                    tmt.utils.shell_variables(self.environment))
+            return name, data
+
+        # Export to Nitrate test case management system
+        elif format_ == 'nitrate':
+            return tmt.export.export_to_nitrate(self)
+
+        # Common node export otherwise
+        else:
+            return super(Test, self).export(format_, keys)
 
 
 class Plan(Node):
