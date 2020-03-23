@@ -3,6 +3,8 @@ import os
 from tmt.steps.provision.base import ProvisionBase
 from tmt.utils import GeneralError, SpecificationError
 
+DEFAULT_IMAGE = 'fedora'
+
 
 class ProvisionPodman(ProvisionBase):
     """ Podman Provisioner """
@@ -16,7 +18,7 @@ class ProvisionPodman(ProvisionBase):
         }
 
         # Get image from provision options
-        self.image = self.option('image')
+        self.image = self.option('image') or DEFAULT_IMAGE
         self.pull = self.option('container_pull')
 
         # Instances variables initialized later
