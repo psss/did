@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.10
+Version: 0.11
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,27 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Mon Mar 23 2020 Petr Šplíchal <psplicha@redhat.com> - 0.11-1
+- Merge default images for podman/testcloud [#169]
+- Do not export empty environment to run.sh
+- Merge vagrant check for running connection [#156]
+- Adjust vagrant check for running connection
+- Merge test export into nitrate [#118]
+- Adjust 'tmt test export --nitrate' implementation
+- Use fedora as a default image for podman/testcloud
+- Move testcloud back to the extra requires
+- Always copy directory tree to the workdir
+- Add an example with test and plan in a single file
+- Do not run tests with an empty environment
+- Check for non-zero status upon yaml syntax errors
+- Export test cases to nitrate
+- Merge test import using testinfo.desc [#160]
+- Adjust test import using testinfo.desc
+- Use testinfo.desc as source of metadata
+- Add environment support to the discover step (#145)
+- Add a new story describing user and system config (#143)
+- Check if connection is running in Vagrant Provision
+
 * Wed Mar 11 2020 Petr Šplíchal <psplicha@redhat.com> - 0.10-1
 - Merge fixed environment support in run.sh [#99]
 - Add container and testcloud to tmt-all requires (#157)
