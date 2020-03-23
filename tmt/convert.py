@@ -124,7 +124,7 @@ def read(path, makefile, nitrate, purpose, disabled):
 
         # Beaker task name
         try:
-            beaker_task = re.search('Name:\s*(.*)\n', testinfo).group(1)
+            beaker_task = re.search(r'Name:\s*(.*)\n', testinfo).group(1)
             echo(style('task: ', fg='green') + beaker_task)
             data['extra-task'] = beaker_task
         except AttributeError:
