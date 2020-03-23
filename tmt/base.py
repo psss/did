@@ -223,7 +223,7 @@ class Test(Node):
             if self.duration is not None:
                 data['duration'] = self.duration
             # Combine environment variables (plan overrides test)
-            if self.environment is not None or environment is not None:
+            if self.environment or environment:
                 combined_environment = dict()
                 if self.environment:
                     combined_environment.update(self.environment)
