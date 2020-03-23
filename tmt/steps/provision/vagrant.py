@@ -72,13 +72,14 @@ class ProvisionVagrant(ProvisionBase):
     def go(self):
         """ Execute actual provisioning """
         self.init()
-        self.info(f'Provisioning {self.executable}, {self.vf_name}', self.vf_read())
-        ret = self.run_vagrant('up')
+        self.info(
+            f'Provisioning {self.executable}, {self.vf_name}', self.vf_read())
+        out, err = self.run_vagrant('up')
 
-        s = self.status()
-        if s != 'running':
-            raise GeneralError(f'Failed to provision(status: {s}), log:\n{out}\n{err}')
-        return ret
+        status = self.status()
+        if status != 'running':
+            raise GeneralError(
+                f'Failed to provision (status: {status}), log:\n{out}\n{err}')
 
     def execute(self, *args, **kwargs):
         """ Execute remote command """
@@ -86,7 +87,8 @@ class ProvisionVagrant(ProvisionBase):
 
     def show(self):
         """ Create and show the Vagrantfile """
-        self.super.show(keys=['how', 'box', 'image', 'memory', 'user', 'password'])
+        self.super.show(
+            keys=['how', 'box', 'image', 'memory', 'user', 'password'])
         self.info(self.vf_name, self.vf_read())
 
     def sync_workdir_to_guest(self):
@@ -101,7 +103,7 @@ class ProvisionVagrant(ProvisionBase):
 
     def destroy(self):
         """ remove instance """
-        for i in range(1,5):
+        for i in range(1, 5):
             if i > 1 and self.status() == 'not created':
                 return
             try:
@@ -147,7 +149,8 @@ class ProvisionVagrant(ProvisionBase):
             self.validate()
         except GeneralError as error:
             self.vf_restore()
-            raise GeneralError(f'Invalid input for vagrant prepare ({how}):\n{what}')
+            raise GeneralError(
+                f'Invalid input for vagrant prepare ({how}):\n{what}')
 
         return self.run_vagrant(cmd, f'--{cmd}-with', name)
 
@@ -210,9 +213,9 @@ class ProvisionVagrant(ProvisionBase):
         """ check guest status """
         out, err = self.run_vagrant('status')
 
-        for sta in self.statuses:
-            if not re.search(f" {sta} ", out) is None:
-                return sta
+        for status in self.statuses:
+            if not re.search(f" {status} ", out) is None:
+                return status
         return 'unknown'
 
     def plugin_install(self, name):
