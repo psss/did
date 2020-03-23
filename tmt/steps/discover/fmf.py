@@ -68,12 +68,13 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if self.filters:
             for filter_ in self.filters:
                 self.info('filter', filter_, 'green')
-        # Initialize the metadata tree
+        # Initialize the metadata tree (filter enabled tests only)
         self.debug(f"Check metadata tree in '{testdir}'.")
-        # Nothing more to do here when in dry mode
         if self.opt('dry'):
             return []
-        tests = tmt.Tree(testdir).tests(filters=self.filters)
+        tests = [
+            test for test in tmt.Tree(testdir).tests(filters=self.filters)
+            if test.enabled]
         # Modify test names and paths to make them unique
         for test in tests:
             test.name = f"/{self.name}{test.name}"
