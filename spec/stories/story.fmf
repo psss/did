@@ -5,3 +5,5 @@ example: |
     story:
         As a user I want the application to do this and that
         so that I can achieve this and that.
+
+implemented: /tmt/base

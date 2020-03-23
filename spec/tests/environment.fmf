@@ -16,3 +16,5 @@ example: |
     environment:
         PACKAGE: python37
         PYTHON: python3.7
+
+implemented: /tmt/base

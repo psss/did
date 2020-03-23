@@ -97,6 +97,8 @@ story: 'As a user I want to comfortably work with tests'
             should be added to the nitrate test case in order to
             allow easy search for migrated test cases directly
             from the web interface.
+        implemented: /tmt/export
+        documented: /docs/questions#nitrate-migration
 
 /coverage:
     story: 'Test coverage overview'

@@ -7,3 +7,5 @@ description:
 
 example: |
     example: tmt run discover
+
+implemented: /tmt/base

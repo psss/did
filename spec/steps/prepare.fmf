@@ -21,6 +21,11 @@ description: |
         prepare:
             how: shell
             script: dnf install -y httpd
+    implemented:
+        - /tmt/steps/provision/localhost
+        - /tmt/steps/provision/podman
+        - /tmt/steps/provision/vagrant
+        - /tmt/steps/provision/testcloud
 
 /ansible:
     summary:
@@ -40,3 +45,8 @@ description: |
             playbooks:
                 - common.yml
                 - rhel7.yml
+    implemented:
+        - /tmt/steps/provision/localhost
+        - /tmt/steps/provision/podman
+        - /tmt/steps/provision/vagrant
+        - /tmt/steps/provision/testcloud

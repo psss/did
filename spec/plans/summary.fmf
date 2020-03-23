@@ -18,3 +18,5 @@ example: |
             summary: Basic smoke test (Tier1)
         /features:
             summary: Verify important features
+
+implemented: /tmt/base

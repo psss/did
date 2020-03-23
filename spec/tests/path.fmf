@@ -20,3 +20,5 @@ example: |
 
 links:
     - http://fmf.readthedocs.io/en/latest/features.html#virtual
+
+implemented: /tmt/base

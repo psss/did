@@ -15,3 +15,5 @@ description:
 example: |
     component: [libselinux, checkpolicy]
     fmf ls --filter 'tier: 1 | component: checkpolicy'
+
+implemented: /tmt/base

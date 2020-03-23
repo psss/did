@@ -13,3 +13,7 @@ example: |
         execute:
             script:
                 - echo "Testing $KOJI_TASK_ID on release $RELEASE"
+
+implemented:
+    - /tmt/base
+    - /tmt/steps/discover

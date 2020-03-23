@@ -19,3 +19,5 @@ example: |
         structure is created for testing. Then a file download
         is performed for different recursion depth specified by
         the "--level=depth" option.
+
+implemented: /tmt/base

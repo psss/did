@@ -40,3 +40,5 @@ example: |
     discover:
         how: 'fmf'
         filter: 'tier: 1'
+
+implemented: /tmt/steps/discover
