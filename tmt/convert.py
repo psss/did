@@ -17,12 +17,6 @@ import os
 
 log = fmf.utils.Logging('tmt').logger
 
-# Import nitrate conditionally (reading from nitrate can be skipped)
-try:
-    from nitrate import TestCase
-except ImportError:
-    TestCase = None
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  YAML
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -198,20 +192,28 @@ def read(path, makefile, nitrate, purpose, disabled):
 def read_nitrate(beaker_task, common_data, disabled):
     """ Read old metadata from nitrate test cases """
 
-    # Check test case, make sure nitrate is available
+    # Need to import nitrate only when really needed. Otherwise we get
+    # traceback when nitrate not installed or config file not available.
+    try:
+        import nitrate
+    except ImportError:
+        raise ConvertError('Install nitrate module to import metadata.')
+
+    # Check test case
     echo(style('Nitrate ', fg='blue'), nl=False)
     if beaker_task is None:
         raise ConvertError('No test name detected for nitrate search')
-    if TestCase is None:
-        raise ConvertError('Need nitrate module to import metadata')
 
     # Find all testcases
-    if disabled:
-        testcases = list(TestCase.search(script=beaker_task))
-    # Find testcases that do not have 'DISABLED' status
-    else:
-        testcases = list(TestCase.search(
-            script=beaker_task, case_status__in=[1, 2, 4]))
+    try:
+        if disabled:
+            testcases = list(nitrate.TestCase.search(script=beaker_task))
+        # Find testcases that do not have 'DISABLED' status
+        else:
+            testcases = list(nitrate.TestCase.search(
+                script=beaker_task, case_status__in=[1, 2, 4]))
+    except nitrate.NitrateError as error:
+        raise ConvertError(error)
     if not testcases:
         echo("No {0}testcase found for '{1}'.".format(
             '' if disabled else 'non-disabled ', beaker_task))

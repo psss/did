@@ -11,15 +11,6 @@ import yaml
 import fmf
 import os
 
-# Import nitrate conditionally
-try:
-    import nitrate
-    # Needed for nitrate.Component
-    DEFAULT_PRODUCT = nitrate.Product(name='RHEL Tests')
-except ImportError:
-    nitrate = None
-    DEFAULT_PRODUCT = ''
-
 log = fmf.utils.Logging('tmt').logger
 
 WARNING = """
@@ -28,13 +19,18 @@ See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
 """.lstrip()
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  Export
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 def export_to_nitrate(test):
     """ Export fmf metadata to nitrate test cases """
+    # Need to import nitrate only when really needed. Otherwise we get
+    # traceback when nitrate not installed or config file not available.
+    try:
+        import nitrate
+        DEFAULT_PRODUCT = nitrate.Product(name='RHEL Tests')
+    except ImportError:
+        raise tmt.utils.ConvertError("Install nitrate to export tests there.")
+    except nitrate.NitrateError as error:
+        raise tmt.utils.ConvertError(error)
+
     # Check nitrate test case
     try:
         nitrate_id = test.node.get('extra-nitrate')[3:]
