@@ -150,12 +150,11 @@ def create_fmf_id(test):
 
     fmf_id = {'name': test.name}
 
-    # Prepare url and ref
+    # Prepare url (for now handle just the most common schemas)
     origin = run('git config --get remote.origin.url')
-    if origin.startswith('ssh://'):
-        fmf_id['url'] = 'git://' + origin.split('@')[-1]
-    else:
-        fmf_id['url'] = origin
+    fmf_id['url'] = tmt.utils.public_git_url(origin)
+
+    # Get the ref (skip for master as it is the default)
     ref = run('git rev-parse --abbrev-ref HEAD')
     if ref != 'master':
         fmf_id['ref'] = ref

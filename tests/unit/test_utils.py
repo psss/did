@@ -3,7 +3,31 @@
 import re
 import unittest
 
-from tmt.utils import StructuredField, StructuredFieldError
+from tmt.utils import StructuredField, StructuredFieldError, public_git_url
+
+def test_public_git_url():
+    """ Verify url conversion """
+    examples = [
+        {
+            'original': 'git@github.com:psss/tmt.git',
+            'expected': 'https://github.com/psss/tmt.git',
+        }, {
+            'original': 'ssh://psplicha@pkgs.devel.redhat.com/tests/bash',
+            'expected': 'git://pkgs.devel.redhat.com/tests/bash',
+        }, {
+            'original': 'ssh://pkgs.devel.redhat.com/tests/bash',
+            'expected': 'git://pkgs.devel.redhat.com/tests/bash',
+        }, {
+            'original': 'ssh://psss@pkgs.fedoraproject.org/tests/shell',
+            'expected': 'https://pkgs.fedoraproject.org/tests/shell',
+        }, {
+            'original': 'ssh://git@pagure.io/fedora-ci/metadata.git',
+            'expected': 'https://pagure.io/fedora-ci/metadata.git',
+            },
+        ]
+    for example in examples:
+        assert public_git_url(example['original']) == example['expected']
+
 
 class test_structured_field(unittest.TestCase):
     """ Self Test """

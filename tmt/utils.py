@@ -496,6 +496,44 @@ def create_file(path, content, name, force=False, mode=0o664, quiet=False):
         raise GeneralError("Failed to create {} '{}' ({})".format(
             name, path, error))
 
+
+def public_git_url(url):
+    """
+    Convert a git url into a public format
+
+    Return url in the format which can be accessed without
+    authentication. For now just cover the most common services.
+    """
+
+    # GitHub, GitLab
+    # old: git@github.com:psss/tmt.git
+    # new: https://github.com/psss/tmt.git
+    matched = re.match('git@(.*):(.*)', url)
+    if matched:
+        host, project = matched.groups()
+        return f'https://{host}/{project}'
+
+    # RHEL packages
+    # old: ssh://psplicha@pkgs.devel.redhat.com/tests/bash
+    # old: ssh://pkgs.devel.redhat.com/tests/bash
+    # new: git://pkgs.devel.redhat.com/tests/bash
+    matched = re.match(r'ssh://(\w+@)?(pkgs\.devel\.redhat\.com)/(.*)', url)
+    if matched:
+        _, host, project = matched.groups()
+        return f'git://{host}/{project}'
+
+    # Fedora packages, Pagure
+    # old: ssh://psss@pkgs.fedoraproject.org/tests/shell
+    # new: https://pkgs.fedoraproject.org/tests/shell
+    matched = re.match(r'ssh://(\w+@)?([^/]*)/(.*)', url)
+    if matched:
+        _, host, project = matched.groups()
+        return f'https://{host}/{project}'
+
+    # Otherwise return unmodified
+    return url
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  StructuredField
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
