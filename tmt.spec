@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.11
+Version: 0.12
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,13 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Wed Mar 25 2020 Petr Šplíchal <psplicha@redhat.com> - 0.12-1
+- Import the testcloud module when needed [fix #175]
+- Update implementation coverage of stories & spec
+- Discover only enabled tests [fix #170]
+- Correctly handle missing nitrate module or config
+- Use raw string for regular expression search
+
 * Mon Mar 23 2020 Petr Šplíchal <psplicha@redhat.com> - 0.11-1
 - Merge default images for podman/testcloud [#169]
 - Do not export empty environment to run.sh
