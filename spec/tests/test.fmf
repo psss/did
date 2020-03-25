@@ -7,7 +7,8 @@ story:
 description:
     This attribute defines how the test is to be executed.
     Allows to parametrize a single test script and in this way
-    create virtual test cases. Should be a ``string``.
+    create virtual test cases. Should be a ``string``. This is
+    a **required** attribute.
 
 example: |
     test: ./test.sh

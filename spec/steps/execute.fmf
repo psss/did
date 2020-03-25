@@ -1,8 +1,10 @@
-summary: Test framework which should execute tests
+summary: Define how tests should be executed
 
 description: |
-    Execute discovered tests on provisioned boxes with optional
-    support for parallelization.
+    Execute discovered tests on provisioned boxes using provided
+    test framework with optional support for parallelization. By
+    default tests are executed as ``shell`` scripts. This is a
+    **required** attribute. Each plan has to define this step.
 
     For each ``plan`` the execute step should produce a
     ``results.yaml`` file with the list of results for each test

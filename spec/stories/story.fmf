@@ -1,6 +1,10 @@
 summary:
     User story describing the feature to be implemented
 
+description:
+    This is a **required** attribute. Each story has to define or
+    inherit a ``story`` definition.
+
 example: |
     story:
         As a user I want the application to do this and that
