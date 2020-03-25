@@ -3,8 +3,6 @@ import os
 import time
 
 import requests
-import testcloud.image
-import testcloud.instance
 
 from tmt.steps.provision.base import ProvisionBase
 from tmt.utils import GeneralError, SpecificationError, WORKDIR_ROOT
@@ -221,6 +219,15 @@ class ProvisionTestcloud(ProvisionBase):
         image_url = self.option('image') or DEFAULT_IMAGE
         if not re.match(r'^(?:https?|file)://.*', image_url):
             image_url = guess_image_url(image_url)
+
+        # Import testcloud module only when needed (until we have a
+        # separate package for each plugin)
+        try:
+            import testcloud.image
+            import testcloud.instance
+        except ImportError:
+            raise GeneralError(
+                "Install 'testcloud' to provision using this method.")
 
         # Get configuration
         config = testcloud.config.get_config()
