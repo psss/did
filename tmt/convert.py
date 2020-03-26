@@ -124,16 +124,26 @@ def read(path, makefile, nitrate, purpose, disabled):
         except AttributeError:
             raise ConvertError("Unable to parse 'Name' from testinfo.desc.")
         # Summary
-        data['summary'] = re.search(
-            r'^Description:\s*(.*)\n', testinfo, re.M).group(1)
-        echo(style('summary: ', fg='green') + data['summary'])
+        try:
+            data['summary'] = re.search(
+                r'^Description:\s*(.*)\n', testinfo, re.M).group(1)
+            echo(style('summary: ', fg='green') + data['summary'])
+        except:
+            pass
         # Test script
-        data['test'] = re.search('^run:.*\n\t(.*)$', makefile, re.M).group(1)
-        echo(style('test: ', fg='green') + data['test'])
+        try:
+            data['test'] = re.search('^run:.*\n\t(.*)$', makefile, re.M).group(1)
+            echo(style('test: ', fg='green') + data['test'])
+        except:
+            raise ConvertError("Makefile is missing 'run' target.")
         # Component
-        data['component'] = re.search(
-            r'^RunFor:\s*(.*)', testinfo, re.M).group(1).split()
-        echo(style('component: ', fg='green') + ' '.join(data['component']))
+        try:
+            data['component'] = re.search(
+                r'^RunFor:\s*(.*)', testinfo, re.M).group(1).split()
+            echo(style('component: ', fg='green') +
+                 ' '.join(data['component']))
+        except:
+            pass
         # Duration
         try:
             data['duration'] = re.search(
@@ -183,6 +193,12 @@ def read(path, makefile, nitrate, purpose, disabled):
     else:
         common_data = data
         individual_data = []
+
+    # If 'component' is not found in either Makefile or nitrate -> fail
+    for i_d in individual_data:
+        if 'component' not in common_data and 'component' not in i_d:
+            raise ConvertError(
+                "component not found (RunFor in Makefile or component in nitrate)")
 
     log.debug('Common metadata:\n' + pprint.pformat(common_data))
     log.debug('Individual metadata:\n' + pprint.pformat(individual_data))
