@@ -124,16 +124,27 @@ def read(path, makefile, nitrate, purpose, disabled):
         except AttributeError:
             raise ConvertError("Unable to parse 'Name' from testinfo.desc.")
         # Summary
-        data['summary'] = re.search(
-            r'^Description:\s*(.*)\n', testinfo, re.M).group(1)
-        echo(style('summary: ', fg='green') + data['summary'])
+        try:
+            data['summary'] = re.search(
+                r'^Description:\s*(.*)\n', testinfo, re.M).group(1)
+            echo(style('summary: ', fg='green') + data['summary'])
+        except AttributeError:
+            pass
         # Test script
-        data['test'] = re.search('^run:.*\n\t(.*)$', makefile, re.M).group(1)
-        echo(style('test: ', fg='green') + data['test'])
+        try:
+            data['test'] = re.search(
+                r'^run:.*\n\t(.*)$', makefile, re.M).group(1)
+            echo(style('test: ', fg='green') + data['test'])
+        except AttributeError:
+            raise ConvertError("Makefile is missing the 'run' target.")
         # Component
-        data['component'] = re.search(
-            r'^RunFor:\s*(.*)', testinfo, re.M).group(1).split()
-        echo(style('component: ', fg='green') + ' '.join(data['component']))
+        try:
+            data['component'] = re.search(
+                r'^RunFor:\s*(.*)', testinfo, re.M).group(1).split()
+            echo(style('component: ', fg='green') +
+                 ' '.join(data['component']))
+        except AttributeError:
+            pass
         # Duration
         try:
             data['duration'] = re.search(
