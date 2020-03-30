@@ -128,21 +128,22 @@ def read(path, makefile, nitrate, purpose, disabled):
             data['summary'] = re.search(
                 r'^Description:\s*(.*)\n', testinfo, re.M).group(1)
             echo(style('summary: ', fg='green') + data['summary'])
-        except:
+        except AttributeError:
             pass
         # Test script
         try:
-            data['test'] = re.search('^run:.*\n\t(.*)$', makefile, re.M).group(1)
+            data['test'] = re.search(
+                r'^run:.*\n\t(.*)$', makefile, re.M).group(1)
             echo(style('test: ', fg='green') + data['test'])
-        except:
-            raise ConvertError("Makefile is missing 'run' target.")
+        except AttributeError:
+            raise ConvertError("Makefile is missing the 'run' target.")
         # Component
         try:
             data['component'] = re.search(
                 r'^RunFor:\s*(.*)', testinfo, re.M).group(1).split()
             echo(style('component: ', fg='green') +
                  ' '.join(data['component']))
-        except:
+        except AttributeError:
             pass
         # Duration
         try:
@@ -193,12 +194,6 @@ def read(path, makefile, nitrate, purpose, disabled):
     else:
         common_data = data
         individual_data = []
-
-    # If 'component' is not found in either Makefile or nitrate -> fail
-    for i_d in individual_data:
-        if 'component' not in common_data and 'component' not in i_d:
-            raise ConvertError(
-                "component not found (RunFor in Makefile or component in nitrate)")
 
     log.debug('Common metadata:\n' + pprint.pformat(common_data))
     log.debug('Individual metadata:\n' + pprint.pformat(individual_data))
