@@ -11,10 +11,15 @@ import os
 import fmf
 import tmt
 import tmt.utils
+import tmt.plugins
 import tmt.convert
 import tmt.export
 import tmt.steps
 import tmt.templates
+import tmt.options
+
+# Explore available plugins (need to detect all supported methods first)
+tmt.plugins.explore()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Custom Group
@@ -51,37 +56,14 @@ class CustomGroup(click.Group):
 
 def verbose_debug_quiet(function):
     """ Verbose, debug and quiet output """
-
-    options = [
-        click.option(
-           '-v', '--verbose', is_flag=True,
-           help='I want to see more details. Please, be verbose.'),
-        click.option(
-           '-d', '--debug', is_flag=True,
-           help='Provide as much debugging details as possible.'),
-        click.option(
-            '-q', '--quiet', is_flag=True,
-            help='Be quiet. Exit code is just enough for me.'),
-        ]
-
-    for option in reversed(options):
+    for option in reversed(tmt.options.verbose_debug_quiet):
         function = option(function)
     return function
 
 
 def force_dry(function):
     """ Force and dry actions """
-
-    options = [
-        click.option(
-            '-f', '--force', is_flag=True,
-            help='Force overwriting existing stuff.'),
-        click.option(
-            '-n', '--dry', is_flag=True,
-            help='No changes, please. Run in dry mode.'),
-        ]
-
-    for option in reversed(options):
+    for option in reversed(tmt.options.force_dry):
         function = option(function)
     return function
 
@@ -170,7 +152,7 @@ def main(context, root, **kwargs):
 #  Run
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(chain=True, invoke_without_command=True, cls=CustomGroup)
+@main.group(chain=True, invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @click.option(
     '-i', '--id', 'id_', help='Run id (name or directory path).', metavar="ID")
@@ -194,21 +176,8 @@ def run(context, all_, id_, environment, **kwargs):
             raise tmt.utils.GeneralError(
                 f"Invalid environment variable specification '{env}'.")
 
-main.add_command(run)
 
-
-@run.command()
-@click.pass_context
-@click.option(
-    '-h', '--how', metavar='METHOD',
-    help='Use specified method to discover tests.')
-@verbose_debug_quiet
-@force_dry
-def discover(context, **kwargs):
-    """ Gather and show information about test cases to be executed. """
-    context.obj.steps.add('discover')
-    tmt.steps.discover.Discover._save_context(context)
-    return 'discover'
+run.add_command(tmt.steps.discover.DiscoverPlugin.command())
 
 
 @run.command()
@@ -327,7 +296,7 @@ def finish(context, **kwargs):
 @verbose_debug_quiet
 def plans(context, **kwargs):
     """
-    Select plans which should be executed
+    Select plans which should be executed.
 
     Regular expression can be used to filter plans by name.
     Use '.' to select plans under the current working directory.
@@ -349,7 +318,7 @@ def plans(context, **kwargs):
 @verbose_debug_quiet
 def tests(context, **kwargs):
     """
-    Select tests which should be executed
+    Select tests which should be executed.
 
     Regular expression can be used to filter tests by name.
     Use '.' to select tests under the current working directory.
@@ -368,7 +337,7 @@ def finito(context, commands, *args, **kwargs):
 #  Test
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(invoke_without_command=True, cls=CustomGroup)
+@main.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @verbose_debug_quiet
 def tests(context, **kwargs):
@@ -382,8 +351,6 @@ def tests(context, **kwargs):
     # Show overview of available tests
     if context.invoked_subcommand is None:
         tmt.Test.overview(context.obj.tree)
-
-main.add_command(tests)
 
 
 @tests.command()
@@ -540,7 +507,7 @@ def export(context, format_, nitrate, **kwargs):
 #  Plan
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(invoke_without_command=True, cls=CustomGroup)
+@main.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @verbose_debug_quiet
 def plans(context, **kwargs):
@@ -556,8 +523,6 @@ def plans(context, **kwargs):
     # Show overview of available plans
     if context.invoked_subcommand is None:
         tmt.Plan.overview(context.obj.tree)
-
-main.add_command(plans)
 
 
 @plans.command()
@@ -629,7 +594,7 @@ def create(context, name, template, force, **kwargs):
 #  Story
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-@click.group(invoke_without_command=True, cls=CustomGroup)
+@main.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @verbose_debug_quiet
 def stories(context, **kwargs):
@@ -645,8 +610,6 @@ def stories(context, **kwargs):
     # Show overview of available stories
     if context.invoked_subcommand is None:
         tmt.Story.overview(context.obj.tree)
-
-main.add_command(stories)
 
 
 @stories.command()

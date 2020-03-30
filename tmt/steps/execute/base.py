@@ -8,9 +8,6 @@ from tmt.steps import Plugin
 class ExecutorBase(Plugin):
     """ This is base executor class """
 
-    def __init__(self,  data, step=None, name=None):
-        super(ExecutorBase, self).__init__(data, step, name)
-
     def go(self, plan_workdir):
         """ Run tests """
         super(ExecutorBase, self).go()

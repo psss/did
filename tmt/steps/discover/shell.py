@@ -5,16 +5,22 @@
 import os
 import fmf
 import tmt
+import copy
 import shutil
 import tmt.steps.discover
 
 class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
     """ Discover available tests from manually provided list """
 
-    def __init__(self, data, step):
-        """ Check supported attributes """
-        super(DiscoverShell, self).__init__(
-            data=data, step=step, name=data['name'])
+    # Supported methods
+    _methods = [
+        tmt.steps.Method(
+            name='shell',
+            summary='Manual list of shell tests',
+            order=50),
+        ]
+
+    def wake(self):
         # Check provided tests, default to an empty list
         if 'tests' not in self.data:
             self.data['tests'] = []
@@ -27,6 +33,8 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
 
         # Check and process each defined shell test
         for data in self.data['tests']:
+            # Create data copy (we want to keep original data for save()
+            data = copy.deepcopy(data)
             # Extract name, make sure it is present
             try:
                 name = data.pop('name')

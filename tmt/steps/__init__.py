@@ -23,7 +23,7 @@ class Step(tmt.utils.Common):
 
     def __init__(self, data={}, plan=None, name=None):
         """ Initialize and check the step data """
-        super(Step, self).__init__(name=name, parent=plan)
+        super().__init__(name=name, parent=plan)
         # Initialize data
         self.plan = plan
         self.data = data
@@ -151,17 +151,123 @@ class Step(tmt.utils.Common):
                     pass
 
 
-class Plugin(tmt.utils.Common):
+class Method(object):
+    """ Step implementation method """
+
+    def __init__(self, name, summary, order):
+        """ Store method data """
+        self.name = name
+        self.summary = summary
+        self.order = order
+
+    def describe(self):
+        """ Format name and summary for a nice method overview """
+        return f'{self.name} '.ljust(22, '.') + f' {self.summary}'
+
+
+class PluginIndex(type):
+    """ Plugin metaclass used to register all available plugins """
+
+    def __init__(cls, name, bases, attributes):
+        """ Store all defined methods in the parent class """
+        try:
+            for method in cls._methods:
+                # Store reference to the implementing class
+                method.class_ = cls
+                # Add to the list of supported methods in parent class
+                bases[0]._supported_methods.append(method)
+        except AttributeError:
+            pass
+
+
+class Plugin(tmt.utils.Common, metaclass=PluginIndex):
     """ Common parent of all step plugins """
 
-    def __init__(self, data, step=None, name=None):
-        """ Store plugin data """
-        super(Plugin, self).__init__(name=name, parent=step)
+    # List of all supported methods aggregated from all plugins
+    _supported_methods = []
+
+    def __init__(self, step, data):
+        """ Store plugin name, data and parent step """
+
+        # Ensure that plugin data contains name
+        if 'name' not in data:
+            raise GeneralError("Missing 'name' in plugin data.")
+
+        # Store name, data and parent step
+        super().__init__(parent=step, name=data['name'])
         self.data = data
         self.step = step
 
+    @classmethod
+    def options(cls, how=None):
+        """ Prepare command line options for given method """
+        # Include common options supported across all plugins
+        return tmt.options.verbose_debug_quiet + tmt.options.force_dry
+
+    @classmethod
+    def command(cls):
+        """ Prepare click command for all supported methods """
+        # Create one command for each supported method
+        commands = {}
+        usage = r'Supported methods:'
+        for method in cls.methods():
+            usage += f'\n{method.describe()}'
+            command = cls.base_command(usage=method.summary)
+            # Apply plugin specific options
+            for option in method.class_.options(method.name):
+                command = option(command)
+            commands[method.name] = command
+
+        # Create base command with common options using method class
+        method_class = tmt.options.create_method_class(commands)
+        command = cls.base_command(method_class, usage)
+        # Apply common options
+        for option in cls.options():
+            command = option(command)
+        return command
+
+    @classmethod
+    def methods(cls):
+        """ Return all supported methods ordered by priority """
+        return sorted(cls._supported_methods, key=lambda method: method.order)
+
+    @classmethod
+    def delegate(cls, how):
+        """
+        Return plugin class implementing given method
+
+        Supports searching by method prefix as well (e.g. 'virtual').
+        The first matching method with the lowest 'order' wins.
+        """
+        # Filter matching methods, pick the one with the lowest order
+        for method in cls.methods():
+            if method.name.startswith(how):
+                return method.class_
+
+        # Report invalid method
+        raise tmt.utils.SpecificationError(f"Unsupported method '{how}'.")
+
+    def default(self, option, default=None):
+        """ Return default data for given option """
+        return None
+
+    def get(self, option, default=None):
+        """ Get option from plugin data, user/system config or defaults """
+        # Check plugin data first
+        try:
+            return self.data[option]
+        except KeyError:
+            pass
+
+        # Check user config and system config
+        # TODO
+
+        # Finally check plugin defaults
+        return self.default(option, default)
+
     def wake(self):
         """ Wake up the plugin (override data with command line) """
+        raise NotImplementedError
 
     def go(self):
         """ Go and perform the plugin task """
@@ -170,7 +276,3 @@ class Plugin(tmt.utils.Common):
         # Show name only if there are more steps
         if self.name != 'one':
             self.info('name', self.name, 'green')
-
-    def dump(self):
-        """ Dump current step plugin data """
-        return self.data
