@@ -259,8 +259,25 @@ def read_nitrate(beaker_task, common_data, disabled):
                 echo(pprint.pformat(data['environment']))
         # Tags
         if testcase.tags:
-            data['tag'] = sorted([
-                tag.name for tag in testcase.tags if tag.name != 'fmf-export'])
+            tags = []
+            for tag in testcase.tags:
+                if tag.name == 'fmf-export':
+                    continue
+                tags.append(tag.name)
+                # Add the tier attribute, if there are multiple TierX tags,
+                # pick the one with the lowest index.
+                tier_match = re.match(r'^Tier(?P<num>\d+)$', tag.name)
+                if tier_match:
+                    num = tier_match.group('num')
+                    if 'tier' in data:
+                        log.warning('Multiple Tier tags found, using the one '
+                                    'with a lower index')
+                        if int(num) < int(data['tier']):
+                            data['tier'] = num
+                    else:
+                        data['tier'] = num
+
+            data['tag'] = sorted(tags)
             echo(style('tag: ', fg='green') + str(data['tag']))
         # Component
         data['component'] = [comp.name for comp in testcase.components]
