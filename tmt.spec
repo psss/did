@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.12
+Version: 0.13
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,13 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Wed Apr 01 2020 Petr Šplíchal <psplicha@redhat.com> - 0.13-1
+- Merge the improved test import checks [#179]
+- Adjust checks for missing metadata
+- Add checks for missing metadata.
+- Implement public_git_url() for git url conversion
+- Define required attributes and duration default
+
 * Wed Mar 25 2020 Petr Šplíchal <psplicha@redhat.com> - 0.12-1
 - Import the testcloud module when needed [fix #175]
 - Update implementation coverage of stories & spec
