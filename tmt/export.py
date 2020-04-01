@@ -10,6 +10,7 @@ import email
 import yaml
 import fmf
 import os
+import re
 
 log = fmf.utils.Logging('tmt').logger
 
@@ -19,7 +20,7 @@ See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
 """.lstrip()
 
 
-def export_to_nitrate(test):
+def export_to_nitrate(test, create):
     """ Export fmf metadata to nitrate test cases """
     # Need to import nitrate only when really needed. Otherwise we get
     # traceback when nitrate not installed or config file not available.
@@ -31,13 +32,19 @@ def export_to_nitrate(test):
     except nitrate.NitrateError as error:
         raise tmt.utils.ConvertError(error)
 
+    new = False
     # Check nitrate test case
     try:
         nitrate_id = test.node.get('extra-nitrate')[3:]
-    except KeyError:
-        return 0
-    nitrate_case = nitrate.TestCase(int(nitrate_id))
-    echo(style(f"Test case '{nitrate_case.identifier}' found.", fg='blue'))
+        nitrate_case = nitrate.TestCase(int(nitrate_id))
+        echo(style(f"Test case '{nitrate_case.identifier}' found.", fg='blue'))
+    except TypeError:
+        if create:
+            nitrate_case = create_nitrate_case(test)
+            echo(style(f"Test case '{nitrate_case.identifier}' will be created.", fg='blue'))
+            new = True
+        else:
+            return 0
 
     # Components
     # First remove any components that are already there
@@ -137,6 +144,19 @@ def export_to_nitrate(test):
     echo(style("Test case '{0}' successfully exported to nitrate.".format(
         nitrate_case.identifier), fg='magenta'))
 
+    # Write id of newly created nitrate case to its file
+    if new:
+        fmf_file_path = test.node.sources[-1]
+        try:
+            with open(fmf_file_path, encoding='utf-8') as fmf_file:
+                content = yaml.safe_load(fmf_file)
+        except IOError:
+            # TODO change exception
+            raise IOError("Unable to open '{0}'.".format(fmf_file_path))
+
+        content['extra-nitrate'] = nitrate_case.identifier
+        tmt.convert.write(fmf_file_path, content)
+
     return 0
 
 
@@ -166,3 +186,38 @@ def create_fmf_id(test):
         fmf_id['path'] = os.path.join('/', os.path.relpath(fmf_root, git_root))
 
     return fmf_id
+
+
+def create_nitrate_case(test):
+    """ Create new nitrate case """
+    # Need to import nitrate only when really needed. Otherwise we get
+    # traceback when nitrate not installed or config file not available.
+    try:
+        import nitrate
+        DEFAULT_PRODUCT = nitrate.Product(name='RHEL Tests')
+    except ImportError:
+        raise tmt.utils.ConvertError("Install nitrate to export tests there.")
+    except nitrate.NitrateError as error:
+        raise tmt.utils.ConvertError(error)
+
+    summary = test.node.get('extra-summary')
+    # Get category from Makefile
+    try:
+        with open('./Makefile', encoding='utf-8') as makefile_file:
+            makefile = makefile_file.read()
+    except IOError:
+        # TODO change exception
+        raise IOError("Unable to open '{0}'.".format('Makefile'))
+
+    try:
+        category = re.search(
+            r'echo\s+"Type:\s*(.*)"', makefile, re.M).group(1)
+    except AttributeError:
+        # TODO error or default value (Sanity?)
+        raise AttributeError("Makefile is missing test type")
+
+    category = nitrate.Category(name=category, product=DEFAULT_PRODUCT)
+
+    case = nitrate.TestCase(summary=summary, category=category)
+
+    return case
