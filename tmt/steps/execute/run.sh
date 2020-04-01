@@ -162,7 +162,7 @@ tmt_run_test () {
 
 # Wrappers
 tmt_run_shell () {
-    bash -c "env -C '$1' $2 bash -c '$3'" 1>"$tmt_LOGOUT_F" 2>&1
+    bash -c "cd '$1' && env $2 bash -c '$3'" 1>"$tmt_LOGOUT_F" 2>&1
     return "$?"
 }
 tmt_run_beakerlib () {
