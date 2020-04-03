@@ -46,7 +46,7 @@ class Discover(tmt.steps.Step):
         tests = dict([
             test.export(format_='execute', environment=environment)
             for test in self.tests()])
-        self.write('run.yaml', tmt.utils.dict_to_yaml(tests))
+        self.write('run.yaml', tmt.utils.dict_to_yaml(tests, width=1000000))
 
     def _discover_from_execute(self):
         """ Check the execute step for possible shell script tests """

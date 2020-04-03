@@ -357,13 +357,13 @@ def variables_to_dictionary(variables):
     return result
 
 
-def dict_to_yaml(data):
+def dict_to_yaml(data, width=None):
     """ Convert dictionary into yaml """
     output = io.StringIO()
     yaml.safe_dump(
         data, output,
         encoding='utf-8', allow_unicode=True,
-        indent=4, default_flow_style=False)
+        width=width, indent=4, default_flow_style=False)
     return output.getvalue()
 
 
