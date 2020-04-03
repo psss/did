@@ -266,7 +266,7 @@ def read_nitrate(beaker_task, common_data, disabled):
                 tags.append(tag.name)
                 # Add the tier attribute, if there are multiple TierX tags,
                 # pick the one with the lowest index.
-                tier_match = re.match(r'^Tier(?P<num>\d+)$', tag.name)
+                tier_match = re.match(r'^Tier ?(?P<num>\d+)$', tag.name, re.I)
                 if tier_match:
                     num = tier_match.group('num')
                     if 'tier' in data:
@@ -279,6 +279,11 @@ def read_nitrate(beaker_task, common_data, disabled):
 
             data['tag'] = sorted(tags)
             echo(style('tag: ', fg='green') + str(data['tag']))
+        # Tier
+        try:
+            echo(style('tier: ', fg='green') + data['tier'])
+        except KeyError:
+            pass
         # Component
         data['component'] = [comp.name for comp in testcase.components]
         echo(style('component: ', fg='green') + ' '.join(data['component']))
