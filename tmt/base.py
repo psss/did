@@ -521,8 +521,8 @@ class Tree(tmt.utils.Common):
                 self._tree = fmf.Tree(self._path)
             except fmf.utils.RootError:
                 raise tmt.utils.GeneralError(
-                    "No metadata found in the '{0}' directory.".format(
-                        self._path))
+                    f"No metadata found in the '{self._path}' directory. "
+                    f"Use 'tmt init' to get started.")
             except fmf.utils.FileError as error:
                 raise tmt.utils.GeneralError(f"Invalid yaml syntax: {error}")
         return self._tree
