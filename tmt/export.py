@@ -12,6 +12,8 @@ import fmf
 import os
 import re
 
+from tmt.utils import ConvertError
+
 log = fmf.utils.Logging('tmt').logger
 
 WARNING = """
@@ -20,31 +22,38 @@ See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
 """.lstrip()
 
 
-def export_to_nitrate(test, create):
-    """ Export fmf metadata to nitrate test cases """
+def import_nitrate():
+    """ Conditionally import the nitrate module """
     # Need to import nitrate only when really needed. Otherwise we get
     # traceback when nitrate not installed or config file not available.
+    # And we want to keep the core tmt package with minimal dependencies.
     try:
+        global nitrate, DEFAULT_PRODUCT
         import nitrate
         DEFAULT_PRODUCT = nitrate.Product(name='RHEL Tests')
     except ImportError:
-        raise tmt.utils.ConvertError("Install nitrate to export tests there.")
+        raise ConvertError("Install nitrate to export tests there.")
     except nitrate.NitrateError as error:
-        raise tmt.utils.ConvertError(error)
+        raise ConvertError(error)
 
-    new = False
+
+def export_to_nitrate(test, create):
+    """ Export fmf metadata to nitrate test cases """
+    import_nitrate()
+
+    new_test_created = False
     # Check nitrate test case
     try:
         nitrate_id = test.node.get('extra-nitrate')[3:]
         nitrate_case = nitrate.TestCase(int(nitrate_id))
         echo(style(f"Test case '{nitrate_case.identifier}' found.", fg='blue'))
     except TypeError:
+        # Create a new nitrate test case
         if create:
             nitrate_case = create_nitrate_case(test)
-            echo(style(f"Test case '{nitrate_case.identifier}' will be created.", fg='blue'))
-            new = True
+            new_test_created = True
         else:
-            return 0
+            raise ConvertError("Nitrate test case id not found.")
 
     # Components
     # First remove any components that are already there
@@ -145,19 +154,16 @@ def export_to_nitrate(test, create):
         nitrate_case.identifier), fg='magenta'))
 
     # Write id of newly created nitrate case to its file
-    if new:
+    if new_test_created:
         fmf_file_path = test.node.sources[-1]
         try:
             with open(fmf_file_path, encoding='utf-8') as fmf_file:
                 content = yaml.safe_load(fmf_file)
         except IOError:
-            # TODO change exception
-            raise IOError("Unable to open '{0}'.".format(fmf_file_path))
+            raise ConvertError("Unable to open '{0}'.".format(fmf_file_path))
 
         content['extra-nitrate'] = nitrate_case.identifier
         tmt.convert.write(fmf_file_path, content)
-
-    return 0
 
 
 def create_fmf_id(test):
@@ -190,34 +196,21 @@ def create_fmf_id(test):
 
 def create_nitrate_case(test):
     """ Create new nitrate case """
-    # Need to import nitrate only when really needed. Otherwise we get
-    # traceback when nitrate not installed or config file not available.
-    try:
-        import nitrate
-        DEFAULT_PRODUCT = nitrate.Product(name='RHEL Tests')
-    except ImportError:
-        raise tmt.utils.ConvertError("Install nitrate to export tests there.")
-    except nitrate.NitrateError as error:
-        raise tmt.utils.ConvertError(error)
+    import_nitrate()
 
-    summary = test.node.get('extra-summary')
     # Get category from Makefile
     try:
-        with open('./Makefile', encoding='utf-8') as makefile_file:
+        with open('Makefile', encoding='utf-8') as makefile_file:
             makefile = makefile_file.read()
-    except IOError:
-        # TODO change exception
-        raise IOError("Unable to open '{0}'.".format('Makefile'))
-
-    try:
         category = re.search(
             r'echo\s+"Type:\s*(.*)"', makefile, re.M).group(1)
-    except AttributeError:
-        # TODO error or default value (Sanity?)
-        raise AttributeError("Makefile is missing test type")
+    # Default to 'Sanity' if Makefile or Type not found
+    except (IOError, AttributeError):
+        category = 'Sanity'
 
+    # Create the new test case
+    summary = test.node.get('extra-summary', test.summary)
     category = nitrate.Category(name=category, product=DEFAULT_PRODUCT)
-
-    case = nitrate.TestCase(summary=summary, category=category)
-
-    return case
+    testcase = nitrate.TestCase(summary=summary, category=category)
+    echo(style(f"Test case '{testcase.identifier}' created.", fg='blue'))
+    return testcase

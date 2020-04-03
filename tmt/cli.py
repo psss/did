@@ -517,7 +517,7 @@ def import_(context, paths, makefile, nitrate, purpose, disabled, **kwargs):
     help='Export test metadata to Nitrate.')
 @click.option(
     '--create', is_flag=True,
-    help="Create tmt cases in nitrate if it doesn't exist.")
+    help="Create test cases in nitrate if they don't exist.")
 @click.option(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
     help='Output format.')
