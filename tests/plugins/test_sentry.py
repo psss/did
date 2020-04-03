@@ -22,10 +22,10 @@ OK_CONFIG = BASIC_CONFIG + "\ntoken = " + \
     "40163646c3aa42d898674d836a1f17595217ccf5f50c409fbd343be72be351b0"
 
 # Three issues should be present
-INTERVAL = "--since 2019-12-02 --until 2019-12-02"
+INTERVAL = "--since 2020-04-03 --until 2020-04-03"
 # No issues should be present
-INTERVAL_EMPTY1 = "--since 2019-11-01 --until 2019-12-01"
-INTERVAL_EMPTY2 = "--since 2019-12-03 --until 2019-12-31"
+INTERVAL_EMPTY1 = "--since 2020-03-01 --until 2020-04-02"
+INTERVAL_EMPTY2 = "--since 2020-04-04 --until 2020-04-30"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,7 +56,7 @@ def test_sentry_resolved():
         --sentry-resolved {0}""".format(
             INTERVAL))[0][0].stats[0].stats[0].stats
     assert len(stats) == 1
-    assert "PYTHON-9 - AttributeError" in stats[0]
+    assert "PYTHON-A - AttributeError" in stats[0]
 
 
 def test_sentry_commented():
@@ -66,7 +66,7 @@ def test_sentry_commented():
         --sentry-commented {0}""".format(
             INTERVAL))[0][0].stats[0].stats[1].stats
     assert len(stats) == 1
-    assert "PYTHON-8 - IndexError" in stats[0]
+    assert "PYTHON-B - IndexError" in stats[0]
 
 
 def test_sentry_no_issues():
