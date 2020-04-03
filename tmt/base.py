@@ -205,7 +205,8 @@ class Test(Node):
         elif len(self.summary) > 50:
             echo(verdict(2, 'summary should not exceed 50 characters'))
 
-    def export(self, format_='yaml', keys=None, environment=None):
+    def export(
+            self, format_='yaml', keys=None, environment=None, create=False):
         """
         Export test data into requested format
 
@@ -235,7 +236,7 @@ class Test(Node):
 
         # Export to Nitrate test case management system
         elif format_ == 'nitrate':
-            return tmt.export.export_to_nitrate(self)
+            tmt.export.export_to_nitrate(self, create)
 
         # Common node export otherwise
         else:

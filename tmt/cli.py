@@ -516,12 +516,15 @@ def import_(context, paths, makefile, nitrate, purpose, disabled, **kwargs):
     '--nitrate', is_flag=True,
     help='Export test metadata to Nitrate.')
 @click.option(
+    '--create', is_flag=True,
+    help="Create test cases in nitrate if they don't exist.")
+@click.option(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
     help='Output format.')
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-def export(context, format_, nitrate, **kwargs):
+def export(context, format_, nitrate, create, **kwargs):
     """
     Export test data into the desired format
 
@@ -531,7 +534,7 @@ def export(context, format_, nitrate, **kwargs):
     tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
         if nitrate:
-            test.export(format_='nitrate')
+            test.export(format_='nitrate', create=create)
         else:
             echo(test.export(format_=format_))
 
