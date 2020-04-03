@@ -84,6 +84,10 @@ class Issue(object):
         return "{0}-{1} - {2}".format(
             self.prefix, self.identifier, self.summary)
 
+    def __eq__(self, other):
+        """ Compare issues by key """
+        return self.key == other.key
+
     @staticmethod
     def search(query, stats):
         """ Perform issue search for given stats instance """
