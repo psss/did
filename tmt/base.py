@@ -110,6 +110,7 @@ class Test(Node):
         'path',
         'duration',
         'environment',
+        'require',
         'relevancy',
         'tag',
         'tier',
@@ -210,9 +211,7 @@ class Test(Node):
         self.ls()
         for key in self._keys:
             value = getattr(self, key)
-            if value is None:
-                continue
-            else:
+            if value not in [None, list(), dict()]:
                 echo(tmt.utils.format(key, value))
         if self.opt('verbose'):
             self._sources()
