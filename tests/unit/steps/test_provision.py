@@ -15,7 +15,7 @@ class PlanMock(MagicMock):
     run = MagicMock(tree=MagicMock(root=''))
 
     def opt(self, *args, **kwargs):
-        return {}
+        return None
 
     def _level(self):
         return 0

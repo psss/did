@@ -78,7 +78,7 @@ class ProvisionBase(tmt.utils.Common):
         return ' '.join(args)
 
     def write(self, data):
-        self.super.write(self.path, self.dictionary_to_yaml(data))
+        self.super.write(self.path, self.dict_to_yaml(data))
 
     def read(self, current):
         if os.path.exists(self.path) and os.path.isfile(self.path):

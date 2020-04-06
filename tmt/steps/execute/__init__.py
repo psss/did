@@ -29,14 +29,15 @@ class Execute(tmt.steps.Step):
         """ Wake up the step (process workdir and command line) """
         super(Execute, self).wake()
         self._check_data()
-        self.executor = self.how_map[self.data['how']](
-                self.data, self, name='one')
+        self.executor = self.how_map[self.data['how']](self, self.data)
 
     def _check_data(self):
         """ Validate input data """
         if len(self.data) > 1:
             raise tmt.utils.SpecificationError("Multiple execute steps defined in '{}'.".format(self.plan))
         self.data = self.data[0]
+        if 'name' not in self.data:
+            self.data['name'] = 'one'
 
         # if not specified, use shell as default
         how = self.data.setdefault('how', 'shell')

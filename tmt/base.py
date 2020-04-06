@@ -91,7 +91,7 @@ class Node(tmt.utils.Common):
         if format_ == 'dict':
             return data
         elif format_ == 'yaml':
-            return tmt.utils.dictionary_to_yaml(data)
+            return tmt.utils.dict_to_yaml(data)
         else:
             raise tmt.utils.GeneralError(
                 f"Invalid test export format '{format_}'.")
@@ -117,9 +117,31 @@ class Test(Node):
         'enabled',
         ]
 
-    def __init__(self, node):
-        """ Initialize the test """
+    def __init__(self, data, name=None):
+        """
+        Initialize test data from an fmf node or a dictionary
+
+        The following two methods are supported:
+
+            Test(node)
+            Test(dictionary, name)
+
+        Test name is required when initializing from a dictionary.
+        """
+
+        # Create a simple test node if dictionary given
+        if isinstance(data, dict):
+            if name is None:
+                raise GeneralError('Name required to initialize test.')
+            elif not name.startswith('/'):
+                raise SpecificationError("Test name should start with a '/'.")
+            else:
+                node = fmf.Tree(data)
+                node.name = name
+        else:
+            node = data
         super(Test, self).__init__(node)
+
         # Get all supported attributes
         for key in self._keys:
             setattr(self, key, self.node.get(key))
@@ -354,9 +376,12 @@ class Plan(Node):
         if self.summary:
             self.verbose('summary', self.summary, 'green')
         # Wake up all steps
+        self.debug('wake', color='cyan', shift=0)
         for step in self.steps(disabled=True):
+            self.debug(str(step), color='blue')
             step.wake()
         # Run enabled steps except 'finish'
+        self.debug('go', color='cyan', shift=0)
         try:
             for step in self.steps(skip=['finish']):
                 step.go()
@@ -590,6 +615,33 @@ class Run(tmt.utils.Common):
         self.debug(f"Using tree '{self.tree.root}'.")
         self._plans = None
 
+    def save(self):
+        """ Save list of selected plans and enabled steps """
+        data = dict(
+            plans = [plan.name for plan in self._plans],
+            steps = list(self._context.obj.steps),
+            )
+        self.write('run.yaml', tmt.utils.dict_to_yaml(data))
+
+    def load(self):
+        """ Load list of selected plans and enabled steps """
+        try:
+            data = tmt.utils.yaml_to_dict(self.read('run.yaml'))
+        except tmt.utils.FileError:
+            self.debug('Run data not found.')
+            return
+
+        # Filter plans by name unless specified on the command line
+        plan_options = ['names', 'filters', 'conditions']
+        if not any([Plan._opt(option) for option in plan_options]):
+            self._plans = [
+                plan for plan in self.tree.plans(run=self)
+                if plan.name in data['plans']]
+
+        # Initialize steps only if not specified on the command line
+        if not self.opt('all_') and not self._context.obj.steps:
+            self._context.obj.steps = set(data['steps'])
+
     @property
     def plans(self):
         """ Test plans for execution """
@@ -601,10 +653,14 @@ class Run(tmt.utils.Common):
         """ Go and do test steps for selected plans """
         # Show run id / workdir path
         self.info(self.workdir, color='magenta')
+        # Attempt to load run data
+        self.load()
         # Enable all steps if none selected or --all provided
         if self.opt('all_') or not self._context.obj.steps:
             self._context.obj.steps = set(tmt.steps.STEPS)
-        # Show summary and iterate over plans
+        # Show summary, store run data
         self.verbose('Found {0}.'.format(listed(self.plans, 'plan')))
+        self.save()
+        # Iterate over plans
         for plan in self.plans:
             plan.go()

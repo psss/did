@@ -1,7 +1,13 @@
 import unittest
 
-from tmt.steps.execute import Execute, shell, beakerlib
+import tmt
+from tmt.steps.execute import shell, beakerlib
 from tmt.utils import SpecificationError
+
+# Ignore loading from workdir
+class Execute(tmt.steps.execute.Execute):
+    def load(self):
+        pass
 
 
 class TestExecute(unittest.TestCase):
@@ -50,18 +56,18 @@ class ExecuteStepMock(object):
 class TestShellExecutor(unittest.TestCase):
 
     def test_requires(self):
-        data = {'how': 'shell'}
+        data = {'how': 'shell', 'name': 'one'}
         plan = None
         execute = ExecuteStepMock()
-        exe = shell.ExecutorShell(data, execute)
+        exe = shell.ExecutorShell(execute, data)
         self.assertEqual(exe.requires(), ())
 
 
 class TestBeakerlibExecutor(unittest.TestCase):
 
     def test_requires(self):
-        data = {'how': 'beakerlib'}
+        data = {'how': 'beakerlib', 'name': 'one'}
         plan = None
         execute = ExecuteStepMock()
-        exe = beakerlib.ExecutorBeakerlib(data, execute)
+        exe = beakerlib.ExecutorBeakerlib(execute, data)
         self.assertEqual(exe.requires(), ('beakerlib', ))
