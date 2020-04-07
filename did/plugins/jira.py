@@ -6,11 +6,11 @@ Configuration example (GSS authentication)::
 
     [jboss]
     type = jira
-    prefix = JIRA
     url = https://issues.jboss.org/
     ssl_verify = true
 
-Configuration example (basic authentication) with alternative username::
+Configuration example (basic authentication) with alternative username
+and custom prefix::
 
     [jboss]
     type = jira
@@ -26,18 +26,17 @@ Configuration example limiting report only to a single project::
 
     [jboss]
     type = jira
-    prefix = JIRA
     project = ORG
     url = https://issues.jboss.org/
     ssl_verify = true
 
 Notes:
 * If your JIRA does not have scriptrunner installed you must set
-  ``use_scriptrunner`` to false
+  ``use_scriptrunner`` to false.
 * You must provide ``login`` variable that matches username if it
-  doesn't match email/JIRA account
+  doesn't match email/JIRA account.
 * Optional parameter ``ssl_verify`` can be used to enable/disable
-  SSL verification (default: true)
+  SSL verification (default: true).
 * ``auth_url`` parameter is optional. If not provided,
   ``url + "/step-auth-gss"`` will be used for authentication.
 * ``auth_type`` parameter is optional, default value is 'gss'.
@@ -155,8 +154,7 @@ class JiraCreated(Stats):
                 self.user.email,
                 self.options.since, self.options.until))
         if self.parent.project:
-            query = query + " AND project = '{0}'".format(
-                    self.parent.project)
+            query = query + " AND project = '{0}'".format(self.parent.project)
         self.stats = Issue.search(query, stats=self)
 
 
@@ -277,10 +275,9 @@ class JiraStats(StatsGroup):
             self.use_scriptrunner = True
 
         if not self.use_scriptrunner and not self.project:
-            raise ReportError("When scriptrunner is disabled with "
-                              "`use_scriptrunner=False`, "
-                              "`project` has to be defined for each JIRA "
-                              "section")
+            raise ReportError(
+                "When scriptrunner is disabled with 'use_scriptrunner=False', "
+                "'project' has to be defined for each JIRA section.")
         self.login = config.get("login", None)
 
         # Check for custom prefix
