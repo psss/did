@@ -352,6 +352,35 @@ class Plan(Node):
             return self._environment
 
     @staticmethod
+    def edit_template(content, new_args):
+        """ Edit the default template with custom values """
+        args = ['name', 'how', 'url', 'ref', 'path', 'test', 'filter']
+        new = ''
+
+        for data in new_args:
+            line = tmt.utils.yaml_to_dict(data)
+            if type(line) is not dict:
+                 raise tmt.utils.GeneralError(
+                         "Invalid YAML provided to --discover option")
+
+            #'how' is the only value that needs to be there all the time
+            if 'how' not in line:
+                line['how'] = 'fmf'
+
+            for key, value in line.items():
+                if key not in args:
+                    raise tmt.utils.GeneralError(
+                            "Invalid discover option provided, allowed values are ({})".format(args))
+
+                new += '    {}: {}\n'.format(key, value)
+
+        new = re.sub('    name:', '  - name:', new, flags=re.MULTILINE)
+        content = re.sub(r'discover:.*prepare:', r'discover:\n{}prepare:'.format(new), content,
+                flags=re.DOTALL)
+
+        return content
+
+    @staticmethod
     def overview(tree):
         """ Show overview of available plans """
         plans = [
@@ -364,7 +393,7 @@ class Plan(Node):
             ), fg='blue'))
 
     @staticmethod
-    def create(name, template, tree, force=False):
+    def create(name, template, tree, discover, force=False):
         """ Create a new plan """
         # Prepare paths
         (directory, plan) = os.path.split(name)
@@ -378,6 +407,10 @@ class Plan(Node):
         except KeyError:
             raise tmt.utils.GeneralError(
                 "Invalid template '{}'.".format(template))
+
+        if discover:
+            content = tmt.Plan.edit_template(content, discover)
+
         tmt.utils.create_file(
             path=plan_path, content=content,
             name='plan', force=force)
@@ -507,6 +540,7 @@ class Story(Node):
         except KeyError:
             raise tmt.utils.GeneralError(
                 "Invalid template '{}'.".format(template))
+
         tmt.utils.create_file(
             path=story_path, content=content,
             name='story', force=force)
