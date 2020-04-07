@@ -358,13 +358,18 @@ def read_nitrate(beaker_task, common_data, disabled):
 
 def write(path, data):
     """ Write gathered metadata in the fmf format """
+    # Put keys into a reasonable order
+    extra_keys = ['extra-summary', 'extra-task', 'extra-nitrate']
+    sorted_data = dict()
+    for key in tmt.base.Test._keys + extra_keys:
+        try:
+            sorted_data[key] = data[key]
+        except KeyError:
+            pass
     # Store metadata into a fmf file
     try:
         with open(path, 'w', encoding='utf-8') as fmf_file:
-            yaml.safe_dump(
-                data, fmf_file,
-                encoding='utf-8', allow_unicode=True,
-                indent=4, default_flow_style=False)
+            fmf_file.write(tmt.utils.dict_to_yaml(sorted_data))
     except IOError:
         raise ConvertError("Unable to write '{0}'".format(path))
     echo(style(

@@ -102,20 +102,25 @@ class Test(Node):
 
     # Supported attributes (listed in display order)
     _keys = [
+        # Basic test information
         'summary',
         'description',
         'contact',
         'component',
+
+        # Test execution data
         'test',
         'path',
-        'duration',
-        'environment',
         'require',
-        'relevancy',
+        'environment',
+        'duration',
+        'enabled',
+        'result',
+
+        # Filtering attributes
         'tag',
         'tier',
-        'result',
-        'enabled',
+        'relevancy',
         ]
 
     def __init__(self, data, name=None):
