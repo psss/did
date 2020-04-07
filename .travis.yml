@@ -2,6 +2,7 @@ language: python
 python:
   - "3.6"
   - "3.7"
+  - "3.8"
 before_install:
   - "sudo apt-get -y install vagrant libvirt-dev"
   - "pip install -U pip setuptools virtualenv python-coveralls fmf click mock testcloud"
