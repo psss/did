@@ -145,6 +145,14 @@ class Discover(tmt.steps.Step):
         """ Return the list of all enabled tests """
         return [test for test in self._tests if test.enabled]
 
+    def requires(self):
+        """ Return all tests' requires """
+        requires = set()
+        for test in self.tests():
+            for value in getattr(test, 'require', []):
+                requires.add(value)
+        return list(requires)
+
 
 class DiscoverPlugin(tmt.steps.Plugin):
     """ Common parent of discover plugins """
