@@ -2,6 +2,7 @@
 
 import os
 import tmt
+import pytest
 import shutil
 import tempfile
 import click.testing
@@ -21,3 +22,32 @@ def test_invalid_yaml_syntax():
     assert result.exit_code != 0
     os.chdir(original_directory)
     shutil.rmtree(tmp)
+
+def test_test_defaults():
+    """ Test default test attributes """
+    test = tmt.Test(dict(test='./test.sh'), name='/smoke')
+    assert test.name == '/smoke'
+    assert test.component == list()
+    assert test.test == './test.sh'
+    assert test.path == '/smoke'
+    assert test.require == list()
+    assert test.environment == dict()
+    assert test.duration == '5m'
+    assert test.enabled == True
+    assert test.result == 'respect'
+    assert test.tag == list()
+
+def test_test_invalid():
+    """ Test invalid test """
+    # Missing name
+    with pytest.raises(tmt.utils.GeneralError):
+        test = tmt.Test({})
+    # Invalid name
+    with pytest.raises(tmt.utils.SpecificationError):
+        test = tmt.Test({}, name='bad')
+    # Invalid attributes
+    for key in ['component', 'require', 'tag']:
+        with pytest.raises(tmt.utils.SpecificationError):
+            test = tmt.Test({key: 'string'}, name='/smoke')
+    with pytest.raises(tmt.utils.SpecificationError):
+        test = tmt.Test({'environment': 'string'}, name='/smoke')

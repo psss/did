@@ -50,6 +50,20 @@ class Node(tmt.utils.Common):
         echo(tmt.utils.format(
             'sources', self.node.sources, key_color='magenta'))
 
+    def _check(self, key, expected, default=None):
+        """ Check that key is of expected type, handle default """
+        value = getattr(self, key)
+        # Handle default
+        if value is None:
+            setattr(self, key, default)
+            return
+        # Check for correct type
+        if not isinstance(value, expected):
+            class_name = self.__class__.__name__.lower()
+            raise tmt.utils.SpecificationError(
+                f"Invalid '{key}' in {class_name} '{self.name}' (should be "
+                f"a '{expected.__name__}', got a '{type(value).__name__}').")
+
     @classmethod
     def _save_context(cls, context):
         """ Save provided command line context for future use """
@@ -138,42 +152,33 @@ class Test(Node):
         # Create a simple test node if dictionary given
         if isinstance(data, dict):
             if name is None:
-                raise GeneralError('Name required to initialize test.')
+                raise tmt.utils.GeneralError(
+                    'Name required to initialize test.')
             elif not name.startswith('/'):
-                raise SpecificationError("Test name should start with a '/'.")
-            else:
-                node = fmf.Tree(data)
-                node.name = name
+                raise tmt.utils.SpecificationError(
+                    "Test name should start with a '/'.")
+            node = fmf.Tree(data)
+            node.name = name
         else:
             node = data
-        super(Test, self).__init__(node)
+        super().__init__(node)
 
-        # Get all supported attributes
+        # Set all supported attributes
         for key in self._keys:
             setattr(self, key, self.node.get(key))
+
         # Path defaults to the node name
-        if self.path is None:
-            self.path = self.name
-        # Convert tag and component into a list
-        if self.tag is None:
-            self.tag = list()
-        if self.component is None:
-            self.component = list()
-        # Convert environment into a dictionary
-        if self.environment is None:
-            self.environment = dict()
-        # Default duration
-        if self.duration is None:
-            self.duration = DEFAULT_TEST_DURATION
-        # Handle other default values
-        if self.enabled is None:
-            disabled = self.node.get('disabled')
-            if disabled is not None:
-                self.enabled = not disabled
-            else:
-                self.enabled = True
-        if self.result is None:
-            self.result = 'respect'
+        self._check('path', expected=str, default=self.name)
+
+        # Check that lists are lists and environment is a dictionary
+        for key in ['component', 'require', 'tag']:
+            self._check(key, expected=list, default=[])
+        self._check('environment', expected=dict, default={})
+
+        # Default duration, enabled and result
+        self._check('duration', expected=str, default=DEFAULT_TEST_DURATION)
+        self._check('enabled', expected=bool, default=True)
+        self._check('result', expected=str, default='respect')
 
     @staticmethod
     def overview(tree):
