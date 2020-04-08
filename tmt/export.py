@@ -4,12 +4,10 @@
 
 from click import echo, style
 
-import subprocess
 import tmt.utils
 import email
 import yaml
 import fmf
-import os
 import re
 
 from tmt.utils import ConvertError
@@ -149,7 +147,7 @@ def export_to_nitrate(test, create):
             echo(style(section + ': ', fg='green') + attribute.strip())
 
     # fmf identifer
-    fmf_id = create_fmf_id(test)
+    fmf_id = test.fmf_id
     struct_field.set('fmf', yaml.dump(fmf_id))
     echo(style('fmf id:\n', fg='green') + yaml.dump(fmf_id).strip())
 
@@ -177,34 +175,6 @@ def export_to_nitrate(test, create):
 
         content['extra-nitrate'] = nitrate_case.identifier
         tmt.convert.write(fmf_file_path, content)
-
-
-def create_fmf_id(test):
-    """ Create fmf identifier for test case """
-
-    def run(command):
-        """ Run command, return output """
-        result = subprocess.run(command.split(), capture_output=True)
-        return result.stdout.strip().decode("utf-8")
-
-    fmf_id = {'name': test.name}
-
-    # Prepare url (for now handle just the most common schemas)
-    origin = run('git config --get remote.origin.url')
-    fmf_id['url'] = tmt.utils.public_git_url(origin)
-
-    # Get the ref (skip for master as it is the default)
-    ref = run('git rev-parse --abbrev-ref HEAD')
-    if ref != 'master':
-        fmf_id['ref'] = ref
-
-    # Construct path (if different from git root)
-    git_root = run('git rev-parse --show-toplevel')
-    fmf_root = test.node.root
-    if git_root != fmf_root:
-        fmf_id['path'] = os.path.join('/', os.path.relpath(fmf_root, git_root))
-
-    return fmf_id
 
 
 def create_nitrate_case(test):

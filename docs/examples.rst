@@ -111,10 +111,10 @@ Use ``tmt tests show`` to see detailed test metadata::
           result respect
          enabled yes
 
-Append ``--verbose`` to get the list of source files where
-metadata are defined::
+Append ``--verbose`` to get additional information about test as
+the list of source files where metadata are defined and its full id::
 
-    $ tmt show /test/docs --verbose
+    $ tmt tests show /tests/docs --verbose
     /tests/docs
          summary Check that essential documentation is working
          contact Petr Šplíchal <psplicha@redhat.com>
@@ -126,7 +126,8 @@ metadata are defined::
          enabled yes
          sources /home/psss/git/tmt/tests/main.fmf
                  /home/psss/git/tmt/tests/docs/main.fmf
-
+        fmf-id name: /tests/docs
+                url: https://github.com/psss/tmt.git
 
 Filter Tests
 ------------------------------------------------------------------
