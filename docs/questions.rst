@@ -57,6 +57,8 @@ The following attributes, if present, are exported as well:
 
 * extra-hardware — hardware in the structured field
 * extra-pepa — pepa in the structured field
+* extra-summary — Nitrate test case summary
+* extra-task — Nitrate test case script
 
 They have the ``extra`` prefix as they are not part of the L1
 Metadata Specification and are supposed to be synced temporarily
