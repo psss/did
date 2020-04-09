@@ -1,0 +1,15 @@
+summary: Manual smoke test
+
+description:
+    Minimal manual smoke test example with a setup, a cleanup and
+    a single step with expected result.
+
+manual:
+    setup:
+        sudo dnf install -y tmt
+    step:
+        Run 'tmt init --template full'.
+    expect:
+        Example story, plan and test created.
+    cleanup:
+        sudo dnf remove -y tmt
