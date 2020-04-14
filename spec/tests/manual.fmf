@@ -1,0 +1,50 @@
+summary: Manual test execution details
+
+story:
+    As a tester I want to store detailed manual instructions
+    covering test scenario so that I can perform them manually
+    before the test can be fully automated.
+
+description: |
+    Sometimes test scenarios cannot be fully automated or it takes
+    time to fully automate them. For such cases the ``manual``
+    attribute can be used to describe test steps in detail. It
+    should be a ``dictionary`` with the following keys, each one
+    of them should be a ``string``.
+
+    setup
+        Environment preparation instructions.
+    step
+        Test step, action to be performed.
+    expect
+        Expected results of the test step.
+    cleanup
+        Environment cleanup instructions.
+
+    If there are several individual steps they can be stored, with
+    their corresponding expected results, as a list of dictionaries
+    under the ``steps`` key.
+
+example: |
+    manual:
+        setup:
+            sudo dnf install -y tmt
+        step:
+            Run 'tmt init --template full'.
+        expect:
+            Example story, plan and test created.
+        cleanup:
+            sudo dnf remove -y tmt
+
+    manual:
+        setup:
+            sudo dnf install -y tmt
+        steps:
+          - step:   Run 'tmt init --template full'.
+            expect: Example story, plan and test created.
+          - step:   Run 'tmt'.
+            expect: Found 1 test, 1 plan and 1 story displayed.
+          - step:   Run 'tmt --help'
+            expect: Available commands and options listed.
+        cleanup:
+            sudo dnf remove -y tmt

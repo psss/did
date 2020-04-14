@@ -1,0 +1,28 @@
+summary: Basic manual test
+
+description:
+    Basic manual test example including a setup, a cleanup and
+    three steps with corresponding expected results. Note that
+    setup and cleanup sections may contain shell script code which
+    could be used for semi-automated execution in the future.
+
+manual:
+    setup: |
+        # Install the latest tmt package.
+        sudo dnf install -y tmt
+        # Create a new empty temporary directory, change to it.
+        tmp=$(mktemp -d /tmp/tmt-smoke-test)
+        pushd $tmp
+    steps:
+      - step:   Run 'tmt init --template full'.
+        expect: Example story, plan and test created.
+      - step:   Run 'tmt'.
+        expect: Found 1 test, 1 plan and 1 story displayed.
+      - step:   Run 'tmt --help'
+        expect: Available commands and options listed.
+    cleanup: |
+        # Remove the temporary directory.
+        popd
+        rm -rf $tmp
+        # Uninstall tmt package from the system.
+        sudo dnf remove -y tmt
