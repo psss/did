@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.13
+Version: 0.14
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,36 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Thu Apr 16 2020 Petr Šplíchal <psplicha@redhat.com> - 0.14-1
+- Workaround yaml key sorting on rhel-8 [fix #207]
+- Fix test discovery from the execute step scripts
+- Merge discover step documentation and fixes [#204]
+- Document the discover step, fix issues, add tests
+- Simplify the minimal example, adjust tests
+- Move fmf_id() to Node class, minor adjustments
+- Allow to print fmf identifier in tmt tests show
+- Merge manual tests story and examples [#198]
+- Add a story and examples describing manual tests
+- Sync more extra-* attributes when exporting [#199]
+- Enable checks for essential test attributes
+- Handle require in Dicovery
+- Store imported metadata in a sane order [fix #86]
+- Enable Python 3.8 in Travis, update classifiers
+- Add missing 'require' attribute to the Test class
+- Fix long environment for run.sh [fix #126]
+- Merge dynamic plugins and wake up support [#186]
+- Implement dynamic plugins and options [fix #135]
+- Add František Nečas to the list of contributors
+- Suggest using 'tmt init' when metadata not found
+- Merge improved import of tier from tags [#187]
+- Adjust tier import from test case tags
+- Merge tmt test export --nitrate --create [#185]
+- Adjust suppport for creating new nitrate testcases
+- Allow creation of nitrate cases when exporting
+- Create tier attribute from multiple Tier tags
+- Fix run.sh to work with RHEL/CentOS 7 as well
+- Implement wake up for Run, Step and Discover
+
 * Wed Apr 01 2020 Petr Šplíchal <psplicha@redhat.com> - 0.13-1
 - Merge the improved test import checks [#179]
 - Adjust checks for missing metadata
