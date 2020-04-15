@@ -1,0 +1,47 @@
+execute:
+    how: shell
+
+/fmf:
+    /url:
+        /ref:
+            /path:
+                discover:
+                    how: fmf
+                    url: https://github.com/psss/tmt
+                    ref: eae4d52
+                    path: /examples/together
+            /nopath:
+                discover:
+                    how: fmf
+                    url: https://github.com/psss/tmt
+                    ref: 5407fe5
+        /noref:
+            /path:
+                discover:
+                    how: fmf
+                    url: https://github.com/psss/tmt
+                    path: /examples/together
+
+            /nopath:
+                discover:
+                    how: fmf
+                    url: https://github.com/psss/tmt
+    /nourl:
+        /ref:
+            /path:
+                discover:
+                    how: fmf
+                    ref: eae4d52
+                    path: (overriden by --path)
+            /nopath:
+                discover:
+                    how: fmf
+                    ref: 5407fe5
+        /noref:
+            /path:
+                discover:
+                    how: fmf
+                    path: (overriden by --path)
+            /nopath:
+                discover:
+                    how: fmf

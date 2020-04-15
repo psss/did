@@ -1,0 +1,13 @@
+test: true
+
+/discover1:
+    summary: Discover one
+    tier: 1
+
+/discover2:
+    summary: Discover two
+    tier: 2
+
+/discover3:
+    summary: Discover three
+    tier: 3
