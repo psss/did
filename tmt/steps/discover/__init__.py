@@ -101,8 +101,8 @@ class Discover(tmt.steps.Step):
 
     def show(self):
         """ Show discover details """
-        keys = ['how', 'repository', 'revision', 'filter']
-        super(Discover, self).show(keys)
+        keys = ['how', 'url', 'ref', 'path', 'test', 'filter']
+        super().show(keys)
 
     def summary(self):
         """ Give a concise summary of the discovery """

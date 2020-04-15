@@ -1,44 +1,102 @@
-summary: Discover test relevant for execution
+summary: Discover tests relevant for execution
 
 description: |
-    Gather information about the test cases which are supposed to
-    be run. This includes list of test cases with corresponding
-    L1 metadata. From the test case metadata constraints for test
-    enviroment can be detected:
+    Gather information about tests which are supposed to be run.
+    Provide method ``tests()`` returning a list of discovered
+    tests and ``requires()`` returning a list of all required
+    packages aggregated from the `require`_ attribute of the
+    individual test metadata.
 
-    * Architectures supported
-    * Disk and memory constraints
-    * Product relevancy
-    * Environment variables
+    .. _require: https://tmt.readthedocs.io/en/latest/spec/tests.html#require
 
-    Examples of metadata storage:
-
-    shell
-        Manual list of shell test cases
-    fmf
-        Flexible Metadata Format filter
-
-    For each ``repository`` the discover step should produce a
-    ``repository.yaml`` file with the list of tests in the
-    following format::
+    Store the list of aggregated tests with their corresponding
+    metadata in the ``tests.yaml`` file. The format should be a
+    dictionary of dictionaries structured in the following way::
 
         /test/one:
-            test: ./test.sh
-            path: /test/path
-            duration: 5m
+            summary: Short test summary.
+            description: Long test description.
+            contact: Petr Šplíchal <psplicha@redhat.com>
+            component: [tmt]
+            test: tmt --help
+            path: /test/path/
+            require: [package1, package2]
             environment:
-                X: 1
-                Y: 2
-                Z: 3
+                key1: value1
+                key2: value2
+                key3: value3
+            duration: 5m
+            enabled: true
+            result: respect
+            tag: [tag]
+            tier: 1
+            relevancy: |
+                distro < rhel-8: False
 
         /test/two:
-            test: ./test.sh
-            path: /test/path
-            duration: 10m
+            summary: Short test summary.
+            description: Long test description.
+            ...
 
-example: |
-    discover:
-        how: 'fmf'
-        filter: 'tier: 1'
+/shell:
+    summary: Provide a manual list of shell test cases
+    description:
+        List of test cases to be executed can be defined manually
+        directly in the plan as a list of dictionaries containing
+        test ``name``, actual ``test`` script and optionally a
+        ``path`` to the test.
+    example: |
+        discover:
+            how: shell
+            tests:
+            - name: /help/main
+              test: tmt --help
+            - name: /help/test
+              test: tmt test --help
+            - name: /help/smoke
+              test: ./smoke.sh
+              path: /tests/shell
+    implemented: /tmt/steps/discover/shell
 
-implemented: /tmt/steps/discover
+/fmf:
+    summary: Discover available tests using the fmf format
+    description: |
+        Use the `Flexible Metadata Format`_ to explore all
+        available tests in given repository. The following
+        parameters are supported:
+
+        url
+            Git repository containing the metadata tree.
+            Current git repository used by default.
+        ref
+            Branch, tag or commit specifying the desired git
+            revision. Defaults to the ``master`` branch if url
+            given or to the current ``HEAD`` if url not provided.
+        path
+            Path to the metadata tree root. Should be relative to
+            the git repository root if url provided, absolute
+            local filesystem path otherwise. By default ``.`` is
+            used.
+        test
+            List of test names or regular expressions used to
+            select tests by name.
+        filter
+            Apply advanced filter based on test metadata
+            attributes. See ``pydoc fmf.filter`` for more info.
+
+        See also the `fmf identifier`_ documentation.
+
+        .. _fmf identifier: https://fmf.readthedocs.io/en/latest/concept.html#identifiers
+        .. _Flexible Metadata Format: https://fmf.readthedocs.io/
+    example: |
+        discover:
+            how: fmf
+
+        discover:
+            how: fmf
+            url: https://github.com/psss/tmt
+            ref: master
+            path: /metadata/tree/path
+            test: [regexp]
+            filter: tier:1
+    implemented: /tmt/steps/discover/fmf

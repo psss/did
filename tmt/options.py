@@ -78,7 +78,7 @@ def create_method_class(methods):
 
         def invoke(self, context):
             if self._method:
-                return context.forward(self._method)
+                return self._method.invoke(context)
             return super().invoke(context)
 
     return MethodCommand
