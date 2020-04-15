@@ -18,12 +18,12 @@ runner = CliRunner()
 
 def test_mini():
     """ Minimal smoke test """
-    result = runner.invoke(tmt.cli.main,
-        ['--root', example('mini'),
-        'run', '--debug', 'provision', '--how=local'])
+    result = runner.invoke(
+        tmt.cli.main, ['--root', example('mini'), 'run', '-d', 'discover'])
     assert result.exit_code == 0
     assert 'Found 1 plan.' in result.output
-    assert '/ci/test/build/smoke' in result.output
+    assert '1 test selected' in result.output
+    assert '/ci' in result.output
 
 def test_init():
     """ Tree initialization """

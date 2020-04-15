@@ -1,3 +1,2 @@
-/test/build/smoke:
-    execute:
-        script: binary --test
+execute:
+    script: tmt --help
