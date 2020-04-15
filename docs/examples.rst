@@ -126,8 +126,9 @@ the list of source files where metadata are defined and its full id::
          enabled yes
          sources /home/psss/git/tmt/tests/main.fmf
                  /home/psss/git/tmt/tests/docs/main.fmf
-        fmf-id name: /tests/docs
-                url: https://github.com/psss/tmt.git
+          fmf-id name: /tests/docs
+                 url: https://github.com/psss/tmt.git
+
 
 Filter Tests
 ------------------------------------------------------------------

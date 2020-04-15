@@ -67,8 +67,36 @@ class Node(tmt.utils.Common):
 
     def _fmf_id(self):
         """ Show fmf identifier """
-        echo(tmt.utils.format(
-            'fmf-id', self.fmf_id, key_color='magenta'))
+        echo(tmt.utils.format('fmf-id', self.fmf_id, key_color='magenta'))
+
+    @property
+    def fmf_id(self):
+        """ Return full fmf identifier of the node """
+
+        def run(command):
+            """ Run command, return output """
+            result = subprocess.run(command.split(), capture_output=True)
+            return result.stdout.strip().decode("utf-8")
+
+        fmf_id = {'name': self.name}
+
+        # Prepare url (for now handle just the most common schemas)
+        origin = run('git config --get remote.origin.url')
+        fmf_id['url'] = tmt.utils.public_git_url(origin)
+
+        # Get the ref (skip for master as it is the default)
+        ref = run('git rev-parse --abbrev-ref HEAD')
+        if ref != 'master':
+            fmf_id['ref'] = ref
+
+        # Construct path (if different from git root)
+        git_root = run('git rev-parse --show-toplevel')
+        fmf_root = self.node.root
+        if git_root != fmf_root:
+            fmf_id['path'] = os.path.join(
+                '/', os.path.relpath(fmf_root, git_root))
+
+        return fmf_id
 
     @classmethod
     def _save_context(cls, context):
@@ -280,34 +308,6 @@ class Test(Node):
         # Common node export otherwise
         else:
             return super(Test, self).export(format_, keys)
-
-    @property
-    def fmf_id(self):
-        """ Valid fmf identifier for test case """
-
-        def run(command):
-            """ Run command, return output """
-            result = subprocess.run(command.split(), capture_output=True)
-            return result.stdout.strip().decode("utf-8")
-
-        fmf_id = {'name': self.name}
-
-        # Prepare url (for now handle just the most common schemas)
-        origin = run('git config --get remote.origin.url')
-        fmf_id['url'] = tmt.utils.public_git_url(origin)
-
-        # Get the ref (skip for master as it is the default)
-        ref = run('git rev-parse --abbrev-ref HEAD')
-        if ref != 'master':
-            fmf_id['ref'] = ref
-
-        # Construct path (if different from git root)
-        git_root = run('git rev-parse --show-toplevel')
-        fmf_root = self.node.root
-        if git_root != fmf_root:
-            fmf_id['path'] = os.path.join('/', os.path.relpath(fmf_root, git_root))
-
-        return fmf_id
 
 
 class Plan(Node):
