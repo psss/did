@@ -15,3 +15,7 @@ tier: 1
 /filtering:
     summary: Test selection by name and advanced filter
     test: ./filtering.sh
+
+/scripts:
+    summary: Check test discovery from the execute step
+    test: ./scripts.sh

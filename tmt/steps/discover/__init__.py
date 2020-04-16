@@ -51,9 +51,10 @@ class Discover(tmt.steps.Step):
     def _discover_from_execute(self):
         """ Check the execute step for possible shell script tests """
 
-        # Check scripts, convert to list if needed
-        scripts = self.plan.execute.opt(
-            'script', self.plan.execute.data[0].get('script'))
+        # Check scripts for command line and data, convert to list if needed
+        scripts = self.plan.execute.opt('script')
+        if not scripts:
+            scripts = self.plan.execute.data[0].get('script')
         if not scripts:
             return
         if isinstance(scripts, str):
