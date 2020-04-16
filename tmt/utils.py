@@ -366,6 +366,23 @@ def dict_to_yaml(data, width=None, sort=False):
         width=width, indent=4, default_flow_style=False)
     return output.getvalue()
 
+# FIXME: Temporary workaround for rhel-8 to disable key sorting
+# https://stackoverflow.com/questions/31605131/
+# https://github.com/psss/tmt/issues/207
+try:
+    output = dict_to_yaml(dict(one=1, two=2, three=3))
+except TypeError:
+    representer = lambda self, data: self.represent_mapping(
+        'tag:yaml.org,2002:map', data.items())
+    yaml.add_representer(dict, representer, Dumper=yaml.SafeDumper)
+    def dict_to_yaml(data, width=None, sort=False):
+        """ Convert dictionary into yaml (ignore sort) """
+        output = io.StringIO()
+        yaml.safe_dump(
+            data, output, encoding='utf-8', allow_unicode=True,
+            width=width, indent=4, default_flow_style=False)
+        return output.getvalue()
+
 
 def yaml_to_dict(data):
     """ Convert yaml into dictionary """
