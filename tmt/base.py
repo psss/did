@@ -650,13 +650,11 @@ class Tree(tmt.utils.Common):
 class Run(tmt.utils.Common):
     """ Test run, a container of plans """
 
-    def __init__(self, id_=None, tree=None):
+    def __init__(self, id_=None, tree=None, context=None):
         """ Initialize tree, workdir and plans """
-        super(Run, self).__init__()
+        super().__init__(workdir=id_ or True, context=context)
         # Save the tree
         self.tree = tree if tree else tmt.Tree('.')
-        # Prepare the workdir
-        self._workdir_init(id_)
         self.debug(f"Using tree '{self.tree.root}'.")
         self._plans = None
 

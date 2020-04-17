@@ -39,17 +39,37 @@ class Common(object):
     Common shared stuff
 
     Takes care of command line context and workdir handling.
+    Provides logging functions info(), verbose() and debug().
+    Implements read() and write() for comfortable file access.
+    Provides the run() method for easy command execution.
     """
 
     # Command line context and workdir
     _context = None
     _workdir = None
 
-    def __init__(self, parent=None, name=None):
-        """ Initialize name and relation with the parent object """
+    def __init__(self, parent=None, name=None, workdir=None, context=None):
+        """
+        Initialize name and relation with the parent object
+
+        Prepare the workdir for provided id / directory path
+        or generate a new workdir name if workdir=True given.
+        Store command line context for future use if provided.
+        """
         # Use lowercase class name as the default name
         self.name = name or self.__class__.__name__.lower()
         self.parent = parent
+
+        # Initialize the workdir if requested
+        if workdir is True:
+            self._workdir_init()
+        elif workdir is not None:
+            self._workdir_init(workdir)
+
+        # Store command line context
+        if context:
+            self._context = context
+
 
     def __str__(self):
         """ Name is the default string representation """
@@ -118,6 +138,8 @@ class Common(object):
 
     def _log(self, message):
         """ Append provided message to the current log """
+        if self.workdir is None:
+            return
         with open(os.path.join(self.workdir, 'log.txt'), 'a') as log:
             log.write(message + '\n')
 
@@ -214,7 +236,8 @@ class Common(object):
 
     def read(self, path):
         """ Read a file from the workdir """
-        path = os.path.join(self.workdir, path)
+        if self.workdir:
+            path = os.path.join(self.workdir, path)
         self.debug(f"Read file '{path}'.")
         try:
             with open(path) as data:
@@ -224,7 +247,8 @@ class Common(object):
 
     def write(self, path, data):
         """ Write a file to the workdir """
-        path = os.path.join(self.workdir, path)
+        if self.workdir:
+            path = os.path.join(self.workdir, path)
         self.debug(f"Write file '{path}'.")
         # Dry mode
         if self.opt('dry'):
@@ -235,27 +259,24 @@ class Common(object):
         except OSError as error:
             raise FileError(f"Failed to write '{path}'.\n{error}")
 
-    def _workdir_init(self, id_):
+    def _workdir_init(self, id_=None):
         """
         Initialize the work directory
 
         Workdir under WORKDIR_ROOT is used/created if 'id' is provided.
         If 'id' is a path, that directory is used instead. Otherwise a
-        new workdir is created under WORKDIR_ROOT.
+        new workdir is created under the WORKDIR_ROOT directory.
         """
-        # Construct the workdir
-        if id_ is not None:
-            # Use provided directory if path given
+        # Prepare the workdir name from given id or path
+        if isinstance(id_, str):
+            # Use provided directory if full path given
             if '/' in id_:
                 workdir = id_
             # Construct directory name under workdir root
             else:
-                if isinstance(id_, int):
-                    id_ = str(id_).rjust(3, '0')
-                directory = 'run-{}'.format(id_)
-                workdir = os.path.join(WORKDIR_ROOT, directory)
-        else:
-            # Generate a unique run id
+                workdir = os.path.join(WORKDIR_ROOT, id_)
+        # Generate a unique workdir name
+        elif id_ is None:
             for id_ in range(1, WORKDIR_MAX + 1):
                 directory = 'run-{}'.format(str(id_).rjust(3, '0'))
                 workdir = os.path.join(WORKDIR_ROOT, directory)
@@ -263,17 +284,21 @@ class Common(object):
                     break
             if id_ == WORKDIR_MAX:
                 raise GeneralError(
-                    "Cleanup the '{}' directory.".format(WORKDIR_ROOT))
+                    "Workdir full. Cleanup the '{WORKDIR_ROOT}' directory.")
+        # Weird workdir id
+        else:
+            raise GeneralError(
+                f"Invalid workdir '{id_}', expected a string or None.")
 
         # Create the workdir
         create_directory(workdir, 'workdir', quiet=True)
         self._workdir = workdir
 
     def _workdir_name(self):
-        """ Construct work directory name """
+        """ Construct work directory name from parent workdir """
         # Need the parent workdir
-        if self.parent is None:
-            raise GeneralError('Parent workdir not available.')
+        if self.parent is None or self.parent.workdir is None:
+            return None
         # Join parent name with self
         return os.path.join(self.parent.workdir, self.name.lstrip('/'))
 
@@ -290,6 +315,10 @@ class Common(object):
         """ Get the workdir, create if does not exist """
         if self._workdir is None:
             self._workdir = self._workdir_name()
+            # Workdir not enabled, even parent does not have one
+            if self._workdir is None:
+                return None
+            # Create a child workdir under the parent workdir
             create_directory(self._workdir, 'workdir', quiet=True)
         return self._workdir
 

@@ -166,8 +166,7 @@ def main(context, root, **kwargs):
 def run(context, all_, id_, environment, **kwargs):
     """ Run test steps. """
     # Initialize
-    tmt.Run._save_context(context)
-    run = tmt.Run(id_, context.obj.tree)
+    run = tmt.Run(id_, context.obj.tree, context=context)
     context.obj.run = run
 
     # Check for sane environment variables

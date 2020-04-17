@@ -21,12 +21,6 @@ class PlanMock(MagicMock):
         return 0
 
 
-def test_empty_plan():
-    provision = Provision({}, None)
-    with pytest.raises(GeneralError):
-        provision.wake()
-
-
 def test_defaults():
     provision = Provision({}, PlanMock())
     provision.wake()
