@@ -63,7 +63,7 @@ def test_localhost_prepare_ansible():
         playbook = os.path.join(plan.run.tree.root, 'playbook.yml')
         run.assert_called_once_with(
             f'sudo sh -c "stty cols 80; '
-            f'ansible-playbook -v -c local -i localhost, {playbook}"')
+            f'ansible-playbook -c local -i localhost, {playbook}"')
 
 
 def test_localhost_prepare_shell():

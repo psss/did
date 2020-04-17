@@ -86,12 +86,13 @@ class ProvisionPodman(ProvisionBase):
         """ Prepare using ansible """
         # Playbook paths should be relative to the metadata tree root
         playbook = os.path.join(self.step.plan.run.tree.root, what)
-
-        # Run ansible playbook against localhost, in verbose mode
+        # Prepare verbose level based on the --debug option count
+        verbose = ' -' + self.opt('debug') * 'v' if self.opt('debug') else ''
+        # Run ansible playbook against localhost
         # Set columns to 80 characters so it looks the same as with vagrant
         self.run(
-            f'stty cols 80; {self.shell_env} podman unshare ansible-playbook '
-            f'-v -c podman -i {self.container_name}, {playbook}')
+            f'stty cols 80; {self.shell_env} podman unshare ansible-playbook'
+            f'{verbose} -c podman -i {self.container_name}, {playbook}')
 
     def _prepare_shell(self, what):
         """ Prepare using shell """

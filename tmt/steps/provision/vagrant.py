@@ -123,11 +123,14 @@ class ProvisionVagrant(ProvisionBase):
         if how == 'ansible':
             name = how
 
+            # Prepare verbose level based on the --debug option count
+            verbose = self.opt('debug') * 'v' if self.opt('debug') else 'false'
             self.add_config_block(cmd,
                 name,
                 f'become = true',
                 self.kve('become_user', self.data['user']),
-                self.kve('playbook', what))
+                self.kve('playbook', what),
+                self.kve('verbose', verbose))
                 # I'm not sure whether this is needed:
                 # run: 'never'
 

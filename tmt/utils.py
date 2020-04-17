@@ -103,9 +103,16 @@ class Common(object):
         parent = None
         if self.parent:
             parent = self.parent.opt(option)
-        # Special handling for flags (parent's yes wins)
-        if isinstance(parent, bool):
-            return parent if parent else local
+        # Special handling for special flags (parent's yes always wins)
+        if option in ['verbose', 'debug', 'quiet', 'force', 'dry']:
+            winner = parent if parent else local
+            # Convert tuple of booleans into debug/verbose level (int)
+            if option in ['verbose', 'debug']:
+                if isinstance(winner, tuple):
+                    winner = len(winner)
+                if winner is None:
+                    winner = 0
+            return winner
         return parent if parent is not None else local
 
     def _level(self):

@@ -8,11 +8,11 @@ import click
 # Verbose, debug and quiet output
 verbose_debug_quiet = [
     click.option(
-        '-v', '--verbose', is_flag=True,
-        help='I want to see more details. Please, be verbose.'),
+        '-v', '--verbose', is_flag=True, multiple=True,
+        help='Show more details. Use multiple times to raise verbosity.'),
     click.option(
-        '-d', '--debug', is_flag=True,
-        help='Provide as much debugging details as possible.'),
+        '-d', '--debug', is_flag=True, multiple=True,
+        help='Provide debugging information. Repeat to see more details.'),
     click.option(
         '-q', '--quiet', is_flag=True,
         help='Be quiet. Exit code is just enough for me.'),

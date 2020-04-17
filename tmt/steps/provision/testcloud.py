@@ -310,12 +310,14 @@ class ProvisionTestcloud(ProvisionBase):
         """ Prepare using ansible """
         # Playbook paths should be relative to the metadata tree root
         playbook = os.path.join(self.step.plan.run.tree.root, what)
+        # Prepare verbose level based on the --debug option count
+        verbose = ' -' + self.opt('debug') * 'v' if self.opt('debug') else ''
         # Set collumns to 80 characters while running ansible
         self.run(
             f'stty cols 80; ansible-playbook '
             f'--ssh-common-args="{self.ssh_args_shell}" '
-            f'-e ansible_python_interpreter=auto '
-            f'-v -i {self.user}@{self.ip}, {playbook}')
+            f'-e ansible_python_interpreter=auto'
+            f'{verbose} -i {self.user}@{self.ip}, {playbook}')
 
     def _prepare_shell(self, what):
         """ Prepare using shell """
