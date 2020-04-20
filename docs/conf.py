@@ -271,6 +271,9 @@ os.makedirs('stories', exist_ok=True)
 os.makedirs('spec', exist_ok=True)
 for area in areas:
     with open('{}.rst'.format(area.lstrip('/')), 'w') as doc:
+        # Anchor and title
+        doc.write(f'.. _{area}:\n\n')
         doc.write('{}\n{}\n'.format(areas[area], '=' * len(areas[area])))
+        # Included stories
         for story in tree.stories(names=[area], whole=True):
             doc.write(story.export(title=story.name != area))
