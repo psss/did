@@ -4,8 +4,18 @@ story:
 
 /verbose:
     summary: Enable verbose output of the command
+    story:
+        As a user I want to see more detailed information for
+        particular command.
+    description: |
+        Different verbose levels can be enabled by using the
+        option several times. For example, discover step shows
+        only number of tests by default, list of tests in verbose
+        level one and could show some further test details in
+        higher verbose levels.
     example:
         - tmt test show -v
+        - tmt test show -vvv
         - tmt test show --verbose
     implemented: /tmt/cli
     documented: /tmt/cli
@@ -38,9 +48,19 @@ story:
     documented: /tmt/cli
 
 /debug:
-    summary: Print out everything tmt is doing
+    summary: Print additional information for debugging
+    story:
+        As a tmt developer I want to see as much details about
+        what's happening during execution so that I can easily
+        reveal bugs in the code.
+    description:
+        Debug level can be used to show detailed implementation
+        steps, revealing what's happening under the hood, so that
+        tool developers are able to more easily find bugs in the
+        code. Use the option multiple times to increase verbosity.
     example:
         - tmt run -d
+        - tmt run -ddd
         - tmt run --debug
     implemented: /tmt/cli
     documented: /tmt/cli

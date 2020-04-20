@@ -6,9 +6,10 @@
 Let's have a look at a couple of real-life examples!
 
 You can obtain detailed list of available options for each command
-by invoking it with ``--help``. To control the verbosity of the
-output, use ``--debug`` and ``--quiet``. Depending on the command,
-``--verbose`` might be also available.
+by invoking it with ``--help``. In order to control the verbosity
+of the output use ``--verbose`` and ``--quiet``. To display
+implementation details for debugging use the ``--debug`` option.
+See :ref:`/stories/cli/common` options for details.
 
 Simply run ``tmt`` to get started with exploring your working
 directory::
