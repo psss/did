@@ -6,6 +6,7 @@ import os
 import fmf
 import tmt
 import copy
+import click
 import shutil
 import tmt.steps.discover
 
@@ -19,6 +20,14 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             summary='Manual list of shell tests',
             order=50),
         ]
+
+    def show(self):
+        """ Show config details """
+        super().show([])
+        tests = self.get('tests')
+        if tests:
+            test_names = [test['name'] for test in tests]
+            click.echo(tmt.utils.format('tests', test_names))
 
     def wake(self):
         # Check provided tests, default to an empty list

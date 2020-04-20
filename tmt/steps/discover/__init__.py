@@ -84,11 +84,7 @@ class Discover(tmt.steps.Step):
 
         # Choose the right plugin and wake it up
         for data in self.data:
-            plugin_class = DiscoverPlugin.delegate(data['how'])
-            self.debug(
-                f"Using '{plugin_class.__name__}' plugin "
-                f"for the '{data['how']}' method.")
-            plugin = plugin_class(self, data)
+            plugin = DiscoverPlugin.delegate(self, data)
             self.plugins.append(plugin)
             plugin.wake()
 
@@ -102,8 +98,8 @@ class Discover(tmt.steps.Step):
 
     def show(self):
         """ Show discover details """
-        keys = ['how', 'url', 'ref', 'path', 'test', 'filter']
-        super().show(keys)
+        for data in self.data:
+            DiscoverPlugin.delegate(self, data).show()
 
     def summary(self):
         """ Give a concise summary of the discovery """

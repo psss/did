@@ -67,6 +67,10 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         # No other defaults available
         return default
 
+    def show(self):
+        """ Show discover details """
+        super().show(['url', 'ref', 'path', 'test', 'filter'])
+
     def wake(self):
         """ Wake up the plugin (override data with command line) """
 

@@ -129,6 +129,7 @@ class Step(tmt.utils.Common):
 
     def show(self, keys=[]):
         """ Show step details """
+        # FIXME Remove when handled by dynamic plugins
         for step in self.data:
             # Show empty steps only in verbose mode
             if (set(step.keys()) == set(['how', 'name'])
@@ -232,24 +233,28 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         return sorted(cls._supported_methods, key=lambda method: method.order)
 
     @classmethod
-    def delegate(cls, how):
+    def delegate(cls, step, data):
         """
-        Return plugin class implementing given method
+        Return plugin instance implementing the data['how'] method
 
         Supports searching by method prefix as well (e.g. 'virtual').
         The first matching method with the lowest 'order' wins.
         """
         # Filter matching methods, pick the one with the lowest order
         for method in cls.methods():
-            if method.name.startswith(how):
-                return method.class_
+            if method.name.startswith(data['how']):
+                step.debug(
+                    f"Using '{method.class_.__name__}' plugin "
+                    f"for the '{data['how']}' method.")
+                return method.class_(step, data)
 
         # Report invalid method
-        raise tmt.utils.SpecificationError(f"Unsupported method '{how}'.")
+        raise tmt.utils.SpecificationError(
+            f"Unsupported method '{data['how']}' in '{step.plan.name}'.")
 
     def default(self, option, default=None):
         """ Return default data for given option """
-        return None
+        return default
 
     def get(self, option, default=None):
         """ Get option from plugin data, user/system config or defaults """
@@ -264,6 +269,29 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
 
         # Finally check plugin defaults
         return self.default(option, default)
+
+    def show(self, keys=None):
+        """ Show plugin details for given or all available keys """
+        # Show empty config only in verbose mode
+        if (set(self.data.keys()) == set(['how', 'name'])
+                and not self.opt('verbose')):
+            return
+        # Step name (and optional summary)
+        echo(tmt.utils.format(
+            self.step, self.get('summary', ''), key_color='blue'))
+        # Show all or requested step attributes
+        if keys is None:
+            keys = list(self.data.keys())
+        for key in ['name', 'how'] + keys:
+            # Skip showing the default name
+            if key == 'name' and self.name == 'one':
+                continue
+            # Skip showing summary again
+            if key == 'summary':
+                continue
+            value = self.get(key)
+            if value is not None:
+                echo(tmt.utils.format(key, value))
 
     def wake(self):
         """ Wake up the plugin (override data with command line) """
