@@ -1,0 +1,51 @@
+summary: Issues or stories related to the object
+
+story:
+    As a user I want to link related stories or external issues so that I can
+    easily find out what the test, plan or story is addressing.
+
+description: |
+    Relevant external issues, for example features or bugs covered
+    as well as FMF stories describing features.
+    Should be a ``link`` or ``list of links`` where a ``link`` is
+
+    string
+        Either ``URL`` to an external tracker or ``Name`` of FMF node within the same root
+
+    fmf-id
+        Is a ``dictionary`` with a full `fmf identifier`__
+
+    dict
+        Key being relation (see bellow) and value is either string or fmf-id.
+
+    Recognized relations are:
+
+    verify
+
+    relate
+
+    block
+
+    depend
+
+    duplicate
+
+    parent
+
+    child
+
+    Default relation is ``verify``
+
+    __ https://fmf.readthedocs.io/en/latest/concept.html#identifiers
+
+example: |
+    link: https://github.com/psss/tmt/issues/207
+    link:
+      - relate: https://github.com/psss/tmt/issues/207
+      - https://bugzilla.redhat.com/show_bug.cgi?id=1
+    link:
+        verify: https://bugzilla.redhat.com/show_bug.cgi?id=1
+    link:
+      - depend:
+        url: https://github.com/psss/tmt.git
+        name: /spec/core/link
