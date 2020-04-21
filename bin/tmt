@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# coding: utf-8
 
 import sys
 import fmf
@@ -9,6 +8,23 @@ import fmf.utils
 
 try:
     tmt.cli.main()
+
+# Show detailed output upon command execution errors
+except tmt.utils.RunError as error:
+    for name, output in (('stdout', error.stdout), ('stderr', error.stderr)):
+        if not output:
+            continue
+        lines = output.strip().split('\n')
+        displayed = min(len(lines), tmt.utils.OUTPUT_LINES)
+        print(
+            f"\n{name} ({displayed}/{len(lines)} lines)"
+            f"\n{tmt.utils.OUTPUT_WIDTH * '~'}\n" +
+            '\n'.join(lines[-tmt.utils.OUTPUT_LINES:]))
+    print()
+    fmf.utils.log.error(error.message)
+    raise SystemExit(1)
+
+# Basic error message for general errors
 except tmt.utils.GeneralError as error:
     fmf.utils.log.error(error)
     raise SystemExit(1)

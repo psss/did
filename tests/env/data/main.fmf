@@ -1,0 +1,25 @@
+/test:
+    test: echo ">>>${TEST}<<<"
+    path: /
+
+    /yes:
+        summary: This is a test with a variable
+        environment:
+            TEST: L1
+    /no:
+        summary: This is a test without a variable
+
+/plan:
+    discover:
+        how: fmf
+    provision:
+        how: local
+    execute:
+        how: shell
+
+    /yes:
+        summary: This is a plan with a variable
+        environment:
+            TEST: L2
+    /no:
+        summary: This is a plan without a variable

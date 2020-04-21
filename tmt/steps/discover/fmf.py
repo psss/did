@@ -1,25 +1,3 @@
-# coding: utf-8
-
-"""
-FMF Tests Discovery
-
-Minimal config example (all available tests from the current
-repository used by default)::
-
-    discover:
-        how: fmf
-
-Full config example::
-
-    discover:
-        how: fmf
-        url: https://github.com/psss/tmt
-        ref: master
-        path: /fmf/root
-        test: /tests/basic
-        filter: 'tier: 1'
-"""
-
 import os
 import fmf
 import tmt
@@ -28,15 +6,28 @@ import click
 import tmt.steps.discover
 
 class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
-    """ Discover available tests from fmf metadata """
+    """
+    Discover available tests from fmf metadata
+
+    By default all available tests from the current repository are used
+    so the minimal configuration looks like this:
+
+        discover:
+            how: fmf
+
+    Full config example:
+
+        discover:
+            how: fmf
+            url: https://github.com/psss/tmt
+            ref: master
+            path: /fmf/root
+            test: /tests/basic
+            filter: 'tier: 1'
+    """
 
     # Supported methods
-    _methods = [
-        tmt.steps.Method(
-            name='fmf',
-            summary='Flexible Metadata Format',
-            order=50),
-        ]
+    _methods = [tmt.steps.Method(name='fmf', doc=__doc__, order=50)]
 
     @classmethod
     def options(cls, how=None):
@@ -108,7 +99,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         # Copy git repository root to workdir
         else:
             if path and not os.path.isdir(path):
-                raise tmt.utils.GeneralError(
+                raise tmt.utils.DiscoverError(
                     f"Provided path '{path}' is not a directory.")
             fmf_root = path or self.step.plan.run.tree.root
             output = self.run('git rev-parse --show-toplevel', cwd=fmf_root)
@@ -135,7 +126,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         # Prepare the whole tree path and test path prefix
         tree_path = os.path.join(testdir, path.lstrip('/'))
         if not os.path.isdir(tree_path):
-            raise tmt.utils.GeneralError(
+            raise tmt.utils.DiscoverError(
                 f"Metadata tree path '{path}' not found.")
         prefix_path = os.path.join('/tests', path.lstrip('/'))
 

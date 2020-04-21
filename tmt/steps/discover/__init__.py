@@ -1,18 +1,13 @@
-# coding: utf-8
-
-""" Discover Step Classes """
-
 import click
 import tmt
 from fmf.utils import listed
 
 class Discover(tmt.steps.Step):
-    """ Gather and show information about test cases to be executed """
+    """ Gather information about test cases to be executed """
 
     def __init__(self, data, plan):
         """ Store supported attributes, check for sanity """
         super(Discover, self).__init__(data, plan)
-        self.plugins = []
 
         # List of Test() objects representing discovered tests
         self._tests = []
@@ -24,19 +19,16 @@ class Discover(tmt.steps.Step):
             tests = tmt.utils.yaml_to_dict(self.read('tests.yaml'))
             self._tests = [
                 tmt.Test(data, name) for name, data in tests.items()]
-        except tmt.utils.GeneralError:
-            self.debug('Discovered tests not found.')
+        except tmt.utils.FileError:
+            self.debug('Discovered tests not found.', level=2)
 
     def save(self):
         """ Save step data to the workdir """
         super(Discover, self).save()
 
-        # Apply common plan environment to all tests
-        environment = self.plan.environment
-
         # Create tests.yaml with the full test data
         tests = dict([
-            (test.name, test.export(format_='dict', environment=environment))
+            (test.name, test.export(format_='dict'))
             for test in self.tests()])
         self.write('tests.yaml', tmt.utils.dict_to_yaml(tests))
 
@@ -44,7 +36,7 @@ class Discover(tmt.steps.Step):
         if not self.tests():
             return
         tests = dict([
-            test.export(format_='execute', environment=environment)
+            (test.name, test.export(format_='execute'))
             for test in self.tests()])
         self.write('run.yaml', tmt.utils.dict_to_yaml(tests, width=1000000))
 
@@ -85,12 +77,13 @@ class Discover(tmt.steps.Step):
         # Choose the right plugin and wake it up
         for data in self.data:
             plugin = DiscoverPlugin.delegate(self, data)
-            self.plugins.append(plugin)
+            self._plugins.append(plugin)
             plugin.wake()
 
         # Nothing more to do if already done
         if self.status() == 'done':
-            self.debug('Discover wake up complete (already done before).')
+            self.debug(
+                'Discover wake up complete (already done before).', level=2)
         # Save status and step data (now we know what to do)
         else:
             self.status('todo')
@@ -105,7 +98,7 @@ class Discover(tmt.steps.Step):
         """ Give a concise summary of the discovery """
         # Summary of selected tests
         text = listed(len(self.tests()), 'test') + ' selected'
-        self.info('tests', text, 'green', shift=1)
+        self.info('summary', text, 'green', shift=1)
         # Test list in verbose mode
         for test in self.tests():
             self.verbose(test.name, color='red', shift=2)
@@ -122,15 +115,17 @@ class Discover(tmt.steps.Step):
 
         # Perform test discovery, gather discovered tests
         self._tests = []
-        for plugin in self.plugins:
+        for plugin in self.plugins():
             # Go and discover tests
             plugin.go()
             # Prefix test name only if multiple plugins configured
-            prefix = f'/{plugin.name}' if len(self.plugins) > 1 else ''
+            prefix = f'/{plugin.name}' if len(self.plugins()) > 1 else ''
             # Check discovered tests, modify test name/path
             for test in plugin.tests():
                 test.name = f"{prefix}{test.name}"
                 test.path = f"/{plugin.name}{test.path}"
+                # Update test environment with plan environment
+                test.environment.update(self.plan.environment)
                 self._tests.append(test)
 
         # Give a summary, update status and save
@@ -154,17 +149,19 @@ class Discover(tmt.steps.Step):
 class DiscoverPlugin(tmt.steps.Plugin):
     """ Common parent of discover plugins """
 
+    # List of all supported methods aggregated from all plugins
+    _supported_methods = []
+
     @classmethod
     def base_command(cls, method_class=None, usage=None):
         """ Create base click command (common for all discover plugins) """
 
-        # Prepare help message
-        message = 'Gather information about test cases to be executed.'
-        if usage is not None:
-            message += '\n\n\b\n' + usage
+        # Prepend general description before method overview for base command
+        if method_class:
+            usage = Discover.__doc__ + '\n\n' + usage
 
         # Create the command
-        @click.command(cls=method_class, help=message)
+        @click.command(cls=method_class, help=usage)
         @click.pass_context
         @click.option(
             '-h', '--how', metavar='METHOD',

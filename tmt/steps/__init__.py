@@ -1,8 +1,8 @@
-# coding: utf-8
 
 """ Step Classes """
 
 import os
+import re
 import fmf
 import click
 import pprint
@@ -28,15 +28,16 @@ class Step(tmt.utils.Common):
         self.plan = plan
         self.data = data
         self._status = None
+        self._plugins = []
 
         # Create an empty step by default (can be updated from cli)
         if self.data is None:
-            self.data = [{'name': 'one'}]
+            self.data = [{'name': tmt.utils.DEFAULT_NAME}]
         # Convert to list if only a single config provided
         elif isinstance(self.data, dict):
             # Give it a name unless defined
             if not self.data.get('name'):
-                self.data['name'] = 'one'
+                self.data['name'] = tmt.utils.DEFAULT_NAME
             self.data = [self.data]
         # Shout about invalid configuration
         elif not isinstance(self.data, list):
@@ -75,7 +76,7 @@ class Step(tmt.utils.Common):
             # Show status only if changed
             elif self._status != status:
                 self._status = status
-                self.debug('status', status, color='yellow')
+                self.debug('status', status, color='yellow', level=2)
         # Return status
         return self._status
 
@@ -83,11 +84,11 @@ class Step(tmt.utils.Common):
         """ Load status and step data from the workdir """
         try:
             content = tmt.utils.yaml_to_dict(self.read('step.yaml'))
-            self.debug('Successfully loaded step data.')
+            self.debug('Successfully loaded step data.', level=2)
             self.data = content['data']
             self.status(content['status'])
         except GeneralError:
-            self.debug('Step data not found.')
+            self.debug('Step data not found.', level=2)
 
     def save(self):
         """ Save status and step data to the workdir """
@@ -107,7 +108,7 @@ class Step(tmt.utils.Common):
         # Probably interrupted in the middle. Clean up the work
         # directory to give it another chance with a fresh start.
         if self.status() == 'todo':
-            self.debug("Step has not finished. Let's try once more!")
+            self.debug("Step has not finished. Let's try once more!", level=2)
             self._workdir_cleanup()
 
         # Nothing more to do when the step is already done
@@ -119,6 +120,10 @@ class Step(tmt.utils.Common):
         if how is not None:
             for data in self.data:
                     data['how'] = how
+
+    def plugins(self):
+        """ Iterate over plugins by their order """
+        return sorted(self._plugins, key=lambda plugin: plugin.order)
 
     def go(self):
         """ Execute the test step """
@@ -141,7 +146,7 @@ class Step(tmt.utils.Common):
             # Show all or requested step attributes
             for key in keys or step:
                 # Skip showing the default name
-                if key == 'name' and step['name'] == 'one':
+                if key == 'name' and step['name'] == tmt.utils.DEFAULT_NAME:
                     continue
                 # Skip showing summary again
                 if key == 'summary':
@@ -155,15 +160,29 @@ class Step(tmt.utils.Common):
 class Method(object):
     """ Step implementation method """
 
-    def __init__(self, name, summary, order):
+    def __init__(self, name, doc, order):
         """ Store method data """
         self.name = name
-        self.summary = summary
+        self.doc = doc.strip()
         self.order = order
+
+        # Parse summary and description from provided doc string
+        lines = [re.sub('^    ', '', line) for line in self.doc.split('\n')]
+        self.summary = lines[0].strip()
+        self.description = '\n'.join(lines[1:]).lstrip()
 
     def describe(self):
         """ Format name and summary for a nice method overview """
         return f'{self.name} '.ljust(22, '.') + f' {self.summary}'
+
+    def usage(self):
+        """ Prepare a detailed usage from summary and description """
+        if self.description:
+            usage = self.summary + '\n\n' + self.description
+        else:
+            usage = self.summary
+        # Disable wrapping for all paragraphs
+        return re.sub('\n\n', '\n\n\b\n', usage)
 
 
 class PluginIndex(type):
@@ -184,9 +203,6 @@ class PluginIndex(type):
 class Plugin(tmt.utils.Common, metaclass=PluginIndex):
     """ Common parent of all step plugins """
 
-    # List of all supported methods aggregated from all plugins
-    _supported_methods = []
-
     def __init__(self, step, data):
         """ Store plugin name, data and parent step """
 
@@ -199,6 +215,12 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         self.data = data
         self.step = step
 
+        # Initialize plugin order
+        try:
+            self.order = int(self.data['order'])
+        except (ValueError, KeyError):
+            self.order = tmt.utils.DEFAULT_PLUGIN_ORDER
+
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for given method """
@@ -210,10 +232,10 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         """ Prepare click command for all supported methods """
         # Create one command for each supported method
         commands = {}
-        usage = r'Supported methods:'
+        method_overview = 'Supported methods:\n\n\b'
         for method in cls.methods():
-            usage += f'\n{method.describe()}'
-            command = cls.base_command(usage=method.summary)
+            method_overview += f'\n{method.describe()}'
+            command = cls.base_command(usage=method.usage())
             # Apply plugin specific options
             for option in method.class_.options(method.name):
                 command = option(command)
@@ -221,7 +243,7 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
 
         # Create base command with common options using method class
         method_class = tmt.options.create_method_class(commands)
-        command = cls.base_command(method_class, usage)
+        command = cls.base_command(method_class, usage=method_overview)
         # Apply common options
         for option in cls.options():
             command = option(command)
@@ -244,8 +266,8 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         for method in cls.methods():
             if method.name.startswith(data['how']):
                 step.debug(
-                    f"Using '{method.class_.__name__}' plugin "
-                    f"for the '{data['how']}' method.")
+                    f"Using the '{method.class_.__name__}' plugin "
+                    f"for the '{data['how']}' method.", level=2)
                 return method.class_(step, data)
 
         # Report invalid method
@@ -278,13 +300,14 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
             return
         # Step name (and optional summary)
         echo(tmt.utils.format(
-            self.step, self.get('summary', ''), key_color='blue'))
+            self.step, self.get('summary', ''),
+            key_color='blue', value_color='blue'))
         # Show all or requested step attributes
         if keys is None:
             keys = list(self.data.keys())
         for key in ['name', 'how'] + keys:
             # Skip showing the default name
-            if key == 'name' and self.name == 'one':
+            if key == 'name' and self.name == tmt.utils.DEFAULT_NAME:
                 continue
             # Skip showing summary again
             if key == 'summary':
@@ -293,14 +316,29 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
             if value is not None:
                 echo(tmt.utils.format(key, value))
 
-    def wake(self):
-        """ Wake up the plugin (override data with command line) """
-        raise NotImplementedError
+    def wake(self, options=None):
+        """
+        Wake up the plugin (override data with command line)
+
+        If a list of option names is provided, their value will be
+        checked and stored in self.data unless empty or undefined.
+        """
+        if options is None:
+            return
+        for option in options:
+            value = self.opt(option)
+            if value:
+                self.data[option] = value
 
     def go(self):
         """ Go and perform the plugin task """
         # Show the method
-        self.info('how', self.data['how'], 'green')
-        # Show name only if there are more steps
-        if self.name != 'one':
-            self.info('name', self.name, 'green')
+        self.info('how', self.get('how'), 'magenta')
+        # Give summary if provided
+        if self.get('summary'):
+            self.info('summary', self.get('summary'), 'magenta')
+        # Show name only if it's not the default one
+        if self.name != tmt.utils.DEFAULT_NAME:
+            self.info('name', self.name, 'magenta')
+        # Include order in verbose mode
+        self.verbose('order', self.order, 'magenta', level=3)

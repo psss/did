@@ -55,6 +55,9 @@ class Execute(tmt.steps.Step):
         """ Execute the test step """
         super(Execute, self).go()
 
+        if not self.plan.provision.guests():
+            raise tmt.utils.ExecuteError("No guests available for execution.")
+
         lognames = ('stdout.log', 'stderr.log', 'nohup.out')
 
         # Remove logs prior to write
@@ -95,21 +98,24 @@ class Execute(tmt.steps.Step):
         """ Place the runner script to workdir  """
         # Detect location of the runner
         script_path = os.path.join(os.path.dirname(__file__), RUNNER)
-        self.debug(f"Copy '{script_path}' to '{self.workdir}'.")
+        self.debug(f"Copy '{script_path}' to '{self.workdir}'.", level=2)
         # Nothing more to do in dry mode
         if self.opt('dry'):
             return
         shutil.copy(script_path, self.workdir)
         # Sync added runner to guests
-        self.plan.provision.sync_workdir_to_guest()
+        for guest in self.plan.provision.guests():
+            guest.push()
 
-    def execute(self, *args, **kwargs):
+    def execute(self, command):
         """ Execute command on provisioned machine """
-        return self.plan.provision.execute(*args, **kwargs)
+        for guest in self.plan.provision.guests():
+            guest.execute(command)
 
     def get_logs(self, lognames):
         """ Get logs contents, also print them to info() """
-        self.plan.provision.sync_workdir_from_guest()
+        for guest in self.plan.provision.guests():
+            guest.pull()
 
         output = {}
         for name in lognames:
@@ -123,7 +129,7 @@ class Execute(tmt.steps.Step):
     # API
     def requires(self):
         """ Returns packages required to run tests - used by prepare step"""
-        return self.executor.requires()
+        return list(self.executor.requires())
 
     def results(self):
         """ Returns results from executed tests - used by report step """

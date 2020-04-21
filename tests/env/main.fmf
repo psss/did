@@ -1,4 +1,6 @@
 summary: Check environment variables handling
+description:
+    Verify that variables are correctly handled to tests. Also
+    check that L2 metadata override L1 metadata and variables
+    provided as command line options override all.
 tier: 2
-environment:
-    TESTING: WORKS

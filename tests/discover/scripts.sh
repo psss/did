@@ -10,13 +10,19 @@ rlJournalStart
     plan='plan --name smoke'
 
     rlPhaseStartTest 'All steps'
-        rlRun "tmt run $plan | tee output"
+        rlRun "tmt run discover $plan | tee output"
         rlAssertGrep '1 test selected' 'output'
     rlPhaseEnd
 
     rlPhaseStartTest 'Selected steps'
-        rlRun "tmt run discover execute $plan | tee output"
+        rlRun "tmt run discover provision execute $plan | tee output"
         rlAssertGrep '1 test selected' 'output'
+        rlAssertGrep 'discover' 'output'
+        rlAssertGrep 'provision' 'output'
+        rlAssertGrep 'execute' 'output'
+        rlAssertNotGrep 'prepare' 'output'
+        rlAssertNotGrep 'report' 'output'
+        rlAssertNotGrep 'finish' 'output'
     rlPhaseEnd
 
     rlPhaseStartCleanup

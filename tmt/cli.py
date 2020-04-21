@@ -163,80 +163,15 @@ def main(context, root, **kwargs):
     help='Set environment variable. Can be specified multiple times.')
 @verbose_debug_quiet
 @force_dry
-def run(context, all_, id_, environment, **kwargs):
+def run(context, all_, id_, **kwargs):
     """ Run test steps. """
     # Initialize
     run = tmt.Run(id_, context.obj.tree, context=context)
     context.obj.run = run
 
-    # Check for sane environment variables
-    for env in environment:
-        if '=' not in env:
-            raise tmt.utils.GeneralError(
-                f"Invalid environment variable specification '{env}'.")
-
-
 run.add_command(tmt.steps.discover.DiscoverPlugin.command())
-
-
-@run.command()
-@click.pass_context
-@click.option(
-    '-h', '--how', metavar='METHOD',
-    help='Use specified method for provisioning.')
-@click.option(
-    '-i', '--image', metavar='IMAGE',
-    help='Select image to use. Possible values depend on the method.')
-@click.option(
-    '-b', '--box', metavar='BOX',
-    help='Vagrant box name to use.')
-@click.option(
-    '--vagrantfile', metavar='VAGRANTFILE',
-    help='Vagrantfile to override initialized one and default entries.')
-@click.option(
-    '-m', '--memory', metavar='MEMORY',
-    help='Set memory available to guest in MB.')
-@click.option(
-    '-u', '--user', metavar='USER',
-    help='Username to use for all guest operations.')
-@click.option(
-    '-p', '--password', metavar='PASSWORD',
-    help='Password to use for login into guest system.')
-@click.option(
-    '-k', '--key', metavar='PRIVATE_KEY',
-    help='Private key to use for login into guest system.')
-@click.option(
-    '-g', '--guest', metavar='GUEST',
-    help='Select remote host to connect to (how: connect).')
-@click.option(
-    '--container-pull', is_flag=True,
-    help='Force pulling container image (how: container).')
-
-@verbose_debug_quiet
-@force_dry
-def provision(context, **kwargs):
-    """ Provision an environment for testing (or use localhost). """
-    context.obj.steps.add('provision')
-    tmt.steps.provision.Provision._save_context(context)
-
-
-@run.command()
-@click.pass_context
-@click.option(
-    '-h', '--how', metavar='METHOD',
-    help='Use specified method for environment preparation.')
-@click.option(
-    '-s', '--script', metavar='SCRIPT',
-    help='Scriplet or path or URI to a script to execute.')
-@click.option(
-    '-p', '--playbook', metavar='PLAYBOOK',
-    help='Path or URI to ansible playbook to run.')
-@verbose_debug_quiet
-@force_dry
-def prepare(context, **kwargs):
-    """ Configure environment for testing (like ansible playbook). """
-    context.obj.steps.add('prepare')
-    tmt.steps.prepare.Prepare._save_context(context)
+run.add_command(tmt.steps.provision.ProvisionPlugin.command())
+run.add_command(tmt.steps.prepare.PreparePlugin.command())
 
 
 @run.command()

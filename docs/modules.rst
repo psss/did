@@ -29,7 +29,15 @@ Here's the overview of available classes::
     │   ├── ExecutePlugin
     │   ├── FinishPlugin
     │   ├── PreparePlugin
+    │   │   ├── PrepareAnsible
+    │   │   ├── PrepareInstall
+    │   │   └── PrepareShell
     │   ├── ProvisionPlugin
+    │   │   ├── ProvisionConnect
+    │   │   ├── ProvisionLocal
+    │   │   ├── ProvisionPodman
+    │   │   ├── ProvisionTestcloud
+    │   │   └── ProvisionVagrant
     │   └── ReportPlugin
     └── Run
 
@@ -37,37 +45,9 @@ Note: The list is not complete. There is a plan to clean up plugin
 inheritance and naming.
 
 
-base
-----
+Essential Classes
+-----------------
 
-.. automodule:: tmt.base
-    :members:
-    :undoc-members:
-
-steps
------
-
-.. automodule:: tmt.steps
-    :members:
-    :undoc-members:
-
-utils
------
-
-.. automodule:: tmt.utils
-    :members:
-    :undoc-members:
-
-cli
----
-
-.. automodule:: tmt.cli
-    :members:
-    :undoc-members:
-
-convert
--------
-
-.. automodule:: tmt.convert
+.. automodule:: tmt
     :members:
     :undoc-members:

@@ -1,117 +1,144 @@
-# coding: utf-8
-
-""" Provision Step Classes """
-
-import tmt
 import os
+import click
 
-from click import echo
-
-from tmt.utils import SpecificationError
-from tmt.steps.provision import vagrant, localhost, podman, testcloud
-
+import fmf
+import tmt
 
 class Provision(tmt.steps.Step):
-    """ Provision step """
-    name = 'provision'
-
-    # supported provisioners are not loaded automatically, import them and map them in how_map
-    how_map = {
-        'vagrant': vagrant.ProvisionVagrant,
-        'libvirt': vagrant.ProvisionVagrant,
-        'virtual': vagrant.ProvisionVagrant,
-        'local': localhost.ProvisionLocalhost,
-        'localhost': localhost.ProvisionLocalhost,
-        'container': podman.ProvisionPodman,
-        'podman': podman.ProvisionPodman,
-        'libvirt.testcloud': testcloud.ProvisionTestcloud,
-        'virtual.testcloud': testcloud.ProvisionTestcloud
-    }
+    """ Provision an environment for testing or use localhost """
 
     # Default implementation for provision is a virtual machine
     how = 'virtual'
 
     def __init__(self, data, plan):
-        # List of provisioned guests
-        self.guests = []
-        # Save parent and initialize it
-        self.super = super(Provision, self)
-        self.super.__init__(data, plan)
+        """ Initialize provision step data """
+        super().__init__(data, plan)
+        # List of provisioned guests and loaded guest data
+        self._guests = []
+        self._guest_data = {}
+
+    def load(self):
+        """ Load guest data from the workdir """
+        super().load()
+        try:
+            self._guest_data = tmt.utils.yaml_to_dict(self.read('guests.yaml'))
+        except tmt.utils.FileError:
+            self.debug('Provisioned guests not found.', level=2)
+
+    def save(self):
+        """ Save guest data to the workdir """
+        super().save()
+        try:
+            guests = dict(
+                [(guest.name, guest.save()) for guest in self.guests()])
+            self.write('guests.yaml', tmt.utils.dict_to_yaml(guests))
+        except tmt.utils.FileError:
+            self.debug('Failed to save provisioned guests.')
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """
-        super(Provision, self).wake()
+        super().wake()
 
-        # Add plugins for all guests
+        # Choose the right plugin and wake it up
         for data in self.data:
-            try:
-                self.guests.append(self.how_map[data['how']](data, self))
-            except KeyError:
-                # We default to vagrant provisioner (as there might be custom
-                # vagrant providers but we cannot detect them)
-                self.guests.append(vagrant.ProvisionVagrant(data, self))
+            plugin = ProvisionPlugin.delegate(self, data)
+            self._plugins.append(plugin)
+            # If guest data loaded, perform a complete wake up
+            plugin.wake(data=self._guest_data.get(plugin.name))
+            if plugin.guest():
+                self._guests.append(plugin.guest())
 
-    def go(self):
-        """ Provision all resources """
-        self.super.go()
-
-        for guest in self.guests:
-            guest.go()
-            # this has to be fixed first
-            #guest.save()
-
-    def execute(self, *args, **kwargs):
-        for guest in self.guests:
-            guest.execute(*args, **kwargs)
-
-    def load(self):
-        self.guests = self.read(self.guests)
-
-        for guest in self.guests:
-            guest.load()
-
-    def save(self):
-        self.write(self.guests)
-
-        for guest in self.guests:
-            guest.save()
+        # Nothing more to do if already done
+        if self.status() == 'done':
+            self.debug(
+                'Provision wake up complete (already done before).', level=2)
+        # Save status and step data (now we know what to do)
+        else:
+            self.status('todo')
+            self.save()
 
     def show(self):
-        """ Show provision details """
-        keys = ['how', 'image']
-        super(Provision, self).show(keys)
+        """ Show discover details """
+        for data in self.data:
+            ProvisionPlugin.delegate(self, data).show()
 
-    def sync_workdir_to_guest(self):
-        for guest in self.guests:
-            guest.sync_workdir_to_guest()
+    def summary(self):
+        """ Give a concise summary of the provisioning """
+        # Summary of provisioned guests
+        guests = fmf.utils.listed(self.guests(), 'guest')
+        self.info('summary', f'{guests} provisioned', 'green', shift=1)
+        # Guest list in verbose mode
+        for guest in self.guests():
+            if guest.name != tmt.utils.DEFAULT_NAME:
+                self.verbose(guest.name, color='red', shift=2)
 
-    def sync_workdir_from_guest(self):
-        for guest in self.guests:
-            guest.sync_workdir_from_guest()
+    def go(self):
+        """ Provision all guests"""
+        super().go()
 
-    def copy_from_guest(self, target):
-        for guest in self.guests:
-            guest.copy_from_guest(target)
+        # Nothing more to do if already done
+        if self.status() == 'done':
+            self.info('status', 'done', 'green', shift=1)
+            self.summary()
+            return
 
-    def destroy(self):
-        for guest in self.guests:
-            guest.destroy()
+        # Provision guests
+        self._guests = []
+        for plugin in self.plugins():
+            plugin.go()
+            plugin.guest().details()
+            self._guests.append(plugin.guest())
 
-    def prepare(self, how, what):
-        for guest in self.guests:
-            guest.prepare(how, what)
+        # Give a summary, update status and save
+        self.summary()
+        self.status('done')
+        self.save()
 
-    def clean(self):
-        for guest in self.guests:
-            guest.clean()
+    def guests(self):
+        """ Return the list of all provisioned guests """
+        return self._guests
 
-    def write(self, data):
-        path = os.path.join(self.workdir, 'guests.yaml')
-        self.super.write(path, self.dict_to_yaml(data))
 
-    def read(self, current):
-        path = os.path.join(self.workdir, 'guests.yaml')
-        if os.path.exists(path) and os.path.isfile(path):
-            return self.super.read(path)
-        else:
-            return current
+class ProvisionPlugin(tmt.steps.Plugin):
+    """ Common parent of provision plugins """
+
+    # List of all supported methods aggregated from all plugins
+    _supported_methods = []
+
+    @classmethod
+    def base_command(cls, method_class=None, usage=None):
+        """ Create base click command (common for all provision plugins) """
+
+        # Prepend general description before method overview for base command
+        if method_class:
+            usage = Provision.__doc__ + '\n\n' + usage
+
+        # Create the command
+        @click.command(cls=method_class, help=usage)
+        @click.pass_context
+        @click.option(
+            '-h', '--how', metavar='METHOD',
+            help='Use specified method for provisioning.')
+        def provision(context, **kwargs):
+            context.obj.steps.add('provision')
+            Provision._save_context(context)
+
+        return provision
+
+    def wake(self, options=None, data=None):
+        """
+        Wake up the plugin
+
+        Override data with command line options.
+        Wake up the guest based on provided guest data.
+        """
+        super().wake(options)
+
+    def guest(self):
+        """
+        Return provisioned guest
+
+        Each ProvisionPlugin has to implement this method.
+        Should return a provisioned Guest() instance.
+        """
+        raise NotImplementedError

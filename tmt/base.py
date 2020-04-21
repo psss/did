@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """ Base Metadata Classes """
 
@@ -6,6 +5,8 @@ import os
 import re
 import fmf
 import pprint
+import random
+import string
 import subprocess
 
 import tmt.steps
@@ -273,7 +274,7 @@ class Test(Node):
             echo(verdict(2, 'summary should not exceed 50 characters'))
 
     def export(
-            self, format_='yaml', keys=None, environment=None, create=False):
+            self, format_='yaml', keys=None, create=False):
         """
         Export test data into requested format
 
@@ -290,16 +291,10 @@ class Test(Node):
             data['path'] = self.path
             if self.duration is not None:
                 data['duration'] = self.duration
-            # Combine environment variables (plan overrides test)
-            if self.environment or environment:
-                combined_environment = dict()
-                if self.environment:
-                    combined_environment.update(self.environment)
-                if environment:
-                    combined_environment.update(environment)
+            if self.environment:
                 data['environment'] = ' '.join(
                     tmt.utils.shell_variables(self.environment))
-            return name, data
+            return data
 
         # Export to Nitrate test case management system
         elif format_ == 'nitrate':
@@ -344,7 +339,17 @@ class Plan(Node):
                 gates = [gates]
 
         # Environment variables
-        self.environment = node.get('environment')
+        self._environment = node.get('environment', dict())
+
+    @property
+    def environment(self):
+        """ Return combined environment from plan data and command line """
+        if self.run and self.run.environment:
+            combined = self._environment.copy()
+            combined.update(self.run.environment)
+            return combined
+        else:
+            return self._environment
 
     @staticmethod
     def overview(tree):
@@ -397,7 +402,7 @@ class Plan(Node):
         self.ls(summary=True)
         for step in self.steps(disabled=True):
             step.show()
-        if self.environment is not None:
+        if self.environment:
             echo(tmt.utils.format(
                 'environment', self.environment, key_color='blue'))
         if self.opt('verbose'):
@@ -420,13 +425,19 @@ class Plan(Node):
         self.info(self.name, color='red')
         if self.summary:
             self.verbose('summary', self.summary, 'green')
+
+        # Additional debug info like plan environment
+        self.debug('info', color='cyan', shift=0, level=3)
+        self.debug('environment', self.environment, 'magenta', level=3)
+
         # Wake up all steps
-        self.debug('wake', color='cyan', shift=0)
+        self.debug('wake', color='cyan', shift=0, level=2)
         for step in self.steps(disabled=True):
-            self.debug(str(step), color='blue')
+            self.debug(str(step), color='blue', level=2)
             step.wake()
+
         # Run enabled steps except 'finish'
-        self.debug('go', color='cyan', shift=0)
+        self.debug('go', color='cyan', shift=0, level=2)
         try:
             for step in self.steps(skip=['finish']):
                 step.go()
@@ -658,13 +669,22 @@ class Run(tmt.utils.Common):
         self.tree = tree if tree else tmt.Tree('.')
         self.debug(f"Using tree '{self.tree.root}'.")
         self._plans = None
+        self._environment = dict()
+
+    @property
+    def environment(self):
+        """ Return environment combined from wake up and command line """
+        combined = self._environment.copy()
+        combined.update(tmt.utils.shell_to_dict(self.opt('environment')))
+        return combined
 
     def save(self):
         """ Save list of selected plans and enabled steps """
-        data = dict(
-            plans = [plan.name for plan in self._plans],
-            steps = list(self._context.obj.steps),
-            )
+        data = {
+            'plans': [plan.name for plan in self._plans],
+            'steps': list(self._context.obj.steps),
+            'environment': self.environment,
+            }
         self.write('run.yaml', tmt.utils.dict_to_yaml(data))
 
     def load(self):
@@ -685,6 +705,10 @@ class Run(tmt.utils.Common):
         # Initialize steps only if not specified on the command line
         if not self.opt('all_') and not self._context.obj.steps:
             self._context.obj.steps = set(data['steps'])
+
+        # Store loaded environment
+        self._environment = data.get('environment')
+        self.debug(f"Loaded environment: '{self._environment}'.", level=3)
 
     @property
     def plans(self):
@@ -708,3 +732,170 @@ class Run(tmt.utils.Common):
         # Iterate over plans
         for plan in self.plans:
             plan.go()
+
+
+class Guest(tmt.utils.Common):
+    """
+    Guest environment provisioned for test execution
+
+    The following keys are expected in the 'data' dictionary::
+
+        guest ...... hostname or ip address
+        user ....... user name to log in
+        key ........ private key
+        password ... password
+
+    These are by default imported into instance attributes.
+    """
+
+    # Supported keys (used for import/export to/from attributes)
+    _keys = ['guest', 'user', 'key', 'password']
+
+    def __init__(self, data, name=None, parent=None):
+        """ Initialize guest data """
+        super().__init__(parent, name)
+        self.load(data)
+
+    def _random_name(self):
+        """ Generate a random name """
+        return ''.join(random.choices(string.ascii_letters, k=16))
+
+    def _ssh_guest(self):
+        """ Return user@guest """
+        return f'{self.user}@{self.guest}'
+
+    def _ssh_options(self, join=False):
+        """ Return common ssh options (list or joined) """
+        options = [
+            '-oStrictHostKeyChecking=no',
+            '-oUserKnownHostsFile=/dev/null',
+            ]
+        if self.key:
+            options.extend(['-i', self.key])
+        return ' '.join(options) if join else options
+
+    def _ssh_command(self, join=False):
+        """ Prepare an ssh command line for execution (list or joined) """
+        command = ['sshpass', f'-p{self.password}'] if self.password else []
+        command += ['ssh'] + self._ssh_options()
+        return ' '.join(command) if join else command
+
+    def load(self, data):
+        """ Load guest data for easy access """
+        for key in self._keys:
+            setattr(self, key, data.get(key))
+
+    def save(self):
+        """ Save guest data for future wake up """
+        data = dict()
+        for key in self._keys:
+            value = getattr(self, key)
+            if value is not None:
+                data[key] = value
+        return data
+
+    def wake(self):
+        """ Wake up the guest """
+        self.debug(f"Doing nothing to wake up guest '{self.guest}'.")
+
+    def start(self):
+        """ Start the guest """
+        self.debug(f"Doing nothing to start guest '{self.guest}'.")
+
+    def details(self):
+        """ Show guest details such as distro and kernel """
+        try:
+            distro = self.execute('cat /etc/redhat-release')[0].strip()
+        except tmt.utils.RunError:
+            try:
+                distro = self.execute('cat /etc/lsb-release')[0].strip()
+                distro = re.search('DESCRIPTION="(.*)"', distro).group(1)
+            except (tmt.utils.RunError, AttributeError):
+                distro = None
+        if distro:
+            self.info('distro', distro, 'green')
+        kernel = self.execute('uname -r')[0].strip()
+        self.info('kernel', kernel, 'green')
+
+    def _ansible_verbosity(self):
+        """ Prepare verbose level based on the --debug option count """
+        if self.opt('debug') < 3:
+            return ''
+        else:
+            return ' -' + (self.opt('debug') - 2) * 'v'
+
+    def _ansible_summary(self, output):
+        """ Check the output for ansible result summary numbers """
+        keys = 'ok changed unreachable failed skipped rescued ignored'.split()
+        for key in keys:
+            matched = re.search(rf'^.*\s:\s.*{key}=(\d+).*$', output, re.M)
+            if matched and int(matched.group(1)) > 0:
+                tasks = fmf.utils.listed(matched.group(1), 'task')
+                self.verbose(key, tasks, 'green')
+
+    def _ansible_playbook_path(self, playbook):
+        """ Prepare full ansible playbook path """
+        # Playbook paths should be relative to the metadata tree root
+        self.debug(f"Applying playbook '{playbook}' on guest '{self.guest}'.")
+        playbook = os.path.join(self.parent.plan.run.tree.root, playbook)
+        self.debug(f"Playbook full path: '{playbook}'", level=2)
+        return playbook
+
+    def ansible(self, playbook):
+        """ Prepare guest using ansible playbook """
+        playbook = self._ansible_playbook_path(playbook)
+        stdout, stderr = self.run(
+            f'stty cols {tmt.utils.OUTPUT_WIDTH}; ansible-playbook '
+            f'--ssh-common-args="{self._ssh_options(join=True)}" '
+            f'-e ansible_python_interpreter=auto'
+            f'{self._ansible_verbosity()} -i {self._ssh_guest()}, {playbook}')
+        self._ansible_summary(stdout)
+
+    def execute(self, command, **kwargs):
+        """
+        Execute command on the guest
+
+        command ....... string or list of command arguments
+        environment ... dictionary with environment variables
+        """
+
+        # Prepare environment variables so they can be correctly passed
+        # to ssh's shell. Needs to be prepended with export and run as a
+        # separate command.
+        environment = kwargs.get('env')
+        if environment is None:
+            environment = ''
+        else:
+            environment = 'export {}; '.format(
+                ' '.join(tmt.utils.shell_variables(environment)))
+
+        # Prepare command and run it
+        if isinstance(command, (list, tuple)):
+            command = ' '.join(command)
+        self.debug(f"Execute command '{command}' on guest '{self.guest}'.")
+        command = (
+            self._ssh_command() + [self._ssh_guest()] +
+            [f'{environment}{command}'])
+        return self.run(command, shell=False, **kwargs)
+
+    def push(self):
+        """ Push workdir to guest """
+        self.debug(f"Push workdir to guest '{self.guest}'.")
+        self.run(
+            f'rsync -Rrze "{self._ssh_command(join=True)}" --delete '
+            f'{self.parent.plan.workdir} {self._ssh_guest()}:/')
+
+    def pull(self):
+        """ Pull workdir from guest """
+        self.debug(f"Pull workdir from guest '{self.guest}'.")
+        self.run(
+            f'rsync -Rrze "{self._ssh_command(join=True)}" '
+            f'{self._ssh_guest()}:{self.parent.plan.workdir} /')
+
+    def stop(self):
+        """ Stop the guest """
+        self.debug(f"Doing nothing to stop guest '{self.guest}'.")
+
+    def remove(self):
+        """ Remove the guest (disk cleanup) """
+        self.debug(f"Doing nothing to remove guest '{self.guest}'.")

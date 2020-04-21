@@ -1,11 +1,13 @@
 # coding: utf-8
 
 import os
-import tmt
 import pytest
 import shutil
 import tempfile
 import click.testing
+
+import tmt
+import tmt.cli
 
 runner = click.testing.CliRunner()
 

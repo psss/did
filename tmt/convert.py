@@ -250,8 +250,7 @@ def read_nitrate(beaker_task, common_data, disabled):
             echo(style('contact: ', fg='green') + data['contact'])
         # Environment
         if testcase.arguments:
-            data['environment'] = tmt.utils.variables_to_dictionary(
-                testcase.arguments)
+            data['environment'] = tmt.utils.shell_to_dict(testcase.arguments)
             if not data['environment']:
                 data.pop('environment')
             else:

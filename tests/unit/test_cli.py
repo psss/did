@@ -19,7 +19,7 @@ runner = CliRunner()
 def test_mini():
     """ Minimal smoke test """
     result = runner.invoke(
-        tmt.cli.main, ['--root', example('mini'), 'run', '-d', 'discover'])
+        tmt.cli.main, ['--root', example('mini'), 'run', '-dv', 'discover'])
     assert result.exit_code == 0
     assert 'Found 1 plan.' in result.output
     assert '1 test selected' in result.output
@@ -101,8 +101,7 @@ def test_step_execute():
 
     # Test execute empty with discover output missing
     assert result.exit_code != 0
-    assert 'Could not find TESTS file' in result.output
-
+    assert isinstance(result.exception, tmt.utils.ExecuteError)
     assert step in result.output
     assert 'provision' not in result.output
 

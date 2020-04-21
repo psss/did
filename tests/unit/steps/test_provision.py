@@ -5,8 +5,10 @@ import tempfile
 
 from mock import MagicMock, patch
 
-from tmt.steps.provision import Provision, localhost, vagrant
+import tmt
+from tmt.steps.provision import Provision, local, vagrant
 from tmt.utils import GeneralError, SpecificationError
+
 
 
 class PlanMock(MagicMock):
@@ -27,50 +29,44 @@ def test_defaults():
     for provision_data in provision.data:
         assert provision_data['how'] == 'virtual'
 
+import tmt.steps.provision.testcloud
+import tmt.steps.provision.podman
+import tmt.steps.provision.connect
+import tmt.steps.provision.local
 
 @pytest.mark.parametrize('how,provisioner', [
-    ('libvirt', vagrant.ProvisionVagrant),
-    ('virtual', vagrant.ProvisionVagrant),
-    ('vagrant', vagrant.ProvisionVagrant),
-    ('local', localhost.ProvisionLocalhost),
-    ('localhost', localhost.ProvisionLocalhost)
+    ('local', tmt.steps.provision.local.ProvisionLocal),
+    ('virtual', tmt.steps.provision.testcloud.ProvisionTestcloud),
+    ('container', tmt.steps.provision.podman.ProvisionPodman),
+    ('connect', tmt.steps.provision.connect.ProvisionConnect),
 ])
 def test_pick_provision(how, provisioner):
     plan = PlanMock()
     provision = Provision({'how': how}, plan)
     provision.wake()
-    for guest in provision.guests:
-        assert isinstance(guest, provisioner)
+    for guest in provision.guests():
+        assert isinstance(guest, tmt.base.Guest)
 
 
 def test_localhost_execute():
     plan = PlanMock()
-    provision = Provision({'how': 'localhost'}, plan)
-    provision.wake()
+    guest = tmt.steps.provision.local.GuestLocal(
+        {'guest': 'localhost'}, 'default', plan)
 
     with patch('tmt.utils.Common.run') as run:
-        provision.execute('a', 'b', 'c')
-        run.assert_called_once_with('a b c')
+        guest.execute(['a', 'b', 'c'])
+        run.assert_called_once_with(['a', 'b', 'c'])
 
 
 def test_localhost_prepare_ansible():
     plan = PlanMock()
-    provision = Provision({'how': 'localhost'}, plan)
-    provision.wake()
+    guest = tmt.steps.provision.local.GuestLocal(
+        {'guest': 'localhost'}, 'default', plan)
 
     with patch('tmt.utils.Common.run') as run:
-        provision.prepare('ansible', 'playbook.yml')
+        run.return_value = ('out', 'err')
+        guest.ansible('playbook.yml')
         playbook = os.path.join(plan.run.tree.root, 'playbook.yml')
         run.assert_called_once_with(
-            f'sudo sh -c "stty cols 80; '
+            f'sudo sh -c "stty cols {tmt.utils.OUTPUT_WIDTH}; '
             f'ansible-playbook -c local -i localhost, {playbook}"')
-
-
-def test_localhost_prepare_shell():
-    plan = PlanMock()
-    provision = Provision({'how': 'localhost'}, plan)
-    provision.wake()
-
-    with patch('tmt.utils.Common.run') as run:
-        provision.prepare('shell', 'a b c')
-        run.assert_called_once_with('a b c', cwd=plan.run.tree.root)

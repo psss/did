@@ -48,7 +48,10 @@ def create_method_class(methods):
             for index in range(len(args)):
                 # Handle '--how method' or '-h method'
                 if args[index] in ['--how', '-h']:
-                    how = args[index + 1]
+                    try:
+                        how = args[index + 1]
+                    except IndexError:
+                        pass
                     break
                 # Handle '--how=method'
                 elif args[index].startswith('--how='):

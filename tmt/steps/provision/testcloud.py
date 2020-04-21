@@ -1,12 +1,27 @@
+# coding: utf-8
+
 import re
 import os
 import time
-
+import tmt
+import click
 import requests
 
-from tmt.steps.provision.base import ProvisionBase
-from tmt.utils import GeneralError, SpecificationError, WORKDIR_ROOT
-from tmt.utils import shell_variables
+from tmt.utils import ProvisionError, WORKDIR_ROOT
+
+def import_testcloud():
+    """
+    Import testcloud module only when needed
+
+    Until we have a separate package for each plugin.
+    """
+    global testcloud
+    try:
+        import testcloud.image
+        import testcloud.instance
+    except ImportError:
+        raise ProvisionError(
+            "Install 'testcloud' to provision using this method.")
 
 # Testcloud cache to our tmt's workdir root
 TESTCLOUD_DATA = os.path.join(WORKDIR_ROOT, 'testcloud')
@@ -99,253 +114,307 @@ DOMAIN_TEMPLATE = """<domain type='kvm'>
 </domain>
 """
 
-# Default image
-DEFAULT_IMAGE = 'fedora'
-
 # VM defaults
-DEFAULT_MEMORY = 2048      # MiB
-DEFAULT_DISK_SIZE = 10     # GiB
-DEFAULT_USER = 'root'
-DEFAULT_BOOT_TIMEOUT = 60  # seconds
-DEFAULT_SSH_CONNECT_TIMEOUT = 60  # seconds
+DEFAULT_BOOT_TIMEOUT = 60      # seconds
+DEFAULT_CONNECT_TIMEOUT = 10   # seconds
 
 # Image guessing related variables
 KOJI_URL = 'https://kojipkgs.fedoraproject.org/compose'
-
 RAWHIDE_URL = f'{KOJI_URL}/rawhide/latest-Fedora-Rawhide'
 RAWHIDE_ID = f'{RAWHIDE_URL}/COMPOSE_ID'
 RAWHIDE_IMAGE_URL = f'{RAWHIDE_URL}/compose/Cloud/x86_64/images'
 
 
-def guess_image_url(name):
-    """ Guess image url for given name """
+class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
+    """
+    Use testcloud to provision a guest
 
-    def get_compose_id(compose_id_url):
-        response = requests.get(f'{compose_id_url}')
+    Minimal config which uses the latest fedora image:
 
-        if not response:
-            raise GeneralError(
-                f'Failed to find compose ID for '
-                f"'{name}' at '{compose_id_url}'")
+        provision:
+            how: virtual
 
-        return response.text
+    Here's a full config example:
 
-    # map fedora, rawhide or fedora-rawhide to latest rawhide image
-    if re.match(r'^(fedora|fedora-rawhide|rawhide)$', name, re.IGNORECASE):
-        compose_id = get_compose_id(RAWHIDE_ID)
-        compose_name = compose_id.replace(
-            'Fedora-Rawhide', 'Fedora-Cloud-Base-Rawhide')
-        return f'{RAWHIDE_IMAGE_URL}/{compose_name}.x86_64.qcow2'
+        provision:
+            how: virtual
+            image: fedora
+            user: root
+            memory: 2048
 
-    # Try to check if given url is a local file
-    if os.path.exists(name):
-        return f'file://{name}'
+    For the image use 'fedora' for the latest rawhide compose or full
+    url to the qcow2 image for example from:
 
-    raise GeneralError(f"Could not map '{name}' to compose.")
+        https://kojipkgs.fedoraproject.org/compose/
+
+    Use full path for image stored on local disk, for example:
+
+        /var/tmp/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2
+    """
+
+    # Guest instance
+    _guest = None
+
+    # Supported methods
+    _methods = [
+        tmt.steps.Method(name='virtual.testcloud', doc=__doc__, order=50),
+        ]
+
+    @classmethod
+    def options(cls, how=None):
+        """ Prepare command line options for testcloud """
+        return [
+            click.option(
+                '-i', '--image', metavar='IMAGE',
+                help='Select image to use. Short name or complete url.'),
+            click.option(
+                '-m', '--memory', metavar='MEMORY',
+                help='Set available memory in MB, 2048 MB by default.'),
+            click.option(
+                '-D', '--disk', metavar='MEMORY',
+                help='Specify disk size in GB, 10 GB by default.'),
+            click.option(
+                '-u', '--user', metavar='USER',
+                help='Username to use for all guest operations.'),
+            ] + super().options(how)
+
+    def default(self, option, default=None):
+        """ Return default data for given option """
+        defaults = {
+            'user': 'root',
+            'memory': 2048,
+            'disk': 10,
+            'image': 'fedora',
+            }
+        if option in defaults:
+            return defaults[option]
+        return default
+
+    def show(self):
+        """ Show provision details """
+        super().show(['image', 'user', 'memory', 'disk'])
+
+    def wake(self, data=None):
+        """ Override options and wake up the guest """
+        super().wake(['image', 'memory', 'disk', 'user'])
+
+        # Convert memory and disk to integers
+        for key in ['memory', 'disk']:
+            if isinstance(self.get(key), str):
+                self.data[key] = int(self.data[key])
+
+        # Wake up testcloud instance
+        if data:
+            guest = GuestTestcloud(data, name=self.name, parent=self.step)
+            guest.wake()
+            self._guest = guest
+
+    def go(self):
+        """ Provision the testcloud instance """
+        super().go()
+
+        # Give info about provided data
+        data = dict()
+        for key in ['image', 'user', 'memory', 'disk']:
+            data[key] = self.get(key)
+            if key == 'memory':
+                self.info('memory', f"{self.get('memory')} MB", 'green')
+            elif key == 'disk':
+                self.info('disk', f"{self.get('disk')} GB", 'green')
+            else:
+                self.info(key, data[key], 'green')
+
+        # Create a new GuestTestcloud instance and start it
+        self._guest = GuestTestcloud(data, name=self.name, parent=self.step)
+        self._guest.start()
+
+    def guest(self):
+        """ Return the provisioned guest """
+        return self._guest
 
 
-class ProvisionTestcloud(ProvisionBase):
-    """ Testcloud Provisioner """
-    def __init__(self, data, step):
-        super(ProvisionTestcloud, self).__init__(data, step)
+class GuestTestcloud(tmt.Guest):
+    """
+    Testcloud Instance
 
-        self._prepare_map = {
-            'ansible': self._prepare_ansible,
-            'shell': self._prepare_shell,
-        }
+    The following keys are expected in the 'data' dictionary::
 
-        # Initialize testcloud image
-        self.image = None
+        image ...... qcov image name or url
+        user ....... user name to log in
+        memory ..... memory size for vm
+        disk ....... disk size for vm
+    """
 
-        # Testcloud instance and ip
-        self.instance = None
-        self.ip = None
+    @staticmethod
+    def _guess_image_url(name):
+        """ Guess image url for given name """
 
-        # Default user
-        self.user = self.option('user') or DEFAULT_USER
+        def get_compose_id(compose_id_url):
+            response = requests.get(f'{compose_id_url}')
 
-        # Create ssh key
-        self.ssh_key = os.path.join(self.provision_dir, 'id_rsa')
-        self.ssh_pubkey = os.path.join(self.provision_dir, 'id_rsa.pub')
+            if not response:
+                raise ProvisionError(
+                    f'Failed to find compose ID for '
+                    f"'{name}' at '{compose_id_url}'")
 
-        # Common ssh args
-        self.ssh_args = [
-            '-i', self.ssh_key,
-            '-oStrictHostKeyChecking=no',
-            '-oUserKnownHostsFile=/dev/null',
-            ]
-        self.ssh_args_shell = self.join(self.ssh_args)
+            return response.text
 
-        # Connection host
-        self.ssh_user_host = None
+        # Map fedora, rawhide or fedora-rawhide to latest rawhide image
+        if re.match(r'^(fedora|fedora-rawhide|rawhide)$', name, re.IGNORECASE):
+            compose_id = get_compose_id(RAWHIDE_ID)
+            compose_name = compose_id.replace(
+                'Fedora-Rawhide', 'Fedora-Cloud-Base-Rawhide')
+            return f'{RAWHIDE_IMAGE_URL}/{compose_name}.x86_64.qcow2'
 
-        # Shell compatible environment variables, so they can be correctly
-        # passed to ssh's shell. Needs to be prepended with export and run
-        # as a separate command.
-        self.shell_env = ''
-        if self.opt('environment'):
-            env = ' '.join(shell_variables(self.opt('environment')))
-            self.shell_env = f'export {env};'
+        # Try to check if given url is a local file
+        if os.path.exists(name):
+            return f'file://{name}'
 
-        # Make sure required directories exist
-        os.makedirs(TESTCLOUD_DATA, exist_ok=True)
-        os.makedirs(TESTCLOUD_IMAGES, exist_ok=True)
-
-        # Make sure libvirt domain template exists
-        ProvisionTestcloud._create_template()
-
-    def option(self, key):
-        """ Return option specified on command line """
-        # Consider command line as priority
-        if self.opt(key):
-            return self.opt(key)
-
-        return self.data.get(key, None)
+        raise ProvisionError(f"Could not map '{name}' to compose.")
 
     @staticmethod
     def _create_template():
         """ Create libvirt domain template if it does not exist """
         if os.path.exists(DOMAIN_TEMPLATE_FILE):
             return
-
         with open(DOMAIN_TEMPLATE_FILE, 'w') as template:
             template.write(DOMAIN_TEMPLATE)
 
-    def go(self):
-        super(ProvisionTestcloud, self).go()
+    def load(self, data):
+        """ Load guest data and initialize attributes """
+        super().load(data)
+        self.image = None
+        self.image_url = data.get('image')
+        self.instance = None
+        self.instance_name = data.get('instance')
+        self.memory = data.get('memory')
+        self.disk = data.get('disk')
 
-        # If image does not start with http/https/file, consider it a mapping
-        # value and try to guess the URL
-        image_url = self.option('image') or DEFAULT_IMAGE
-        if not re.match(r'^(?:https?|file)://.*', image_url):
-            image_url = guess_image_url(image_url)
+    def save(self):
+        """ Save guest data for future wake up """
+        data = super().save()
+        data['instance'] = self.instance_name
+        data['image'] = self.image_url
+        return data
 
-        # Import testcloud module only when needed (until we have a
-        # separate package for each plugin)
-        try:
-            import testcloud.image
-            import testcloud.instance
-        except ImportError:
-            raise GeneralError(
-                "Install 'testcloud' to provision using this method.")
-
-        # Get configuration
-        config = testcloud.config.get_config()
-
-        # Make sure download progress is disabled, so it
-        # does not spoil our logging
-        config.DOWNLOAD_PROGRESS = False
-
-        # Configure to tmt's storage directories
-        config.DATA_DIR = TESTCLOUD_DATA
-        config.STORE_DIR = TESTCLOUD_IMAGES
-
-        # Initialize testcloud image
-        self.image = testcloud.image.Image(image_url)
-
-        # Show which image we are using
-        self.info('image', f'{self.image.name}', 'green')
-
-        status = f'{self.image.name}'
-        if not os.path.exists(self.image.local_path):
-            self.info('status', 'downloading', 'green')
-
-        # prepare testcloud image
-        try:
-            self.image.prepare()
-        except FileNotFoundError:
-            raise GeneralError(
-                f"Could not find image '{self.image.local_path}'")
-
+    def wake(self):
+        """ Wake up the guest """
+        self.debug(
+            f"Waking up testcloud instance '{self.instance_name}'.",
+            level=2, shift=0)
+        self.prepare_config()
+        self.image = testcloud.image.Image(self.image_url)
         self.instance = testcloud.instance.Instance(
             self.instance_name, image=self.image)
 
-        # generate ssh key
-        self.run(f'ssh-keygen -f {self.ssh_key} -N ""')
+    def prepare_ssh_key(self):
+        """ Prepare ssh key for authentication """
+        # Create ssh key paths
+        self.key = os.path.join(self.workdir, 'id_rsa')
+        self.pubkey = os.path.join(self.workdir, 'id_rsa.pub')
 
-        with open(self.ssh_pubkey, 'r') as pubkey:
-            config.USER_DATA = USER_DATA.format(
+        # Generate ssh key
+        self.debug('Generating an ssh key.')
+        self.run(f'ssh-keygen -f {self.key} -N ""')
+        with open(self.pubkey, 'r') as pubkey:
+            self.config.USER_DATA = USER_DATA.format(
                 user_name=self.user, public_key=pubkey.read())
 
-        self.info('status', 'booting', 'green')
-        self.instance.ram = self.option('memory') or DEFAULT_MEMORY
-        self.instance.disk_size = DEFAULT_DISK_SIZE
+    def prepare_config(self):
+        """ Prepare common configuration """
+        import_testcloud()
+
+        # Get configuration
+        self.config = testcloud.config.get_config()
+
+        # Make sure download progress is disabled unless in debug mode,
+        # so it does not spoil our logging
+        self.config.DOWNLOAD_PROGRESS = self.opt('debug') > 2
+
+        # Configure to tmt's storage directories
+        self.config.DATA_DIR = TESTCLOUD_DATA
+        self.config.STORE_DIR = TESTCLOUD_IMAGES
+
+    def start(self):
+        """ Start provisioned guest """
+        # Make sure required directories exist
+        os.makedirs(TESTCLOUD_DATA, exist_ok=True)
+        os.makedirs(TESTCLOUD_IMAGES, exist_ok=True)
+
+        # Make sure libvirt domain template exists
+        GuestTestcloud._create_template()
+
+        # Prepare config
+        self.prepare_config()
+
+        # If image does not start with http/https/file, consider it a
+        # mapping value and try to guess the URL
+        if not re.match(r'^(?:https?|file)://.*', self.image_url):
+            self.image_url = GuestTestcloud._guess_image_url(self.image_url)
+
+        # Initialize and prepare testcloud image
+        self.image = testcloud.image.Image(self.image_url)
+        self.verbose('qcow', self.image.name, 'green')
+        if not os.path.exists(self.image.local_path):
+            self.info('progress', 'downloading...', 'cyan')
+        try:
+            self.image.prepare()
+        except FileNotFoundError:
+            raise ProvisionError(f"Image '{self.image.local_path}' not found.")
+
+        # Create instance
+        self.instance_name = self._random_name()
+        self.instance = testcloud.instance.Instance(
+            name=self.instance_name, image=self.image)
+        self.verbose('name', self.instance_name, 'green')
+
+        # Prepare ssh key
+        self.prepare_ssh_key()
+
+        # Boot the virtual machine
+        self.info('progress', 'booting...', 'cyan')
+        self.instance.ram = self.memory
+        self.instance.disk_size = self.disk
         self.instance.prepare()
         self.instance.spawn_vm()
-
         try:
             self.instance.start(DEFAULT_BOOT_TIMEOUT)
-        except testcloud.exceptions.TestcloudInstanceError:
-            # TODO: find out how to get detailed information about boot problem
-            raise GeneralError('Failed to boot instance')
+        except testcloud.exceptions.TestcloudInstanceError as error:
+            raise ProvisionError(
+                f'Failed to boot testcloud instance ({error}).')
+        self.guest = self.instance.get_ip()
+        self.instance.create_ip_file(self.guest)
 
-        self.ip = self.instance.get_ip()
-        self.instance.create_ip_file(self.ip)
-        self.ssh_user_host = f'{self.user}@{self.instance.get_ip()}'
-
-        for i in range(1, DEFAULT_SSH_CONNECT_TIMEOUT):
+        # Wait a bit until the box is up
+        for i in range(1, DEFAULT_CONNECT_TIMEOUT):
             try:
                 self.execute('whoami')
                 break
-            except GeneralError:
-                self.debug('failed to connect to machine, retrying')
+            except tmt.utils.RunError:
+                self.debug('Failed to connect to machine, retrying.')
             time.sleep(1)
+        if i == DEFAULT_CONNECT_TIMEOUT:
+            raise ProvisionError(
+                'Failed to connect in {DEFAULT_CONNECT_TIMEOUT}s.')
 
-        if i == DEFAULT_BOOT_TIMEOUT:
-            raise GeneralError(
-                'Failed to login to the machine in {DEFAULT_BOOT_TIMEOUT}s')
-
-        self.info('instance', self.ssh_user_host, 'green')
-
-    def execute(self, *args, **kwargs):
-        if not self.instance:
-            raise GeneralError(
-                'Could not execute without a provisioned VM.')
-
-        return self.run(
-            ['ssh'] + self.ssh_args + [self.ssh_user_host] +
-            [f'{self.shell_env} {self.join(args)}'], shell=False)[0].rstrip()
-
-    def _prepare_ansible(self, what):
-        """ Prepare using ansible """
-        # Playbook paths should be relative to the metadata tree root
-        playbook = os.path.join(self.step.plan.run.tree.root, what)
-        # Prepare verbose level based on the --debug option count
-        verbose = ' -' + self.opt('debug') * 'v' if self.opt('debug') else ''
-        # Set collumns to 80 characters while running ansible
-        self.run(
-            f'stty cols 80; ansible-playbook '
-            f'--ssh-common-args="{self.ssh_args_shell}" '
-            f'-e ansible_python_interpreter=auto'
-            f'{verbose} -i {self.user}@{self.ip}, {playbook}')
-
-    def _prepare_shell(self, what):
-        """ Prepare using shell """
-        # Set current working directory to the test metadata root
-        self.execute(what, cwd=self.step.plan.run.tree.root)
-
-    def prepare(self, how, what):
-        """ Run prepare phase """
-        try:
-            self._prepare_map[how](what)
-        except AttributeError as e:
-            raise SpecificationError(
-                f"Prepare method '{how}' is not supported.")
-
-    def sync_workdir_to_guest(self):
-        """ sync on demand """
-        self.run(
-            f'rsync -Rrze "ssh {self.ssh_args_shell}" '
-            f'{self.step.plan.workdir} {self.user}@{self.ip}:/')
-
-    def sync_workdir_from_guest(self):
-        """ sync from guest to host """
-        self.run(
-            f'rsync -Rrze "ssh {self.ssh_args_shell}" '
-            f'{self.user}@{self.ip}:{self.step.plan.workdir} /')
-
-    def destroy(self):
-        """ Remove the container """
+    def stop(self):
+        """ Stop provisioned guest """
         if self.instance:
-            self.info('instance', 'stopping', 'green')
-            self.instance.stop()
+            self.debug(f"Stopping testcloud instance '{self.instance_name}'.")
+            try:
+                self.instance.stop()
+            except testcloud.exceptions.TestcloudInstanceError as error:
+                raise tmt.utils.ProvisionError(
+                    f"Failed to stop testcloud instance: {error}")
+            self.info('guest', 'stopped', 'green')
+
+    def remove(self):
+        """ Remove the guest (disk cleanup) """
+        if self.instance:
+            self.debug(f"Removing testcloud instance '{self.instance_name}'.")
+            try:
+                self.instance.remove(autostop=True)
+            except FileNotFoundError as error:
+                raise tmt.utils.ProvisionError(
+                    f"Failed to remove testcloud instance: {error}")
+            self.info('guest', 'removed', 'green')

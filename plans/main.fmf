@@ -1,10 +1,24 @@
-# Run tests quickly on the local host
+# Local host
 provision:
     how: local
 
-# Run tests in a virtual machine
+# Connect to a running guest
 #provision:
-#    how: virtual
+#    how: connect
+#    guest: 10.20.30.40
+#    key: /home/psss/.ssh/1minutetip_rsa
+#    user: root
+#    password: secret
+
+# Virtual using testcloud
+#provision:
+#    how: virtual.testcloud
+#    image: fedora
+#    image: https://kojipkgs.fedoraproject.org/compose/31/latest-Fedora-31/compose/Cloud/x86_64/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2
+
+# Virtual using vagrant
+#provision:
+#    how: virtual.vagrant
 #    image: fedora/30-cloud-base
 
 # Run tests in a container

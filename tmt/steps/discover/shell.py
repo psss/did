@@ -1,7 +1,3 @@
-# coding: utf-8
-
-""" Shell Tests Discovery """
-
 import os
 import fmf
 import tmt
@@ -11,15 +7,27 @@ import shutil
 import tmt.steps.discover
 
 class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
-    """ Discover available tests from manually provided list """
+    """
+    Use provided list of shell script tests
+
+    List of test cases to be executed can be defined manually directly
+    in the plan as a list of dictionaries containing test name, actual
+    test script and optionally a path to the test. Example config:
+
+    discover:
+        how: shell
+        tests:
+        - name: /help/main
+          test: tmt --help
+        - name: /help/test
+          test: tmt test --help
+        - name: /help/smoke
+          test: ./smoke.sh
+          path: /tests/shell
+    """
 
     # Supported methods
-    _methods = [
-        tmt.steps.Method(
-            name='shell',
-            summary='Manual list of shell tests',
-            order=50),
-        ]
+    _methods = [tmt.steps.Method(name='shell', doc=__doc__, order=50)]
 
     def show(self):
         """ Show config details """

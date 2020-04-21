@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """ Test Metadata Utilities """
 
@@ -23,11 +22,21 @@ log = fmf.utils.Logging('tmt').logger
 WORKDIR_ROOT = '/var/tmp/tmt'
 WORKDIR_MAX = 1000
 
+# Maximum number of lines of stdout/stderr to show upon errors
+OUTPUT_LINES = 100
+# Default output width
+OUTPUT_WIDTH = 79
+
 # Hierarchy indent
 INDENT = 4
 
 # Simple runner script name
 RUNNER = 'run.sh'
+
+# Default name and order for step plugins
+DEFAULT_NAME = 'default'
+DEFAULT_PLUGIN_ORDER = 50
+DEFAULT_PLUGIN_ORDER_REQUIRES = 70
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -156,23 +165,33 @@ class Common(object):
         if not self.opt('quiet'):
             echo(self._indent(key, value, color, shift))
 
-    def verbose(self, key, value=None, color=None, shift=0):
-        """ Show message if in verbose or debug mode """
+    def verbose(self, key, value=None, color=None, shift=0, level=1):
+        """ Show message if in requested verbose mode level """
         self._log(self._indent(key, value, color=None, shift=shift))
-        if self.opt('verbose') or self.opt('debug'):
+        if self.opt('verbose') >= level:
             echo(self._indent(key, value, color, shift))
 
-    def debug(self, key, value=None, color=None, shift=1):
-        """ Show message if in debug mode """
+    def debug(self, key, value=None, color=None, shift=1, level=1):
+        """ Show message if in requested debug mode level """
         self._log(self._indent(key, value, color=None, shift=shift))
-        if self.opt('debug'):
+        if self.opt('debug') >= level:
             echo(self._indent(key, value, color, shift))
 
-    def _run(self, command, cwd, shell):
+    def _run(self, command, cwd, shell, env):
         """ Run command, capture the output """
+        # Prepare the environment
+        if env:
+            if not isinstance(env, dict):
+                raise tmt.utils.GeneralError(f"Invalid environment '{env}'.")
+            # Do not modify current process environment
+            environment = os.environ.copy()
+            environment.update(env)
+        else:
+            environment = None
+
         # Create the process
         process = subprocess.Popen(
-            command, cwd=cwd, shell=shell,
+            command, cwd=cwd, shell=shell, env=environment,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         descriptors = [process.stdout.fileno(), process.stderr.fileno()]
         stdout = ''
@@ -188,37 +207,42 @@ class Common(object):
                     line = process.stdout.readline().decode('utf-8')
                     stdout += line
                     if line != '':
-                        self.debug('out', line.rstrip('\n'), 'yellow')
+                        self.debug('out', line.rstrip('\n'), 'yellow', level=3)
                 # Handle stderr
                 if descriptor == process.stderr.fileno():
                     line = process.stderr.readline().decode('utf-8')
                     stderr += line
                     if line != '':
-                        self.debug('err', line.rstrip('\n'), 'yellow')
+                        self.debug('err', line.rstrip('\n'), 'yellow', level=3)
 
         # Check for possible additional output
         for line in process.stdout.readlines():
             line = line.decode('utf-8')
             stdout += line
-            self.debug('out', line.rstrip('\n'), 'yellow')
+            self.debug('out', line.rstrip('\n'), 'yellow', level=3)
         for line in process.stderr.readlines():
             line = line.decode('utf-8')
             stderr += line
-            self.debug('err', line.rstrip('\n'), 'yellow')
+            self.debug('err', line.rstrip('\n'), 'yellow', level=3)
 
         # Handle the exit code, return output
         if process.returncode != 0:
             if isinstance(command, (list, tuple)):
                 command = ' '.join(command)
-            raise subprocess.CalledProcessError(process.returncode, command)
+            raise RunError(
+                message=f"Command returned '{process.returncode}'.",
+                command=command, stdout=stdout, stderr=stderr)
         return stdout, stderr
 
-    def run(self, command, message=None, cwd=None, dry=False, shell=True):
+    def run(
+            self, command, message=None,
+            cwd=None, dry=False, shell=True, env=None):
         """
         Run command, give message, handle errors
 
         Command is run in the workdir be default.
         In dry mode commands are not executed unless dry=True.
+        Environment is updated with variables from the 'env' dictionary.
         Returns (stdout, stderr) tuple.
         """
         # Use a generic message if none given, prepare error message
@@ -228,7 +252,7 @@ class Common(object):
             else:
                 line = command
             message = f"Run command '{line}'."
-        self.debug(message)
+        self.debug(message, level=2)
         message = "Failed to " + message[0].lower() + message[1:]
 
         # Nothing more to do in dry mode (unless requested)
@@ -237,15 +261,17 @@ class Common(object):
 
         # Prepare command, run it, handle the exit code
         try:
-            return self._run(command, cwd=cwd or self.workdir, shell=shell)
-        except (OSError, subprocess.CalledProcessError) as error:
-            raise GeneralError(f"{message}\n{error}")
+            return self._run(
+                command, cwd=cwd or self.workdir, shell=shell, env=env)
+        except RunError as error:
+            self.debug(error.message, level=3)
+            raise RunError(message, error.command, error.stdout, error.stderr)
 
     def read(self, path):
         """ Read a file from the workdir """
         if self.workdir:
             path = os.path.join(self.workdir, path)
-        self.debug(f"Read file '{path}'.")
+        self.debug(f"Read file '{path}'.", level=2)
         try:
             with open(path) as data:
                 return data.read()
@@ -256,7 +282,7 @@ class Common(object):
         """ Write a file to the workdir """
         if self.workdir:
             path = os.path.join(self.workdir, path)
-        self.debug(f"Write file '{path}'.")
+        self.debug(f"Write file '{path}'.", level=2)
         # Dry mode
         if self.opt('dry'):
             return
@@ -291,7 +317,7 @@ class Common(object):
                     break
             if id_ == WORKDIR_MAX:
                 raise GeneralError(
-                    "Workdir full. Cleanup the '{WORKDIR_ROOT}' directory.")
+                    f"Workdir full. Cleanup the '{WORKDIR_ROOT}' directory.")
         # Weird workdir id
         else:
             raise GeneralError(
@@ -313,7 +339,7 @@ class Common(object):
         """ Clean up the work directory """
         directory = self._workdir_name()
         if os.path.isdir(directory):
-            self.debug(f"Clean up workdir '{directory}'.")
+            self.debug(f"Clean up workdir '{directory}'.", level=2)
             shutil.rmtree(directory)
         self._workdir = None
 
@@ -339,6 +365,14 @@ class GeneralError(Exception):
 class FileError(GeneralError):
     """ File operation error """
 
+class RunError(GeneralError):
+    """ Command execution error """
+    def __init__(self, message, command, stdout, stderr):
+        self.message = message
+        self.command = command
+        self.stdout = stdout
+        self.stderr = stderr
+
 class SpecificationError(GeneralError):
     """ Metadata specification error """
 
@@ -348,6 +382,26 @@ class ConvertError(GeneralError):
 class StructuredFieldError(GeneralError):
     """ StructuredField parsing error """
 
+# Step exceptions
+
+class DiscoverError(GeneralError):
+    """ Discover step error """
+
+class ProvisionError(GeneralError):
+    """ Provision step error """
+
+class PrepareError(GeneralError):
+    """ Prepare step error """
+
+class ExecuteError(GeneralError):
+    """ Execute step error """
+
+class ReportError(GeneralError):
+    """ Report step error """
+
+class FinishError(GeneralError):
+    """ Finish step error """
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utilities
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -355,6 +409,7 @@ class StructuredFieldError(GeneralError):
 def quote(string):
     """ Surround a string with double quotes """
     return f'"{string}"'
+
 
 def ascii(text):
     """ Transliterate special unicode characters into pure ascii """
@@ -367,7 +422,26 @@ def ascii(text):
     return unicodedata.normalize('NFKD', text).encode('ascii','ignore')
 
 
-def variables_to_dictionary(variables):
+def listify(data, split=False, keys=None):
+    """
+    Ensure that variable is a list, convert if necessary
+
+    For dictionaries check all items or only those with provided keys.
+    Also split strings on space/comma if split=True.
+    """
+    if isinstance(data, list):
+        return data
+    if isinstance(data, str):
+        return fmf.utils.split(data) if split else [data]
+    if isinstance(data, dict):
+        for key in keys or data:
+            if key in data:
+                data[key] = listify(data[key], split=split)
+        return data
+    return [data]
+
+
+def shell_to_dict(variables):
     """
     Convert shell-like variables into a dictionary
 
@@ -378,7 +452,7 @@ def variables_to_dictionary(variables):
     ['X=1 Y=2 Z=3', 'A=1 B=2 C=3']
     'TXT="Some text with spaces in it"'
     """
-    if not isinstance(variables, list):
+    if not isinstance(variables, (list, tuple)):
         variables = [variables]
     result = dict()
     for variable in variables:
@@ -387,7 +461,7 @@ def variables_to_dictionary(variables):
         for var in shlex.split(variable):
             matched = re.match("([^=]+)=(.*)", var)
             if not matched:
-                raise GeneralError("Invalid parameter {0}".format(var))
+                raise GeneralError("Invalid variable specification '{var}'.")
             name, value = matched.groups()
             result[name] = value
     return result

@@ -27,6 +27,9 @@ class Finish(tmt.steps.Step):
 
     def go(self):
         """ Prepare the test step """
-        self.super.go()
+        super().go()
 
-        self.plan.provision.destroy()
+        # Stop and remove provisioned guests
+        for guest in self.plan.provision.guests():
+            guest.stop()
+            guest.remove()

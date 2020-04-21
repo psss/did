@@ -4,6 +4,7 @@ import re
 import unittest
 
 from tmt.utils import StructuredField, StructuredFieldError, public_git_url
+from tmt.utils import listify
 
 def test_public_git_url():
     """ Verify url conversion """
@@ -27,6 +28,15 @@ def test_public_git_url():
         ]
     for example in examples:
         assert public_git_url(example['original']) == example['expected']
+
+def test_listify():
+    """ Check listify functionality """
+    assert listify(['abc']) == ['abc']
+    assert listify('abc') == ['abc']
+    assert listify('a b c') == ['a b c']
+    assert listify('a b c', split=True) == ['a', 'b', 'c']
+    assert listify(dict(a=1, b=2)) == dict(a=[1], b=[2])
+    assert listify(dict(a=1, b=2), keys=['a']) == dict(a=[1], b=2)
 
 
 class test_structured_field(unittest.TestCase):

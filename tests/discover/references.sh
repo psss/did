@@ -10,7 +10,7 @@ rlJournalStart
 
     plan=fmf/nourl/noref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -d discover plan --name $plan | tee output'
+        rlRun 'tmt run -dv discover plan --name $plan | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertNotGrep 'Checkout ref' output
         rlAssertGrep '3 tests selected' output
@@ -22,7 +22,7 @@ rlJournalStart
     plan=fmf/nourl/noref/path
     path=$(realpath .)
     rlPhaseStartTest $plan
-        rlRun 'tmt run -d discover --how fmf --path $path plan --name $plan \
+        rlRun 'tmt run -dv discover --how fmf --path $path plan --name $plan \
             | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertNotGrep 'Checkout ref' output
@@ -34,7 +34,7 @@ rlJournalStart
 
     plan=fmf/nourl/ref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -d discover plan --name $plan | tee output'
+        rlRun 'tmt run -dv discover plan --name $plan | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*5407fe5' output
         rlAssertGrep '2 tests selected' output
@@ -47,8 +47,8 @@ rlJournalStart
     path=$(realpath ../../../examples/together)
     echo $path
     rlPhaseStartTest $plan
-        rlRun 'tmt run -d discover --how fmf --path $path plan --name $plan \
-            | tee output'
+        rlRun 'tmt run -dddv discover --how fmf --path $path \
+            plan --name $plan | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*eae4d52' output
         rlAssertGrep '2 tests selected' output
@@ -58,7 +58,7 @@ rlJournalStart
 
     plan=fmf/url/noref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -d discover plan --name $plan | tee output'
+        rlRun 'tmt run -dddv discover plan --name $plan | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*master' output
         rlAssertGrep /tests/docs output
@@ -68,7 +68,7 @@ rlJournalStart
 
     plan=fmf/url/noref/path
     rlPhaseStartTest $plan
-        rlRun 'tmt run -d discover plan --name $plan | tee output'
+        rlRun 'tmt run -dddv discover plan --name $plan | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*master' output
         rlAssertGrep '2 tests selected' output
@@ -78,7 +78,7 @@ rlJournalStart
 
     plan=fmf/url/ref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -d discover plan --name $plan | tee output'
+        rlRun 'tmt run -dddv discover plan --name $plan | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*5407fe5' output
         rlAssertGrep '2 tests selected' output
@@ -89,7 +89,7 @@ rlJournalStart
 
     plan=fmf/url/ref/path
     rlPhaseStartTest $plan
-        rlRun 'tmt run -d discover plan --name $plan | tee output'
+        rlRun 'tmt run -dddv discover plan --name $plan | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*eae4d52' output
         rlAssertGrep '2 tests selected' output
