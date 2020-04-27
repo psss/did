@@ -521,18 +521,29 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
     help='Plan template ({}).'.format(_plan_templates),
     prompt='Template ({})'.format(_plan_templates))
 @click.option(
-    '--discover', metavar='\'{YAML}\'',
-    help='Parameters for discover phase in a yaml format.',
-    multiple=True)
+    '--discover', metavar='YAML', multiple=True,
+    help='Discover phase content in yaml format.')
+@click.option(
+    '--provision', metavar='YAML', multiple=True,
+    help='Provision phase content in yaml format.')
+@click.option(
+    '--prepare', metavar='YAML', multiple=True,
+    help='Prepare phase content in yaml format.')
+@click.option(
+    '--execute', metavar='YAML', multiple=True,
+    help='Execute phase content in yaml format.')
+@click.option(
+    '--report', metavar='YAML', multiple=True,
+    help='Report phase content in yaml format.')
+@click.option(
+    '--finish', metavar='YAML', multiple=True,
+    help='Finish phase content in yaml format.')
 @verbose_debug_quiet
 @force_dry
-def create(context, name, template, discover, force, **kwargs):
+def create(context, name, template, force, **kwargs):
     """ Create a new plan based on given template. """
-    if context.args:
-       tmt.Plan.validate_args(context.args)
-
     tmt.Plan._save_context(context)
-    tmt.Plan.create(name, template, discover, context.obj.tree, force)
+    tmt.Plan.create(name, template, context.obj.tree, force)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Story

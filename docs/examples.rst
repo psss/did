@@ -318,6 +318,14 @@ Use ``tmt plan create`` to create a new plan with templates::
     tmt plans create --template mini /plans/smoke
     tmt plans create --t full /plans/features
 
+In order to override default template content directly from the
+command line use individual step options and provide desired data
+in the ``yaml`` format::
+
+    tmt plan create /plans/custom --template mini \
+        --discover '{how: "fmf", name: "internal", url: "https://internal/repo"}' \
+        --discover '{how: "fmf", name: "external", url: "https://external/repo"}'
+
 Options ``-f`` or ``--force`` can be used to overwrite existing
 files.
 

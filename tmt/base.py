@@ -4,6 +4,7 @@
 import os
 import re
 import fmf
+import yaml
 import pprint
 import random
 import string
@@ -352,33 +353,36 @@ class Plan(Node):
             return self._environment
 
     @staticmethod
-    def edit_template(content, new_args):
+    def edit_template(content):
         """ Edit the default template with custom values """
-        args = ['name', 'how', 'url', 'ref', 'path', 'test', 'filter']
-        new = ''
 
-        for data in new_args:
-            line = tmt.utils.yaml_to_dict(data)
-            if type(line) is not dict:
-                 raise tmt.utils.GeneralError(
-                         "Invalid YAML provided to --discover option")
+        content = tmt.utils.yaml_to_dict(content)
 
-            #'how' is the only value that needs to be there all the time
-            if 'how' not in line:
-                line['how'] = 'fmf'
+        # For each step check for possible command line data
+        for step in tmt.steps.STEPS:
+            options = Plan._opt(step)
+            if not options:
+                continue
+            step_data = []
 
-            for key, value in line.items():
-                if key not in args:
+            # For each option check for valid yaml and store
+            for option in options:
+                try:
+                    data = tmt.utils.yaml_to_dict(option)
+                    if not data:
+                        raise tmt.utils.GeneralError(
+                            f"Invalid step data for {step}: '{data}'.")
+                    step_data.append(data)
+                except yaml.parser.ParserError as error:
                     raise tmt.utils.GeneralError(
-                            "Invalid discover option provided, allowed values are ({})".format(args))
+                        f"Invalid yaml data for {step}:\n{error}")
 
-                new += '    {}: {}\n'.format(key, value)
+            # Use list only when multiple step data provided
+            if len(step_data) == 1:
+                step_data = step_data[0]
+            content[step] = step_data
 
-        new = re.sub('    name:', '  - name:', new, flags=re.MULTILINE)
-        content = re.sub(r'discover:.*prepare:', r'discover:\n{}prepare:'.format(new), content,
-                flags=re.DOTALL)
-
-        return content
+        return tmt.utils.dict_to_yaml(content)
 
     @staticmethod
     def overview(tree):
@@ -393,7 +397,7 @@ class Plan(Node):
             ), fg='blue'))
 
     @staticmethod
-    def create(name, template, tree, discover, force=False):
+    def create(name, template, tree, force=False):
         """ Create a new plan """
         # Prepare paths
         (directory, plan) = os.path.split(name)
@@ -408,8 +412,8 @@ class Plan(Node):
             raise tmt.utils.GeneralError(
                 "Invalid template '{}'.".format(template))
 
-        if discover:
-            content = tmt.Plan.edit_template(content, discover)
+        # Override template with data provided on command line
+        content = Plan.edit_template(content)
 
         tmt.utils.create_file(
             path=plan_path, content=content,

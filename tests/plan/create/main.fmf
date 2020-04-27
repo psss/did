@@ -1,0 +1,2 @@
+summary: Create a test plan using template and command line data
+test: ./test.sh
