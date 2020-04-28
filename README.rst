@@ -189,7 +189,8 @@ available options.
 Install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The tmt package is available in Fedora and EPEL::
+Currently tmt is supported for Fedora 30 and later, RHEL 8 and
+CentOS 8, available directly in the distro repositories::
 
     sudo dnf install tmt
 
