@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import re
+import tmt
 import unittest
 
 from tmt.utils import StructuredField, StructuredFieldError, public_git_url
@@ -37,6 +38,15 @@ def test_listify():
     assert listify('a b c', split=True) == ['a', 'b', 'c']
     assert listify(dict(a=1, b=2)) == dict(a=[1], b=[2])
     assert listify(dict(a=1, b=2), keys=['a']) == dict(a=[1], b=2)
+
+
+def test_config():
+    """ Config smoke test """
+    run = '/var/tmp/tmt/test'
+    config1 = tmt.utils.Config()
+    config1.last_run(run)
+    config2 = tmt.utils.Config()
+    assert config2.last_run() == run
 
 
 class test_structured_field(unittest.TestCase):

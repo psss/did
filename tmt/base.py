@@ -702,7 +702,16 @@ class Run(tmt.utils.Common):
 
     def __init__(self, id_=None, tree=None, context=None):
         """ Initialize tree, workdir and plans """
+        # Use the last run id if requested
+        config = tmt.utils.Config()
+        if context.params.get('last'):
+            id_ = config.last_run()
+            if id_ is None:
+                raise tmt.utils.GeneralError(
+                    "No last run id found. Have you executed any run?")
         super().__init__(workdir=id_ or True, context=context)
+        # Store workdir as the last run id
+        config.last_run(self.workdir)
         # Save the tree
         self.tree = tree if tree else tmt.Tree('.')
         self.debug(f"Using tree '{self.tree.root}'.")

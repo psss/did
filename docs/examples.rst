@@ -701,3 +701,9 @@ the test and cleaning up::
     tmt run -i <ID> execute              # ... until you're done
 
     tmt run -i <ID> report finish
+
+Instead of always specifying the whole run id you can also use
+``--last`` or ``-l`` as an abbreviation for the last run id::
+
+    tmt run -l execute
+    tmt run --last execute

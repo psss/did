@@ -38,6 +38,41 @@ DEFAULT_NAME = 'default'
 DEFAULT_PLUGIN_ORDER = 50
 DEFAULT_PLUGIN_ORDER_REQUIRES = 70
 
+# Config directory
+CONFIG_PATH = '~/.config/tmt'
+
+
+class Config(object):
+    """ User configuration """
+
+    def __init__(self):
+        """ Initialize config directory path """
+        self.path = os.path.expanduser(CONFIG_PATH)
+        if not os.path.exists(self.path):
+            try:
+                os.makedirs(self.path)
+            except OSError as error:
+                raise GeneralError(
+                    f"Failed to create config '{self.path}'.\n{error}")
+
+    def last_run(self, run_id=None):
+        """ Get and set last run id """
+        symlink = os.path.join(self.path, 'last-run')
+        if run_id:
+            try:
+                os.remove(symlink)
+            except OSError:
+                pass
+            try:
+                os.symlink(run_id, symlink)
+            except OSError as error:
+                raise GeneralError(
+                    f"Unable to save last run '{self.path}'.\n{error}")
+            return run_id
+        if os.path.islink(symlink):
+            return os.path.realpath(symlink)
+        return None
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Common

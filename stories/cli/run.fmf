@@ -148,9 +148,8 @@ story: 'As a user I want to execute tests easily'
     example:
         - tmt run --all execute --how restraint
 
-/latest:
+/last:
     story: 'As a user I want to rerun tests easily'
-
     description: >
         Execute previous run without the need to specify the
         previous run id. The command is a shortcut for::
@@ -158,7 +157,9 @@ story: 'As a user I want to execute tests easily'
             tmt run --id PREVIOUS_RUN
 
         Note that ``tmt`` saves last run id on each new execution.
-
+    implemented: /tmt/base
+    documented: /docs/examples#debug-tests
     example:
         - tmt run -l
-        - tmt run --latest
+        - tmt run --last
+

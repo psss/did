@@ -157,6 +157,8 @@ def main(context, root, **kwargs):
 @click.option(
     '-i', '--id', 'id_', help='Run id (name or directory path).', metavar="ID")
 @click.option(
+    '-l', '--last', help='Execute the last run once again.', is_flag=True)
+@click.option(
     '-a', '--all', 'all_', help='Run all steps, customize some.', is_flag=True)
 @click.option(
     '-e', '--environment', metavar='KEY=VALUE', multiple='True',
