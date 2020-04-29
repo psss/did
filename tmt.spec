@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.14
+Version: 0.15
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,19 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Wed Apr 29 2020 Petr Šplíchal <psplicha@redhat.com> - 0.15-1
+- Implement executing the last run using --last
+- Adjust support for modifying plan templates
+- Add a way how to edit values in a new template
+- Explicitly mention supported distros in the docs
+- Convert provision/prepare into dynamic plugins
+- Describe difference between --verbose and --debug
+- Support fmf name references in docs, update spec
+- Support multiple verbose/debug levels [fix #191]
+- Remove forgotten 'Core' section from stories
+- Implement Plugin.show() for a full dynamic support
+- Improve the workdir handling in the Common class
+
 * Thu Apr 16 2020 Petr Šplíchal <psplicha@redhat.com> - 0.14-1
 - Workaround yaml key sorting on rhel-8 [fix #207]
 - Fix test discovery from the execute step scripts
@@ -167,7 +180,6 @@ export LANG=en_US.utf-8
 - Fix long environment for run.sh [fix #126]
 - Merge dynamic plugins and wake up support [#186]
 - Implement dynamic plugins and options [fix #135]
-- Add František Nečas to the list of contributors
 - Suggest using 'tmt init' when metadata not found
 - Merge improved import of tier from tags [#187]
 - Adjust tier import from test case tags
