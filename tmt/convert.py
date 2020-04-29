@@ -195,6 +195,16 @@ def read(path, makefile, nitrate, purpose, disabled):
         common_data = data
         individual_data = []
 
+    # Remove keys which are inherited from parent
+    parent_path = os.path.dirname(path.rstrip('/'))
+    parent_name = '/' + os.path.relpath(parent_path, tree.root)
+    parent = tree.find(parent_name)
+    if parent:
+        for test in [common_data] + individual_data:
+            for key in list(test):
+                if parent.get(key) == test[key]:
+                    test.pop(key)
+
     log.debug('Common metadata:\n' + pprint.pformat(common_data))
     log.debug('Individual metadata:\n' + pprint.pformat(individual_data))
     return common_data, individual_data

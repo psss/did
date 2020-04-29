@@ -1,5 +1,4 @@
 path: /tests/discover
-tier: 1
 
 /options:
     summary: Check that all supported options are present
@@ -11,6 +10,7 @@ tier: 1
         Make sure that all combinations of 'url', 'ref' and 'path'
         parameters work as expected.
     test: ./references.sh
+    tier: 2
 
 /filtering:
     summary: Test selection by name and advanced filter
