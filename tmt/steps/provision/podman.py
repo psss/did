@@ -152,19 +152,25 @@ class GuestContainer(tmt.Guest):
         """ Run given command via podman """
         return self.run(['podman'] + command, shell=False, **kwargs)
 
-    def execute(self, command, environment=None):
+    def execute(self, command, **kwargs):
         """ Execute given commands in podman via shell """
         if not self.container:
             raise tmt.utils.ProvisionError(
                 'Could not execute without provisioned container.')
 
+        # Change to given directory on guest if cwd provided
+        directory = kwargs.get('cwd', '')
+        if directory:
+            directory = f"cd '{directory}'; "
+
         # Note that we MUST run commands via bash, so variables
         # work as expected
         if isinstance(command, list):
             command = ' '.join(command)
+        command = directory + command
         return self.podman(
             ['exec'] + self.podman_env + [self.container,
-            'sh', '-c', command])
+            'sh', '-c', command], **kwargs)
 
     def push(self):
         """ Nothing to be done to push workdir """

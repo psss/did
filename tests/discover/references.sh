@@ -37,7 +37,6 @@ rlJournalStart
         rlRun 'tmt run -dv discover plan --name $plan | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*5407fe5' output
-        rlAssertGrep '2 tests selected' output
         rlAssertGrep /tests/docs output
         rlAssertNotGrep /tests/env output
         rlAssertGrep /tests/ls output

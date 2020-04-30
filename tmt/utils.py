@@ -30,9 +30,6 @@ OUTPUT_WIDTH = 79
 # Hierarchy indent
 INDENT = 4
 
-# Simple runner script name
-RUNNER = 'run.sh'
-
 # Default name and order for step plugins
 DEFAULT_NAME = 'default'
 DEFAULT_PLUGIN_ORDER = 50

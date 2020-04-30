@@ -60,6 +60,20 @@ class Step(tmt.utils.Common):
         except AttributeError:
             return None
 
+    @classmethod
+    def usage(cls, method_overview):
+        """ Prepare general usage message for the step """
+        # Main description comes from the class docstring
+        usage = re.sub('\n    ', '\n', cls.__doc__)
+        # Append the list of supported methods
+        usage += '\n\n' + method_overview
+        # Give a hint about detailed help
+        name = cls.__name__.lower()
+        usage += (
+            f"\n\nUse 'tmt run {name} --help --how <method>' to learn more "
+            f"about given {name} method and all its supported options.")
+        return usage
+
     def status(self, status=None):
         """
         Get and set current step status

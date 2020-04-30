@@ -916,13 +916,18 @@ class Guest(tmt.utils.Common):
             environment = 'export {}; '.format(
                 ' '.join(tmt.utils.shell_variables(environment)))
 
+        # Change to given directory on guest if cwd provided
+        directory = kwargs.get('cwd', '')
+        if directory:
+            directory = f"cd '{directory}'; "
+
         # Prepare command and run it
         if isinstance(command, (list, tuple)):
             command = ' '.join(command)
         self.debug(f"Execute command '{command}' on guest '{self.guest}'.")
         command = (
             self._ssh_command() + [self._ssh_guest()] +
-            [f'{environment}{command}'])
+            [f'{environment}{directory}{command}'])
         return self.run(command, shell=False, **kwargs)
 
     def push(self):
@@ -946,3 +951,57 @@ class Guest(tmt.utils.Common):
     def remove(self):
         """ Remove the guest (disk cleanup) """
         self.debug(f"Doing nothing to remove guest '{self.guest}'.")
+
+
+class Result(object):
+    """
+    Test result
+
+    The following keys are expected in the 'data' dictionary::
+
+        result ........... test execution result
+        log .............. one or more log files
+
+    Required parameter 'name' should contain a unique test name.
+    """
+
+    _results = {
+        'pass': 'green',
+        'fail': 'red',
+        'info': 'blue',
+        'warn': 'yellow',
+        'error': 'magenta',
+        }
+
+    def __init__(self, data, name):
+        """
+        Initialize test result data """
+
+        # Save the test name
+        if not name or not isinstance(name, str):
+            raise tmt.utils.SpecificationError(f"Invalid test name '{name}'.")
+        self.name = name
+
+        # Check for valid results
+        try:
+            self.result = data['result']
+        except KeyError:
+            raise tmt.utils.SpecificationError("Missing test result.")
+        if self.result not in self._results:
+            raise tmt.utils.SpecificationError(
+                    f"Invalid result '{self.result}'.")
+
+        # Convert log into list if necessary
+        try:
+            self.log = tmt.utils.listify(data['log'])
+        except KeyError:
+            self.log = []
+
+    def show(self):
+        """ Return a nicely color result with test name """
+        colored = click.style(self.result, fg=self._results[result])
+        return f"{colored} {self.name}"
+
+    def export(self):
+        """ Save result data for future wake-up """
+        return dict(result=self.result, log=self.log)

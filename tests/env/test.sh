@@ -9,14 +9,14 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest 'Variable in L1'
-        rlRun "tmt run plan --name no test --name yes | tee output"
+        rlRun "tmt run -vv plan --name no test --name yes | tee output"
         rlAssertGrep '>>>L1<<<' 'output'
     rlPhaseEnd
 
     rlPhaseStartTest 'Variable in L2'
-        rlRun "tmt run plan --name yes test --name no | tee output"
+        rlRun "tmt run -vv plan --name yes test --name no | tee output"
         rlAssertGrep '>>>L2<<<' 'output'
-        rlRun "tmt run plan --name yes test --name yes | tee output"
+        rlRun "tmt run -vv plan --name yes test --name yes | tee output"
         rlAssertGrep '>>>L2<<<' 'output'
     rlPhaseEnd
 
@@ -24,7 +24,7 @@ rlJournalStart
         for plan in yes no; do
             for test in yes no; do
                 selection="plan --name $plan test --name $test"
-                rlRun "tmt run -e TEST=OP $selection | tee output"
+                rlRun "tmt run -vv -e TEST=OP $selection | tee output"
                 rlAssertGrep '>>>OP<<<' 'output'
             done
         done

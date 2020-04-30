@@ -1,0 +1,2 @@
+summary: Check that test status is correctly reported
+test: ./test.sh

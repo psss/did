@@ -174,22 +174,7 @@ def run(context, all_, id_, **kwargs):
 run.add_command(tmt.steps.discover.DiscoverPlugin.command())
 run.add_command(tmt.steps.provision.ProvisionPlugin.command())
 run.add_command(tmt.steps.prepare.PreparePlugin.command())
-
-
-@run.command()
-@click.pass_context
-@click.option(
-    '-h', '--how', metavar='METHOD',
-    help='Use specified method for test execution.')
-@click.option(
-    '-s', '--script', metavar='SCRIPT', multiple=True,
-    help='Shell script to be executed as a test.')
-@verbose_debug_quiet
-@force_dry
-def execute(context, **kwargs):
-    """ Run the tests (using the specified framework and its settings). """
-    context.obj.steps.add('execute')
-    tmt.steps.execute.Execute._save_context(context)
+run.add_command(tmt.steps.execute.ExecutePlugin.command())
 
 
 @run.command()

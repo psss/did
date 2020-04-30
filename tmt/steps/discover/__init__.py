@@ -156,9 +156,9 @@ class DiscoverPlugin(tmt.steps.Plugin):
     def base_command(cls, method_class=None, usage=None):
         """ Create base click command (common for all discover plugins) """
 
-        # Prepend general description before method overview for base command
+        # Prepare general usage message for the step
         if method_class:
-            usage = Discover.__doc__ + '\n\n' + usage
+            usage = Discover.usage(method_overview=usage)
 
         # Create the command
         @click.command(cls=method_class, help=usage)

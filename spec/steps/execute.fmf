@@ -11,29 +11,42 @@ description: |
     in the following format::
 
         /test/one:
-            result: TEST_RESULT
+            result: OUTCOME
             log: PATH
 
         /test/two:
-            result: TEST_RESULT
+            result: OUTCOME
             log: PATH
 
-    Where ``TEST_RESULT`` is the outcome of the test. It can have
-    these values:
+    Where ``OUTCOME`` is the result of the test execution. It can
+    have the following values:
 
-        * info - test finished and produced only information
-          message
-        * passed - test finished and passed
-        * failed - test finished and failed
-        * error - a problem encountered during test execution,
-          treated as failed
+        pass
+            Test execution successfully finished and passed.
+        info
+            Test finished but only produced an informational
+            message. Represents a soft pass, used for skipped
+            tests and for tests with the :ref:`/spec/tests/result`
+            attribute set to *ignore*. Automation should treat
+            this as a passed test.
+        warn
+            A problem appeared during test execution which does
+            not affect test results but might be worth checking
+            and fixing. For example test cleanup phase failed.
+            Automation should treat this as a failed test.
+        error
+            Undefined problem encountered during test execution.
+            Human inspection is needed to investigate whether it
+            was a test bug, infrastructure error or a real test
+            failure. Automation should treat it as a failed test.
+        fail
+            Test execution successfully finished and failed.
 
-    Where ``PATH`` is the test log output path, relative to the
-    execute step plan run directory.
-
-example: |
-    execute:
-        how: beakerlib
+    The ``PATH`` is the test log output path, relative to the
+    execute step working directory. It can be a single string
+    or a list of strings when multiple log files available, in
+    which case the first log will be considered as the main one
+    (e.g. presented to the user for inspection).
 
 /isolate:
     summary: Run tests in an isolated environment
@@ -107,3 +120,7 @@ example: |
         been executed successfully and the journal for test
         results.
     implemented: /tmt/steps/execute/beakerlib.py
+
+    example: |
+        execute:
+            how: beakerlib

@@ -109,9 +109,9 @@ class ProvisionPlugin(tmt.steps.Plugin):
     def base_command(cls, method_class=None, usage=None):
         """ Create base click command (common for all provision plugins) """
 
-        # Prepend general description before method overview for base command
+        # Prepare general usage message for the step
         if method_class:
-            usage = Provision.__doc__ + '\n\n' + usage
+            usage = Provision.usage(method_overview=usage)
 
         # Create the command
         @click.command(cls=method_class, help=usage)

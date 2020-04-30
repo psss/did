@@ -27,6 +27,7 @@ Here's the overview of available classes::
     │   │   ├── DiscoverFmf
     │   │   └── DiscoverShell
     │   ├── ExecutePlugin
+    │   │   └── ExecuteSimple
     │   ├── FinishPlugin
     │   ├── PreparePlugin
     │   │   ├── PrepareAnsible

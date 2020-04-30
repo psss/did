@@ -1,136 +1,131 @@
-# coding: utf-8
-
-""" Execute Step Class """
-
+import re
+import fmf
 import tmt
-import os
-import shutil
-
-from tmt.steps.execute import shell, beakerlib
-from tmt.utils import RUNNER
-from fmf.utils import listed
-from tmt.utils import GeneralError
+import click
 
 
 class Execute(tmt.steps.Step):
-    """ Run tests (using the specified framework and its settings) """
-    name = 'execute'
-    # supported executors are not loaded automatically, import them and map them in how_map
-    how_map = {'shell': shell.ExecutorShell,
-               'beakerlib': beakerlib.ExecutorBeakerlib,
-               }
+    """ Run tests using the specified framework """
 
     def __init__(self, data, plan):
-        """ Initialize the execute step """
-        super(Execute, self).__init__(data, plan)
+        """ Initialize execute step data """
+        super().__init__(data, plan)
         self.executor = None
+        # List of Result() objects representing test results
+        self._results = []
+
+    def load(self):
+        """ Load test results """
+        super().load()
+        try:
+            results = tmt.utils.yaml_to_dict(self.read('results.yaml'))
+            self._results = [
+                tmt.Result(data, test) for test, data in results.items()]
+        except tmt.utils.FileError as error:
+            self.debug('Test results not found.', level=2)
+
+    def save(self):
+        """ Save test results to the workdir """
+        super().save()
+        results = dict([
+            (result.name, result.export()) for result in self.results()])
+        self.write('results.yaml', tmt.utils.dict_to_yaml(results))
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """
-        super(Execute, self).wake()
-        self._check_data()
-        self.executor = self.how_map[self.data['how']](self, self.data)
+        super().wake()
 
-    def _check_data(self):
-        """ Validate input data """
+        # There should be just a single definition
         if len(self.data) > 1:
-            raise tmt.utils.SpecificationError("Multiple execute steps defined in '{}'.".format(self.plan))
-        self.data = self.data[0]
-        if 'name' not in self.data:
-            self.data['name'] = 'one'
+            raise tmt.utils.SpecificationError(
+                "Multiple execute steps defined in '{}'.".format(self.plan))
 
-        # if not specified, use shell as default
-        how = self.data.setdefault('how', 'shell')
+        # Choose the right plugin and wake it up
+        self.executor = ExecutePlugin.delegate(self, self.data[0])
+        self.executor.wake()
 
-        # is how supported?
-        if how not in self.how_map:
-            raise tmt.utils.SpecificationError("How '{}' in plan '{}' is not implemented".format(how, self.plan))
+        # Nothing more to do if already done
+        if self.status() == 'done':
+            self.debug(
+                'Execute wake up complete (already done before).', level=2)
+        # Save status and step data (now we know what to do)
+        else:
+            self.status('todo')
+            self.save()
 
     def show(self):
-        """ Show discover details """
-        keys = ['how', 'isolate', 'script']
-        super(Execute, self).show(keys)
+        """ Show execute details """
+        ExecutePlugin.delegate(self, self.data[0]).show()
+
+    def summary(self):
+        """ Give a concise summary of the execution """
+        tests = fmf.utils.listed(self.results(), 'test')
+        self.info('summary', f'{tests} executed', 'green', shift=1)
 
     def go(self):
-        """ Execute the test step """
-        super(Execute, self).go()
+        """ Execute tests """
+        super().go()
 
+        # Nothing more to do if already done
+        if self.status() == 'done':
+            self.info('status', 'done', 'green', shift=1)
+            self.summary()
+            return
+
+        # Make sure that guests are prepared
         if not self.plan.provision.guests():
             raise tmt.utils.ExecuteError("No guests available for execution.")
 
-        lognames = ('stdout.log', 'stderr.log', 'nohup.out')
+        # Execute the tests, store results
+        self.executor.go()
+        self._results = self.executor.results()
 
-        # Remove logs prior to write
-        for name in lognames:
-            logpath = os.path.join(self.workdir, name)
-            if os.path.exists(logpath):
-                os.remove(logpath)
+        # Give a summary, update status and save
+        self.summary()
+        self.status('done')
+        self.save()
 
-        try:
-            self.executor.go(self.plan.workdir)
-        except tmt.utils.GeneralError as error:
-            self.get_logs(lognames)
-            raise tmt.utils.GeneralError(f'Test execution failed: {error}')
-
-        output = self.get_logs(lognames)
-
-        # Process the stdout.log
-        overview = output['stdout.log'].rstrip('\nD')
-        self.verbose('overview', overview, color='green', shift=1)
-        passed = 0
-        failed = 0
-        errors = 0
-        for character in output['stdout.log']:
-            if character == '.':
-                passed += 1
-            if character == 'F':
-                failed += 1
-            if character == 'E':
-                errors += 1
-        passed = listed(passed, 'test')
-        failed = listed(failed, 'test')
-        message = f"{passed} passed, {failed} failed"
-        self.info('result', message, color='green', shift=1)
-        if errors >0:
-            raise tmt.utils.GeneralError(f"{errors} errors occured during tests.")
-
-    def sync_runner(self):
-        """ Place the runner script to workdir  """
-        # Detect location of the runner
-        script_path = os.path.join(os.path.dirname(__file__), RUNNER)
-        self.debug(f"Copy '{script_path}' to '{self.workdir}'.", level=2)
-        # Nothing more to do in dry mode
-        if self.opt('dry'):
-            return
-        shutil.copy(script_path, self.workdir)
-        # Sync added runner to guests
-        for guest in self.plan.provision.guests():
-            guest.push()
-
-    def execute(self, command):
-        """ Execute command on provisioned machine """
-        for guest in self.plan.provision.guests():
-            guest.execute(command)
-
-    def get_logs(self, lognames):
-        """ Get logs contents, also print them to info() """
-        for guest in self.plan.provision.guests():
-            guest.pull()
-
-        output = {}
-        for name in lognames:
-            path = os.path.join(self.workdir, name)
-            if os.path.exists(path) and os.path.isfile(path):
-                output[name] = open(path).read()
-                self.info(name, output[name], 'yellow')
-
-        return output
-
-    # API
     def requires(self):
-        """ Returns packages required to run tests - used by prepare step"""
-        return list(self.executor.requires())
+        """
+        Packages required for test execution
+
+        Return a list of packages which need to be installed on the
+        guest so that tests can be executed. Used by the prepare step.
+        """
+        return self.executor.requires()
 
     def results(self):
-        """ Returns results from executed tests - used by report step """
-        return self.executor.results()
+        """
+        Results from executed tests
+
+        Return a dictionary with test results according to the spec:
+        https://tmt.readthedocs.io/en/latest/spec/steps.html#execute
+        """
+        return self._results
+
+
+class ExecutePlugin(tmt.steps.Plugin):
+    """ Common parent of execute plugins """
+
+    # List of all supported methods aggregated from all plugins
+    _supported_methods = []
+
+    @classmethod
+    def base_command(cls, method_class=None, usage=None):
+        """ Create base click command (common for all execute plugins) """
+
+        # Prepare general usage message for the step
+        if method_class:
+            usage = Execute.usage(method_overview=usage)
+
+        # Create the command
+        @click.command(cls=method_class, help=usage)
+        @click.pass_context
+        @click.option(
+            '-h', '--how', metavar='METHOD',
+            help='Use specified method for test execution.')
+        def execute(context, **kwargs):
+            context.obj.steps.add('execute')
+            Execute._save_context(context)
+
+        return execute

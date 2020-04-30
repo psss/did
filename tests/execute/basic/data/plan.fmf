@@ -1,0 +1,16 @@
+provision:
+    how: local
+
+/shell:
+    discover:
+        how: fmf
+        test: shell
+    execute:
+        how: shell
+
+/beakerlib:
+    discover:
+        how: fmf
+        test: beakerlib
+    execute:
+        how: beakerlib
