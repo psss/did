@@ -1,0 +1,34 @@
+/plan:
+    discover:
+        how: fmf
+    provision:
+        how: local
+    execute:
+        how: shell
+
+/test:
+    path: /
+
+    /good:
+        test: 'true'
+
+        /one:
+            summary: Good test one.
+        /two:
+            summary: Good test two.
+        /three:
+            summary: Good test three.
+
+    /bad:
+        test: 'false'
+
+        /one:
+            summary: Bad test one.
+        /two:
+            summary: Bad test two.
+
+    /weird:
+        test: weird-command
+
+        /one:
+            summary: Weird test one.

@@ -40,6 +40,7 @@ Here's the overview of available classes::
     │   │   ├── ProvisionTestcloud
     │   │   └── ProvisionVagrant
     │   └── ReportPlugin
+    │       └── ReportDisplay
     └── Run
 
 Note: The list is not complete. There is a plan to clean up plugin

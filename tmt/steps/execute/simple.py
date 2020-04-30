@@ -83,8 +83,7 @@ class ExecuteSimple(tmt.steps.execute.ExecutePlugin):
         for log in self.logs:
             try:
                 output = self.step.read(log)
-                level = 2 if log == 'stderr.log' else 1
-                self.verbose(log, output.strip(), 'yellow', level=level)
+                self.verbose(log, output.strip(), 'yellow', level=2)
             except tmt.utils.FileError:
                 pass
 
@@ -143,6 +142,7 @@ class ExecuteSimple(tmt.steps.execute.ExecutePlugin):
 
         # Nothing to do in dry mode
         if self.opt('dry'):
+            self._results = []
             return
 
         # Prepare the runner and remove logs

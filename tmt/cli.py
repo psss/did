@@ -175,19 +175,7 @@ run.add_command(tmt.steps.discover.DiscoverPlugin.command())
 run.add_command(tmt.steps.provision.ProvisionPlugin.command())
 run.add_command(tmt.steps.prepare.PreparePlugin.command())
 run.add_command(tmt.steps.execute.ExecutePlugin.command())
-
-
-@run.command()
-@click.pass_context
-@click.option(
-    '-h', '--how', metavar='METHOD',
-    help='Use specified method for result reporting.')
-@verbose_debug_quiet
-@force_dry
-def report(context, **kwargs):
-    """ Provide an overview of test results and send notifications. """
-    context.obj.steps.add('report')
-    tmt.steps.report.Report._save_context(context)
+run.add_command(tmt.steps.report.ReportPlugin.command())
 
 
 @run.command()

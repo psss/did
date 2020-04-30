@@ -852,7 +852,8 @@ class Guest(tmt.utils.Common):
     def details(self):
         """ Show guest details such as distro and kernel """
         try:
-            distro = self.execute('cat /etc/redhat-release')[0].strip()
+            distro = self.execute(
+                'cat /etc/redhat-release', dry=True)[0].strip()
         except tmt.utils.RunError:
             try:
                 distro = self.execute('cat /etc/lsb-release')[0].strip()
@@ -861,7 +862,7 @@ class Guest(tmt.utils.Common):
                 distro = None
         if distro:
             self.info('distro', distro, 'green')
-        kernel = self.execute('uname -r')[0].strip()
+        kernel = self.execute('uname -r', dry=True)[0].strip()
         self.info('kernel', kernel, 'green')
 
     def _ansible_verbosity(self):
@@ -873,6 +874,8 @@ class Guest(tmt.utils.Common):
 
     def _ansible_summary(self, output):
         """ Check the output for ansible result summary numbers """
+        if not output:
+            return
         keys = 'ok changed unreachable failed skipped rescued ignored'.split()
         for key in keys:
             matched = re.search(rf'^.*\s:\s.*{key}=(\d+).*$', output, re.M)
@@ -999,7 +1002,8 @@ class Result(object):
 
     def show(self):
         """ Return a nicely color result with test name """
-        colored = click.style(self.result, fg=self._results[result])
+        result = 'errr' if self.result == 'error' else self.result
+        colored = style(result, fg=self._results[self.result])
         return f"{colored} {self.name}"
 
     def export(self):
