@@ -2,22 +2,21 @@ import fmf
 import tmt
 import click
 
-class PrepareShell(tmt.steps.prepare.PreparePlugin):
+
+class FinishShell(tmt.steps.finish.FinishPlugin):
     """
-    Prepare guest using shell scripts
+    Perform finishing tasks using shell scripts
 
     Example config:
 
-    prepare:
+    finish:
         how: shell
         script:
-        - sudo dnf install -y 'dnf-command(copr)'
-        - sudo dnf copr enable -y psss/tmt
-        - sudo dnf install -y tmt
+            - upload-logs.sh || true
+            - rm -rf /tmp/temporary-files
 
-    Use 'order' attribute to select in which order preparation should
-    happen if there are multiple configs. Default order is '50'.
-    Default order of required packages installation is '70'.
+    Use the 'order' attribute to select in which order finishing tasks
+    should happen if there are multiple configs. Default order is '50'.
     """
 
     # Supported methods
@@ -25,7 +24,7 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
 
     @classmethod
     def options(cls, how=None):
-        """ Prepare command line options """
+        """ Finish command line options """
         return [
             click.option(
                 '-s', '--script', metavar='SCRIPT',
@@ -50,7 +49,7 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
         tmt.utils.listify(self.data, keys=['script'])
 
     def go(self, guest):
-        """ Prepare the guests """
+        """ Perform finishing tasks on given guest """
         super().go()
 
         # Give a short summary

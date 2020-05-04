@@ -171,24 +171,14 @@ def run(context, all_, id_, **kwargs):
     run = tmt.Run(id_, context.obj.tree, context=context)
     context.obj.run = run
 
+
+# Steps options
 run.add_command(tmt.steps.discover.DiscoverPlugin.command())
 run.add_command(tmt.steps.provision.ProvisionPlugin.command())
 run.add_command(tmt.steps.prepare.PreparePlugin.command())
 run.add_command(tmt.steps.execute.ExecutePlugin.command())
 run.add_command(tmt.steps.report.ReportPlugin.command())
-
-
-@run.command()
-@click.pass_context
-@click.option(
-    '-h', '--how', metavar='METHOD',
-    help='Use specified method for finishing tasks.')
-@verbose_debug_quiet
-@force_dry
-def finish(context, **kwargs):
-    """ Additional actions to be performed after the test execution. """
-    context.obj.steps.add('finish')
-    tmt.steps.finish.Finish._save_context(context)
+run.add_command(tmt.steps.finish.FinishPlugin.command())
 
 
 @run.command()

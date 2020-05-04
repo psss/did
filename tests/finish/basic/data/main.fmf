@@ -1,0 +1,8 @@
+provision:
+    how: local
+prepare:
+    script: mkdir ../cleanup-test
+execute:
+    script: 'true'
+finish:
+    script: rmdir ../cleanup-test

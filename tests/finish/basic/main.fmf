@@ -1,0 +1,4 @@
+summary: Basic check for the finishing tasks
+description:
+    Create a temporary directory during the prepare step.
+    Remove it during the finish step and check that it's gone.
