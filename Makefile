@@ -10,9 +10,9 @@ FILES = LICENSE README.rst \
 all: docs packages
 .PHONY: docs
 
-# Temporary directory
+# Temporary directory, include .fmf to prevent exploring tests there
 tmp:
-	mkdir $(TMP)
+	mkdir -p $(TMP)/.fmf
 
 
 # Run the test suite, optionally with coverage
@@ -36,7 +36,7 @@ man: source
 
 
 # RPM packaging
-source: clean
+source: clean tmp
 	mkdir -p $(TMP)/SOURCES
 	mkdir -p $(TMP)/$(PACKAGE)
 	cp -a $(FILES) $(TMP)/$(PACKAGE)

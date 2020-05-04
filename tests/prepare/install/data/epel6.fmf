@@ -1,0 +1,14 @@
+provision:
+    how: container
+    image: centos:6
+prepare:
+    how: install
+    copr:
+        - '@oamg/convert2rhel'
+        - 'kwalker/rhsecapi'
+    package:
+        - convert2rhel
+        - rhsecapi
+execute:
+    how: shell
+    script: rpm -q convert2rhel rhsecapi

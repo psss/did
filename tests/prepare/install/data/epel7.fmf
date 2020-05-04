@@ -1,0 +1,10 @@
+provision:
+    how: container
+    image: centos:7
+prepare:
+    how: install
+    copr: '@oamg/convert2rhel'
+    package: convert2rhel
+execute:
+    how: shell
+    script: rpm -q convert2rhel

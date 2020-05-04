@@ -10,6 +10,14 @@ rlJournalStart
         rlRun "tmt run -adddvvv plan --name escape"
     rlPhaseEnd
 
+    rlPhaseStartTest "Install from epel7 copr"
+        rlRun "tmt run -adddvvv plan --name epel7"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Install from epel6 copr"
+        rlRun "tmt run -adddvvv plan --name epel6"
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
     rlPhaseEnd

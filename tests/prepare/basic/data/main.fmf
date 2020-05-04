@@ -1,0 +1,9 @@
+provision:
+    how: container
+    image: fedora
+prepare:
+    how: install
+    package: tmt
+execute:
+    how: shell
+    script: tmt --help
