@@ -1,0 +1,9 @@
+provision:
+    how: container
+    image: fedora
+prepare:
+    how: install
+    package: dnf-command(copr)
+execute:
+    how: shell
+    script: rpm -q dnf-plugins-core

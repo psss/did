@@ -63,6 +63,7 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
         packages = self.get('package')
         if packages:
             self.info('package', fmf.utils.listed(packages, max=3), 'green')
-            packages = ' '.join(packages)
+            packages = ' '.join(
+                [tmt.utils.quote(package) for package in packages])
             guest.execute(
                 f'rpm -q {packages} || sudo dnf install -y {packages}')
