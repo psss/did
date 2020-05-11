@@ -120,9 +120,6 @@ DEFAULT_CONNECT_TIMEOUT = 10   # seconds
 
 # Image guessing related variables
 KOJI_URL = 'https://kojipkgs.fedoraproject.org/compose'
-RAWHIDE_URL = f'{KOJI_URL}/rawhide/latest-Fedora-Rawhide'
-RAWHIDE_ID = f'{RAWHIDE_URL}/COMPOSE_ID'
-RAWHIDE_IMAGE_URL = f'{RAWHIDE_URL}/compose/Cloud/x86_64/images'
 
 
 class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
@@ -142,8 +139,10 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
             user: root
             memory: 2048
 
-    For the image use 'fedora' for the latest rawhide compose or full
-    url to the qcow2 image for example from:
+    As the image use 'fedora' for the latest released Fedora compose,
+    'rawhide' for the latest Rawhide compose, short aliases such as
+    'fedora-32', 'f-32' or 'f32' for specific release or a full url to
+    the qcow2 image for example from:
 
         https://kojipkgs.fedoraproject.org/compose/
 
@@ -249,28 +248,47 @@ class GuestTestcloud(tmt.Guest):
     def _guess_image_url(name):
         """ Guess image url for given name """
 
-        def get_compose_id(compose_id_url):
-            response = requests.get(f'{compose_id_url}')
-
-            if not response:
+        def latest_release():
+            """ Get the latest released Fedora number """
+            try:
+                response = requests.get(KOJI_URL)
+                releases = re.findall(r'>(\d\d)/<', response.text)
+                return releases[-1]
+            except requests.RequestException as error:
                 raise ProvisionError(
-                    f'Failed to find compose ID for '
-                    f"'{name}' at '{compose_id_url}'")
-
-            return response.text
-
-        # Map fedora, rawhide or fedora-rawhide to latest rawhide image
-        if re.match(r'^(fedora|fedora-rawhide|rawhide)$', name, re.IGNORECASE):
-            compose_id = get_compose_id(RAWHIDE_ID)
-            compose_name = compose_id.replace(
-                'Fedora-Rawhide', 'Fedora-Cloud-Base-Rawhide')
-            return f'{RAWHIDE_IMAGE_URL}/{compose_name}.x86_64.qcow2'
+                    f"Unable to check Fedora composes ({error}).")
+            except IndexError:
+                raise ProvisionError(
+                    f"Latest Fedora release not found at '{KOJI_URL}'.")
 
         # Try to check if given url is a local file
         if os.path.exists(name):
             return f'file://{name}'
 
-        raise ProvisionError(f"Could not map '{name}' to compose.")
+        # Map fedora aliases (e.g. rawhide, fedora, fedora-32, f-32, f32)
+        name = name.lower().strip()
+        matched = re.match(r'^f(edora)?-?(\d+)$', name)
+        if matched:
+            release = matched.group(2)
+        elif 'rawhide' in name:
+            release = 'rawhide'
+        elif name == 'fedora':
+            release = latest_release()
+        else:
+            raise ProvisionError(f"Could not map '{name}' to compose.")
+
+        # Prepare the full qcow name
+        images = f"{KOJI_URL}/{release}/latest-Fedora-{release.capitalize()}"
+        images += "/compose/Cloud/x86_64/images"
+        response = requests.get(images)
+        matched = re.search(">(Fedora-Cloud[^<]*qcow2)<", response.text)
+        try:
+            compose_name = matched.group(1)
+        except AttributeError:
+            raise ProvisionError(
+                f"Failed to detect full compose name from '{images}'.")
+        return f'{images}/{compose_name}'
+
 
     @staticmethod
     def _create_template():
