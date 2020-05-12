@@ -750,7 +750,9 @@ class Run(tmt.utils.Common):
                 if plan.name in data['plans']]
 
         # Initialize steps only if not specified on the command line
-        if not self.opt('all_') and not self._context.obj.steps:
+        command_line_options = any(
+            [self.opt(option) for option in 'all since until skip'.split()])
+        if not command_line_options and not self._context.obj.steps:
             self._context.obj.steps = set(data['steps'])
 
         # Store loaded environment
@@ -770,9 +772,31 @@ class Run(tmt.utils.Common):
         self.info(self.workdir, color='magenta')
         # Attempt to load run data
         self.load()
-        # Enable all steps if none selected or --all provided
-        if self.opt('all_') or not self._context.obj.steps:
-            self._context.obj.steps = set(tmt.steps.STEPS)
+
+        # Enable selected steps
+        enabled_steps = self._context.obj.steps
+        all_steps = self.opt('all') or not enabled_steps
+        since = self.opt('since')
+        until = self.opt('until')
+        skip = self.opt('skip')
+
+        if all_steps or since or until:
+            # Detect index of the first and last enabled step
+            try:
+                first = tmt.steps.STEPS.index(self.opt('since'))
+            except ValueError:
+                first = tmt.steps.STEPS.index('discover')
+            try:
+                last = tmt.steps.STEPS.index(self.opt('until'))
+            except ValueError:
+                last = tmt.steps.STEPS.index('finish')
+            # Enable all steps between the first and last
+            for index in range(first, last + 1):
+                step = tmt.steps.STEPS[index]
+                if step not in skip:
+                    enabled_steps.add(step)
+        self.debug(f"Enabled steps: {fmf.utils.listed(enabled_steps)}")
+
         # Show summary, store run data
         self.verbose('Found {0}.'.format(listed(self.plans, 'plan')))
         self.save()

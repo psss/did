@@ -159,13 +159,22 @@ def main(context, root, **kwargs):
 @click.option(
     '-l', '--last', help='Execute the last run once again.', is_flag=True)
 @click.option(
-    '-a', '--all', 'all_', help='Run all steps, customize some.', is_flag=True)
+    '-a', '--all', help='Run all steps, customize some.', is_flag=True)
+@click.option(
+    '-u', '--until', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
+    help='Enable all steps until the given one.')
+@click.option(
+    '-s', '--since', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
+    help='Enable all steps since the given one.')
+@click.option(
+    '-S', '--skip', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
+    help='Skip given step during test run execution.', multiple=True)
 @click.option(
     '-e', '--environment', metavar='KEY=VALUE', multiple='True',
     help='Set environment variable. Can be specified multiple times.')
 @verbose_debug_quiet
 @force_dry
-def run(context, all_, id_, **kwargs):
+def run(context, id_, **kwargs):
     """ Run test steps. """
     # Initialize
     run = tmt.Run(id_, context.obj.tree, context=context)

@@ -18,17 +18,30 @@ story: 'As a user I want to execute tests easily'
         example:
             - tmt run provision prepare
             - tmt run discover provision prepare
-        implemented: /tmt/cli
+        implemented: /tmt/base
     /until:
         story: 'Run all steps until the given one'
         example:
             - tmt run --until prepare
             - tmt run --until execute
+        implemented: /tmt/base
+    /since:
+        story: 'Run all steps since the given one'
+        example:
+            - tmt run --since prepare
+            - tmt run --since execute
+        implemented: /tmt/base
+    /skip:
+        story: 'Skip given step during execution'
+        example:
+            - tmt run --skip prepare
+            - tmt run --skip finish
+        implemented: /tmt/base
     /all:
         story: 'Run all test steps, customize some'
         example:
             - tmt run --all provision --how=container
-        implemented: /tmt/cli
+        implemented: /tmt/base
 
 /interactive:
     story: 'Provide way similar to git rebase --interactive'
