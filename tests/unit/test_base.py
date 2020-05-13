@@ -50,6 +50,9 @@ def test_test_invalid():
     # Invalid attributes
     for key in ['component', 'require', 'tag']:
         with pytest.raises(tmt.utils.SpecificationError):
-            test = tmt.Test({key: 'string'}, name='/smoke')
+            test = tmt.Test({key: 1}, name='/smoke')
     with pytest.raises(tmt.utils.SpecificationError):
         test = tmt.Test({'environment': 'string'}, name='/smoke')
+    # Listify attributes
+    assert tmt.Test({'tag': 'a'}, name='/smoke').tag == ['a']
+    assert tmt.Test({'tag': ['a', 'b']}, name='/smoke').tag == ['a', 'b']

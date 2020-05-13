@@ -10,10 +10,16 @@ description:
     given component or package. As they do not always have to be
     stored in the same repository and because many tests cover
     multiple components a dedicated field is needed. Should be a
-    ``list of strings``.
+    ``string`` or a ``list of strings``. Component name usually
+    corresponds to the source package name.
 
 example: |
+    component: libselinux
+
     component: [libselinux, checkpolicy]
-    fmf ls --filter 'tier: 1 | component: checkpolicy'
+
+    component:
+        - libselinux
+        - checkpolicy
 
 implemented: /tmt/base

@@ -18,10 +18,13 @@ description: |
     metadata) to specify required packages for each component or
     product version individually.
 
-    Should be a ``list of strings`` using package specification
-    supported by ``dnf`` which takes care of the installation.
+    Should be a ``string`` or a ``list of strings`` using package
+    specification supported by ``dnf`` which takes care of the
+    installation.
 
 example: |
+    require: make
+
     require: [gcc, make]
 
     require:

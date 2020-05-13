@@ -53,8 +53,12 @@ class Node(tmt.utils.Common):
         echo(tmt.utils.format(
             'sources', self.node.sources, key_color='magenta'))
 
-    def _check(self, key, expected, default=None):
-        """ Check that key is of expected type, handle default """
+    def _check(self, key, expected, default=None, listify=False):
+        """
+        Check that the key is of expected type
+
+        Handle default and convert into a list if requested.
+        """
         value = getattr(self, key)
         # Handle default
         if value is None:
@@ -62,10 +66,16 @@ class Node(tmt.utils.Common):
             return
         # Check for correct type
         if not isinstance(value, expected):
+            expected = tmt.utils.listify(expected)
+            expected_names = fmf.utils.listed(
+                [type_.__name__ for type_ in expected], join='or')
             class_name = self.__class__.__name__.lower()
             raise tmt.utils.SpecificationError(
                 f"Invalid '{key}' in {class_name} '{self.name}' (should be "
-                f"a '{expected.__name__}', got a '{type(value).__name__}').")
+                f"a '{expected_names}', got a '{type(value).__name__}').")
+        # Convert into a list if requested
+        if listify:
+            setattr(self, key, tmt.utils.listify(value))
 
     def _fmf_id(self):
         """ Show fmf identifier """
@@ -206,9 +216,11 @@ class Test(Node):
         # Path defaults to the node name
         self._check('path', expected=str, default=self.name)
 
-        # Check that lists are lists and environment is a dictionary
+        # Check that lists are lists or strings, listify if needed
         for key in ['component', 'require', 'tag']:
-            self._check(key, expected=list, default=[])
+            self._check(key, expected=(list, str), default=[], listify=True)
+
+        # Check that environment is a dictionary
         self._check('environment', expected=dict, default={})
 
         # Default duration, enabled and result
