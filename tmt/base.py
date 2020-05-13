@@ -761,10 +761,10 @@ class Run(tmt.utils.Common):
                 plan for plan in self.tree.plans(run=self)
                 if plan.name in data['plans']]
 
-        # Initialize steps only if not specified on the command line
-        command_line_options = any(
-            [self.opt(option) for option in 'all since until skip'.split()])
-        if not command_line_options and not self._context.obj.steps:
+        # Initialize steps only if not selected on the command line
+        step_options = 'all since until after before skip'.split()
+        selected = any([self.opt(option) for option in step_options])
+        if not selected and not self._context.obj.steps:
             self._context.obj.steps = set(data['steps'])
 
         # Store loaded environment
@@ -790,17 +790,23 @@ class Run(tmt.utils.Common):
         all_steps = self.opt('all') or not enabled_steps
         since = self.opt('since')
         until = self.opt('until')
+        after = self.opt('after')
+        before = self.opt('before')
         skip = self.opt('skip')
 
         if all_steps or since or until:
             # Detect index of the first and last enabled step
-            try:
-                first = tmt.steps.STEPS.index(self.opt('since'))
-            except ValueError:
+            if since:
+                first = tmt.steps.STEPS.index(since)
+            elif after:
+                first = tmt.steps.STEPS.index(after) + 1
+            else:
                 first = tmt.steps.STEPS.index('discover')
-            try:
-                last = tmt.steps.STEPS.index(self.opt('until'))
-            except ValueError:
+            if until:
+                last = tmt.steps.STEPS.index(until)
+            elif before:
+                last = tmt.steps.STEPS.index(before) - 1
+            else:
                 last = tmt.steps.STEPS.index('finish')
             # Enable all steps between the first and last
             for index in range(first, last + 1):

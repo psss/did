@@ -63,6 +63,28 @@ rlJournalStart
         rlAssertGrep '1 test passed' output
     rlPhaseEnd
 
+    rlPhaseStartTest "Before"
+        rlRun "tmt run --before report | tee output"
+        for step in discover provision prepare execute; do
+            rlAssertGrep $step output
+        done
+        for step in report finish; do
+            rlAssertNotGrep $step output
+        done
+        rlAssertGrep '1 test executed' output
+    rlPhaseEnd
+
+    rlPhaseStartTest "After"
+        rlRun "tmt run --last --after execute | tee output"
+        for step in discover provision prepare execute; do
+            rlAssertNotGrep $step output
+        done
+        for step in report finish; do
+            rlAssertGrep $step output
+        done
+        rlAssertGrep '1 test passed' output
+    rlPhaseEnd
+
     rlPhaseStartTest "Invalid"
         for option in 'since' 'until' 'skip'; do
             rlRun "tmt run --$option invalid 2>&1 | tee output" 2

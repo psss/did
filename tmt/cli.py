@@ -162,13 +162,19 @@ def main(context, root, **kwargs):
     '-a', '--all', help='Run all steps, customize some.', is_flag=True)
 @click.option(
     '-u', '--until', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
-    help='Enable all steps until the given one.')
+    help='Enable given step and all preceding steps.')
 @click.option(
     '-s', '--since', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
-    help='Enable all steps since the given one.')
+    help='Enable given step and all following steps.')
+@click.option(
+    '-A', '--after', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
+    help='Enable all steps before the given one.')
+@click.option(
+    '-B', '--before', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
+    help='Enable all steps after the given one.')
 @click.option(
     '-S', '--skip', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
-    help='Skip given step during test run execution.', multiple=True)
+    help='Skip given step(s) during test run execution.', multiple=True)
 @click.option(
     '-e', '--environment', metavar='KEY=VALUE', multiple='True',
     help='Set environment variable. Can be specified multiple times.')
