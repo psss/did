@@ -1,17 +1,15 @@
 import base64
+import click
 import datetime
 import getpass
 import json
 import os
 import re
-import time
-
-import click
 import requests
-from urllib3.exceptions import InsecureRequestWarning
+import time
+import urllib3.exceptions
 
 import tmt
-from tmt.utils import RunError, ProvisionError
 
 
 DEFAULT_USER = 'root'
@@ -26,7 +24,7 @@ API_URL_RE = r'PRERESERVE\_URL=\"(?P<url>.+)\"'
 def run_openstack(url, cmd, cached_list=False):
     """
     Runs an openstack command.
-    
+
     Returns (exit_code, stdout) tuple. Both are None if the request failed.
     """
     url += '/openstack.php'
@@ -38,35 +36,36 @@ def run_openstack(url, cmd, cached_list=False):
         data['use_cached_list'] = 1
     # Disable warning about insecure connection. Using insecure connection
     # is unfortunately necessary here for the plugin to work.
-    requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
-    r = requests.post(url, verify=False, data=data)
-    if r.ok:
+    requests.packages.urllib3.disable_warnings(
+        category=urllib3.exceptions.InsecureRequestWarning)
+    response = requests.post(url, verify=False, data=data)
+    if response.ok:
         # The output is in the form of: <stdout>\n<exit>\n.
-        split = r.text.rsplit('\n', 2)
+        split = response.text.rsplit('\n', 2)
         return int(split[1]), split[0]
     return None, None
 
 
 class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
     """
-    Use 1minutetip's openstack backend script to provision a guest
+    Provision guest using 1minutetip backend
 
     Minimal configuration using the latest Fedora image:
-        
+
         provision:
             how: minute
 
     Full configuration example:
-        
+
         provision:
             how: minute
             image: 1MT-Fedora-32
             flavor: m1.large
 
-    Possible images and flavors can be found using 1minutetip
-    (see 1minutetip list and 1minutetip list-flavors).
-
+    Available images and flavors can be listed using '1minutetip list'
+    and '1minutetip list-flavors'.
     """
+
     # Guest instance
     _guest = None
 
@@ -81,20 +80,22 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
         return [
             click.option(
                 '-i', '--image', metavar='IMAGE',
-                help='Select image to use. See 1minutetip list for available choices.'),
+                help="Image, see '1minutetip list' for options."),
             click.option(
-                '--flavor', metavar='FLAVOR',
-                help='Select flavor to use. See 1minutetip list-flavors for available choices.'),
+                '-F', '--flavor', metavar='FLAVOR',
+                help="Flavor, see '1minutetip list-flavors' for options."),
             ] + super().options(how)
 
     def _get_default_image(self):
-        _, images = run_openstack(self.get('api_url'),
-                'image list -f value -c Name', True)
+        _, images = run_openstack(
+            self.get('api_url'), 'image list -f value -c Name', True)
         # Use the latest Fedora image
         fedora_re = re.compile(r'1MT-Fedora-(?P<ver>\d+)')
-        fedora_images = [image for image in images.splitlines() if fedora_re.match(image)]
-        return max(fedora_images, key=lambda x: int(fedora_re.match(x).group('ver')))
-    
+        fedora_images = [
+            image for image in images.splitlines() if fedora_re.match(image)]
+        return max(
+            fedora_images, key=lambda x: int(fedora_re.match(x).group('ver')))
+
     def default(self, option, default=None):
         """ Return the default value for the given option """
         defaults = {
@@ -110,19 +111,19 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
     def wake(self, data=None):
         """ Override options and wake up the guest """
         super().wake(['image', 'flavor'])
+
         # Read API URL from 1minutetip script
         try:
-            with open(SCRIPT_PATH, 'r') as script:
-                script_content = script.read()
+            script_content = self.read(SCRIPT_PATH)
             match = re.search(API_URL_RE, script_content)
             if not match:
-                raise ProvisionError(
-                        f'Could not obtain API URL from {SCRIPT_PATH}.')
+                raise tmt.utils.ProvisionError(
+                        f"Could not obtain API URL from '{SCRIPT_PATH}'.")
             self.data['api_url'] = match.group('url')
-
-        except FileNotFoundError:
-            raise ProvisionError(
-                    f'File {SCRIPT_PATH} not found. Please install 1minutetip.')
+            self.debug('api_url', self.data['api_url'], level=3)
+        except tmt.utils.FileError:
+            raise tmt.utils.ProvisionError(
+                f"File '{SCRIPT_PATH}' not found. Please install 1minutetip.")
 
         if data:
             self._guest = GuestMinute(data, name=self.name, parent=self.step)
@@ -152,7 +153,7 @@ class GuestMinute(tmt.Guest):
     1minutetip instance
 
     The following keys are expected in the 'data' dictionary:
-        
+
         image ...... 1minutetip image name
         flavor ..... openstack server flavor to use
         api_url .... URL of 1minutetip's openstack API
@@ -175,20 +176,23 @@ class GuestMinute(tmt.Guest):
         return data
 
     def _guess_net_id(self):
-        _, networks = run_openstack(self.api_url, 'ip availability list -f json')
+        _, networks = run_openstack(
+            self.api_url, 'ip availability list -f json')
         networks = json.loads(networks)
-        networks = [network for network in networks if
-                re.match(NETWORK_NAME_RE, network['Network Name'])]
+        networks = [
+            network for network in networks
+            if re.match(NETWORK_NAME_RE, network['Network Name'])]
         self.debug(
-                f'Available networks:\n{json.dumps(networks, indent=2)}',
-                level=2, shift=0)
+            f'Available networks:\n{json.dumps(networks, indent=2)}',
+            level=2, shift=0)
         if not networks:
             return None, None
 
-        best = max(networks, key=lambda x: x.get('Total IPs') - x.get('Used IPs'))
+        best = max(
+            networks, key=lambda x: x.get('Total IPs') - x.get('Used IPs'))
         self.debug(
-                f'Using the following network:\n{json.dumps(best, indent=2)}',
-                level=2, shift=0)
+            f'Using the following network:\n{json.dumps(best, indent=2)}',
+            level=2, shift=0)
         return best['Network ID'], best['Network Name']
 
     def _boot_machine(self):
@@ -201,18 +205,20 @@ class GuestMinute(tmt.Guest):
         if not network_id:
             return False
 
-        err, net_info = run_openstack(self.api_url,
-            f'server create --wait --flavor {self.flavor} --image {self.image} '
-            f'--nic net-id={network_id} '
-            f'--security-group default --property local_user="{self.username}" '
+        error, net_info = run_openstack(
+            self.api_url,
+            f'server create --wait '
+            f'--flavor {self.flavor} --image {self.image} '
+            f'--nic net-id={network_id} --security-group default '
+            f'--property local_user="{self.username}" '
             f'--property reserved_time={self.instance_start} -f value '
             f'-c addresses {self.instance_name}')
-        if err is None or err != 0:
+        if error is None or error != 0:
             return False
 
         # Get the IP
-        match = re.match(
-                r'\s*{}=(?P<ip>[^ ]+), .*'.format(re.escape(network_name)), net_info)
+        match = re.match(r'\s*{}=(?P<ip>[^ ]+), .*'.format(
+            re.escape(network_name)), net_info)
         if not match:
             self.delete()
             return False
@@ -223,8 +229,8 @@ class GuestMinute(tmt.Guest):
             try:
                 self.execute('whoami')
                 break
-            except RunError:
-                self.debug('Failed to connect to the machine, retrying')
+            except tmt.utils.RunError:
+                self.debug('Failed to connect to the machine, retrying.')
             time.sleep(1)
 
         if i == DEFAULT_CONNECT_TIMEOUT:
@@ -233,37 +239,40 @@ class GuestMinute(tmt.Guest):
         return True
 
     def _setup_machine(self):
-        r = requests.get(
+        response = requests.get(
             f'{self.api_url}?image_name={self.image}'
-            f'&user={self.username}&osver=rhos10')
-        if r.ok:
-            if 'prereserve' not in r.text:
-                # No prereserved machine, boot a new one
-                return self._boot_machine()
-            else:
-                # Rename the prereserved machine
-                old_name, self.guest = r.text.split()
-                _, rename_out = run_openstack(self.api_url,
-                    f'server set --name {self.instance_name} {old_name}')
-                if rename_out is None or 'ERROR' in rename_out:
-                    return False
-                else:
-                    # Machine renamed, set properties
-                    run_openstack(self.api_url,
-                        f'server set --property local_user={self.username} '
-                        f'--property reserved_time={self.instance_start}')
-                    return True
+            f'&user={self.username}&osver=rhos10', verify=False)
+        if not response.ok:
+            return
+        # No prereserved machine, boot a new one
+        if 'prereserve' not in response.text:
+            return self._boot_machine()
+        # Rename the prereserved machine
+        old_name, self.guest = response.text.split()
+        _, rename_out = run_openstack(
+            self.api_url, f'server set --name {self.instance_name} {old_name}')
+        if rename_out is None or 'ERROR' in rename_out:
+            return False
+        # Machine renamed, set properties
+        run_openstack(
+            self.api_url,
+            f'server set --property local_user={self.username} '
+            f'--property reserved_time={self.instance_start}')
+        return True
 
     def start(self):
         """ Start provisioned guest """
-        self.instance_start = datetime.datetime.utcnow().strftime('%Y-%m-%d-%H-%M')
-        self.instance_name = f'{self.username}-{self.image}-{os.getpid()}-{self.instance_start}'
+        self.instance_start = datetime.datetime.utcnow().strftime(
+            '%Y-%m-%d-%H-%M')
+        self.instance_name = (
+            f'{self.username}-{self.image}-'
+            f'{os.getpid()}-{self.instance_start}')
         for i in range(NUMBER_OF_RETRIES):
             if self._setup_machine():
                 return
 
-        raise ProvisionError(
-                "All attempts to provision a machine with 1minutetip failed.")
+        raise tmt.utils.ProvisionError(
+            "All attempts to provision a machine with 1minutetip failed.")
 
     def delete(self):
         run_openstack(self.api_url, f'server delete {self.instance_name}')
