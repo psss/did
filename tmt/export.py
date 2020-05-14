@@ -35,7 +35,7 @@ def import_nitrate():
         raise ConvertError(error)
 
 
-def export_to_nitrate(test, create):
+def export_to_nitrate(test, create, general):
     """ Export fmf metadata to nitrate test cases """
     import_nitrate()
 
@@ -71,12 +71,21 @@ def export_to_nitrate(test, create):
     nitrate_case.components.clear()
     # Then add fmf ones
     if test.component:
-        components = [
-            nitrate.Component(name=component, product=DEFAULT_PRODUCT.id)
-            for component in test.component]
-        # TODO exception not existing component
-        nitrate_case.components.add(components)
         echo(style('components: ', fg='green') + ' '.join(test.component))
+        for component in test.component:
+            try:
+                nitrate_case.components.add(
+                    nitrate.Component(name=component, product=DEFAULT_PRODUCT.id))
+            except nitrate.xmlrpc_driver.NitrateError as err:
+                log.debug(err)
+                echo(style(f"Component '{component}' couldn't be added to the case in TCMS.", fg='red'))
+            if general:
+                try:
+                    general_plan = find_general_plan(component)
+                    nitrate_case.testplans.add(general_plan)
+                except nitrate.NitrateError as err:
+                    log.debug(err)
+                    echo(style(f"General plan for '{component}' couldn't be added to the case in TCMS.", fg='red'))
 
     # Tags
     nitrate_case.tags.clear()
@@ -198,3 +207,28 @@ def create_nitrate_case(test):
     testcase = nitrate.TestCase(summary=summary, category=category)
     echo(style(f"Test case '{testcase.identifier}' created.", fg='blue'))
     return testcase
+
+
+def find_general_plan(component):
+    """ Return single General Test Plan or raise an error """
+    # At first find by linked components
+    found = nitrate.TestPlan.search(
+        type__name="General",
+        is_active=True,
+        component__name=f"{component}")
+    # Attempt to find by name if no test plan found
+    if not found:
+        found = nitrate.TestPlan.search(
+            type__name="General",
+            is_active=True,
+            name=f"{component} / General")
+    # No general -> raise error
+    if not found:
+        raise nitrate.NitrateError(
+            f"No general test plan found for '{component}'")
+    # Multiple general plans are fishy -> raise error
+    if len(found) != 1:
+        nitrate.NitrateError("Multiple general test plans "
+                    f"found for '{component}' component")
+    # Finally return the one and only General plan
+    return found[0]

@@ -405,7 +405,10 @@ def import_(context, paths, makefile, nitrate, purpose, disabled, **kwargs):
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-def export(context, format_, nitrate, create, **kwargs):
+@click.option(
+    '--general / --no-general', default=True,
+    help="Link Nitrate case to component's General plan")
+def export(context, format_, nitrate, create, general, **kwargs):
     """
     Export test data into the desired format
 
@@ -415,7 +418,7 @@ def export(context, format_, nitrate, create, **kwargs):
     tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
         if nitrate:
-            test.export(format_='nitrate', create=create)
+            test.export(format_='nitrate', create=create, general=general)
         else:
             echo(test.export(format_=format_))
 
