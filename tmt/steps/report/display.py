@@ -14,7 +14,7 @@ class ReportDisplay(tmt.steps.report.ReportPlugin):
     _methods = [tmt.steps.Method(name='display', doc=__doc__, order=50)]
 
     def details(self, result, verbosity):
-        """ Print resuts' details based on the verbose mode """
+        """ Print result details based on the verbose mode """
         # -v prints just result + name
         # -vv prints path to logs
         # -vvv prints also content of out.log
@@ -24,13 +24,13 @@ class ReportDisplay(tmt.steps.report.ReportPlugin):
         # -vv and more follows
         for log_file in result.log:
             log_name = os.path.basename(log_file)
-            real_log_path = os.path.join(self.step.plan.execute.workdir, log_file)
-            # path to logs (-vv and more)
-            self.verbose(log_name, real_log_path, color='yellow', shift=2)
-            # out.log for (-vvv and more)
+            full_path = os.path.join(self.step.plan.execute.workdir, log_file)
+            # List path to logs (-vv and more)
+            self.verbose(log_name, full_path, color='yellow', shift=2)
+            # Show content of out.log (-vvv and more)
             if verbosity > 2 and log_name in ['out.log']:
-                with open(real_log_path) as f:
-                    self.verbose(f.read(), shift=2)
+                self.verbose(
+                    'content', self.read(full_path), color='yellow', shift=2)
 
     def go(self):
         """ Discover available tests """
