@@ -1,0 +1,4 @@
+provision:
+    how: local
+execute:
+    script: 'true'
