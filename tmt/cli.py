@@ -400,14 +400,14 @@ def import_(context, paths, makefile, nitrate, purpose, disabled, **kwargs):
     '--create', is_flag=True,
     help="Create test cases in nitrate if they don't exist.")
 @click.option(
+    '--general / --no-general', default=True,
+    help="Link Nitrate case to component's General plan.")
+@click.option(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
     help='Output format.')
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-@click.option(
-    '--general / --no-general', default=True,
-    help="Link Nitrate case to component's General plan")
 def export(context, format_, nitrate, create, general, **kwargs):
     """
     Export test data into the desired format

@@ -74,18 +74,21 @@ def export_to_nitrate(test, create, general):
         echo(style('components: ', fg='green') + ' '.join(test.component))
         for component in test.component:
             try:
-                nitrate_case.components.add(
-                    nitrate.Component(name=component, product=DEFAULT_PRODUCT.id))
-            except nitrate.xmlrpc_driver.NitrateError as err:
-                log.debug(err)
-                echo(style(f"Component '{component}' couldn't be added to the case in TCMS.", fg='red'))
+                nitrate_case.components.add(nitrate.Component(
+                    name=component, product=DEFAULT_PRODUCT.id))
+            except nitrate.xmlrpc_driver.NitrateError as error:
+                log.debug(error)
+                echo(style(
+                    f"Failed to add component '{component}'.", fg='red'))
             if general:
                 try:
                     general_plan = find_general_plan(component)
                     nitrate_case.testplans.add(general_plan)
-                except nitrate.NitrateError as err:
-                    log.debug(err)
-                    echo(style(f"General plan for '{component}' couldn't be added to the case in TCMS.", fg='red'))
+                except nitrate.NitrateError as error:
+                    log.debug(error)
+                    echo(style(
+                        f"Failed to link general test plan for '{component}'.",
+                        fg='red'))
 
     # Tags
     nitrate_case.tags.clear()
@@ -225,10 +228,10 @@ def find_general_plan(component):
     # No general -> raise error
     if not found:
         raise nitrate.NitrateError(
-            f"No general test plan found for '{component}'")
+            f"No general test plan found for '{component}'.")
     # Multiple general plans are fishy -> raise error
     if len(found) != 1:
-        nitrate.NitrateError("Multiple general test plans "
-                    f"found for '{component}' component")
+        nitrate.NitrateError(
+            "Multiple general test plans found for '{component}' component.")
     # Finally return the one and only General plan
     return found[0]
