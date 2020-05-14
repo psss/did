@@ -1,3 +1,2 @@
 summary: List available tests and plans
 description: Make sure that 'tmt test ls' and 'tmt plan ls' work.
-tier: 0

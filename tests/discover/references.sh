@@ -60,9 +60,9 @@ rlJournalStart
         rlRun 'tmt run -dddv discover plan --name $plan | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*master' output
-        rlAssertGrep /tests/docs output
-        rlAssertGrep /tests/env output
-        rlAssertGrep /tests/ls output
+        rlAssertGrep /tests/core/docs output
+        rlAssertGrep /tests/core/env output
+        rlAssertGrep /tests/core/ls output
     rlPhaseEnd
 
     plan=fmf/url/noref/path

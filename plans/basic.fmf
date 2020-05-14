@@ -2,7 +2,6 @@ summary:
     Essential command line features
 discover:
     how: fmf
-    filter: 'tier: 0,1,2'
 prepare:
     how: ansible
     playbooks: ansible/packages.yml
