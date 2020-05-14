@@ -90,7 +90,8 @@ def export_to_nitrate(test, create):
 
     # Default tester
     if test.contact:
-        email_address = email.utils.parseaddr(test.contact)[1]
+        # Need to pick one value, so picking the first contact
+        email_address = email.utils.parseaddr(test.contact[0])[1]
         # TODO handle nitrate user not existing and other possible exceptions
         nitrate_case.tester = nitrate.User(email_address)
         echo(style('default tester: ', fg='green') + email_address)

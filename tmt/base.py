@@ -217,7 +217,7 @@ class Test(Node):
         self._check('path', expected=str, default=self.name)
 
         # Check that lists are lists or strings, listify if needed
-        for key in ['component', 'require', 'tag']:
+        for key in ['component', 'contact', 'require', 'tag']:
             self._check(key, expected=(list, str), default=[], listify=True)
 
         # Check that environment is a dictionary

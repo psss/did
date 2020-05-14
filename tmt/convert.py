@@ -137,6 +137,13 @@ def read(path, makefile, nitrate, purpose, disabled):
             echo(style('test: ', fg='green') + data['test'])
         except AttributeError:
             raise ConvertError("Makefile is missing the 'run' target.")
+        # Contact
+        try:
+            data['contact'] = [re.search(
+                r'^Owner:\s*(.*)', testinfo, re.M).group(1).strip()]
+            echo(style('contact: ', fg='green') + ' '.join(data['contact']))
+        except AttributeError:
+            pass
         # Component
         try:
             data['component'] = re.search(
