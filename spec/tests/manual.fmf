@@ -1,50 +1,35 @@
-summary: Manual test execution details
+summary: Test automation state
 
 story:
-    As a tester I want to store detailed manual instructions
-    covering test scenario so that I can perform them manually
-    before the test can be fully automated.
+    As a tester I need to store detailed manual instructions covering
+    test scenario I have to perform manually.
 
 description: |
-    Sometimes test scenarios cannot be fully automated or it takes
-    time to fully automate them. For such cases the ``manual``
-    attribute can be used to describe test steps in detail. It
-    should be a ``dictionary`` with the following keys, each one
-    of them should be a ``string``.
+    Attribute marks whether this test needs human interaction during its execution.
 
-    setup
-        Environment preparation instructions.
-    step
-        Test step, action to be performed.
-    expect
-        Expected results of the test step.
-    cleanup
-        Environment cleanup instructions.
+    Such tests are not likely to be executed in automation pipelines.
+    In the future they can be executed in semi-automated way, waiting on human interaction.
+    It's value should be a ``bool``. The default value is ``false``.
+    Attribute :ref:`/spec/tests/test` should point to a Markdown document following `CommonMark <https://spec.commonmark.org/0.29/>`_ spec
+    where following sections are recognizes by TMT and have special meaning. Any other features of Markdown can be used, but TMT will just show them.
 
-    If there are several individual steps they can be stored, with
-    their corresponding expected results, as a list of dictionaries
-    under the ``steps`` key.
+    Recognized sections:
+      ``# Setup``
+        Optional heading under which any necessary preparation actions are documented. These actions are not part of the test itself.
+      ``# Test`` or ``# Test .*``
+        Required heading of level 1 starting with word 'Test' marks beginning of the test itself. You can use several Test sections in the document.
+      ``## Step`` or ``## Test step``
+        Required heading of level 2 marking single step of the test, should be in pair with Expect section which follows it. Cannot be used outside test sections.
+      ``## Expect`` or ``## Expected result`` or ``## Result``
+        Required heading of level 2 marking expected outcome of the previous step. Cannot be used outside test sections.
+      ``# Cleanup``
+        Optional heading under which any cleanup actions which are not part of the test itself are documented
+      Code block
+        Optional, can be used in any section to mark code snippets. Specification of the code type (bash, python,...) is just for syntax highlighting purposes.
+
+    See examples of `documents <https://github.com/psss/tmt/tree/master/examples/manual/>`_ for a better idea.
 
 example: |
-    manual:
-        setup:
-            sudo dnf install -y tmt
-        step:
-            Run 'tmt init --template full'.
-        expect:
-            Example story, plan and test created.
-        cleanup:
-            sudo dnf remove -y tmt
+  manual: true
 
-    manual:
-        setup:
-            sudo dnf install -y tmt
-        steps:
-          - step:   Run 'tmt init --template full'.
-            expect: Example story, plan and test created.
-          - step:   Run 'tmt'.
-            expect: Found 1 test, 1 plan and 1 story displayed.
-          - step:   Run 'tmt --help'
-            expect: Available commands and options listed.
-        cleanup:
-            sudo dnf remove -y tmt
+implemented: /tmp/base

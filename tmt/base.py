@@ -174,6 +174,7 @@ class Test(Node):
         'require',
         'environment',
         'duration',
+        'manual',
         'enabled',
         'result',
 
@@ -223,8 +224,9 @@ class Test(Node):
         # Check that environment is a dictionary
         self._check('environment', expected=dict, default={})
 
-        # Default duration, enabled and result
+        # Default duration, manual, enabled and result
         self._check('duration', expected=str, default=DEFAULT_TEST_DURATION)
+        self._check('manual', expected=bool, default=False)
         self._check('enabled', expected=bool, default=True)
         self._check('result', expected=str, default='respect')
 

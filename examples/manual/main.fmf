@@ -1,1 +1,14 @@
-test: manual
+manual: true
+description:
+    Example demonstrates using MarkDown with defined
+    structure to describe actions necessary for its execution.
+    Adhering to its structure allows export to other formats or services.
+    Note any sections may contain shell script code which
+    could be used for semi-automated execution in the future.
+
+/short:
+    summary: Minimal manual test
+    test: short.md
+/longer:
+    summary: Longer manual test
+    test: longer.md
