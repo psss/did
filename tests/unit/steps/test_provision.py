@@ -6,7 +6,7 @@ import tempfile
 from mock import MagicMock, patch
 
 import tmt
-from tmt.steps.provision import Provision, local, vagrant
+from tmt.steps.provision import Provision, local
 from tmt.utils import GeneralError, SpecificationError
 
 

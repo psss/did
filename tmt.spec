@@ -79,7 +79,8 @@ Summary: Extra dependencies for the Test Management Tool
 Requires: tmt >= %{version}
 Requires: tmt-container >= %{version}
 Requires: tmt-testcloud >= %{version}
-Requires: vagrant python3-nitrate make
+Requires: python3-nitrate make
+Recommends: vagrant
 
 %description all
 All extra dependencies of the Test Management Tool. Install this

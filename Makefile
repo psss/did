@@ -40,6 +40,7 @@ source: clean tmp
 	mkdir -p $(TMP)/SOURCES
 	mkdir -p $(TMP)/$(PACKAGE)
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
+	rm $(TMP)/$(PACKAGE)/tmt/steps/provision/{base,vagrant}.py
 tarball: source man
 	cd $(TMP) && tar cfz SOURCES/$(PACKAGE).tar.gz $(PACKAGE)
 rpm: tarball
