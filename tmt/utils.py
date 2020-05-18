@@ -101,16 +101,15 @@ class Common(object):
         self.name = name or self.__class__.__name__.lower()
         self.parent = parent
 
+        # Store command line context
+        if context:
+            self._context = context
+
         # Initialize the workdir if requested
         if workdir is True:
             self._workdir_init()
         elif workdir is not None:
             self._workdir_init(workdir)
-
-        # Store command line context
-        if context:
-            self._context = context
-
 
     def __str__(self):
         """ Name is the default string representation """
@@ -355,6 +354,10 @@ class Common(object):
             raise GeneralError(
                 f"Invalid workdir '{id_}', expected a string or None.")
 
+        # Cleanup possible old workdir if called with --force
+        if self.opt('force'):
+            self._workdir_cleanup(workdir)
+
         # Create the workdir
         create_directory(workdir, 'workdir', quiet=True)
         self._workdir = workdir
@@ -367,9 +370,9 @@ class Common(object):
         # Join parent name with self
         return os.path.join(self.parent.workdir, self.name.lstrip('/'))
 
-    def _workdir_cleanup(self):
+    def _workdir_cleanup(self, path=None):
         """ Clean up the work directory """
-        directory = self._workdir_name()
+        directory = path or self._workdir_name()
         if os.path.isdir(directory):
             self.debug(f"Clean up workdir '{directory}'.", level=2)
             shutil.rmtree(directory)
