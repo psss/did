@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.15
+Version: 0.16
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,33 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Mon May 18 2020 Petr Šplíchal <psplicha@redhat.com> - 0.16-1
+- Merge the fix and test for run --force [#245]
+- Merge the improved display report [#241]
+- Adjust the display report plugin verbose output
+- Adjust general plan linking and component check
+- Clean up the run workdir if --force provided
+- More verbose modes for report --how display
+- Link plans, handle missing components in export
+- Import and listify of contact
+- Disable Tier 3 tests by default (need bare metal)
+- Move Tier 0 tests into a separate directory
+- Merge the new 1minutetip provision plugin [#225]
+- Adjust the 1minutetip provision plugin
+- Add support for tmt run --after and --before (#237)
+- Support string in test component, require and tag (#233)
+- Add support for installing local rpm packages
+- Add 1minutetip provision plugin
+- Implement tmt run --since, --until and --skip (#236)
+- Merge pull request #234 from psss/testcloud-aliases
+- Update the last run id at the very end of run
+- Support short Fedora compose aliases in testcloud
+- Convert the finish step into dynamic plugins
+- Convert the report step into dynamic plugins
+- Convert the execute step into dynamic plugins
+- Escape package names during installation
+- Deduplicate inherited keys in test import [fix #8]
+
 * Wed Apr 29 2020 Petr Šplíchal <psplicha@redhat.com> - 0.15-1
 - Implement executing the last run using --last
 - Adjust support for modifying plan templates
