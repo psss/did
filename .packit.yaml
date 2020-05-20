@@ -18,3 +18,4 @@ jobs:
   metadata:
     targets:
     - fedora-all
+    - epel-8
