@@ -35,7 +35,7 @@ man: source
 	rst2man $(TMP)/man.rst > $(TMP)/$(PACKAGE)/tmt.1
 
 
-# RPM packaging
+# RPM packaging and Packit
 source: clean tmp
 	mkdir -p $(TMP)/SOURCES
 	mkdir -p $(TMP)/$(PACKAGE)
@@ -43,20 +43,14 @@ source: clean tmp
 	rm $(TMP)/$(PACKAGE)/tmt/steps/provision/{base,vagrant}.py
 tarball: source man
 	cd $(TMP) && tar cfz SOURCES/$(PACKAGE).tar.gz $(PACKAGE)
+	@echo ./tmp/SOURCES/$(PACKAGE).tar.gz
+version:
+	@echo "$(VERSION)"
 rpm: tarball
 	rpmbuild --define '_topdir $(TMP)' -bb tmt.spec
 srpm: tarball
 	rpmbuild --define '_topdir $(TMP)' -bs tmt.spec
 packages: rpm srpm
-
-
-# Packit stuff
-packit-tarball: tarball
-	mv $(TMP)/SOURCES/$(PACKAGE).tar.gz .
-packit-path:
-	@printf "$(PACKAGE).tar.gz"
-packit-version:
-	@printf "$(VERSION)"
 
 
 # Python packaging

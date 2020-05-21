@@ -5,12 +5,12 @@ synced_files:
 upstream_project_name: tmt
 downstream_package_name: tmt
 
-current_version_command: ["make", "packit-version"]
 
 actions:
   create-archive:
-  - make packit-tarball
-  - make packit-path
+  - make tarball
+  get-current-version:
+  - make version
 
 jobs:
 - job: tests
