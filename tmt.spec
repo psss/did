@@ -69,7 +69,8 @@ Dependencies required to run tests in a container environment.
 Summary: Virtual machine provisioner for the Test Management Tool
 Obsoletes: tmt-testcloud < 0.17
 Requires: tmt == %{version}-%{release}
-Requires: ansible python%{python3_pkgversion}-testcloud openssh-clients rsync
+Requires: python%{python3_pkgversion}-testcloud >= 0.3.5
+Requires: ansible openssh-clients rsync
 
 %description provision-virtual
 Dependencies required to run tests in a local virtual machine.

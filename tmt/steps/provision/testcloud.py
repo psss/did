@@ -78,7 +78,7 @@ DOMAIN_TEMPLATE = """<domain type='kvm'>
     <suspend-to-disk enabled='no'/>
   </pm>
   <devices>
-    <emulator>/usr/bin/qemu-kvm</emulator>
+    <emulator>{{ emulator_path }}</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
       <source file="{{ disk }}"/>
