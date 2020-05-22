@@ -134,13 +134,21 @@ export LANG=en_US.utf-8
 %{python3_sitelib}/%{name}/
 %{python3_sitelib}/%{name}-*.egg-info/
 %license LICENSE
+%exclude %{python3_sitelib}/%{name}/steps/provision/podman.*
+%exclude %{python3_sitelib}/%{name}/steps/provision/__pycache__/podman.*
+%exclude %{python3_sitelib}/%{name}/steps/provision/testcloud.*
+%exclude %{python3_sitelib}/%{name}/steps/provision/__pycache__/testcloud.*
 
 
 %files container
+%{python3_sitelib}/%{name}/steps/provision/podman.*
+%{python3_sitelib}/%{name}/steps/provision/__pycache__/podman.*
 %license LICENSE
 
 
 %files testcloud
+%{python3_sitelib}/%{name}/steps/provision/testcloud.*
+%{python3_sitelib}/%{name}/steps/provision/__pycache__/testcloud.*
 %license LICENSE
 
 
