@@ -124,7 +124,7 @@ KOJI_URL = 'https://kojipkgs.fedoraproject.org/compose'
 
 class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
     """
-    Use testcloud to provision a guest
+    Local virtual machine using testcloud
 
     Minimal config which uses the latest fedora image:
 

@@ -56,29 +56,29 @@ The tmt Python module and command line tool implement the test
 metadata specification (L1 and L2) and allows easy test execution.
 This package contains the Python 3 module.
 
-%package container
+%package provision-container
 Summary: Container provisioner for the Test Management Tool
+Obsoletes: tmt-container < 0.17
 Requires: tmt == %{version}-%{release}
 Requires: ansible podman
 
-%description container
-All dependencies of the Test Management Tool required to run tests
-in a container environment.
+%description provision-container
+Dependencies required to run tests in a container environment.
 
-%package testcloud
-Summary: Libvirt (via testcloud) provisioner for the Test Management Tool
+%package provision-virtual
+Summary: Virtual machine provisioner for the Test Management Tool
+Obsoletes: tmt-testcloud < 0.17
 Requires: tmt == %{version}-%{release}
 Requires: ansible python%{python3_pkgversion}-testcloud openssh-clients rsync
 
-%description testcloud
-All dependencies of the Test Management Tool required to run tests
-in a libvirt environment provisioned using testcloud.
+%description provision-virtual
+Dependencies required to run tests in a local virtual machine.
 
 %package all
 Summary: Extra dependencies for the Test Management Tool
 Requires: tmt >= %{version}
-Requires: tmt-container >= %{version}
-Requires: tmt-testcloud >= %{version}
+Requires: tmt-provision-container >= %{version}
+Requires: tmt-provision-virtual >= %{version}
 Requires: python3-nitrate make
 Recommends: vagrant
 
@@ -122,6 +122,7 @@ export LANG=en_US.utf-8
 
 %{!?_licensedir:%global license %%doc}
 
+
 %files
 %{_mandir}/man1/*
 %{_bindir}/%{name}
@@ -129,28 +130,17 @@ export LANG=en_US.utf-8
 %license LICENSE
 /etc/bash_completion.d/tmt
 
-
 %files -n python%{python3_pkgversion}-%{name}
 %{python3_sitelib}/%{name}/
 %{python3_sitelib}/%{name}-*.egg-info/
 %license LICENSE
-%exclude %{python3_sitelib}/%{name}/steps/provision/podman.*
-%exclude %{python3_sitelib}/%{name}/steps/provision/__pycache__/podman.*
-%exclude %{python3_sitelib}/%{name}/steps/provision/testcloud.*
-%exclude %{python3_sitelib}/%{name}/steps/provision/__pycache__/testcloud.*
+%exclude %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}{podman,testcloud}.*
 
+%files provision-container
+%{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}podman.*
 
-%files container
-%{python3_sitelib}/%{name}/steps/provision/podman.*
-%{python3_sitelib}/%{name}/steps/provision/__pycache__/podman.*
-%license LICENSE
-
-
-%files testcloud
-%{python3_sitelib}/%{name}/steps/provision/testcloud.*
-%{python3_sitelib}/%{name}/steps/provision/__pycache__/testcloud.*
-%license LICENSE
-
+%files provision-virtual
+%{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}testcloud.*
 
 %files all
 %license LICENSE
