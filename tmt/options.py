@@ -22,7 +22,7 @@ verbose_debug_quiet = [
 force_dry = [
     click.option(
         '-f', '--force', is_flag=True,
-        help='Force overwriting existing stuff.'),
+        help='Overwrite existing files and step data.'),
     click.option(
         '-n', '--dry', is_flag=True,
         help='Run in dry mode. No changes, please.'),
