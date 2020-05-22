@@ -36,7 +36,7 @@ install_requires = [
     'requests',
 ]
 extras_require = {
-    'docs': ['sphinx', 'sphinx_rtd_theme'],
+    'docs': ['sphinx', 'sphinx_rtd_theme', 'mock'],
     'tests': ['pytest', 'python-coveralls', 'mock'],
     'provision': ['testcloud'],
 }
