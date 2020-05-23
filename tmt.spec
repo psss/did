@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.16
+Version: 0.17
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,15 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Sat May 23 2020 Petr Šplíchal <psplicha@redhat.com> - 0.17-1
+- Use emulator_path instead of hard-coded qemu path
+- Improve a bit the --force option description
+- Use consistent naming for provision subpackages
+- Add 'mock' to extra requires (needed to make docs)
+- Move podman and testcloud plugins into subpackages
+- Enable epel for packit build & testing farm
+- Move vagrant from requires to recommends (tmt-all)
+
 * Mon May 18 2020 Petr Šplíchal <psplicha@redhat.com> - 0.16-1
 - Merge the fix and test for run --force [#245]
 - Merge the improved display report [#241]
