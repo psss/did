@@ -652,7 +652,7 @@ class Tree(tmt.utils.Common):
             try:
                 self._tree = fmf.Tree(self._path)
             except fmf.utils.RootError:
-                raise tmt.utils.GeneralError(
+                raise tmt.utils.MetadataError(
                     f"No metadata found in the '{self._path}' directory. "
                     f"Use 'tmt init' to get started.")
             except fmf.utils.FileError as error:
@@ -725,8 +725,18 @@ class Run(tmt.utils.Common):
         # Store workdir as the last run id
         self.config.last_run(self.workdir)
         # Save the tree
-        self.tree = tree if tree else tmt.Tree('.')
-        self.debug(f"Using tree '{self.tree.root}'.")
+        try:
+            self.tree = tree if tree else tmt.Tree('.')
+            self.debug(f"Using tree '{self.tree.root}'.")
+        # Create a minimal default plan if no metadata
+        except tmt.utils.MetadataError:
+            plan = tmt.utils.yaml_to_dict("""
+                /plans/default:
+                    execute:
+                        how: shell
+                """)
+            self.tree = tmt.Tree(tree=fmf.Tree(plan))
+            self.debug(f"Using the default plan.")
         self._plans = None
         self._environment = dict()
 
@@ -776,6 +786,18 @@ class Run(tmt.utils.Common):
         """ Test plans for execution """
         if self._plans is None:
             self._plans = self.tree.plans(run=self)
+            # Use a default plan with fmf discover when no plan detected
+            if not self._plans:
+                plan = tmt.utils.yaml_to_dict("""
+                    /plans/default:
+                        discover:
+                            how: fmf
+                        execute:
+                            how: shell
+                    """)
+                self.tree.tree.update(plan)
+                self._plans = self.tree.plans(run=self)
+                self.debug(f"Using the default plan.")
         return self._plans
 
     def go(self):

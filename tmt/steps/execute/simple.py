@@ -108,7 +108,7 @@ class ExecuteSimple(tmt.steps.execute.ExecutePlugin):
             elif exit_code == '1':
                 data['result'] = 'fail'
         except tmt.utils.FileError:
-            log.debug(f"Exit code not found for test '{test.name}'.", level=3)
+            self.debug(f"Exit code not found for test '{test.name}'.", level=3)
         return tmt.Result(data, test.name)
 
     def check_beakerlib(self, test):

@@ -507,6 +507,13 @@ steps for all discovered test plans are executed::
         finish
             summary: 0 tasks completed
 
+Even if there are no :ref:`/spec/plans` defined it is still
+possible to execute tests and custom scripts. See the default
+:ref:`/stories/cli/run/default/plan` story for details. For
+example, in order to run beakerlib tests you could do this::
+
+    tmt run -a execute -h beakerlib
+
 
 Dry run mode is enabled with the ``--dry`` option::
 

@@ -102,9 +102,14 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 raise tmt.utils.DiscoverError(
                     f"Provided path '{path}' is not a directory.")
             fmf_root = path or self.step.plan.run.tree.root
-            output = self.run(
-                'git rev-parse --show-toplevel', cwd=fmf_root, dry=True)
-            git_root = output[0].strip('\n')
+            # Check git repository root (use fmf root if not found)
+            try:
+                output = self.run(
+                    'git rev-parse --show-toplevel', cwd=fmf_root, dry=True)
+                git_root = output[0].strip('\n')
+            except tmt.utils.RunError:
+                self.debug(f"Git root not found, using '{fmf_root}.'")
+                git_root = fmf_root
             # Set path to relative path from the git root to fmf root
             path = os.path.relpath(fmf_root, git_root)
             self.info('directory', git_root, 'green')

@@ -71,12 +71,15 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             # Create a simple fmf node, adjust its name
             tests.child(name, data)
 
-        # Copy directory tree to the workdir
+        # Copy directory tree (if defined) to the workdir
         directory = self.step.plan.run.tree.root
         testdir = os.path.join(self.workdir, 'tests')
-        self.info('directory', directory, 'green')
-        self.debug("Copy '{}' to '{}'.".format(directory, testdir))
-        shutil.copytree(directory, testdir)
+        if directory:
+            self.info('directory', directory, 'green')
+            self.debug("Copy '{}' to '{}'.".format(directory, testdir))
+            shutil.copytree(directory, testdir)
+        else:
+            os.makedirs(testdir)
 
         # Use a tmt.Tree to apply possible command line filters
         tests = tmt.Tree(tree=tests).tests()

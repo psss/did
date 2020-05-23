@@ -408,10 +408,13 @@ class RunError(GeneralError):
         self.stdout = stdout
         self.stderr = stderr
 
-class SpecificationError(GeneralError):
+class MetadataError(GeneralError):
+    """ General metadata error """
+
+class SpecificationError(MetadataError):
     """ Metadata specification error """
 
-class ConvertError(GeneralError):
+class ConvertError(MetadataError):
     """ Metadata conversion error """
 
 class StructuredFieldError(GeneralError):

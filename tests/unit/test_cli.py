@@ -76,13 +76,6 @@ def test_create():
     os.chdir(original_directory)
     shutil.rmtree(tmp)
 
-def test_no_metadata():
-    """ No metadata found """
-    tmp = tempfile.mkdtemp()
-    result = runner.invoke(tmt.cli.main, ['--root', tmp, 'run'])
-    assert result.exception
-    os.rmdir(tmp)
-
 def test_step():
     """ Select desired step"""
     for step in ['discover', 'provision', 'prepare']:

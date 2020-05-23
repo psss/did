@@ -1,0 +1,6 @@
+summary: Check whether default plan works
+description:
+    If there is no plan detected a 'default plan' is used to allow
+    running tests and arbitrary commands without existing plan.
+    This should work both when no fmf metadata are found and when
+    there is a metadata tree but it does not contain any plan.

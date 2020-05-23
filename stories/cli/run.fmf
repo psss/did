@@ -1,14 +1,58 @@
 story: 'As a user I want to execute tests easily'
 
 /default:
-    story: 'Default should cover the most common use case'
-    description:
-        Run all relevant tests on the default environment.
-        Default environment should be something safe which
-        should not modify user environment. Perhaps something
-        like 'x86_64 virtual machine from the testing farm'?
-    implemented: /tmt/base.py
-    example: tmt run
+    /run:
+        summary: 'Default should cover the most common use case'
+        story:
+            As a user I want to easily and safely execute all
+            available tests in the default environment.
+        description:
+            Run all relevant tests in a local virtual machine so
+            that the test environment can be safely prepared and
+            adjusted as needed without affecting or possibly
+            breaking user environment such as laptop.
+        implemented: /tmt/base.py
+        documented: /docs/examples.rst#run
+        example: tmt run
+    /plan:
+        summary: 'Plan should not be required for test execution'
+        story:
+            As a tester I want to execute tests in the default
+            environment without having to define a plan.
+        description: |
+            Even if there are no :ref:`/spec/plans` defined it is
+            still possible to execute tests and custom scripts. In
+            that case the default :ref:`/spec/steps` configuration
+            is applied and tests are executed using the ``shell``
+            method.
+
+            In order to discover available tests, the ``fmf``
+            method is used if metadata tree is detected otherwise
+            test discovery defaults to the ``shell`` method as well.
+
+            Individual steps of the default plan can be adjusted
+            as needed in the same way as if it was a real plans.
+            For example use ``execute -h beakerlib`` to execute
+            tests using the beakerlib method.
+        example: |
+            /plans/default:
+                summary:
+                    Default plan when fmf metadata found
+                discover:
+                    how: fmf
+                execute:
+                    how: shell
+
+            /plans/default:
+                summary:
+                    Default plan when no fmf metadata around
+                discover:
+                    how: shell
+                execute:
+                    how: shell
+        implemented: /tmt/base.py
+        tested: /tests/run/default
+        documented: /docs/examples.rst#run
 
 /select:
     story: 'Select multiple steps to be executed'
