@@ -220,3 +220,67 @@ story: 'As a user I want to execute tests easily'
         - tmt run -l
         - tmt run --last
 
+/login:
+    summary: 'Easily login into a provisioned guest'
+    story:
+        As a user I want to log into the provisioned guest so
+        that I can adjust the environment before the test is run
+        or investigate what happened after the test is finished.
+
+    implemented: /tmt/step
+    tested: /tests/login
+    documented: /docs/examples.rst#guest-login
+
+    /last:
+        summary: 'Log in at the end of the last enabled step'
+        story:
+            As a user I want to log into the provisioned guest
+            to investigate once the test execution has finished.
+        example:
+            tmt run --until execute login
+
+    /select:
+        summary: 'Log in at the end of the selected step'
+        story:
+            As a user I want to finish the guest preparation
+            manually at the end of the prepare step.
+        example: |
+            tmt run login --step prepare
+            tmt run login --step prepare:end
+            tmt run login --step prepare:90
+
+    /start:
+        summary: 'Log in at the start of the selected step'
+        story:
+            As a user I want to manually enable extra package
+            repositories before the prepare step is run.
+        example: |
+            tmt run login --step prepare:start
+            tmt run login --step prepare:10
+
+    /order:
+        summary: 'Log in at the selected phase of a step'
+        story:
+            As a user I want to select the exact phase during the
+            step execution to log into the guest.
+        example:
+            tmt run login --step prepare:75
+
+    /status:
+        summary: 'Log in when a test finished with given status'
+        story:
+            As a user I want to quickly investigate what exactly
+            happened on the guest if any test failed.
+        example: |
+            tmt run login --step execute --when fail
+            tmt run login --step execute --when error
+            tmt run login --step execute --when fail --when error
+
+    /experiment:
+        summary: 'Provision an environment for experimenting'
+        story:
+            As a user I want to easily provision a clean and safe
+            environment for experimenting and remove it when done.
+        example: |
+            tmt run provision login
+            tmt run --last finish

@@ -163,13 +163,16 @@ class GuestContainer(tmt.Guest):
         if directory:
             directory = f"cd '{directory}'; "
 
+        # Run in interactive mode if requested
+        interactive = ['-it'] if kwargs.get('interactive') else []
+
         # Note that we MUST run commands via bash, so variables
         # work as expected
         if isinstance(command, list):
             command = ' '.join(command)
         command = directory + command
         return self.podman(
-            ['exec'] + self.podman_env + [self.container,
+            ['exec'] + interactive + self.podman_env + [self.container,
             'sh', '-c', command], **kwargs)
 
     def push(self):

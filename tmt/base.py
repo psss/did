@@ -991,12 +991,15 @@ class Guest(tmt.utils.Common):
         if directory:
             directory = f"cd '{directory}'; "
 
+        # Run in interactive mode if requested
+        interactive = ['-t'] if kwargs.get('interactive') else []
+
         # Prepare command and run it
         if isinstance(command, (list, tuple)):
             command = ' '.join(command)
         self.debug(f"Execute command '{command}' on guest '{self.guest}'.")
         command = (
-            self._ssh_command() + [self._ssh_guest()] +
+            self._ssh_command() + interactive + [self._ssh_guest()] +
             [f'{environment}{directory}{command}'])
         return self.run(command, shell=False, **kwargs)
 

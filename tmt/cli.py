@@ -194,6 +194,7 @@ run.add_command(tmt.steps.prepare.PreparePlugin.command())
 run.add_command(tmt.steps.execute.ExecutePlugin.command())
 run.add_command(tmt.steps.report.ReportPlugin.command())
 run.add_command(tmt.steps.finish.FinishPlugin.command())
+run.add_command(tmt.steps.Login.command())
 
 
 @run.command()

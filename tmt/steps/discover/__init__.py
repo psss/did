@@ -118,6 +118,9 @@ class Discover(tmt.steps.Step):
         for plugin in self.plugins():
             # Go and discover tests
             plugin.go()
+            # Nothing more to be done for other plugins
+            if not isinstance(plugin, DiscoverPlugin):
+                continue
             # Prefix test name only if multiple plugins configured
             prefix = f'/{plugin.name}' if len(self.plugins()) > 1 else ''
             # Check discovered tests, modify test name/path

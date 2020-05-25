@@ -10,7 +10,6 @@ class Execute(tmt.steps.Step):
     def __init__(self, data, plan):
         """ Initialize execute step data """
         super().__init__(data, plan)
-        self.executor = None
         # List of Result() objects representing test results
         self._results = []
 
@@ -41,8 +40,9 @@ class Execute(tmt.steps.Step):
                 "Multiple execute steps defined in '{}'.".format(self.plan))
 
         # Choose the right plugin and wake it up
-        self.executor = ExecutePlugin.delegate(self, self.data[0])
-        self.executor.wake()
+        executor = ExecutePlugin.delegate(self, self.data[0])
+        executor.wake()
+        self._plugins.append(executor)
 
         # Nothing more to do if already done
         if self.status() == 'done':
@@ -77,8 +77,10 @@ class Execute(tmt.steps.Step):
             raise tmt.utils.ExecuteError("No guests available for execution.")
 
         # Execute the tests, store results
-        self.executor.go()
-        self._results = self.executor.results()
+        for plugin in self.plugins():
+            plugin.go()
+            if isinstance(plugin, ExecutePlugin):
+                self._results = plugin.results()
 
         # Give a summary, update status and save
         self.summary()
@@ -92,7 +94,10 @@ class Execute(tmt.steps.Step):
         Return a list of packages which need to be installed on the
         guest so that tests can be executed. Used by the prepare step.
         """
-        return self.executor.requires()
+        requires = set()
+        for plugin in self.plugins(classes=ExecutePlugin):
+            requires.update(plugin.requires())
+        return list(requires)
 
     def results(self):
         """
