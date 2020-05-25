@@ -908,7 +908,7 @@ class Guest(tmt.utils.Common):
         if distro:
             self.info('distro', distro, 'green')
         kernel = self.execute('uname -r', dry=True)[0].strip()
-        self.info('kernel', kernel, 'green')
+        self.verbose('kernel', kernel, 'green')
 
     def _ansible_verbosity(self):
         """ Prepare verbose level based on the --debug option count """
