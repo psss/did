@@ -478,48 +478,34 @@ Run
 The ``tmt run`` command is used to execute tests. By default all
 steps for all discovered test plans are executed::
 
-    $ tmt test run
-    /var/tmp/tmt/run-080
+    $ tmt run
+    /var/tmp/tmt/run-581
 
     /plans/basic
         discover
             how: fmf
-            repository: https://github.com/psss/tmt
-            revision: devel
-            filter: tier: 0,1
-            tests: 2 tests selected
+            directory: /home/psss/git/tmt
+            filter: tier: 0,1,2
+            summary: 15 tests selected
         provision
+            how: local
+            distro: Fedora release 32 (Thirty Two)
+            summary: 1 guest provisioned
         prepare
+            how: ansible
+            playbook: ansible/packages.yml
+            how: install
+            summary: Install required packages
+            package: beakerlib
+            summary: 2 preparations applied
         execute
             how: beakerlib
-            result: 2 tests passed, 0 tests failed
+            summary: 15 tests executed
         report
+            how: display
+            summary: 15 tests passed
         finish
-
-    /plans/helps
-        discover
-            how: shell
-            directory: /home/psss/git/tmt
-            tests: 4 tests selected
-        provision
-        prepare
-        execute
-            how: shell
-            result: 2 tests passed, 0 tests failed
-        report
-        finish
-
-    /plans/smoke
-        discover
-            how: shell
-            tests: 0 tests selected
-        provision
-        prepare
-        execute
-            how: shell
-            result: 1 test passed, 0 tests failed
-        report
-        finish
+            summary: 0 tasks completed
 
 
 Dry run mode is enabled with the ``--dry`` option::
