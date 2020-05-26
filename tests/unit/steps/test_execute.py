@@ -7,8 +7,9 @@ import tmt.plugins
 # Load all plugins
 tmt.plugins.explore()
 
-# Ignore loading from workdir
+# Ignore loading/saving from/to workdir
 tmt.steps.execute.Execute.load = lambda self: None
+tmt.steps.execute.Execute.save = lambda self: None
 
 
 # Smoke plan
