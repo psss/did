@@ -86,20 +86,10 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
                 help="Flavor, see '1minutetip list-flavors' for options."),
             ] + super().options(how)
 
-    def _get_default_image(self):
-        _, images = run_openstack(
-            self.get('api_url'), 'image list -f value -c Name', True)
-        # Use the latest Fedora image
-        fedora_re = re.compile(r'1MT-Fedora-(?P<ver>\d+)')
-        fedora_images = [
-            image for image in images.splitlines() if fedora_re.match(image)]
-        return max(
-            fedora_images, key=lambda x: int(fedora_re.match(x).group('ver')))
-
     def default(self, option, default=None):
         """ Return the default value for the given option """
         defaults = {
-            'image': self._get_default_image(),
+            'image': 'fedora',
             'flavor': 'm1.small'
         }
         return defaults.get(option, default)
@@ -208,7 +198,7 @@ class GuestMinute(tmt.Guest):
         error, net_info = run_openstack(
             self.api_url,
             f'server create --wait '
-            f'--flavor {self.flavor} --image {self.image} '
+            f'--flavor {self.flavor} --image {self.mt_image} '
             f'--nic net-id={network_id} --security-group default '
             f'--property local_user="{self.username}" '
             f'--property reserved_time={self.instance_start} -f value '
@@ -240,7 +230,7 @@ class GuestMinute(tmt.Guest):
 
     def _setup_machine(self):
         response = requests.get(
-            f'{self.api_url}?image_name={self.image}'
+            f'{self.api_url}?image_name={self.mt_image}'
             f'&user={self.username}&osver=rhos10', verify=False)
         if not response.ok:
             return
@@ -260,12 +250,83 @@ class GuestMinute(tmt.Guest):
             f'--property reserved_time={self.instance_start}')
         return True
 
+    def _convert_image(self, image):
+        """ Converts the given image to 1MT image name.
+
+        Raises a ProvisionError if the given image name is not valid.
+
+        The given image can be shortened, the supported formats are:
+
+        Fedora images:
+            fedora (latest fedora)
+            fedoraX
+            fedora-X
+            fcX
+            fc-X
+            fX
+            f-X
+
+        RHEL images:
+            rhelX
+            rhel-X
+
+        CentOS images:
+            centosX
+            centos-X
+
+        """
+        mt_image = image
+        image_lower = image.lower().strip()
+        _, images = run_openstack(
+            self.api_url, 'image list -f value -c Name', True)
+
+        if image_lower == 'fedora':
+            # Use the latest Fedora image
+            fedora_re = re.compile(r'1MT-Fedora-(?P<ver>\d+)')
+            fedora_images = [
+                image for image in images.splitlines() if fedora_re.match(image)]
+            mt_image = max(
+                fedora_images, key=lambda x: int(fedora_re.match(x).group('ver')))
+
+        # Fedora shortened names
+        fedora_match = re.match(r'^f(c|edora)?-?(?P<ver>\d+)$', image_lower)
+        if fedora_match:
+            mt_image = f'1MT-Fedora-{fedora_match.group("ver")}'
+
+        # RHEL shortened names
+        rhel_match = re.match(r'^rhel-?(?P<ver>\d+)$', image_lower)
+        if rhel_match:
+            rhel_re = re.compile(r'1MT-RHEL-*{}'.format(
+                re.escape(rhel_match.group('ver'))))
+            rhel_images = [
+                image for image in images.splitlines() if rhel_re.match(image)]
+
+            # Remove obsolete and invalid images
+            invalid_re = re.compile(r'(new|obsolete|invalid|fips)$')
+            rhel_images = [
+                image for image in rhel_images if not invalid_re.search(image)]
+
+            # Use the last image (newest RHEL)
+            mt_image = rhel_images[-1]
+
+        # CentOS shortened names
+        centos_match = re.match(r'^centos-?(?P<ver>\d+)$', image_lower)
+        if centos_match:
+            mt_image = f'1MT-CentOS-{centos_match.group("ver")}'
+
+        # Check if the image is valid
+        if not mt_image in images:
+            raise tmt.utils.ProvisionError(
+                f"The given image ({image}) is not a valid 1minutetip image.")
+        return mt_image
+
     def start(self):
         """ Start provisioned guest """
+        self.mt_image = self._convert_image(self.image)
         self.instance_start = datetime.datetime.utcnow().strftime(
             '%Y-%m-%d-%H-%M')
         self.instance_name = (
-            f'{self.username}-{self.image}-'
+            f'{self.username}-{self.mt_image}-'
             f'{os.getpid()}-{self.instance_start}')
         for i in range(NUMBER_OF_RETRIES):
             if self._setup_machine():
