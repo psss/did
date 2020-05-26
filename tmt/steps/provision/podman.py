@@ -96,10 +96,6 @@ class GuestContainer(tmt.Guest):
         # Instances variables initialized later
         self.container_id = None
 
-        # Environment variables compatible with commands used
-        self.podman_env = [f'-e {env}' for env in self.opt('environment')]
-        self.shell_env = ' '.join(self.opt('environment'))
-
     def save(self):
         """ Save guest data for future wake up """
         data = {
@@ -132,9 +128,9 @@ class GuestContainer(tmt.Guest):
         self.container = 'tmt' + tmt_workdir.replace('/', '-')
         self.verbose('name', self.container, 'green')
 
-        # Run the container, add environment variables
+        # Run the container
         self.container_id = self.podman(
-            ['run'] + self.podman_env + ['--name', self.container,
+            ['run'] + ['--name', self.container,
             '-v', f'{tmt_workdir}:{tmt_workdir}:Z', '-itd', self.image],
             message=f"Start container '{self.image}'.")[0].strip()
 
@@ -143,7 +139,8 @@ class GuestContainer(tmt.Guest):
         playbook = self._ansible_playbook_path(playbook)
         stdout, stderr = self.run(
             f'stty cols {tmt.utils.OUTPUT_WIDTH}; '
-            f'{self.shell_env} podman unshare ansible-playbook'
+            f'{self._export_environment()}'
+            f'podman unshare ansible-playbook'
             f'{self._ansible_verbosity()} -c podman -i {self.container}, '
             f'{playbook}')
         self._ansible_summary(stdout)
@@ -163,6 +160,9 @@ class GuestContainer(tmt.Guest):
         if directory:
             directory = f"cd '{directory}'; "
 
+        # Prepare the environment variables export
+        environment = self._export_environment(kwargs.get('env', dict()))
+
         # Run in interactive mode if requested
         interactive = ['-it'] if kwargs.get('interactive') else []
 
@@ -170,10 +170,10 @@ class GuestContainer(tmt.Guest):
         # work as expected
         if isinstance(command, list):
             command = ' '.join(command)
-        command = directory + command
+        command = directory + environment + command
         return self.podman(
-            ['exec'] + interactive + self.podman_env + [self.container,
-            'sh', '-c', command], **kwargs)
+            ['exec'] + interactive +
+            [self.container, 'sh', '-c', command], **kwargs)
 
     def push(self):
         """ Nothing to be done to push workdir """

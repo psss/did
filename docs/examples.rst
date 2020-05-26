@@ -700,6 +700,14 @@ Instead of always specifying the whole run id you can also use
     tmt run -l execute
     tmt run --last execute
 
+In order to interactively debug tests use the ``--interactive``
+option which disables output capturing so that you can see what
+exactly is happening during test execution. This also allows to
+inspect particular place of the code by inserting a ``bash`` in
+the shell code or ``import pdb; pdb.set_trace()`` for python::
+
+    tmt run --all execute --how beakerlib.tmt --interactive
+
 
 Guest Login
 ------------------------------------------------------------------

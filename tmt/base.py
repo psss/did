@@ -225,6 +225,8 @@ class Test(Node):
 
         # Check that environment is a dictionary
         self._check('environment', expected=dict, default={})
+        self.environment = dict([
+            (key, str(value)) for key, value in self.environment.items()])
 
         # Default duration, manual, enabled and result
         self._check('duration', expected=str, default=DEFAULT_TEST_DURATION)
@@ -355,8 +357,10 @@ class Plan(Node):
             if not isinstance(gates, list):
                 gates = [gates]
 
-        # Environment variables
-        self._environment = node.get('environment', dict())
+        # Environment variables, make sure that values are string
+        self._environment = dict([
+            (key, str(value)) for key, value
+            in node.get('environment', dict()).items()])
 
     @property
     def environment(self):
@@ -1008,6 +1012,21 @@ class Guest(tmt.utils.Common):
         self.debug(f"Playbook full path: '{playbook}'", level=2)
         return playbook
 
+    def _export_environment(self, execute_environment=None):
+        """ Prepare shell export of environment variables """
+        # Prepare environment variables so they can be correctly passed
+        # to ssh's shell. Create a copy to prevent modifying source.
+        environment = dict()
+        environment.update(execute_environment or dict())
+        # Plan environment and variables provided on the command line
+        # override environment provided to execute().
+        environment.update(self.parent.plan.environment)
+        # Prepend with export and run as a separate command.
+        if not environment:
+            return ''
+        return 'export {}; '.format(
+            ' '.join(tmt.utils.shell_variables(environment)))
+
     def ansible(self, playbook):
         """ Prepare guest using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
@@ -1026,15 +1045,8 @@ class Guest(tmt.utils.Common):
         environment ... dictionary with environment variables
         """
 
-        # Prepare environment variables so they can be correctly passed
-        # to ssh's shell. Needs to be prepended with export and run as a
-        # separate command.
-        environment = kwargs.get('env')
-        if environment is None:
-            environment = ''
-        else:
-            environment = 'export {}; '.format(
-                ' '.join(tmt.utils.shell_variables(environment)))
+        # Prepare the export of environment variables
+        environment = self._export_environment(kwargs.get('env', dict()))
 
         # Change to given directory on guest if cwd provided
         directory = kwargs.get('cwd', '')

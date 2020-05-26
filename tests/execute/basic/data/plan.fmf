@@ -5,12 +5,22 @@ provision:
     discover:
         how: fmf
         test: shell
-    execute:
-        how: shell
+
+    /detach:
+        execute:
+            how: shell.detach
+    /tmt:
+        execute:
+            how: shell.tmt
 
 /beakerlib:
     discover:
         how: fmf
         test: beakerlib
-    execute:
-        how: beakerlib
+
+    /detach:
+        execute:
+            how: beakerlib.detach
+    /tmt:
+        execute:
+            how: beakerlib.tmt

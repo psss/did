@@ -1,13 +1,14 @@
 /test:
-    test: echo ">>>${TEST}<<<"
+    test: echo ">>>${STR}${INT}<<<"
     path: /
 
     /yes:
-        summary: This is a test with a variable
+        summary: This is a test with variables
         environment:
-            TEST: L1
+            STR: L
+            INT: 1
     /no:
-        summary: This is a test without a variable
+        summary: This is a test without variables
 
 /plan:
     discover:
@@ -18,8 +19,9 @@
         how: shell
 
     /yes:
-        summary: This is a plan with a variable
+        summary: This is a plan with variables
         environment:
-            TEST: L2
+            STR: L
+            INT: 2
     /no:
-        summary: This is a plan without a variable
+        summary: This is a plan without variables

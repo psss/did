@@ -114,7 +114,7 @@ tmt_run_test () {
       duration="timeout '$duration' "
     }
 
-    local log_dir="${tmt_LOG_D}/results/$name"
+    local log_dir="${tmt_LOG_D}/logs/$name"
     mkdir -p "$log_dir" || {
         tmt_error "[${name}] Could not create log dir: '$log_dir'" E
         return

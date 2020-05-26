@@ -8,24 +8,28 @@ rlJournalStart
         rlRun "set -o pipefail"
     rlPhaseEnd
 
-    rlPhaseStartTest "Run"
-        rlRun "tmt run -i $run" 2
-    rlPhaseEnd
+    for verbosity in '' '-dv' '-ddvv' '-dddvvv'; do
+        rlPhaseStartTest "Run $verbosity"
+            rlRun "tmt run $verbosity --force --id $run" 2 "Run all plans"
+        rlPhaseEnd
+    done
 
-    rlPhaseStartTest "Shell"
-        results="$run/plan/shell/execute/results.yaml"
-        rlRun "grep -A1 good:  $results | grep pass" 0 "Check pass"
-        rlRun "grep -A1 weird: $results | grep error" 0 "Check error"
-        rlRun "grep -A1 bad:   $results | grep fail" 0 "Check fail"
-    rlPhaseEnd
+    for method in tmt detach; do
+        rlPhaseStartTest "Check shell.$method results"
+            results="$run/plan/shell/$method/execute/results.yaml"
+            rlRun "grep -A1 good:  $results | grep pass" 0 "Check pass"
+            rlRun "grep -A1 weird: $results | grep error" 0 "Check error"
+            rlRun "grep -A1 bad:   $results | grep fail" 0 "Check fail"
+        rlPhaseEnd
 
-    rlPhaseStartTest "BeakerLib"
-        results="$run/plan/beakerlib/execute/results.yaml"
-        rlRun "grep -A1 good:  $results | grep pass" 0 "Check pass"
-        rlRun "grep -A1 need:  $results | grep warn" 0 "Check warn"
-        rlRun "grep -A1 weird: $results | grep error" 0 "Check error"
-        rlRun "grep -A1 bad:   $results | grep fail" 0 "Check fail"
-    rlPhaseEnd
+        rlPhaseStartTest "Check beakerlib.$method results"
+            results="$run/plan/beakerlib/$method/execute/results.yaml"
+            rlRun "grep -A1 good:  $results | grep pass" 0 "Check pass"
+            rlRun "grep -A1 need:  $results | grep warn" 0 "Check warn"
+            rlRun "grep -A1 weird: $results | grep error" 0 "Check error"
+            rlRun "grep -A1 bad:   $results | grep fail" 0 "Check fail"
+        rlPhaseEnd
+    done
 
     rlPhaseStartCleanup
         rlRun "popd"

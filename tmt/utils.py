@@ -209,8 +209,17 @@ class Common(object):
         if self.opt('debug') >= level:
             echo(self._indent(key, value, color, shift))
 
-    def _run(self, command, cwd, shell, env):
-        """ Run command, capture the output """
+    def _run(
+        self, command, cwd, shell, env, log, join=False, interactive=False):
+        """
+        Run command, capture the output
+
+        By default stdout and stderr are captured separately.
+        Use join=True to merge stderr into stdout.
+        """
+        # By default command ouput is logged using debug
+        if not log:
+            log = self.debug
         # Prepare the environment
         if env:
             if not isinstance(env, dict):
@@ -220,12 +229,26 @@ class Common(object):
             environment.update(env)
         else:
             environment = None
+        self.debug('environment', pprint.pformat(environment), level=4)
+
+        # Run the command in interactive mode if requested
+        if interactive:
+            try:
+                subprocess.run(
+                    command, cwd=cwd, shell=shell, env=environment, check=True)
+                return None if join else (None, None)
+            except subprocess.CalledProcessError as error:
+                raise RunError(message, command, error.returncode)
 
         # Create the process
         process = subprocess.Popen(
             command, cwd=cwd, shell=shell, env=environment,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        descriptors = [process.stdout.fileno(), process.stderr.fileno()]
+            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT if join else subprocess.PIPE)
+        if join:
+            descriptors = [process.stdout.fileno()]
+        else:
+            descriptors = [process.stdout.fileno(), process.stderr.fileno()]
         stdout = ''
         stderr = ''
 
@@ -239,23 +262,23 @@ class Common(object):
                     line = process.stdout.readline().decode('utf-8')
                     stdout += line
                     if line != '':
-                        self.debug('out', line.rstrip('\n'), 'yellow', level=3)
+                        log('out', line.rstrip('\n'), 'yellow', level=3)
                 # Handle stderr
-                if descriptor == process.stderr.fileno():
+                if not join and descriptor == process.stderr.fileno():
                     line = process.stderr.readline().decode('utf-8')
                     stderr += line
                     if line != '':
-                        self.debug('err', line.rstrip('\n'), 'yellow', level=3)
+                        log('err', line.rstrip('\n'), 'yellow', level=3)
 
         # Check for possible additional output
         for line in process.stdout.readlines():
             line = line.decode('utf-8')
             stdout += line
-            self.debug('out', line.rstrip('\n'), 'yellow', level=3)
-        for line in process.stderr.readlines():
+            log('out', line.rstrip('\n'), 'yellow', level=3)
+        for line in [] if join else process.stderr.readlines():
             line = line.decode('utf-8')
             stderr += line
-            self.debug('err', line.rstrip('\n'), 'yellow', level=3)
+            log('err', line.rstrip('\n'), 'yellow', level=3)
 
         # Handle the exit code, return output
         if process.returncode != 0:
@@ -263,19 +286,21 @@ class Common(object):
                 command = ' '.join(command)
             raise RunError(
                 message=f"Command returned '{process.returncode}'.",
-                command=command, stdout=stdout, stderr=stderr)
-        return stdout, stderr
+                command=command, returncode=process.returncode,
+                stdout=stdout, stderr=stderr)
+        return stdout if join else (stdout, stderr)
 
     def run(
-            self, command, message=None,
-            cwd=None, dry=False, shell=True, env=None, interactive=False):
+            self, command, message=None, cwd=None, dry=False,
+            shell=True, env=None, interactive=False, join=False, log=None):
         """
         Run command, give message, handle errors
 
         Command is run in the workdir be default.
         In dry mode commands are not executed unless dry=True.
         Environment is updated with variables from the 'env' dictionary.
-        Returns (stdout, stderr) tuple.
+        Output is logged using self.debug() or custom 'log' function.
+        Returns stdout if join=True, (stdout, stderr) tuple otherwise.
         """
         # Use a generic message if none given, prepare error message
         if not message:
@@ -289,37 +314,34 @@ class Common(object):
 
         # Nothing more to do in dry mode (unless requested)
         if self.opt('dry') and not dry:
-            return None, None
+            return None if join else (None, None)
 
-        # Run the command in interactive mode if requested
+        # Run the command, handle the exit code
         cwd = cwd or self.workdir
-        if interactive:
-            subprocess.run(command, cwd=cwd, shell=shell, env=env)
-            return
-
-        # Prepare command, run it, handle the exit code
         try:
-            return self._run(command, cwd=cwd, shell=shell, env=env)
+            return self._run(command, cwd, shell, env, log, join, interactive)
         except RunError as error:
             self.debug(error.message, level=3)
-            raise RunError(message, error.command, error.stdout, error.stderr)
+            raise RunError(
+                message, error.command, error.returncode,
+                error.stdout, error.stderr)
 
-    def read(self, path):
+    def read(self, path, level=2):
         """ Read a file from the workdir """
         if self.workdir:
             path = os.path.join(self.workdir, path)
-        self.debug(f"Read file '{path}'.", level=2)
+        self.debug(f"Read file '{path}'.", level=level)
         try:
             with open(path) as data:
                 return data.read()
         except OSError as error:
             raise FileError(f"Failed to read '{path}'.\n{error}")
 
-    def write(self, path, data):
+    def write(self, path, data, level=2):
         """ Write a file to the workdir """
         if self.workdir:
             path = os.path.join(self.workdir, path)
-        self.debug(f"Write file '{path}'.", level=2)
+        self.debug(f"Write file '{path}'.", level=level)
         # Dry mode
         if self.opt('dry'):
             return
@@ -408,9 +430,10 @@ class FileError(GeneralError):
 
 class RunError(GeneralError):
     """ Command execution error """
-    def __init__(self, message, command, stdout, stderr):
+    def __init__(self, message, command, returncode, stdout=None, stderr=None):
         self.message = message
         self.command = command
+        self.returncode = returncode
         self.stdout = stdout
         self.stderr = stderr
 
@@ -508,7 +531,7 @@ def shell_to_dict(variables):
         for var in shlex.split(variable):
             matched = re.match("([^=]+)=(.*)", var)
             if not matched:
-                raise GeneralError("Invalid variable specification '{var}'.")
+                raise GeneralError(f"Invalid variable specification '{var}'.")
             name, value = matched.groups()
             result[name] = value
     return result

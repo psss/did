@@ -21,7 +21,7 @@ def test_smoke_method():
 
 def test_smoke_plugin():
     assert isinstance(
-        smoke.execute.plugins()[0], tmt.steps.execute.simple.ExecuteSimple)
+        smoke.execute.plugins()[0], tmt.steps.execute.ExecutePlugin)
 
 def test_requires():
     assert smoke.execute.requires() == []
@@ -36,7 +36,7 @@ def test_basic_method():
 
 def test_basic_plugin():
     assert isinstance(
-        basic.execute.plugins()[0], tmt.steps.execute.simple.ExecuteSimple)
+        basic.execute.plugins()[0], tmt.steps.execute.ExecutePlugin)
 
 def test_basic_requires():
     assert basic.execute.requires() == ['beakerlib']

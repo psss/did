@@ -1,7 +1,11 @@
+import os
 import re
 import fmf
 import tmt
 import click
+
+# Logs directory name
+LOGS = 'logs'
 
 
 class Execute(tmt.steps.Step):
@@ -134,3 +138,55 @@ class ExecutePlugin(tmt.steps.Plugin):
             Execute._save_context(context)
 
         return execute
+
+    def log(self, test, filename=None, full=False, create=False):
+        """
+        Prepare full/relative test log/directory path
+
+        Construct logs directory path for given test, create directory
+        if requested and return the full or relative path to it (if
+        filename not provided) or to the given log file otherwise.
+        """
+        # Prepare directory path, create if requested
+        directory = os.path.join(
+            self.step.workdir, LOGS, test.name.lstrip('/'))
+        if create and not os.path.isdir(directory):
+            os.makedirs(directory)
+        if not filename:
+            return directory
+        path = os.path.join(directory, filename)
+        return path if full else os.path.relpath(path, self.step.workdir)
+
+    def check_shell(self, test):
+        """ Check result of a shell test """
+        # Prepare the log path
+        data = {'log': self.log(test, 'out.log')}
+        # Process the exit code
+        try:
+            data['result'] = {0: 'pass', 1: 'fail'}[test.returncode]
+        except KeyError:
+            data['result'] = 'error'
+        return tmt.Result(data, test.name)
+
+    def check_beakerlib(self, test):
+        """ Check result of a beakerlib test """
+        # Initialize data, prepare log paths
+        data = {'result': 'error', 'log': []}
+        for log in ['out.log', 'journal.txt']:
+            if os.path.isfile(self.log(test, log, full=True)):
+                data['log'].append(self.log(test, log))
+        # Check beakerlib log for the result
+        try:
+            beakerlib_results_file = self.log(test, 'TestResults', full=True)
+            results = self.read(beakerlib_results_file, level=3)
+        except tmt.utils.FileError:
+            self.debug(f"Unable to read '{beakerlib_results_file}'.", level=3)
+            return tmt.Result(data, test.name)
+        try:
+            matched = re.search('TESTRESULT_RESULT_STRING=(.*)', results)
+            result = matched.group(1)
+        except AttributeError:
+            self.debug(f"No result in '{beakerlib_results_file}'.", level=3)
+            return tmt.Result(data, test.name)
+        data['result'] = result.lower()
+        return tmt.Result(data, test.name)
