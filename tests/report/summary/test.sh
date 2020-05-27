@@ -8,12 +8,12 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Check summary"
-        rlRun "tmt run | tee output" 0 "Run tests in verbose mode"
+        rlRun "tmt run | tee output" 2 "Run tests in verbose mode"
         rlAssertGrep "3 tests passed, 2 tests failed and 1 error" "output"
     rlPhaseEnd
 
     rlPhaseStartTest "Check details"
-        rlRun "tmt run -v | tee output" 0 "Run tests in verbose mode"
+        rlRun "tmt run -v | tee output" 2 "Run tests in verbose mode"
         rlAssertGrep "fail /test/bad/one" "output"
         rlAssertGrep "fail /test/bad/two" "output"
         rlAssertGrep "pass /test/good/one" "output"

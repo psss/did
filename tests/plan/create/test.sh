@@ -20,13 +20,13 @@ rlJournalStart
     rlPhaseStartTest "Invalid yaml"
         yaml='{how: "fmf"; name: "int"; url: "https://int/repo"}'
         rlRun "tmt plan create /plans/bad --template mini \
-            --discover '$yaml' 2>&1 | tee output " 1
+            --discover '$yaml' 2>&1 | tee output " 2
         rlAssertGrep "Invalid yaml data" "output"
     rlPhaseEnd
 
     rlPhaseStartTest "Invalid step"
         rlRun "tmt plan create /plans/bad --template mini \
-            --discover '' 2>&1 | tee output " 1
+            --discover '' 2>&1 | tee output " 2
         rlAssertGrep "Invalid step data" "output"
     rlPhaseEnd
 

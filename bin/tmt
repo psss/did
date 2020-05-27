@@ -22,9 +22,9 @@ except tmt.utils.RunError as error:
             '\n'.join(lines[-tmt.utils.OUTPUT_LINES:]))
     print()
     fmf.utils.log.error(error.message)
-    raise SystemExit(1)
+    raise SystemExit(2)
 
 # Basic error message for general errors
 except tmt.utils.GeneralError as error:
     fmf.utils.log.error(error)
-    raise SystemExit(1)
+    raise SystemExit(2)

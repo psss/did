@@ -228,6 +228,23 @@ can also easily install optional dependencies in this way::
     pip install '.[all]'
 
 
+Exit Codes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following exit codes are returned from ``tmt run``. Note that
+you can use the ``--quiet`` option to completely disable output
+and only check for the exit code.
+
+0
+    At least one test passed, there was no fail, warn or error.
+1
+    There was a fail or warn identified, but no error.
+2
+    Errors occured during test execution.
+3
+    No test results found.
+
+
 Links
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

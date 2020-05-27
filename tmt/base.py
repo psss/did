@@ -5,6 +5,7 @@ import os
 import re
 import fmf
 import yaml
+import click
 import pprint
 import random
 import string
@@ -488,11 +489,20 @@ class Plan(Node):
         # Run enabled steps except 'finish'
         self.debug('go', color='cyan', shift=0, level=2)
         try:
+            abort = False
             for step in self.steps(skip=['finish']):
                 step.go()
+                # Finish plan if no tests found (except dry mode)
+                if (step.name == 'discover' and not step.tests()
+                        and not self.opt('dry')):
+                    step.info(
+                        'warning', 'No tests found, finishing plan.',
+                        color='yellow', shift=1)
+                    abort = True
+                    return
         # Make sure we run 'finish' step always if enabled
         finally:
-            if self.finish.enabled:
+            if not abort and self.finish.enabled:
                 self.finish.go()
 
 
@@ -800,6 +810,38 @@ class Run(tmt.utils.Common):
                 self.debug(f"Using the default plan.")
         return self._plans
 
+    def summary(self):
+        """ Check overall results, return appropriate exit code """
+        # Nothing to do unless the execute/prepare step is enabled
+        execute = self.plans[0].execute
+        report = self.plans[0].report
+        if not execute.enabled and not report.enabled:
+            return
+
+        # Gather all results and give an overall summary
+        results = [
+            result
+            for plan in self.plans
+            for result in plan.execute.results()]
+        self.info('')
+        self.info('total', Result.summary(results), color='cyan')
+
+        # Skip sending exit codes in dry mode
+        if self.opt('dry'):
+            return
+
+        # Return appropriate exit code based on the total stats
+        stats = Result.total(results)
+        if sum(stats.values()) == 0:
+            raise SystemExit(3)
+        if stats['error']:
+            raise SystemExit(2)
+        if stats['fail'] + stats['warn']:
+            raise SystemExit(1)
+        if stats['pass']:
+            raise SystemExit(0)
+        raise SystemExit(2)
+
     def go(self):
         """ Go and do test steps for selected plans """
         # Show run id / workdir path
@@ -840,12 +882,17 @@ class Run(tmt.utils.Common):
         # Show summary, store run data
         self.verbose('Found {0}.'.format(listed(self.plans, 'plan')))
         self.save()
+
         # Iterate over plans
         for plan in self.plans:
             plan.go()
+
         # Update the last run id at the very end
         # (override possible runs created during execution)
         self.config.last_run(self.workdir)
+
+        # Final summary
+        self.summary()
 
 
 class Guest(tmt.utils.Common):
@@ -1069,6 +1116,36 @@ class Result(object):
             self.log = tmt.utils.listify(data['log'])
         except KeyError:
             self.log = []
+
+    @staticmethod
+    def total(results):
+        """ Return dictionary with total stats for given results """
+        stats = dict([(result, 0) for result in Result._results])
+        for result in results:
+            stats[result.result] += 1
+        return stats
+
+    @staticmethod
+    def summary(results):
+        """ Prepare a nice human summary of provided results """
+        stats = Result.total(results)
+        comments = []
+        if stats.get('pass'):
+            passed = ' ' + click.style('passed', fg='green')
+            comments.append(fmf.utils.listed(stats['pass'], 'test') + passed)
+        if stats.get('fail'):
+            failed = ' ' + click.style('failed', fg='red')
+            comments.append(fmf.utils.listed(stats['fail'], 'test') + failed)
+        if stats.get('info'):
+            count, comment = fmf.utils.listed(stats['info'], 'info').split()
+            comments.append(count + ' ' + click.style(comment, fg='blue'))
+        if stats.get('warn'):
+            count, comment = fmf.utils.listed(stats['warn'], 'warn').split()
+            comments.append(count + ' ' + click.style(comment, fg='yellow'))
+        if stats.get('error'):
+            count, comment = fmf.utils.listed(stats['error'], 'error').split()
+            comments.append(count + ' ' + click.style(comment, fg='magenta'))
+        return fmf.utils.listed(comments or ['no results found'])
 
     def show(self):
         """ Return a nicely color result with test name """

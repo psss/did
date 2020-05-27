@@ -36,35 +36,8 @@ class Report(tmt.steps.Step):
 
     def summary(self):
         """ Give a concise report summary """
-        # Prepare stats
-        stats = {}
-        for result in self.plan.execute.results():
-            try:
-                stats[result.result] += 1
-            except KeyError:
-                stats[result.result] = 1
-
-        # Prepare comments
-        comments = []
-        if stats.get('pass'):
-            passed = ' ' + click.style('passed', fg='green')
-            comments.append(fmf.utils.listed(stats['pass'], 'test') + passed)
-        if stats.get('fail'):
-            failed = ' ' + click.style('failed', fg='red')
-            comments.append(fmf.utils.listed(stats['fail'], 'test') + failed)
-        if stats.get('info'):
-            count, comment = fmf.utils.listed(stats['info'], 'info').split()
-            comments.append(count + ' ' + click.style(comment, fg='blue'))
-        if stats.get('warn'):
-            count, comment = fmf.utils.listed(stats['warn'], 'warn').split()
-            comments.append(count + ' ' + click.style(comment, fg='yellow'))
-        if stats.get('error'):
-            count, comment = fmf.utils.listed(stats['error'], 'error').split()
-            comments.append(count + ' ' + click.style(comment, fg='magenta'))
-
-        # Give the summary
-        comments = comments or ['no results found']
-        self.info('summary', fmf.utils.listed(comments), 'green', shift=1)
+        summary = tmt.base.Result.summary(self.plan.execute.results())
+        self.info('summary', summary, 'green', shift=1)
 
     def go(self):
         """ Report the guests """

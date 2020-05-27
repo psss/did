@@ -9,7 +9,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Run"
-        rlRun "tmt run -i $run" 0 "Check help message"
+        rlRun "tmt run -i $run" 2
     rlPhaseEnd
 
     rlPhaseStartTest "Shell"

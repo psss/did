@@ -11,7 +11,9 @@ rlJournalStart
 
     for selected_step in $steps; do
         rlPhaseStartTest "Select $selected_step"
-            [[ $selected_step == execute ]] && exitcode=1 || exitcode=0
+            exitcode=0
+            [[ $selected_step == execute ]] && exitcode=2
+            [[ $selected_step == report ]] && exitcode=3
             rlRun "tmt run $selected_step | tee output" $exitcode
             for step in $steps; do
                 if [[ $step == $selected_step ]]; then

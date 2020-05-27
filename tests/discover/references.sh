@@ -96,7 +96,7 @@ rlJournalStart
         rlAssertGrep /tests/smoke output
         # Before the change was committed
         rlRun 'tmt run -d discover --how fmf --ref eae4d52^ plan --name $plan \
-            2>&1 | tee output' 1
+            2>&1 | tee output' 2
         rlAssertGrep 'Metadata tree path .* not found.' output
     rlPhaseEnd
 
