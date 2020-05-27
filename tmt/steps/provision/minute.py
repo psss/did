@@ -251,10 +251,10 @@ class GuestMinute(tmt.Guest):
         return True
 
     def _convert_image(self, image):
-        """ Converts the given image to 1MT image name.
+        """
+        Convert the given image to 1MT image name
 
         Raises a ProvisionError if the given image name is not valid.
-
         The given image can be shortened, the supported formats are:
 
         Fedora images:
@@ -273,20 +273,19 @@ class GuestMinute(tmt.Guest):
         CentOS images:
             centosX
             centos-X
-
         """
         mt_image = image
         image_lower = image.lower().strip()
         _, images = run_openstack(
             self.api_url, 'image list -f value -c Name', True)
+        images = images.splitlines()
 
+        # Use the latest Fedora image
         if image_lower == 'fedora':
-            # Use the latest Fedora image
             fedora_re = re.compile(r'1MT-Fedora-(?P<ver>\d+)')
             fedora_images = [
-                image for image in images.splitlines() if fedora_re.match(image)]
-            mt_image = max(
-                fedora_images, key=lambda x: int(fedora_re.match(x).group('ver')))
+                image for image in images if fedora_re.match(image)]
+            mt_image = sorted(fedora_images)[-1]
 
         # Fedora shortened names
         fedora_match = re.match(r'^f(c|edora)?-?(?P<ver>\d+)$', image_lower)
@@ -298,13 +297,11 @@ class GuestMinute(tmt.Guest):
         if rhel_match:
             rhel_re = re.compile(r'1MT-RHEL-*{}'.format(
                 re.escape(rhel_match.group('ver'))))
-            rhel_images = [
-                image for image in images.splitlines() if rhel_re.match(image)]
-
             # Remove obsolete and invalid images
             invalid_re = re.compile(r'(new|obsolete|invalid|fips)$')
             rhel_images = [
-                image for image in rhel_images if not invalid_re.search(image)]
+                image for image in images
+                if rhel_re.match(image) and not invalid_re.search(image)]
 
             # Use the last image (newest RHEL)
             mt_image = rhel_images[-1]
@@ -317,7 +314,7 @@ class GuestMinute(tmt.Guest):
         # Check if the image is valid
         if not mt_image in images:
             raise tmt.utils.ProvisionError(
-                f"The given image ({image}) is not a valid 1minutetip image.")
+                f"Image '{image}' is not a valid 1minutetip image.")
         return mt_image
 
     def start(self):
