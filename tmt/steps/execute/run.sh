@@ -289,4 +289,5 @@ tmt_verbose 0 "$tmt_WD $ main $tmt_TYPE < $tmt_TESTS_F"
 
 tmt_main < <( grep -vE '^\s*$' "$tmt_TESTS_F" )
 
+tmt_verbose 0 "Test execution finished."
 echo 'D'
