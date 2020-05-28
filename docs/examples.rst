@@ -679,7 +679,6 @@ directly on your ``local`` host::
     tmt run --all provision --how=local
 
 
-
 Debug Tests
 ------------------------------------------------------------------
 
@@ -700,3 +699,38 @@ Instead of always specifying the whole run id you can also use
 
     tmt run -l execute
     tmt run --last execute
+
+
+Guest Login
+------------------------------------------------------------------
+
+Use the ``login`` command to get an interactive shell on the
+provisined guest. This can be useful for example for additional
+manual preparation of the guest before testing or checking test
+logs to investigate a test failure::
+
+    tmt run login --step prepare
+    tmt run login --step execute
+
+It's possible to log in at the start or end of a step or select
+the desired step phase using order::
+
+    tmt run login --step prepare:start
+    tmt run login --step prepare:50
+    tmt run login --step prepare:end
+
+Interactive shell session can be also enabled conditionally when
+specific test result occurs::
+
+    tmt run login --when fail
+    tmt run login --when fail --when error
+
+You can also enable only the ``provision`` step to easily get a
+clean and safe environment for experimenting. Use the ``finish``
+step to remove provisioned guest::
+
+    tmt run provision login
+    tmt run --last finish
+
+See the :ref:`/stories/cli/run/login` user stories for more
+details and examples.

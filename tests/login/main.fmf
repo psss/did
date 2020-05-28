@@ -1,0 +1,10 @@
+path: /tests/login
+
+/step:
+    summary: Check login step selection
+    test: ./step.sh
+
+/when:
+    summary: Check login result condition
+    test: ./when.sh
+

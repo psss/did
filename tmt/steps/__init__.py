@@ -13,6 +13,11 @@ from tmt.utils import GeneralError
 
 STEPS = ['discover', 'provision', 'prepare', 'execute', 'report', 'finish']
 
+# Step phase order
+PHASE_START = 10
+PHASE_BASE = 50
+PHASE_END = 90
+
 
 class Step(tmt.utils.Common):
     """ Common parent of all test steps """
@@ -125,6 +130,12 @@ class Step(tmt.utils.Common):
             self.debug("Step has not finished. Let's try once more!", level=2)
             self._workdir_cleanup()
 
+        # Insert login plugins if requested on the command line
+        for plugin in Login.plugins(step=self):
+            self.debug(
+                f"Insert login plugin with order '{plugin.order}'.", level=2)
+            self._plugins.append(plugin)
+
         # Nothing more to do when the step is already done
         if self.status() == 'done':
             return
@@ -135,9 +146,18 @@ class Step(tmt.utils.Common):
             for data in self.data:
                     data['how'] = how
 
-    def plugins(self):
-        """ Iterate over plugins by their order """
-        return sorted(self._plugins, key=lambda plugin: plugin.order)
+    def plugins(self, classes=None):
+        """
+        Iterate over plugins by their order
+
+        By default iterates over all available plugins. Optional filter
+        'classes' can be used to iterate only over instances of given
+        class (single class or tuple of classes).
+        """
+        return sorted(
+            [plugin for plugin in self._plugins
+                if classes is None or isinstance(plugin, classes)],
+            key=lambda plugin: plugin.order)
 
     def go(self):
         """ Execute the test step """
@@ -356,3 +376,146 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
             self.info('name', self.name, 'magenta')
         # Include order in verbose mode
         self.verbose('order', self.order, 'magenta', level=3)
+
+
+class Login(tmt.utils.Common):
+    """ Log into the guest """
+
+    # Dictionary containing list of requested phases for each enabled step
+    _phases = None
+
+    # True if interactive login enabled
+    _enabled = False
+
+    def __init__(self, step, order):
+        """ Initialize relations, store the login order """
+        super().__init__(parent=step, name='login')
+        self.order = order
+
+    @classmethod
+    def command(cls, method_class=None, usage=None):
+        """ Create the login command """
+        @click.command()
+        @click.pass_context
+        @click.option(
+            '-s', '--step', metavar='STEP[:PHASE]', multiple=True,
+            help='Log in during given phase of selected step(s).')
+        @click.option(
+            '-w', '--when', metavar='RESULT', multiple=True,
+            type=click.Choice(tmt.base.Result._results),
+            help='Log in if a test finished with given result(s).')
+        @click.option(
+            '-c', '--command', metavar='COMMAND',
+            multiple=True, default=['bash'],
+            help="Run given command(s). Default is 'bash'.")
+        def login(context, **kwargs):
+            """
+            Provide user with an interactive shell on the guest.
+
+            By default the shell si provided at the end of the last
+            enabled step. Use one or more --step options to select a
+            different step instead.
+
+            Optional phase can be provided to specify the exact phase of
+            the step when the shell should be provided. The following
+            values are supported:
+
+            \b
+                start ... beginning of the step (same as '10')
+                end ..... end of the step (default, same as '90')
+                00-99 ... integer order defining the exact phase
+
+            Usually the main step execution happens with order 50.
+            Consult individual step documentation for more details.
+
+            For the execute step and following steps it is also possible
+            to conditionally enable the login feature only if some of
+            the tests finished with given result (pass, info, fail,
+            warn, error).
+            """
+            Login._save_context(context)
+            Login._enabled = True
+
+        return login
+
+    @classmethod
+    def _parse_phases(cls, step):
+        """ Parse options and store phase order """
+        phases = dict()
+        options = cls._opt('step')
+
+        # Use the end of the last enabled step if no --step given
+        if not options:
+            last_enabled_step = list(step.plan.steps())[-1]
+            phases[last_enabled_step.name] = [PHASE_END]
+
+        # Process provided options
+        for option in options:
+            # Parse the step:phase format
+            matched = re.match(r'(\w+)(:(\w+))?', option)
+            if matched:
+                step_name, _, phase = matched.groups()
+            if not matched or step_name not in STEPS:
+                raise tmt.utils.GeneralError(f"Invalid step '{option}'.")
+            # Check phase format, convert into int, use end by default
+            try:
+                phase = int(phase)
+            except TypeError:
+                phase = PHASE_END
+            except ValueError:
+                # Convert 'start' and 'end' aliases
+                try:
+                    phase = dict(start=PHASE_START, end=PHASE_END)[phase]
+                except KeyError:
+                    raise tmt.utils.GeneralError(f"Invalid phase '{phase}'.")
+            # Store the phase for given step
+            try:
+                phases[step_name].append(phase)
+            except KeyError:
+                phases[step_name] = [phase]
+        return phases
+
+    @classmethod
+    def phases(cls, step):
+        """ Return list of phases enabled for given step """
+        # Build the phase list unless done before
+        if cls._phases is None:
+            cls._phases = cls._parse_phases(step)
+        # Return enabled phases, empty list if step not found
+        try:
+            return cls._phases[step.name]
+        except KeyError:
+            return []
+
+    @classmethod
+    def plugins(cls, step):
+        """ Return list of login instances for given step """
+        if not Login._enabled:
+            return []
+        return [Login(step, phase) for phase in cls.phases(step)]
+
+    def go(self, *args, **kwargs):
+        """ Login to the guest(s) """
+        # Verify possible test result condition
+        count = dict()
+        expected_results = self.opt('when')
+        if expected_results:
+            for expected_result in expected_results:
+                count[expected_result] = len([
+                    result for result in self.parent.plan.execute.results()
+                    if result.result == expected_result])
+            if not any(count.values()):
+                self.info('Skipping interactive shell', color='yellow')
+                return
+
+        # Run the interactive command
+        commands = self.opt('command')
+        self.info('login', 'Starting interactive shell', color='yellow')
+        for guest in self.parent.plan.provision.guests():
+            # Make sure the workdir is available on the guest
+            guest.push()
+            for command in commands:
+                self.debug(f"Run '{command}' in interactive mode.")
+                guest.execute(
+                    command, interactive=True, cwd=self.parent.workdir)
+        self.info('login', 'Interactive shell finished', color='yellow')

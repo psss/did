@@ -267,7 +267,7 @@ class Common(object):
 
     def run(
             self, command, message=None,
-            cwd=None, dry=False, shell=True, env=None):
+            cwd=None, dry=False, shell=True, env=None, interactive=False):
         """
         Run command, give message, handle errors
 
@@ -290,10 +290,15 @@ class Common(object):
         if self.opt('dry') and not dry:
             return None, None
 
+        # Run the command in interactive mode if requested
+        cwd = cwd or self.workdir
+        if interactive:
+            subprocess.run(command, cwd=cwd, shell=shell, env=env)
+            return
+
         # Prepare command, run it, handle the exit code
         try:
-            return self._run(
-                command, cwd=cwd or self.workdir, shell=shell, env=env)
+            return self._run(command, cwd=cwd, shell=shell, env=env)
         except RunError as error:
             self.debug(error.message, level=3)
             raise RunError(message, error.command, error.stdout, error.stderr)

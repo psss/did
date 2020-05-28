@@ -86,8 +86,9 @@ class Provision(tmt.steps.Step):
         self._guests = []
         for plugin in self.plugins():
             plugin.go()
-            plugin.guest().details()
-            self._guests.append(plugin.guest())
+            if isinstance(plugin, ProvisionPlugin):
+                plugin.guest().details()
+                self._guests.append(plugin.guest())
 
         # Give a summary, update status and save
         self.summary()
