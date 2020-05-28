@@ -1,0 +1,4 @@
+summary: Initialize a new tmt tree and run tests
+description:
+    Create a simple plan and a basic beakerlib test using the
+    'base' template. Run it using the local provision method.

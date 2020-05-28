@@ -26,17 +26,12 @@ rm $tmp
 TEST['beakerlib'] = r"""
 #!/bin/bash
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
-
-# Include Beaker environment
 . /usr/share/beakerlib/beakerlib.sh || exit 1
-
-PACKAGE="tmt"
 
 rlJournalStart
     rlPhaseStartSetup
-        rlAssertRpm $PACKAGE
-        rlRun "TMP=\$(mktemp -d)" 0 "Creating tmp directory"
-        rlRun "pushd $TMP"
+        rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory"
+        rlRun "pushd $tmp"
         rlRun "set -o pipefail"
     rlPhaseEnd
 
@@ -47,7 +42,7 @@ rlJournalStart
 
     rlPhaseStartCleanup
         rlRun "popd"
-        rlRun "rm -r $TMP" 0 "Removing tmp directory"
+        rlRun "rm -r $tmp" 0 "Removing tmp directory"
     rlPhaseEnd
 rlJournalEnd
 """.lstrip()
