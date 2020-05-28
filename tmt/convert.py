@@ -159,12 +159,20 @@ def read(path, makefile, nitrate, purpose, disabled):
             echo(style('duration: ', fg='green') + data['duration'])
         except AttributeError:
             pass
-        # Requires and RhtsRequires (optional)
-        requires = re.findall(r'^(?:Rhts)?Requires:\s*(.*)', testinfo, re.M)
+        # RhtsRequires (optional) goes to require
+        requires = re.findall(r'^RhtsRequires:\s*(.*)', testinfo, re.M)
         if requires:
             data['require'] = [
                 require for line in requires for require in line.split()]
             echo(style('require: ', fg='green') + ' '.join(data['require']))
+
+        # Requires (optional) goes to recommend
+        recommends = re.findall(r'^Requires:\s*(.*)', testinfo, re.M)
+        if recommends:
+            data['recommend'] = [
+                recommend for line in recommends for recommend in line.split()]
+            echo(
+                style('recommend: ', fg='green') + ' '.join(data['recommend']))
 
         # Restore the original testinfo.desc content (if existed)
         if old_testinfo:

@@ -30,3 +30,10 @@ example: |
     require:
         - gcc
         - make
+
+implemented:
+    - /tmt/base
+    - /tmt/steps/discover
+    - /tmt/steps/prepare
+tested:
+    - /tests/prepare/require

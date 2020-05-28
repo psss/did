@@ -1,0 +1,41 @@
+summary: Packages recommended for the test execution
+
+story:
+    As a tester I want to specify additional packages which should
+    be installed on the system if available and no error should be
+    reported if they cannot be installed.
+
+description: |
+    Sometimes there can be additional packages which are not
+    strictly needed to run tests but can improve test execution in
+    some way, for example provide better results presentation.
+
+    Also package names can differ across product versions. Using
+    this attribute it is possible to specify all possible package
+    names and only those which are available will be installed.
+
+    If possible, for the second use case it is recommended to
+    specify such packages using the :ref:`/spec/steps/prepare`
+    step configuration which is usually branched according to the
+    version and thus can better ensure that the right packages are
+    correctly installed as expected.
+
+    Should be a ``string`` or a ``list of strings`` using package
+    specification supported by ``dnf`` which takes care of the
+    installation.
+
+example: |
+    recommend: mariadb
+
+    recommend: [mariadb, mysql]
+
+    recommend:
+        - mariadb
+        - mysql
+
+implemented:
+    - /tmt/base
+    - /tmt/steps/discover
+    - /tmt/steps/prepare
+tested:
+    - /tests/prepare/recommend

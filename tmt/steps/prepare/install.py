@@ -17,6 +17,11 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
             how: install
             copr: psss/tmt
             package: tmt-all
+            missing: fail
+
+    Use 'copr' for enabling desired copr repository and 'missing' to
+    choose if missing packages should be silently ignored (skip) or a
+    preparation error should be reported (fail), which is the default.
 
     In addition to package name you can also use one or more paths to
     local rpm files to be installed:
@@ -53,16 +58,26 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
                 help='Path to a local directory with rpm packages.'),
             click.option(
                 '-c', '--copr', metavar='REPO', multiple=True,
-                help='Copr repository to be enabled.')
+                help='Copr repository to be enabled.'),
+            click.option(
+                '-m', '--missing', metavar='ACTION',
+                type=click.Choice(['fail', 'skip']),
+                help='Action on missing packages, fail (default) or skip.'),
             ] + super().options(how)
+
+    def default(self, option, default=None):
+        """ Return default data for given option """
+        if option == 'missing':
+            return 'fail'
+        return default
 
     def show(self):
         """ Show provided scripts """
-        super().show(['package', 'directory', 'copr'])
+        super().show(['package', 'directory', 'copr', 'missing'])
 
     def wake(self, data=None):
         """ Override options and wake up the guest """
-        super().wake(['package', 'directory', 'copr'])
+        super().wake(['package', 'directory', 'copr', 'missing'])
 
         # Convert to list if necessary
         tmt.utils.listify(
@@ -122,12 +137,13 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
         user = guest.execute('whoami')[0].strip()
         sudo = '' if user == 'root' else 'sudo '
         self.debug('Check if dnf is available.', level=2)
+        skip = ' --skip-broken' if self.get('missing') == 'skip' else ''
         try:
             guest.execute('rpm -q dnf')
-            command = f"{sudo}dnf"
+            command = f"{sudo}dnf{skip}"
             plugin = 'dnf-plugins-core'
         except tmt.utils.RunError:
-            command = f"{sudo}yum"
+            command = f"{sudo}yum{skip}"
             plugin = 'yum-plugin-copr'
         self.debug(f"Using '{command}' for all package operations.")
 

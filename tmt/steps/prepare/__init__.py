@@ -69,6 +69,18 @@ class Prepare(tmt.steps.Step):
                 package=requires)
             self._plugins.append(PreparePlugin.delegate(self, data))
 
+        # Recommended packages
+        recommends = self.plan.discover.recommends()
+        if recommends:
+            data = dict(
+                how='install',
+                name='recommends',
+                summary='Install recommended packages',
+                order=tmt.utils.DEFAULT_PLUGIN_ORDER_RECOMMENDS,
+                package=recommends,
+                missing='skip')
+            self._plugins.append(PreparePlugin.delegate(self, data))
+
         # Prepare guests
         for guest in self.plan.provision.guests():
             for plugin in self.plugins():
