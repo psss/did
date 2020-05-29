@@ -1,3 +1,2 @@
 summary: Verify that basic package installation works
 test: ./test.sh
-tier: 3

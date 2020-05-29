@@ -3,4 +3,3 @@ description:
     Make sure that special characters are correctly escaped.
     Verify that installation from copr works for epel6 and epel7.
 test: ./test.sh
-tier: 3
