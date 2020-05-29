@@ -9,10 +9,9 @@ description: |
     Allows to parametrize a single test script and in this way
     create virtual test cases.
 
-    Special value ``manual`` can be used for tests which haven't
-    been automated yet. Such tests will be skipped during test
-    execution. In the future we might add support for executing
-    manual tests using user input to provide actual test results.
+    If the test is :ref:`/spec/tests/manual`, it points to the
+    document describing the manual test case steps in Markdown
+    format with defined structure.
 
     Should be a ``string``. This is a **required** attribute.
 
@@ -21,5 +20,8 @@ example: |
     test: ./test.sh --depth 1000
     test: pytest -k performance
     test: make run
+
+    test: manual.md
+    manual: true
 
 implemented: /tmt/base

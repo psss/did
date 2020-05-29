@@ -1,50 +1,76 @@
-summary: Manual test execution details
+summary: Test automation state
 
 story:
-    As a tester I want to store detailed manual instructions
-    covering test scenario so that I can perform them manually
-    before the test can be fully automated.
+    As a tester I need to store detailed manual instructions covering
+    test scenario I have to perform manually.
 
 description: |
-    Sometimes test scenarios cannot be fully automated or it takes
-    time to fully automate them. For such cases the ``manual``
-    attribute can be used to describe test steps in detail. It
-    should be a ``dictionary`` with the following keys, each one
-    of them should be a ``string``.
+    Attribute marks whether this test needs human interaction
+    during its execution.  Such tests are not likely to be
+    executed in automation pipelines. In the future they can be
+    executed in a semi-automated way, waiting on human
+    interaction.
 
-    setup
-        Environment preparation instructions.
-    step
-        Test step, action to be performed.
-    expect
-        Expected results of the test step.
-    cleanup
-        Environment cleanup instructions.
+    It's value should be a ``boolean``. The default value is
+    ``false``. When set to ``true``, the :ref:`/spec/tests/test`
+    attribute should point to a Markdown document following the
+    `CommonMark`__ specification.
 
-    If there are several individual steps they can be stored, with
-    their corresponding expected results, as a list of dictionaries
-    under the ``steps`` key.
+    __ https://spec.commonmark.org/0.29
+
+    This is a minimal example of a manual test document containing
+    a single test with one test step and one expected result::
+
+        # Test
+
+        ## Step
+        Do this and that.
+
+        ## Expect
+        Check this and that.
+
+    The following sections are recognized by tmt and have a
+    special meaning. Any other features of Markdown can be used,
+    but tmt will just show them.
+
+    Setup
+        Optional heading ``# Setup`` under which any necessary
+        preparation actions are documented. These actions are not
+        part of the test itself.
+
+    Test
+        Required level 1 heading ``# Test`` or ``# Test .*``
+        starting with the word 'Test' marks beginning of the test
+        itself. Multiple Test sections can be defined in a single
+        document.
+
+    Step
+        Required level 2 heading ``## Step`` or ``## Test Step``
+        marking a single step of the test, should be in pair with
+        the Expect section which follows it. Cannot be used
+        outside of test sections.
+
+    Expect
+        Required level 2 heading ``## Expect``, ``## Result`` or
+        ``## Expected Result`` marking expected outcome of the
+        previous step. Cannot be used outside of test sections.
+
+    Cleanup
+        Optional heading ``# Cleanup`` under which any cleanup
+        actions which are not part of the test itself are
+        documented.
+
+    Code block
+        Optional, can be used in any section to mark code
+        snippets. Code type specification (bash, python...) is
+        recommended. It can be used for syntax highlighting and in
+        the future for the semi-automated test execution as well.
+
+    See the `manual test examples`__ to get a better idea.
+
+    __ https://github.com/psss/tmt/tree/master/examples/manual/
 
 example: |
-    manual:
-        setup:
-            sudo dnf install -y tmt
-        step:
-            Run 'tmt init --template full'.
-        expect:
-            Example story, plan and test created.
-        cleanup:
-            sudo dnf remove -y tmt
+  manual: true
 
-    manual:
-        setup:
-            sudo dnf install -y tmt
-        steps:
-          - step:   Run 'tmt init --template full'.
-            expect: Example story, plan and test created.
-          - step:   Run 'tmt'.
-            expect: Found 1 test, 1 plan and 1 story displayed.
-          - step:   Run 'tmt --help'
-            expect: Available commands and options listed.
-        cleanup:
-            sudo dnf remove -y tmt
+implemented: /tmp/base
