@@ -1,25 +1,21 @@
-summary:
-    Check help messages
+summary: Check help messages
+description:
+    A couple of oneline examples showing how simple shell
+    tests can be written directly in the discover step. The
+    last one demonstrates a custom script in given directory.
 discover:
-    how: shell
     tests:
-    - name: /help/main
-      test: tmt --help
-    - name: /help/test
-      test: tmt test --help
-    - name: /help/plan
-      test: tmt plan --help
-    - name: /help/smoke
-      test: ./smoke.sh
-      path: /tests/shell
-prepare:
-    how: shell
-    script:
-    - sudo dnf install -y 'dnf-command(copr)'
-    - sudo dnf copr enable -y psss/tmt
-    - sudo dnf install -y tmt
+      - name: /help/main
+        test: tmt --help
+      - name: /help/test
+        test: tmt test --help
+      - name: /help/plan
+        test: tmt plan --help
+      - name: /help/smoke
+        test: ./smoke.sh
+        path: /tests/shell
 execute:
-    how: shell
+    how: shell.tmt
 artifact:
     - build
     - update

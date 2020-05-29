@@ -355,6 +355,8 @@ class GuestTestcloud(tmt.Guest):
 
     def start(self):
         """ Start provisioned guest """
+        if self.opt('dry'):
+            return
         # Make sure required directories exist
         os.makedirs(TESTCLOUD_DATA, exist_ok=True)
         os.makedirs(TESTCLOUD_IMAGES, exist_ok=True)

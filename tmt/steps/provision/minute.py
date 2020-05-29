@@ -101,6 +101,8 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
     def wake(self, data=None):
         """ Override options and wake up the guest """
         super().wake(['image', 'flavor'])
+        if self.opt('dry'):
+            return
 
         # Read API URL from 1minutetip script
         try:
@@ -319,6 +321,8 @@ class GuestMinute(tmt.Guest):
 
     def start(self):
         """ Start provisioned guest """
+        if self.opt('dry'):
+            return
         self.mt_image = self._convert_image(self.image)
         self.instance_start = datetime.datetime.utcnow().strftime(
             '%Y-%m-%d-%H-%M')

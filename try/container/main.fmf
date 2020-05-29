@@ -1,0 +1,14 @@
+# Run tests in a container
+provision:
+    how: container
+#    image: fedora
+#    pull: false
+
+artifact:
+    - build
+    - update
+
+# Enable special container filter
+/core:
+    discover+:
+        filter: 'tier:0 & tag:container'

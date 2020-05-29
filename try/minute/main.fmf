@@ -1,0 +1,9 @@
+# Use 1minutetip backend
+provision:
+    how: minute
+#    image: fedora
+#    flavor: m1.large
+
+artifact:
+    - build
+    - update

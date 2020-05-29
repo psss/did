@@ -111,6 +111,8 @@ class GuestContainer(tmt.Guest):
 
     def start(self):
         """ Start provisioned guest """
+        if self.opt('dry'):
+            return
         # Check if the image is available
         image_id = self.podman(
             ['images', '-q', self.image],

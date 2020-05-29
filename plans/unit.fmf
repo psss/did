@@ -1,0 +1,15 @@
+summary: Python unit tests
+description:
+    Run all available python unit tests using pytest.
+prepare+:
+  - name: pytest
+    how: install
+    package:
+        - python3-pytest
+        - python3-mock
+execute:
+    how: shell.tmt
+    script: python3 -m pytest tests
+artifact:
+    - build
+    - update

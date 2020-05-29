@@ -1,27 +1,24 @@
-# Local host
+# Use localhost by default
 provision:
     how: local
 
-# Connect to a running guest
-#provision:
-#    how: connect
-#    guest: 10.20.30.40
-#    key: /home/psss/.ssh/1minutetip_rsa
-#    user: root
-#    password: secret
+# Install packages
+#prepare:
+#  - name: tmt
+#    how: install
+#    package: tmt
+#    copr: psss/tmt
+#    directory: tmp/RPMS/noarch
 
-# Virtual using testcloud
-#provision:
-#    how: virtual.testcloud
-#    image: fedora
-#    image: https://kojipkgs.fedoraproject.org/compose/31/latest-Fedora-31/compose/Cloud/x86_64/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2
+# Ansible playbook
+#prepare:
+#    how: ansible
+#    playbooks: ansible/packages.yml
 
-# Virtual using vagrant
-#provision:
-#    how: virtual.vagrant
-#    image: fedora/30-cloud-base
-
-# Run tests in a container
-#provision:
-#    how: container
-#    image: fedora:latest
+# Shell commands
+#prepare:
+#    how: shell
+#    script:
+#    - sudo dnf install -y 'dnf-command(copr)'
+#    - sudo dnf copr enable -y psss/tmt
+#    - sudo dnf install -y tmt

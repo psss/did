@@ -987,6 +987,10 @@ class Guest(tmt.utils.Common):
 
     def details(self):
         """ Show guest details such as distro and kernel """
+        # Skip distro & kernel check in dry mode
+        if self.opt('dry'):
+            return
+        # Distro
         try:
             distro = self.execute(
                 'cat /etc/redhat-release', dry=True)[0].strip()
@@ -998,6 +1002,7 @@ class Guest(tmt.utils.Common):
                 distro = None
         if distro:
             self.info('distro', distro, 'green')
+        # Kernel
         kernel = self.execute('uname -r', dry=True)[0].strip()
         self.verbose('kernel', kernel, 'green')
 

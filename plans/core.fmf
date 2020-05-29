@@ -1,0 +1,10 @@
+summary: Core functionality
+description:
+    Check common options such as --dry & --force, environment
+    variables handling, exploring tests and plans, presence of
+    documentation.
+discover:
+    how: fmf
+    filter: 'tier: 0'
+execute:
+    how: beakerlib.tmt

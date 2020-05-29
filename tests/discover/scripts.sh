@@ -7,7 +7,7 @@ rlJournalStart
         rlRun 'set -o pipefail'
     rlPhaseEnd
 
-    plan='plan --name smoke'
+    plan='plan --name /plans/smoke'
 
     rlPhaseStartTest 'All steps'
         rlRun "tmt run discover $plan | tee output"

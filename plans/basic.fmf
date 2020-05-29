@@ -1,10 +1,10 @@
-summary:
-    Essential command line features
+summary: Basic command line features
+description:
+    Wide set of tests that cover individual steps, commands
+    and features. Tier 2 tests go a bit more into detail and
+    can take a little bit longer to complete.
 discover:
     how: fmf
-    filter: 'tier: 0,1,2'
-prepare:
-    how: ansible
-    playbooks: ansible/packages.yml
+    filter: 'tier: 1, 2'
 execute:
-    how: beakerlib
+    how: beakerlib.tmt

@@ -85,7 +85,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         try:
             stdout = guest.execute(
                 test.test, cwd=workdir, env=environment,
-                join=True, interactive=self.opt('interactive'), log=log)
+                join=True, interactive=self.get('interactive'), log=log)
             test.returncode = 0
         except tmt.utils.RunError as error:
             stdout = error.stdout

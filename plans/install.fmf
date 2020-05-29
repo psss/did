@@ -1,0 +1,13 @@
+summary: Tests needing virtualization support
+description:
+    A couple of installation tests which provision a container
+    to verify that package installation works as expected.
+    Thanks to fetching dnf metadata these can take some time.
+discover:
+    how: fmf
+    filter: 'tier: 3'
+execute:
+    how: beakerlib.tmt
+artifact:
+    - build
+    - update
