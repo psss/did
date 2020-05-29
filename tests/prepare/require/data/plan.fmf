@@ -1,0 +1,14 @@
+provision:
+    how: container
+execute:
+    how: shell
+
+/available:
+    discover:
+        how: fmf
+        test: available
+
+/missing:
+    discover:
+        how: fmf
+        test: missing

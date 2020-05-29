@@ -1,0 +1,6 @@
+summary: Check that required packages work as expected
+description:
+    Run a test which requires an available package and check that
+    everything has been completed successfully. Then run a test
+    which requires a missing package and check that an error is
+    correctly reported. In both cases check the exit code.

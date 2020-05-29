@@ -148,6 +148,14 @@ class Discover(tmt.steps.Step):
                 requires.add(value)
         return list(requires)
 
+    def recommends(self):
+        """ Return all packages recommended by tests """
+        recommends = set()
+        for test in self.tests():
+            for value in getattr(test, 'recommend', []):
+                recommends.add(value)
+        return list(recommends)
+
 
 class DiscoverPlugin(tmt.steps.Plugin):
     """ Common parent of discover plugins """

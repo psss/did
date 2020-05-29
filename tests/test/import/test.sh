@@ -10,6 +10,8 @@ rlJournalStart
     rlPhaseStartTest 'Import metadata'
         rlRun 'tmt test import --no-nitrate'
         rlAssertGrep 'summary: Simple smoke test' 'main.fmf'
+        rlRun 'grep -A1 require main.fmf | grep tmt'
+        rlRun 'grep -A1 recommend main.fmf | grep fmf'
     rlPhaseEnd
 
     rlPhaseStartTest 'Check duplicates'
