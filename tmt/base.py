@@ -331,6 +331,7 @@ class Plan(Node):
         """ Initialize the plan """
         super(Plan, self).__init__(node, parent=run)
         self.summary = node.get('summary')
+        self.description = node.get('description')
         self.run = run
 
         # Initialize test steps
@@ -457,6 +458,9 @@ class Plan(Node):
     def show(self):
         """ Show plan details """
         self.ls(summary=True)
+        if self.description:
+            echo(tmt.utils.format(
+                'description', self.description, key_color='green'))
         for step in self.steps(disabled=True):
             step.show()
         if self.environment:
