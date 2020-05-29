@@ -756,6 +756,7 @@ class Run(tmt.utils.Common):
             self.debug(f"Using the default plan.")
         self._plans = None
         self._environment = dict()
+        self.remove = self.opt('remove')
 
     @property
     def environment(self):
@@ -770,6 +771,7 @@ class Run(tmt.utils.Common):
             'plans': [plan.name for plan in self._plans],
             'steps': list(self._context.obj.steps),
             'environment': self.environment,
+            'remove': self.remove,
             }
         self.write('run.yaml', tmt.utils.dict_to_yaml(data))
 
@@ -798,6 +800,10 @@ class Run(tmt.utils.Common):
         self._environment = data.get('environment')
         self.debug(f"Loaded environment: '{self._environment}'.", level=3)
 
+        # If the remove was enabled, restore it, option overrides
+        self.remove = self.remove or data.get('remove', 'False')
+        self.debug(f"Remove workdir when finished: {self.remove}", level=3)
+
     @property
     def plans(self):
         """ Test plans for execution """
@@ -817,24 +823,29 @@ class Run(tmt.utils.Common):
                 self.debug(f"Using the default plan.")
         return self._plans
 
-    def summary(self):
+    def finish(self):
         """ Check overall results, return appropriate exit code """
-        # Nothing to do unless the execute/prepare step is enabled
+        # We get interesting results only if execute or prepare step is enabled
         execute = self.plans[0].execute
         report = self.plans[0].report
-        if not execute.enabled and not report.enabled:
-            return
+        interesting_results = execute.enabled or report.enabled
 
         # Gather all results and give an overall summary
         results = [
             result
             for plan in self.plans
             for result in plan.execute.results()]
-        self.info('')
-        self.info('total', Result.summary(results), color='cyan')
+        if interesting_results:
+            self.info('')
+            self.info('total', Result.summary(results), color='cyan')
 
-        # Skip sending exit codes in dry mode
-        if self.opt('dry'):
+        # Remove the workdir if enabled
+        if self.remove and self.plans[0].finish.enabled:
+            self._workdir_cleanup(self.workdir)
+
+        # Skip handling of the exit codes in dry mode and
+        # when there are no interesting results available
+        if self.opt('dry') or not interesting_results:
             return
 
         # Return appropriate exit code based on the total stats
@@ -898,8 +909,8 @@ class Run(tmt.utils.Common):
         # (override possible runs created during execution)
         self.config.last_run(self.workdir)
 
-        # Final summary
-        self.summary()
+        # Give the final summary, remove workdir, handle exit codes
+        self.finish()
 
 
 class Guest(tmt.utils.Common):

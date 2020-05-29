@@ -1,0 +1,6 @@
+summary: Check that test run workdir removal works
+description:
+    Verify that the test run workdir is correctly removed when
+    requested with the --remove option. This should work both for
+    all steps enabled at once and several command line invocations
+    with selected steps only.
