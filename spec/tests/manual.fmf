@@ -5,29 +5,70 @@ story:
     test scenario I have to perform manually.
 
 description: |
-    Attribute marks whether this test needs human interaction during its execution.
+    Attribute marks whether this test needs human interaction
+    during its execution.  Such tests are not likely to be
+    executed in automation pipelines. In the future they can be
+    executed in a semi-automated way, waiting on human
+    interaction.
 
-    Such tests are not likely to be executed in automation pipelines.
-    In the future they can be executed in semi-automated way, waiting on human interaction.
-    It's value should be a ``bool``. The default value is ``false``.
-    Attribute :ref:`/spec/tests/test` should point to a Markdown document following `CommonMark <https://spec.commonmark.org/0.29/>`_ spec
-    where following sections are recognizes by TMT and have special meaning. Any other features of Markdown can be used, but TMT will just show them.
+    It's value should be a ``boolean``. The default value is
+    ``false``. When set to ``true``, the :ref:`/spec/tests/test`
+    attribute should point to a Markdown document following the
+    `CommonMark`__ specification.
 
-    Recognized sections:
-      ``# Setup``
-        Optional heading under which any necessary preparation actions are documented. These actions are not part of the test itself.
-      ``# Test`` or ``# Test .*``
-        Required heading of level 1 starting with word 'Test' marks beginning of the test itself. You can use several Test sections in the document.
-      ``## Step`` or ``## Test step``
-        Required heading of level 2 marking single step of the test, should be in pair with Expect section which follows it. Cannot be used outside test sections.
-      ``## Expect`` or ``## Expected result`` or ``## Result``
-        Required heading of level 2 marking expected outcome of the previous step. Cannot be used outside test sections.
-      ``# Cleanup``
-        Optional heading under which any cleanup actions which are not part of the test itself are documented
-      Code block
-        Optional, can be used in any section to mark code snippets. Specification of the code type (bash, python,...) is just for syntax highlighting purposes.
+    __ https://spec.commonmark.org/0.29
 
-    See examples of `documents <https://github.com/psss/tmt/tree/master/examples/manual/>`_ for a better idea.
+    This is a minimal example of a manual test document containing
+    a single test with one test step and one expected result::
+
+        # Test
+
+        ## Step
+        Do this and that.
+
+        ## Expect
+        Check this and that.
+
+    The following sections are recognized by tmt and have a
+    special meaning. Any other features of Markdown can be used,
+    but tmt will just show them.
+
+    Setup
+        Optional heading ``# Setup`` under which any necessary
+        preparation actions are documented. These actions are not
+        part of the test itself.
+
+    Test
+        Required level 1 heading ``# Test`` or ``# Test .*``
+        starting with the word 'Test' marks beginning of the test
+        itself. Multiple Test sections can be defined in a single
+        document.
+
+    Step
+        Required level 2 heading ``## Step`` or ``## Test Step``
+        marking a single step of the test, should be in pair with
+        the Expect section which follows it. Cannot be used
+        outside of test sections.
+
+    Expect
+        Required level 2 heading ``## Expect``, ``## Result`` or
+        ``## Expected Result`` marking expected outcome of the
+        previous step. Cannot be used outside of test sections.
+
+    Cleanup
+        Optional heading ``# Cleanup`` under which any cleanup
+        actions which are not part of the test itself are
+        documented.
+
+    Code block
+        Optional, can be used in any section to mark code
+        snippets. Code type specification (bash, python...) is
+        recommended. It can be used for syntax highlighting and in
+        the future for the semi-automated test execution as well.
+
+    See the `manual test examples`__ to get a better idea.
+
+    __ https://github.com/psss/tmt/tree/master/examples/manual/
 
 example: |
   manual: true

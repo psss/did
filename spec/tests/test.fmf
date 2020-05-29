@@ -9,8 +9,9 @@ description: |
     Allows to parametrize a single test script and in this way
     create virtual test cases.
 
-    If test is manual (see :ref:`/spec/tests/manual`) it points to the document
-    describing the test case steps in Markdown format with defined structure.
+    If the test is :ref:`/spec/tests/manual`, it points to the
+    document describing the manual test case steps in Markdown
+    format with defined structure.
 
     Should be a ``string``. This is a **required** attribute.
 

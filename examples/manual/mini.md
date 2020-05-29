@@ -1,5 +1,7 @@
 # Test
+
 ## Step
 Description of what has to be done
+
 ## Expect
-Description of desired outcome
+Description of the desired outcome

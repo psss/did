@@ -5,12 +5,12 @@ sudo dnf install -y tmt-all
 ```
 2. Create and use a brand new git repo
 ```bash
-cd `mktemp -d`
+cd $(mktemp -d)
 git init
 ```
 # Test
 ## Step
-Verify tmt show help page
+Verify tmt shows help page
 ```bash
 tmt --help
 ```
@@ -22,7 +22,7 @@ Usage: tmt [OPTIONS] COMMAND [ARGS]...
   Test Management Tool
 
 Options:
-....
+...
 ```
 ## Step
 Check that error about missing metadata is sane

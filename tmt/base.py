@@ -171,10 +171,10 @@ class Test(Node):
         # Test execution data
         'test',
         'path',
+        'manual',
         'require',
         'environment',
         'duration',
-        'manual',
         'enabled',
         'result',
 
