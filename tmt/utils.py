@@ -223,7 +223,7 @@ class Common(object):
         # Prepare the environment
         if env:
             if not isinstance(env, dict):
-                raise tmt.utils.GeneralError(f"Invalid environment '{env}'.")
+                raise GeneralError(f"Invalid environment '{env}'.")
             # Do not modify current process environment
             environment = os.environ.copy()
             environment.update(env)
@@ -236,9 +236,12 @@ class Common(object):
             try:
                 subprocess.run(
                     command, cwd=cwd, shell=shell, env=environment, check=True)
-                return None if join else (None, None)
             except subprocess.CalledProcessError as error:
-                raise RunError(message, command, error.returncode)
+                # Interactive mode can return non-zero if the last command
+                # failed, ignore errors here
+                pass
+            finally:
+                return None if join else (None, None)
 
         # Create the process
         process = subprocess.Popen(
