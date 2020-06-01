@@ -27,6 +27,11 @@ rlJournalStart
         rlRun "grep '^    discover$' -A4 output | grep -i interactive"
     rlPhaseEnd
 
+    rlPhaseStartTest "Failed command"
+        rlRun "$tmt login -c false | tee output"
+        rlAssertGrep "interactive" "output"
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
         rlRun "rm -r $tmp" 0 "Removing tmp directory"
