@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.17
+Version: 0.18
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,31 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Mon Jun 01 2020 Petr Šplíchal <psplicha@redhat.com> - 0.18-1
+- Add virtual plans for supported provision methods
+- Implement description in 'tmt plan show' as well
+- Implement tmt run --remove to remove workdir
+- Extend the login/step test to cover failed command
+- Do not fail upon command fail in interactive mode
+- Implement the internal tmt execute step method
+- Move all prepare/install tests to tier level 3
+- Merge the new manual test specification [#247]
+- Merge the new L1 attribute 'recommend' [#265]
+- Adjust the manual test specification and examples
+- Implement 'recommend' for installing soft requires
+- State explicitly that execution is finished
+- Simplify beakerlib template, add test for init
+- Manual test case specification and examples
+- Implement exit codes, handle no tests [fix #246]
+- Merge the interactive shell login command [#258]
+- Adjust support for shortened 1MT image names
+- New login command to provide a shell on guest
+- Add support for shortened 1MT image names
+- Add support for running tests without defined plan
+- Ignore save() in the execute step unit test
+- Update the default run example with fresh output
+- Show kernel version only in verbose mode
+
 * Sat May 23 2020 Petr Šplíchal <psplicha@redhat.com> - 0.17-1
 - Use emulator_path instead of hard-coded qemu path
 - Improve a bit the --force option description
