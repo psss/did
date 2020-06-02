@@ -1,0 +1,40 @@
+test: ./certificate.sh
+path: /
+
+/rpm:
+    summary: Generate a certificate (rpm)
+    description:
+        The old backward compatible way to require a beakerlib
+        library using the 'library(component/lib)' format.
+    require:
+      - library(openssl/certgen)
+
+/fmf:
+    summary: Generate a certificate (fmf)
+    description:
+        The new flexible way to require a beakerlib library using
+        an fmf identifier.
+    require:
+      - url: https://github.com/beakerlib/openssl
+        name: /certgen
+
+/nick:
+    summary: Custom repo name and recommended packages
+    description:
+        Use provided nick instead of the repository name.
+        Check that packages recommended by library are installed.
+    require:
+      - url: https://github.com/beakerlib-libraries/certgen/
+        nick: openssl
+        name: /certgen
+    test: ./certificate.sh tree
+
+/destination:
+    summary: Custom destination directory
+    description:
+        The optional key 'destination' can be used to store
+        fetched content to a custom directory.
+    require:
+      - url: https://github.com/beakerlib/openssl
+        name: /certgen
+        destination: custom

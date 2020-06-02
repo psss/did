@@ -1,9 +1,9 @@
-summary: Packages required for the test execution
+summary: Packages or libraries required for test execution
 
 story:
-    As a tester I want to specify packages which are required by
-    the test and need to be installed on the system so that the
-    test can be successfully executed.
+    As a tester I want to specify packages and libraries which are
+    required by the test and need to be installed on the system so
+    that the test can be successfully executed.
 
 description: |
     In order to execute the test, additional packages may need to
@@ -14,13 +14,27 @@ description: |
 
     For tests shared across multiple components or product
     versions where required packages have different names it is
-    recommended to use the ``prepare`` step configuration (L2
-    metadata) to specify required packages for each component or
-    product version individually.
+    recommended to use the :ref:`/spec/steps/prepare` step
+    configuration to specify required packages for each component
+    or product version individually.
+
+    When referencing beakerlib libraries it is possible to use
+    both the backward-compatible syntax ``library(repo/lib)``
+    which fetches libraries from the `default location`__ as well
+    as provide a ``dictionary`` with a full `fmf identifier`__.
+
+    By default, fetched repositories are stored in the discover
+    step workdir under the ``libs`` directory. Use optional key
+    ``destination`` to choose a different location. The ``nick``
+    key can be used to override the default git repository name.
 
     Should be a ``string`` or a ``list of strings`` using package
     specification supported by ``dnf`` which takes care of the
-    installation.
+    installation or a ``dictionary`` if using fmf identifier to
+    fetch dependent repositories.
+
+    __ https://github.com/beakerlib/
+    __ https://fmf.readthedocs.io/en/latest/concept.html#identifiers
 
 example: |
     require: make
@@ -30,6 +44,18 @@ example: |
     require:
         - gcc
         - make
+
+    require: library(openssl/certgen)
+
+    require:
+        - url: https://github.com/beakerlib/openssl
+          name: /certgen
+
+    require:
+        - url: https://github.com/redhat-qe-security/certgen
+          ref: devel
+          nick: openssl
+          name: /certgen
 
 implemented:
     - /tmt/base

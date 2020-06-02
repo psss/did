@@ -20,6 +20,9 @@ description: |
     version and thus can better ensure that the right packages are
     correctly installed as expected.
 
+    Note that beakerlib libraries are not supported by this
+    attribute, use :ref:`/spec/tests/require` instead.
+
     Should be a ``string`` or a ``list of strings`` using package
     specification supported by ``dnf`` which takes care of the
     installation.

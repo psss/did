@@ -638,6 +638,8 @@ def format(
         output += ('yes' if value else 'no')
     # List
     elif isinstance(value, list):
+        # Make sure everything is string, prepare list, check for spaces
+        value = [str(item) for item in value]
         listed_text = fmf.utils.listed(value)
         has_spaces = any([item.find(' ') > -1 for item in value])
         # Use listed output only for short lists without spaces

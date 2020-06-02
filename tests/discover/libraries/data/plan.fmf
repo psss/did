@@ -1,0 +1,39 @@
+discover:
+    how: fmf
+provision:
+    how: container
+execute:
+    how: beakerlib.tmt
+
+/apache:
+    summary: "Apache test (library requires another library)"
+    discover+:
+        test: apache
+    provision:
+        how: virtual
+
+/certificate:
+    /rpm:
+        summary: "Certificate test (rpm format)"
+        discover+:
+            test: rpm
+    /fmf:
+        summary: "Certificate test (fmf format)"
+        discover+:
+            test: fmf
+    /nick:
+        summary: "Certificate test (custom nick name)"
+        discover+:
+            test: nick
+    /duplicate:
+        summary: "Duplicate library (already fetched)"
+        discover+:
+            test: [rpm, fmf]
+    /conflict:
+        summary: "Conflicting library (different url)"
+        discover+:
+            test: [fmf, nick]
+    /destination:
+        summary: "Custom destination directory"
+        discover+:
+            test: destination

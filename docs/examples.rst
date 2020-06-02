@@ -260,6 +260,35 @@ And here's the resulting ``main.fmf`` file::
     summary: Simple smoke test
 
 
+Test Libraries
+------------------------------------------------------------------
+
+In order to prevent unnecessary test code duplication it makes
+sense to use a test library which implements frequently repeated
+actions. Currently beakerlib libraries are supported. They can be
+defined in the :ref:`/spec/tests/require` attribute and are
+fetched during the :ref:`/spec/steps/discover` step.
+
+Use the short backward-compatible syntax to fetch libraries from
+the `default repository`__::
+
+    require: library(openssl/certgen)
+
+__ https://github.com/beakerlib/
+
+The full fmf identifier allows to fetch libraries from arbitrary
+location::
+
+    require:
+        - type: beakerlib-library
+          url: https://github.com/beakerlib/openssl
+          name: /certgen
+
+See the :ref:`/spec/tests/require` attribute specification for
+detailed description of the syntax and available keys.
+
+
+
 Plans
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

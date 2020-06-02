@@ -1,0 +1,10 @@
+summary: Verify beakerlib libraries support
+description:
+    Run a test which requires a beakerlib library 'httpd/http'
+    which has an additional dependency on 'openssl/certgen'. Make
+    sure that all required packages are installed and libraries
+    are fetched into the discover step workdir. Make sure that the
+    test successfully passed. Needs a full virtualization.
+test: ./test.sh
+path: /tests/discover/libraries
+tier: 3
