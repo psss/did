@@ -1,0 +1,9 @@
+summary: The full user scenario with virtualization
+description: |
+    This is a beakerlib test used to execute all relevant test
+    coverage for local, container and virtual provision methods on
+    a machine with a full virtualization support. It verifies that
+    package dependencies can be installed and that these provision
+    methods work as expected.
+test: ./test.sh
+duration: 3h

@@ -1,0 +1,7 @@
+summary: The minimal user scenario with localhost
+description: |
+    Install the base tmt package.
+    Initialize tree using the base template.
+    Run the example test on the localhost.
+test: ./test.sh
+duration: 15m
