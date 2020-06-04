@@ -17,6 +17,8 @@ description: |
         /test/two:
             result: OUTCOME
             log: PATH
+            duration: DURATION
+
 
     Where ``OUTCOME`` is the result of the test execution. It can
     have the following values:
@@ -47,6 +49,9 @@ description: |
     or a list of strings when multiple log files available, in
     which case the first log will be considered as the main one
     (e.g. presented to the user for inspection).
+
+    The ``DURATION`` is an optional section stating how long did
+    the test run. Its value is in the ``hh:mm:ss`` format.
 
 /isolate:
     summary: Run tests in an isolated environment
