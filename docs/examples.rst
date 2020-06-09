@@ -280,8 +280,7 @@ The full fmf identifier allows to fetch libraries from arbitrary
 location::
 
     require:
-        - type: beakerlib-library
-          url: https://github.com/beakerlib/openssl
+        - url: https://github.com/beakerlib/openssl
           name: /certgen
 
 See the :ref:`/spec/tests/require` attribute specification for
