@@ -1,0 +1,5 @@
+summary: Selecting and filtering plans
+description:
+    For now covered only simple scenarios 'tmt plan ls <name>' and
+    'tmt run plan --name <name>' with valid and invalid names.
+test: ./test.sh

@@ -20,6 +20,7 @@ rlJournalStart
         rlRun "echo 'touch $tmp/no-plan' >> tests/smoke/test.sh"
         rlRun "tmt run $options"
         rlAssertExists "$tmp/no-plan"
+        rlRun "tmt run --last report -fv" 0 "Try --last report (verify #287)"
     rlPhaseEnd
 
     rlPhaseStartCleanup

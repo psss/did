@@ -745,19 +745,22 @@ class Run(tmt.utils.Common):
         super().__init__(workdir=id_ or True, context=context)
         # Store workdir as the last run id
         self.config.last_run(self.workdir)
+        default_plan = tmt.utils.yaml_to_dict(tmt.templates.DEFAULT_PLAN)
         # Save the tree
         try:
             self.tree = tree if tree else tmt.Tree('.')
             self.debug(f"Using tree '{self.tree.root}'.")
-        # Create a minimal default plan if no metadata
+            # Insert default plan if no plan detected
+            if not list(self.tree.tree.prune(keys=['execute'])):
+                self.tree.tree.update(default_plan)
+                self.debug(f"No plan found, adding the default plan.")
+        # Create an empty default plan if no fmf metadata found
         except tmt.utils.MetadataError:
-            plan = tmt.utils.yaml_to_dict("""
-                /plans/default:
-                    execute:
-                        how: shell
-                """)
-            self.tree = tmt.Tree(tree=fmf.Tree(plan))
-            self.debug(f"Using the default plan.")
+            # The default discover method for this case is 'shell'
+            default_plan['/plans/default']['discover']['how'] = 'shell'
+            self.tree = tmt.Tree(tree=fmf.Tree(default_plan))
+            self.debug(f"No metadata found, using the default plan.")
+
         self._plans = None
         self._environment = dict()
         self.remove = self.opt('remove')
@@ -813,18 +816,6 @@ class Run(tmt.utils.Common):
         """ Test plans for execution """
         if self._plans is None:
             self._plans = self.tree.plans(run=self)
-            # Use a default plan with fmf discover when no plan detected
-            if not self._plans:
-                plan = tmt.utils.yaml_to_dict("""
-                    /plans/default:
-                        discover:
-                            how: fmf
-                        execute:
-                            how: shell
-                    """)
-                self.tree.tree.update(plan)
-                self._plans = self.tree.plans(run=self)
-                self.debug(f"Using the default plan.")
         return self._plans
 
     def finish(self):
@@ -902,6 +893,8 @@ class Run(tmt.utils.Common):
         self.debug(f"Enabled steps: {fmf.utils.listed(enabled_steps)}")
 
         # Show summary, store run data
+        if not self.plans:
+            raise tmt.utils.GeneralError("No plans found.")
         self.verbose('Found {0}.'.format(listed(self.plans, 'plan')))
         self.save()
 

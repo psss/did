@@ -51,6 +51,14 @@ rlJournalEnd
 #  Plan Templates
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+DEFAULT_PLAN = """
+/plans/default:
+    discover:
+        how: fmf
+    execute:
+        how: shell.tmt
+""".lstrip()
+
 PLAN = dict()
 
 PLAN['mini'] = """

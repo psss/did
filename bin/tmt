@@ -1,10 +1,8 @@
 #!/usr/bin/python
 
-import sys
-import fmf
+import click
 
 import tmt.cli
-import fmf.utils
 
 try:
     tmt.cli.main()
@@ -21,10 +19,10 @@ except tmt.utils.RunError as error:
             f"\n{tmt.utils.OUTPUT_WIDTH * '~'}\n" +
             '\n'.join(lines[-tmt.utils.OUTPUT_LINES:]))
     print()
-    fmf.utils.log.error(error.message)
+    click.echo(click.style(error.message, fg='red'))
     raise SystemExit(2)
 
 # Basic error message for general errors
 except tmt.utils.GeneralError as error:
-    fmf.utils.log.error(error)
+    click.echo(click.style(str(error), fg='red'))
     raise SystemExit(2)
