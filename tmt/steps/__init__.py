@@ -166,30 +166,6 @@ class Step(tmt.utils.Common):
         # Show workdir in verbose mode
         self.debug('workdir', self.workdir, 'magenta')
 
-    def show(self, keys=[]):
-        """ Show step details """
-        # FIXME Remove when handled by dynamic plugins
-        for step in self.data:
-            # Show empty steps only in verbose mode
-            if (set(step.keys()) == set(['how', 'name'])
-                    and not self.opt('verbose')):
-                continue
-            # Step name (and optional header)
-            echo(tmt.utils.format(
-                self, step.get('summary') or '', key_color='blue'))
-            # Show all or requested step attributes
-            for key in keys or step:
-                # Skip showing the default name
-                if key == 'name' and step['name'] == tmt.utils.DEFAULT_NAME:
-                    continue
-                # Skip showing summary again
-                if key == 'summary':
-                    continue
-                try:
-                    echo(tmt.utils.format(key, step[key]))
-                except KeyError:
-                    pass
-
 
 class Method(object):
     """ Step implementation method """
@@ -236,6 +212,10 @@ class PluginIndex(type):
 
 class Plugin(tmt.utils.Common, metaclass=PluginIndex):
     """ Common parent of all step plugins """
+
+    # Default implementation for all steps is shell
+    # except for provision (virtual) and report (display)
+    how = 'shell'
 
     def __init__(self, step, data):
         """ Store plugin name, data and parent step """
@@ -328,18 +308,20 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
 
     def show(self, keys=None):
         """ Show plugin details for given or all available keys """
-        # Show empty config only in verbose mode
+        # Show empty config with default method only in verbose mode
         if (set(self.data.keys()) == set(['how', 'name'])
-                and not self.opt('verbose')):
+                and not self.opt('verbose')
+                and self.data['how'] == self.how):
             return
         # Step name (and optional summary)
         echo(tmt.utils.format(
             self.step, self.get('summary', ''),
             key_color='blue', value_color='blue'))
         # Show all or requested step attributes
+        base_keys = ['name', 'how']
         if keys is None:
-            keys = list(self.data.keys())
-        for key in ['name', 'how'] + keys:
+            keys = [key for key in self.data.keys() if key not in base_keys]
+        for key in base_keys + keys:
             # Skip showing the default name
             if key == 'name' and self.name == tmt.utils.DEFAULT_NAME:
                 continue

@@ -62,6 +62,9 @@ class Report(tmt.steps.Step):
 class ReportPlugin(tmt.steps.Plugin):
     """ Common parent of report plugins """
 
+    # Default implementation for report is display
+    how = 'display'
+
     # List of all supported methods aggregated from all plugins
     _supported_methods = []
 

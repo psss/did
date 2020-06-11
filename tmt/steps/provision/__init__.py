@@ -103,6 +103,9 @@ class Provision(tmt.steps.Step):
 class ProvisionPlugin(tmt.steps.Plugin):
     """ Common parent of provision plugins """
 
+    # Default implementation for provision is a virtual machine
+    how = 'virtual'
+
     # List of all supported methods aggregated from all plugins
     _supported_methods = []
 
