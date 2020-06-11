@@ -244,24 +244,29 @@ class GuestTestcloud(tmt.Guest):
         disk ....... disk size for vm
     """
 
-    @staticmethod
-    def _guess_image_url(name):
+    def _get_url(self, url, message):
+        """ Get url, retry when fails, return response """
+        for i in range(1, DEFAULT_CONNECT_TIMEOUT):
+            try:
+                response = requests.get(url)
+                if response.ok:
+                    return response
+            except requests.RequestException:
+                pass
+            self.debug(f"Unable to {message} ({url}), retry {i}.")
+            time.sleep(3)
+        raise ProvisionError(
+            f'Failed to {message} ({DEFAULT_CONNECT_TIMEOUT} attempts).')
+
+    def _guess_image_url(self, name):
         """ Guess image url for given name """
 
         def latest_release():
             """ Get the latest released Fedora number """
             try:
-                for i in range(1, DEFAULT_CONNECT_TIMEOUT):
-                    try:
-                        response = requests.get(KOJI_URL)
-                        releases = re.findall(r'>(\d\d)/<', response.text)
-                        return releases[-1]
-                    except requests.RequestException as error:
-                        self.debug(f"Unable to check Fedora composes ({error}), retrying ({i}).")
-                    time.sleep(1)
-                if i == DEFAULT_CONNECT_TIMEOUT:
-                    raise ProvisionError(
-                        'Failed to to check Fedora composes in {DEFAULT_CONNECT_TIMEOUT} tries.')
+                response = self._get_url(KOJI_URL, 'check Fedora composes')
+                releases = re.findall(r'>(\d\d)/<', response.text)
+                return releases[-1]
             except IndexError:
                 raise ProvisionError(
                     f"Latest Fedora release not found at '{KOJI_URL}'.")
@@ -285,7 +290,7 @@ class GuestTestcloud(tmt.Guest):
         # Prepare the full qcow name
         images = f"{KOJI_URL}/{release}/latest-Fedora-{release.capitalize()}"
         images += "/compose/Cloud/x86_64/images"
-        response = requests.get(images)
+        response = self._get_url(images, 'get the full qcow name')
         matched = re.search(">(Fedora-Cloud[^<]*qcow2)<", response.text)
         try:
             compose_name = matched.group(1)
@@ -375,7 +380,7 @@ class GuestTestcloud(tmt.Guest):
         # If image does not start with http/https/file, consider it a
         # mapping value and try to guess the URL
         if not re.match(r'^(?:https?|file)://.*', self.image_url):
-            self.image_url = GuestTestcloud._guess_image_url(self.image_url)
+            self.image_url = self._guess_image_url(self.image_url)
 
         # Initialize and prepare testcloud image
         self.image = testcloud.image.Image(self.image_url)
