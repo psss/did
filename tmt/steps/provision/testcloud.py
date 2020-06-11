@@ -251,12 +251,17 @@ class GuestTestcloud(tmt.Guest):
         def latest_release():
             """ Get the latest released Fedora number """
             try:
-                response = requests.get(KOJI_URL)
-                releases = re.findall(r'>(\d\d)/<', response.text)
-                return releases[-1]
-            except requests.RequestException as error:
-                raise ProvisionError(
-                    f"Unable to check Fedora composes ({error}).")
+                for i in range(1, DEFAULT_CONNECT_TIMEOUT):
+                    try:
+                        response = requests.get(KOJI_URL)
+                        releases = re.findall(r'>(\d\d)/<', response.text)
+                        return releases[-1]
+                    except requests.RequestException as error:
+                        self.debug(f"Unable to check Fedora composes ({error}), retrying ({i}).")
+                    time.sleep(1)
+                if i == DEFAULT_CONNECT_TIMEOUT:
+                    raise ProvisionError(
+                        'Failed to to check Fedora composes in {DEFAULT_CONNECT_TIMEOUT} tries.')
             except IndexError:
                 raise ProvisionError(
                     f"Latest Fedora release not found at '{KOJI_URL}'.")
