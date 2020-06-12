@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.18
+Version: 0.19
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,18 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Fri Jun 12 2020 Petr Šplíchal <psplicha@redhat.com> - 0.19-1
+- Make the discover step a little bit more secure
+- Improve basic and verbose output of tmt plan show
+- Improve default plan handling and more [fix #287]
+- Adjust the compose check retry in testcloud
+- Retry Fedora compose check in testcloud [fix #275]
+- Update development section and library example
+- Support fetching beakerlib libraries in discover
+- Add nitrate to the setup.py extra requires
+- Add a workflow-tomorrow integration test example
+- Add 'duration' into the test results specification
+
 * Mon Jun 01 2020 Petr Šplíchal <psplicha@redhat.com> - 0.18-1
 - Add virtual plans for supported provision methods
 - Implement description in 'tmt plan show' as well
