@@ -224,7 +224,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if url:
             self.info('url', url, 'green')
             self.debug(f"Clone '{url}' to '{testdir}'.")
-            self.run(f'git clone {url} {testdir}')
+            self.run(['git', 'clone', url, testdir], shell=False)
         # Copy git repository root to workdir
         else:
             if path and not os.path.isdir(path):
@@ -251,7 +251,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if ref:
             self.info('ref', ref, 'green')
             self.debug(f"Checkout ref '{ref}'.")
-            self.run(f"git checkout -f {ref}", cwd=testdir)
+            self.run(['git', 'checkout', '-f', ref], cwd=testdir, shell=False)
 
         # Adjust path and optionally show
         if path is None or path == '.':
