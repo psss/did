@@ -87,7 +87,11 @@ class Library(object):
             # Prepare path, clone the repository, checkout ref
             directory = os.path.join(
                 self.parent.workdir, self.destination, self.repo)
-            self.parent.run(['git', 'clone', self.url, directory], shell=False)
+            try:
+                self.parent.run(['git', 'clone', self.url, directory], shell=False,
+                    env={"GIT_TERMINAL_PROMPT": "0"})
+            except tmt.utils.RunError as e:
+                raise LibraryError(e)
             self.parent.run(
                 ['git', 'checkout', self.ref], shell=False, cwd=directory)
             # Initialize metadata tree, add self into the library index
