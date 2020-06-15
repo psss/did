@@ -32,6 +32,7 @@ class Library(object):
             if not matched:
                 raise LibraryError
             self.parent.debug(f"Detected library '{identifier}'.", level=3)
+            self.format = 'rpm'
             self.repo, self.name = matched.groups()
             self.url = os.path.join(DEFAULT_REPOSITORY, self.repo)
             self.ref = 'master'
@@ -39,6 +40,7 @@ class Library(object):
         # The fmf identifier
         elif isinstance(identifier, dict):
             self.parent.debug(f"Detected library '{identifier}'.", level=3)
+            self.format = 'fmf'
             self.url = identifier.get('url')
             self.ref = identifier.get('ref', 'master')
             self.destination = identifier.get(
@@ -87,11 +89,19 @@ class Library(object):
             # Prepare path, clone the repository, checkout ref
             directory = os.path.join(
                 self.parent.workdir, self.destination, self.repo)
+            # Clone repo with disabled prompt to ignore missing/private repos
             try:
-                self.parent.run(['git', 'clone', self.url, directory], shell=False,
-                    env={"GIT_TERMINAL_PROMPT": "0"})
-            except tmt.utils.RunError as e:
-                raise LibraryError(e)
+                self.parent.run(
+                    ['git', 'clone', self.url, directory],
+                    shell=False, env={"GIT_TERMINAL_PROMPT": "0"})
+            except tmt.utils.RunError as error:
+                # Fallback to install during the prepare step if in rpm format
+                if self.format == 'rpm':
+                    raise LibraryError
+                self.parent.info(
+                    f"Failed to fetch library '{self}' from '{self.url}'.",
+                    color='red')
+                raise
             self.parent.run(
                 ['git', 'checkout', self.ref], shell=False, cwd=directory)
             # Initialize metadata tree, add self into the library index
