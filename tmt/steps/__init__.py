@@ -246,7 +246,7 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         """ Prepare click command for all supported methods """
         # Create one command for each supported method
         commands = {}
-        method_overview = 'Supported methods:\n\n\b'
+        method_overview = f'Supported methods ({cls.how} by default):\n\n\b'
         for method in cls.methods():
             method_overview += f'\n{method.describe()}'
             command = cls.base_command(usage=method.usage())
