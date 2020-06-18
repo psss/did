@@ -1,10 +1,13 @@
 summary: Define how tests should be executed
 
 description: |
-    Execute discovered tests on provisioned boxes using provided
-    test framework with optional support for parallelization. By
-    default tests are executed as ``shell`` scripts. This is a
-    **required** attribute. Each plan has to define this step.
+    Execute discovered tests in the provisioned environment using
+    selected test executor. By default tests are executed using
+    the internal ``tmt`` executor which allows to show detailed
+    progress of the testing and supports interactive debugging.
+
+    This is a **required** attribute. Each plan has to define this
+    step.
 
     For each ``plan`` the execute step should produce a
     ``results.yaml`` file with the list of results for each test
@@ -60,42 +63,78 @@ description: |
         request a clean test environment for each test.
     example: |
         execute:
-            how: beakerlib
+            how: tmt
             isolate: true
 
+/tmt:
+    summary: Internal test executor
+    story: As a user I want to execute tests directly from tmt.
+    description:
+        The internal ``tmt`` executor runs tests in the
+        provisioned environment one by one directly from the
+        tmt code which allows features such as showing live
+        :ref:`/stories/cli/steps/execute/progress` or the
+        :ref:`/stories/cli/steps/execute/interactive` session .
+        This is the default execute step implementation.
+    example: |
+        execute:
+            how: tmt
+    implemented:
+      - /tmt/steps/execute/internal.py
+    tested:
+      - /tests/execute/framework
+
+/detach:
+    summary: Detached test executor
+    story: As a user I want to execute tests in a detached way.
+    description:
+        The ``detach`` executor runs tests in one batch using a
+        shell script directly executed on the provisioned guest.
+        This can be useful when the connection to the guest is
+        slow or the test execution takes a long time and you want
+        to disconnect your laptop while keeping tests running in
+        the background.
+    example: |
+        execute:
+            how: detach
+    implemented:
+      - /tmt/steps/execute/detach.py
+    tested:
+      - /tests/execute/framework
+
 /shell:
-    story: As a user I want to easily run shell script as a test.
     summary: Execute shell scripts
+    story: As a user I want to easily run shell script as a test.
     description:
         Execute arbitratry shell commands and check their exit
-        code which is used as a test result. This is the default
-        execute step implementation.
+        code which is used as a test result.
 
         The default :ref:`/spec/tests/duration` for tests defined
         directly under the execute step is ``1h``. Use the
         ``duration`` attribute to modify the default limit.
-
     example: |
         execute:
-            how: shell
+            how: tmt
             script: tmt --help
 
         execute:
-            how: shell
+            how: tmt
             script: a-long-test-suite
             duration: 3h
+    implemented:
+      - /tmt/steps/execute/internal.py
+      - /tmt/steps/execute/detach.py
 
-    /default:
-        summary: Shell is the default executor
+    /simple:
+        summary: Simple use case should be super simple to write
         description: |
-            The `shell` implementation is the default one.  Thus
-            you can omit the `how` keyword and just define the
-            `script` to be run.  This is how a minimal smoke test
-            for the `tmt` command line can look like:
+            As the `how` keyword can be omitted when using the
+            default executor you can just define the shell
+            `script` to be run. This is how a minimal smoke test
+            configuration for the `tmt` command can look like:
         example: |
             execute:
                 script: tmt --help
-        implemented: /tmt/steps/execute/shell.py
 
     /multi:
         summary: Multiple shell commands
@@ -110,14 +149,13 @@ description: |
                     - systemctl start httpd
                     - echo foo > /var/www/html/index.html
                     - curl http://localhost/ | grep foo
-        implemented: /tmt/steps/execute/shell.py
 
     /script:
         summary: Multi-line shell script
         description:
-            Providing a multi-line shell script is also
-            supported. In that case executor will store given
-            script into a file and execute.
+            Providing a multi-line shell script is also supported.
+            In that case executor will store given script into a
+            file and execute.
         example: |
             execute:
                 script: |
@@ -125,17 +163,3 @@ description: |
                     systemctl start httpd
                     echo foo > /var/www/html/index.html
                     curl http://localhost/ | grep foo
-
-/beakerlib:
-    story: As a user I want to easily run beakerlib tests.
-    summary: Execute beakerlib tests
-    description:
-        Run tests using the beakerlib shell-level integration
-        testing library. Check the exit code to ensure tests have
-        been executed successfully and the journal for test
-        results.
-    implemented: /tmt/steps/execute/beakerlib.py
-
-    example: |
-        execute:
-            how: beakerlib

@@ -204,6 +204,10 @@ class Common(object):
         if not self.opt('quiet'):
             echo(self._indent(key, value, color, shift))
 
+    def warn(self, message, shift=0):
+        """ Show a yellow warning message on info level """
+        self.info('warning', message, color='yellow', shift=shift)
+
     def verbose(self, key, value=None, color=None, shift=0, level=1):
         """ Show message if in requested verbose mode level """
         self._log(self._indent(key, value, color=None, shift=shift))

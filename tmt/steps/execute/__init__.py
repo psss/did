@@ -7,15 +7,38 @@ import click
 # Logs directory name
 LOGS = 'logs'
 
+# Default test framework
+DEFAULT_FRAMEWORK = 'shell'
+
 
 class Execute(tmt.steps.Step):
-    """ Run tests using the specified framework. """
+    """
+    Run tests using the specified executor.
+
+    Note that the old execution methods 'shell.tmt', 'beakerlib.tmt',
+    'shell.detach' and 'beakerlib.detach' have been deprecated and the
+    backward-compatible support for them will be dropped in March 2021.
+
+    Use the new L1 metadata attribute 'framework' instead to specify
+    which test framework should be used for execution. This allows to
+    combine tests using different test frameworks in a single plan.
+    """
+
+    # Internal executor is the default implementation
+    how = 'tmt'
 
     def __init__(self, data, plan):
         """ Initialize execute step data """
         super().__init__(data, plan)
         # List of Result() objects representing test results
         self._results = []
+
+        # Default test framework and mapping old methods
+        # FIXME remove when we drop the old execution methods
+        self._framework = DEFAULT_FRAMEWORK
+        # Map old methods now if there is no run (and thus no wake up)
+        if not self.plan.run:
+            self._map_old_methods()
 
     def load(self):
         """ Load test results """
@@ -34,6 +57,28 @@ class Execute(tmt.steps.Step):
             (result.name, result.export()) for result in self.results()])
         self.write('results.yaml', tmt.utils.dict_to_yaml(results))
 
+    def _map_old_methods(self):
+        """ Map the old execute methods in a backward-compatible way """
+        how = self.data[0]['how']
+        matched = re.search(r"^(shell|beakerlib)(\.(tmt|detach))?$", how)
+        if not matched:
+            return
+        # Show the old method deprecation warning to users
+        self.warn(f"The '{how}' execute method has been deprecated.")
+        # Map the old syntax to the appropriate executor
+        # shell, beakerlib ---> tmt
+        # shell.tmt, beakerlib.tmt ---> tmt
+        # shell.detach, beakerlib.detach ---> detach
+        how = matched.group(3) or 'tmt'
+        self.warn(f"Use 'how: {how}' in the execute step instead (L2).")
+        self.data[0]['how'] = how
+        # Store shell or beakerlib as the default test framework
+        # (used when the framework is not defined in the L1 metadata)
+        framework = matched.group(1)
+        self.warn(f"Set 'framework: {framework}' in test metadata (L1).")
+        self._framework = framework
+        self.warn("Support for old methods will be dropped in March 2021.")
+
     def wake(self):
         """ Wake up the step (process workdir and command line) """
         super().wake()
@@ -44,6 +89,7 @@ class Execute(tmt.steps.Step):
                 "Multiple execute steps defined in '{}'.".format(self.plan))
 
         # Choose the right plugin and wake it up
+        self._map_old_methods()
         executor = ExecutePlugin.delegate(self, self.data[0])
         executor.wake()
         self._plugins.append(executor)
@@ -118,6 +164,9 @@ class ExecutePlugin(tmt.steps.Plugin):
 
     # List of all supported methods aggregated from all plugins
     _supported_methods = []
+
+    # Internal executor is the default implementation
+    how = 'tmt'
 
     @classmethod
     def base_command(cls, method_class=None, usage=None):

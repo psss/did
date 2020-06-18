@@ -17,7 +17,7 @@ smoke = tmt.Plan(fmf.Tree({'execute': {'script': 'tmt --help'}}))
 smoke.execute.wake()
 
 def test_smoke_method():
-    assert smoke.execute.data[0]['how'] == 'shell'
+    assert smoke.execute.data[0]['how'] == 'tmt'
 
 def test_smoke_plugin():
     assert isinstance(
@@ -32,7 +32,7 @@ basic = tmt.Plan(fmf.Tree({'execute': {'how': 'beakerlib'}}))
 basic.execute.wake()
 
 def test_basic_method():
-    assert basic.execute.data[0]['how'] == 'beakerlib'
+    assert basic.execute.data[0]['how'] == 'tmt'
 
 def test_basic_plugin():
     assert isinstance(

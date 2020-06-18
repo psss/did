@@ -10,40 +10,29 @@ RUNNER = 'run.sh'
 LOGS = ['stdout.log', 'stderr.log', 'nohup.out', 'results.yaml']
 
 
-class ExecuteSimple(tmt.steps.execute.ExecutePlugin):
-    """ Run tests using a detached shell script on the guest """
-
-    _shell_doc = """
-    Run shell tests using a detached script on the guest
-
-    A simple 'run.sh' script is run directly on the guest, executes all
-    tests in one batch and checks the exit code for the test results.
+class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
     """
-
-    _beakerlib_doc = """
-    Run beakerlib tests using a detached script on the guest
+    Run tests using a detached shell script on the guest
 
     A simple 'run.sh' script is run directly on the guest, executes all
-    tests in one batch and checks the beakerlib journal for the test
-    results.
+    tests in one batch and checks for the test results using the exit
+    code (for shell tests) or the results file (for beakerlib tests).
     """
 
     # Supported methods
     _methods = [
-        tmt.steps.Method(
-            name='shell.detach', doc=_shell_doc, order=60),
-        tmt.steps.Method(
-            name='beakerlib.detach', doc=_beakerlib_doc, order=60),
+        tmt.steps.Method(name='detach', doc=__doc__, order=60),
+        tmt.steps.Method(name='shell.detach', doc=__doc__, order=90),
+        tmt.steps.Method(name='beakerlib.detach', doc=__doc__, order=90),
         ]
 
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for given method """
         options = []
-        if 'shell' in how:
-            options.append(click.option(
-                '-s', '--script', metavar='SCRIPT', multiple=True,
-                help='Shell script to be executed as a test.'))
+        options.append(click.option(
+            '-s', '--script', metavar='SCRIPT', multiple=True,
+            help='Shell script to be executed as a test.'))
         return options + super().options(how)
 
     def show(self):
@@ -52,18 +41,9 @@ class ExecuteSimple(tmt.steps.execute.ExecutePlugin):
 
     def wake(self):
         """ Wake up the plugin (override data with command line) """
-
+        super().wake(options=['script'])
         # Make sure that 'script' is a list
         tmt.utils.listify(self.data, keys=['script'])
-
-        # Process command line options, apply defaults
-        for option in ['script']:
-            value = self.opt(option)
-            if value:
-                self.data[option] = value
-
-        # Store the method for future use
-        self.beakerlib = 'beakerlib' in self.get('how')
 
     def prepare_runner(self):
         """ Place the runner script to workdir """
@@ -104,7 +84,7 @@ class ExecuteSimple(tmt.steps.execute.ExecutePlugin):
 
     def check(self, test):
         """ Check the test result """
-        if self.beakerlib:
+        if test.framework == 'beakerlib':
             return self.check_beakerlib(test)
         else:
             # Get the exit code from the file
@@ -135,9 +115,8 @@ class ExecuteSimple(tmt.steps.execute.ExecutePlugin):
             # Push workdir to guest and execute tests
             guest.push()
             try:
-                how = 'beakerlib' if self.beakerlib else 'shell'
                 guest.execute(
-                    f'./{RUNNER} -v .. {how} stdout.log stderr.log',
+                    f'./{RUNNER} -v .. stdout.log stderr.log',
                     cwd=self.step.workdir)
             except tmt.utils.RunError as error:
                 guest.pull()
@@ -157,4 +136,5 @@ class ExecuteSimple(tmt.steps.execute.ExecutePlugin):
 
     def requires(self):
         """ Return list of required packages """
-        return ['beakerlib'] if self.beakerlib else []
+        # FIXME Remove when we drop support for the old execution methods
+        return ['beakerlib'] if self.step._framework == 'beakerlib' else []

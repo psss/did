@@ -5,42 +5,31 @@ import click
 
 
 class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
-    """ Use the basic tmt executor """
-
-    _shell_doc = """
-    Run shell tests using the internal tmt executor
-
-    Internal tmt executor runs shell scripts on the guest one by one,
-    shows testing progress and supports interactive debugging as well.
-    Test result is based on the script exit code.
     """
+    Use the internal tmt executor to execute tests
 
-    _beakerlib_doc = """
-    Run beakerlib tests using the internal tmt executor
-
-    Internal tmt executor runs beakerlib tests on the guest one by one,
-    shows testing progress and supports interactive debugging as well.
-    Checks beakerlib's TestResults file to identify the test result.
+    The internal tmt executor runs tests on the guest one by one, shows
+    testing progress and supports interactive debugging as well. Test
+    result is based on the script exit code (for shell tests) or the
+    results file (for beakerlib tests).
     """
 
     # Supported methods
     _methods = [
-        tmt.steps.Method(
-            name='shell.tmt', doc=_shell_doc, order=50),
-        tmt.steps.Method(
-            name='beakerlib.tmt', doc=_beakerlib_doc, order=50),
+        tmt.steps.Method(name='tmt', doc=__doc__, order=50),
+        tmt.steps.Method(name='shell.tmt', doc=__doc__, order=80),
+        tmt.steps.Method(name='beakerlib.tmt', doc=__doc__, order=80),
         ]
 
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for given method """
         options = []
-        # Script for the shell method
-        if 'shell' in how:
-            options.append(click.option(
-                '-s', '--script', metavar='SCRIPT', multiple=True,
-                help='Shell script to be executed as a test.'))
-        # Interactive mode for both methods
+        # Shell script as a test
+        options.append(click.option(
+            '-s', '--script', metavar='SCRIPT', multiple=True,
+            help='Shell script to be executed as a test.'))
+        # Interactive mode
         options.append(click.option(
             '-i', '--interactive', is_flag=True,
             help='Run in interactive mode, do not capture output.'))
@@ -55,14 +44,13 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         super().wake(options=['script', 'interactive'])
         # Make sure that script is a list
         tmt.utils.listify(self.data, keys=['script'])
-        # Store the method for future use
-        self.beakerlib = 'beakerlib' in self.get('how')
 
     def execute(self, test, guest):
         """ Run test on the guest """
+        # Provide info/debug message
         self.verbose(
             'test', test.summary or test.name, color='cyan', shift=1, level=2)
-        self.debug(f"Execute test '{test.name}'.")
+        self.debug(f"Execute '{test.name}' as a '{test.framework}' test.")
 
         # Test will be executed in the workdir
         workdir = os.path.join(
@@ -72,7 +60,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         # Create logsdir, prepare environment
         logsdir = self.log(test, full=True, create=True)
         environment = test.environment
-        if self.beakerlib:
+        if test.framework == 'beakerlib':
             environment = environment.copy()
             environment['BEAKERLIB_DIR'] = logsdir
 
@@ -106,7 +94,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     def check(self, test):
         """ Check the test result """
         self.debug(f"Check result of '{test.name}'.")
-        if self.beakerlib:
+        if test.framework == 'beakerlib':
             return self.check_beakerlib(test)
         else:
             return self.check_shell(test)
@@ -141,4 +129,5 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
     def requires(self):
         """ Return list of required packages """
-        return ['beakerlib'] if self.beakerlib else []
+        # FIXME Remove when we drop support for the old execution methods
+        return ['beakerlib'] if self.step._framework == 'beakerlib' else []

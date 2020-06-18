@@ -21,7 +21,7 @@ description: |
      * discover: shell
      * provision: virtual
      * prepare: shell
-     * execute: shell
+     * execute: tmt
      * report: display
      * finish: shell
 

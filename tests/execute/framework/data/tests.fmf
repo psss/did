@@ -1,0 +1,21 @@
+path: /
+
+/beakerlib:
+    test: ./beakerlib.sh
+
+    /without-framework:
+        summary: This is a beakerlib test (without framework)
+
+    /with-framework:
+        summary: This is a beakerlib test (with framework)
+        framework: beakerlib
+
+/shell:
+    test: ./shell.sh
+
+    /without-framework:
+        summary: This is a shell test (without framework)
+
+    /with-framework:
+        summary: This is a shell test (with framework)
+        framework: shell

@@ -83,7 +83,7 @@ def test_step():
             tmt.cli.main, ['--root', example('local'), 'run', step])
         assert result.exit_code == 0
         assert step in result.output
-        assert 'execute' not in result.output
+        assert 'finish' not in result.output
 
 def test_step_execute():
     """ Test execute step"""

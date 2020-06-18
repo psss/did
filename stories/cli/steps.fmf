@@ -81,13 +81,50 @@
 /execute:
     story: 'Select or adjust the execute step'
     description:
-        Specification of the testing framework which should
-        execute tests.
+        Specification of the executor which should run tests.
     example:
         - tmt run execute
-        - tmt run execute --how=shell
-        - tmt run execute --how=beakerlib
+        - tmt run execute --how=tmt
+        - tmt run execute --how=detach
         - tmt run execute --how=restraint
+
+    /progress:
+        summary: Watch test execution progress
+        story:
+            As a user I want to watch live test execution
+            including the complete test output.
+        description:
+            In order to see progress of the testing use the
+            ``--verbose`` or ``-v`` switch. Applying the option
+            multiple times increases verbosity. This is supported
+            by the :ref:`/spec/steps/execute/tmt` executor only.
+        example:
+          - tmt run -v
+          - tmt run -vv
+          - tmt run -vvv
+          - tmt run --all execute -vvv
+        implemented:
+          - /tmt/steps/execute/internal.py
+
+    /interactive:
+        summary: Interactive test debugging
+        story:
+            As a user I want to interactively debug tests in the
+            middle of their execution.
+        description:
+            To debug a test use the ``--interactive`` option which
+            disables output capturing and allows to interact
+            directly with the test from the terminal. For example,
+            for tests written in shell you can insert a ``bash``
+            command in the middle of the script and investigate.
+            Supported by the :ref:`/spec/steps/execute/tmt`
+            executor only.
+        example:
+          - tmt run --all execute --how tmt --interactive
+        implemented:
+          - /tmt/steps/execute/internal.py
+        documented:
+          - /docs/examples.rst
 
 /report:
     story: 'Select or adjust the report step'

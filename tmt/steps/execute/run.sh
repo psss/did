@@ -1,11 +1,7 @@
 #!/bin/bash
-# run.sh [-d] /path/to/workdir TYPE
+# run.sh [-d] /path/to/workdir
 #
-#   TYPE of exectution:
-#       shell | beakerlib
-#
-#   Supports __only__ one workdir to run in,
-#       and only one TYPE to run the tests
+#   Supports __only__ one workdir to run in.
 #
 #   Outputs results into folder specified by test name.
 #       Resulting files:
@@ -25,7 +21,6 @@ bash -n "$0"
 
 tmt_WD=
 tmt_VERBOSE=
-tmt_TYPE='shell'
 
 tmt_TESTS_D='discover'
 tmt_TESTS_F="${tmt_TESTS_D}/run.yaml"
@@ -38,7 +33,6 @@ tmt_JOURNAL_F="journal.txt"
 set -x
 
 # TESTS_F file is on stdin
-# TYPE is ARG
 tmt_main () {
     local name=''
     local test=''
@@ -60,6 +54,7 @@ tmt_main () {
             m=
             [[ "$key" == 'test' ]] && { m=y; test="${val}"; }
             [[ "$key" == 'path' ]] && { m=y; path="${val}"; }
+            [[ "$key" == 'framework' ]] && { m=y; framework="${val}"; }
             [[ "$key" == 'duration' ]] && { m=y; duration="${val}"; }
             [[ "$key" == 'environment' ]] && { m=y; environment="${val}"; }
 
@@ -67,7 +62,7 @@ tmt_main () {
             :
         } || {
             [[ "$name" == "$last" ]] || {
-                tmt_run_test "$name" "$test" "$path" "$duration" "$environment"
+                tmt_run_test "$name" "$test" "$path" "$framework" "$duration" "$environment"
                 last="$name"
             }
 
@@ -82,7 +77,7 @@ tmt_main () {
     done
 
     [[ "$name" == "$last" ]] \
-        || tmt_run_test "$name" "$test" "$path" "$duration" "$environment"
+        || tmt_run_test "$name" "$test" "$path" "$framework" "$duration" "$environment"
 
     local IFS="$IFS_b"
 }
@@ -91,8 +86,9 @@ tmt_run_test () {
     local name="$1"
     local test="$2"
     local path="$3"
-    local duration="$4"
-    local environment="$5"
+    local framework="$4"
+    local duration="$5"
+    local environment="$6"
     local execute
     local cmd
     local prefix
@@ -113,6 +109,9 @@ tmt_run_test () {
     [[ -z "$duration" ]] || {
       duration="timeout '$duration' "
     }
+    [[ "$framework" == 'beakerlib' || "$framework" == 'shell' ]] \
+        || tmt_error "Unknown test framework: '$framework'"
+
 
     local log_dir="${tmt_LOG_D}/logs/$name"
     mkdir -p "$log_dir" || {
@@ -137,9 +136,10 @@ tmt_run_test () {
     tmt_verbose 2 "environment: $environment"
     tmt_verbose 2 "duration: $duration"
     tmt_verbose 2 "command: $test"
-    tmt_verbose 2 "type: ${tmt_TYPE}"
+    tmt_verbose 2 "framework: $framework"
+    tmt_verbose 2 "Execute '$name' as a '$framework' test."
 
-    tmt_run_${tmt_TYPE} "$path" "$environment" "$cmd"
+    tmt_run_${framework} "$path" "$environment" "$cmd"
     echo "$?" >"$tmt_LOGCODE_F"
 
     grep -q '^0$' "$tmt_LOGCODE_F" \
@@ -240,11 +240,6 @@ tmt_WD="$(readlink -f "$1")"
 shift
 
 [[ -z "$1" ]] || {
-    tmt_TYPE="$1"
-}
-shift
-
-[[ -z "$1" ]] || {
     tmt_STDOUT="$(readlink -f "$1")"
     touch "$tmt_STDOUT" && {
         exec >>"$tmt_STDOUT"
@@ -273,9 +268,6 @@ shift
 [[ -n "$tmt_WD" ]] || tmt_abort "Path to workdir is missing"
 [[ -d "$tmt_WD" ]] || tmt_abort "Could not find Workdir: $tmt_WD"
 
-[[ "$tmt_TYPE" == 'beakerlib' || "$tmt_TYPE" == 'shell' ]] \
-    || tmt_abort "Unknown tests execution TYPE: '$1'"
-
 cd "$tmt_WD" || tmt_ abort "Failed to cd: $tmt_WD"
 [[ -r "$tmt_TESTS_F" ]] || tmt_abort "Could not find TESTS file: $tmt_TESTS_F"
 [[ `wc -l "$tmt_TESTS_F" | cut -d' ' -f1` -gt 1 ]] || tmt_abort "Missing tests. (`cat "$tmt_TESTS_F"`)"
@@ -288,7 +280,7 @@ tmt_LOG_D="$(readlink -f "${tmt_WD}/${tmt_LOG_D}")"
 
 
 ### RUN
-tmt_verbose 0 "$tmt_WD $ main $tmt_TYPE < $tmt_TESTS_F"
+tmt_verbose 0 "$tmt_WD $ main < $tmt_TESTS_F"
 
 tmt_main < <( grep -vE '^\s*$' "$tmt_TESTS_F" )
 

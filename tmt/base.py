@@ -173,6 +173,7 @@ class Test(Node):
         # Test execution data
         'test',
         'path',
+        'framework',
         'manual',
         'require',
         'recommend',
@@ -223,6 +224,13 @@ class Test(Node):
         # Check that lists are lists or strings, listify if needed
         for key in ['component', 'contact', 'require', 'recommend', 'tag']:
             self._check(key, expected=(list, str), default=[], listify=True)
+
+        # FIXME Framework should default to 'shell' in the future. For
+        # backward-compatibility with the old execute methods we need to be
+        # able to detect if the test has explicitly set the framework.
+        self._check('framework', expected=str, default=None)
+        if self.framework == 'beakerlib':
+            self.require.append('beakerlib')
 
         # Check that environment is a dictionary
         self._check('environment', expected=dict, default={})
@@ -313,6 +321,7 @@ class Test(Node):
             data = dict()
             data['test'] = self.test
             data['path'] = self.path
+            data['framework'] = self.framework
             if self.duration is not None:
                 data['duration'] = self.duration
             if self.environment:

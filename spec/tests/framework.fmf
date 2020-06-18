@@ -1,0 +1,25 @@
+summary: Test framework defining how tests should be executed
+
+story:
+    As a tester I want to include tests using different test
+    execution framework in a single plan.
+
+description: |
+    The framework defines how test code should be executed and how
+    test results should be interpreted (e.g. checking exit code of
+    a shell test versus checking beakerlib test results file). It
+    also determines possible additional required packages to be
+    installed on the test environment.
+
+    Currently ``shell`` and ``beakerlib`` are supported. Each
+    `execute` step plugin should list which frameworks it supports
+    and raise an error when an unsupported framework is detected.
+
+    Should be a ``string``, by default ``shell`` is used.
+
+example: |
+    framework: shell
+
+    framework: beakerlib
+
+implemented: /tmt/base
