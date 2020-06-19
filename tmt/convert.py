@@ -91,9 +91,10 @@ def read(path, makefile, nitrate, purpose, disabled):
         # Make Makefile 'makeable' without extra dependecies
         # (replace targets, make include optional and remove rhts-lint)
         makefile = makefile.replace('$(METADATA)', 'testinfo.desc')
-        makefile = makefile.replace(
-            'include /usr/share/rhts/lib/rhts-make.include',
-            '-include /usr/share/rhts/lib/rhts-make.include')
+        makefile = re.sub(
+                r'^include /usr/share/rhts/lib/rhts-make.include',
+                '-include /usr/share/rhts/lib/rhts-make.include',
+                makefile, flags=re.MULTILINE)
         makefile = makefile.replace('rhts-lint testinfo.desc', '')
 
         # Create testinfo.desc file with resolved variables
