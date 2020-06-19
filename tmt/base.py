@@ -745,25 +745,33 @@ class Run(tmt.utils.Common):
         super().__init__(workdir=id_ or True, context=context)
         # Store workdir as the last run id
         self.config.last_run(self.workdir)
-        default_plan = tmt.utils.yaml_to_dict(tmt.templates.DEFAULT_PLAN)
         # Save the tree
         try:
             self.tree = tree if tree else tmt.Tree('.')
             self.debug(f"Using tree '{self.tree.root}'.")
-            # Insert default plan if no plan detected
-            if not list(self.tree.tree.prune(keys=['execute'])):
-                self.tree.tree.update(default_plan)
-                self.debug(f"No plan found, adding the default plan.")
+            self.insert_default_plan()
+
         # Create an empty default plan if no fmf metadata found
         except tmt.utils.MetadataError:
-            # The default discover method for this case is 'shell'
-            default_plan['/plans/default']['discover']['how'] = 'shell'
-            self.tree = tmt.Tree(tree=fmf.Tree(default_plan))
-            self.debug(f"No metadata found, using the default plan.")
+            self.create_default_plan()
 
         self._plans = None
         self._environment = dict()
         self.remove = self.opt('remove')
+
+    def insert_default_plan(self):
+        # Insert default plan if no plan detected
+        default_plan = tmt.utils.yaml_to_dict(tmt.templates.DEFAULT_PLAN)
+        if not list(self.tree.tree.prune(keys=['execute'])):
+            self.tree.tree.update(default_plan)
+            self.debug(f"No plan found, adding the default plan.")
+
+    def create_default_plan(self):
+        default_plan = tmt.utils.yaml_to_dict(tmt.templates.DEFAULT_PLAN)
+        # The default discover method for this case is 'shell'
+        default_plan['/plans/default']['discover']['how'] = 'shell'
+        self.tree = tmt.Tree(tree=fmf.Tree(default_plan))
+        self.debug(f"No metadata found, using the default plan.")
 
     @property
     def environment(self):
@@ -775,6 +783,7 @@ class Run(tmt.utils.Common):
     def save(self):
         """ Save list of selected plans and enabled steps """
         data = {
+            'root': self.tree.root,
             'plans': [plan.name for plan in self._plans],
             'steps': list(self._context.obj.steps),
             'environment': self.environment,
@@ -789,6 +798,17 @@ class Run(tmt.utils.Common):
         except tmt.utils.FileError:
             self.debug('Run data not found.')
             return
+
+        # If run id was given and root was not explicitly specified,
+        # create a new Tree from the root in run.yaml
+        if self._workdir and not self.opt('root'):
+            if 'root' in data:
+                try:
+                    self.tree = tmt.Tree(data['root'])
+                    self.debug(f"Using tree '{self.tree.root}'.")
+                    self.insert_default_plan()
+                except fmf.utils.GeneralError:
+                    self.create_default_plan()
 
         # Filter plans by name unless specified on the command line
         plan_options = ['names', 'filters', 'conditions']

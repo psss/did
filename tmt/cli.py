@@ -128,12 +128,13 @@ def implemented_tested_documented(function):
 @click.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @click.option(
-    '-r', '--root', metavar='PATH', default='.', show_default=True,
-    help='Path to the tree root.')
+    '-r', '--root', metavar='PATH', show_default=True,
+    help='Path to the tree root. \'.\' by default.')
 @verbose_debug_quiet
 def main(context, root, **kwargs):
     """ Test Management Tool """
     # Initialize metadata tree
+    root = root or os.curdir
     tree = tmt.Tree(root)
     tree._save_context(context)
     context.obj = tmt.utils.Common()

@@ -1,0 +1,6 @@
+summary: Check whether loading root when using --id works
+description:
+    When using tmt run --id the root directory should
+    be loaded from run.yaml so that the user doesn't have
+    to specify it manually. The fmf tree will then be loaded
+    from the root directory.
