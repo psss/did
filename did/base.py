@@ -114,6 +114,17 @@ class Config(object):
             return None
 
     @property
+    def quarter(self):
+        """ The first month of the quarter, 1 by default """
+        try:
+            month = self.parser.get("general", "quarter", fallback=1)
+            month = int(month) % 3
+        except ValueError:
+            raise ConfigError(
+                f"Invalid quarter start '{month}', should be integer.")
+        return month
+
+    @property
     def email(self):
         """ User email(s) """
         try:
@@ -255,7 +266,7 @@ class Date(object):
     def this_quarter():
         """ Return start and end date of this quarter. """
         since = TODAY + delta(day=1)
-        while since.month % 3 != 0:
+        while since.month % 3 != Config().quarter:
             since -= delta(months=1)
         until = since + delta(months=3)
         return Date(since), Date(until)

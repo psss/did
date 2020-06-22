@@ -24,11 +24,13 @@ General
 
 Minimum config file should contain at least a ``general`` section
 with an email address which will be used for searching. Option
-``width`` specifies the maximum width of the report::
+``width`` specifies the maximum width of the report, ``quarter``
+can be used to choose a different start month of the quarter::
 
     [general]
     email = Petr Šplíchal <psplicha@redhat.com>
     width = 79
+    quarter = 1
 
 In order to load additional plugins from your custom locations
 provide paths to be searched in the ``plugins`` option::
@@ -38,7 +40,7 @@ provide paths to be searched in the ``plugins`` option::
     plugins = ~/.did/plugins
 
 Each path should be a package or module. This method works whether
-the package or module is on the filesystem or in an ``.egg``.
+the package or module is on the filesystem or in an ``.egg``. 
 
 
 Email

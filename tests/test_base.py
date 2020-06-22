@@ -83,14 +83,14 @@ def test_Date_period():
     # This quarter
     for argument in ["quarter", "this quarter"]:
         since, until, period = Date.period(argument)
-        assert str(since) == "2015-09-01"
-        assert str(until) == "2015-12-01"
+        assert str(since) == "2015-10-01"
+        assert str(until) == "2016-01-01"
         assert period == "this quarter"
     # Last quarter
     for argument in ["last quarter"]:
         since, until, period = Date.period(argument)
-        assert str(since) == "2015-06-01"
-        assert str(until) == "2015-09-01"
+        assert str(since) == "2015-07-01"
+        assert str(until) == "2015-10-01"
         assert period == "the last quarter"
     # This year
     for argument in ["year", "this year"]:
