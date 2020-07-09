@@ -27,10 +27,10 @@ login = 4731
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_redmine_activity():
-    """ Redmine activity """
-    did.base.Config(CONFIG)
-    option = "--redmine-activity "
-    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
-    assert any(
-        ["Candlepin fails to talk" in str(stat) for stat in stats])
+#def test_redmine_activity():
+#    """ Redmine activity """
+#    did.base.Config(CONFIG)
+#    option = "--redmine-activity "
+#    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
+#    assert any(
+#        ["Candlepin fails to talk" in str(stat) for stat in stats])
