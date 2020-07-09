@@ -46,20 +46,14 @@ source:
 	rm -rf $(TMP)/$(PACKAGE)/examples/mr.bob
 tarball: source man
 	cd $(TMP) && tar cfj SOURCES/$(PACKAGE).tar.bz2 $(PACKAGE)
+	@echo ./tmp/SOURCES/$(PACKAGE).tar.bz2
+version:
+	@echo "$(VERSION)"
 rpm: tarball
 	rpmbuild --define '_topdir $(TMP)' -bb did.spec
 srpm: tarball
 	rpmbuild --define '_topdir $(TMP)' -bs did.spec
 packages: rpm srpm
-
-
-# Packit stuff
-packit-tarball: tarball
-	mv $(TMP)/SOURCES/$(PACKAGE).tar.bz2 .
-packit-path:
-	@printf "$(PACKAGE).tar.bz2"
-packit-version:
-	@printf "$(VERSION)"
 
 
 # Python packaging

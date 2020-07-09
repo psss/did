@@ -1,16 +1,8 @@
-specfile_path: did.spec
-synced_files:
-    - did.spec
-
-downstream_package_name: did
-upstream_package_name: did
-
-current_version_command: ["make", "packit-version"]
-
 actions:
   create-archive:
-  - make packit-tarball
-  - make packit-path
+  - make tarball
+  get-current-version:
+  - make version
 
 jobs:
 - job: tests
@@ -18,3 +10,4 @@ jobs:
   metadata:
     targets:
     - fedora-all
+    - epel-8
