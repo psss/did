@@ -1,0 +1,2 @@
+summary: Basic smoke test against github
+test: ./test.sh
