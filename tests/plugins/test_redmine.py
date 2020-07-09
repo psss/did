@@ -11,16 +11,16 @@ import time
 #  Constants
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-INTERVAL = "--since 2017-06-12 --until 2017-06-19"
+INTERVAL = "--since 2020-01-01 --until 2020-02-01"
 
 CONFIG = """
 [general]
-email = "Petr Splichal" <psplicha@redhat.com>
+email = "Ignored" <ignored@redhat.com>
 
 [redmine]
 type = redmine
-url = http://projects.theforeman.org
-login = 6558
+url = https://projects.theforeman.org
+login = 4731
 """
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,5 +33,4 @@ def test_redmine_activity():
     option = "--redmine-activity "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
     assert any(
-        ["puppetserver fails to restart after installation"
-        in str(stat) for stat in stats])
+        ["Candlepin fails to talk" in str(stat) for stat in stats])

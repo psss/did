@@ -55,6 +55,7 @@ class RedmineActivity(Stats):
             feed_url = '{0}/activity.atom?user_id={1}&from={2}'.format(
                 self.parent.url, self.user.login,
                 from_date.strftime('%Y-%m-%d'))
+            log.debug(f"Feed url: {feed_url}")
             feed = feedparser.parse(feed_url)
             for entry in feed.entries:
                 updated = dateutil.parser.parse(entry.updated).date()
