@@ -11,11 +11,11 @@ import did.base
 
 CONFIG = """
 [general]
-email = Dan Callaghan <dcallagh@redhat.com>
+email = jayconrod@google.com
 
 [gerrit]
 type = gerrit
-url = https://gerrit.beaker-project.org/
+url = https://go-review.googlesource.com/#/
 prefix = GR
 """
 
@@ -35,10 +35,10 @@ def test_gerrit_merged():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--gerrit-merged",
-        "--since", "2018-09-24",
-        "--until", "2018-09-30"])[0][0].stats[0].stats[1].stats
+        "--since", "2020-06-01",
+        "--until", "2020-06-30"])[0][0].stats[0].stats[1].stats
     assert any([
-        "GR#6299 - beaker - expand device.fw_version column" in str(change)
+        "GR#238157 - go - cmd: update golang.org/x/tools" in str(change)
         for change in stats])
 
 
@@ -47,10 +47,22 @@ def test_gerrit_reviewed():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--gerrit-reviewed",
-        "--since", "2018-10-20",
-        "--until", "2018-10-30"])[0][0].stats[0].stats[4].stats
+        "--since", "2020-06-01",
+        "--until", "2020-06-30"])[0][0].stats[0].stats[4].stats
     assert any([
-        "GR#6313 - beaker - Make beah default harness" in str(change)
+        "GR#237177 - go - cmd/go/internal/web" in str(change)
+        for change in stats])
+
+
+def test_gerrit_submitted_for_review():
+    """ Check changes submitted for review """
+    did.base.Config(CONFIG)
+    stats = did.cli.main([
+        "--gerrit-submitted",
+        "--since", "2020-06-01",
+        "--until", "2020-06-30"])[0][0].stats[0].stats[2].stats
+    assert any([
+        "GR#240548 - go - cmd/go/internal/modload" in str(change)
         for change in stats])
 
 
@@ -59,10 +71,10 @@ def test_gerrit_wip():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--gerrit-wip",
-        "--since", "2015-05-01",
-        "--until", "2016-10-31"])[0][0].stats[0].stats[3].stats
+        "--since", "2020-06-01",
+        "--until", "2020-06-30"])[0][0].stats[0].stats[3].stats
     assert any([
-        "GR#4211 - beaker - WIP JSONAPI for system pools" in str(change)
+        "GR#237584 - go - doc: update install instructions" in str(change)
         for change in stats])
 
 
@@ -72,6 +84,6 @@ def test_gerrit_wip_disabled():
     did.base.Config(CONFIG_NO_WIP)
     stats = did.cli.main([
         "--gerrit-wip",
-        "--since", "2015-05-01",
-        "--until", "2016-10-31"])[0][0].stats[0].stats[3].stats
+        "--since", "2020-06-01",
+        "--until", "2020-06-30"])[0][0].stats[0].stats[3].stats
     assert stats == []
