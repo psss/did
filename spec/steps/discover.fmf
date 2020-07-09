@@ -43,8 +43,9 @@ description: |
     description:
         List of test cases to be executed can be defined manually
         directly in the plan as a list of dictionaries containing
-        test ``name``, actual ``test`` script and optionally a
-        ``path`` to the test.
+        test ``name`` and actual ``test`` script. Optionally it is
+        possible to define any other :ref:`/spec/tests` attributes
+        such as ``path`` or ``duration`` here as well.
     example: |
         discover:
             how: shell
@@ -56,6 +57,7 @@ description: |
             - name: /help/smoke
               test: ./smoke.sh
               path: /tests/shell
+              duration: 1m
     implemented: /tmt/steps/discover/shell
 
 /fmf:
