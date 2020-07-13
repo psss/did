@@ -14,7 +14,7 @@ rlJournalStart
         rlRun "tmt test create -t shell tests/test"
         rlRun "tmt plans create -t mini plans/test-plan"
         rlRun "tmt run --until report provision -h local"
-        rlRun "cd .. && tmt run --last --since report"
+        rlRun "cd .. && tmt run -vvvddd --last --since report"
     rlPhaseEnd
 
     rlPhaseStartCleanup

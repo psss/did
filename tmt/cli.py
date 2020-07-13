@@ -129,7 +129,7 @@ def implemented_tested_documented(function):
 @click.pass_context
 @click.option(
     '-r', '--root', metavar='PATH', show_default=True,
-    help='Path to the tree root. \'.\' by default.')
+    help="Path to the tree root, '.' by default.")
 @verbose_debug_quiet
 def main(context, root, **kwargs):
     """ Test Management Tool """
