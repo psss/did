@@ -1,5 +1,5 @@
 Name: did
-Version: 0.16
+Version: 0.17
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -53,6 +53,25 @@ export LANG=en_US.utf-8
 %license LICENSE
 
 %changelog
+* Mon Jul 13 2020 Petr Šplíchal <psplicha@redhat.com> - 0.17-1
+- Prevent exploring tests under the tmt directory
+- Run unit tests always under the English locale
+- Enable basic smoke test against github in packit
+- Disable test for the redmine plugin
+- Update test data for the redmine plugin
+- Update test data for the sentry plugin
+- Update test data for the gerrit plugin
+- Use calendar year quarters by default [fix #223]
+- Merge the improved Jira search [#198]
+- Adjust improved Jira search using scriptrunner
+- Use scriptrunner issueFunction to speed up things
+- Simplify Packit config (copr_build no more needed)
+- Update test data for the sentry plugin
+- Implement Jira issue comparison to prevent dupes
+- Do not break sorting on merge
+- Add default command into the info log [fix #217]
+- Enable Python 3.8 in Travis, update metadata
+
 * Tue Dec 10 2019 Petr Šplíchal <psplicha@redhat.com> - 0.16-1
 - Convert smoke test into docs test, fix config file
 - Include a short summary in the help usage message
