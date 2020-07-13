@@ -154,7 +154,7 @@ class ProvisionPlugin(tmt.steps.Plugin):
 
 class Guest(tmt.utils.Common):
     """
-    Guest environment provisioned for test execution
+    Guest provisioned for test execution
 
     The following keys are expected in the 'data' dictionary::
 
@@ -163,10 +163,12 @@ class Guest(tmt.utils.Common):
         key ........ private key
         password ... password
 
-    These are by default imported into instance attributes.
+    These are by default imported into instance attributes (see the
+    class attribute '_keys' below).
     """
 
-    # Supported keys (used for import/export to/from attributes)
+    # List of supported keys
+    # (used for import/export to/from attributes during load and save)
     _keys = ['guest', 'user', 'key', 'password']
 
     def __init__(self, data, name=None, parent=None):
@@ -199,12 +201,30 @@ class Guest(tmt.utils.Common):
         return ' '.join(command) if join else command
 
     def load(self, data):
-        """ Load guest data for easy access """
+        """
+        Load guest data into object attributes for easy access
+
+        Called during guest object initialization. Takes care of storing
+        all supported keys (see class attribute _keys for the list) from
+        provided data to the guest object attributes. Child classes can
+        extend it to make additional guest attributes easily available.
+
+        Data dictionary can contain guest information from both command
+        line options / L2 metadata / user configuration and wake up data
+        stored by the save() method below.
+        """
         for key in self._keys:
             setattr(self, key, data.get(key))
 
     def save(self):
-        """ Save guest data for future wake up """
+        """
+        Save guest data for future wake up
+
+        Export all essential guest data into a dictionary which will be
+        stored in the `guests.yaml` file for possible future wake up of
+        the guest. Everything needed to attach to a running instance
+        should be added into the data dictionary by child classes.
+        """
         data = dict()
         for key in self._keys:
             value = getattr(self, key)
@@ -213,11 +233,23 @@ class Guest(tmt.utils.Common):
         return data
 
     def wake(self):
-        """ Wake up the guest """
+        """
+        Wake up the guest
+
+        Perform any actions necessary after step wake up to be able to
+        attach to a running guest instance and execute commands. Called
+        after load() is completed so all guest data should be prepared.
+        """
         self.debug(f"Doing nothing to wake up guest '{self.guest}'.")
 
     def start(self):
-        """ Start the guest """
+        """
+        Start the guest
+
+        Get a new guest instance running. This should include preparing
+        any configuration necessary to get it started. Called after
+        load() is completed so all guest data should be available.
+        """
         self.debug(f"Doing nothing to start guest '{self.guest}'.")
 
     def details(self):
@@ -296,8 +328,12 @@ class Guest(tmt.utils.Common):
         """
         Execute command on the guest
 
-        command ....... string or list of command arguments
-        environment ... dictionary with environment variables
+        command ... string or list of command arguments (required)
+        env ....... dictionary with environment variables
+        cwd ....... working directory to be entered before execution
+
+        If the command is provided as a list, it will be space-joined.
+        If necessary, quote escaping has to be handled by the caller.
         """
 
         # Prepare the export of environment variables
@@ -335,9 +371,20 @@ class Guest(tmt.utils.Common):
             f'{self._ssh_guest()}:{self.parent.plan.workdir} /')
 
     def stop(self):
-        """ Stop the guest """
+        """
+        Stop the guest
+
+        Shut down a running guest instance so that it does not consume
+        any memory or cpu resources. If needed, perform any actions
+        necessary to store the instance status to disk.
+        """
         self.debug(f"Doing nothing to stop guest '{self.guest}'.")
 
     def remove(self):
-        """ Remove the guest (disk cleanup) """
+        """
+        Remove the guest
+
+        Completely remove all guest instance data so that it does not
+        consume any disk resources.
+        """
         self.debug(f"Doing nothing to remove guest '{self.guest}'.")
