@@ -101,7 +101,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
             data['key'] = key
 
         # And finally create the guest
-        self._guest = tmt.base.Guest(data, name=self.name, parent=self.step)
+        self._guest = tmt.Guest(data, name=self.name, parent=self.step)
 
     def guest(self):
         """ Return the provisioned guest """
