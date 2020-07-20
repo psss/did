@@ -39,15 +39,15 @@ story: 'As a user I want to comfortably work with tests'
     implemented: /tmt/cli
     documented: /docs/examples#create-tests
 
-/convert:
-    story: 'Convert old test metadata'
-    example: tmt test convert
+/import:
+    story: 'As a tester I want to import test metadata.'
+    example: tmt test import
     implemented: /tmt/convert
     tested: /tests/test_convert
     documented: /docs/examples#convert-tests
 
 /export:
-    story: 'I want to export test metadata.'
+    story: 'As a tester I want to export test metadata.'
 
     /format:
         story: 'I want to export test metadata into given format.'
@@ -86,6 +86,7 @@ story: 'As a user I want to comfortably work with tests'
             The following attributes, if present, should be
             exported as well:
 
+            * extra-summary — test case summary
             * extra-hardware — hardware in the structured field
             * extra-pepa — pepa in the structured field
 

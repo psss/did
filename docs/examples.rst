@@ -198,18 +198,14 @@ Specify templates non-interactively with ``-t`` or ``--template``::
 Use ``-f`` or ``--force`` option to overwrite existing files.
 
 
-Convert Tests
+Import Tests
 ------------------------------------------------------------------
 
-Use ``tmt tests convert`` to gather old metadata stored in
+Use ``tmt tests import`` to gather old metadata stored in
 different sources and convert them into the new ``fmf`` format.
 By default ``Makefile`` and ``PURPOSE`` files in the current
 directory are inspected and the ``Nitrate`` test case management
-system is contacted to gather all related metadata::
-
-    makefile ..... summary, component, duration
-    purpose ...... description
-    nitrate ...... environment, relevancy
+system is contacted to gather all related metadata.
 
 In order to fetch data from Nitrate you need to have ``nitrate``
 module installed. For each test case found in Nitrate separate fmf
@@ -221,21 +217,30 @@ sources.
 
 Example output of metadata conversion::
 
-    $ tmt test convert
+    $ tmt test import
     Checking the '/home/psss/git/tmt/examples/convert' directory.
     Makefile found in '/home/psss/git/tmt/examples/convert/Makefile'.
-    test: /tmt/smoke
-    description: Simple smoke test
+    task: /tmt/smoke
+    summary: Simple smoke test
+    test: ./runtest.sh
+    contact: Petr Splichal <psplicha@redhat.com>
     component: tmt
     duration: 5m
+    require: fmf
+    recommend: tmt
     Purpose found in '/home/psss/git/tmt/examples/convert/PURPOSE'.
     description:
     Just run 'tmt --help' to make sure the binary is sane.
     This is really that simple. Nothing more here. Really.
     Nitrate test case found 'TC#0603489'.
+    extra-summary: tmt convert test
     contact: Petr Šplíchal <psplicha@redhat.com>
     environment:
     {'TEXT': 'Text with spaces', 'X': '1', 'Y': '2', 'Z': '3'}
+    tag: ['NoRHEL4', 'NoRHEL5', 'Tier3']
+    tier: 3
+    component: tmt
+    enabled: True
     relevancy:
     distro = rhel-4, rhel-5: False
     distro = rhel-6: False
@@ -243,21 +248,68 @@ Example output of metadata conversion::
 
 And here's the resulting ``main.fmf`` file::
 
-    component: tmt
-    contact: Petr Šplíchal <psplicha@redhat.com>
+    summary: Simple smoke test
     description: |
         Just run 'tmt --help' to make sure the binary is sane.
         This is really that simple. Nothing more here. Really.
-    duration: 5m
+    contact: Petr Šplíchal <psplicha@redhat.com>
+    component:
+    - tmt
+    test: ./runtest.sh
+    require:
+    - fmf
+    recommend:
+    - tmt
     environment:
         TEXT: Text with spaces
         X: '1'
         Y: '2'
         Z: '3'
+    duration: 5m
+    enabled: true
+    tag:
+    - NoRHEL4
+    - NoRHEL5
+    - Tier3
+    tier: '3'
     relevancy: |
         distro = rhel-4, rhel-5: False
         distro = rhel-6: False
-    summary: Simple smoke test
+    extra-summary: tmt convert test
+    extra-task: /tmt/smoke
+    extra-nitrate: TC#0603489
+
+
+Export Tests
+------------------------------------------------------------------
+
+Use ``tmt tests export`` command to export test metadata into
+different formats and tools. By default all available tests are
+exported, specify regular expression matching test name to export
+only selected tests or use ``.`` to export tests under the current
+directory::
+
+    $ tmt tests export --nitrate .
+    Test case 'TC#0603489' found.
+    summary: tmt convert test
+    script: /tmt/smoke
+    components: tmt
+    tags: NoRHEL4 Tier3 NoRHEL5 fmf-export
+    default tester: psplicha@redhat.com
+    estimated time: 5m
+    status: CONFIRMED
+    arguments: TEXT='Text with spaces' X=1 Y=2 Z=3
+    Structured Field:
+    relevancy: distro = rhel-4, rhel-5: False
+    distro = rhel-6: False
+    description: Simple smoke test
+    purpose-file: Just run 'tmt --help' to make sure the binary is sane.
+    This is really that simple. Nothing more here. Really.
+    fmf id:
+    name: /
+    path: /examples/convert
+    url: https://github.com/psss/tmt.git
+    Test case 'TC#0603489' successfully exported to nitrate.
 
 
 Test Libraries
