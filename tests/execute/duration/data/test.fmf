@@ -1,0 +1,10 @@
+path: /
+
+/good:
+    summary: Test with an appropriate duration
+    test: sleep 1
+
+/long:
+    summary: Test exceeding the duration limit
+    duration: 3s
+    test: sleep 10s

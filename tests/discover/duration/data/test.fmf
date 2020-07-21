@@ -1,0 +1,8 @@
+test: 'true'
+
+/default:
+    summary: Test with the default duration
+
+/defined:
+    summary: Test with a defined duration
+    duration: 3h

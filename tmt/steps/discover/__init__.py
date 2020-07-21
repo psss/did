@@ -52,11 +52,15 @@ class Discover(tmt.steps.Step):
         if isinstance(scripts, str):
             scripts = [scripts]
 
+        # Check the execute step for possible custom duration limit
+        duration = self.plan.execute.data[0].get(
+            'duration', tmt.base.DEFAULT_TEST_DURATION_L2)
+
         # Prepare the list of tests
         tests = []
         for index, script in enumerate(scripts):
             name = f'script-{str(index).zfill(2)}'
-            tests.append(dict(name=name, test=script))
+            tests.append(dict(name=name, test=script, duration=duration))
 
         # Append new data if tests already defined
         if self.data[0].get('tests'):

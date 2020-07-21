@@ -4,6 +4,7 @@
 from click import style, echo, wrap_text
 
 from collections import OrderedDict
+from threading import Timer
 import unicodedata
 import subprocess
 import fmf.utils
@@ -38,6 +39,9 @@ DEFAULT_PLUGIN_ORDER_RECOMMENDS = 71
 
 # Config directory
 CONFIG_PATH = '~/.config/tmt'
+
+# Special process return code
+PROCESS_TIMEOUT = 124
 
 
 class Config(object):
@@ -210,12 +214,14 @@ class Common(object):
             echo(self._indent(key, value, color, shift))
 
     def _run(
-        self, command, cwd, shell, env, log, join=False, interactive=False):
+        self, command, cwd, shell, env, log, join=False, interactive=False,
+        timeout=None):
         """
         Run command, capture the output
 
         By default stdout and stderr are captured separately.
         Use join=True to merge stderr into stdout.
+        Use timeout=<seconds> to finish process after given time
         """
         # By default command ouput is logged using debug
         if not log:
@@ -255,6 +261,16 @@ class Common(object):
         stdout = ''
         stderr = ''
 
+        # Prepare kill function for the timer
+        def kill():
+            """ Kill the process and adjust the return code """
+            process.kill()
+            process.returncode = PROCESS_TIMEOUT
+
+        # Start the timer
+        timer = Timer(timeout, kill)
+        timer.start()
+
         # Capture the output
         while process.poll() is None:
             # Check which file descriptors are ready for read
@@ -272,6 +288,9 @@ class Common(object):
                     stderr += line
                     if line != '':
                         log('err', line.rstrip('\n'), 'yellow', level=3)
+
+        # Cancel the timer
+        timer.cancel()
 
         # Check for possible additional output
         for line in process.stdout.readlines():
@@ -294,8 +313,8 @@ class Common(object):
         return stdout if join else (stdout, stderr)
 
     def run(
-            self, command, message=None, cwd=None, dry=False,
-            shell=True, env=None, interactive=False, join=False, log=None):
+            self, command, message=None, cwd=None, dry=False, shell=True,
+            env=None, interactive=False, join=False, log=None, timeout=None):
         """
         Run command, give message, handle errors
 
@@ -322,7 +341,8 @@ class Common(object):
         # Run the command, handle the exit code
         cwd = cwd or self.workdir
         try:
-            return self._run(command, cwd, shell, env, log, join, interactive)
+            return self._run(
+                command, cwd, shell, env, log, join, interactive, timeout)
         except RunError as error:
             self.debug(error.message, level=3)
             raise RunError(
@@ -669,6 +689,21 @@ def shell_variables(data):
 
     # Convert from dictionary
     return [f"{key}={shlex.quote(str(value))}" for key, value in data.items()]
+
+
+def duration_to_seconds(duration):
+    """ Convert sleep time format into seconds """
+    units = {
+        's': 1,
+        'm': 60,
+        'h': 60 * 60,
+        'd': 60 * 60 * 24,
+        }
+    try:
+        number, suffix = re.match(r'^(\d+)([smhd]?)$', str(duration)).groups()
+        return int(number) * units.get(suffix, 1)
+    except (ValueError, AttributeError):
+        raise SpecificationError(f"Invalid duration '{duration}'.")
 
 
 def verdict(decision, comment=None, good='pass', bad='fail', problem='warn'):

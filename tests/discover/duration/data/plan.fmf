@@ -1,0 +1,45 @@
+/default:
+    /fmf:
+        summary: 'Default duration in the fmf metadata'
+        discover:
+            how: fmf
+            test: default
+        execute:
+            how: shell
+    /execute:
+        summary: 'Default duration in the execute step'
+        execute:
+            script: test
+    /discover:
+        summary: 'Default duration in the discover step'
+        discover:
+            how: shell
+            tests:
+              - name: script
+                test: test
+        execute:
+            how: shell
+
+/defined:
+    /fmf:
+        summary: 'Defined duration in the fmf metadata'
+        discover:
+            how: fmf
+            test: defined
+        execute:
+            how: shell
+    /execute:
+        summary: 'Defined duration in the execute step'
+        execute:
+            script: test
+            duration: 4h
+    /discover:
+        summary: 'Defined duration in the discover step'
+        discover:
+            how: shell
+            tests:
+              - name: script
+                test: test
+                duration: 5h
+        execute:
+            how: shell

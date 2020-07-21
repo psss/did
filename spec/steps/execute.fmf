@@ -70,10 +70,20 @@ description: |
         Execute arbitratry shell commands and check their exit
         code which is used as a test result. This is the default
         execute step implementation.
+
+        The default :ref:`/spec/tests/duration` for tests defined
+        directly under the execute step is ``1h``. Use the
+        ``duration`` attribute to modify the default limit.
+
     example: |
         execute:
             how: shell
             script: tmt --help
+
+        execute:
+            how: shell
+            script: a-long-test-suite
+            duration: 3h
 
     /default:
         summary: Shell is the default executor

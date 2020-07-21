@@ -166,6 +166,9 @@ class ExecutePlugin(tmt.steps.Plugin):
             data['result'] = {0: 'pass', 1: 'fail'}[test.returncode]
         except KeyError:
             data['result'] = 'error'
+            # Add note about the exceeded duration
+            if test.returncode == tmt.utils.PROCESS_TIMEOUT:
+                data['note'] = 'timeout'
         return tmt.Result(data, test.name)
 
     def check_beakerlib(self, test):

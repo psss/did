@@ -1,0 +1,2 @@
+summary: Verify that the test duration is correctly handled
+test: ./test.sh

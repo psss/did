@@ -154,6 +154,9 @@ tmt_run_test () {
             tmt_verbose 2 "$tmt_LOGCODE_F:"
             cat "$tmt_LOGCODE_F"
 
+            grep -q '^124$' "$tmt_LOGCODE_F" \
+            && tmt_verbose 2 "Test duration exceeded."
+
         } >&2
     }
 

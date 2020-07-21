@@ -17,3 +17,6 @@ example: |
     duration: 1d
 
 implemented: /tmt/base
+tested:
+  - /tests/discover/duration
+  - /tests/execute/duration

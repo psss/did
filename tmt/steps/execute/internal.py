@@ -81,21 +81,27 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             self.verbose(key, value, color, shift=2, level=3)
 
         # Execute the test, save the output and return code
+        timeout = ''
         start = time.time()
         try:
             stdout = guest.execute(
                 test.test, cwd=workdir, env=environment,
-                join=True, interactive=self.get('interactive'), log=log)
+                join=True, interactive=self.get('interactive'), log=log,
+                timeout=tmt.utils.duration_to_seconds(test.duration))
             test.returncode = 0
         except tmt.utils.RunError as error:
             stdout = error.stdout
             test.returncode = error.returncode
+            if test.returncode == tmt.utils.PROCESS_TIMEOUT:
+                timeout = ' (timeout)'
+                self.debug(f"Test duration '{test.duration}' exceeded.")
         end = time.time()
         self.write(self.log(test, 'out.log', full=True), stdout or '', level=3)
         duration = time.strftime("%H:%M:%S", time.gmtime(end - start))
         duration = click.style(duration, fg='cyan')
         shift = 1 if self.opt('verbose') < 2 else 2
-        self.verbose(f"{duration} {test.name}", color='cyan', shift=shift)
+        self.verbose(
+            f"{duration} {test.name}{timeout}", color='cyan', shift=shift)
 
     def check(self, test):
         """ Check the test result """

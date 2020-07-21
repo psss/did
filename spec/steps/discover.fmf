@@ -45,7 +45,9 @@ description: |
         directly in the plan as a list of dictionaries containing
         test ``name`` and actual ``test`` script. Optionally it is
         possible to define any other :ref:`/spec/tests` attributes
-        such as ``path`` or ``duration`` here as well.
+        such as ``path`` or ``duration`` here as well. The default
+        :ref:`/spec/tests/duration` for tests defined directly in
+        the discover step is ``1h``.
     example: |
         discover:
             how: shell

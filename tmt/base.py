@@ -25,7 +25,10 @@ from tmt.utils import verdict
 from fmf.utils import listed
 from click import echo, style
 
-DEFAULT_TEST_DURATION = '5m'
+# Default test duration is 5m for individual tests discovered from L1
+# metadata and 1h for scripts defined directly in plans (L2 metadata).
+DEFAULT_TEST_DURATION_L1 = '5m'
+DEFAULT_TEST_DURATION_L2 = '1h'
 
 class Node(tmt.utils.Common):
     """
@@ -227,7 +230,7 @@ class Test(Node):
             (key, str(value)) for key, value in self.environment.items()])
 
         # Default duration, manual, enabled and result
-        self._check('duration', expected=str, default=DEFAULT_TEST_DURATION)
+        self._check('duration', expected=str, default=DEFAULT_TEST_DURATION_L1)
         self._check('manual', expected=bool, default=False)
         self._check('enabled', expected=bool, default=True)
         self._check('result', expected=str, default='respect')
@@ -924,6 +927,7 @@ class Result(object):
 
         result ........... test execution result
         log .............. one or more log files
+        note ............. additional result details
 
     Required parameter 'name' should contain a unique test name.
     """
@@ -940,10 +944,11 @@ class Result(object):
         """
         Initialize test result data """
 
-        # Save the test name
+        # Save the test name and optional note
         if not name or not isinstance(name, str):
             raise tmt.utils.SpecificationError(f"Invalid test name '{name}'.")
         self.name = name
+        self.note = data.get('note')
 
         # Check for valid results
         try:
@@ -991,11 +996,15 @@ class Result(object):
         return fmf.utils.listed(comments or ['no results found'])
 
     def show(self):
-        """ Return a nicely color result with test name """
+        """ Return a nicely colored result with test name (and note) """
         result = 'errr' if self.result == 'error' else self.result
         colored = style(result, fg=self._results[self.result])
-        return f"{colored} {self.name}"
+        note = f" ({self.note})" if self.note else ''
+        return f"{colored} {self.name}{note}"
 
     def export(self):
         """ Save result data for future wake-up """
-        return dict(result=self.result, log=self.log)
+        data = dict(result=self.result, log=self.log)
+        if self.note:
+            data['note'] = self.note
+        return data
