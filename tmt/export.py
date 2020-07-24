@@ -26,8 +26,9 @@ def import_nitrate():
     # traceback when nitrate not installed or config file not available.
     # And we want to keep the core tmt package with minimal dependencies.
     try:
-        global nitrate, DEFAULT_PRODUCT
+        global nitrate, DEFAULT_PRODUCT, gssapi
         import nitrate
+        import gssapi
         DEFAULT_PRODUCT = nitrate.Product(name='RHEL Tests')
     except ImportError:
         raise ConvertError("Install nitrate to export tests there.")
@@ -44,6 +45,7 @@ def export_to_nitrate(test, create, general):
     try:
         nitrate_id = test.node.get('extra-nitrate')[3:]
         nitrate_case = nitrate.TestCase(int(nitrate_id))
+        nitrate_case.summary # Make sure we connect to the server now
         echo(style(f"Test case '{nitrate_case.identifier}' found.", fg='blue'))
     except TypeError:
         # Create a new nitrate test case
@@ -52,6 +54,8 @@ def export_to_nitrate(test, create, general):
             new_test_created = True
         else:
             raise ConvertError("Nitrate test case id not found.")
+    except (nitrate.NitrateError, gssapi.raw.misc.GSSError) as error:
+        raise ConvertError(error)
 
     # Summary
     summary = test.node.get(

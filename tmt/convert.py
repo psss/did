@@ -233,6 +233,7 @@ def read_nitrate(beaker_task, common_data, disabled):
     # traceback when nitrate not installed or config file not available.
     try:
         import nitrate
+        import gssapi
     except ImportError:
         raise ConvertError('Install nitrate module to import metadata.')
 
@@ -249,7 +250,7 @@ def read_nitrate(beaker_task, common_data, disabled):
         else:
             testcases = list(nitrate.TestCase.search(
                 script=beaker_task, case_status__in=[1, 2, 4]))
-    except nitrate.NitrateError as error:
+    except (nitrate.NitrateError, gssapi.raw.misc.GSSError) as error:
         raise ConvertError(error)
     if not testcases:
         echo("No {0}testcase found for '{1}'.".format(
