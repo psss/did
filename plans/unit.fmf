@@ -1,6 +1,11 @@
 summary: Python unit tests
 description:
     Run all available python unit tests using pytest.
+discover:
+    tests:
+      - name: /unit
+        test: python3 -m pytest
+        path: /tests/unit
 prepare+:
   - name: pytest
     how: install
@@ -9,7 +14,6 @@ prepare+:
         - python3-mock
 execute:
     how: shell.tmt
-    script: python3 -m pytest tests
 artifact:
     - build
     - update

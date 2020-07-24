@@ -1,120 +1,11 @@
 import os
-import re
+import click
+import shutil
+
 import fmf
 import tmt
-import shutil
-import click
+import tmt.beakerlib
 import tmt.steps.discover
-
-# Regular expressions for beakerlib libraries
-LIBRARY_REGEXP = re.compile(r'^library\(([^/]+)(/[^)]+)\)$')
-
-# Default beakerlib libraries location and destination directory
-DEFAULT_REPOSITORY = 'https://github.com/beakerlib'
-DEFAULT_DESTINATION = 'libs'
-
-
-class LibraryError(Exception):
-    """ Used when library cannot be parsed from the identifier """
-
-
-class Library(object):
-    """ A beakerlib library """
-
-    def __init__(self, identifier, parent):
-        """ Process the library identifier and fetch the library """
-        self.parent = parent
-
-        # The 'library(repo/lib)' format
-        if isinstance(identifier, str):
-            identifier = identifier.strip()
-            matched = LIBRARY_REGEXP.search(identifier)
-            if not matched:
-                raise LibraryError
-            self.parent.debug(f"Detected library '{identifier}'.", level=3)
-            self.format = 'rpm'
-            self.repo, self.name = matched.groups()
-            self.url = os.path.join(DEFAULT_REPOSITORY, self.repo)
-            self.ref = 'master'
-            self.destination = DEFAULT_DESTINATION
-        # The fmf identifier
-        elif isinstance(identifier, dict):
-            self.parent.debug(f"Detected library '{identifier}'.", level=3)
-            self.format = 'fmf'
-            self.url = identifier.get('url')
-            self.ref = identifier.get('ref', 'master')
-            self.destination = identifier.get(
-                'destination', DEFAULT_DESTINATION).lstrip('/')
-            self.name = identifier.get('name', '/')
-            if not self.name.startswith('/'):
-                raise tmt.utils.DiscoverError(
-                    f"Library name '{self.name}' does not start with a '/'.")
-            # Use provided repository nick name or parse it from the url
-            try:
-                self.repo = identifier.get('nick') or re.search(
-                    r'/([^/]+?)(/|\.git)?$', self.url).group(1)
-            except AttributeError:
-                raise tmt.utils.DiscoverError(
-                    f"Unable to parse repository name from '{self.url}'.")
-        # Something weird
-        else:
-            raise LibraryError
-
-        # Fetch the library
-        self.fetch()
-
-    def __str__(self):
-        """ Use repo/name for string representation """
-        return f"{self.repo}{self.name}"
-
-    def fetch(self):
-        """ Fetch the library (unless already fetched) """
-        # Check if the library was already fetched
-        try:
-            library = self.parent._libraries[self.repo]
-            if library.url != self.url:
-                raise tmt.utils.DiscoverError(
-                    f"Library '{self.repo}' with url '{self.url}' conflicts "
-                    f"with already fetched library from '{library.url}'.")
-            if library.ref != self.ref:
-                raise tmt.utils.DiscoverError(
-                    f"Library '{self.repo}' using ref '{self.ref}' conflicts "
-                    f"with already fetched library using ref '{library.ref}'.")
-            self.parent.debug(f"Library '{self}' already fetched.", level=3)
-            # Reuse the existing metadata tree
-            self.tree = library.tree
-        # Fetch the library and add it to the index
-        except KeyError:
-            self.parent.debug(f"Fetch library '{self}'.", level=3)
-            # Prepare path, clone the repository, checkout ref
-            directory = os.path.join(
-                self.parent.workdir, self.destination, self.repo)
-            # Clone repo with disabled prompt to ignore missing/private repos
-            try:
-                self.parent.run(
-                    ['git', 'clone', self.url, directory],
-                    shell=False, env={"GIT_TERMINAL_PROMPT": "0"})
-            except tmt.utils.RunError as error:
-                # Fallback to install during the prepare step if in rpm format
-                if self.format == 'rpm':
-                    raise LibraryError
-                self.parent.info(
-                    f"Failed to fetch library '{self}' from '{self.url}'.",
-                    color='red')
-                raise
-            self.parent.run(
-                ['git', 'checkout', self.ref], shell=False, cwd=directory)
-            # Initialize metadata tree, add self into the library index
-            self.tree = fmf.Tree(directory)
-            self.parent._libraries[self.repo] = self
-
-        # Get the library node, check require and recommend
-        library = self.tree.find(self.name)
-        if not library:
-            raise tmt.utils.DiscoverError(
-                f"Library '{self.name}' not found in '{self.repo}'.")
-        self.require = tmt.utils.listify(library.get('require', []))
-        self.recommend = tmt.utils.listify(library.get('recommend', []))
 
 
 class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
@@ -140,12 +31,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
 
     # Supported methods
     _methods = [tmt.steps.Method(name='fmf', doc=__doc__, order=50)]
-
-    def __init__(self, data, plan):
-        """ Initialize discover step data """
-        super().__init__(data, plan)
-        # Dictionary of fetched libraries indexed by repo name
-        self._libraries = dict()
 
     @classmethod
     def options(cls, how=None):
@@ -199,31 +84,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             value = self.opt(option)
             if value:
                 self.data[option] = value
-
-    def dependencies(self, all_requires):
-        """
-        Check dependencies for possible beakerlib libraries
-
-        Fetch all identified libraries, check their required and
-        recommended packages. Return tuple (requires, recommends)
-        containing lists of regular rpm package names aggregated
-        from all fetched libraries.
-        """
-        requires = []
-        recommends = []
-        for require in all_requires:
-            # Library require
-            try:
-                library = Library(require, parent=self)
-                recommends.extend(library.recommend)
-                # Recursively check for possible dependent libraries
-                require, recommend = self.dependencies(library.require)
-                requires.extend(require)
-                recommends.extend(recommend)
-            # Regular package require
-            except LibraryError:
-                requires.append(require)
-        return list(set(requires)), list(set(recommends))
 
     def go(self):
         """ Discover available tests """
@@ -301,11 +161,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             test.path = os.path.join(prefix_path, test.path.lstrip('/'))
             # Check for possible required beakerlib libraries
             if test.require:
-                requires, recommends = self.dependencies(test.require)
-                # Update test requires to regular rpm packages only
-                test.require = requires
-                # Extend recommended packages with possible library recommends
-                test.recommend = list(set(test.recommend + recommends))
+                test.require, test.recommend, _ = tmt.beakerlib.dependencies(
+                    test.require, test.recommend, parent=self)
 
     def tests(self):
         """ Return all discovered tests """
