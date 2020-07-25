@@ -769,7 +769,7 @@ class Run(tmt.utils.Common):
     def environment(self):
         """ Return environment combined from wake up and command line """
         combined = self._environment.copy()
-        combined.update(tmt.utils.shell_to_dict(self.opt('environment')))
+        combined.update(tmt.utils.environment_to_dict(self.opt('environment')))
         return combined
 
     def save(self):

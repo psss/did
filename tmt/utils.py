@@ -514,6 +514,41 @@ def listify(data, split=False, keys=None):
     return [data]
 
 
+# These two are helpers for shell_to_dict and environment_to_dict - there is some overlap
+# of their functionality.
+def _add_simple_var(result, var):
+    """
+    Parse given string VAR to its constituents, NAME and VALUE, and add them to
+    the provided dict.
+    """
+
+    matched = re.match("([^=]+)=(.*)", var)
+    if not matched:
+        raise GeneralError(f"Invalid variable specification '{var}'.")
+    name, value = matched.groups()
+    result[name] = value
+
+
+def _add_file_vars(result, filepath):
+    """
+    Load mapping from a YAML file FILEPATH, and add its content - "name: value" entries - to
+    the provided dict.
+    """
+
+    if not filepath[1:]:
+        raise GeneralError(f"Invalid variable file specification '{filepath}'.")
+
+    try:
+        with open(filepath[1:], 'r') as f:
+            file_vars = yaml_to_dict(f)
+
+    except Exception as exc:
+        raise GeneralError(f"Failed to load variables from '{filepath}': {exc}")
+
+    for name, value in file_vars.items():
+        result[name] = str(value)
+
+
 def shell_to_dict(variables):
     """
     Convert shell-like variables into a dictionary
@@ -532,11 +567,49 @@ def shell_to_dict(variables):
         if variable is None:
             continue
         for var in shlex.split(variable):
-            matched = re.match("([^=]+)=(.*)", var)
-            if not matched:
-                raise GeneralError(f"Invalid variable specification '{var}'.")
-            name, value = matched.groups()
-            result[name] = value
+            _add_simple_var(result, var)
+
+    return result
+
+
+def environment_to_dict(variables):
+    """
+    Convert environment variables a dictionary. Variables may be specified in two ways:
+
+    * NAME=VALUE pairs
+    * @foo.yaml
+
+    If "variable" starts with "@" character, it is treated as a path to a YAML file that
+    contains "key: value" pairs which ar ethen transparently loaded and added to the final
+    dictionary.
+
+    In general, allowed inputs are the same as in "shell_to_dict" function, with the addition
+    of "@foo.yaml" form:
+    'X=1'
+    'X=1 Y=2 Z=3'
+    ['X=1', 'Y=2', 'Z=3']
+    ['X=1 Y=2 Z=3', 'A=1 B=2 C=3']
+    'TXT="Some text with spaces in it"'
+    @foo.yaml
+    @../../bar.yaml
+    """
+
+    if not isinstance(variables, (list, tuple)):
+        variables = [variables]
+
+    result = dict()
+
+    for variable in variables:
+        if variable is None:
+            continue
+
+        for var in shlex.split(variable):
+            if var.startswith('@'):
+                _add_file_vars(result, var)
+
+            else:
+                _add_simple_var(result, var)
+
     return result
 
 

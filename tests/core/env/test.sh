@@ -34,6 +34,22 @@ rlJournalStart
                 done
             done
         rlPhaseEnd
+
+        # Using the same setup as the test above, but instead of -e/--environment,
+        # with variables, we exercise YAML file as a source.
+        rlPhaseStartTest "Variable in YAML file ($execute)"
+            rlRun "printf \"STR: O\nINT: 0\" > many-vars.yaml"
+
+            for plan in yes no; do
+                for test in yes no; do
+                    rlRun "tmt run -avvv -e @many-vars.yaml \
+                        execute --how $execute \
+                        plan --name $plan \
+                        test --name $test | tee output"
+                    rlAssertGrep '>>>O0<<<' 'output'
+                done
+            done
+        rlPhaseEnd
     done
 
     rlPhaseStartCleanup
