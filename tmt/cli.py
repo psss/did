@@ -181,7 +181,8 @@ def main(context, root, **kwargs):
     help='Skip given step(s) during test run execution.', multiple=True)
 @click.option(
     '-e', '--environment', metavar='KEY=VALUE|@FILE', multiple='True',
-    help='Set environment variable. Can be specified multiple times. "@" marks a YAML file to load.')
+    help='Set environment variable. Can be specified multiple times. '
+         'The "@" prefix marks a YAML file to load.')
 @verbose_debug_quiet
 @force_dry
 def run(context, id_, **kwargs):
