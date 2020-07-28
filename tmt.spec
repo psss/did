@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.19
+Version: 0.20
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -148,6 +148,25 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Tue Jul 28 2020 Petr Šplíchal <psplicha@redhat.com> - 0.20-1
+- Move libraries handling into a separate module
+- Adjust loading variables from YAML files [#316]
+- Support environment variables from YAML files
+- Give a nice error for expired kerberos [fix #57]
+- Merge Guest relocation and documentation [#307]
+- Describe essential Guest methods in more detail
+- Update test import story and documentation
+- Merge extra-task as summary in test export [#304]
+- Move default plan handling into a single method
+- Move the Guest class from base to steps.provision
+- Save root in run.yaml
+- Document L1 metadata defined in the discover step
+- Improve Makefile editing during test import
+- Use extra-task as summary in test export
+- Mention default methods in the step help message
+- Handle invalid url when library provided as fmf id
+- Allow library git clone to fail
+
 * Fri Jun 12 2020 Petr Šplíchal <psplicha@redhat.com> - 0.19-1
 - Make the discover step a little bit more secure
 - Improve basic and verbose output of tmt plan show
