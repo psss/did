@@ -443,6 +443,58 @@ inheritance and merging attributes.
 .. _fmf features: https://fmf.readthedocs.io/en/latest/features.html
 
 
+Multiple Configs
+------------------------------------------------------------------
+
+Step can contain multiple configurations. In this case provide
+each config with a unique name. Applying ansible playbook and
+executing custom script in a single :ref:`/spec/steps/prepare`
+step could look like this::
+
+    prepare:
+      - name: packages
+        how: ansible
+        playbooks: plans/packages.yml
+      - name: services
+        how: shell
+        script: systemctl start service
+
+Another common use case which can be easily covered by multiple
+configs can be fetching tests from multiple repositories during
+the :ref:`/spec/steps/discover` step::
+
+    discover:
+      - name: upstream
+        how: fmf
+        repository: https://github.com/psss/tmt
+      - name: fedora
+        how: fmf
+        repository: https://src.fedoraproject.org/rpms/tmt/
+
+
+Extend Steps
+------------------------------------------------------------------
+
+When defining multiple configurations for a step it is also
+possible to make use of fmf inheritance. For example the common
+preparation config can be defined up in the hierarchy::
+
+    prepare:
+      - name: tmt
+        how: install
+        package: tmt
+
+Extending the prepare config in a child plan to install additional
+package then could be done in the following way::
+
+    prepare+:
+      - name: pytest
+        how: install
+        package:
+            - python3-pytest
+            - python3-mock
+
+
 Stories
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
