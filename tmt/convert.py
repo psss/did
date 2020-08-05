@@ -46,6 +46,112 @@ except AttributeError:
 #  Convert
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+def read_manual(plan_id, case_id, disabled):
+    """
+    Reads metadata of manual test cases from Nitrate
+    """
+    nitrate = tmt.export.import_nitrate()
+    # Turns off nitrate caching
+    nitrate.set_cache_level(0)
+
+    try:
+        tree = fmf.Tree(os.getcwd())
+    except fmf.utils.RootError:
+        raise ConvertError("Initialize metadata tree using 'tmt init'")
+
+    try:
+        if plan_id:
+            all_cases = nitrate.TestPlan(int(plan_id)).testcases
+            case_ids = [case.id for case in all_cases if case.manual]
+        else:
+            case_ids = [int(case_id)]
+    except ValueError:
+        raise ConvertError('Value of plan/case option must be an integer')
+
+    # Create directory to store manual tests in
+    old_cwd = os.getcwd()
+    os.chdir(tree.root)
+    try:
+        os.mkdir('Manual')
+    except FileExistsError:
+        pass
+
+    os.chdir('Manual')
+
+    for case_id in case_ids:
+        testcase = nitrate.TestCase(case_id)
+        if testcase.status.name != 'CONFIRMED' and not disabled:
+            continue
+
+        # Filename sanitization
+        dir_name = testcase.summary.replace(' ', '_')
+        dir_name = dir_name.replace('/', '_')
+        try:
+            os.mkdir(dir_name)
+        except FileExistsError:
+            pass
+
+        os.chdir(dir_name)
+        echo("Importing the '{0}' test case.".format(dir_name))
+
+        # Test case data
+        md_content = {}
+
+        md_content['setup'] = html_to_markdown(testcase.setup)
+        md_content['action'] = html_to_markdown(testcase.action)
+        md_content['expected'] = html_to_markdown(testcase.effect)
+        md_content['cleanup'] = html_to_markdown(testcase.breakdown)
+
+        # Test case metadata
+        data = read_nitrate_case(testcase)
+        data['manual'] = True
+        data['test'] = 'full.md'
+
+        write_markdown(os.getcwd() + '/full.md', md_content)
+        write(os.getcwd() + '/main.fmf', data)
+        os.chdir('..')
+
+    os.chdir(old_cwd)
+
+
+def html_to_markdown(text):
+    """ Convert html to markdown """
+    try:
+        import html2text
+        md_handler = html2text.HTML2Text()
+    except ImportError:
+        raise ConvertError("Install html2text to import manual tests.")
+
+    if text is None:
+        converted = ""
+    else:
+        converted = md_handler.handle(text).strip()
+    return converted
+
+
+def write_markdown(path, content):
+    """ Write gathered metadata in the markdown format """
+    to_print = ""
+    if content['setup']:
+        to_print += "# Setup\n" + content['setup'] + '\n\n'
+    if content['action'] or content['expected']:
+        to_print += "# Test\n\n"
+        if content['action']:
+            to_print += "## Step\n" + content['action'] + '\n\n'
+        if content['expected']:
+            to_print += "## Expect\n" + content['expected'] + '\n\n'
+    if content['cleanup']:
+        to_print += "# Cleanup\n" + content['cleanup'] + '\n'
+
+    try:
+        with open(path, 'w', encoding='utf-8') as md_file:
+            md_file.write(to_print)
+    except IOError:
+        raise ConvertError("Unable to write '{0}'".format(path))
+    echo(style(
+        "Test case successfully stored into '{0}'.".format(path), fg='magenta'))
+
+
 def read(path, makefile, nitrate, purpose, disabled):
     """
     Read old metadata from various sources
@@ -262,87 +368,7 @@ def read_nitrate(beaker_task, common_data, disabled):
     # Process individual test cases
     individual_data = list()
     for testcase in testcases:
-        data = dict()
-        echo("test case found '{0}'.".format(testcase.identifier))
-        # Test identifier
-        data['extra-nitrate'] = testcase.identifier
-        # Beaker task name (taken from summary)
-        if testcase.summary:
-            data['extra-summary'] = testcase.summary
-            echo(style('extra-summary: ', fg='green') + data['extra-summary'])
-        # Contact
-        if testcase.tester:
-            data['contact'] = '{} <{}>'.format(
-                testcase.tester.name, testcase.tester.email)
-            echo(style('contact: ', fg='green') + data['contact'])
-        # Environment
-        if testcase.arguments:
-            data['environment'] = tmt.utils.shell_to_dict(testcase.arguments)
-            if not data['environment']:
-                data.pop('environment')
-            else:
-                echo(style('environment:', fg='green'))
-                echo(pprint.pformat(data['environment']))
-        # Tags
-        if testcase.tags:
-            tags = []
-            for tag in testcase.tags:
-                if tag.name == 'fmf-export':
-                    continue
-                tags.append(tag.name)
-                # Add the tier attribute, if there are multiple TierX tags,
-                # pick the one with the lowest index.
-                tier_match = re.match(r'^Tier ?(?P<num>\d+)$', tag.name, re.I)
-                if tier_match:
-                    num = tier_match.group('num')
-                    if 'tier' in data:
-                        log.warning('Multiple Tier tags found, using the one '
-                                    'with a lower index')
-                        if int(num) < int(data['tier']):
-                            data['tier'] = num
-                    else:
-                        data['tier'] = num
-
-            data['tag'] = sorted(tags)
-            echo(style('tag: ', fg='green') + str(data['tag']))
-        # Tier
-        try:
-            echo(style('tier: ', fg='green') + data['tier'])
-        except KeyError:
-            pass
-        # Component
-        data['component'] = [comp.name for comp in testcase.components]
-        echo(style('component: ', fg='green') + ' '.join(data['component']))
-        # Status
-        data['enabled'] = testcase.status.name == "CONFIRMED"
-        echo(style('enabled: ', fg='green') + str(data['enabled']))
-        # Relevancy
-        field = tmt.utils.StructuredField(testcase.notes)
-        try:
-            relevancy = field.get('relevancy')
-            if relevancy:
-                data['relevancy'] = relevancy
-                echo(style('relevancy:', fg='green'))
-                echo(data['relevancy'].rstrip('\n'))
-        except tmt.utils.StructuredFieldError:
-            pass
-        # Extras: [pepa] and [hardware]
-        try:
-            extra_pepa = field.get('pepa')
-            if extra_pepa:
-                data['extra-pepa'] = extra_pepa
-                echo(style('extra-pepa:', fg='green'))
-                echo(data['extra-pepa'].rstrip('\n'))
-        except tmt.utils.StructuredFieldError:
-            pass
-        try:
-            extra_hardware = field.get('hardware')
-            if extra_hardware:
-                data['extra-hardware'] = extra_hardware
-                echo(style('extra-hardware:', fg='green'))
-                echo(data['extra-hardware'].rstrip('\n'))
-        except tmt.utils.StructuredFieldError:
-            pass
+        data = read_nitrate_case(testcase)
         individual_data.append(data)
 
     # Find common data from individual test cases
@@ -380,6 +406,93 @@ def read_nitrate(beaker_task, common_data, disabled):
                 testcase.pop(common_key)
 
     return common_data, individual_data
+
+
+def read_nitrate_case(testcase):
+    """ Read old metadata from nitrate test case """
+    data = dict()
+    echo("test case found '{0}'.".format(testcase.identifier))
+    # Test identifier
+    data['extra-nitrate'] = testcase.identifier
+    # Beaker task name (taken from summary)
+    if testcase.summary:
+        data['extra-summary'] = testcase.summary
+        echo(style('extra-summary: ', fg='green') + data['extra-summary'])
+    # Contact
+    if testcase.tester:
+        data['contact'] = '{} <{}>'.format(
+            testcase.tester.name, testcase.tester.email)
+        echo(style('contact: ', fg='green') + data['contact'])
+    # Environment
+    if testcase.arguments:
+        data['environment'] = tmt.utils.shell_to_dict(testcase.arguments)
+        if not data['environment']:
+            data.pop('environment')
+        else:
+            echo(style('environment:', fg='green'))
+            echo(pprint.pformat(data['environment']))
+    # Tags
+    if testcase.tags:
+        tags = []
+        for tag in testcase.tags:
+            if tag.name == 'fmf-export':
+                continue
+            tags.append(tag.name)
+            # Add the tier attribute, if there are multiple TierX tags,
+            # pick the one with the lowest index.
+            tier_match = re.match(r'^Tier ?(?P<num>\d+)$', tag.name, re.I)
+            if tier_match:
+                num = tier_match.group('num')
+                if 'tier' in data:
+                    log.warning('Multiple Tier tags found, using the one '
+                                'with a lower index')
+                    if int(num) < int(data['tier']):
+                        data['tier'] = num
+                else:
+                    data['tier'] = num
+
+        data['tag'] = sorted(tags)
+        echo(style('tag: ', fg='green') + str(data['tag']))
+    # Tier
+    try:
+        echo(style('tier: ', fg='green') + data['tier'])
+    except KeyError:
+        pass
+    # Component
+    data['component'] = [comp.name for comp in testcase.components]
+    echo(style('component: ', fg='green') + ' '.join(data['component']))
+    # Status
+    data['enabled'] = testcase.status.name == "CONFIRMED"
+    echo(style('enabled: ', fg='green') + str(data['enabled']))
+    # Relevancy
+    field = tmt.utils.StructuredField(testcase.notes)
+    try:
+        relevancy = field.get('relevancy')
+        if relevancy:
+            data['relevancy'] = relevancy
+            echo(style('relevancy:', fg='green'))
+            echo(data['relevancy'].rstrip('\n'))
+    except tmt.utils.StructuredFieldError:
+        pass
+    # Extras: [pepa] and [hardware]
+    try:
+        extra_pepa = field.get('pepa')
+        if extra_pepa:
+            data['extra-pepa'] = extra_pepa
+            echo(style('extra-pepa:', fg='green'))
+            echo(data['extra-pepa'].rstrip('\n'))
+    except tmt.utils.StructuredFieldError:
+        pass
+    try:
+        extra_hardware = field.get('hardware')
+        if extra_hardware:
+            data['extra-hardware'] = extra_hardware
+            echo(style('extra-hardware:', fg='green'))
+            echo(data['extra-hardware'].rstrip('\n'))
+    except tmt.utils.StructuredFieldError:
+        pass
+
+    return(data)
 
 
 def write(path, data):

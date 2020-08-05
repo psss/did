@@ -81,7 +81,7 @@ Summary: Extra dependencies for the Test Management Tool
 Requires: tmt >= %{version}
 Requires: tmt-provision-container >= %{version}
 Requires: tmt-provision-virtual >= %{version}
-Requires: python3-nitrate make
+Requires: python3-nitrate python3-html2text make
 
 %description all
 All extra dependencies of the Test Management Tool. Install this

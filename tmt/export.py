@@ -30,6 +30,7 @@ def import_nitrate():
         import nitrate
         import gssapi
         DEFAULT_PRODUCT = nitrate.Product(name='RHEL Tests')
+        return nitrate
     except ImportError:
         raise ConvertError("Install nitrate to export tests there.")
     except nitrate.NitrateError as error:

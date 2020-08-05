@@ -357,9 +357,18 @@ def create(context, name, template, force, **kwargs):
 @click.option(
     '--disabled', default=False, is_flag=True,
     help='Import disabled test cases from Nitrate as well.')
+@click.option(
+    '--manual', default=False, is_flag=True,
+    help='Import manual test cases from Nitrate.')
+@click.option(
+    '--plan', metavar='PLAN',
+    help='Identifier of test plan from which to import manual test cases.')
+@click.option(
+    '--case', metavar='CASE',
+    help='Identifier of manual test case to be imported.')
 @verbose_debug_quiet
 @force_dry
-def import_(context, paths, makefile, nitrate, purpose, disabled, **kwargs):
+def import_(context, paths, makefile, nitrate, purpose, disabled, manual, plan, case, **kwargs):
     """
     Import old test metadata into the new fmf format.
 
@@ -374,6 +383,15 @@ def import_(context, paths, makefile, nitrate, purpose, disabled, **kwargs):
                    environment, relevancy, enabled
     """
     tmt.Test._save_context(context)
+
+    if manual:
+        if not (case or plan):
+            raise tmt.utils.GeneralError(
+                "Option --case or --plan is mandatory when using --manual.")
+        else:
+            tmt.convert.read_manual(plan, case, disabled)
+            return 0
+
     if not paths:
         paths = ['.']
     for path in paths:
