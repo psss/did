@@ -21,6 +21,11 @@ rlJournalStart
         rlAssertGrep "Fetch library 'openssl/certgen'" $tmp/output
     rlPhaseEnd
 
+    rlPhaseStartTest "Recommend"
+        rlRun "$tmt recommend | tee $tmp/output" 0
+        rlAssertGrep "Fetch library 'openssl/certgen'" $tmp/output
+    rlPhaseEnd
+
     rlPhaseStartTest "Conflict"
         rlRun "$tmt conflict 2>&1 | tee $tmp/output" 2
         rlAssertGrep 'Library.*conflicts' $tmp/output

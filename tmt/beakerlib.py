@@ -160,13 +160,17 @@ def dependencies(original_require, original_recommend=None, parent=None):
     """
     # Initialize lists, use set for require & recommend
     processed_require = set()
-    processed_recommend = set(original_recommend or [])
+    processed_recommend = set()
     gathered_libraries = []
+    if not original_require:
+        original_require = []
+    if not original_recommend:
+        original_recommend = []
 
-    for require in original_require:
-        # Library require
+    for dependency in original_require + original_recommend:
+        # Library require/recommend
         try:
-            library = Library(require, parent=parent)
+            library = Library(dependency, parent=parent)
             gathered_libraries.append(library)
             # Recursively check for possible dependent libraries
             requires, recommends, libraries = dependencies(
@@ -174,9 +178,12 @@ def dependencies(original_require, original_recommend=None, parent=None):
             processed_require.update(set(requires))
             processed_recommend.update(set(recommends))
             gathered_libraries.extend(libraries)
-        # Regular package require
+        # Regular package require/recommend
         except LibraryError:
-            processed_require.add(require)
+            if dependency in original_require:
+                processed_require.add(dependency)
+            if dependency in original_recommend:
+                processed_recommend.add(dependency)
 
     # Convert to list and return the results
     processed_require = list(processed_require)

@@ -21,6 +21,10 @@ execute:
         summary: "Certificate test (fmf format)"
         discover+:
             test: fmf
+    /recommend:
+        summary: "Certificate test (recommended library)"
+        discover+:
+            test: recommend
     /nick:
         summary: "Certificate test (custom nick name)"
         discover+:

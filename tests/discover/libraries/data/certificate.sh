@@ -5,9 +5,7 @@
 rlJournalStart
     rlPhaseStartSetup
         rlAssertRpm "openssl"
-        # TODO Enable once beakerlib support is ready
-        #rlRun "rlImport openssl/certgen"
-        source ../../../../../libs/openssl/certgen/lib.sh
+        rlRun "rlImport openssl/certgen"
         rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory"
         rlRun "pushd $tmp"
     rlPhaseEnd

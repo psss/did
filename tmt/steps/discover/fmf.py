@@ -160,7 +160,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             # Prefix test path with 'tests' and possible 'path' prefix
             test.path = os.path.join(prefix_path, test.path.lstrip('/'))
             # Check for possible required beakerlib libraries
-            if test.require:
+            if test.require or test.recommend:
                 test.require, test.recommend, _ = tmt.beakerlib.dependencies(
                     test.require, test.recommend, parent=self)
 

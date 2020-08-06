@@ -1,4 +1,4 @@
-summary: Packages recommended for the test execution
+summary: Packages or libraries recommended for the test execution
 
 story:
     As a tester I want to specify additional packages which should
@@ -20,8 +20,9 @@ description: |
     version and thus can better ensure that the right packages are
     correctly installed as expected.
 
-    Note that beakerlib libraries are not supported by this
-    attribute, use :ref:`/spec/tests/require` instead.
+    Note that beakerlib libraries are supported by this attribute
+    as well. See the :ref:`/spec/tests/require` attribute for more
+    details about available reference options.
 
     Should be a ``string`` or a ``list of strings`` using package
     specification supported by ``dnf`` which takes care of the

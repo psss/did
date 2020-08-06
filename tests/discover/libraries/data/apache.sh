@@ -5,10 +5,7 @@
 rlJournalStart
     rlPhaseStartSetup
         rlAssertRpm "httpd"
-        # TODO Enable once beakerlib support is ready
-        #rlRun "rlImport httpd/http"
-        source ../../../../../libs/openssl/certgen/lib.sh
-        source ../../../../../libs/httpd/http/lib.sh
+        rlRun "rlImport httpd/http"
         rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory"
         rlRun "pushd $tmp"
     rlPhaseEnd

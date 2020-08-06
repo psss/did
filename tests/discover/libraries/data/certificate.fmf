@@ -18,6 +18,16 @@ path: /
       - url: https://github.com/beakerlib/openssl
         name: /certgen
 
+/recommend:
+    summary: Generate a certificate (recommend)
+    description:
+        The old backward compatible way to require a beakerlib
+        library using the 'library(component/lib)' format
+        specified in the 'recommend' attribute.
+    recommend:
+      - library(openssl/certgen)
+      - library(wrong/certgen)
+
 /nick:
     summary: Custom repo name and recommended packages
     description:
