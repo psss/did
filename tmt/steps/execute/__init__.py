@@ -9,7 +9,7 @@ LOGS = 'logs'
 
 
 class Execute(tmt.steps.Step):
-    """ Run tests using the specified framework """
+    """ Run tests using the specified framework. """
 
     def __init__(self, data, plan):
         """ Initialize execute step data """

@@ -6,7 +6,7 @@ import click
 
 class Prepare(tmt.steps.Step):
     """
-    Prepare the environment for testing
+    Prepare the environment for testing.
 
     Use the 'order' attribute to select in which order preparation
     should happen if there are multiple configs. Default order is 50.

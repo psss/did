@@ -5,7 +5,7 @@ import click
 
 
 class Report(tmt.steps.Step):
-    """ Provide test results overview and send reports """
+    """ Provide test results overview and send reports. """
 
     # Default implementation for report is display
     how = 'display'

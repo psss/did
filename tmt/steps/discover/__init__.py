@@ -3,7 +3,7 @@ import tmt
 from fmf.utils import listed
 
 class Discover(tmt.steps.Step):
-    """ Gather information about test cases to be executed """
+    """ Gather information about test cases to be executed. """
 
     def __init__(self, data, plan):
         """ Store supported attributes, check for sanity """

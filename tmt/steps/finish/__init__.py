@@ -6,7 +6,7 @@ import click
 
 class Finish(tmt.steps.Step):
     """
-    Perform the finishing tasks and clean up provisioned guests
+    Perform the finishing tasks and clean up provisioned guests.
 
     Additional actions to be performed after the test execution has been
     completed. Counterpart of the ``prepare`` step useful for various
