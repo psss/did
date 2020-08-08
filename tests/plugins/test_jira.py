@@ -62,6 +62,12 @@ def test_config_gss_and_password():
                       + "auth_type = gss\n"
                       + "auth_password = tom\n")
 
+def test_config_gss_and_valut_file():
+    """  Test gss auth with password set """
+    assert_conf_error(CONFIG + "\n"
+                      + "auth_type = gss\n"
+                      + "auth_valut_file = ~/.did/config\n")
+
 def test_config_invaliad_ssl_verify():
     """  Test ssl_verify with wrong bool value """
     assert_conf_error(CONFIG + "\n"
