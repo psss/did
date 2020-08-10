@@ -62,7 +62,7 @@ def test_gerrit_submitted_for_review():
         "--since", "2020-06-01",
         "--until", "2020-06-30"])[0][0].stats[0].stats[2].stats
     assert any([
-        "GR#240548 - go - cmd/go/internal/modload" in str(change)
+        "GR#240458 - go - cmd/go/internal/modfetch" in str(change)
         for change in stats])
 
 
