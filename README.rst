@@ -226,7 +226,7 @@ Belanger, Eduard Trott, Martin Frodl, Randy Barlow, Alois Mahdal,
 Evgeni Golov, Stanislav Ochotnický, Maroš Kopec, Robbie Harwood,
 Christopher Sams, Thomas Heute, Giulio Fidente, Han Han, Qiao
 Zhao, Henrique Ferreiro, Jakub Vávra, Luigi Toscano, Lukáš
-Zapletal, Maryna Nalbandian and Dominika Hoďovská.
+Zapletal, Maryna Nalbandian, Dominika Hoďovská and Jakub Haruda.
 
 
 Copyright
