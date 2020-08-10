@@ -1,9 +1,0 @@
-/test/build/smoke:
-    summary: Basic httpd smoke test
-    execute:
-        how: shell
-        script:
-        - dnf -y install httpd curl
-        - systemctl start httpd
-        - echo foo > /var/www/html/index.html
-        - curl http://localhost/ | grep foo
