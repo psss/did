@@ -21,8 +21,7 @@ and custom prefix::
     auth_type = basic
     auth_username = username
     auth_password = password
-        or
-    auth_valut_file = ~/.did/.valut_jira
+    auth_password_file = ~/.did/jira_password
 
 Configuration example limiting report only to a single project::
 
@@ -42,10 +41,10 @@ Notes:
 * ``auth_url`` parameter is optional. If not provided,
   ``url + "/step-auth-gss"`` will be used for authentication.
 * ``auth_type`` parameter is optional, default value is 'gss'.
-* ``auth_username``, ``auth_password`` and ``auth_valut_file`` are only valid
-  for basic authentication.
-* ``auth_password`` or ``auth_valut_file`` must be provided. ``auth_password``
-  has higher priority.
+* ``auth_username``, ``auth_password`` and ``auth_password_file`` are
+  only valid for basic authentication, ``auth_password`` or
+  ``auth_password_file`` must be provided, ``auth_password`` has a
+  higher priority.
 """
 
 import os
@@ -248,26 +247,23 @@ class JiraStats(StatsGroup):
             self.auth_username = config["auth_username"]
             if "auth_password" in config:
                 self.auth_password = config["auth_password"]
+            elif "auth_password_file" in config:
+                file_path = os.path.expanduser(config["auth_password_file"])
+                with open(file_path) as password_file:
+                    self.auth_password = password_file.read().strip()
             else:
-                if "auth_valut_file" in config:
-                    with open(
-                        os.path.expanduser(config["auth_valut_file"])) as f:
-                        self.auth_password = f.read().strip()
-                else:
-                    raise ReportError(
-                        "`auth_password` or `auth_valut_file` must be set in "
-                        + "the [{0}] section"
-                        .format(option))
+                raise ReportError(
+                    "`auth_password` or `auth_password_file` must be set "
+                    "in the [{0}] section".format(option))
         else:
             if "auth_username" in config:
                 raise ReportError(
                     "`auth_username` is only valid for basic authentication"
                     + " (section [{0}])".format(option))
-            if ("auth_password" in config or
-                "auth_valut_file" in config):
+            if "auth_password" in config or "auth_password_file" in config:
                 raise ReportError(
-                    "`auth_password` and `auth_valut_file` are only valid for "
-                    + "basic authentication (section [{0}])".format(option))
+                    "`auth_password` and `auth_password_file` are only valid "
+                    "for basic authentication (section [{0}])".format(option))
         # SSL verification
         if "ssl_verify" in config:
             try:
