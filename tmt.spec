@@ -81,7 +81,6 @@ Requires: tmt >= %{version}
 Requires: tmt-provision-container >= %{version}
 Requires: tmt-provision-virtual >= %{version}
 Requires: python3-nitrate make
-Recommends: vagrant
 
 %description all
 All extra dependencies of the Test Management Tool. Install this
