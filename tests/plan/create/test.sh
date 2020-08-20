@@ -17,6 +17,11 @@ rlJournalStart
         rlAssertGrep "url:.*ext/repo" "plans/custom.fmf"
     rlPhaseEnd
 
+    rlPhaseStartTest "Valid data - fmf extension included"
+        rlRun "tmt plan create plan.fmf --template mini"
+        rlAssertExists "$TMP/plan.fmf"
+    rlPhaseEnd
+
     rlPhaseStartTest "Invalid yaml"
         yaml='{how: "fmf"; name: "int"; url: "https://int/repo"}'
         rlRun "tmt plan create /plans/bad --template mini \
