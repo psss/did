@@ -7,7 +7,7 @@ import tmt
 import click
 import requests
 
-from tmt.utils import ProvisionError, WORKDIR_ROOT
+from tmt.utils import ProvisionError, WORKDIR_ROOT, retry_session
 
 def import_testcloud():
     """
@@ -248,7 +248,7 @@ class GuestTestcloud(tmt.Guest):
         """ Get url, retry when fails, return response """
         for i in range(1, DEFAULT_CONNECT_TIMEOUT):
             try:
-                response = requests.get(url)
+                response = retry_session().get(url)
                 if response.ok:
                     return response
             except requests.RequestException:

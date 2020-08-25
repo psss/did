@@ -16,6 +16,9 @@ import yaml
 import re
 import io
 import os
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 log = fmf.utils.Logging('tmt').logger
 
@@ -854,6 +857,28 @@ def public_git_url(url):
 
     # Otherwise return unmodified
     return url
+
+
+def retry_session(retries=3, backoff_factor=0.1, method_whitelist=False,
+                  status_forcelist=(429, 500, 502, 503, 504)):
+    """
+    Create a requests.Session() that retries on request failure.
+
+    'method_whitelist' is set to False to retry on all http request methods
+    by default.
+    """
+    session = requests.Session()
+    retry = Retry(
+        total=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+        method_whitelist=method_whitelist,
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
