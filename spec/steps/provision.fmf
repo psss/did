@@ -12,10 +12,9 @@ description: |
 
 example: |
     provision:
-        memory:
-            min: '1 GB'
-        arch:
-            - 'x86_64'
+        how: virtual
+        image: fedora
+        memory: 8 GB
 
 /virtual:
     summary: Provision a virtual machine (default)
@@ -115,3 +114,68 @@ example: |
             image: 1MT-Fedora-32
             flavor: m1.large
     implemented: /tmt/steps/provision/minute.py
+
+/environment:
+    summary: Environment specification
+
+    description: |
+        As part of the provision step it is possible to specify
+        additional requirements for the testing environment.
+        Individual requirements are provided as a simple ``key:
+        value`` pairs, for example the minimum amount of
+        ``memory`` and ``disk`` space, or the related information
+        is grouped under a common parent, for example ``cores`` or
+        ``model`` under the ``cpu`` key.
+
+        When multiple environment requirements are provided the
+        provision implementation should attempt to satisfy all of
+        them. It is also possible to write this explicitly using
+        the ``and`` operator containing a list of dictionaries
+        with individual requirements. When the ``or`` operator is
+        used, any of the alternatives provided in the list should
+        be sufficient.
+
+        Regular expressions can be used for selected fields such
+        as the ``model_name``. Please note, that the full extent
+        of regular expressions might not be supported across all
+        provision implementations. The ``.*`` notation, however,
+        should be supported everywhere.
+
+    example: |
+        # Simple use cases simple
+        memory: 8 GB
+        disk: 500 GB
+
+        # Processor-related stuff grouped together
+        cpu:
+            processors: 2
+            cores: 16
+            model: 37
+
+        # Optional operators at the start of the value
+        memory: '> 8 GB'
+        memory: '>= 8 GB'
+        memory: '< 8 GB'
+        memory: '<= 8 GB'
+
+        # By default exact value expected, these are equivalent:
+        cpu:
+            model: 37
+        cpu:
+            model: '= 37'
+
+        # Enable regular expression search
+        cpu:
+            model_name: =~ .*AMD.*
+
+        # Using advanced logic operators
+        and:
+          - cpu:
+                family: 15
+          - or:
+              - cpu:
+                    model: 65
+              - cpu:
+                    model: 67
+              - cpu:
+                    model: 69
