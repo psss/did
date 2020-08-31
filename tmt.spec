@@ -5,6 +5,7 @@ Release: 1%{?dist}
 Summary: Test Management Tool
 License: MIT
 BuildArch: noarch
+%{?kernel_arches:ExclusiveArch: %{kernel_arches} noarch}
 
 URL: https://github.com/psss/tmt
 Source0: https://github.com/psss/tmt/releases/download/%{version}/tmt-%{version}.tar.gz
