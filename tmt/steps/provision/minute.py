@@ -10,6 +10,7 @@ import time
 import urllib3.exceptions
 
 import tmt
+from tmt.utils import retry_session
 
 
 DEFAULT_USER = 'root'
@@ -38,7 +39,7 @@ def run_openstack(url, cmd, cached_list=False):
     # is unfortunately necessary here for the plugin to work.
     requests.packages.urllib3.disable_warnings(
         category=urllib3.exceptions.InsecureRequestWarning)
-    response = requests.post(url, verify=False, data=data)
+    response = retry_session().post(url, verify=False, data=data)
     if response.ok:
         # The output is in the form of: <stdout>\n<exit>\n.
         split = response.text.rsplit('\n', 2)
@@ -231,7 +232,7 @@ class GuestMinute(tmt.Guest):
         return True
 
     def _setup_machine(self):
-        response = requests.get(
+        response = retry_session().get(
             f'{self.api_url}?image_name={self.mt_image}'
             f'&user={self.username}&osver=rhos10', verify=False)
         if not response.ok:
