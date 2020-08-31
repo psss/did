@@ -424,7 +424,9 @@ class Plan(Node):
         # Prepare paths
         (directory, plan) = os.path.split(name)
         directory_path = os.path.join(tree.root, directory.lstrip('/'))
-        plan_path = os.path.join(directory_path, plan + '.fmf')
+        has_fmf_ext = os.path.splitext(plan)[1] == '.fmf'
+        plan_path = os.path.join(directory_path,
+                                plan + ('' if has_fmf_ext else '.fmf'))
 
         # Create directory & plan
         tmt.utils.create_directory(directory_path, 'plan directory')
@@ -569,7 +571,9 @@ class Story(Node):
         # Prepare paths
         (directory, story) = os.path.split(name)
         directory_path = os.path.join(tree.root, directory.lstrip('/'))
-        story_path = os.path.join(directory_path, story + '.fmf')
+        has_fmf_ext = os.path.splitext(story)[1] == '.fmf'
+        story_path = os.path.join(directory_path,
+                                  story + ('' if has_fmf_ext else '.fmf'))
 
         # Create directory & story
         tmt.utils.create_directory(directory_path, 'story directory')

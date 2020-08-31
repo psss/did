@@ -1,0 +1,2 @@
+summary: Check that a story is created correctly
+test: ./test.sh
