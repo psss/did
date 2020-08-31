@@ -318,9 +318,12 @@ def lint(context, **kwargs):
     Use '.' to select tests under the current working directory.
     """
     tmt.Test._save_context(context)
+    exit_code = 0
     for test in context.obj.tree.tests():
-        test.lint()
+        if not test.lint():
+            exit_code = 1
         echo()
+    raise SystemExit(exit_code)
 
 
 _test_templates = listed(tmt.templates.TEST, join='or')
@@ -496,9 +499,12 @@ def lint(context, **kwargs):
     Use '.' to select plans under the current working directory.
     """
     tmt.Plan._save_context(context)
+    exit_code = 0
     for plan in context.obj.tree.plans():
-        plan.lint()
+        if not plan.lint():
+            exit_code = 1
         echo()
+    raise SystemExit(exit_code)
 
 
 _plan_templates = listed(tmt.templates.PLAN, join='or')
