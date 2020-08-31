@@ -270,30 +270,32 @@ class Common(object):
             process.kill()
             process.returncode = PROCESS_TIMEOUT
 
-        # Start the timer
-        timer = Timer(timeout, kill)
-        timer.start()
+        try:
+            # Start the timer
+            timer = Timer(timeout, kill)
+            timer.start()
 
-        # Capture the output
-        while process.poll() is None:
-            # Check which file descriptors are ready for read
-            selected = select.select(descriptors, [], [])
-            for descriptor in selected[0]:
-                # Handle stdout
-                if descriptor == process.stdout.fileno():
-                    line = process.stdout.readline().decode('utf-8')
-                    stdout += line
-                    if line != '':
-                        log('out', line.rstrip('\n'), 'yellow', level=3)
-                # Handle stderr
-                if not join and descriptor == process.stderr.fileno():
-                    line = process.stderr.readline().decode('utf-8')
-                    stderr += line
-                    if line != '':
-                        log('err', line.rstrip('\n'), 'yellow', level=3)
+            # Capture the output
+            while process.poll() is None:
+                # Check which file descriptors are ready for read
+                selected = select.select(descriptors, [], [])
+                for descriptor in selected[0]:
+                    # Handle stdout
+                    if descriptor == process.stdout.fileno():
+                        line = process.stdout.readline().decode('utf-8')
+                        stdout += line
+                        if line != '':
+                            log('out', line.rstrip('\n'), 'yellow', level=3)
+                    # Handle stderr
+                    if not join and descriptor == process.stderr.fileno():
+                        line = process.stderr.readline().decode('utf-8')
+                        stderr += line
+                        if line != '':
+                            log('err', line.rstrip('\n'), 'yellow', level=3)
 
-        # Cancel the timer
-        timer.cancel()
+        finally:
+            # Cancel the timer
+            timer.cancel()
 
         # Check for possible additional output
         for line in process.stdout.readlines():
