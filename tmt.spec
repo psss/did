@@ -76,12 +76,19 @@ Requires: ansible openssh-clients rsync
 %description provision-virtual
 Dependencies required to run tests in a local virtual machine.
 
+%package test-convert
+Summary: Test import and export dependencies
+Requires: make python3-nitrate python3-html2text
+
+%description test-convert
+Additional dependencies needed for test metadata import and export.
+
 %package all
 Summary: Extra dependencies for the Test Management Tool
 Requires: tmt >= %{version}
 Requires: tmt-provision-container >= %{version}
 Requires: tmt-provision-virtual >= %{version}
-Requires: python3-nitrate python3-html2text make
+Requires: tmt-test-convert >= %{version}
 
 %description all
 All extra dependencies of the Test Management Tool. Install this
@@ -142,6 +149,9 @@ export LANG=en_US.utf-8
 
 %files provision-virtual
 %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}testcloud.*
+
+%files test-convert
+%license LICENSE
 
 %files all
 %license LICENSE
