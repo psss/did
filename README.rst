@@ -189,9 +189,15 @@ available options.
 Install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Currently tmt is supported for Fedora 30 and later, RHEL 8 and
-CentOS 8, available directly in the distro repositories::
+Currently tmt is supported for Fedora 31 and later, available
+directly in the distro repositories::
 
+    sudo dnf install tmt
+
+For RHEL 8 and CentOS 8, first make sure that you have enabled the
+EPEL repository::
+
+    sudo dnf install epel-release
     sudo dnf install tmt
 
 Install the latest version from the ``copr`` repository::

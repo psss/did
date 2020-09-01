@@ -3,17 +3,32 @@
 ======================
 
 
-Fedora 30
+Virtualization Tips
 ------------------------------------------------------------------
 
-If you want to run tests in virtual machine on Fedora 30 do not
-install ``tmt-all`` package. Install base ``tmt`` package instead
-and use the following commands to install necessary dependencies::
+Here's just a couple of hints how to get the virtualization
+quickly working on your laptop. See the `Getting started with
+virtualization`__ docs to learn more.
 
-    dnf install -y vagrant libvirt rsync --setopt=install_weak_deps=False
-    dnf install -y rubygem-{formatador,excon,builder,ruby-libvirt,nokogiri,multi_json}
+Make sure the ``libvirtd`` is running on your box::
 
-Then everything should work fine.
+    sudo systemctl start libvirtd
+
+Add your user account to the libvirt group::
+
+    sudo usermod -a -G libvirt $(whoami)
+    newgrp libvirt
+
+Note that you might need to restart your desktop session to get it
+fully working. In some cases you might also need to activate the
+default network device::
+
+    sudo virsh net-start default
+
+Here you can find vm `images for download`__.
+
+__ https://docs.fedoraproject.org/en-US/quick-docs/getting-started-with-virtualization/
+__ https://kojipkgs.fedoraproject.org/compose/
 
 
 vagrant-rsync-back
