@@ -307,7 +307,7 @@ class GuestMinute(tmt.Guest):
             mt_image = f'1MT-Fedora-{fedora_match.group("ver")}'
 
         # RHEL shortened names
-        rhel_match = re.match(r'^rhel-?(?P<ver>\d+)$', image_lower)
+        rhel_match = re.match(r'^rhel-?(?P<ver>\d+(?:\.\d)*)$', image_lower)
         if rhel_match:
             rhel_re = re.compile(r'1MT-RHEL-*{}'.format(
                 re.escape(rhel_match.group('ver'))))
@@ -326,7 +326,7 @@ class GuestMinute(tmt.Guest):
             mt_image = f'1MT-CentOS-{centos_match.group("ver")}'
 
         # Check if the image is valid
-        if not mt_image in images:
+        if mt_image not in images:
             raise tmt.utils.ProvisionError(
                 f"Image '{image}' is not a valid 1minutetip image.")
         return mt_image
