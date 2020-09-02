@@ -18,8 +18,14 @@ def test_public_git_url():
             'original': 'ssh://psplicha@pkgs.devel.redhat.com/tests/bash',
             'expected': 'git://pkgs.devel.redhat.com/tests/bash',
         }, {
+            'original': 'git+ssh://psplicha@pkgs.devel.redhat.com/tests/bash',
+            'expected': 'git://pkgs.devel.redhat.com/tests/bash',
+        }, {
             'original': 'ssh://pkgs.devel.redhat.com/tests/bash',
             'expected': 'git://pkgs.devel.redhat.com/tests/bash',
+        }, {
+            'original': 'git+ssh://psss@pkgs.fedoraproject.org/tests/shell',
+            'expected': 'https://pkgs.fedoraproject.org/tests/shell',
         }, {
             'original': 'ssh://psss@pkgs.fedoraproject.org/tests/shell',
             'expected': 'https://pkgs.fedoraproject.org/tests/shell',

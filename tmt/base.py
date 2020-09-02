@@ -89,7 +89,7 @@ class Node(tmt.utils.Common):
 
         def run(command):
             """ Run command, return output """
-            result = subprocess.run(command.split(), capture_output=True)
+            result = subprocess.run(command.split(), stdout=subprocess.PIPE)
             return result.stdout.strip().decode("utf-8")
 
         fmf_id = {'name': self.name}

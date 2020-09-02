@@ -165,9 +165,9 @@ def export_to_nitrate(test, create, general):
             echo(style(section + ': ', fg='green') + attribute.strip())
 
     # fmf identifer
-    fmf_id = test.fmf_id
-    struct_field.set('fmf', yaml.dump(fmf_id))
-    echo(style('fmf id:\n', fg='green') + yaml.dump(fmf_id).strip())
+    fmf_id = tmt.utils.dict_to_yaml(test.fmf_id)
+    struct_field.set('fmf', fmf_id)
+    echo(style('fmf id:\n', fg='green') + fmf_id.strip())
 
     # Warning
     if WARNING not in struct_field.header():

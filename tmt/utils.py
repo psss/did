@@ -841,20 +841,23 @@ def public_git_url(url):
         return f'https://{host}/{project}'
 
     # RHEL packages
+    # old: git+ssh://psplicha@pkgs.devel.redhat.com/tests/bash
     # old: ssh://psplicha@pkgs.devel.redhat.com/tests/bash
     # old: ssh://pkgs.devel.redhat.com/tests/bash
     # new: git://pkgs.devel.redhat.com/tests/bash
-    matched = re.match(r'ssh://(\w+@)?(pkgs\.devel\.redhat\.com)/(.*)', url)
+    matched = re.match(
+        r'(git\+)?ssh://(\w+@)?(pkgs\.devel\.redhat\.com)/(.*)', url)
     if matched:
-        _, host, project = matched.groups()
+        _, _, host, project = matched.groups()
         return f'git://{host}/{project}'
 
     # Fedora packages, Pagure
+    # old: git+ssh://psss@pkgs.fedoraproject.org/tests/shell
     # old: ssh://psss@pkgs.fedoraproject.org/tests/shell
     # new: https://pkgs.fedoraproject.org/tests/shell
-    matched = re.match(r'ssh://(\w+@)?([^/]*)/(.*)', url)
+    matched = re.match(r'(git\+)?ssh://(\w+@)?([^/]*)/(.*)', url)
     if matched:
-        _, host, project = matched.groups()
+        _, _, host, project = matched.groups()
         return f'https://{host}/{project}'
 
     # Otherwise return unmodified
