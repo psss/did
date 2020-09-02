@@ -257,16 +257,25 @@ class Guest(tmt.utils.Common):
         # Skip distro & kernel check in dry mode
         if self.opt('dry'):
             return
-        # Distro
+
+        # Most distros
         try:
-            distro = self.execute(
-                'cat /etc/redhat-release', dry=True)[0].strip()
+            distro = self.execute('cat /etc/os-release', dry=True)[0].strip()
+            distro = re.search('PRETTY_NAME="(.*)"', distro).group(1)
         except tmt.utils.RunError:
+
+            # The old standardized way
             try:
                 distro = self.execute('cat /etc/lsb-release')[0].strip()
-                distro = re.search('DESCRIPTION="(.*)"', distro).group(1)
+                distro = re.search('DISTRIB_DESCRIPTION="(.*)"', distro).group(1)
             except (tmt.utils.RunError, AttributeError):
-                distro = None
+
+                # The old RHEL way
+                try:
+                    distro = self.execute('cat /etc/redhat-release')[0].strip()
+                except (tmt.utils.RunError, AttributeError):                    
+                    distro = None
+
         if distro:
             self.info('distro', distro, 'green')
         # Kernel
