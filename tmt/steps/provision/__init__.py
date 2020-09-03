@@ -258,28 +258,27 @@ class Guest(tmt.utils.Common):
         if self.opt('dry'):
             return
 
-        # Most distros
+        # Distro (check os-release first)
         try:
-            distro = self.execute('cat /etc/os-release', dry=True)[0].strip()
+            distro = self.execute('cat /etc/os-release')[0].strip()
             distro = re.search('PRETTY_NAME="(.*)"', distro).group(1)
         except tmt.utils.RunError:
-
-            # The old standardized way
+            # Check for lsb-release
             try:
                 distro = self.execute('cat /etc/lsb-release')[0].strip()
-                distro = re.search('DISTRIB_DESCRIPTION="(.*)"', distro).group(1)
+                distro = re.search(
+                    'DISTRIB_DESCRIPTION="(.*)"', distro).group(1)
             except (tmt.utils.RunError, AttributeError):
-
-                # The old RHEL way
+                # Check for redhat-release
                 try:
                     distro = self.execute('cat /etc/redhat-release')[0].strip()
-                except (tmt.utils.RunError, AttributeError):                    
+                except (tmt.utils.RunError, AttributeError):
                     distro = None
-
         if distro:
             self.info('distro', distro, 'green')
+
         # Kernel
-        kernel = self.execute('uname -r', dry=True)[0].strip()
+        kernel = self.execute('uname -r')[0].strip()
         self.verbose('kernel', kernel, 'green')
 
     def _ansible_verbosity(self):
