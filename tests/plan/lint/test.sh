@@ -8,17 +8,18 @@ rlJournalStart
         rlRun "pushd $tmp"
         rlRun "set -o pipefail"
         rlRun "tmt init"
-        rlRun "tmt plan create --template mini plan"
+        rlRun "tmt plan create --template mini good"
+        rlRun "echo 'execute:' > bad.fmf"
     rlPhaseEnd
 
-    rlPhaseStartTest
-        rlRun "tmt plan lint"
+    rlPhaseStartTest "Good"
+        rlRun "tmt plan lint good"
     rlPhaseEnd
 
-    rlPhaseStartTest
-        # remove the last line (execute definition)
-        rlRun "tail -n 1 plan.fmf | wc -c | xargs -I {} truncate plan.fmf -s -{}"
-        rlRun "tmt plan lint" 1
+    rlPhaseStartTest "Bad"
+        rlRun "tmt plan lint bad | tee output" 1
+        rlAssertGrep 'fail execute step must be defined' output
+        rlAssertGrep 'warn summary is very useful' output
     rlPhaseEnd
 
     rlPhaseStartCleanup

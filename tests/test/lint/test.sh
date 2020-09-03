@@ -11,14 +11,15 @@ rlJournalStart
         rlRun "tmt test create --template beakerlib test"
     rlPhaseEnd
 
-    rlPhaseStartTest
+    rlPhaseStartTest "Good"
         rlRun "tmt test lint"
     rlPhaseEnd
 
-    rlPhaseStartTest
-        # remove the test script path
+    rlPhaseStartTest "Bad"
+        # Remove the test script path
         rlRun "sed -i '$ s/\s.*$//' test/main.fmf"
-        rlRun "tmt test lint" 1
+        rlRun "tmt test lint | tee output" 1
+        rlAssertGrep 'fail test script must be defined' output
     rlPhaseEnd
 
     rlPhaseStartCleanup
