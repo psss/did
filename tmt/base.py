@@ -282,9 +282,12 @@ class Test(Node):
             self._sources()
             self._fmf_id()
 
-
     def lint(self):
-        """ Check test against the L1 metadata specification. """
+        """
+        Check test against the L1 metadata specification.
+
+        Return whether the test is valid.
+        """
         self.ls()
         echo(verdict(self.test is not None, 'test script must be defined'))
         echo(verdict(self.path is not None, 'directory path must be defined'))
@@ -292,6 +295,7 @@ class Test(Node):
             echo(verdict(2, 'summary is very useful for quick inspection'))
         elif len(self.summary) > 50:
             echo(verdict(2, 'summary should not exceed 50 characters'))
+        return self.test is not None and self.path is not None
 
     def export(
             self, format_='yaml', keys=None, create=False, general=False):
@@ -473,7 +477,11 @@ class Plan(Node):
             self._sources()
 
     def lint(self):
-        """ Check plan against the L2 metadata specification. """
+        """
+        Check plan against the L2 metadata specification.
+
+        Return whether the plan is valid.
+        """
         self.ls()
         execute = self.node.get('execute')
         echo(verdict(execute is not None, 'execute step must be defined'))
@@ -481,6 +489,7 @@ class Plan(Node):
             echo(verdict(2, 'summary is very useful for quick inspection'))
         elif len(self.summary) > 50:
             echo(verdict(2, 'summary should not exceed 50 characters'))
+        return execute is not None
 
     def go(self):
         """ Execute the plan """
