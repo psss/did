@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.20
+Version: 0.21
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -158,6 +158,31 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Mon Sep 07 2020 Petr Šplíchal <psplicha@redhat.com> - 0.21-1
+- Adjust manual test case import from nitrate [#319]
+- Move the test convert deps into a separate package
+- Support importing manual test cases from Nitrate
+- Merge the non-zero exit codes for linting errors
+- Fix several test export issues [fix #337]
+- Adjust distro checks, remove the dry parameter
+- Generalized Guest.details() [fix #310]
+- Adjust the test coverage for tmt plan/test lint
+- Update documentation with virtualization tips
+- Make sure the duration timer is always canceled
+- Merge the new retry_session functionality [#328]
+- Exit with non-zero code if linting fails
+- Merge fix for the double fmf extension [#327]
+- Prevent koji from trying to build packages on i686
+- Retry requests in case of network failure
+- Avoid double fmf extension when creating plans and stories
+- Improve the maximum test duration handling
+- Remove vagrant from tmt-all recommended packages
+- Detect beakerlib libraries from recommend as well
+- Simplify packit custom create archive command
+- Make the httpd test example a bit more interesting
+- Append dots to fix tmt run --help message summary
+- Document multiple configs and extending steps
+
 * Tue Jul 28 2020 Petr Šplíchal <psplicha@redhat.com> - 0.20-1
 - Move libraries handling into a separate module
 - Adjust loading variables from YAML files [#316]
