@@ -57,7 +57,7 @@ def read_manual(plan_id, case_id, disabled):
     try:
         tree = fmf.Tree(os.getcwd())
     except fmf.utils.RootError:
-        raise ConvertError("Initialize metadata tree using 'tmt init'")
+        raise ConvertError("Initialize metadata tree using 'tmt init'.")
 
     try:
         if plan_id:
@@ -66,7 +66,7 @@ def read_manual(plan_id, case_id, disabled):
         else:
             case_ids = [int(case_id)]
     except ValueError:
-        raise ConvertError('Value of plan/case option must be an integer')
+        raise ConvertError('Test plan/case identifier must be an integer.')
 
     # Create directory to store manual tests in
     old_cwd = os.getcwd()
@@ -105,9 +105,9 @@ def read_manual(plan_id, case_id, disabled):
         # Test case metadata
         data = read_nitrate_case(testcase)
         data['manual'] = True
-        data['test'] = 'full.md'
+        data['test'] = 'test.md'
 
-        write_markdown(os.getcwd() + '/full.md', md_content)
+        write_markdown(os.getcwd() + '/test.md', md_content)
         write(os.getcwd() + '/main.fmf', data)
         os.chdir('..')
 
@@ -147,9 +147,8 @@ def write_markdown(path, content):
         with open(path, 'w', encoding='utf-8') as md_file:
             md_file.write(to_print)
     except IOError:
-        raise ConvertError("Unable to write '{0}'".format(path))
-    echo(style(
-        "Test case successfully stored into '{0}'.".format(path), fg='magenta'))
+        raise ConvertError(f"Unable to write '{path}'.")
+    echo(style(f"Test case successfully stored into '{path}'.", fg='magenta'))
 
 
 def read(path, makefile, nitrate, purpose, disabled):
@@ -492,7 +491,7 @@ def read_nitrate_case(testcase):
     except tmt.utils.StructuredFieldError:
         pass
 
-    return(data)
+    return data
 
 
 def write(path, data):

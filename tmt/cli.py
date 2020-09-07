@@ -368,7 +368,9 @@ def create(context, name, template, force, **kwargs):
     help='Identifier of manual test case to be imported.')
 @verbose_debug_quiet
 @force_dry
-def import_(context, paths, makefile, nitrate, purpose, disabled, manual, plan, case, **kwargs):
+def import_(
+        context, paths, makefile, nitrate, purpose, disabled, manual, plan,
+        case, **kwargs):
     """
     Import old test metadata into the new fmf format.
 
