@@ -26,9 +26,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     # Supported methods
     _methods = [
         tmt.steps.Method(
-            name='shell.tmt', doc=_shell_doc, order=60),
+            name='shell.tmt', doc=_shell_doc, order=50),
         tmt.steps.Method(
-            name='beakerlib.tmt', doc=_beakerlib_doc, order=60),
+            name='beakerlib.tmt', doc=_beakerlib_doc, order=50),
         ]
 
     @classmethod

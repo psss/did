@@ -31,16 +31,16 @@ class ExecuteSimple(tmt.steps.execute.ExecutePlugin):
     # Supported methods
     _methods = [
         tmt.steps.Method(
-            name='shell.detach', doc=_shell_doc, order=50),
+            name='shell.detach', doc=_shell_doc, order=60),
         tmt.steps.Method(
-            name='beakerlib.detach', doc=_beakerlib_doc, order=50),
+            name='beakerlib.detach', doc=_beakerlib_doc, order=60),
         ]
 
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for given method """
         options = []
-        if how == 'shell.simple':
+        if 'shell' in how:
             options.append(click.option(
                 '-s', '--script', metavar='SCRIPT', multiple=True,
                 help='Shell script to be executed as a test.'))
