@@ -497,7 +497,10 @@ def read_nitrate_case(testcase):
 def write(path, data):
     """ Write gathered metadata in the fmf format """
     # Put keys into a reasonable order
-    extra_keys = ['extra-summary', 'extra-task', 'extra-nitrate']
+    extra_keys = [
+        'extra-nitrate',
+        'extra-summary', 'extra-task',
+        'extra-hardware', 'extra-pepa']
     sorted_data = dict()
     for key in tmt.base.Test._keys + extra_keys:
         try:
