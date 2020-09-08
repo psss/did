@@ -26,6 +26,7 @@ description: |
         - /tmt/steps/provision/podman
         - /tmt/steps/provision/vagrant
         - /tmt/steps/provision/testcloud
+        - /tmt/steps/provision/minute
 
 /ansible:
     summary:
@@ -50,3 +51,4 @@ description: |
         - /tmt/steps/provision/podman
         - /tmt/steps/provision/vagrant
         - /tmt/steps/provision/testcloud
+        - /tmt/steps/provision/minute
