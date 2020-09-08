@@ -97,3 +97,19 @@ example: |
             how: connect
             guest: hostname or ip address
             key: private-key-path
+
+/minute:
+    summary: Provision a virtual machine using 1minutetip OpenStack backend
+    description: |
+        First check whether a prereserved machine exists
+        using the 1minutetip backend. Use it, if it exists, otherwise
+        boot a new machine using the OpenStack backend.
+
+        Note that you need to have the 1minutetip script installed in
+        order for this provision method to work.
+    example: |
+        provision:
+            how: minute
+            image: 1MT-Fedora-32
+            flavor: m1.large
+    implemented: /tmt/steps/provision/minute.py
