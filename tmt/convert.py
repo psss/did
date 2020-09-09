@@ -493,6 +493,23 @@ def read_nitrate_case(testcase):
 
     return data
 
+def remove_rhts(path):
+    """ Remove sourcing of rhts-environment.sh from runtest.sh """
+    rhts_line = '. /usr/bin/rhts-environment.sh || exit 1\n'
+    path += '/runtest.sh'
+    try:
+        with open(path, 'r+') as runtest:
+            lines = runtest.readlines()
+            runtest.seek(0)
+            for line in lines:
+                if line == rhts_line:
+                    echo("Removing sourcing of rhts-environment.sh from runtest.sh")
+                else:
+                    runtest.write(line)
+            runtest.truncate()
+    except IOError:
+        raise ConvertError("Unable to read/write '{0}'".format(path))
+
 
 def write(path, data):
     """ Write gathered metadata in the fmf format """
