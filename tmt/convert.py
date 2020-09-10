@@ -503,12 +503,14 @@ def remove_rhts(path):
             runtest.seek(0)
             for line in lines:
                 if line == rhts_line:
-                    echo("Removing sourcing of rhts-environment.sh from runtest.sh")
+                    echo(
+                        "Removing sourcing of 'rhts-environment.sh' "
+                        "from 'runtest.sh'.")
                 else:
                     runtest.write(line)
             runtest.truncate()
     except IOError:
-        raise ConvertError("Unable to read/write '{0}'".format(path))
+        raise ConvertError("Unable to read/write '{0}'.".format(path))
 
 
 def write(path, data):
