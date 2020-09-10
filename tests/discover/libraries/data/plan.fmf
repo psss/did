@@ -41,3 +41,7 @@ execute:
         summary: "Custom destination directory"
         discover+:
             test: destination
+    /missing:
+        summary: "Missing library"
+        discover+:
+            test: missing

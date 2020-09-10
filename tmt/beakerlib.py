@@ -124,7 +124,7 @@ class Library(object):
             try:
                 self.parent.run(
                     ['git', 'clone', self.url, directory],
-                    shell=False, env={"GIT_TERMINAL_PROMPT": "0"})
+                    shell=False, env={"GIT_ASKPASS": "echo"})
             except tmt.utils.RunError as error:
                 # Fallback to install during the prepare step if in rpm format
                 if self.format == 'rpm':

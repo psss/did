@@ -36,6 +36,11 @@ rlJournalStart
         rlAssertGrep 'Cloning into.*custom/openssl' $tmp/output
     rlPhaseEnd
 
+    rlPhaseStartTest "Missing"
+        rlRun "$tmt missing 2>&1 | tee $tmp/output" 2
+        rlAssertGrep 'Authentication failed.*something' $tmp/output
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
         rlRun "rm -r $tmp" 0 "Removing tmp directory"
