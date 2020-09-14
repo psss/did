@@ -71,6 +71,9 @@ class ExecuteSimple(tmt.steps.execute.ExecutePlugin):
         script_path = os.path.join(os.path.dirname(__file__), RUNNER)
         self.debug(f"Copy '{script_path}' to '{self.step.workdir}'.", level=2)
         shutil.copy(script_path, self.step.workdir)
+        # We're shipping the script as not-runnable. Make it runnable now.
+        runner_path = os.path.join(self.step.workdir, RUNNER)
+        os.chmod(runner_path, 0o0755)
 
     def show_logs(self):
         """ Check each log, show in verbose mode """
