@@ -215,6 +215,13 @@ found in all test cases are stored in ``main.fmf``. You can use
 and ``--no-purpose`` switches to disable the other two metadata
 sources.
 
+Manual test cases can be imported from Nitrate using the
+``--manual`` option. Provide either ``--case ID`` or ``--plan ID``
+with the Nitrate test case/plan identifier to select which test
+case should be imported or which test plan should be checked for
+manual test cases. Directory ``Manual`` will be created in the fmf
+root directory and manual test cases will be imported there.
+
 Example output of metadata conversion::
 
     $ tmt test import
