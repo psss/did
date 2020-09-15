@@ -26,6 +26,7 @@ description: |
         - /tmt/steps/provision/podman
         - /tmt/steps/provision/vagrant
         - /tmt/steps/provision/testcloud
+        - /tmt/steps/provision/minute
 
 /ansible:
     summary:
@@ -50,3 +51,47 @@ description: |
         - /tmt/steps/provision/podman
         - /tmt/steps/provision/vagrant
         - /tmt/steps/provision/testcloud
+        - /tmt/steps/provision/minute
+
+/install:
+    summary:
+        Install packages on the guest
+    description: |
+        One or more RPM packages can be specified under the
+        ``package`` attribute. The packages will be installed
+        on the guest. They can either be specified using their
+        names or paths to local rpm files.
+
+        Additionaly, the ``directory`` attribute can be used to
+        install all packages from the given directory. Copr
+        repositories can be enabled using the ``copr`` attribute.
+        It's possible to change the behaviour when a package is
+        missing using the ``missing`` attribute. The missing
+        packages can either be silently ignored ('skip') or a
+        preparation error is thrown ('fail'), which is the default
+        behaviour.
+
+    example: |
+        prepare:
+            how: install
+            package:
+                - tmp/RPMS/noarch/tmt-0.15-1.fc31.noarch.rpm
+                - tmp/RPMS/noarch/python3-tmt-0.15-1.fc31.noarch.rpm
+
+        prepare:
+            how: install
+            directory:
+                - tmp/RPMS/noarch
+
+        prepare:
+            how: install
+            copr: psss/tmt
+            package: tmt-all
+            missing: fail
+
+    implemented:
+      - /tmt/steps/provision/localhost
+      - /tmt/steps/provision/podman
+      - /tmt/steps/provision/vagrant
+      - /tmt/steps/provision/testcloud
+      - /tmt/steps/provision/minute
