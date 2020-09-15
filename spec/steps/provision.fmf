@@ -99,14 +99,16 @@ example: |
             key: private-key-path
 
 /minute:
-    summary: Provision a virtual machine using 1minutetip OpenStack backend
+    summary:
+        Provision a virtual machine using the 1minutetip OpenStack
+        backend
     description: |
-        First check whether a prereserved machine exists
-        using the 1minutetip backend. Use it, if it exists, otherwise
-        boot a new machine using the OpenStack backend.
+        First check whether a prereserved machine exists using the
+        1minutetip backend. Use it, if it exists, otherwise boot a
+        new machine using the OpenStack backend.
 
-        Note that you need to have the 1minutetip script installed in
-        order for this provision method to work.
+        Note that you need to have the ``1minutetip`` script
+        installed in order for this provision method to work.
     example: |
         provision:
             how: minute
