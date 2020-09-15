@@ -13,7 +13,7 @@ story:
     example:
         - tmt --help
         - tmt run --help
-        - tmt test convert --help
+        - tmt test import --help
     tested: /tests/docs
     implemented: /tmt/cli
 

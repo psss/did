@@ -56,10 +56,10 @@ List tests, show details, check against the specification::
     tmt test show
     tmt test lint
 
-Create a new test, convert old metadata::
+Create a new test, import test metadata from other formats::
 
     tmt test create
-    tmt test convert
+    tmt test import
 
 List plans, show details, check against the specification::
 

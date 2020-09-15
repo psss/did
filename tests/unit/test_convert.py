@@ -19,7 +19,7 @@ def test_convert():
     tmp = tempfile.mkdtemp()
     os.system('cp -a {} {}'.format(CONVERT, tmp))
     path = os.path.join(tmp, 'convert')
-    command = 'test convert --no-nitrate {}'.format(path)
+    command = 'test import --no-nitrate {}'.format(path)
     result = runner.invoke(tmt.cli.main, command.split())
     assert result.exit_code == 0
     assert 'Metadata successfully stored' in result.output
