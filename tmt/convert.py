@@ -62,7 +62,7 @@ def read_manual(plan_id, case_id, disabled):
     try:
         if plan_id:
             all_cases = nitrate.TestPlan(int(plan_id)).testcases
-            case_ids = [case.id for case in all_cases if case.manual]
+            case_ids = [case.id for case in all_cases if not case.automated]
         else:
             case_ids = [int(case_id)]
     except ValueError:
@@ -95,12 +95,7 @@ def read_manual(plan_id, case_id, disabled):
         echo("Importing the '{0}' test case.".format(dir_name))
 
         # Test case data
-        md_content = {}
-
-        md_content['setup'] = html_to_markdown(testcase.setup)
-        md_content['action'] = html_to_markdown(testcase.action)
-        md_content['expected'] = html_to_markdown(testcase.effect)
-        md_content['cleanup'] = html_to_markdown(testcase.breakdown)
+        md_content = read_manual_data(testcase)
 
         # Test case metadata
         data = read_nitrate_case(testcase)
@@ -114,7 +109,17 @@ def read_manual(plan_id, case_id, disabled):
     os.chdir(old_cwd)
 
 
-def html_to_markdown(text):
+def read_manual_data(testcase):
+    """ Read test data from manual fields """
+    md_content = {}
+    md_content['setup'] = html_to_markdown(testcase.setup)
+    md_content['action'] = html_to_markdown(testcase.action)
+    md_content['expected'] = html_to_markdown(testcase.effect)
+    md_content['cleanup'] = html_to_markdown(testcase.breakdown)
+    return md_content
+
+
+def html_to_markdown(html):
     """ Convert html to markdown """
     try:
         import html2text
@@ -122,11 +127,11 @@ def html_to_markdown(text):
     except ImportError:
         raise ConvertError("Install html2text to import manual tests.")
 
-    if text is None:
-        converted = ""
+    if html is None:
+        markdown = ""
     else:
-        converted = md_handler.handle(text).strip()
-    return converted
+        markdown = md_handler.handle(html).strip()
+    return markdown
 
 
 def write_markdown(path, content):
@@ -146,9 +151,10 @@ def write_markdown(path, content):
     try:
         with open(path, 'w', encoding='utf-8') as md_file:
             md_file.write(to_print)
+            echo(style(
+                f"Test case successfully stored into '{path}'.", fg='magenta'))
     except IOError:
         raise ConvertError(f"Unable to write '{path}'.")
-    echo(style(f"Test case successfully stored into '{path}'.", fg='magenta'))
 
 
 def read(path, makefile, nitrate, purpose, disabled):
@@ -366,9 +372,33 @@ def read_nitrate(beaker_task, common_data, disabled):
 
     # Process individual test cases
     individual_data = list()
+    md_content = dict()
     for testcase in testcases:
+        # Testcase data must be fetched due to
+        # https://github.com/psss/python-nitrate/issues/24
+        testcase._fetch()
         data = read_nitrate_case(testcase)
         individual_data.append(data)
+        # Check testcase for manual data
+        md_content_tmp = read_manual_data(testcase)
+        if any(md_content_tmp.values()):
+            md_content = md_content_tmp
+
+    # Write md file if there is something to write
+    # or try to remove if there isn't.
+    md_path = os.getcwd() + '/test.md'
+    if md_content:
+        write_markdown(md_path , md_content)
+    else:
+        try:
+            os.remove(md_path)
+            echo(style(f"Test case file '{md_path}' "
+            "successfully removed.", fg='magenta'))
+        except FileNotFoundError:
+            pass
+        except IOError:
+            raise ConvertError(
+                "Unable to remove '{0}'.".format(md_path))
 
     # Find common data from individual test cases
     common_candidates = dict()
