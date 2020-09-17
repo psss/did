@@ -1,0 +1,3 @@
+Before: This text is fine.
+Weird: That is the bãd one!
+After: This text is fine as well.

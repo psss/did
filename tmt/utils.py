@@ -282,13 +282,15 @@ class Common(object):
                 for descriptor in selected[0]:
                     # Handle stdout
                     if descriptor == process.stdout.fileno():
-                        line = process.stdout.readline().decode('utf-8')
+                        line = process.stdout.readline().decode(
+                            'utf-8', errors='replace')
                         stdout += line
                         if line != '':
                             log('out', line.rstrip('\n'), 'yellow', level=3)
                     # Handle stderr
                     if not join and descriptor == process.stderr.fileno():
-                        line = process.stderr.readline().decode('utf-8')
+                        line = process.stderr.readline().decode(
+                            'utf-8', errors='replace')
                         stderr += line
                         if line != '':
                             log('err', line.rstrip('\n'), 'yellow', level=3)
@@ -299,11 +301,11 @@ class Common(object):
 
         # Check for possible additional output
         for line in process.stdout.readlines():
-            line = line.decode('utf-8')
+            line = line.decode('utf-8', errors='replace')
             stdout += line
             log('out', line.rstrip('\n'), 'yellow', level=3)
         for line in [] if join else process.stderr.readlines():
-            line = line.decode('utf-8')
+            line = line.decode('utf-8', errors='replace')
             stderr += line
             log('err', line.rstrip('\n'), 'yellow', level=3)
 
@@ -360,7 +362,7 @@ class Common(object):
             path = os.path.join(self.workdir, path)
         self.debug(f"Read file '{path}'.", level=level)
         try:
-            with open(path) as data:
+            with open(path, encoding='utf-8', errors='replace') as data:
                 return data.read()
         except OSError as error:
             raise FileError(f"Failed to read '{path}'.\n{error}")
@@ -374,7 +376,7 @@ class Common(object):
         if self.opt('dry'):
             return
         try:
-            with open(path, 'w') as target:
+            with open(path, 'w', encoding='utf-8', errors='replace') as target:
                 return target.write(data)
         except OSError as error:
             raise FileError(f"Failed to write '{path}'.\n{error}")
