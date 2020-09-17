@@ -887,5 +887,15 @@ step to remove provisioned guest::
     tmt run provision login
     tmt run --last finish
 
+Clean up the box right after your are done with experimenting by
+combining the above-mentioned commands on a single line::
+
+    tmt run provision login finish
+
+Have you heard already that using command abbreviation is possible
+as well? It might save you some typing::
+
+    tmt run pro log fin
+
 See the :ref:`/stories/cli/run/login` user stories for more
 details and examples.
