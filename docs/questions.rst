@@ -31,6 +31,26 @@ __ https://docs.fedoraproject.org/en-US/quick-docs/getting-started-with-virtuali
 __ https://kojipkgs.fedoraproject.org/compose/
 
 
+Package Cache
+------------------------------------------------------------------
+
+Using containers can speed up your testing. However, fetching
+package cache can slow things down substantially. Use this set of
+commands to prepare a container image with a fresh dnf cache::
+
+    podman run -itd --name fresh fedora
+    podman exec fresh dnf makecache
+    podman image rm fedora:fresh
+    podman commit fresh fedora:fresh
+    podman container rm -f fresh
+
+Then specify the newly created image in the provision step::
+
+    tmt run --all provision --how container --image fedora:fresh
+
+In this way you can save up to several minutes for each plan.
+
+
 vagrant-rsync-back
 ------------------------------------------------------------------
 
