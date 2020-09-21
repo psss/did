@@ -107,6 +107,7 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
 
         # Read API URL from 1minutetip script
         try:
+            self.debug(f"Get the API URL from '{SCRIPT_PATH}'.")
             script_content = self.read(SCRIPT_PATH)
             match = re.search(API_URL_RE, script_content)
             if not match:
@@ -169,6 +170,7 @@ class GuestMinute(tmt.Guest):
         return data
 
     def _guess_net_id(self):
+        self.debug("Check the network IP availability.")
         _, networks = run_openstack(
             self.api_url, 'ip availability list -f json')
         networks = json.loads(networks)
@@ -184,7 +186,7 @@ class GuestMinute(tmt.Guest):
         best = max(
             networks, key=lambda x: x.get('Total IPs') - x.get('Used IPs'))
         self.debug(
-            f'Using the following network:\n{json.dumps(best, indent=2)}',
+            f'Use the following network:\n{json.dumps(best, indent=2)}',
             level=2, shift=0)
         return best['Network ID'], best['Network Name']
 
@@ -198,6 +200,7 @@ class GuestMinute(tmt.Guest):
         if not network_id:
             return False
 
+        self.debug(f"Try to boot a new openstack machine.")
         error, net_info = run_openstack(
             self.api_url,
             f'server create --wait '
@@ -218,6 +221,7 @@ class GuestMinute(tmt.Guest):
         self.guest = match.group('ip')
 
         # Wait for ssh connection
+        self.debug("Wait for an ssh connection to the machine.")
         for i in range(1, DEFAULT_CONNECT_TIMEOUT):
             try:
                 self.execute('whoami')
@@ -227,26 +231,32 @@ class GuestMinute(tmt.Guest):
             time.sleep(1)
 
         if i == DEFAULT_CONNECT_TIMEOUT:
+            self.debug("Failed to boot the machine, removing it.")
             self.delete()
             return False
         return True
 
     def _setup_machine(self):
+        self.debug("Try to get a prereserved minute machine.")
         response = retry_session().get(
             f'{self.api_url}?image_name={self.mt_image}'
             f'&user={self.username}&osver=rhos10', verify=False)
         if not response.ok:
             return
+        self.debug(f"Prereserved machine result: {response.text}")
         # No prereserved machine, boot a new one
         if 'prereserve' not in response.text:
             return self._boot_machine()
         # Rename the prereserved machine
         old_name, self.guest = response.text.split()
+        self.debug(
+            f"Rename the machine from '{old_name}' to '{self.instance_name}'.")
         _, rename_out = run_openstack(
             self.api_url, f'server set --name {self.instance_name} {old_name}')
         if rename_out is None or 'ERROR' in rename_out:
             return False
         # Machine renamed, set properties
+        self.debug("Change properties of the prereserved machine.")
         run_openstack(
             self.api_url,
             f'server set --property local_user={self.username} '
@@ -279,6 +289,7 @@ class GuestMinute(tmt.Guest):
         """
         mt_image = image
         image_lower = image.lower().strip()
+        self.debug("Check for available 1MT images.")
         _, images = run_openstack(
             self.api_url, 'image list -f value -c Name', True)
         images = images.splitlines()
@@ -338,6 +349,7 @@ class GuestMinute(tmt.Guest):
             "All attempts to provision a machine with 1minutetip failed.")
 
     def delete(self):
+        self.debug(f"Remove the minute instance '{self.instance_name}'.")
         run_openstack(self.api_url, f'server delete {self.instance_name}')
 
     def remove(self):
