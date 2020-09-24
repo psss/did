@@ -9,28 +9,30 @@ Test Management Tool
 Description
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``tmt`` python module and command line tool implement the L1
-and L2 Metadata Specification which allows to store all needed
-test execution data directly within a git repository. In this way
-it makes tests independent on any external test management system.
+The ``tmt`` python module and command-line tool implement the
+Metadata Specification which allows storing all needed test
+execution data directly within a git repository. In this way, it
+makes testing independent on any external test management system.
 
 The Flexible Metadata Format ``fmf`` is used to store data in both
 human and machine readable way close to the source code. Thanks to
 inheritance and elasticity metadata are organized in the structure
 efficiently, preventing unnecessary duplication.
 
-Command line tool allows to easily create new tests, convert old
-metadata, list and filter available tests and verify them against
-the L1 specification. Plans are used to group tests and precisely
-define individual test steps defined by the L2 specification, like
-environment preparation. Stories are used to track implementation,
-test and documentation coverage for individual features.
+The tool provides a user-friendly way to create, debug and easily
+run tests from your laptop across different environments. It also
+allows to easily convert old metadata, list and filter available
+tests and verify them against the L1 specification.
 
-Last but not least, the tool provides a user-friendly way how to
-run, debug and develop tests directly from your laptop across many
-different test environments. This is currently a proof-of-concept
-so many features are still on the way. Check stories to see which
-functionality has already been implemented.
+Plans are used to group tests and configure individual test steps
+defined by the L2 specification. They describe how to select tests
+for execution, how to provision the environment, how to prepare it
+for testing or how the test results should be reported.
+
+Stories, defined by the L3 specification, can be used to track
+implementation, test and documentation coverage for individual
+features or requirements. Thanks to this you can track everything
+in one place, including the project implementation progress.
 
 
 Synopsis
@@ -43,6 +45,16 @@ Command line usage is straightforward::
 
 Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Let's see which tests, plans and stories are available::
+
+    tmt
+
+Initialize the metadata tree in the current directory, optionally
+with example content based on templates::
+
+    tmt init
+    tmt init --template base
 
 Run all or selected steps for each plan::
 
@@ -94,29 +106,25 @@ Run
 
 The `run` command is used to execute test steps. By default all
 test steps are run. See the L2 Metadata specification for detailed
-description of individual steps. For now here is at least a brief
-overview:
+description of individual steps. Here is a brief overview:
 
 discover
-    gather and show information about test cases to be executed
+    Gather information about test cases to be executed.
 
 provision
-    provision an environment for testing (or use localhost)
+    Provision an environment for testing or use localhost.
 
 prepare
-    configure environment for testing (e.g. ansible playbook)
+    Prepare the environment for testing.
 
 execute
-    run the tests (using the specified framework and its settings)
+    Run tests using the specified executor.
 
 report
-    provide an overview of test results and send notifications
+    Provide test results overview and send reports.
 
 finish
-    additional actions to be performed after the test execution
-
-Note: This is only preview / draft of future functionality.
-Features described above are not implemented yet.
+    Perform the finishing tasks and clean up provisioned guests.
 
 
 Test
@@ -134,7 +142,7 @@ lint
     Check tests against the L1 metadata specification.
 create
     Create a new test based on given template.
-convert
+import
     Convert old test metadata into the new fmf format.
 
 
@@ -173,14 +181,14 @@ Utils
 
 Various utility options.
 
---path PATH
-    Path to the metadata tree (default: current directory)
+--root PATH
+    Path to the metadata tree, current directory used by default.
 
 --verbose
-    Print additional information standard error output
+    Print additional information.
 
 --debug
-    Turn on debugging output, do not catch exceptions
+    Turn on debugging output.
 
 Check help message of individual commands for the full list of
 available options.
