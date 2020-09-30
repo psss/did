@@ -69,7 +69,25 @@ def force_dry(function):
 
 
 def name_filter_condition(function):
-    """ Common filter option """
+    """ Common filter options (short & long) """
+    options = [
+        click.argument(
+            'names', nargs=-1, metavar='[REGEXP]'),
+        click.option(
+            '-f', '--filter', 'filters', metavar='FILTER', multiple=True,
+            help="Apply advanced filter (see 'pydoc fmf.filter')."),
+        click.option(
+            '-c', '--condition', 'conditions', metavar="EXPR", multiple=True,
+            help="Use arbitrary Python expression for filtering."),
+        ]
+
+    for option in reversed(options):
+        function = option(function)
+    return function
+
+
+def name_filter_condition_long(function):
+    """ Common filter options (long only) """
     options = [
         click.argument(
             'names', nargs=-1, metavar='[REGEXP]'),
@@ -213,13 +231,13 @@ run.add_command(tmt.steps.Login.command())
 @run.command()
 @click.pass_context
 @click.option(
-    '--name', 'names', metavar='REGEXP', multiple=True,
+    '-n', '--name', 'names', metavar='REGEXP', multiple=True,
     help="Regular expression to match plan name.")
 @click.option(
-    '--filter', 'filters', metavar='FILTER', multiple=True,
+    '-f', '--filter', 'filters', metavar='FILTER', multiple=True,
     help="Apply advanced filter (see 'pydoc fmf.filter').")
 @click.option(
-    '--condition', 'conditions', metavar="EXPR", multiple=True,
+    '-c', '--condition', 'conditions', metavar="EXPR", multiple=True,
     help="Use arbitrary Python expression for filtering.")
 @verbose_debug_quiet
 def plans(context, **kwargs):
@@ -235,13 +253,13 @@ def plans(context, **kwargs):
 @run.command()
 @click.pass_context
 @click.option(
-    '--name', 'names', metavar='REGEXP', multiple=True,
+    '-n', '--name', 'names', metavar='REGEXP', multiple=True,
     help="Regular expression to match test name.")
 @click.option(
-    '--filter', 'filters', metavar='FILTER', multiple=True,
+    '-f', '--filter', 'filters', metavar='FILTER', multiple=True,
     help="Apply advanced filter (see 'pydoc fmf.filter').")
 @click.option(
-    '--condition', 'conditions', metavar="EXPR", multiple=True,
+    '-c', '--condition', 'conditions', metavar="EXPR", multiple=True,
     help="Use arbitrary Python expression for filtering.")
 @verbose_debug_quiet
 def tests(context, **kwargs):
@@ -431,7 +449,7 @@ def import_(
 
 @tests.command()
 @click.pass_context
-@name_filter_condition
+@name_filter_condition_long
 @click.option(
     '--nitrate', is_flag=True,
     help='Export test metadata to Nitrate.')
@@ -594,7 +612,7 @@ def stories(context, **kwargs):
 
 @stories.command()
 @click.pass_context
-@name_filter_condition
+@name_filter_condition_long
 @implemented_tested_documented
 @verbose_debug_quiet
 def ls(
@@ -615,7 +633,7 @@ def ls(
 
 @stories.command()
 @click.pass_context
-@name_filter_condition
+@name_filter_condition_long
 @implemented_tested_documented
 @verbose_debug_quiet
 def show(
@@ -659,7 +677,7 @@ def create(context, name, template, force, **kwargs):
 @click.option(
     '--code', is_flag=True, help='Show code coverage.')
 @click.pass_context
-@name_filter_condition
+@name_filter_condition_long
 @implemented_tested_documented
 @verbose_debug_quiet
 def coverage(
@@ -715,7 +733,7 @@ def coverage(
 
 @stories.command()
 @click.pass_context
-@name_filter_condition
+@name_filter_condition_long
 @implemented_tested_documented
 @click.option(
     '--format', 'format_', default='rst', show_default=True, metavar='FORMAT',

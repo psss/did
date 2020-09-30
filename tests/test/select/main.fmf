@@ -1,0 +1,5 @@
+summary: Selecting and filtering tests
+description:
+    Verify selecting tests by name and filter works as expected
+    for 'tmt test ls', 'tmt test show' and 'tmt run test'.
+test: ./test.sh
