@@ -29,6 +29,5 @@ jobs:
     - epel-8
     list_on_homepage: True
     preserve_project: True
-    # For now let's build in packit/psss-tmt-master
-    #owner: psss
-    #project: tmt
+    owner: psss
+    project: tmt
