@@ -42,6 +42,11 @@ execute:
         discover+:
             test: destination
     /missing:
-        summary: "Missing library"
-        discover+:
-            test: missing
+        /library:
+            summary: "Missing library"
+            discover+:
+                test: missing/library
+        /repository:
+            summary: "Missing repository"
+            discover+:
+                test: missing/repository

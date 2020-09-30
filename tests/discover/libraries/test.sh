@@ -37,8 +37,10 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Missing"
-        rlRun "$tmt missing 2>&1 | tee $tmp/output" 2
+        rlRun "$tmt missing/repository 2>&1 | tee $tmp/output" 2
         rlAssertGrep 'Authentication failed.*something' $tmp/output
+        rlRun "$tmt missing/library 2>&1 | tee $tmp/output" 2
+        rlAssertGrep 'dnf install.*openssl/wrong' $tmp/output
     rlPhaseEnd
 
     rlPhaseStartCleanup

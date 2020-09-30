@@ -128,6 +128,7 @@ class Library(object):
             except tmt.utils.RunError as error:
                 # Fallback to install during the prepare step if in rpm format
                 if self.format == 'rpm':
+                    self.parent.debug(f"Repository '{self.url}' not found.")
                     raise LibraryError
                 self.parent.info(
                     f"Failed to fetch library '{self}' from '{self.url}'.",
@@ -142,6 +143,12 @@ class Library(object):
         # Get the library node, check require and recommend
         library = self.tree.find(self.name)
         if not library:
+            # Fallback to install during the prepare step if in rpm format
+            if self.format == 'rpm':
+                self.parent.debug(
+                    f"Library '{self.name.lstrip('/')}' not found "
+                    f"in the '{self.url}' repo.")
+                raise LibraryError
             raise tmt.utils.GeneralError(
                 f"Library '{self.name}' not found in '{self.repo}'.")
         self.require = tmt.utils.listify(library.get('require', []))

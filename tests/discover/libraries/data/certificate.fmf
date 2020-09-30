@@ -50,5 +50,9 @@ path: /
         destination: custom
 
 /missing:
-    summary: Reference a non-existent library
-    require: library(something/wrong)
+    /repository:
+        summary: Reference a non-existent repository
+        require: library(something/wrong)
+    /library:
+        summary: Reference a non-existent library
+        require: library(openssl/wrong)
