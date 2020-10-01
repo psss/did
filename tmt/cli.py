@@ -417,7 +417,7 @@ def import_(
             testcase_path = os.path.join(
                 path, str(testcase['extra-nitrate']) + '.fmf')
             tmt.convert.write(testcase_path, testcase)
-        tmt.convert.remove_rhts(path)
+        tmt.convert.remove_rhts(path + '/runtest.sh')
 
 
 @tests.command()

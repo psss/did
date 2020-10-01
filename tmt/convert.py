@@ -495,17 +495,16 @@ def read_nitrate_case(testcase):
 
 def remove_rhts(path):
     """ Remove sourcing of rhts-environment.sh from runtest.sh """
-    rhts_line = '. /usr/bin/rhts-environment.sh || exit 1\n'
-    path += '/runtest.sh'
+    rhts_line = '. /usr/bin/rhts-environment.sh'
     try:
         with open(path, 'r+') as runtest:
             lines = runtest.readlines()
             runtest.seek(0)
             for line in lines:
-                if line == rhts_line:
-                    echo(
+                if rhts_line in line:
+                    echo(style(
                         "Removing sourcing of 'rhts-environment.sh' "
-                        "from 'runtest.sh'.")
+                        "from 'runtest.sh'.", fg='magenta'))
                 else:
                     runtest.write(line)
             runtest.truncate()
