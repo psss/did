@@ -417,7 +417,13 @@ def import_(
             testcase_path = os.path.join(
                 path, str(testcase['extra-nitrate']) + '.fmf')
             tmt.convert.write(testcase_path, testcase)
-        tmt.convert.remove_rhts(path + '/runtest.sh')
+        runtest_path = path + '/runtest.sh'
+        tmt.convert.remove_rhts(runtest_path)
+        try:
+            os.chmod(runtest_path, 0o755)
+        except IOError:
+            raise tmt.convert.ConvertError(
+                "Could not make '{0}' executable.".format(runtest_path))
 
 
 @tests.command()
