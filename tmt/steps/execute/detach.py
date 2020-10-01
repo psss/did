@@ -105,9 +105,10 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
         if self.opt('dry'):
             return
 
-        # Prepare the runner and remove logs
+        # Remove old logs, prepare the runner and tests
         self.remove_logs()
         self.prepare_runner()
+        self.prepare_tests()
 
         # For each guest execute all tests
         for guest in self.step.plan.provision.guests():

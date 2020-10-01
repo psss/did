@@ -110,7 +110,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             return
 
         # For each guest execute all tests
-        tests = self.step.plan.discover.tests()
+        tests = self.prepare_tests()
         for guest in self.step.plan.provision.guests():
 
             # Push workdir to guest and execute tests

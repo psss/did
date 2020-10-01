@@ -9,6 +9,15 @@ description: |
     This is a **required** attribute. Each plan has to define this
     step.
 
+    For each test, a separate directory is created for storing
+    artifacts related to the test execution. Its path is
+    constructed from the test name and it's stored under the
+    ``execute/logs`` directory. It contains a ``metadata.yaml``
+    file with the aggregated L1 metadata which can be used by the
+    test :ref:`/spec/tests/framework`. In addition to supported
+    :ref:`/spec/tests` attributes it also contains fmf ``name`` of
+    the test.
+
     For each ``plan`` the execute step should produce a
     ``results.yaml`` file with the list of results for each test
     in the following format::
@@ -21,7 +30,6 @@ description: |
             result: OUTCOME
             log: PATH
             duration: DURATION
-
 
     Where ``OUTCOME`` is the result of the test execution. It can
     have the following values:

@@ -206,6 +206,22 @@ class ExecutePlugin(tmt.steps.Plugin):
         path = os.path.join(directory, filename)
         return path if full else os.path.relpath(path, self.step.workdir)
 
+    def prepare_tests(self):
+        """
+        Prepare discovered tests for testing
+
+        Check which tests have been discovered, for each test prepare
+        the aggregated metadata in a 'metadata.yaml' file under the test
+        logs directory and finally return a list of discovered tests.
+        """
+        tests = self.step.plan.discover.tests()
+        for test in tests:
+            metadata_filename = self.log(
+                test, filename='metadata.yaml', full=True, create=True)
+            self.write(
+                metadata_filename, test.export(keys=['name'] + test._keys))
+        return tests
+
     def check_shell(self, test):
         """ Check result of a shell test """
         # Prepare the log path
