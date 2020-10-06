@@ -117,6 +117,7 @@ story: 'As a user I want to comfortably work with tests'
         - tmt test ls .
         - tmt test ls REGEXP
         - tmt test show --filter tier:1
-        - tmt test show --condition 'tier < 2'
+        - tmt test show --condition 'int(tier) < 2'
+        - tmt test show --condition '"gcc" in require'
     implemented: /tmt/base.py
     documented: /docs/examples#filter-tests

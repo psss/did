@@ -152,7 +152,7 @@ condition::
     $ tmt tests ls --filter 'tier: 0'
     /tests/docs
 
-    $ tmt tests ls --condition 'tier > 0'
+    $ tmt tests ls --condition 'int(tier) > 0'
     /tests/ls
 
 In order to select tests under the current working directory use
