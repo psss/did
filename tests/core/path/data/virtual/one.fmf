@@ -1,0 +1,3 @@
+summary: Virtual test number one.
+description: Path should default to '/virtual'.
+test: 'true'

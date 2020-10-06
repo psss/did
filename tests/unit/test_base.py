@@ -31,7 +31,7 @@ def test_test_defaults():
     assert test.name == '/smoke'
     assert test.component == list()
     assert test.test == './test.sh'
-    assert test.path == '/smoke'
+    assert test.path == '/'
     assert test.require == list()
     assert test.environment == dict()
     assert test.duration == '5m'

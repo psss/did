@@ -1,8 +1,8 @@
 summary: Filesystem directory to be entered before executing the test
 
 story:
-    As a test writer I define two virtual test cases, both using
-    the same script for executing.
+    As a test writer I want to define two virtual test cases, both
+    using the same script for executing.
 
 description:
     As the object hierarchy does not need to copy the filesystem
@@ -12,8 +12,8 @@ description:
     Automation is expected to change directory to provided path
     starting from the fmf tree root directory before executing the
     test. Use a ``string`` containing an absolute path starting
-    with slash. If path is not defined, object name (identifier)
-    is used by default.
+    with slash. If path is not defined, the directory where the
+    test metadata are stored is used by default.
 
 example: |
     path: /protocols/https

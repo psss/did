@@ -218,8 +218,18 @@ class Test(Node):
         for key in self._keys:
             setattr(self, key, self.node.get(key))
 
-        # Path defaults to the node name
-        self._check('path', expected=str, default=self.name)
+        # Path defaults to the directory where metadata are stored or to
+        # the root '/' if fmf metadata were not stored on the filesystem
+        try:
+            directory = os.path.dirname(self.node.sources[-1])
+            relative_path = os.path.relpath(directory, self.node.root)
+            if relative_path == '.':
+                default_path = '/'
+            else:
+                default_path = os.path.join('/', relative_path)
+        except (AttributeError, IndexError):
+            default_path = '/'
+        self._check('path', expected=str, default=default_path)
 
         # Check that lists are lists or strings, listify if needed
         for key in ['component', 'contact', 'require', 'recommend', 'tag']:
