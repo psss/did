@@ -493,8 +493,15 @@ def read_nitrate_case(testcase):
 
     return data
 
-def remove_rhts(path):
-    """ Remove sourcing of rhts-environment.sh from runtest.sh """
+
+def adjust_runtest(path):
+    """ Adjust runtest.sh content and permission """
+
+    # Nothing to do if there is no runtest.sh
+    if not os.path.exists(path):
+        return
+
+    # Remove sourcing of rhts-environment.sh
     rhts_line = '. /usr/bin/rhts-environment.sh'
     try:
         with open(path, 'r+') as runtest:
@@ -510,6 +517,13 @@ def remove_rhts(path):
             runtest.truncate()
     except IOError:
         raise ConvertError("Unable to read/write '{0}'.".format(path))
+
+    # Make sure the script has correct execute permissions
+    try:
+        os.chmod(path, 0o755)
+    except IOError:
+        raise tmt.convert.ConvertError(
+            "Could not make '{0}' executable.".format(path))
 
 
 def write(path, data):

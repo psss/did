@@ -408,7 +408,7 @@ def import_(
         # Add path to common metadata if there are virtual test cases
         if individual:
             root = fmf.Tree(path).root
-            common['path'] = os.path.join( '/', os.path.relpath(path, root))
+            common['path'] = os.path.join('/', os.path.relpath(path, root))
         # Store common metadata
         common_path = os.path.join(path, 'main.fmf')
         tmt.convert.write(common_path, common)
@@ -417,13 +417,8 @@ def import_(
             testcase_path = os.path.join(
                 path, str(testcase['extra-nitrate']) + '.fmf')
             tmt.convert.write(testcase_path, testcase)
-        runtest_path = path + '/runtest.sh'
-        tmt.convert.remove_rhts(runtest_path)
-        try:
-            os.chmod(runtest_path, 0o755)
-        except IOError:
-            raise tmt.convert.ConvertError(
-                "Could not make '{0}' executable.".format(runtest_path))
+        # Adjust runtest.sh content and permission if needed
+        tmt.convert.adjust_runtest(os.path.join(path, 'runtest.sh'))
 
 
 @tests.command()
