@@ -1,4 +1,3 @@
-test: bash test.sh
 summary: Too much output in prepare script could freeze tmt
 description: |
   Runs prepare script which produces a lot of text but is killed fast.

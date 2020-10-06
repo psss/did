@@ -1,3 +1,2 @@
 test: rpm -q tree
-path: /
 recommend: [tree, forest]

@@ -1,2 +1,1 @@
 summary: Correctly handle weird test output
-test: ./test.sh

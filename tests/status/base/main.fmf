@@ -1,2 +1,1 @@
 summary: Checks whether tmt status works correctly
-test: ./test.sh

@@ -1,5 +1,3 @@
-path: /
-
 /good:
     summary: Test with an appropriate duration
     test: sleep 1

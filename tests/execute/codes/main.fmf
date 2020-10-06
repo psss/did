@@ -1,2 +1,1 @@
 summary: Check tmt run exit codes
-test: ./test.sh

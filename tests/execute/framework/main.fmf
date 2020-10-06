@@ -3,7 +3,6 @@ description:
     Check test framework selection in the L1 metadata.
     Combining different frameworks under a single plan.
     Ensure backward-compatibility for the old execution methods.
-test: ./test.sh
 duration: 30m
 tier: 3
 tag-: [container]

@@ -1,2 +1,1 @@
 summary: Check that a test is created correctly
-test: ./test.sh

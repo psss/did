@@ -1,5 +1,3 @@
-path: /
-
 /available:
     summary: Test requiring an available package
     require: tree

@@ -1,2 +1,1 @@
 summary: Test dry mode in different verbose/debug levels
-test: ./test.sh

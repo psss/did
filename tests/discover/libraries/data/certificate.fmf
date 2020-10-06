@@ -1,5 +1,4 @@
 test: ./certificate.sh
-path: /
 
 /rpm:
     summary: Generate a certificate (rpm)
