@@ -1,5 +1,5 @@
 Name: tmt
-Version: 0.21
+Version: 1.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -158,6 +158,43 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Wed Oct 07 2020 Petr Šplíchal <psplicha@redhat.com> - 1.0-1
+- Correctly handle framework for new plans and tests
+- Move runtest.sh adjustments into a single function
+- Add the executable permission to runtest.sh
+- Less strict removing sourcing of rhts-environment
+- Use metadata directory as the default for path
+- Implement the new L1 attribute 'framework'
+- Explicitly enable copr_build for pull requests
+- Handle missing library in existing repository
+- Update the overall tmt description and examples
+- Enable builds from master in the main copr repo
+- Merge packit config for copr builds from master
+- Use packit repository for copr builds from master
+- Gracefully handle invalid test output
+- Build in COPR for master via packit
+- Add hint about caching the dnf package metadata
+- Add two hints about easy login for experimenting
+- Merge debug messages for the minute plugin [#361]
+- Adjust the minute provision debug messages wording
+- Use the internal tmt executor by default
+- Add more debug messages to minute provision
+- Remove the remaining 'tmt test convert' references
+- Prevent shebang mangling for detached executor
+- Merge the minute and install plugin docs [#345]
+- Adjust the minute and install plugin documentation
+- Merge the manual test import documentation [#347]
+- Adjust the manual test documentation wording
+- Merge rhts-environment source line removal [#344]
+- Adjust rhts-environment source line removal
+- Add missing extra-* keys to the test import
+- Add docs for manual case import
+- Disable authentication when fetching libraries
+- Document the install prepare method
+- Document the minute provision method
+- Remove sourcing of rhts-environment in runtest.sh
+- Add minute to supported provision methods of prepare
+
 * Mon Sep 07 2020 Petr Šplíchal <psplicha@redhat.com> - 0.21-1
 - Adjust manual test case import from nitrate [#319]
 - Move the test convert deps into a separate package
