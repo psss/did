@@ -275,7 +275,7 @@ class Test(Node):
         # Create metadata
         metadata_path = os.path.join(directory_path, 'main.fmf')
         tmt.utils.create_file(
-            path=metadata_path, content=tmt.templates.TEST_METADATA,
+            path=metadata_path, content=tmt.templates.TEST_METADATA[template],
             name='test metadata', force=force)
 
         # Create script

@@ -160,7 +160,7 @@ def read(path, makefile, nitrate, purpose, disabled):
     data for individual testcases (if multiple nitrate testcases found).
     """
 
-    data = dict()
+    data = dict(framework='beakerlib')
     echo("Checking the '{0}' directory.".format(path))
 
     # Make sure there is a metadata tree initialized

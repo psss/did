@@ -7,11 +7,17 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 TEST = dict()
+TEST_METADATA = dict()
 
-TEST_METADATA = """
+TEST_METADATA['shell'] = """
 summary: Concise summary describing what the test does
-contact: Name Surname <email@example.com>
 test: ./test.sh
+""".lstrip()
+
+TEST_METADATA['beakerlib'] = """
+summary: Concise summary describing what the test does
+test: ./test.sh
+framework: beakerlib
 """.lstrip()
 
 TEST['shell'] = """
@@ -56,7 +62,7 @@ DEFAULT_PLAN = """
     discover:
         how: fmf
     execute:
-        how: shell.tmt
+        how: tmt
 """.lstrip()
 
 PLAN = dict()
@@ -74,7 +80,7 @@ summary:
 discover:
     how: fmf
 execute:
-    how: beakerlib
+    how: tmt
 """.lstrip()
 
 PLAN['full'] = """
@@ -87,7 +93,7 @@ prepare:
     how: ansible
     playbooks: plans/packages.yml
 execute:
-    how: beakerlib
+    how: tmt
 """.lstrip()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

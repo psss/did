@@ -17,7 +17,7 @@ rlJournalStart
 
     rlPhaseStartTest "Bad"
         # Remove the test script path
-        rlRun "sed -i '$ s/\s.*$//' test/main.fmf"
+        rlRun "sed -i 's/test:.*/test:/' test/main.fmf"
         rlRun "tmt test lint | tee output" 1
         rlAssertGrep 'fail test script must be defined' output
     rlPhaseEnd
