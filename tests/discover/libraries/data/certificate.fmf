@@ -56,3 +56,7 @@ path: /
     /library:
         summary: Reference a non-existent library
         require: library(openssl/wrong)
+    /metadata:
+        summary: Repository with no fmf metadata
+        require:
+          - url: https://github.com/psss/try

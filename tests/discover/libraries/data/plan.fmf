@@ -50,3 +50,7 @@ execute:
             summary: "Missing repository"
             discover+:
                 test: missing/repository
+        /metadata:
+            summary: "Missing metadata"
+            discover+:
+                test: missing/metadata

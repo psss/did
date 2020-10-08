@@ -41,6 +41,8 @@ rlJournalStart
         rlAssertGrep 'Authentication failed.*something' $tmp/output
         rlRun "$tmt missing/library 2>&1 | tee $tmp/output" 2
         rlAssertGrep 'dnf install.*openssl/wrong' $tmp/output
+        rlRun "$tmt missing/metadata 2>&1 | tee $tmp/output" 2
+        rlAssertGrep 'Repository .* does not contain fmf metadata.' $tmp/output
     rlPhaseEnd
 
     rlPhaseStartCleanup

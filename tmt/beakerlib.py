@@ -88,7 +88,11 @@ class Library(object):
             raise LibraryError
 
         # Fetch the library
-        self.fetch()
+        try:
+            self.fetch()
+        except fmf.utils.RootError:
+            raise tmt.utils.SpecificationError(
+                f"Repository '{self.url}' does not contain fmf metadata.")
 
     def __str__(self):
         """ Use repo/name for string representation """
