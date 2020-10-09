@@ -233,6 +233,7 @@ def read(path, makefile, nitrate, purpose, disabled):
             beaker_task = re.search(r'Name:\s*(.*)\n', testinfo).group(1)
             echo(style('task: ', fg='green') + beaker_task)
             data['extra-task'] = beaker_task
+            data['extra-summary'] = beaker_task
         except AttributeError:
             raise ConvertError("Unable to parse 'Name' from testinfo.desc.")
         # Summary
