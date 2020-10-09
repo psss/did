@@ -41,6 +41,8 @@ $(METADATA): Makefile
 	@echo "License:         MIT" >> $(METADATA)
 	@echo "Confidential:    no" >> $(METADATA)
 	@echo "Destructive:     no" >> $(METADATA)
+	@echo "Environment:     AVC_ERROR=+no_avc_check" >> $(METADATA)
+	@echo "Environment:     TEST=one two three" >> $(METADATA)
 	@echo "Releases:        -RHEL4 -RHELClient5 -RHELServer5" >> $(METADATA)
 
 	rhts-lint $(METADATA)

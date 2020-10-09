@@ -41,6 +41,12 @@ rlJournalStart
         rlAssertGrep 'duration 5m' 'output'
     rlPhaseEnd
 
+    rlPhaseStartTest 'Check Makefile environment variables'
+        rlRun 'tmt test show | tee output'
+        rlAssertGrep 'AVC_ERROR: +no_avc_check' 'output'
+        rlAssertGrep 'TEST: one two three' 'output'
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "rm -r $tmp" 0 "Removing tmp directory"
         rlRun 'popd'
