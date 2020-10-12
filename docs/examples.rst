@@ -853,7 +853,46 @@ exactly is happening during test execution. This also allows to
 inspect particular place of the code by inserting a ``bash`` in
 the shell code or ``import pdb; pdb.set_trace()`` for python::
 
-    tmt run --all execute --how beakerlib.tmt --interactive
+    tmt run --all execute --how tmt --interactive
+
+
+Aliases
+------------------------------------------------------------------
+
+It might be useful to set up a set of shell aliases for the tmt
+command lines which you often use. For a quick reservation of
+a machine or a container for quick experimenting::
+
+    alias reserve='tmt run login --step execute execute finish provision --how container --image fedora'
+
+Reserving a testing box then can be as short as this::
+
+    reserve
+    reserve -h virtual
+    reserve -i fedora:32
+    reserve --how virtual
+    reserve --image fedora:32
+
+For interactive debugging of tests the following three aliases can
+come in handy::
+
+    alias start='tmt run --verbose --until report execute --how tmt --interactive test --name . provision --how virtual --image fedora'
+    alias retest='tmt run --last test --name . discover -f execute -f --how tmt --interactive'
+    alias stop='tmt run --last report --verbose finish'
+
+The test debugging session then can look like this::
+
+    start
+    retest
+    retest
+    retest login
+    ...
+    stop
+
+First you ``start`` the session in order to provision a testing
+environment, then you ``retest`` your test code changes as many
+times as you need to finalize the test implementation, and finally
+``stop`` is used to clean up the testing environment.
 
 
 Guest Login
