@@ -284,9 +284,27 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
                     f"for the '{data['how']}' method.", level=2)
                 return method.class_(step, data)
 
+        # Give some hints when provision plugins are not installed
+        if step.name == 'provision':
+            if data['how'] == 'virtual':
+                step.info(
+                    'hint', "Install 'tmt-provision-virtual' "
+                    "to run tests in a virtual machine.", color='blue')
+            if data['how'] == 'container':
+                step.info(
+                    'hint', "Install 'tmt-provision-container' "
+                    "to run tests in a container.", color='blue')
+            step.info(
+                'hint', "Use the 'local' method to execute tests "
+                "directly on your localhost.", color='blue')
+            step.info(
+                'hint', "See 'tmt run provision --help' for all "
+                "available provision options.", color='blue')
+
         # Report invalid method
         raise tmt.utils.SpecificationError(
-            f"Unsupported method '{data['how']}' in '{step.plan.name}'.")
+            f"Unsupported {step.name} method '{data['how']}' "
+            f"in the '{step.plan.name}' plan.")
 
     def default(self, option, default=None):
         """ Return default data for given option """
