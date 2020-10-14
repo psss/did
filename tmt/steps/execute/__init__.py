@@ -4,8 +4,8 @@ import fmf
 import tmt
 import click
 
-# Logs directory name
-LOGS = 'logs'
+# Test data directory name
+TEST_DATA = 'data'
 
 # Default test framework
 DEFAULT_FRAMEWORK = 'shell'
@@ -188,17 +188,17 @@ class ExecutePlugin(tmt.steps.Plugin):
 
         return execute
 
-    def log(self, test, filename=None, full=False, create=False):
+    def data_path(self, test, filename=None, full=False, create=False):
         """
-        Prepare full/relative test log/directory path
+        Prepare full/relative test data directory/file path
 
-        Construct logs directory path for given test, create directory
+        Construct test data directory path for given test, create it
         if requested and return the full or relative path to it (if
-        filename not provided) or to the given log file otherwise.
+        filename not provided) or to the given data file otherwise.
         """
         # Prepare directory path, create if requested
         directory = os.path.join(
-            self.step.workdir, LOGS, test.name.lstrip('/'))
+            self.step.workdir, TEST_DATA, test.name.lstrip('/'))
         if create and not os.path.isdir(directory):
             os.makedirs(directory)
         if not filename:
@@ -212,11 +212,11 @@ class ExecutePlugin(tmt.steps.Plugin):
 
         Check which tests have been discovered, for each test prepare
         the aggregated metadata in a 'metadata.yaml' file under the test
-        logs directory and finally return a list of discovered tests.
+        data directory and finally return a list of discovered tests.
         """
         tests = self.step.plan.discover.tests()
         for test in tests:
-            metadata_filename = self.log(
+            metadata_filename = self.data_path(
                 test, filename='metadata.yaml', full=True, create=True)
             self.write(
                 metadata_filename, test.export(keys=['name'] + test._keys))
@@ -225,7 +225,7 @@ class ExecutePlugin(tmt.steps.Plugin):
     def check_shell(self, test):
         """ Check result of a shell test """
         # Prepare the log path
-        data = {'log': self.log(test, 'out.log')}
+        data = {'log': self.data_path(test, 'out.log')}
         # Process the exit code
         try:
             data['result'] = {0: 'pass', 1: 'fail'}[test.returncode]
@@ -241,11 +241,12 @@ class ExecutePlugin(tmt.steps.Plugin):
         # Initialize data, prepare log paths
         data = {'result': 'error', 'log': []}
         for log in ['out.log', 'journal.txt']:
-            if os.path.isfile(self.log(test, log, full=True)):
-                data['log'].append(self.log(test, log))
+            if os.path.isfile(self.data_path(test, log, full=True)):
+                data['log'].append(self.data_path(test, log))
         # Check beakerlib log for the result
         try:
-            beakerlib_results_file = self.log(test, 'TestResults', full=True)
+            beakerlib_results_file = self.data_path(
+                test, 'TestResults', full=True)
             results = self.read(beakerlib_results_file, level=3)
         except tmt.utils.FileError:
             self.debug(f"Unable to read '{beakerlib_results_file}'.", level=3)

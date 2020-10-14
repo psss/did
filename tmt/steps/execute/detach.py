@@ -89,7 +89,7 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
         else:
             # Get the exit code from the file
             try:
-                exit_code_file = self.log(test, 'exitcode.log')
+                exit_code_file = self.data_path(test, 'exitcode.log')
                 test.returncode = int(self.step.read(exit_code_file).strip())
             except tmt.utils.FileError:
                 self.debug(f"Exit code not found for '{test.name}'.", level=3)

@@ -113,7 +113,7 @@ tmt_run_test () {
         || tmt_error "Unknown test framework: '$framework'"
 
 
-    local log_dir="${tmt_LOG_D}/logs/$name"
+    local log_dir="${tmt_LOG_D}/data/$name"
     mkdir -p "$log_dir" || {
         tmt_error "[${name}] Could not create log dir: '$log_dir'" E
         return

@@ -57,12 +57,12 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             self.step.plan.discover.workdir, test.path.lstrip('/'))
         self.debug(f"Use workdir '{workdir}'.", level=3)
 
-        # Create logsdir, prepare environment
-        logsdir = self.log(test, full=True, create=True)
+        # Create data directory, prepare environment
+        data_directory = self.data_path(test, full=True, create=True)
         environment = test.environment
         if test.framework == 'beakerlib':
             environment = environment.copy()
-            environment['BEAKERLIB_DIR'] = logsdir
+            environment['BEAKERLIB_DIR'] = data_directory
 
         # Prepare custom function to log output in verbose mode
         def log(key, value=None, color=None, shift=1, level=1):
@@ -84,7 +84,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 timeout = ' (timeout)'
                 self.debug(f"Test duration '{test.duration}' exceeded.")
         end = time.time()
-        self.write(self.log(test, 'out.log', full=True), stdout or '', level=3)
+        self.write(
+            self.data_path(test, 'out.log', full=True), stdout or '', level=3)
         duration = time.strftime("%H:%M:%S", time.gmtime(end - start))
         duration = click.style(duration, fg='cyan')
         shift = 1 if self.opt('verbose') < 2 else 2
