@@ -23,7 +23,8 @@ rlJournalStart
     for execute in tmt detach; do
         for framework in shell beakerlib; do
             rlPhaseStartTest "Old execute methods ($framework.$execute)"
-                rlRun "$tmt execute -h $framework.$execute | tee output" 0,2
+                rlRun "$tmt execute -h $framework.$execute \
+                        2>&1 | tee output" 0,2
                 rlAssertGrep 'execute method has been deprecated' output
                 # Default framework should be picked from the old method
                 rlAssertGrep "Execute '$sh1' as a '$framework' test." output
@@ -35,7 +36,7 @@ rlJournalStart
                 if [[ $framework == beakerlib ]]; then
                     rlAssertGrep "dnf install.*beakerlib" output
                 fi
-                rlAssertGrep "warning.*execute.*deprecated" output
+                rlAssertGrep "warn.*execute.*deprecated" output
             rlPhaseEnd
         done
     done
@@ -43,7 +44,7 @@ rlJournalStart
     # New execute methods
     for execute in tmt detach; do
         rlPhaseStartTest "Combine shell and beakerlib ($execute)"
-            rlRun "$tmt execute --how $execute | tee output"
+            rlRun "$tmt execute --how $execute 2>&1 | tee output"
             # The default test framework should be 'shell'
             rlAssertGrep "Execute '$sh1' as a 'shell' test." output
             rlAssertGrep "Execute '$bl1' as a 'shell' test." output

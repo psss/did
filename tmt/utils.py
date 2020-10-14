@@ -198,27 +198,32 @@ class Common(object):
         with open(os.path.join(self.workdir, 'log.txt'), 'a') as log:
             log.write(message + '\n')
 
-    def info(self, key, value=None, color=None, shift=0):
+    def info(self, key, value=None, color=None, shift=0, err=False):
         """ Show a message unless in quiet mode """
         self._log(self._indent(key, value, color=None, shift=shift))
         if not self.opt('quiet'):
-            echo(self._indent(key, value, color, shift))
+            echo(self._indent(key, value, color, shift), err=err)
 
     def warn(self, message, shift=0):
-        """ Show a yellow warning message on info level """
-        self.info('warning', message, color='yellow', shift=shift)
+        """ Show a yellow warning message on info level, send to stderr """
+        self.info('warn', message, color='yellow', shift=shift, err=True)
 
-    def verbose(self, key, value=None, color=None, shift=0, level=1):
+    def fail(self, message, shift=0):
+        """ Show a red failure message on info level, send to stderr """
+        self.info('fail', message, color='red', shift=shift, err=True)
+
+    def verbose(
+        self, key, value=None, color=None, shift=0, level=1, err=False):
         """ Show message if in requested verbose mode level """
         self._log(self._indent(key, value, color=None, shift=shift))
         if self.opt('verbose') >= level:
-            echo(self._indent(key, value, color, shift))
+            echo(self._indent(key, value, color, shift), err=err)
 
-    def debug(self, key, value=None, color=None, shift=1, level=1):
+    def debug(self, key, value=None, color=None, shift=1, level=1, err=False):
         """ Show message if in requested debug mode level """
         self._log(self._indent(key, value, color=None, shift=shift))
         if self.opt('debug') >= level:
-            echo(self._indent(key, value, color, shift))
+            echo(self._indent(key, value, color, shift), err=err)
 
     def _run(
         self, command, cwd, shell, env, log, join=False, interactive=False,
