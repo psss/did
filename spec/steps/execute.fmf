@@ -12,7 +12,7 @@ description: |
     For each test, a separate directory is created for storing
     artifacts related to the test execution. Its path is
     constructed from the test name and it's stored under the
-    ``execute/logs`` directory. It contains a ``metadata.yaml``
+    ``execute/data`` directory. It contains a ``metadata.yaml``
     file with the aggregated L1 metadata which can be used by the
     test :ref:`/spec/tests/framework`. In addition to supported
     :ref:`/spec/tests` attributes it also contains fmf ``name`` of
