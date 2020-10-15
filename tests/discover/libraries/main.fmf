@@ -9,3 +9,4 @@ test: ./test.sh
 path: /tests/discover/libraries
 tier: 3
 duration: 15m
+tag-: [virtual, container]
