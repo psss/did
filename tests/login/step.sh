@@ -32,6 +32,12 @@ rlJournalStart
         rlAssertGrep "interactive" "output"
     rlPhaseEnd
 
+    rlPhaseStartTest "Last run"
+        rlRun "$tmt"
+        rlRun "tmt run -l login -c true | tee output"
+        rlAssertGrep "interactive" "output"
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
         rlRun "rm -r $tmp" 0 "Removing tmp directory"

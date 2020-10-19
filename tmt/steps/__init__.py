@@ -159,6 +159,12 @@ class Step(tmt.utils.Common):
                 if classes is None or isinstance(plugin, classes)],
             key=lambda plugin: plugin.order)
 
+    def try_running_login(self):
+        """ Run all loaded Login plugin instances of the step """
+        for plugin in self.plugins():
+            if isinstance(plugin, Login):
+                plugin.go()
+
     def go(self):
         """ Execute the test step """
         # Show step header and how
