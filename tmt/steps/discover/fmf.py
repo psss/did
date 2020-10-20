@@ -118,7 +118,9 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.info('directory', git_root, 'green')
             self.debug(f"Copy '{git_root}' to '{testdir}'.")
             if not self.opt('dry'):
-                shutil.copytree(git_root, testdir)
+                shutil.copytree(
+                    git_root, testdir,
+                    symlinks=True, ignore_dangling_symlinks=True)
 
         # Checkout revision if requested
         ref = self.get('ref')

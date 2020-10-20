@@ -369,14 +369,16 @@ class Guest(tmt.utils.Common):
         """ Push workdir to guest """
         self.debug(f"Push workdir to guest '{self.guest}'.")
         self.run(
-            f'rsync -Rrze "{self._ssh_command(join=True)}" --delete '
-            f'{self.parent.plan.workdir} {self._ssh_guest()}:/')
+            f'rsync -Rrz --links --safe-links --delete '
+            f'-e "{self._ssh_command(join=True)}" '
+            f'--safe-links {self.parent.plan.workdir} {self._ssh_guest()}:/')
 
     def pull(self):
         """ Pull workdir from guest """
         self.debug(f"Pull workdir from guest '{self.guest}'.")
         self.run(
-            f'rsync -Rrze "{self._ssh_command(join=True)}" '
+            f'rsync -Rrz --links --safe-links '
+            f'-e "{self._ssh_command(join=True)}" '
             f'{self._ssh_guest()}:{self.parent.plan.workdir} /')
 
     def stop(self):

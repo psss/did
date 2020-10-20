@@ -80,7 +80,9 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         if directory:
             self.info('directory', directory, 'green')
             self.debug("Copy '{}' to '{}'.".format(directory, testdir))
-            shutil.copytree(directory, testdir)
+            shutil.copytree(
+                directory, testdir,
+                symlinks=True, ignore_dangling_symlinks=True)
         else:
             os.makedirs(testdir)
 
