@@ -292,13 +292,16 @@ class GuestMinute(tmt.Guest):
         self.debug("Check for available 1MT images.")
         _, images = run_openstack(
             self.api_url, 'image list -f value -c Name', True)
+        _, released = run_openstack(
+            self.api_url, 'image list -f value -c Name --tag released', False)
         images = images.splitlines()
+        released = released.splitlines()
 
         # Use the latest Fedora image
         if image_lower == 'fedora':
             fedora_re = re.compile(r'1MT-Fedora-(?P<ver>\d+)')
             fedora_images = [
-                image for image in images if fedora_re.match(image)]
+                image for image in released if fedora_re.match(image)]
             mt_image = sorted(fedora_images)[-1]
 
         # Fedora shortened names
@@ -311,14 +314,19 @@ class GuestMinute(tmt.Guest):
         if rhel_match:
             rhel_re = re.compile(r'1MT-RHEL-*{}'.format(
                 re.escape(rhel_match.group('ver'))))
-            # Remove obsolete and invalid images
-            invalid_re = re.compile(r'(new|obsolete|invalid|fips)$')
             rhel_images = [
-                image for image in images
-                if rhel_re.match(image) and not invalid_re.search(image)]
+                image for image in released if rhel_re.match(image)]
+
+            # No such released image, try choosing from the whole set
+            if not rhel_images:
+                # Remove obsolete and invalid images
+                invalid_re = re.compile(r'(new|obsolete|invalid|fips)$')
+                rhel_images = [
+                    image for image in images
+                    if rhel_re.match(image) and not invalid_re.search(image)]
 
             # Use the last image (newest RHEL)
-            mt_image = rhel_images[-1]
+            mt_image = rhel_images[-1] if rhel_images else None
 
         # CentOS shortened names
         centos_match = re.match(r'^centos-?(?P<ver>\d+)$', image_lower)
