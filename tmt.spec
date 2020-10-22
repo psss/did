@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.0
+Version: 1.1
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -158,6 +158,26 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Thu Oct 22 2020 Petr Šplíchal <psplicha@redhat.com> - 1.1-1
+- Convert adds extra-summary as well
+- Simplify test directory copy with enabled symlinks
+- Select latest minute image only from released images
+- Allow specifying exact RHEL version using a short name
+- Preserve symlinks during discover, pull and push
+- Always run Login plugin even if step is done
+- Suggest some useful aliases for common use cases
+- Correct type of Tier attribute in examples
+- Define basic hardware environment specification
+- Import manual data for automated tests
+- Tag tests which can be run under container/virtual
+- Give hints to install provision plugins [fix #405]
+- Handle nicely missing library metadata [fix #397]
+- Update the test data directory name in the spec
+- Extend duration for tests using virtualization
+- Use a better name for the test data path method
+- Provide aggregated test metadata for execution
+- Send warnings to stderr, introduce a fail() method
+
 * Wed Oct 07 2020 Petr Šplíchal <psplicha@redhat.com> - 1.0-1
 - Correctly handle framework for new plans and tests
 - Move runtest.sh adjustments into a single function
