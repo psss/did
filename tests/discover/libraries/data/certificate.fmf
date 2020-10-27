@@ -60,3 +60,8 @@ path: /
         summary: Repository with no fmf metadata
         require:
           - url: https://github.com/psss/try
+    /reference:
+        summary: Requested reference does not exist
+        require:
+          - url: https://github.com/beakerlib/epel
+            ref: weird

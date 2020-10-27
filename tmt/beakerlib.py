@@ -134,12 +134,21 @@ class Library(object):
                 if self.format == 'rpm':
                     self.parent.debug(f"Repository '{self.url}' not found.")
                     raise LibraryError
-                self.parent.info(
-                    f"Failed to fetch library '{self}' from '{self.url}'.",
-                    color='red')
+                self.parent.fail(
+                    f"Failed to fetch library '{self}' from '{self.url}'.")
                 raise
-            self.parent.run(
-                ['git', 'checkout', self.ref], shell=False, cwd=directory)
+            # Check out the requested branch (master by default)
+            try:
+                self.parent.run(
+                    ['git', 'checkout', self.ref], shell=False, cwd=directory)
+            except tmt.utils.RunError as error:
+                # Fallback to install during the prepare step if in rpm format
+                if self.format == 'rpm':
+                    self.parent.debug(f"Invalid reference '{self.ref}'.")
+                    raise LibraryError
+                self.parent.fail(
+                    f"Reference '{self.ref}' for library '{self}' not found.")
+                raise
             # Initialize metadata tree, add self into the library index
             self.tree = fmf.Tree(directory)
             self.parent._library_cache[self.repo] = self

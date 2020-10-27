@@ -43,6 +43,8 @@ rlJournalStart
         rlAssertGrep 'dnf install.*openssl/wrong' $tmp/output
         rlRun "$tmt missing/metadata 2>&1 | tee $tmp/output" 2
         rlAssertGrep 'Repository .* does not contain fmf metadata.' $tmp/output
+        rlRun "$tmt missing/reference 2>&1 | tee $tmp/output" 2
+        rlAssertGrep 'Reference .* not found.' $tmp/output
     rlPhaseEnd
 
     rlPhaseStartCleanup

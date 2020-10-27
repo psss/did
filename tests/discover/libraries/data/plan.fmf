@@ -54,3 +54,7 @@ execute:
             summary: "Missing metadata"
             discover+:
                 test: missing/metadata
+        /reference:
+            summary: "Missing reference"
+            discover+:
+                test: missing/reference
