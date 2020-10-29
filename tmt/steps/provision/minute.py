@@ -39,7 +39,12 @@ def run_openstack(url, cmd, cached_list=False):
     # is unfortunately necessary here for the plugin to work.
     requests.packages.urllib3.disable_warnings(
         category=urllib3.exceptions.InsecureRequestWarning)
-    response = retry_session().post(url, verify=False, data=data)
+    try:
+        response = retry_session().post(url, verify=False, data=data)
+    except requests.exceptions.ConnectionError:
+        raise tmt.utils.ProvisionError(
+            "The minute API is currently unavailable. Please check your "
+            "connection or try again later")
     if response.ok:
         # The output is in the form of: <stdout>\n<exit>\n.
         split = response.text.rsplit('\n', 2)
@@ -173,7 +178,11 @@ class GuestMinute(tmt.Guest):
         self.debug("Check the network IP availability.")
         _, networks = run_openstack(
             self.api_url, 'ip availability list -f json')
-        networks = json.loads(networks)
+        try:
+            networks = json.loads(networks)
+        except json.decoder.JSONDecodeError:
+            raise tmt.utils.ProvisionError(
+                "Failed to decode network data from minute API.")
         networks = [
             network for network in networks
             if re.match(NETWORK_NAME_RE, network['Network Name'])]
