@@ -14,7 +14,7 @@ rlJournalStart
 
     rlPhaseStartTest "Require a missing package"
         rlRun "tmt run plan --name missing | tee output" 2
-        rlAssertGrep 'package forest is not installed' output
+        rlAssertGrep 'Unable to find a match: forest' output
     rlPhaseEnd
 
     rlPhaseStartCleanup

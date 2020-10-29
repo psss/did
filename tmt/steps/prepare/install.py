@@ -199,9 +199,19 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
 
         # Install from repositories
         if repo_packages:
-            summary = fmf.utils.listed(repo_packages, max=3)
-            self.info('package', summary, 'green')
+            # Show a brief summary by default
+            if not self.opt('verbose'):
+                summary = fmf.utils.listed(repo_packages, max=3)
+                self.info('package', summary, 'green')
+            # Provide a full list of packages in verbose mode
+            else:
+                summary = fmf.utils.listed(repo_packages, 'package')
+                self.info('package', summary + ' requested', 'green')
+                for package in sorted(repo_packages):
+                    self.verbose(package, shift=1)
+            # Quote package names and install
             packages = ' '.join(
-                [tmt.utils.quote(package) for package in packages])
+                [tmt.utils.quote(package) for package in repo_packages])
             guest.execute(
-                f'rpm -q {packages} || {command} install -y {packages}')
+                f'{command} --cacheonly install -y {packages} || '
+                f'{command} install -y {packages}')
