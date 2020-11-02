@@ -220,7 +220,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             metadata_filename = self.data_path(
                 test, filename='metadata.yaml', full=True, create=True)
             self.write(
-                metadata_filename, test.export(keys=['name'] + test._keys))
+                metadata_filename, tmt.utils.dict_to_yaml(test._metadata))
         return tests
 
     def check_shell(self, test):

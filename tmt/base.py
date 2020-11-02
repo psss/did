@@ -253,6 +253,12 @@ class Test(Node):
         self._check('enabled', expected=bool, default=True)
         self._check('result', expected=str, default='respect')
 
+        # Store original metadata with applied defaults and including
+        # keys which are not defined in the L1 metadata specification
+        self._metadata = self.node.data.copy()
+        self._metadata.update(self.export(format_='dict'))
+        self._metadata['name'] = self.name
+
     @staticmethod
     def overview(tree):
         """ Show overview of available tests """
