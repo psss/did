@@ -118,6 +118,10 @@ def export_to_nitrate(test, create, general):
     nitrate_case.time = test.duration
     echo(style('estimated time: ', fg='green') + test.duration)
 
+    # Manual
+    nitrate_case.automated = not test.manual
+    echo(style('manual: ', fg='green') + str(test.manual))
+
     # Status
     current_status = nitrate_case.status
     # Enable enabled tests
