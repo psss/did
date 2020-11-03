@@ -84,7 +84,7 @@ class Config(object):
         # Read the config only once (unless explicitly provided)
         if self.parser is not None and config is None and path is None:
             return
-        Config.parser = configparser.ConfigParser()
+        Config.parser = configparser.ConfigParser(interpolation=None)
         # If config provided as string, parse it directly
         if config is not None:
             log.info("Inspecting config file from string")
