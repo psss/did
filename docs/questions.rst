@@ -16,12 +16,15 @@ Make sure the ``libvirtd`` is running on your box::
 
 Add your user account to the libvirt group::
 
-    sudo usermod -a -G libvirt $(whoami)
-    newgrp libvirt
+    sudo usermod -a -G libvirt $USER
 
 Note that you might need to restart your desktop session to get it
-fully working. In some cases you might also need to activate the
-default network device::
+fully working. Or at least start a new login shell::
+
+    su - $USER
+
+In some cases you might also need to activate the default network
+device::
 
     sudo virsh net-start default
 
