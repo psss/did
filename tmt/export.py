@@ -120,7 +120,7 @@ def export_to_nitrate(test, create, general):
 
     # Manual
     nitrate_case.automated = not test.manual
-    echo(style('manual: ', fg='green') + str(test.manual))
+    echo(style('automated: ', fg='green') + ['auto', 'manual'][test.manual])
 
     # Status
     current_status = nitrate_case.status
