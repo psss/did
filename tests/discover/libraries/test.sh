@@ -47,6 +47,11 @@ rlJournalStart
         rlAssertGrep 'Reference .* not found.' $tmp/output
     rlPhaseEnd
 
+    rlPhaseStartTest "Deep"
+        rlRun "$tmt file 2>&1 | tee $tmp/output"
+        rlAssertGrep 'the library is stored deep.' $tmp/output
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
         rlRun "rm -r $tmp" 0 "Removing tmp directory"

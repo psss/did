@@ -167,6 +167,22 @@ class Library(object):
         self.require = tmt.utils.listify(library.get('require', []))
         self.recommend = tmt.utils.listify(library.get('recommend', []))
 
+        # Create a symlink if the library is deep in the structure
+        # FIXME: hot fix for https://github.com/beakerlib/beakerlib/pull/72
+        # Covers also cases when library is stored more than 2 levels deep
+        if os.path.dirname(self.name).lstrip('/'):
+            link = self.name.lstrip('/')
+            path = os.path.join(self.tree.root, os.path.basename(self.name))
+            self.parent.debug(
+                f"Create a '{link}' symlink as the library is stored "
+                f"deep in the directory structure.")
+            try:
+                os.symlink(link, path)
+            except OSError as error:
+                self.parent.warn(
+                    f"Unable to create a '{link}' symlink "
+                    f"for a deep library ({error}).")
+
 
 def dependencies(original_require, original_recommend=None, parent=None):
     """

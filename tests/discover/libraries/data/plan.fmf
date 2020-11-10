@@ -5,6 +5,11 @@ provision:
 execute:
     how: beakerlib.tmt
 
+/file:
+    summary: "Simple test for the file command"
+    discover+:
+        test: file
+
 /apache:
     summary: "Apache test (library requires another library)"
     discover+:
