@@ -1,0 +1,4 @@
+summary: Basic check for the story priority
+description:
+    Verify that the priority key is available, correctly displayed
+    in `tmt story show` and that it can be used for filtering.

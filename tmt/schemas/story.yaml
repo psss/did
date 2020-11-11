@@ -43,9 +43,10 @@ properties:
   priority:
     type: string
     enum:
-      - could
-      - should
-      - must
+      - must have
+      - could have
+      - should have
+      - will not have
 
   # https://tmt.readthedocs.io/en/stable/spec/stories.html#story
   story:

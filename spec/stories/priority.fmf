@@ -1,0 +1,48 @@
+summary:
+    User story priority
+
+story:
+    As a stakeholder I want to define priority for each user story
+    so that it's clear which user stories are essential and must
+    be implemented, which are important and which are desirable
+    but not necessary.
+
+description: |
+    All user stories are important, but they are prioritized to
+    deliver the greatest and most immediate benefits early. When
+    working on implementation developers should prioritize their
+    tasks to cover the most important features first.
+
+    The following four values based on the `MoSCoW method`__ are
+    supported:
+
+    must have
+        critical for the project success, must be delivered on
+        time in order to consider the implementation as successful
+
+    should have
+        important stories which need to be covered but are not as
+        time-critical and can be delivered later if there are not
+        enough resources
+
+    could have
+        desirable but not necessary and could improve the user
+        experience or customer satisfaction for a little
+        development cost
+
+    will not have
+        least-critical, lowest-payback items, not planned into the
+        current schedule, might be dropped or reconsidered for
+        inclusion in a later timebox
+
+    Should be a ``string`` with one of the above-mentioned values.
+
+    __ https://en.wikipedia.org/wiki/MoSCoW_method
+
+example: |
+    # This is an essential feature
+    priority: must have
+
+link:
+  - implemented-by: /tmp/base.py
+  - verified-by: /tests/story/priority

@@ -22,7 +22,7 @@ story:
         adjust:
           - enabled: False
             when: distro < fedora-28
-    priority: should
+    priority: should have
 
 /reference:
     summary:
@@ -39,7 +39,7 @@ story:
             url: https://github.com/teemtee/fmf
             ref: main
             name: /tests/basic/repo
-    priority: should
+    priority: should have
 
 /filter:
     /repo:
@@ -55,7 +55,7 @@ story:
         example: |
             tmt story ls --filter "url:https://gitlab/project"
             tmt story ls --filter "url:https://gitlab/project & ref:main name:/tests/smoke"
-        priority: should
+        priority: should have
 
     /tags:
         summary: Filtering based on test tags
@@ -68,6 +68,6 @@ story:
             tags.
         example: |
             tmt story ls --filter "tag:fast"
-        priority: should
+        priority: should have
         link:
           - implemented-by: /tmt/base.py

@@ -1044,6 +1044,7 @@ class Story(Core):
         'summary',
         'title',
         'story',
+        'priority',
         'description',
         'example',
         'enabled',

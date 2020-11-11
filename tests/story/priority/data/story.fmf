@@ -1,0 +1,20 @@
+story: As a user I need this and that.
+
+/essential:
+    summary: This is an essential story.
+    priority: must have
+
+/important:
+    summary: This is an important story.
+    priority: should have
+
+/useful:
+    summary: This feature would be useful.
+    priority: could have
+
+/drop:
+    summary: This feature was dropped for now.
+    priority: will not have
+
+/unknown:
+    summary: This story is not prioritized.

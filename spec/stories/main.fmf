@@ -28,4 +28,4 @@ example: |
       - implemented-by: /tmt/cli.py
       - documented-by: /tmt/cli.py
       - verified-by: /tests/core/dry
-    priority: must
+    priority: must have
