@@ -1,70 +1,72 @@
 story:
-    As a QE I want to document the test coverage,
-    so that it can be easily tracked which requirement
-    is covered by which test case and vice-versa.
+    As a tester I want to document the test coverage, so that it
+    can be easily tracked which user stories are covered by which
+    test case and vice-versa.
 
 /relevancy:
     summary:
         Story relevancy
     story:
-        As a product owner I want to connect requirements
-        with products or versions, so that I can filter out items
+        As a product owner I want to connect user stories with
+        products or versions, so that I can filter out items
         relevant (or not relevant) for a particular product.
     description:
-        Relevancy is an easy way to bind stories
-        to particular product(s). The same relevancy rules
-        as for tests should be also used for stories.
+        Relevancy is an easy way to bind stories to particular
+        product(s). The same relevancy rules as for tests should
+        be also used for stories.
     example: |
-        story:  As an admin I want product A doing B,
-                so that I can use it for C.
-        rule:
-            - enabled: False
-              when: distro < fedora-28
+        story:
+            As an admin I want product A doing B, so that I can
+            use it for C.
+        adjust:
+          - enabled: False
+            when: distro < fedora-28
     priority: should
 
-/reference-repo:
+/reference:
     summary:
         Referencing remote repositories
     story:
-        As a QE I want to reference not only local repositories,
-        so that requirements can be covered by tests cases
-        from a different repository.
+        As a tester I want to reference not only local objects,
+        so that user stories can be covered by test cases from a
+        different repository.
     description:
-        It should be possible to used full FMF Identifier
-        in the tested, implemented, documented story parameters.
+        It should be possible to use a full fmf identifier in the
+        :ref:`/spec/stories/tested`,
+        :ref:`/spec/stories/implemented` and
+        :ref:`/spec/stories/documented` story attributes.
     example: |
         tested:
-             url: https://github.com/psss/fmf
-             ref: master
-             name: /tests/basic/repo
+            url: https://github.com/psss/fmf
+            ref: master
+            name: /tests/basic/repo
     priority: should
 
 /filter:
     /repo:
         summary:
-            Filtering based on FMF identifiers
+            Filtering based on fmf identifiers
         story:
-            As a QE I want to filter based on reference
-            identifiers, so that I can learn where
-            the tests are implemented/maintained.
+            As a tester I want to filter based on reference
+            identifiers, so that I can learn where the tests are
+            implemented/maintained.
         description:
-            There should be an easy way to filter based
-            on FMF Identifiers.
+            There should be an easy way to filter based on fmf
+            identifiers.
         example: |
             tmt story ls --filter "url:https://gitlab/project"
-            tmt story ls --filter "url:https://gitlab/project \
-                            & ref:master name:/tests/smoke"
+            tmt story ls --filter "url:https://gitlab/project & ref:master name:/tests/smoke"
         priority: should
 
     /tags:
         summary: Filtering based on test tags
         story:
-            As a QE I want to filter requirements based
-            on the referenced tests tags, so that I can see what
-            coverage the requirements have.
+            As a tester I want to filter user stories based on the
+            referenced tests tags, so that I can see what coverage
+            the stories have.
         description:
-            There should be an easy way to filter based
-            on tests tags.
+            There should be an easy way to filter based on tests
+            tags.
         example: |
             tmt story ls --filter "tags:Tier1"
         priority: should

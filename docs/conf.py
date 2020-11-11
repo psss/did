@@ -260,6 +260,7 @@ areas = {
     '/stories/cli': 'Command Line',
     '/stories/api': 'API',
     '/stories/install': 'Installation',
+    '/stories/coverage': 'Coverage',
     '/spec/core': 'Core',
     '/spec/tests': 'Tests',
     '/spec/plans': 'Plans',

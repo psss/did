@@ -15,6 +15,7 @@ couple of examples demonstrating expected usage.
     stories/docs
     stories/cli
     stories/api
+    stories/coverage
 
 
 It is also possible to list and search stories directly from the
