@@ -316,8 +316,8 @@ Authors
 Petr Šplíchal, Miro Hrončok, Alexander Sosedkin, Lukáš Zachar,
 Petr Menšík, Leoš Pol, Miroslav Vadkerti, Pavel Valena, Jakub
 Heger, Honza Horák, Rachel Sibley, František Nečas, Michal
-Ruprich, Martin Kyral, Miloš Prchlík, Tomáš Navrátil and František
-Lachman.
+Ruprich, Martin Kyral, Miloš Prchlík, Tomáš Navrátil, František
+Lachman and Patrik Kis.
 
 
 Copyright
