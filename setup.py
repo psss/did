@@ -40,6 +40,7 @@ extras_require = {
     'tests': ['pytest', 'python-coveralls', 'mock'],
     'provision': ['testcloud'],
     'convert': ['nitrate'],
+    'report-html': ['jinja2'],
 }
 extras_require['all'] = [dependency
     for extra in extras_require.values()
