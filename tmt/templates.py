@@ -104,23 +104,23 @@ STORY = dict()
 
 STORY['mini'] = """
 story: As a user I want to do this and that.
-examples: One example is worth thousand words.
+example: One example is worth thousand words.
 """.lstrip()
 
 STORY['base'] = """
 summary:
-    Short description summarizing the story.
+    Short description summarizing the story
 story:
     As a user I want to do this and that
     so that I can achieve this.
-examples:
+example:
     - One example is worth thousand words.
     - Of course, there can be more than one.
 """.lstrip()
 
 STORY['full'] = """
 summary:
-    Short description summarizing the story.
+    Short description summarizing the story
 story:
     As a user I want to do this and that
     so that I can achieve this.
@@ -129,7 +129,7 @@ description:
     Usually spans across several paragraphs. It should not
     contain detailed examples. Those should be stored
     under the 'examples' attribute.
-examples:
+example:
     - One example is worth thousand words.
     - Of course, there can be more than one.
 """.lstrip()
