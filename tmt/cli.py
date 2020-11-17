@@ -130,20 +130,28 @@ def implemented_tested_documented(function):
 @click.option(
     '-r', '--root', metavar='PATH', show_default=True,
     help="Path to the tree root, '.' by default.")
+@click.option(
+    '-c', '--context', metavar='DATA', multiple='True',
+    help='Set the fmf context. Use KEY=VAL or KEY=VAL1,VAL2... format '
+         'to define individual dimensions or the @FILE notation to load data '
+         'from provided yaml file. Can be specified multiple times. ')
 @verbose_debug_quiet
-def main(context, root, **kwargs):
+def main(click_contex, root, context, **kwargs):
     """ Test Management Tool """
-    # Initialize metadata tree
-    root = root or os.curdir
-    tree = tmt.Tree(root)
-    tree._save_context(context)
-    context.obj = tmt.utils.Common()
-    context.obj.tree = tree
+    # Save click context and fmf context for future use
+    tmt.utils.Common._save_context(click_contex)
+    click_contex.obj = tmt.utils.Common()
+    click_contex.obj.fmf_context = tmt.utils.context_to_dict(context)
+
+    # Initialize metadata tree (from given path or current directory)
+    tree = tmt.Tree(root or os.curdir)
+    click_contex.obj.tree = tree
+
     # List of enabled steps
-    context.obj.steps = set()
+    click_contex.obj.steps = set()
 
     # Show overview of available tests, plans and stories
-    if context.invoked_subcommand is None:
+    if click_contex.invoked_subcommand is None:
         tmt.Test.overview(tree)
         tmt.Plan.overview(tree)
         tmt.Story.overview(tree)
@@ -248,10 +256,10 @@ def tests(context, **kwargs):
 
 @run.resultcallback()
 @click.pass_context
-def finito(context, commands, *args, **kwargs):
+def finito(click_context, commands, *args, **kwargs):
     """ Run tests if run defined """
-    if hasattr(context.obj, 'run'):
-        context.obj.run.go()
+    if hasattr(click_context.obj, 'run'):
+        click_context.obj.run.go()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Test

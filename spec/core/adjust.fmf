@@ -1,0 +1,62 @@
+summary: Adjust metadata based on the given context
+
+story:
+    As a user I want to adjust test, plan or story metadata
+    based on the given context such as product, distribution,
+    architecture or trigger.
+
+description: |
+    The ``adjust`` attribute allows to modify arbitrary object
+    metadata based on the context in which they are to be used.
+    For example tests may be relevant only for given environment,
+    the set of required packages may differ across distributions
+    or there might be a different set of plans executed for pull
+    requests versus for the full compose integration testing.
+
+    The value can be a dictionary or a list of dictionaries which
+    represent individual rules to be applied. Each rule contains
+    metadata to be merged into the original object. The following
+    three keys are reserved for rule evaluation:
+
+    when
+        The condition to be evaluated in order to decide if the
+        metadata should be merged. In the expression, you can use
+        any defined context :ref:`/spec/context/dimension`. See
+        the full `condition syntax`__ for details about supported
+        operators. This is a **required** key.
+
+    continue
+        By default, all provided rules are evaluated. When set to
+        ``false``, the first successful rule finishes the
+        evaluation and the rest is ignored.
+
+    because
+        An optional comment with justification of the adjustment.
+        Should be a plain string.
+
+    .. note::
+        This covers and extends the original concept of `Test Case
+        Relevancy`__ which is now obsoleted.
+
+    __ https://fmf.readthedocs.io/en/latest/context.html#syntax
+    __ https://docs.fedoraproject.org/en-US/ci/test-case-relevancy
+
+example: |
+    enabled: true
+    adjust:
+        enabled: false
+        when: distro ~< fedora-33
+        because: the feature was added in Fedora 33
+
+    require: procps-ng
+    adjust:
+      - require: procps
+        when: distro == centos-6
+
+    adjust:
+      - environment+:
+            SH: bash
+        when: component == bash
+        continue: true
+      - when: distro ~< centos-6
+        enabled: false

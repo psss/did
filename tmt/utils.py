@@ -135,6 +135,13 @@ class Common(object):
             return None
         return cls._context.params.get(option, default)
 
+    def _fmf_context(self):
+        """ Return the current fmf contex """
+        try:
+            return self._context.obj.fmf_context
+        except AttributeError:
+            return dict()
+
     def opt(self, option, default=None):
         """
         Get an option from the command line context
@@ -651,6 +658,21 @@ def environment_to_dict(variables):
                 _add_simple_var(result, var)
 
     return result
+
+
+def context_to_dict(context):
+    """
+    Convert command line context definition into a dictionary
+
+    Does the same as environment_to_dict() plus separates possible
+    comma-separated values into lists. Here's a couple of examples:
+
+    distro=fedora-33 ---> {'distro': ['fedora']}
+    arch=x86_64,ppc64 ---> {'arch': ['x86_64', 'ppc64']}
+    """
+    return {
+        key: value.split(',')
+        for key, value in environment_to_dict(context).items()}
 
 
 def dict_to_yaml(data, width=None, sort=False):

@@ -1,0 +1,38 @@
+summary: Definition of the trigger dimension
+
+story:
+    As a user I want to run a custom set of tests for
+    different events which trigger the testing.
+
+description: |
+    Testing can be triggered by various events and a different set
+    of tests is usually executed for each of them. The ``trigger``
+    dimension supports the following values:
+
+    code
+        Project source code has changed. This can be either a
+        pull/merge request or a new commit pushed to a branch.
+
+    build
+        There has been a new package built in koji or brew and is
+        available for testing.
+
+    update
+        A new bodhi update or errata advisory with one or more
+        builds has been created or updated.
+
+    compose
+        There is a new compose ready for integration testing.
+
+    This context dimension will usually be provided from the
+    command line.
+
+example: |
+    summary: Full test coverage (takes three days)
+    discover:
+        how: fmf
+    execute:
+        how: tmt
+    adjust:
+        enabled: false
+        when: trigger == code

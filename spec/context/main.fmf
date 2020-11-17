@@ -1,0 +1,34 @@
+summary: Definition of the environment context
+
+story:
+    As a user I want to define a context so that test, plan or
+    story metadata can be adjusted to it accordingly.
+
+description: |
+    This specification defines all standard context dimensions
+    which can be used together with the :ref:`/spec/core/adjust`
+    attribute to modify object metadata for particular context.
+    For a detailed description of the concept itself see the fmf
+    `context`__ documentation.
+
+    The context is usually defined from the command line using the
+    ``--context`` option. All dimensions are optional. It is
+    possible to define your own dimensions to describe the
+    context, just make sure the :ref:`/spec/context/dimension`
+    name does not conflict with reserved names.
+
+    Some of the context dimensions can be detected (e.g. distro
+    from the provision step config). Each plan can provide its own
+    :ref:`/spec/plans/context` which will override detected
+    values. Finally, the context definition provided directly on
+    the command line overrides detected and defined dimensions.
+
+    __ https://fmf.readthedocs.io/en/latest/context.html
+
+example: |
+    tmt --context distro=fedora-33 run
+    tmt --context product=rhscl run
+    tmt --context trigger=code run
+
+    tmt -c distro=fedora test show
+    tmt -c distro=fedora plan show

@@ -266,6 +266,7 @@ areas = {
     '/spec/plans': 'Plans',
     '/spec/steps': 'Steps',
     '/spec/stories': 'Stories',
+    '/spec/context': 'Context',
     }
 
 os.makedirs('stories', exist_ok=True)

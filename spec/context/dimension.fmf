@@ -1,0 +1,51 @@
+summary: Supported context dimensions
+
+story:
+    As a tester I want to clearly specify dimensions, such as
+    'distro' or 'trigger', so that I can well describe the
+    context in which a test is running.
+
+description: |
+    The following dimensions are reserved for storing dedicated
+    information as described below:
+
+    distro
+        The operating system distribution on which the application
+        runs (fedora, fedora-33, centos, centos-8, centos-8.4,
+        rhel, rhel-8, rhel-8.4).
+
+    variant
+        The distribution variant (Client, Desktop, Server
+        Workstation, Silverblue, CoreOS).
+
+    arch
+        The guest architecture (aarch64, armhfp, i386, ppc64,
+        ppc64le, s390x, x86_64).
+
+    component
+        Name of the relevant component, should match the source
+        package name (bash, php, httpd).
+
+    collection
+        The Red Hat Software Collection name (python27,
+        rh-python34, rh-mariadb100, httpd24).
+
+    module
+        Module name with an optional stream specification
+        (mariadb, mariadb:10.5, httpd, httpd:2.4, perl, perl:5.32,
+        ruby, ruby:2.7).
+
+    trigger
+        The event which triggered testing, see the
+        :ref:`/spec/context/trigger` section for the full list
+        of supported values.
+
+example: |
+    context:
+        distro: fedora-33
+        variant: Workstation
+        arch: x86_64
+
+    context:
+        product: rhscl
+        collection: httpd24

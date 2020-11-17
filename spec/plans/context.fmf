@@ -1,0 +1,33 @@
+summary: Definition of the test execution context
+
+story:
+    As a user I want to define the default context in which tests
+    included in given plan should be executed.
+
+description: |
+    Define the default context values for all tests executed under
+    the given plan. This overrides context values auto-detected
+    from the environment, such as ``distro``, ``variant`` or
+    ``arch`` but can overriden by context provided directly on the
+    command line. See the :ref:`/spec/context` definition for the
+    full list of supported context dimensions.
+
+example: |
+    summary:
+        Test basic functionality of the httpd24 collection
+    discover:
+        how: fmf
+    execute:
+        how: tmt
+    context:
+        collection: httpd24
+
+    summary:
+        Verify dash against the shared shell tests repository
+    discover:
+        how: fmf
+        url: https://src.fedoraproject.org/tests/shell
+    execute:
+        how: tmt
+    context:
+        component: dash

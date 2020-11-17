@@ -1,0 +1,15 @@
+/free:
+    test: free
+
+/uptime:
+    test: uptime
+    adjust:
+        duration: 1m
+        when: arch == ppc64
+
+/pidof:
+    test: pidof sh
+    adjust:
+        enabled: false
+        when: distro ~< centos-8
+        because: pidof is available in centos-8 and later

@@ -1,0 +1,31 @@
+discover:
+    how: fmf
+provision:
+    how: container
+prepare:
+    how: install
+    package: procps-ng
+execute:
+    how: tmt
+
+adjust:
+    prepare+:
+        package: procps
+    when: distro ~< centos-7
+    because: procps has been forked
+
+/fedora:
+    provision+:
+        image: fedora
+
+/centos-8:
+    provision+:
+        image: centos:8
+
+/centos-7:
+    provision+:
+        image: centos:7
+
+/centos-6:
+    provision+:
+        image: centos:6

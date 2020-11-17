@@ -393,6 +393,9 @@ class Plan(Node):
             (key, str(value)) for key, value
             in node.get('environment', dict()).items()])
 
+        # Test execution context defined in the plan
+        self._plan_context = self.node.get('context', dict())
+
     @property
     def environment(self):
         """ Return combined environment from plan data and command line """
@@ -402,6 +405,12 @@ class Plan(Node):
             return combined
         else:
             return self._environment
+
+    def _fmf_context(self):
+        """ Return combined context from plan data and command line """
+        combined = self._plan_context.copy()
+        combined.update(self._context.obj.fmf_context)
+        return combined
 
     @staticmethod
     def edit_template(content):
@@ -498,6 +507,9 @@ class Plan(Node):
         if self.environment:
             echo(tmt.utils.format(
                 'environment', self.environment, key_color='blue'))
+        if self._fmf_context():
+            echo(tmt.utils.format(
+                'context', self._fmf_context(), key_color='blue'))
         if self.opt('verbose'):
             self._sources()
 
@@ -527,6 +539,7 @@ class Plan(Node):
         # Additional debug info like plan environment
         self.debug('info', color='cyan', shift=0, level=3)
         self.debug('environment', self.environment, 'magenta', level=3)
+        self.debug('context', self._fmf_context(), 'magenta', level=3)
 
         # Wake up all steps
         self.debug('wake', color='cyan', shift=0, level=2)
@@ -700,10 +713,17 @@ class Story(Node):
 class Tree(tmt.utils.Common):
     """ Test Metadata Tree """
 
-    def __init__(self, path='.', tree=None):
+    def __init__(self, path='.', tree=None, context=None):
         """ Initialize tmt tree from directory path or given fmf tree """
         self._path = path
         self._tree = tree
+        self._custom_context = context
+
+    def _fmf_context(self):
+        """ Use custom fmf context if provided, default otherwise """
+        if self._custom_context is not None:
+            return self._custom_context
+        return super()._fmf_context()
 
     @property
     def tree(self):
@@ -717,6 +737,8 @@ class Tree(tmt.utils.Common):
                     f"Use 'tmt init' to get started.")
             except fmf.utils.FileError as error:
                 raise tmt.utils.GeneralError(f"Invalid yaml syntax: {error}")
+            # Adjust metadata for current fmf context
+            self._tree.adjust(fmf.context.Context(**self._fmf_context()))
         return self._tree
 
     @property

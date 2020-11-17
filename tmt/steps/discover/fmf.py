@@ -153,7 +153,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if self.opt('dry'):
             self._tests = []
             return
-        self._tests = tmt.Tree(tree_path).tests(filters=filters, names=names)
+        tree = tmt.Tree(path=tree_path, context=self.step.plan._fmf_context())
+        self._tests = tree.tests(filters=filters, names=names)
 
         # Prefix tests and handle library requires
         for test in self._tests:

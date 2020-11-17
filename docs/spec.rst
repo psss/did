@@ -35,7 +35,7 @@ Level 2
     :ref:`/spec/steps/provision` the environment for testing and
     how to :ref:`/spec/steps/prepare` it or which frameworks
     should be used to :ref:`/spec/steps/execute` tests relevant
-    for given :ref:`/spec/plans/artifact`.
+    for given :ref:`/spec/plans/context`.
 
 Level 3
     User :ref:`/spec/stories` can be used to define expected
@@ -52,3 +52,4 @@ Level 3
     spec/plans
     spec/steps
     spec/stories
+    spec/context
