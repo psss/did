@@ -532,8 +532,11 @@ def adjust_runtest(path):
     if not os.path.exists(path):
         return
 
-    # Remove sourcing of rhts-environment.sh
+    # Remove sourcing of rhts-environment.sh and update beakerlib path
     rhts_line = '. /usr/bin/rhts-environment.sh'
+    old_beakerlib_path1 = '. /usr/lib/beakerlib/beakerlib.sh'
+    old_beakerlib_path2 = '. /usr/share/rhts-library/rhtslib.sh'
+    new_beakerlib_path = '. /usr/share/beakerlib/beakerlib.sh || exit 1\n'
     try:
         with open(path, 'r+') as runtest:
             lines = runtest.readlines()
@@ -543,6 +546,12 @@ def adjust_runtest(path):
                     echo(style(
                         "Removing sourcing of 'rhts-environment.sh' "
                         "from 'runtest.sh'.", fg='magenta'))
+                elif (old_beakerlib_path1 in line
+                        or old_beakerlib_path2 in line):
+                    runtest.write(new_beakerlib_path)
+                    echo(style(
+                        "Replacing old beakerlib path with new one "
+                        "in 'runtest.sh'.", fg='magenta'))
                 else:
                     runtest.write(line)
             runtest.truncate()

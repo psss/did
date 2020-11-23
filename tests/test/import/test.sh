@@ -27,6 +27,13 @@ rlJournalStart
         rlAssertNotGrep 'rhts-environment' 'runtest.sh'
     rlPhaseEnd
 
+    rlPhaseStartTest 'Check beakerlib path update'
+        rlAssertGrep 'Replacing old beakerlib path' 'output'
+        rlAssertGrep '/usr/share/beakerlib/beakerlib.sh' 'runtest.sh'
+        rlAssertNotGrep '/usr/lib/beakerlib/beakerlib.sh' 'runtest.sh'
+        rlAssertNotGrep '/usr/share/rhts-library/rhtslib.sh' 'runtest.sh'
+    rlPhaseEnd
+
     rlPhaseStartTest 'Verify inheritance'
         rlRun 'tmt test show | tee output'
         rlAssertGrep 'component tmt' 'output'
