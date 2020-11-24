@@ -273,11 +273,12 @@ def read(path, makefile, nitrate, purpose, disabled):
         except AttributeError:
             pass
         # Environment
-        env_vars = re.findall(r'^Environment:\s*(.*)', testinfo, re.M)
-        if env_vars:
+        variables = re.findall(r'^Environment:\s*(.*)', testinfo, re.M)
+        if variables:
             data['environment'] = {}
-            for var in env_vars:
-                data['environment'].update({var.split('=')[0]: var.split('=')[1]})
+            for variable in variables:
+                key, value = variable.split('=', maxsplit=1)
+                data['environment'][key] = value
             echo(style('environment:', fg='green'))
             echo(pprint.pformat(data['environment']))
         # RhtsRequires (optional) goes to require

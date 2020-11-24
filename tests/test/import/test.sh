@@ -45,6 +45,7 @@ rlJournalStart
         rlRun 'tmt test show | tee output'
         rlAssertGrep 'AVC_ERROR: +no_avc_check' 'output'
         rlAssertGrep 'TEST: one two three' 'output'
+        rlAssertGrep 'CONTEXT: distro=fedora' 'output'
     rlPhaseEnd
 
     rlPhaseStartCleanup
