@@ -3,6 +3,7 @@ import os.path
 
 import click
 import jinja2
+import webbrowser
 
 import tmt
 
@@ -105,25 +106,13 @@ class ReportHTML(tmt.steps.report.ReportPlugin):
         if not self.opt('open'):
             return
 
-        # Open target using xdg-open
+        # Open target in webbrowser
         try:
-            self.run(f"xdg-open {target}")
-            self.info('open', 'xdg-open', color='green')
-            return
-        except tmt.utils.RunError:
-            self.debug(f"Open via 'xdg-open' not successful.")
+            if webbrowser.open(f"file://{target}",new=0):
+                self.info('open', 'Successfully opened in the webbrowser', color='green')
+                return
+        except Exception as error:
+            self.debug(f"Failed to open webbrowser, exception was: {error}")
 
-        # Fallback to the $BROWSER variable
-        try:
-            browser = os.environ.get('BROWSER')
-            if not browser:
-                browser = 'unset'
-                raise tmt.utils.ReportError(
-                    "Environment variable $BROWSER not defined.")
-            self.run(f"{browser} {target}")
-            self.info('open', browser, color='green')
-            return
-        except tmt.utils.GeneralError:
-            self.debug(f"Open via $BROWSER '{browser}' not successful.")
-            self.fail("Unable to open browser, xdg-open nor $BROWSER worked.")
-            raise
+        self.fail("Unable to open browser")
+        raise tmt.utils.ReportError("Unable to open browser")
