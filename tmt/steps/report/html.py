@@ -108,11 +108,13 @@ class ReportHTML(tmt.steps.report.ReportPlugin):
 
         # Open target in webbrowser
         try:
-            if webbrowser.open(f"file://{target}",new=0):
-                self.info('open', 'Successfully opened in the webbrowser', color='green')
+            if webbrowser.open(f"file://{target}", new=0):
+                self.info(
+                    'open', 'Successfully opened in the web browser.',
+                    color='green')
                 return
+            self.fail(f"Failed to open the web browser.")
         except Exception as error:
-            self.debug(f"Failed to open webbrowser, exception was: {error}")
+            self.fail(f"Failed to open the web browser: {error}")
 
-        self.fail("Unable to open browser")
-        raise tmt.utils.ReportError("Unable to open browser")
+        raise tmt.utils.ReportError("Unable to open the web browser.")
