@@ -12,6 +12,10 @@ path: /tests/discover
     test: ./references.sh
     tier: 2
 
+/modified-only:
+    summary: Check filtering for tests modified since a given ref
+    test: ./modified-only.sh
+
 /filtering:
     summary: Test selection by name and advanced filter
     test: ./filtering.sh

@@ -151,6 +151,8 @@ class Common(object):
         mode for all included plans and steps). Environment variables
         override command line options.
         """
+        # Translate dashes to underscores to match click's conversion
+        option = option.replace('-', '_')
         # Check the environment first
         if option == 'debug':
             try:
