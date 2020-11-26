@@ -26,7 +26,7 @@ tmt_TESTS_D='discover'
 tmt_TESTS_F="${tmt_TESTS_D}/run.yaml"
 
 tmt_LOG_D='execute'
-tmt_LOGOUT_F="out.log"
+tmt_LOGOUT_F="output.txt"
 tmt_LOGCODE_F="exitcode.log"
 tmt_JOURNAL_F="journal.txt"
 

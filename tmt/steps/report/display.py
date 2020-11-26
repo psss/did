@@ -1,6 +1,7 @@
 import os
 
 import tmt
+from tmt.steps.execute import TEST_OUTPUT_FILENAME
 
 class ReportDisplay(tmt.steps.report.ReportPlugin):
     """
@@ -17,7 +18,7 @@ class ReportDisplay(tmt.steps.report.ReportPlugin):
         """ Print result details based on the verbose mode """
         # -v prints just result + name
         # -vv prints path to logs
-        # -vvv prints also content of out.log
+        # -vvv prints also test output
         self.verbose(result.show(), shift=1)
         if verbosity == 1:
             return
@@ -27,8 +28,8 @@ class ReportDisplay(tmt.steps.report.ReportPlugin):
             full_path = os.path.join(self.step.plan.execute.workdir, log_file)
             # List path to logs (-vv and more)
             self.verbose(log_name, full_path, color='yellow', shift=2)
-            # Show content of out.log (-vvv and more)
-            if verbosity > 2 and log_name in ['out.log']:
+            # Show the whole test output (-vvv and more)
+            if verbosity > 2 and log_name == TEST_OUTPUT_FILENAME:
                 self.verbose(
                     'content', self.read(full_path), color='yellow', shift=2)
 

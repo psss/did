@@ -10,6 +10,9 @@ TEST_DATA = 'data'
 # Default test framework
 DEFAULT_FRAMEWORK = 'shell'
 
+# The main test output filename
+TEST_OUTPUT_FILENAME = 'output.txt'
+
 
 class Execute(tmt.steps.Step):
     """
@@ -226,7 +229,7 @@ class ExecutePlugin(tmt.steps.Plugin):
     def check_shell(self, test):
         """ Check result of a shell test """
         # Prepare the log path
-        data = {'log': self.data_path(test, 'out.log')}
+        data = {'log': self.data_path(test, TEST_OUTPUT_FILENAME)}
         # Process the exit code
         try:
             data['result'] = {0: 'pass', 1: 'fail'}[test.returncode]
@@ -241,7 +244,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         """ Check result of a beakerlib test """
         # Initialize data, prepare log paths
         data = {'result': 'error', 'log': []}
-        for log in ['out.log', 'journal.txt']:
+        for log in [TEST_OUTPUT_FILENAME, 'journal.txt']:
             if os.path.isfile(self.data_path(test, log, full=True)):
                 data['log'].append(self.data_path(test, log))
         # Check beakerlib log for the result

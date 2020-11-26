@@ -1,7 +1,9 @@
 import os
-import tmt
 import time
 import click
+
+import tmt
+from tmt.steps.execute import TEST_OUTPUT_FILENAME
 
 
 class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
@@ -85,7 +87,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 self.debug(f"Test duration '{test.duration}' exceeded.")
         end = time.time()
         self.write(
-            self.data_path(test, 'out.log', full=True), stdout or '', level=3)
+            self.data_path(test, TEST_OUTPUT_FILENAME, full=True),
+            stdout or '', level=3)
         duration = time.strftime("%H:%M:%S", time.gmtime(end - start))
         duration = click.style(duration, fg='cyan')
         shift = 1 if self.opt('verbose') < 2 else 2
