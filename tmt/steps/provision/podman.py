@@ -153,7 +153,7 @@ class GuestContainer(tmt.Guest):
 
     def execute(self, command, **kwargs):
         """ Execute given commands in podman via shell """
-        if not self.container:
+        if not self.container and not self.opt('dry'):
             raise tmt.utils.ProvisionError(
                 'Could not execute without provisioned container.')
 
@@ -175,7 +175,7 @@ class GuestContainer(tmt.Guest):
         command = directory + environment + command
         return self.podman(
             ['exec'] + interactive +
-            [self.container, 'sh', '-c', command], **kwargs)
+            [self.container or 'dry', 'sh', '-c', command], **kwargs)
 
     def push(self):
         """ Nothing to be done to push workdir """

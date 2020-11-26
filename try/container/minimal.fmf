@@ -1,0 +1,12 @@
+summary: Verify that the minimal package works
+prepare+:
+  - summary: Make sure tmt is present
+    name: present
+    how: install
+    package: tmt
+  - summary: No subpackages are installed
+    name: minimal
+    order: 90
+    script: dnf remove -y 'tmt-*' --exclude tmt
+execute:
+    script: cd $(mktemp -d) && tmt init -t full && tmt

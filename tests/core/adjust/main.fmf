@@ -1,3 +1,5 @@
 summary: Verify test/plan adjustments based on context
 test: ./test.sh
 framework: beakerlib
+tag-: [container]
+tier: 3
