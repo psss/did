@@ -83,12 +83,21 @@ Requires: make python3-nitrate python3-html2text
 %description test-convert
 Additional dependencies needed for test metadata import and export.
 
+%package report-html
+Summary: Report plugin with support for generating web pages
+Requires: python3-jinja2
+
+%description report-html
+Generate test results in the html format. Quickly review test
+output thanks to direct links to output logs.
+
 %package all
 Summary: Extra dependencies for the Test Management Tool
 Requires: tmt >= %{version}
 Requires: tmt-provision-container >= %{version}
 Requires: tmt-provision-virtual >= %{version}
 Requires: tmt-test-convert >= %{version}
+Requires: tmt-report-html >= %{version}
 
 %description all
 All extra dependencies of the Test Management Tool. Install this
@@ -143,12 +152,16 @@ export LANG=en_US.utf-8
 %{python3_sitelib}/%{name}-*.egg-info/
 %license LICENSE
 %exclude %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}{podman,testcloud}.*
+%exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}html.*
 
 %files provision-container
 %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}podman.*
 
 %files provision-virtual
 %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}testcloud.*
+
+%files report-html
+%{python3_sitelib}/%{name}/steps/report/{,__pycache__/}html.*
 
 %files test-convert
 %license LICENSE
