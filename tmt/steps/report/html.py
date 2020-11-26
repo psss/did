@@ -13,25 +13,83 @@ HTML_TEMPLATE = """
 <head>
     <title>Test results of {{ plan.name }}</title>
     <style>
+        body {
+            background: #eee;
+            padding: 3em;
+            font-family: sans-serif;
+            text-align: center;
+        }
+
+        div {
+            display: inline-block;
+            text-align: left;
+            background: white;
+            padding: 2em;
+            border-radius: 1ex;
+        }
+
+        a {
+            color: #29f;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            color: #aaa;
+            margin: 0ex 0ex 1ex 7px;
+        }
+
+        h2 {
+            color: #555;
+            margin: -1ex 0ex 1ex 7px;
+        }
+
+        table {
+            border-spacing: 7px;
+        }
+
+        td, th {
+            padding: 0.7ex 1em;
+        }
+
+        td {
+            background: #f8f8f8;
+            border-radius: 0.5ex;
+            word-spacing: 1ex;
+        }
+
+        td.result {
+            text-align: center;
+            text-shadow: 0px 0px 5px #555;
+            color: white;
+        }
+
         td.pass {
-            background: green;
+            background: #0a0;
         }
-        td.fail{
-            background: red;
+
+        td.fail {
+            background: #d30;
         }
+
         td.info {
-            background: blue;
+            background: #58d;
         }
+
         td.warn {
-            background: yellow;
+            background: #fc5;
         }
+
         td.error {
-            background: magenta;
+            background: #b4d;
         }
     </style>
 </head>
 <body>
-
+<div>
 <h1>{{ plan.name }}</h1>
 {% if plan.summary %}<h2>{{ plan.summary }}</h2>{% endif %}
 {% if results %}
@@ -58,6 +116,7 @@ HTML_TEMPLATE = """
 {% else %}
 <b>No test results found.</b>
 {% endif %}
+</div>
 </body>
 </html>
 """.strip()
