@@ -835,3 +835,47 @@ def init(context, path, template, force, **kwargs):
         tmt.Test.create('/tests/example', 'shell', tree, force)
         tmt.Plan.create('/plans/example', 'full', tree, force)
         tmt.Story.create('/stories/example', 'full', tree, force)
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Status
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+@main.command()
+@click.pass_context
+@click.argument('path', default=tmt.utils.WORKDIR_ROOT)
+@click.option(
+    '-i', '--id', help=
+    'Run id (name or directory path) to show status of.', metavar="ID")
+@click.option(
+    '--abandoned', is_flag=True, default=False,
+    help='List runs which have provision step completed but finish step '
+         'not yet done.')
+@click.option(
+    '--active', is_flag=True, default=False,
+    help='List runs where at least one of the enabled steps has not '
+         'been finished.')
+@click.option(
+    '--finished', is_flag=True, default=False,
+    help='List all runs which have all enabled steps completed.')
+@verbose_debug_quiet
+def status(context, path, abandoned, active, finished, **kwargs):
+    """
+    Show status of runs.
+
+    Lists past runs in the given directory filtered using options.
+    /var/tmp/tmt is used by default.
+
+    By default, status of the whole runs is listed. With more
+    verbosity (-v), status of every plan is shown. By default,
+    the last completed step is displayed, 'done' is used when
+    all enabled steps are completed. Status of every step is
+    displayed with the most verbosity (-vv).
+
+    """
+    if [abandoned, active, finished].count(True) > 1:
+        raise tmt.utils.GeneralError(
+            "Options --abandoned, --active and --finished cannot be "
+            "used together.")
+    if not os.path.exists(path):
+        raise tmt.utils.GeneralError(f"Path {path} doesn't exist.")
