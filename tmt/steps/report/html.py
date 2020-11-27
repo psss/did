@@ -2,7 +2,6 @@ import os
 import os.path
 
 import click
-import jinja2
 import webbrowser
 
 import tmt
@@ -121,6 +120,18 @@ HTML_TEMPLATE = """
 </html>
 """.strip()
 
+def import_jinja2():
+    """
+    Import jinja2 module only when needed
+
+    Until we have a separate package for each plugin.
+    """
+    global jinja2
+    try:
+        import jinja2
+    except ImportError:
+        raise tmt.utils.ReportError(
+            "Missing 'jinja2', fixable by 'pip install tmt[report-html]'")
 
 class ReportHTML(tmt.steps.report.ReportPlugin):
     """ Format test results into an html report """
@@ -140,6 +151,8 @@ class ReportHTML(tmt.steps.report.ReportPlugin):
     def go(self):
         """ Process results """
         super().go()
+
+        import_jinja2()
 
         # Prepare the template
         environment = jinja2.Environment()
