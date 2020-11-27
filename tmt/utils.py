@@ -200,10 +200,16 @@ class Common(object):
 
     def _log(self, message):
         """ Append provided message to the current log """
+        # Nothing to do if there is no workdir
         if self.workdir is None:
             return
-        with open(os.path.join(self.workdir, 'log.txt'), 'a') as log:
-            log.write(message + '\n')
+
+        # Store log only in the top parent
+        if self.parent:
+            self.parent._log(message)
+        else:
+            with open(os.path.join(self.workdir, 'log.txt'), 'a') as log:
+                log.write(remove_color(message) + '\n')
 
     def info(self, key, value=None, color=None, shift=0, err=False):
         """ Show a message unless in quiet mode """
@@ -922,6 +928,11 @@ def retry_session(retries=3, backoff_factor=0.1, method_whitelist=False,
     session.mount('http://', adapter)
     session.mount('https://', adapter)
     return session
+
+
+def remove_color(text):
+    """ Remove ansi color sequences from the string """
+    return re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', text)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
