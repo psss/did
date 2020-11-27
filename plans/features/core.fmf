@@ -1,0 +1,8 @@
+summary: Verify core functionality
+description:
+    Run smoke test, unit tests and check common options such as
+    --dry & --force, environment variables handling, exploring
+    tests and plans, presence of documentation. Usually fast.
+discover:
+    how: fmf
+    filter: 'tier: 0, 1'

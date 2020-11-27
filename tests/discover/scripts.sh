@@ -5,11 +5,12 @@
 rlJournalStart
     rlPhaseStartSetup
         rlRun 'set -o pipefail'
+        rlRun 'pushd data'
     rlPhaseEnd
 
-    plan='plan --name /plans/smoke'
+    plan='plan --name /smoke'
 
-    rlPhaseStartTest 'All steps'
+    rlPhaseStartTest 'Discover only'
         rlRun "tmt run discover $plan | tee output"
         rlAssertGrep '1 test selected' 'output'
     rlPhaseEnd
@@ -26,6 +27,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartCleanup
+        rlRun 'popd'
         rlRun 'rm -f output' 0 'Removing tmp file'
     rlPhaseEnd
 rlJournalEnd

@@ -1,0 +1,16 @@
+summary: Verify that the pip install works
+prepare:
+  - summary: Remove tmt if it is present
+    name: remove
+    script:
+      - rpm -q tmt && dnf remove -y tmt* || true
+  - summary: Install requirements
+    name: install
+    install:
+      package:
+      - gcc
+execute:
+    script:
+        - python3 -m venv /tmp/venv
+        - /tmp/venv/bin/pip install .
+        - /tmp/venv/bin/tmt --help

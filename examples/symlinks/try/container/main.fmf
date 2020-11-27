@@ -4,10 +4,6 @@ provision:
 #    image: fedora
 #    pull: false
 
-artifact:
-    - build
-    - update
-
 # Enable special container filter
 /core:
     discover+:

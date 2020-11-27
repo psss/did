@@ -1,0 +1,8 @@
+summary: Basic command line features
+description:
+    Wide set of tests that cover individual steps, commands
+    and features. These tests do not require virtualization,
+    their individual duration should not exceed 5 minutes.
+discover:
+    how: fmf
+    filter: 'tier: 2'

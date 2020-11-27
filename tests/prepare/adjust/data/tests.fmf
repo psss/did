@@ -1,0 +1,19 @@
+summary: Smoke test for yaml
+
+# Adjust test script (for both tests)
+test: python3 smoke.py
+adjust:
+  - test: python2 smoke.py
+    when: distro ~< centos-8
+
+# Test with a require
+/defined:
+    summary: This test defines required packages
+    require: [python3, python3-yaml]
+    adjust+:
+      - require: [python2, PyYAML]
+        when: distro ~< centos-8
+
+# Test without a require
+/without:
+    summary: This test does not require anything

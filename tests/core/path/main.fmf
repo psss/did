@@ -4,4 +4,4 @@ framework: shell
 require: python3-pytest
 
 # FIXME: Remove once cruncher is obsoleted
-tier: 3
+tag-: [cruncher]

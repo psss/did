@@ -14,14 +14,6 @@ adjust:
     when: distro ~< centos-7
     because: procps has been forked
 
-/fedora:
-    provision+:
-        image: fedora
-
-/centos-8:
-    provision+:
-        image: centos:8
-
 /centos-7:
     provision+:
         image: centos:7

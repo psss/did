@@ -6,8 +6,3 @@ description:
 discover:
     how: fmf
     filter: 'tier: 3'
-execute:
-    how: beakerlib.tmt
-artifact:
-    - build
-    - update

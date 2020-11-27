@@ -1,0 +1,6 @@
+# Virtual machine via testcloud
+provision:
+    how: virtual
+#    image: fedora
+#    memory: 2048
+#    disk: 10

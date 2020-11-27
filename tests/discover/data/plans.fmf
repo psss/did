@@ -1,6 +1,12 @@
 execute:
     how: shell
 
+/smoke:
+    provision:
+        how: local
+    execute:
+        script: tmt --help
+
 /fmf:
     /url:
         /ref:

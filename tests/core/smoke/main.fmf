@@ -1,0 +1,5 @@
+summary: Just a basic smoke test
+test: tmt --help
+framework: shell
+tag-: [cruncher]
+tier: 0

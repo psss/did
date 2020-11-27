@@ -1,10 +1,6 @@
-# Virtual machine via testcloud
+summary: Virtual machine via testcloud
 provision:
     how: virtual
 #    image: fedora
 #    memory: 2048
 #    disk: 10
-
-artifact:
-    - build
-    - update

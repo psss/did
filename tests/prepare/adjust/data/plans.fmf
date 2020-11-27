@@ -1,0 +1,21 @@
+discover:
+    how: fmf
+provision:
+    how: container
+execute:
+    how: tmt
+
+# Plan with a prepare step defined
+/defined:
+    summary: Prepare required package
+    prepare:
+        how: install
+        package: [python3, python3-yaml]
+    adjust:
+        prepare+:
+            package: [python2, PyYAML]
+        when: distro ~< centos-8
+
+# Plan with no prepare step defined
+/without:
+    summary: Do not prepare anything

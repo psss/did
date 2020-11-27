@@ -1,5 +1,5 @@
 summary: Various package installation options
 description:
     Make sure that special characters are correctly escaped.
-    Verify that installation from copr works for epel6 and epel7.
+    Verify that installation from copr works for epel7.
 test: ./test.sh

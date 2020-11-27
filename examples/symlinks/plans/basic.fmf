@@ -6,5 +6,3 @@ description:
 discover:
     how: fmf
     filter: 'tier: 1, 2'
-execute:
-    how: beakerlib.tmt

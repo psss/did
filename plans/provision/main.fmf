@@ -1,0 +1,4 @@
+# Select tests which can be run in a virtual machine
+discover:
+    how: fmf
+    filter: 'tag: virtual & tier:1'

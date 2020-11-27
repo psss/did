@@ -1,0 +1,7 @@
+summary: Connect to a running guest
+provision:
+    how: connect
+    guest: my.test.box
+#    key: /home/psss/.ssh/1minutetip_rsa
+#    user: root
+#    password: secret

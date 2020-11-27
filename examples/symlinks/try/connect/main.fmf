@@ -5,7 +5,3 @@ provision:
 #    key: /home/psss/.ssh/1minutetip_rsa
 #    user: root
 #    password: secret
-
-artifact:
-    - build
-    - update

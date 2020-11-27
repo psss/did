@@ -1,0 +1,8 @@
+summary: Run tests in a container
+discover:
+    how: fmf
+    filter: 'tag: container & tier: 1'
+provision:
+    how: container
+#    image: fedora
+#    pull: false

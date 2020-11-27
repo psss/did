@@ -1,0 +1,10 @@
+summary: Python unit tests
+description:
+    Run all available python unit tests using pytest.
+test: python3 -m pytest
+framework: shell
+require:
+  - python3-pytest
+  - python3-mock
+tier: 0
+tag-: [cruncher]

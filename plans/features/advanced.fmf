@@ -1,0 +1,8 @@
+summary: Advanced tests using virtualization
+description:
+    Tests covering more advanced scenarios, quite often using a
+    container or a virtual machine to verify that package
+    installation works as expected. These can take some time.
+discover:
+    how: fmf
+    filter: 'tier: 3'

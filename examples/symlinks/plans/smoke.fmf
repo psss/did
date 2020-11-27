@@ -4,5 +4,4 @@ description:
     to enable at least a very basic testing of your component
     in the CI the following two lines should be just enough.
 execute:
-    how: shell.tmt
     script: tmt --help

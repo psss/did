@@ -12,8 +12,3 @@ prepare+:
     package:
         - python3-pytest
         - python3-mock
-execute:
-    how: shell.tmt
-artifact:
-    - build
-    - update
