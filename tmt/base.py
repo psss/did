@@ -1085,6 +1085,155 @@ class Run(tmt.utils.Common):
         self.finish()
 
 
+class Status(tmt.utils.Common):
+    """ Status of tmt work directories. """
+
+    LONGEST_STEP = max(tmt.steps.STEPS, key=lambda k: len(k))
+    FIRST_COL_LEN = len(LONGEST_STEP) + 2
+
+    @staticmethod
+    def get_overall_plan_status(plan):
+        """ Examines the plan status (find the last done step) """
+        steps = list(plan.steps())
+        step_names = list(plan.steps(names=True))
+        for i in range(len(steps) - 1, -1, -1):
+            if steps[i].status() == 'done':
+                if i + 1 == len(steps):
+                    # Last enabled step, consider the whole plan done
+                    return 'done'
+                else:
+                    return step_names[i]
+        return 'todo'
+
+    def plan_matches_filters(self, plan):
+        """ Check if the given plan matches filters from the command line """
+        if self.opt('abandoned'):
+            return plan.provision.status() ==\
+                   'done' and plan.finish.status() == 'todo'
+        if self.opt('active'):
+            return any(step.status() == 'todo' for step in plan.steps())
+        if self.opt('finished'):
+            return all(step.status() == 'done' for step in plan.steps())
+        return True
+
+    @staticmethod
+    def colorize_column(content):
+        """ Add color to a status column """
+        if 'done' in content:
+            return style(content, fg='green')
+        else:
+            return style(content, fg='yellow')
+
+    @classmethod
+    def pad_with_spaces(cls, string):
+        """ Append spaces to string to properly align the first column """
+        return string + (cls.FIRST_COL_LEN - len(string)) * ' '
+
+    def run_matches_filters(self, run):
+        """ Check if the given run matches filters from the command line """
+        if self.opt('abandoned') or self.opt('active'):
+            # Any of the plans must be abandoned/active for the whole
+            # run to be abandoned/active
+            return any(self.plan_matches_filters(p) for p in run.plans)
+        if self.opt('finished'):
+            # All plans must be finished for the whole run to be finished
+            return all(self.plan_matches_filters(p) for p in run.plans)
+        return True
+
+    def print_run_status(self, run):
+        """ Display the overall status of the run """
+        if not self.run_matches_filters(run):
+            return
+        # Find the earliest step in all plans' status
+        earliest_step_index = len(tmt.steps.STEPS)
+        for plan in run.plans:
+            plan_status = self.get_overall_plan_status(plan)
+            if plan_status == 'done':
+                continue
+            elif plan_status == 'todo':
+                # If plan has no steps done, consider the whole run not done
+                earliest_step_index = -1
+                break
+            plan_status_index = tmt.steps.STEPS.index(plan_status)
+            if plan_status_index < earliest_step_index:
+                earliest_step_index = plan_status_index
+
+        if earliest_step_index == len(tmt.steps.STEPS):
+            run_status = 'done'
+        elif earliest_step_index == -1:
+            run_status = 'todo'
+        else:
+            run_status = tmt.steps.STEPS[earliest_step_index]
+        run_status = self.colorize_column(self.pad_with_spaces(run_status))
+        echo(run_status, nl=False)
+        echo(run.workdir)
+
+    def print_plans_status(self, run):
+        """ Display the status of each plan of the given run """
+        for plan in run.plans:
+            if self.plan_matches_filters(plan):
+                plan_status = self.get_overall_plan_status(plan)
+                echo(self.colorize_column(self.pad_with_spaces(plan_status)),
+                     nl=False)
+                echo(f'{run.workdir}  {plan.name}')
+
+    def print_verbose_status(self, run):
+        """ Display the status of each step of the given run """
+        for plan in run.plans:
+            if self.plan_matches_filters(plan):
+                for step in plan.steps(disabled=True):
+                    column = step.status() + ' '
+                    echo(self.colorize_column(column), nl=False)
+                echo(f' {run.workdir}  {plan.name}')
+
+    def process_run(self, run):
+        """ Display the status of the given run based on verbosity """
+        try:
+            run.load()
+        except tmt.utils.GeneralError as error:
+            self.warn(f'Failed to check {run.workdir} ({error}).')
+            return
+        for plan in run.plans:
+            for step in plan.steps(disabled=True):
+                step.load()
+        if self.opt('verbose') == 0:
+            self.print_run_status(run)
+        elif self.opt('verbose') == 1:
+            self.print_plans_status(run)
+        else:
+            self.print_verbose_status(run)
+
+    def print_header(self):
+        """ Print the header of the status table based on verbosity """
+        header = ''
+        if self.opt('verbose') >= 2:
+            for step in tmt.steps.STEPS:
+                header += (step[0:4] + ' ')
+            header += ' '
+        else:
+            header = self.pad_with_spaces('status')
+        header += 'id'
+        echo(style(header, fg='blue'))
+
+    def show(self):
+        """ Display the current status """
+        # Prepare absolute workdir path if --id was used
+        id_ = self.opt('id')
+        path = self.opt('path')
+        if id_ and '/' not in id_:
+            id_ = os.path.join(path, id_)
+        self.print_header()
+        for filename in os.listdir(path):
+            abs_path = os.path.join(path, filename)
+            invalid_id = id_ and abs_path != id_
+            invalid_run = not os.path.exists(
+                os.path.join(abs_path, 'run.yaml'))
+            if not os.path.isdir(abs_path) or invalid_id or invalid_run:
+                continue
+            run = Run(abs_path, self._context.obj.tree, self._context)
+            self.process_run(run)
+
+
 class Result(object):
     """
     Test result

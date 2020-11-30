@@ -879,3 +879,5 @@ def status(context, path, abandoned, active, finished, **kwargs):
             "used together.")
     if not os.path.exists(path):
         raise tmt.utils.GeneralError(f"Path {path} doesn't exist.")
+    status_obj = tmt.Status(context=context)
+    status_obj.show()
