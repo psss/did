@@ -426,6 +426,15 @@ def read_nitrate(beaker_task, common_data, disabled):
                 case['environment'] = common_data['environment'].copy()
                 case['environment'].update(case_environment)
 
+    # Merge description from PURPOSE with header/footer from Nitrate notes
+    for testcase in individual_data:
+        if 'description' in common_data:
+            testcase['description'] = common_data['description'] + \
+                testcase['description']
+
+    if 'description' in common_data:
+        common_data.pop('description')
+
     # Find common data from individual test cases
     common_candidates = dict()
     histogram = dict()
@@ -529,6 +538,10 @@ def read_nitrate_case(testcase):
             echo(pprint.pformat(data['adjust']))
     except tmt.utils.StructuredFieldError:
         pass
+
+    # Header and footer from notes
+    data['description'] = field.header() + field.footer()
+
     # Extras: [pepa] and [hardware]
     try:
         extra_pepa = field.get('pepa')
