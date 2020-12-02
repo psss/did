@@ -1,0 +1,6 @@
+summary: Verify the old Makefile features
+description:
+    Check whether the old beakerlib functions which depend on
+    the Makefile metadata work with the new metadata.yaml file.
+test: ./test.sh
+framework: beakerlib
