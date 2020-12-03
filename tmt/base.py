@@ -573,6 +573,7 @@ class Story(Node):
     # Supported attributes (listed in display order)
     _keys = [
         'summary',
+        'title',
         'story',
         'description',
         'example',
@@ -679,7 +680,10 @@ class Story(Node):
         # Title and its anchor
         if title:
             depth = len(re.findall('/', self.name)) - 1
-            title = re.sub('.*/', '', self.name)
+            if self.title:
+                title = self.title
+            else:
+                title = re.sub('.*/', '', self.name)
             output += f'\n.. _{self.name}:\n'
             output += '\n{}\n{}\n'.format(title, '=~^:-><'[depth] * len(title))
 

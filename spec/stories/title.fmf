@@ -1,0 +1,11 @@
+summary:
+    User prefered title
+
+description:
+    Sometimes one wants to use their prefered title
+    instead of story's name in the documention.
+
+example: |
+    title: Nice title
+
+implemented: /tmt/base
