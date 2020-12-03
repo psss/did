@@ -3,4 +3,4 @@ discover:
 provision:
     how: local
 execute:
-    how: shell.tmt
+    how: tmt

@@ -8,7 +8,7 @@ prepare:
     playbooks:
         - ci/rhel-8.yml
 execute:
-    how: beakerlib
+    how: tmt
 
 # Individual plans
 /pull-request/smoke:

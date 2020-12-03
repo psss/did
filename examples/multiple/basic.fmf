@@ -24,4 +24,4 @@ prepare:
     name: services
     script: systemctl start service
 execute:
-    how: beakerlib
+    how: tmt

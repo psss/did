@@ -430,7 +430,7 @@ inheritance to prevent unnecessary duplication of the data::
         how: ansible
         playbooks: ansible/packages.yml
     execute:
-        how: beakerlib
+        how: tmt
 
     /basic:
         summary: Quick set of basic functionality tests
@@ -648,10 +648,7 @@ steps for all discovered test plans are executed::
 
 Even if there are no :ref:`/spec/plans` defined it is still
 possible to execute tests and custom scripts. See the default
-:ref:`/stories/cli/run/default/plan` story for details. For
-example, in order to run beakerlib tests you could do this::
-
-    tmt run -a execute -h beakerlib
+:ref:`/stories/cli/run/default/plan` story for details.
 
 Dry run mode is enabled with the ``--dry`` option::
 
@@ -720,6 +717,9 @@ Run only a subset of available tests across all plans::
             tests: 0 tests selected
         ...
 
+To run only tests defined in the current working directory::
+
+    $ tmt run test --name .
 
 Select Steps
 ------------------------------------------------------------------

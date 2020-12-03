@@ -34,7 +34,7 @@ __ https://docs.fedoraproject.org/en-US/quick-docs/getting-started-with-virtuali
 __ https://kojipkgs.fedoraproject.org/compose/
 
 
-Package Cache
+Container Package Cache
 ------------------------------------------------------------------
 
 Using containers can speed up your testing. However, fetching

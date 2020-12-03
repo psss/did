@@ -1,7 +1,7 @@
 summary:
     Demonstrate various test discover options
 execute:
-    how: beakerlib
+    how: tmt
 provision:
     how: local
 

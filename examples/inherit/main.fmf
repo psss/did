@@ -5,7 +5,7 @@ prepare:
     how: ansible
     playbooks: ansible/packages.yml
 execute:
-    how: beakerlib
+    how: tmt
 
 /basic:
     summary: Quick set of basic functionality tests

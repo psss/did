@@ -3,7 +3,7 @@ discover:
 provision:
     how: container
 execute:
-    how: beakerlib.tmt
+    how: tmt
 
 /file:
     summary: "Simple test for the file command"

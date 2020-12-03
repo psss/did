@@ -110,7 +110,7 @@ description: |
     tested:
       - /tests/execute/framework
 
-/shell:
+/script:
     summary: Execute shell scripts
     story: As a user I want to easily run shell script as a test.
     description:
@@ -135,6 +135,7 @@ description: |
 
     /simple:
         summary: Simple use case should be super simple to write
+        title: Simplest usage
         description: |
             As the `how` keyword can be omitted when using the
             default executor you can just define the shell
@@ -144,8 +145,9 @@ description: |
             execute:
                 script: tmt --help
 
-    /multi:
+    /several:
         summary: Multiple shell commands
+        title: Multiple commands
         description:
             You can also include several commands as a list.
             Executor will run commands one-by-one and check exit
@@ -158,8 +160,9 @@ description: |
                     - echo foo > /var/www/html/index.html
                     - curl http://localhost/ | grep foo
 
-    /script:
+    /multi:
         summary: Multi-line shell script
+        title: Multi-line script
         description:
             Providing a multi-line shell script is also supported.
             In that case executor will store given script into a
