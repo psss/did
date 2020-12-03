@@ -54,7 +54,7 @@ except AttributeError:
 #  Convert
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def read_manual(plan_id, case_id, disabled):
+def read_manual(plan_id, case_id, disabled, with_script):
     """
     Reads metadata of manual test cases from Nitrate
     """
@@ -89,6 +89,11 @@ def read_manual(plan_id, case_id, disabled):
     for case_id in case_ids:
         testcase = nitrate.TestCase(case_id)
         if testcase.status.name != 'CONFIRMED' and not disabled:
+            log.debug(
+                testcase.identifier + ' skipped (testcase is not CONFIRMED).')
+            continue
+        if testcase.script is not None and not with_script:
+            log.debug(testcase.identifier + ' skipped (script is not empty).')
             continue
 
         # Filename sanitization

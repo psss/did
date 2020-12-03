@@ -395,11 +395,14 @@ def create(context, name, template, force, **kwargs):
 @click.option(
     '--case', metavar='CASE',
     help='Identifier of manual test case to be imported.')
+@click.option(
+    '--with-script', default=False, is_flag=True,
+    help='Import manual cases with non-empty script field in Nitrate.')
 @verbose_debug_quiet
 @force_dry
 def import_(
         context, paths, makefile, nitrate, purpose, disabled, manual, plan,
-        case, **kwargs):
+        case, with_script, **kwargs):
     """
     Import old test metadata into the new fmf format.
 
@@ -420,7 +423,7 @@ def import_(
             raise tmt.utils.GeneralError(
                 "Option --case or --plan is mandatory when using --manual.")
         else:
-            tmt.convert.read_manual(plan, case, disabled)
+            tmt.convert.read_manual(plan, case, disabled, with_script)
             return 0
 
     if not paths:
