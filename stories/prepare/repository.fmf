@@ -1,0 +1,13 @@
+summary:
+    Add artifact repository for installation.
+story:
+    As a CI system I want to be able to add a repository with high priority
+    from which all subsequent packages will be installed, updated, downgraded
+    or reinstalled.
+description:
+    In case of Fedora CI we want the packages to be from the artifact repository
+    which the CI system provides. Due to support of dist-git pull requests we need to support
+    cases when the artifact repository contains packages with lower or the same version,
+    which is quite common in case of scratch builds.
+example: |
+    tmt run -a prepare -h repository --order 1 --base-url file:///repository --priority 999 plan --name some-plan
