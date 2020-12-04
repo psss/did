@@ -1,0 +1,14 @@
+summary:
+    Install a minimal set of freshly built required packages
+story:
+    As a developer who has just built fresh rpms in given local
+    directory I want to prepare the guest the minimal set of
+    required packages.
+description:
+    After building new rpm packages locally there should be an
+    easy way to install on the guest only those packages which are
+    actually required by tests or are explicitly requested in the
+    prepare step.
+example: |
+    make rpm
+    tmt run plan --name install/minimal
