@@ -2,6 +2,27 @@
     Questions
 ======================
 
+.. _fmf-and-tmt:
+
+What is the difference between fmf and tmt?
+------------------------------------------------------------------
+
+The `Flexible Metadata Format`__ or ``fmf`` is a plain text format
+based on ``yaml`` used to store data in both human and machine
+readable way close to the source code. Thanks to inheritance and
+elasticity, metadata are organized in the structure efficiently,
+preventing unnecessary duplication.
+
+__ https://fmf.readthedocs.io/en/latest/
+
+The `Test Management Tool`__ or ``tmt`` is a project which
+consists of the :ref:`specification` which defines how tests,
+plans and stories are organized, python modules implementing the
+specification and the command-line tool which provides a
+user-friendly way to create, debug and easily run tests.
+
+__ https://tmt.readthedocs.io/en/latest/
+
 
 Virtualization Tips
 ------------------------------------------------------------------
