@@ -135,7 +135,7 @@ description: |
 
     /simple:
         summary: Simple use case should be super simple to write
-        title: Simplest usage
+        title: The simplest usage
         description: |
             As the `how` keyword can be omitted when using the
             default executor you can just define the shell

@@ -2,6 +2,7 @@ summary: A simple test for the Apache web server
 description:
     Requires a library which requires another library.
 test: ./apache.sh
+framework: beakerlib
 path: /
 require:
   - wget

@@ -680,10 +680,7 @@ class Story(Node):
         # Title and its anchor
         if title:
             depth = len(re.findall('/', self.name)) - 1
-            if self.title:
-                title = self.title
-            else:
-                title = re.sub('.*/', '', self.name)
+            title = self.title or re.sub('.*/', '', self.name)
             output += f'\n.. _{self.name}:\n'
             output += '\n{}\n{}\n'.format(title, '=~^:-><'[depth] * len(title))
 

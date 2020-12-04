@@ -1,9 +1,16 @@
 summary:
-    User prefered title
+    Title to be used when generating documentation
+
+story:
+    As a story writer I want to specify a title which should be
+    used when generating online documentation from user stories.
 
 description:
-    Sometimes one wants to use their prefered title
-    instead of story's name in the documention.
+    When converting user stories into the reStructuredText format
+    in order to render content into online documentation it is
+    sometimes useful to provide a custom user story title rather
+    then using the story name which can be too short to describe
+    well the section content.
 
 example: |
     title: Nice title
