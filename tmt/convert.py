@@ -17,6 +17,14 @@ import os
 
 log = fmf.utils.Logging('tmt').logger
 
+
+# Test case relevancy regular expressions
+RELEVANCY_COMMENT =  r"^([^#]*)#\s*(.+)$"
+RELEVANCY_RULE = r"^([^:]+)\s*:\s*(.+)$"
+RELEVANCY_EXPRESSION = (
+    r"^\s*(.*?)\s*(!?contains|!?defined|[=<>!]+)\s*(.*?)\s*$")
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  YAML
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -516,9 +524,9 @@ def read_nitrate_case(testcase):
     try:
         relevancy = field.get('relevancy')
         if relevancy:
-            data['relevancy'] = relevancy
-            echo(style('relevancy:', fg='green'))
-            echo(data['relevancy'].rstrip('\n'))
+            data['adjust'] = relevancy_to_adjust(relevancy)
+            echo(style('adjust:', fg='green'))
+            echo(pprint.pformat(data['adjust']))
     except tmt.utils.StructuredFieldError:
         pass
     # Extras: [pepa] and [hardware]
@@ -587,7 +595,7 @@ def write(path, data):
     """ Write gathered metadata in the fmf format """
     # Put keys into a reasonable order
     extra_keys = [
-        'extra-nitrate',
+        'adjust', 'extra-nitrate',
         'extra-summary', 'extra-task',
         'extra-hardware', 'extra-pepa']
     sorted_data = dict()
@@ -604,3 +612,85 @@ def write(path, data):
         raise ConvertError("Unable to write '{0}'".format(path))
     echo(style(
         "Metadata successfully stored into '{0}'.".format(path), fg='magenta'))
+
+
+def relevancy_to_adjust(relevancy):
+    """
+    Convert the old test case relevancy into adjust rules
+
+    Expects a string or list of strings with relevancy rules.
+    Returns a list of dictionaries with adjust rules.
+    """
+    rules = list()
+    rule = dict()
+    if isinstance(relevancy, list):
+        relevancy = '\n'.join(str(line) for line in relevancy)
+
+    for line in re.split(r'\s*\n\s*', relevancy.strip()):
+        # Extract possible comments
+        try:
+            line, rule['because'] = re.search(RELEVANCY_COMMENT, line).groups()
+        except Exception:
+            pass
+
+        # Nothing to do with empty lines
+        if not line:
+            continue
+
+        # Split rule
+        try:
+            condition, decision = re.search(RELEVANCY_RULE, line).groups()
+        except Exception:
+            raise tmt.utils.ConvertError(
+                f"Invalid test case relevancy rule '{line}'.")
+
+        # Handle the decision
+        if decision.lower() == 'false':
+            rule['enabled'] = False
+        else:
+            try:
+                rule['environment'] = tmt.utils.shell_to_dict(decision)
+            except tmt.utils.GeneralError:
+                raise tmt.utils.ConvertError(
+                    f"Invalid test case relevancy decision '{decision}'.")
+
+        # Adjust condition syntax
+        expressions = list()
+        for expression in re.split(r'\s*&&?\s*', condition):
+            try:
+                left, operator, right = re.match(
+                    RELEVANCY_EXPRESSION, expression).groups()
+            except Exception:
+                raise tmt.utils.ConvertError(
+                    f"Invalid test case relevancy expression '{expression}'.")
+            # Always use double == for equality comparison
+            if operator == '=':
+                operator = '=='
+            # Basic operators
+            if operator in ['==', '!=', '<', '<=', '>', '>=']:
+                # Use the special comparison for product and distro
+                if left in ['distro', 'product']:
+                    operator = '~' + ('=' if operator == '==' else operator)
+            # Special operators
+            else:
+                try:
+                    operator = {
+                        'contains': '==',
+                        '!contains': '!=',
+                        'defined': 'is defined',
+                        '!defined': 'is not defined',
+                        }[operator]
+                except KeyError:
+                    raise tmt.utils.ConvertError(
+                        f"Invalid test case relevancy operator '{operator}'.")
+            # Join 'left operator right' with spaces
+            expressions.append(
+                ' '.join([item for item in [left, operator, right] if item]))
+
+        # Finish the rule definition
+        rule['when'] = ' and '.join(expressions)
+        rule['continue'] = False
+        rules.append(rule)
+        rule = dict()
+
+    return rules

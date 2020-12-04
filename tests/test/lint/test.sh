@@ -4,26 +4,51 @@
 
 rlJournalStart
     rlPhaseStartSetup
-        rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory"
-        rlRun "pushd $tmp"
+        rlRun "tmp=\$(mktemp -d)" 0 "Create tmp directory"
+        rlRun "cp -a data $tmp"
+        rlRun "pushd $tmp/data"
         rlRun "set -o pipefail"
-        rlRun "tmt init"
-        rlRun "tmt test create --template beakerlib test"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Perfect"
+        rlRun "tmt test lint perfect | tee output"
+        rlAssertGrep 'pass' output
+        rlAssertNotGrep 'warn' output
+        rlAssertNotGrep 'fail' output
     rlPhaseEnd
 
     rlPhaseStartTest "Good"
-        rlRun "tmt test lint"
+        rlRun "tmt test lint good | tee output"
+        rlAssertGrep 'pass' output
+        rlAssertGrep 'warn' output
+        rlAssertNotGrep 'fail' output
     rlPhaseEnd
 
     rlPhaseStartTest "Bad"
-        # Remove the test script path
-        rlRun "sed -i 's/test:.*/test:/' test/main.fmf"
-        rlRun "tmt test lint | tee output" 1
+        rlRun "tmt test lint bad | tee output" 1
         rlAssertGrep 'fail test script must be defined' output
+        rlRun "tmt test lint relevancy | tee output" 1
+        rlAssertGrep 'fail relevancy has been obsoleted' output
+        # There should be no change without --fix
+        for format in list text; do
+            rlAssertGrep 'relevancy' "relevancy-$format.fmf"
+            rlAssertNotGrep 'adjust:' "relevancy-$format.fmf"
+        done
+    rlPhaseEnd
+
+    rlPhaseStartTest "Fix"
+        # With --fix relevancy should be converted
+        rlRun "tmt test lint --fix relevancy | tee output"
+        rlAssertGrep 'relevancy converted into adjust' output
+        for format in list text; do
+            rlAssertNotGrep 'relevancy' "relevancy-$format.fmf"
+            rlAssertGrep 'adjust:' "relevancy-$format.fmf"
+            rlAssertGrep 'when: distro ~= rhel' "relevancy-$format.fmf"
+        done
     rlPhaseEnd
 
     rlPhaseStartCleanup
         rlRun "popd"
-        rlRun "rm -r $tmp" 0 "Removing tmp directory"
+        rlRun "rm -r $tmp" 0 "Remove tmp directory"
     rlPhaseEnd
 rlJournalEnd

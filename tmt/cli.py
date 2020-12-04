@@ -335,6 +335,9 @@ def show(context, **kwargs):
 @tests.command()
 @click.pass_context
 @name_filter_condition
+@click.option(
+    '-f', '--fix', is_flag=True,
+    help='Attempt to fix all discovered issues.')
 @verbose_debug_quiet
 def lint(context, **kwargs):
     """

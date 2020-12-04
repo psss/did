@@ -185,7 +185,6 @@ class Test(Node):
         # Filtering attributes
         'tag',
         'tier',
-        'relevancy',
         ]
 
     def __init__(self, data, name=None):
@@ -313,13 +312,31 @@ class Test(Node):
         Return whether the test is valid.
         """
         self.ls()
+        valid = self.test is not None and self.path is not None
+
+        # Check test, path and summary
         echo(verdict(self.test is not None, 'test script must be defined'))
         echo(verdict(self.path is not None, 'directory path must be defined'))
         if self.summary is None:
             echo(verdict(2, 'summary is very useful for quick inspection'))
         elif len(self.summary) > 50:
             echo(verdict(2, 'summary should not exceed 50 characters'))
-        return self.test is not None and self.path is not None
+
+        # Check for possible test case relevancy rules
+        filename = self.node.sources[-1]
+        metadata = tmt.utils.yaml_to_dict(self.read(filename))
+        relevancy = metadata.pop('relevancy', None)
+        if relevancy:
+            # Convert into adjust rules if --fix enabled
+            if self.opt('fix'):
+                metadata['adjust'] = tmt.convert.relevancy_to_adjust(relevancy)
+                self.write(filename, tmt.utils.dict_to_yaml(metadata))
+                echo(verdict(2, 'relevancy converted into adjust'))
+            else:
+                echo(verdict(0, 'relevancy has been obsoleted by adjust'))
+                valid = False
+
+        return valid
 
     def export(
             self, format_='yaml', keys=None, create=False, general=False):
