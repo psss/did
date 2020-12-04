@@ -1,0 +1,12 @@
+summary:
+    Install a minimal set of packages available
+story:
+    As a tester who uses VM or container with relevant repositories enabled
+    and whose packages are not part of the default installation I want to
+    prepare the guest with the minimal set of required packages.
+description:
+    Only packages which are actually required by tests or are explicitly
+    requested in the prepare step are installed. This allows to test
+    the installation itself and also verify functionality without hidden requires.
+example: |
+    tmt run plan --name install/dependencies
