@@ -1,0 +1,32 @@
+summary:
+    Install all packages from a given source
+story:
+    As a developer I would like to install all packages from a given source.
+    In case of execution from CI, I want all packages from a given Koji build
+    to be installed, even if they have same or lower NVR. In case of COPR
+    repository, I want all packages from a given repository to be installed,
+    in the latest version available in the given repository. In case of
+    already existing repository, I want to install all packages from the given
+    repository.
+description:
+    I don't have conflicting subpackages in my repository, or I'm excluding
+    packages explicitly to solve those conflicts. All installation conflicts
+    abort the installation and fail the run. If no packages are found
+    the install fails as well. In case of CI, I want to be able override
+    default behaviour, and install all packages instead.
+example: |
+    /plan/install-all-copr:
+        prepare:
+        - how: install-all
+          copr: psss/tmt
+
+    /plan/install-all-repository:
+        prepare:
+        - how: install-all
+          repository: my-enabled-repo
+
+    /plan/install-all-ci:
+        prepare:
+        - how: install-all
+
+    tmt run -a prepare -h install-all -D my_packages/
