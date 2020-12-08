@@ -62,3 +62,6 @@ example: |
         enabled: false
 
 implemented: /tmt/base
+tested:
+  - /tests/core/adjust
+  - /tests/prepare/adjust

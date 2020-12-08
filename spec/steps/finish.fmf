@@ -8,6 +8,6 @@ description:
 example: |
     finish:
         how: shell
-        command: upload-logs.sh
+        script: upload-logs.sh
 
 implemented: /tmt/steps/finish/shell
