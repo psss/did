@@ -60,3 +60,5 @@ example: |
         continue: true
       - when: distro ~< centos-6
         enabled: false
+
+implemented: /tmt/base

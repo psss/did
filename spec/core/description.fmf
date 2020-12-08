@@ -5,3 +5,5 @@ description:
     the object. Usually spans across several paragraphs. For
     detailed examples using a dedicated attributes 'examples'
     should be considered.
+
+implemented: /tmt/base

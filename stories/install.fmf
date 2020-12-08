@@ -7,3 +7,5 @@ story: As a Fedora user I want to easily install tmt on my system.
 /all:
     summary: Install tmt with all available plugins and dependencies
     example: dnf install tmt-all
+
+implemented: tmt.spec

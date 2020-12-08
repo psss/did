@@ -9,3 +9,5 @@ example: |
     finish:
         how: shell
         command: upload-logs.sh
+
+implemented: /tmt/steps/finish/shell
