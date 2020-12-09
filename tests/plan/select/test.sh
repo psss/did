@@ -38,7 +38,7 @@ rlJournalStart
             rlRun "$tmt plan $name core | tee $output"
             rlAssertGrep "^/plans/features/core" $output
             rlAssertNotGrep "^/plans/features/basic" $output
-            rlRun "$tmt plan $name non-existent | tee $output" 2
+            rlRun "$tmt plan $name non-existent 2>&1 | tee $output" 2
             rlAssertGrep "No plans found." $output
         rlPhaseEnd
     done

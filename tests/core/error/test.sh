@@ -3,19 +3,18 @@
 
 rlJournalStart
     rlPhaseStartSetup
-        rlRun "TmpDir=\$(mktemp -d)" 0 "Creating tmp directory"
-        rlRun "pushd $TmpDir"
-        rlRun "set -o pipefail"
+        rlRun "tmp=\$(mktemp -d)" 0 "Create tmp directory"
+        rlRun "pushd $tmp"
     rlPhaseEnd
 
-    rlPhaseStartTest "plan errors"
+    rlPhaseStartTest "Test error output"
         rlRun "tmt plan ls 2>output" 2 "tmt plan ls without metadata"
         rlRun "cat output"
-        rlRun "grep \"No metadata found in the '.' directory. Use 'tmt init' to get started.\" output"
+        rlAssertGrep "No metadata found" output
     rlPhaseEnd
 
     rlPhaseStartCleanup
-        rlRun "rm -rf output $run" 0 "Remove run directory"
         rlRun "popd"
+        rlRun "rm -rf $tmp" 0 "Remove tmp directory"
     rlPhaseEnd
 rlJournalEnd
