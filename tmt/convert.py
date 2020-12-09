@@ -533,6 +533,9 @@ def read_nitrate_case(testcase):
     # Status
     data['enabled'] = testcase.status.name == "CONFIRMED"
     echo(style('enabled: ', fg='green') + str(data['enabled']))
+    # Set manual attribute to manual tests only
+    if not testcase.automated:
+        data['manual'] = True
     # Relevancy
     field = tmt.utils.StructuredField(testcase.notes)
     try:
