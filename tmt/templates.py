@@ -36,7 +36,7 @@ TEST['beakerlib'] = r"""
 
 rlJournalStart
     rlPhaseStartSetup
-        rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory"
+        rlRun "tmp=\$(mktemp -d)" 0 "Create tmp directory"
         rlRun "pushd $tmp"
         rlRun "set -o pipefail"
     rlPhaseEnd
@@ -48,7 +48,7 @@ rlJournalStart
 
     rlPhaseStartCleanup
         rlRun "popd"
-        rlRun "rm -r $tmp" 0 "Removing tmp directory"
+        rlRun "rm -r $tmp" 0 "Remove tmp directory"
     rlPhaseEnd
 rlJournalEnd
 """.lstrip()
