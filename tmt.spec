@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.1
+Version: 1.2
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -171,6 +171,55 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Wed Dec 09 2020 Petr Šplíchal <psplicha@redhat.com> - 1.2-1
+- Minor adjustment of the beakerlib test template
+- Adjust the new test checking the error output
+- Print errors to stderr
+- Fix check for selecting plans during tmt run
+- Update test coverage, fix finish step example
+- Update spec/stories implementation coverage
+- Skip import of manual cases with script
+- Import header and footer from Nitrate
+- Implement conversion between relevancy and adjust
+- Support short options for selecting tests & plans
+- Document the display and html report in the spec
+- Explain the difference between fmf and tmt
+- Fix the last missing framework in library tests
+- Adjust the docs update and title implementation
+- Implement a new story attribute 'title' (L3)
+- Small documentation cleanup
+- Simplify plan setup, move old plans to examples
+- Store the whole debug log in the top run directory
+- Add test for pip installability
+- Add a new plan to cover minimal installation
+- Move html report plugin into a separate subpackage
+- Use 'output.txt' filename for the main test output
+- Update required fmf version in setup.py
+- Improve the css style for the html report
+- Fix blocking read in Common.run
+- Adjust a bit the improved html report
+- Improve report-html --open
+- Implement adjusting metadata based on the context
+- Adjust the new 'html' report method
+- New report --how html available
+- Adjust environment import from Makefile metadata
+- Import environment from Makefile metadata
+- Update old beakerlib paths during tmt test import
+- Adjust a little bit the user story templates
+- Support libraries stored deep in the repositories
+- Enable the new coverage stories section in docs
+- First stories to cover tests coverage mapping
+- Recommend using login shell in libvirt hints
+- Use nitrate naming for the manual field export
+- Export manual attribute to nitrate
+- Store complete initialized data in metadata.yaml
+- Merge the improved minute error messages [#425]
+- Adjust a bit the minute provision error messages
+- Handle testcloud problem with the images directory
+- Handle tracebacks in minute provision
+- Multiple enhancements for package preparation
+- Gracefully handle invalid library reference
+
 * Thu Oct 22 2020 Petr Šplíchal <psplicha@redhat.com> - 1.1-1
 - Convert adds extra-summary as well
 - Simplify test directory copy with enabled symlinks
