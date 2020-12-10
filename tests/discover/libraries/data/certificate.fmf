@@ -1,5 +1,4 @@
 test: ./certificate.sh
-framework: beakerlib
 path: /
 
 /rpm:
