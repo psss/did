@@ -107,7 +107,6 @@ attributes which are synchronized to corresponding nitrate fields:
 * duration — estimated time
 * enabled — status
 * environment — arguments
-* relevancy — relevancy in the structured field
 * summary — description in the structured field
 * tag — tags tab
 * tier — tags (e.g. ``1`` synced to the ``Tier1`` tag)

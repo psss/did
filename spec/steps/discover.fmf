@@ -30,8 +30,6 @@ description: |
             result: respect
             tag: [tag]
             tier: 1
-            relevancy: |
-                distro < rhel-8: False
 
         /test/two:
             summary: Short test summary.

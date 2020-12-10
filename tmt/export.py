@@ -153,7 +153,6 @@ def export_to_nitrate(test, create, general):
 
     # Mapping of structured field sections to fmf case attributes
     section_to_attr = {
-        'relevancy': test.relevancy,
         'description': test.summary,
         'purpose-file': test.description,
         'hardware': test.node.get('extra-hardware'),

@@ -540,7 +540,7 @@ def read_nitrate_case(testcase):
         if relevancy:
             data['adjust'] = relevancy_to_adjust(relevancy)
             echo(style('adjust:', fg='green'))
-            echo(pprint.pformat(data['adjust']))
+            echo(tmt.utils.dict_to_yaml(data['adjust']).strip())
     except tmt.utils.StructuredFieldError:
         pass
 

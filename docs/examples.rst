@@ -248,9 +248,14 @@ Example output of metadata conversion::
     tier: 3
     component: tmt
     enabled: True
-    relevancy:
-    distro = rhel-4, rhel-5: False
-    distro = rhel-6: False
+    adjust:
+      - enabled: false
+        when: distro ~= rhel-4, rhel-5
+        continue: false
+      - environment:
+            PHASES: novalgrind
+        when: arch == s390x
+        continue: false
     Metadata successfully stored into '/home/psss/git/tmt/examples/convert/main.fmf'.
 
 And here's the resulting ``main.fmf`` file::
@@ -279,9 +284,14 @@ And here's the resulting ``main.fmf`` file::
     - NoRHEL5
     - Tier3
     tier: '3'
-    relevancy: |
-        distro = rhel-4, rhel-5: False
-        distro = rhel-6: False
+    adjust:
+      - enabled: false
+        when: distro ~= rhel-4, rhel-5
+        continue: false
+      - environment:
+            PHASES: novalgrind
+        when: arch == s390x
+        continue: false
     extra-summary: tmt convert test
     extra-task: /tmt/smoke
     extra-nitrate: TC#0603489
@@ -307,7 +317,6 @@ directory::
     status: CONFIRMED
     arguments: TEXT='Text with spaces' X=1 Y=2 Z=3
     Structured Field:
-    relevancy: distro = rhel-4, rhel-5: False
     distro = rhel-6: False
     description: Simple smoke test
     purpose-file: Just run 'tmt --help' to make sure the binary is sane.

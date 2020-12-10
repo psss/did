@@ -76,7 +76,6 @@ story: 'As a user I want to comfortably work with tests'
             * enabled — status
             * environment — arguments
             * path — not synced
-            * relevancy — relevancy in the structured field
             * result — not synced
             * summary — description in the structured field
             * tag — tags tab
