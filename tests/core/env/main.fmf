@@ -1,6 +1,7 @@
 summary: Check environment variables handling
 description:
-    Verify that variables are correctly handled to tests. Also
+    Verify that variables are correctly handed to tests. Also
     check that L2 metadata override L1 metadata and variables
     provided as command line options (including variables loaded
-    from a YAML file) override all.
+    from a YAML file) override all. Ensure that environment
+    variables have the desired effect.

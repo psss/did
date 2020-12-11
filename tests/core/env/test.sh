@@ -8,6 +8,13 @@ rlJournalStart
         rlRun 'set -o pipefail'
     rlPhaseEnd
 
+    rlPhaseStartTest "Check the TMT_DEBUG variable"
+        rlRun "TMT_DEBUG=3 tmt plan show | tee output"
+        rlAssertGrep "Using the 'DiscoverFmf' plugin" 'output'
+        rlRun "TMT_DEBUG=weird tmt plan show 2>&1 | tee output" 2
+        rlAssertGrep "Invalid debug level" 'output'
+    rlPhaseEnd
+
     for execute in 'shell.detach' 'shell.tmt'; do
         tmt="tmt run -avvv execute --how $execute"
 

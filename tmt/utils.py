@@ -148,8 +148,20 @@ class Common(object):
 
         Checks also parent options. For flags (boolean values) parent's
         True wins over child's False (e.g. run --verbose enables verbose
-        mode for all included plans and steps).
+        mode for all included plans and steps). Environment variables
+        override command line options.
         """
+        # Check the environment first
+        if option == 'debug':
+            try:
+                debug = os.environ['TMT_DEBUG']
+                return int(debug)
+            except ValueError:
+                raise GeneralError(
+                    f"Invalid debug level '{debug}', use an integer.")
+            except KeyError:
+                pass
+
         # Check local option
         local = default
         if self._context is not None:
