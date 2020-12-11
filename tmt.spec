@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.2
+Version: 1.2.1
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -171,6 +171,11 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Fri Dec 11 2020 Petr Šplíchal <psplicha@redhat.com> - 1.2.1-1
+- Manual state for manual nitrate tests
+- Define framework for all beakerlib libraries tests
+- Remove the remaining test case relevancy leftovers
+
 * Wed Dec 09 2020 Petr Šplíchal <psplicha@redhat.com> - 1.2-1
 - Minor adjustment of the beakerlib test template
 - Adjust the new test checking the error output
