@@ -60,8 +60,8 @@ def test_continue(mini):
 
 def test_condition(mini, full):
     """ Expressions conversion """
-    assert mini[0]['when'] == 'distro ~= fedora'
-    assert full[0]['when'] == 'distro ~< fedora-33'
+    assert mini[0]['when'] == 'distro == fedora'
+    assert full[0]['when'] == 'distro < fedora-33'
     assert full[1]['when'] == 'component == firefox and arch == ppc64'
     assert full[2]['when'] == 'arch == s390x'
     assert full[3]['when'] == 'collection == httpd24 and fips is defined'
@@ -73,25 +73,45 @@ def test_operators_basic():
     check('arch == s390x', 'arch == s390x')
     check('arch != s390x', 'arch != s390x')
 
-def test_operators_distro():
-    """ Special handling for distro """
-    check('distro = fedora', 'distro ~= fedora')
-    check('distro == fedora', 'distro ~= fedora')
-    check('distro != fedora', 'distro ~!= fedora')
-    check('distro < fedora-33', 'distro ~< fedora-33')
-    check('distro > fedora-33', 'distro ~> fedora-33')
-    check('distro <= fedora-33', 'distro ~<= fedora-33')
-    check('distro >= fedora-33', 'distro ~>= fedora-33')
+def test_operators_distro_name():
+    """ Check distro name """
+    check('distro = fedora', 'distro == fedora')
+    check('distro == fedora', 'distro == fedora')
+    check('distro != fedora', 'distro != fedora')
+
+def test_operators_distro_major():
+    """ Check distro major version """
+    check('distro < fedora-33', 'distro < fedora-33')
+    check('distro > fedora-33', 'distro > fedora-33')
+    check('distro <= fedora-33', 'distro <= fedora-33')
+    check('distro >= fedora-33', 'distro >= fedora-33')
+
+def test_operators_distro_minor():
+    """ Check distro minor version """
+    check('distro = centos-8.3', 'distro ~= centos-8.3')
+    check('distro == centos-8.3', 'distro ~= centos-8.3')
+    check('distro != centos-8.3', 'distro ~!= centos-8.3')
+    check('distro < centos-8.3', 'distro ~< centos-8.3')
+    check('distro > centos-8.3', 'distro ~> centos-8.3')
+    check('distro <= centos-8.3', 'distro ~<= centos-8.3')
+    check('distro >= centos-8.3', 'distro ~>= centos-8.3')
 
 def test_operators_product():
     """ Special handling for product """
-    check('product = fedora', 'product ~= fedora')
-    check('product == fedora', 'product ~= fedora')
-    check('product != fedora', 'product ~!= fedora')
-    check('product < fedora-33', 'product ~< fedora-33')
-    check('product > fedora-33', 'product ~> fedora-33')
-    check('product <= fedora-33', 'product ~<= fedora-33')
-    check('product >= fedora-33', 'product ~>= fedora-33')
+    # rhscl
+    check('product = rhscl', 'product == rhscl')
+    check('product == rhscl', 'product == rhscl')
+    check('product != rhscl', 'product != rhscl')
+    # rhscl-3
+    check('product < rhscl-3', 'product < rhscl-3')
+    check('product > rhscl-3', 'product > rhscl-3')
+    check('product <= rhscl-3', 'product <= rhscl-3')
+    check('product >= rhscl-3', 'product >= rhscl-3')
+    # rhscl-3.3
+    check('product < rhscl-3.3', 'product ~< rhscl-3.3')
+    check('product > rhscl-3.3', 'product ~> rhscl-3.3')
+    check('product <= rhscl-3.3', 'product ~<= rhscl-3.3')
+    check('product >= rhscl-3.3', 'product ~>= rhscl-3.3')
 
 def test_operators_special():
     """ Check 'defined' and 'contains' """

@@ -690,7 +690,8 @@ def relevancy_to_adjust(relevancy):
             # Basic operators
             if operator in ['==', '!=', '<', '<=', '>', '>=']:
                 # Use the special comparison for product and distro
-                if left in ['distro', 'product']:
+                # when the definition specifies a minor version
+                if left in ['distro', 'product'] and '.' in right:
                     operator = '~' + ('=' if operator == '==' else operator)
             # Special operators
             else:
