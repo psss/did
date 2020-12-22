@@ -26,6 +26,9 @@ log = fmf.utils.Logging('tmt').logger
 WORKDIR_ROOT = '/var/tmp/tmt'
 WORKDIR_MAX = 1000
 
+# Log in workdir
+LOG_FILENAME = 'log.txt'
+
 # Maximum number of lines of stdout/stderr to show upon errors
 OUTPUT_LINES = 100
 # Default output width
@@ -222,7 +225,7 @@ class Common(object):
         if self.parent:
             self.parent._log(message)
         else:
-            with open(os.path.join(self.workdir, 'log.txt'), 'a') as log:
+            with open(os.path.join(self.workdir, LOG_FILENAME), 'a') as log:
                 log.write(remove_color(message) + '\n')
 
     def info(self, key, value=None, color=None, shift=0, err=False):

@@ -189,6 +189,9 @@ def main(click_contex, root, context, **kwargs):
     '-r', '--rm', '--remove', 'remove', is_flag=True,
     help='Remove the workdir when test run is finished.')
 @click.option(
+    '--follow', is_flag=True,
+    help='Output the logfile as it grows.')
+@click.option(
     '-a', '--all', help='Run all steps, customize some.', is_flag=True)
 @click.option(
     '-u', '--until', type=click.Choice(tmt.steps.STEPS), metavar='STEP',

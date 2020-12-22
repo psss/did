@@ -3,6 +3,7 @@
 
 import os
 import re
+import time
 import fmf
 import yaml
 import click
@@ -29,6 +30,10 @@ from click import echo, style
 # metadata and 1h for scripts defined directly in plans (L2 metadata).
 DEFAULT_TEST_DURATION_L1 = '5m'
 DEFAULT_TEST_DURATION_L2 = '1h'
+
+# How many already existing lines should tmt run --follow show
+FOLLOW_LINES = 10
+
 
 class Node(tmt.utils.Common):
     """
@@ -821,6 +826,9 @@ class Run(tmt.utils.Common):
             if id_ is None:
                 raise tmt.utils.GeneralError(
                     "No last run id found. Have you executed any run?")
+        if context.params.get('follow') and id_ is None:
+            raise tmt.utils.GeneralError(
+                "Run id has to be specified in order to use --follow.")
         super().__init__(workdir=id_ or True, context=context)
         # Store workdir as the last run id
         self.config.last_run(self.workdir)
@@ -942,12 +950,39 @@ class Run(tmt.utils.Common):
             raise SystemExit(0)
         raise SystemExit(2)
 
+    def follow(self):
+        """ Periodically check for new lines in the log. """
+        logfile = open(os.path.join(self.workdir, tmt.utils.LOG_FILENAME), 'r')
+        # Move to the end of the file
+        logfile.seek(0, os.SEEK_END)
+        # Rewind some lines back to show more context
+        location = logfile.tell()
+        read_lines = 0
+        while location >= 0:
+            logfile.seek(location)
+            location -= 1
+            current_char = logfile.read(1)
+            if current_char == '\n':
+                read_lines += 1
+            if read_lines > FOLLOW_LINES:
+                break
+
+        while True:
+            line = logfile.readline()
+            if line:
+                print(line, end='')
+            else:
+                time.sleep(0.5)
+
     def go(self):
         """ Go and do test steps for selected plans """
         # Show run id / workdir path
         self.info(self.workdir, color='magenta')
         # Attempt to load run data
         self.load()
+
+        if self.opt('follow'):
+            self.follow()
 
         # Enable selected steps
         enabled_steps = self._context.obj.steps
