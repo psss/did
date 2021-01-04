@@ -14,6 +14,7 @@ from tmt.utils import retry_session
 
 
 DEFAULT_USER = 'root'
+DEFAULT_FLAVOR = 'm1.small'
 SSH_KEY = '/usr/share/qa-tools/1minutetip/1minutetip'
 SCRIPT_PATH = '/usr/bin/1minutetip'
 NUMBER_OF_RETRIES = 3
@@ -96,7 +97,7 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
         """ Return the default value for the given option """
         defaults = {
             'image': 'fedora',
-            'flavor': 'm1.small'
+            'flavor': DEFAULT_FLAVOR,
         }
         return defaults.get(option, default)
 
@@ -246,6 +247,10 @@ class GuestMinute(tmt.Guest):
         return True
 
     def _setup_machine(self):
+        # Create a new machine if custom flavor requested
+        if self.flavor != DEFAULT_FLAVOR:
+            return self._boot_machine()
+        # Check for prereserved machine
         self.debug("Try to get a prereserved minute machine.")
         response = retry_session().get(
             f'{self.api_url}?image_name={self.mt_image}'
