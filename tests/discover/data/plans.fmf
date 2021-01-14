@@ -51,10 +51,10 @@ execute:
             /nopath:
                 discover:
                     how: fmf
-    /modified-only:
+    /modified:
         discover:
             how: fmf
             path: ../../..
-            ref: 8329db0421e9
+            ref: 8329db0
             modified-only: true
-            modified-ref: 8329db0421e9^
+            modified-ref: 8329db0^

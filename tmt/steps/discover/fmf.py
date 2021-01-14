@@ -29,13 +29,13 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             test: /tests/basic
             filter: 'tier: 1'
 
-    It is also possible to limit tests only to those that have changed in git
-    since a given revision. This can be particularly useful when testing
-    changes to tests themselves (e.g. in a pull request CI).
+    It is also possible to limit tests only to those that have changed
+    in git since a given revision. This can be particularly useful when
+    testing changes to tests themselves (e.g. in a pull request CI).
 
     Related config options (all optional):
     * modified-only - set to True if you want to filter modified tests
-    * modified-url - will be fetched as "reference" remote in the test dir
+    * modified-url - fetched as "reference" remote in the test dir
     * modified-ref - the ref to compare against
 
     Example to compare local repo against upstream master:
@@ -46,8 +46,9 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             modified-url: https://github.com/psss/tmt
             modified-ref: reference/master
 
-    Note that internally the modified tests are appended to the list specified
-    via 'test', so those tests will also be selected even if not modified.
+    Note that internally the modified tests are appended to the list
+    specified via 'test', so those tests will also be selected even if
+    not modified.
     """
 
     # Supported methods
@@ -68,10 +69,12 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 help='URL of the reference git repository with fmf metadata.'),
             click.option(
                 '--modified-ref', metavar='REVISION',
-                help='Branch, tag or commit specifying the reference git revision.'),
+                help='Branch, tag or commit specifying '
+                'the reference git revision (master by default).'),
             click.option(
                 '-m', '--modified-only', is_flag=True,
-                help='If set, select only tests modified since reference revision.'),
+                help='If set, select only tests modified '
+                'since reference revision.'),
             click.option(
                 '-p', '--path', metavar='ROOT',
                 help='Path to the metadata tree root.'),
@@ -181,23 +184,24 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if names:
             self.info('names', fmf.utils.listed(names), 'green')
 
-        only_modified = self.get('modified-only')
-        ref_url = self.get('modified-url')
-        if ref_url:
-            self.info('modified-url', ref_url, 'green')
-            self.debug(f"Fetch also '{ref_url}' as 'reference'.")
-            self.run(['git', 'remote', 'add', 'reference', ref_url],
+        # Filter only modified tests if requested
+        modified_only = self.get('modified-only')
+        modified_url = self.get('modified-url')
+        if modified_url:
+            self.info('modified-url', modified_url, 'green')
+            self.debug(f"Fetch also '{modified_url}' as 'reference'.")
+            self.run(['git', 'remote', 'add', 'reference', modified_url],
                      cwd=testdir, shell=False)
             self.run(['git', 'fetch', 'reference'], cwd=testdir, shell=False)
-        if only_modified:
-            reference_ref = self.get('modified-ref')
-            self.info('modified-ref', reference_ref, 'green')
-            output = self.run(['git', 'log', '--format=', '--stat',
-                               '--name-only', f"{reference_ref}..HEAD"],
-                              cwd=testdir, shell=False)[0]
-            modified = set(f"^/{re.escape(name)}$"
-                           for name in map(os.path.dirname, output.split('\n'))
-                           if name)
+        if modified_only:
+            modified_ref = self.get('modified-ref')
+            self.info('modified-ref', modified_ref, 'green')
+            output = self.run(
+                ['git', 'log', '--format=', '--stat', '--name-only',
+                f"{modified_ref}..HEAD"], cwd=testdir, shell=False)[0]
+            modified = set(
+                f"^/{re.escape(name)}$"
+                for name in map(os.path.dirname, output.split('\n')) if name)
             self.debug(f"Limit to modified test dirs: {modified}", level=3)
             names.extend(modified)
 

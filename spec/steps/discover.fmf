@@ -88,18 +88,21 @@ description: |
 
         See also the `fmf identifier`_ documentation.
 
-        It is also possible to limit tests only to those that have changed in git
-        since a given revision. This can be particularly useful when testing
-        changes to tests themselves (e.g. in a pull request CI).
+        It is also possible to limit tests only to those that have
+        changed in git since a given revision. This can be
+        particularly useful when testing changes to tests
+        themselves (e.g. in a pull request CI).
 
         Related config options (all optional):
 
         modified-only
-            set to True if you want to filter modified tests
+            Set to True if you want to filter modified tests only.
         modified-url
-            will be fetched as "reference" remote in the test dir
+            Will be fetched as a "reference" remote in the test
+            dir.
         modified-ref
-            the ref to compare against
+            The ref to compare against, ``master`` branch is used
+            by default.
 
         .. _fmf identifier: https://fmf.readthedocs.io/en/latest/concept.html#identifiers
         .. _Flexible Metadata Format: https://fmf.readthedocs.io/
