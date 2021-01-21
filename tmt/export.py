@@ -186,17 +186,15 @@ def export_to_nitrate(test, create, general):
     echo(style("Test case '{0}' successfully exported to nitrate.".format(
         nitrate_case.identifier), fg='magenta'))
 
-    # Write id of newly created nitrate case to its file
+    # Append id of newly created nitrate case to its file
     if new_test_created:
         fmf_file_path = test.node.sources[-1]
         try:
-            with open(fmf_file_path, encoding='utf-8') as fmf_file:
-                content = yaml.safe_load(fmf_file)
+            with open(fmf_file_path, encoding='utf-8', mode='a+') as fmf_file:
+                fmf_file.write("extra-nitrate: " + nitrate_case.identifier + '\n')
         except IOError:
             raise ConvertError("Unable to open '{0}'.".format(fmf_file_path))
 
-        content['extra-nitrate'] = nitrate_case.identifier
-        tmt.convert.write(fmf_file_path, content)
 
 
 def create_nitrate_case(test):
