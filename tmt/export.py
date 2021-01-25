@@ -6,7 +6,6 @@ from click import echo, style
 
 import tmt.utils
 import email
-import yaml
 import fmf
 import re
 
@@ -176,25 +175,26 @@ def export_to_nitrate(test, create, general):
     # Warning
     if WARNING not in struct_field.header():
         struct_field.header(WARNING + struct_field.header())
-        echo(style('Added warning about porting to case notes.', fg='green'))
+        echo(style(
+            'Add migration warning to the test case notes.', fg='green'))
 
     # Saving case.notes with edited StructField
     nitrate_case.notes = struct_field.save()
+
+    # Append id of newly created nitrate case to its file
+    if new_test_created:
+        fmf_file_path = test.node.sources[-1]
+        echo(style(f"Append test case id into '{fmf_file_path}'.", fg='green'))
+        try:
+            with open(fmf_file_path, encoding='utf-8', mode='a+') as fmf_file:
+                fmf_file.write(f"extra-nitrate: {nitrate_case.identifier}\n")
+        except IOError:
+            raise ConvertError("Unable to open '{0}'.".format(fmf_file_path))
 
     # Update nitrate test case
     nitrate_case.update()
     echo(style("Test case '{0}' successfully exported to nitrate.".format(
         nitrate_case.identifier), fg='magenta'))
-
-    # Append id of newly created nitrate case to its file
-    if new_test_created:
-        fmf_file_path = test.node.sources[-1]
-        try:
-            with open(fmf_file_path, encoding='utf-8', mode='a+') as fmf_file:
-                fmf_file.write("extra-nitrate: " + nitrate_case.identifier + '\n')
-        except IOError:
-            raise ConvertError("Unable to open '{0}'.".format(fmf_file_path))
-
 
 
 def create_nitrate_case(test):
