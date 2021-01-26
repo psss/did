@@ -12,3 +12,8 @@ execute:
     discover:
         how: fmf
         test: missing
+
+/mixed:
+    discover:
+        how: fmf
+        test: mixed

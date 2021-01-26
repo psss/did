@@ -7,15 +7,30 @@ rlJournalStart
         rlRun "set -o pipefail"
     rlPhaseEnd
 
-    rlPhaseStartTest "Require an available package"
-        rlRun "tmt run plan --name available | tee output"
-        rlAssertGrep '1 preparation applied' output
-    rlPhaseEnd
+    for image in fedora centos:7 ; do
+        # Prepare the tmt command and expected error message
+        tmt="tmt run -av provision -h container -i $image"
+        if [[ $image == fedora ]]; then
+            error='Unable to find a match: forest'
+        else
+            error='No package forest available'
+        fi
 
-    rlPhaseStartTest "Require a missing package"
-        rlRun "tmt run plan --name missing | tee output" 2
-        rlAssertGrep 'Unable to find a match: forest' output
-    rlPhaseEnd
+        rlPhaseStartTest "Require an available package ($image)"
+            rlRun "$tmt plan --name available | tee output"
+            rlAssertGrep '1 preparation applied' output
+        rlPhaseEnd
+
+        rlPhaseStartTest "Require a missing package ($image)"
+            rlRun "$tmt plan --name missing | tee output" 2
+            rlAssertGrep "$error" output
+        rlPhaseEnd
+
+        rlPhaseStartTest "Require both available and missing ($image)"
+            rlRun "$tmt plan --name mixed | tee output" 2
+            rlAssertGrep "$error" output
+        rlPhaseEnd
+    done
 
     rlPhaseStartCleanup
         rlRun "rm -f output"
