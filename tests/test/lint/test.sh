@@ -43,7 +43,7 @@ rlJournalStart
         for format in list text; do
             rlAssertNotGrep 'relevancy' "relevancy-$format.fmf"
             rlAssertGrep 'adjust:' "relevancy-$format.fmf"
-            rlAssertGrep 'when: distro ~= rhel' "relevancy-$format.fmf"
+            rlAssertGrep 'when: distro == rhel' "relevancy-$format.fmf"
         done
     rlPhaseEnd
 
