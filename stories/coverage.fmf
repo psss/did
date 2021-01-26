@@ -68,5 +68,5 @@ story:
             There should be an easy way to filter based on tests
             tags.
         example: |
-            tmt story ls --filter "tags:Tier1"
+            tmt story ls --filter "tag:fast"
         priority: should

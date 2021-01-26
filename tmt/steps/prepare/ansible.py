@@ -15,7 +15,7 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
 
         prepare:
             how: ansible
-            playbooks:
+            playbook:
               - playbook/one.yml
               - playbook/two.yml
               - playbook/three.yml

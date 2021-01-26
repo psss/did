@@ -11,7 +11,7 @@
     # Setup with ansible
     prepare:
         how: ansible
-        playbooks:
+        playbook:
             - 'dependencies.yml'
             - 'selenium.yml'
     # Use restraint with isolation enabled

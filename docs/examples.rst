@@ -389,7 +389,7 @@ and detailed plan information, respectively::
           filter tier: 0,1
          prepare
              how ansible
-       playbooks plans/packages.yml
+        playbook plans/packages.yml
 
     /plans/helps
          summary Check help messages
@@ -434,10 +434,10 @@ inheritance to prevent unnecessary duplication of the data::
 
     discover:
         how: fmf
-        repository: https://github.com/psss/tmt
+        url: https://github.com/psss/tmt
     prepare:
         how: ansible
-        playbooks: ansible/packages.yml
+        playbook: ansible/packages.yml
     execute:
         how: tmt
 
@@ -470,7 +470,7 @@ step could look like this::
     prepare:
       - name: packages
         how: ansible
-        playbooks: plans/packages.yml
+        playbook: plans/packages.yml
       - name: services
         how: shell
         script: systemctl start service
@@ -482,10 +482,10 @@ the :ref:`/spec/steps/discover` step::
     discover:
       - name: upstream
         how: fmf
-        repository: https://github.com/psss/tmt
+        url: https://github.com/psss/tmt
       - name: fedora
         how: fmf
-        repository: https://src.fedoraproject.org/rpms/tmt/
+        url: https://src.fedoraproject.org/rpms/tmt/
 
 
 Extend Steps
@@ -685,8 +685,8 @@ Choose which plans should be executed::
     /plans/basic
         discover
             how: fmf
-            repository: https://github.com/psss/tmt
-            revision: devel
+            url: https://github.com/psss/tmt
+            ref: devel
             filter: tier: 0,1
             tests: 2 tests selected
         provision
@@ -707,8 +707,8 @@ Run only a subset of available tests across all plans::
     /plans/basic
         discover
             how: fmf
-            repository: https://github.com/psss/tmt
-            revision: devel
+            url: https://github.com/psss/tmt
+            ref: devel
             filter: tier: 0,1
             tests: 1 test selected
         ...
@@ -748,8 +748,8 @@ running them choose the ``discover`` step::
     /plans/basic
         discover
             how: fmf
-            repository: https://github.com/psss/tmt
-            revision: devel
+            url: https://github.com/psss/tmt
+            ref: devel
             filter: tier: 0,1
             tests: 2 tests selected
 
@@ -769,8 +769,8 @@ test environment provisioning::
     /plans/basic
         discover
             how: fmf
-            repository: https://github.com/psss/tmt
-            revision: devel
+            url: https://github.com/psss/tmt
+            ref: devel
             filter: tier: 0,1
             tests: 2 tests selected
                 /one/tests/docs

@@ -21,7 +21,7 @@ artifact:
 # Ansible playbook
 #prepare:
 #    how: ansible
-#    playbooks: ansible/packages.yml
+#    playbook: ansible/packages.yml
 
 # Shell commands
 #prepare:

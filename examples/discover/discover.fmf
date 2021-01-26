@@ -15,7 +15,7 @@ provision:
             summary: Full from directory
             discover:
                 how: fmf
-                revision: devel
+                ref: devel
                 filter: 'tier: 1'
 
     /repository:
@@ -23,11 +23,11 @@ provision:
             summary: Minimal from repository
             discover:
                 how: fmf
-                repository: https://github.com/psss/tmt
+                url: https://github.com/psss/tmt
         /full:
             summary: Full from repository
             discover:
                 how: fmf
-                repository: https://github.com/psss/tmt
-                revision: devel
+                url: https://github.com/psss/tmt
+                ref: devel
                 filter: 'tier: 1'

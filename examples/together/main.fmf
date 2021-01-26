@@ -6,7 +6,7 @@
         how: fmf
     prepare:
         how: ansible
-        playbooks: packages.yaml
+        playbook: packages.yaml
     execute:
         how: shell
 

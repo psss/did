@@ -8,18 +8,18 @@ discover:
   - name: tier0
     how: fmf
     filter: 'tier: 0'
-    repository: https://github.com/psss/tmt
+    url: https://github.com/psss/tmt
   - name: tier1
     how: fmf
     filter: 'tier: 1'
-    repository: https://github.com/psss/tmt
+    url: https://github.com/psss/tmt
   - name: all
     how: fmf
-    repository: https://github.com/psss/tmt
+    url: https://github.com/psss/tmt
 prepare:
   - how: ansible
     name: packages
-    playbooks: plans/packages.yml
+    playbook: plans/packages.yml
   - how: shell
     name: services
     script: systemctl start service

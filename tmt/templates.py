@@ -88,10 +88,10 @@ summary:
     Essential command line features
 discover:
     how: fmf
-    repository: https://github.com/psss/tmt
+    url: https://github.com/psss/tmt
 prepare:
     how: ansible
-    playbooks: plans/packages.yml
+    playbook: plans/packages.yml
 execute:
     how: tmt
 """.lstrip()

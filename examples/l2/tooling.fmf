@@ -5,9 +5,9 @@
         /sti:
             execute:
                 how: sti
-                playbooks:
+                playbook:
                     - 'tests.yml'
-                tags:
+                tag:
                     - 'classic'
         # Simple shell script
         /shell:
@@ -27,6 +27,6 @@
             discover:
                 how: fmf
                 filter: 'tier: 1, 2'
-                repository: https://src.fedoraproject.org/tests/python
+                url: https://src.fedoraproject.org/tests/python
             execute:
                 how: restraint

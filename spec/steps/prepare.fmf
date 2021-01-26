@@ -41,9 +41,9 @@ description: |
     example: |
         prepare:
             how: ansible
-            roles:
+            role:
                 - nginxinc.nginx
-            playbooks:
+            playbook:
                 - common.yml
                 - rhel7.yml
     implemented:

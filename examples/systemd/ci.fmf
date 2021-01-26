@@ -2,10 +2,10 @@
 # Common configuration
 discover:
     how: fmf
-    repository: "https://github.com/systemd-rhel/tests"
+    url: "https://github.com/systemd-rhel/tests"
 prepare:
     how: ansible
-    playbooks:
+    playbook:
         - ci/rhel-8.yml
 execute:
     how: tmt
