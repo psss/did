@@ -216,7 +216,7 @@ Install the latest version from the ``copr`` repository::
 When installing using ``pip`` you might need to install additional
 packages on your system::
 
-    sudo dnf install gcc python3-devel libvirt-devel
+    sudo dnf install gcc {python3,libvirt,krb5,libpq}-devel
     pip install --user tmt
 
 You can omit the ``--user`` flag if in a virtual environment.
