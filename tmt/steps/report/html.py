@@ -133,7 +133,7 @@ def import_jinja2():
         raise tmt.utils.ReportError(
             "Missing 'jinja2', fixable by 'pip install tmt[report-html]'")
 
-class ReportHTML(tmt.steps.report.ReportPlugin):
+class ReportHtml(tmt.steps.report.ReportPlugin):
     """ Format test results into an html report """
 
     # Supported methods

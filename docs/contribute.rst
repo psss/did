@@ -46,9 +46,6 @@ make docs
 make packages
     Build rpm and srpm packages.
 
-make hooks
-    Link git commit hooks.
-
 make tags
     Create or update the Vim ``tags`` file for quick searching.
     You might want to use ``set tags=./tags;`` in your ``.vimrc``

@@ -7,7 +7,7 @@
 Class Structure
 ---------------
 
-Here's the overview of available classes::
+Here's the overview of core classes::
 
     Common
     ├── Tree
@@ -27,8 +27,10 @@ Here's the overview of available classes::
     │   │   ├── DiscoverFmf
     │   │   └── DiscoverShell
     │   ├── ExecutePlugin
-    │   │   └── ExecuteSimple
+    │   │   ├── ExecuteDetach
+    │   │   └── ExecuteInternal
     │   ├── FinishPlugin
+    │   │   └── FinishShell
     │   ├── PreparePlugin
     │   │   ├── PrepareAnsible
     │   │   ├── PrepareInstall
@@ -36,15 +38,19 @@ Here's the overview of available classes::
     │   ├── ProvisionPlugin
     │   │   ├── ProvisionConnect
     │   │   ├── ProvisionLocal
+    │   │   ├── ProvisionMinute
     │   │   ├── ProvisionPodman
     │   │   ├── ProvisionTestcloud
     │   │   └── ProvisionVagrant
     │   └── ReportPlugin
-    │       └── ReportDisplay
+    │       ├── ReportDisplay
+    │       └── ReportHtml
+    ├── Guest
+    │   ├── GuestContainer
+    │   ├── GuestLocal
+    │   ├── GuestMinute
+    │   └── GuestTestcloud
     └── Run
-
-Note: The list is not complete. There is a plan to clean up plugin
-inheritance and naming.
 
 
 Essential Classes
