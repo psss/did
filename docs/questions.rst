@@ -24,6 +24,8 @@ user-friendly way to create, debug and easily run tests.
 __ https://tmt.readthedocs.io/en/latest/
 
 
+.. _libvirt:
+
 Virtualization Tips
 ------------------------------------------------------------------
 

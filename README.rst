@@ -274,7 +274,7 @@ Variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following environment variables can be used to modify
-behaviour of the ``tmt`` command::
+behaviour of the ``tmt`` command.
 
 TMT_DEBUG
     Enable the desired debug level. Most of the commands support

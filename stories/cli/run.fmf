@@ -179,7 +179,23 @@ story: 'As a user I want to execute tests easily'
     story:
         As a test developer I want to automatically execute
         tests upon saving the updated test code to disk.
-    example: tmt run debug
+    description: |
+        A very common loop of modifying the source code and
+        re-executing the test should be accessible without
+        subsequent user interaction with the tool.
+
+        * run the tool once, keep it running
+        * observe the execution results
+        * open an editor in a separate window
+        * modify the file, save the changes
+        * observe the updated execution results
+        * ...
+
+        Prioritize latency and reuse as much as possible from the
+        previous execution. Ideally, start the re-execution from
+        the modified line.
+    example:
+        tmt run debug
 
 /smoke:
     story:

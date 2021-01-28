@@ -16,7 +16,7 @@ Table of Contents
     :maxdepth: 2
 
     Overview <overview>
-    Dreams <dreams>
+    Guide <guide>
     Stories <stories>
     Specification <spec>
     Examples <examples>
