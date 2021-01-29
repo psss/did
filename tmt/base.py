@@ -780,8 +780,17 @@ class Tree(tmt.utils.Common):
             conditions.extend(Test._opt('conditions'))
         # Build the list and convert to objects
         keys.append('test')
-        return [Test(test) for test in self.tree.prune(
-            keys=keys, names=names, filters=filters, conditions=conditions)]
+        tests = []
+        for test_node in self.tree.prune(keys=keys, names=names):
+            test = Test(test_node)
+            if not all([fmf.utils.evaluate(condition, vars(test), test_node)
+                        for condition in conditions]):
+                continue
+            if not all([fmf.utils.filter(filter, vars(test), regexp=True)
+                        for filter in filters]):
+                continue
+            tests.append(test)
+        return tests
 
     def plans(self, keys=[], names=[], filters=[], conditions=[], run=None):
         """ Search available plans """
@@ -794,8 +803,17 @@ class Tree(tmt.utils.Common):
             conditions.extend(Plan._opt('conditions'))
         # Build the list and convert to objects
         keys.append('execute')
-        return [Plan(plan, run=run) for plan in self.tree.prune(
-            keys=keys, names=names, filters=filters, conditions=conditions)]
+        plans = []
+        for plan_node in self.tree.prune(keys=keys, names=names):
+            plan = Plan(plan_node, run=run)
+            if not all([fmf.utils.evaluate(condition, vars(plan), plan_node)
+                        for condition in conditions]):
+                continue
+            if not all([fmf.utils.filter(filter, vars(plan), regexp=True)
+                        for filter in filters]):
+                continue
+            plans.append(plan)
+        return plans
 
     def stories(
             self, keys=[], names=[], filters=[], conditions=[], whole=False):
@@ -809,9 +827,17 @@ class Tree(tmt.utils.Common):
             conditions.extend(Story._opt('conditions'))
         # Build the list and convert to objects
         keys.append('story')
-        return [Story(story) for story in self.tree.prune(
-            keys=keys, names=names,
-            filters=filters, conditions=conditions, whole=whole)]
+        stories = []
+        for story_node in self.tree.prune(keys=keys, names=names, whole=whole):
+            story = Story(story_node)
+            if not all([fmf.utils.evaluate(condition, vars(story), story_node)
+                        for condition in conditions]):
+                continue
+            if not all([fmf.utils.filter(filter, vars(story), regexp=True)
+                        for filter in filters]):
+                continue
+            stories.append(story)
+        return stories
 
 
 class Run(tmt.utils.Common):
