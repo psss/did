@@ -222,13 +222,19 @@ def export_to_nitrate(test):
 
     # Append id of newly created nitrate case to its file
     if new_test_created:
-        fmf_file_path = test.node.sources[-1]
-        echo(style(f"Append test case id into '{fmf_file_path}'.", fg='green'))
+        echo(style(f"Append the nitrate test case id.", fg='green'))
         try:
-            with open(fmf_file_path, encoding='utf-8', mode='a+') as fmf_file:
-                fmf_file.write(f"extra-nitrate: {nitrate_case.identifier}\n")
-        except IOError:
-            raise ConvertError("Unable to open '{0}'.".format(fmf_file_path))
+            with test.node as data:
+                data["extra-nitrate"] = nitrate_case.identifier
+        except AttributeError:
+            # FIXME: Remove this deprecated code after fmf support
+            # for storing modified data is released long enough
+            file_path = test.node.sources[-1]
+            try:
+                with open(file_path, encoding='utf-8', mode='a+') as file:
+                    file.write(f"extra-nitrate: {nitrate_case.identifier}\n")
+            except IOError:
+                raise ConvertError("Unable to open '{0}'.".format(file_path))
 
     # Update nitrate test case
     nitrate_case.update()
