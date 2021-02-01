@@ -1,0 +1,31 @@
+test: 'true'
+
+/enabled:
+    /default:
+        summary: This test is enabled by default
+    /defined:
+        summary: This test is enabled explicitly
+        enabled: true
+    /disabled:
+        summary: This test is disabled
+        enabled: false
+
+/tag:
+    /default:
+        summary: No tag by default
+    /defined:
+        summary: Custom tag defined
+        tag: slow
+    /empty:
+        summary: Explicit null tag
+        tag:
+
+/tier:
+    /default:
+        summary: No tier by default
+    /one:
+        summary: Explicit tier level
+        tier: 1
+    /two:
+        summary: Explicit tier level
+        tier: 2

@@ -748,6 +748,19 @@ class Tree(tmt.utils.Common):
             return self._custom_context
         return super()._fmf_context()
 
+    def _filters_conditions(self, nodes, filters, conditions):
+        """ Apply filters and conditions, return pruned nodes """
+        result = []
+        for node in nodes:
+            if not all([fmf.utils.evaluate(condition, vars(node), node)
+                        for condition in conditions]):
+                continue
+            if not all([fmf.utils.filter(filter_, vars(node), regexp=True)
+                        for filter_ in filters]):
+                continue
+            result.append(node)
+        return result
+
     @property
     def tree(self):
         """ Initialize tree only when accessed """
@@ -780,17 +793,9 @@ class Tree(tmt.utils.Common):
             conditions.extend(Test._opt('conditions'))
         # Build the list and convert to objects
         keys.append('test')
-        tests = []
-        for test_node in self.tree.prune(keys=keys, names=names):
-            test = Test(test_node)
-            if not all([fmf.utils.evaluate(condition, vars(test), test_node)
-                        for condition in conditions]):
-                continue
-            if not all([fmf.utils.filter(filter, vars(test), regexp=True)
-                        for filter in filters]):
-                continue
-            tests.append(test)
-        return tests
+        return self._filters_conditions(
+            [Test(test) for test in self.tree.prune(keys=keys, names=names)],
+            filters, conditions)
 
     def plans(self, keys=[], names=[], filters=[], conditions=[], run=None):
         """ Search available plans """
@@ -803,17 +808,10 @@ class Tree(tmt.utils.Common):
             conditions.extend(Plan._opt('conditions'))
         # Build the list and convert to objects
         keys.append('execute')
-        plans = []
-        for plan_node in self.tree.prune(keys=keys, names=names):
-            plan = Plan(plan_node, run=run)
-            if not all([fmf.utils.evaluate(condition, vars(plan), plan_node)
-                        for condition in conditions]):
-                continue
-            if not all([fmf.utils.filter(filter, vars(plan), regexp=True)
-                        for filter in filters]):
-                continue
-            plans.append(plan)
-        return plans
+        return self._filters_conditions(
+            [Plan(plan, run=run)
+                for plan in self.tree.prune(keys=keys, names=names)],
+            filters, conditions)
 
     def stories(
             self, keys=[], names=[], filters=[], conditions=[], whole=False):
@@ -827,17 +825,10 @@ class Tree(tmt.utils.Common):
             conditions.extend(Story._opt('conditions'))
         # Build the list and convert to objects
         keys.append('story')
-        stories = []
-        for story_node in self.tree.prune(keys=keys, names=names, whole=whole):
-            story = Story(story_node)
-            if not all([fmf.utils.evaluate(condition, vars(story), story_node)
-                        for condition in conditions]):
-                continue
-            if not all([fmf.utils.filter(filter, vars(story), regexp=True)
-                        for filter in filters]):
-                continue
-            stories.append(story)
-        return stories
+        return self._filters_conditions(
+            [Story(story) for story in self.tree.prune(
+                keys=keys, names=names, whole=whole)],
+            filters, conditions)
 
 
 class Run(tmt.utils.Common):
