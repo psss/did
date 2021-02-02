@@ -174,7 +174,6 @@ class Test(Node):
         'description',
         'contact',
         'component',
-        'link',
 
         # Test execution data
         'test',
