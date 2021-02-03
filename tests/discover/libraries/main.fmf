@@ -9,4 +9,10 @@ test: ./test.sh
 path: /tests/discover/libraries
 tier: 3
 duration: 15m
-tag-: [virtual, container, cruncher]
+tag-: [virtual, container]
+enabled: False
+
+adjust:
+    enabled: True
+    when: how == full
+    because: this can be run only with a full virtualization

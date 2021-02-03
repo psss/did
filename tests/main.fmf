@@ -3,4 +3,5 @@ framework: beakerlib
 contact: Petr Šplíchal <psplicha@redhat.com>
 duration: 5m
 tier: 2
-tag: [container, virtual, cruncher]
+tag: [container, virtual]
+enabled: True

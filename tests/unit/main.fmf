@@ -7,4 +7,3 @@ require:
   - python3-pytest
   - python3-mock
 tier: 0
-tag-: [cruncher]

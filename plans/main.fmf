@@ -6,10 +6,6 @@ provision:
 execute:
     how: tmt
 
-# Disable cruncher until it is replaced
-artifact:
-    - disable-cruncher
-
 # Install packages
 #prepare:
 #  - name: tmt

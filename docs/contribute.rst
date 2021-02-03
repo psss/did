@@ -82,7 +82,16 @@ __ http://stackoverflow.com/questions/2290016/
 Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To run tests using pytest::
+Run the default set of tests directly on your localhost::
+
+    tmt run
+
+Execute the whole test coverage, including tests which need the
+full virtualization support::
+
+    tmt -c how=full run
+
+To run unit tests using pytest::
 
     coverage run --source=tmt -m py.test tests
     coverage report
