@@ -7,6 +7,7 @@ from click import echo, style
 import tmt.utils
 import email
 import fmf
+import os
 import re
 
 from tmt.utils import ConvertError
@@ -74,7 +75,7 @@ def export_to_nitrate(test):
     try:
         nitrate_id = test.node.get('extra-nitrate')[3:]
         nitrate_case = nitrate.TestCase(int(nitrate_id))
-        nitrate_case.summary # Make sure we connect to the server now
+        nitrate_case.summary  # Make sure we connect to the server now
         echo(style(f"Test case '{nitrate_case.identifier}' found.", fg='blue'))
     except TypeError:
         # Create a new nitrate test case
@@ -91,14 +92,19 @@ def export_to_nitrate(test):
             if not nitrate_case:
                 nitrate_case = create_nitrate_case(test)
             new_test_created = True
+            # Newly created tmt tests have special format summary
+            test._metadata['extra-summary'] = nitrate_case.summary
         else:
             raise ConvertError("Nitrate test case id not found.")
     except (nitrate.NitrateError, gssapi.raw.misc.GSSError) as error:
         raise ConvertError(error)
 
     # Summary
-    summary = test.node.get(
-        'extra-summary', test.node.get('extra-task', test.summary))
+    summary = (test._metadata.get('extra-summary')
+        or test._metadata.get('extra-task')
+        or test.summary
+        or test.name
+        )
     if summary:
         nitrate_case.summary = summary
         echo(style('summary: ', fg='green') + summary)
@@ -257,7 +263,11 @@ def create_nitrate_case(test):
         category = 'Sanity'
 
     # Create the new test case
-    summary = test.node.get('extra-summary', test.summary)
+    remote_dirname = re.sub('.git$', '', os.path.basename(test.fmf_id['url']))
+    if not remote_dirname:
+        raise ConvertError("Unable to find git remote url.")
+    summary = test.node.get('extra-summary', remote_dirname + test.name + ' - '
+                            + test.summary)
     category = nitrate.Category(name=category, product=DEFAULT_PRODUCT)
     testcase = nitrate.TestCase(summary=summary, category=category)
     echo(style(f"Test case '{testcase.identifier}' created.", fg='blue'))
