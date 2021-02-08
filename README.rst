@@ -83,7 +83,7 @@ Format
 ------
 
 The default output is plain text of maximum width 79 characters.
-This can adjusted using the ``--width`` parameter. To disable
+This can be adjusted using the ``--width`` parameter. To disable
 shortening altogether use ``--width=0``. The default width value
 can be saved in the config file as well. Use ``--format=wiki`` to
 enable simple MoinMoin wiki syntax. For stats which support them,
