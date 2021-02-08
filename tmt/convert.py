@@ -265,9 +265,9 @@ def read(path, makefile, nitrate, purpose, disabled):
             raise ConvertError("Makefile is missing the 'run' target.")
         # Contact
         try:
-            data['contact'] = [re.search(
-                r'^Owner:\s*(.*)', testinfo, re.M).group(1).strip()]
-            echo(style('contact: ', fg='green') + ' '.join(data['contact']))
+            data['contact'] = re.search(
+                r'^Owner:\s*(.*)', testinfo, re.M).group(1)
+            echo(style('contact: ', fg='green') + data['contact'])
         except AttributeError:
             pass
         # Component
@@ -400,7 +400,7 @@ def read_nitrate(beaker_task, common_data, disabled):
         # Testcase data must be fetched due to
         # https://github.com/psss/python-nitrate/issues/24
         testcase._fetch()
-        data = read_nitrate_case(testcase)
+        data = read_nitrate_case(testcase, common_data)
         individual_data.append(data)
         # Check testcase for manual data
         md_content_tmp = read_manual_data(testcase)
@@ -477,7 +477,7 @@ def read_nitrate(beaker_task, common_data, disabled):
     return common_data, individual_data
 
 
-def read_nitrate_case(testcase):
+def read_nitrate_case(testcase, makefile_data):
     """ Read old metadata from nitrate test case """
     data = dict()
     echo("test case found '{0}'.".format(testcase.identifier))
@@ -489,8 +489,16 @@ def read_nitrate_case(testcase):
         echo(style('extra-summary: ', fg='green') + data['extra-summary'])
     # Contact
     if testcase.tester:
-        data['contact'] = '{} <{}>'.format(
-            testcase.tester.name, testcase.tester.email)
+        if testcase.tester.name is not None:
+            data['contact'] = '{} <{}>'.format(
+                testcase.tester.name, testcase.tester.email)
+        elif 'contact' not in makefile_data:
+            data['contact'] = testcase.tester.email
+        else:
+            if not re.search(testcase.tester.email, makefile_data['contact']):
+                data['contact'] = testcase.tester.email
+            else:
+                data['contact'] = makefile_data['contact']
         echo(style('contact: ', fg='green') + data['contact'])
     # Environment
     if testcase.arguments:
