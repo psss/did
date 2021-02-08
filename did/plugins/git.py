@@ -6,14 +6,14 @@ Config example::
 
     [tools]
     type = git
-    did = /home/psss/git/did
-    edd = /home/psss/git/edd
-    fmf = /home/psss/git/fmf
+    did = ~/git/did
+    edd = ~/git/edd
+    fmf = ~/git/fmf
 
     [tests]
     type = git
-    fedora = /home/psss/tests/fedora/*
-    rhel = /home/psss/tests/rhel/*
+    fedora = ~/tests/fedora/*
+    rhel = ~/tests/rhel/*
 
 Note that using an ``*`` you can enable multiple git repositories at
 once. Non git directories from the expansion are silently ignored.
@@ -120,6 +120,7 @@ class GitStats(StatsGroup):
         name = "Work on {0}".format(option)
         StatsGroup.__init__(self, option, name, parent, user)
         for repo, path in did.base.Config().section(option):
+            path = os.path.expanduser(path)
             if path.endswith('/*'):
                 try:
                     directories = os.listdir(path[:-1])

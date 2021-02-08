@@ -10,7 +10,7 @@ Config example::
     client_id = <client_id>
     client_secret = <client_secret>
     apps = calendar,tasks
-    storage = /home/diduser/.did/google-api-credentials.json
+    storage = ~/.did/google-api-credentials.json
 
 Make sure you have additional dependencies of the google plugin
 installed on your system::
@@ -263,6 +263,8 @@ class GoogleStatsGroup(StatsGroup):
         client_id = config["client_id"]
         client_secret = config["client_secret"]
         storage = config.get("storage")
+        if storage is not None:
+            storage = os.path.expanduser(storage)
         try:
             apps = [app.lower() for app in split(config["apps"])]
         except KeyError:
