@@ -49,7 +49,15 @@ rlJournalStart
         rlAssertGrep '/tests/enabled/default' $output
         rlAssertGrep '/tests/enabled/defined' $output
         rlAssertNotGrep '/tests/enabled/disabled' $output
+        rlRun "tmt test ls --filter enabled:true | tee $output"
+        rlAssertGrep '/tests/enabled/default' $output
+        rlAssertGrep '/tests/enabled/defined' $output
+        rlAssertNotGrep '/tests/enabled/disabled' $output
         rlRun "tmt test ls --filter enabled:False | tee $output"
+        rlAssertNotGrep '/tests/enabled/default' $output
+        rlAssertNotGrep '/tests/enabled/defined' $output
+        rlAssertGrep '/tests/enabled/disabled' $output
+        rlRun "tmt test ls --filter enabled:false | tee $output"
         rlAssertNotGrep '/tests/enabled/default' $output
         rlAssertNotGrep '/tests/enabled/defined' $output
         rlAssertGrep '/tests/enabled/disabled' $output

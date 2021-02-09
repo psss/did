@@ -752,6 +752,11 @@ class Tree(tmt.utils.Common):
         """ Apply filters and conditions, return pruned nodes """
         result = []
         for node in nodes:
+            filter_vars = vars(node)
+            # Add a lowercase version of bool variables for filtering
+            bool_vars = {k: [v, str(v).lower()] for k, v in
+                         filter_vars.items() if isinstance(v, bool)}
+            filter_vars.update(bool_vars)
             try:
                 if not all([fmf.utils.evaluate(condition, vars(node), node)
                             for condition in conditions]):
@@ -762,7 +767,7 @@ class Tree(tmt.utils.Common):
                 raise tmt.utils.GeneralError(f"Invalid condition syntax: {error}")
 
             try:
-                if not all([fmf.utils.filter(filter_, vars(node), regexp=True)
+                if not all([fmf.utils.filter(filter_, filter_vars, regexp=True)
                             for filter_ in filters]):
                     continue
             except fmf.utils.FilterError as error:
