@@ -477,7 +477,7 @@ def read_nitrate(beaker_task, common_data, disabled):
     return common_data, individual_data
 
 
-def read_nitrate_case(testcase, makefile_data):
+def read_nitrate_case(testcase, makefile_data=None):
     """ Read old metadata from nitrate test case """
     data = dict()
     echo("test case found '{0}'.".format(testcase.identifier))
@@ -489,16 +489,20 @@ def read_nitrate_case(testcase, makefile_data):
         echo(style('extra-summary: ', fg='green') + data['extra-summary'])
     # Contact
     if testcase.tester:
+        # Full 'Name Surname <example@email.com>' form
         if testcase.tester.name is not None:
             data['contact'] = '{} <{}>'.format(
                 testcase.tester.name, testcase.tester.email)
-        elif 'contact' not in makefile_data:
-            data['contact'] = testcase.tester.email
         else:
-            if not re.search(testcase.tester.email, makefile_data['contact']):
+            try:
+                # Use contact from Makefile if it's there and email matches
+                if re.search(testcase.tester.email, makefile_data['contact']):
+                    data['contact'] = makefile_data['contact']
+                else:
+                    raise KeyError
+            except (KeyError, TypeError):
+                # Otherwise use just the email address
                 data['contact'] = testcase.tester.email
-            else:
-                data['contact'] = makefile_data['contact']
         echo(style('contact: ', fg='green') + data['contact'])
     # Environment
     if testcase.arguments:
