@@ -1,6 +1,7 @@
 
 """ Base Metadata Classes """
 
+import copy
 import os
 import re
 import time
@@ -51,9 +52,20 @@ class Node(tmt.utils.Common):
         super(Node, self).__init__(parent=parent, name=node.name)
         self.node = node
 
+        # Store original metadata with applied defaults and including
+        # keys which are not defined in the L1 metadata specification
+        # Once the whole node has been initialized,
+        # self.update_metadata() must be called to work correctly.
+        self._metadata = self.node.data.copy()
+
     def __str__(self):
         """ Node name """
         return self.name
+
+    def _update_metadata(self):
+        """ Update the _metadata attribute """
+        self._metadata.update(self.export(format_='dict'))
+        self._metadata['name'] = self.name
 
     def _sources(self):
         """ Show source files """
@@ -257,11 +269,7 @@ class Test(Node):
         self._check('enabled', expected=bool, default=True)
         self._check('result', expected=str, default='respect')
 
-        # Store original metadata with applied defaults and including
-        # keys which are not defined in the L1 metadata specification
-        self._metadata = self.node.data.copy()
-        self._metadata.update(self.export(format_='dict'))
-        self._metadata['name'] = self.name
+        self._update_metadata()
 
     @staticmethod
     def overview(tree):
@@ -417,6 +425,8 @@ class Plan(Node):
 
         # Test execution context defined in the plan
         self._plan_context = self.node.get('context', dict())
+
+        self._update_metadata()
 
     @property
     def environment(self):
@@ -611,6 +621,7 @@ class Story(Node):
         # Get all supported attributes
         for key in self._keys:
             setattr(self, key, self.node.get(key))
+        self._update_metadata()
 
     def _match(
         self, implemented, tested, documented, covered,
@@ -752,13 +763,14 @@ class Tree(tmt.utils.Common):
         """ Apply filters and conditions, return pruned nodes """
         result = []
         for node in nodes:
-            filter_vars = vars(node)
+            filter_vars = copy.deepcopy(node._metadata)
+            cond_vars = node._metadata
             # Add a lowercase version of bool variables for filtering
             bool_vars = {k: [v, str(v).lower()] for k, v in
                          filter_vars.items() if isinstance(v, bool)}
             filter_vars.update(bool_vars)
             try:
-                if not all([fmf.utils.evaluate(condition, vars(node), node)
+                if not all([fmf.utils.evaluate(condition, cond_vars, node)
                             for condition in conditions]):
                     continue
             except fmf.utils.FilterError as error:
