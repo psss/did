@@ -87,6 +87,7 @@ as something that could/will be pasted into release notes:
 
 * The first line should have up to 50 characters.
 * Complete sentence with the first word capitalized.
+* No prefixes such as "doc:" or "<filename>:".
 * Should concisely describe the purpose of the patch.
 * Other details should be separated by a blank line.
 
