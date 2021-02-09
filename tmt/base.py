@@ -752,12 +752,21 @@ class Tree(tmt.utils.Common):
         """ Apply filters and conditions, return pruned nodes """
         result = []
         for node in nodes:
-            if not all([fmf.utils.evaluate(condition, vars(node), node)
-                        for condition in conditions]):
-                continue
-            if not all([fmf.utils.filter(filter_, vars(node), regexp=True)
-                        for filter_ in filters]):
-                continue
+            try:
+                if not all([fmf.utils.evaluate(condition, vars(node), node)
+                            for condition in conditions]):
+                    continue
+            except fmf.utils.FilterError as error:
+                raise tmt.utils.GeneralError(f"Invalid condition usage: {error}")
+            except SyntaxError as error:
+                raise tmt.utils.GeneralError(f"Invalid condition syntax: {error}")
+
+            try:
+                if not all([fmf.utils.filter(filter_, vars(node), regexp=True)
+                            for filter_ in filters]):
+                    continue
+            except fmf.utils.FilterError as error:
+                raise tmt.utils.GeneralError(f"Invalid filter usage: {error}")
             result.append(node)
         return result
 
