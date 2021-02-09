@@ -219,7 +219,7 @@ def read(path, makefile, nitrate, purpose, disabled):
                 r'^include /usr/share/rhts/lib/rhts-make.include',
                 '-include /usr/share/rhts/lib/rhts-make.include',
                 makefile, flags=re.MULTILINE)
-        makefile = makefile.replace('rhts-lint testinfo.desc', '')
+        makefile = re.sub('.*rhts-lint.*', '', makefile)
 
         # Create testinfo.desc file with resolved variables
         try:
