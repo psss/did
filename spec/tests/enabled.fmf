@@ -9,9 +9,12 @@ description:
     immediately there should be an easy way how to temporarily
     mark it as disabled so that it's skipped during the test suite
     execution. Should be a ``boolean``. The default value is
-    ``yes``.
+    ``true``.
 
 example: |
-    enabled: no
+    enabled: false
+
+    # list only enabled tests
+    tmt tests ls --filter enabled:true
 
 implemented: /tmt/base

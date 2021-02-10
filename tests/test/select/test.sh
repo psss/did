@@ -45,22 +45,18 @@ rlJournalStart
 
     rlPhaseStartTest "Select tests using a filter"
         # Enabled
-        rlRun "tmt test ls --filter enabled:True | tee $output"
-        rlAssertGrep '/tests/enabled/default' $output
-        rlAssertGrep '/tests/enabled/defined' $output
-        rlAssertNotGrep '/tests/enabled/disabled' $output
-        rlRun "tmt test ls --filter enabled:true | tee $output"
-        rlAssertGrep '/tests/enabled/default' $output
-        rlAssertGrep '/tests/enabled/defined' $output
-        rlAssertNotGrep '/tests/enabled/disabled' $output
-        rlRun "tmt test ls --filter enabled:False | tee $output"
-        rlAssertNotGrep '/tests/enabled/default' $output
-        rlAssertNotGrep '/tests/enabled/defined' $output
-        rlAssertGrep '/tests/enabled/disabled' $output
-        rlRun "tmt test ls --filter enabled:false | tee $output"
-        rlAssertNotGrep '/tests/enabled/default' $output
-        rlAssertNotGrep '/tests/enabled/defined' $output
-        rlAssertGrep '/tests/enabled/disabled' $output
+        for bool in True true; do
+            rlRun "tmt test ls --filter enabled:$bool | tee $output"
+            rlAssertGrep '/tests/enabled/default' $output
+            rlAssertGrep '/tests/enabled/defined' $output
+            rlAssertNotGrep '/tests/enabled/disabled' $output
+        done
+        for bool in False false; do
+            rlRun "tmt test ls --filter enabled:False | tee $output"
+            rlAssertNotGrep '/tests/enabled/default' $output
+            rlAssertNotGrep '/tests/enabled/defined' $output
+            rlAssertGrep '/tests/enabled/disabled' $output
+        done
 
         for tmt in 'tmt test ls' 'tmt run -rv discover test'; do
             # Tag

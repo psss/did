@@ -55,7 +55,7 @@ class Node(tmt.utils.Common):
         # Store original metadata with applied defaults and including
         # keys which are not defined in the L1 metadata specification
         # Once the whole node has been initialized,
-        # self.update_metadata() must be called to work correctly.
+        # self._update_metadata() must be called to work correctly.
         self._metadata = self.node.data.copy()
 
     def __str__(self):
@@ -708,6 +708,10 @@ class Story(Node):
     def export(self, format_='rst', title=True):
         """ Export story data into requested format """
 
+        # Use common Node export unless 'rst' requested
+        if format_ != 'rst':
+            return super().export(format_=format_)
+
         output = ''
 
         # Title and its anchor
@@ -766,24 +770,30 @@ class Tree(tmt.utils.Common):
             filter_vars = copy.deepcopy(node._metadata)
             cond_vars = node._metadata
             # Add a lowercase version of bool variables for filtering
-            bool_vars = {k: [v, str(v).lower()] for k, v in
-                         filter_vars.items() if isinstance(v, bool)}
+            bool_vars = {
+                key: [value, str(value).lower()]
+                for key, value in filter_vars.items()
+                if isinstance(value, bool)}
             filter_vars.update(bool_vars)
+            # Conditions
             try:
                 if not all([fmf.utils.evaluate(condition, cond_vars, node)
                             for condition in conditions]):
                     continue
             except fmf.utils.FilterError as error:
-                raise tmt.utils.GeneralError(f"Invalid condition usage: {error}")
+                # Handle missing attributes as if condition failed
+                continue
             except SyntaxError as error:
-                raise tmt.utils.GeneralError(f"Invalid condition syntax: {error}")
-
+                raise tmt.utils.GeneralError(
+                    f"Invalid condition syntax: {error}")
+            # Filters
             try:
                 if not all([fmf.utils.filter(filter_, filter_vars, regexp=True)
                             for filter_ in filters]):
                     continue
             except fmf.utils.FilterError as error:
-                raise tmt.utils.GeneralError(f"Invalid filter usage: {error}")
+                # Handle missing attributes as if filter failed
+                continue
             result.append(node)
         return result
 
