@@ -222,9 +222,23 @@ class GuestMinute(tmt.Guest):
         if error is None or error != 0:
             return False
 
-        # Get the IP
-        match = re.match(r'\s*{}=(?P<ip>[^ ]+), .*'.format(
-            re.escape(network_name)), net_info)
+        # Get the IP. The return format (if the boot was successful) will be:
+        #   a) <network_name>=<IPv4>, <IPv6>
+        #   b) <network_name>=<IPv4> in case the network doesn't support IPv6
+        # We can assume that the IPv4 is valid and hence it is sufficient
+        # to just check whether there are 4 sequences of 1 to 3 numbers
+        # separated by a dot.
+        match = re.match(
+            r'''
+            \s*
+            {}=                      # network name
+            (?P<ip>
+                (\d{{1,3}}\.){{3}}   # first 3 parts are followed by .
+                \d{{1,3}}
+            )
+            (,\ .*)?                 # optional IPv6 part
+            '''.format(re.escape(network_name)), net_info, re.VERBOSE
+        )
         if not match:
             self.delete()
             return False
