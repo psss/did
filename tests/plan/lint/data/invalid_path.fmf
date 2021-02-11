@@ -1,0 +1,7 @@
+discover:
+    how: fmf
+    url: https://github.com/psss/tmt
+    ref: master
+    path: /invalid-path-123456
+execute:
+    how: tmt

@@ -11,6 +11,7 @@ import click
 import pprint
 import subprocess
 import functools
+import collections
 
 import tmt.steps
 import tmt.utils
@@ -588,6 +589,71 @@ class Plan(Node):
         if self.opt('verbose'):
             self._sources()
 
+    def _lint_execute(self):
+        """ Lint execute step """
+        execute = self.node.get('execute')
+        if not execute:
+            echo(verdict(0, 'execute step must be defined with "how"'))
+            return False
+
+        how = execute.get('how')
+        methods = [
+            method.name
+            for method in tmt.steps.execute.ExecutePlugin.methods()]
+
+        if how not in methods:
+            echo(verdict(0, f'unsupported execute method "{how}"'))
+            return False
+
+        return True
+
+    def _lint_summary(self):
+        """ Lint summary step """
+        # summary is advised with a resonable length
+        if self.summary is None:
+            echo(verdict(2, 'summary is very useful for quick inspection'))
+        elif len(self.summary) > 50:
+            echo(verdict(2, 'summary should not exceed 50 characters'))
+
+        return True
+
+    def _lint_discover(self):
+        """ Lint discover step """
+        # discover step is optional
+        discover = self.node.get('discover')
+        if not discover:
+            return True
+
+        how = discover.get('how')
+        methods = [
+            method.name
+            for method in tmt.steps.discover.DiscoverPlugin.methods()]
+
+        if how not in methods:
+            echo(verdict(0, f'unknown discover method "{how}"'))
+            return False
+
+        return self._lint_discover_fmf(discover)
+
+    @staticmethod
+    def _lint_discover_fmf(discover):
+        """ Lint fmf discover method """
+        # default to `None` for non-existing keys
+        fmf_id = collections.defaultdict(lambda: None, {
+            key: value for key, value in discover.items()
+            if key in ['url', 'ref', 'path'] and value
+            })
+
+        # validate remote id and translate to human readable errors
+        valid, error = tmt.utils.validate_fmf_id(fmf_id)
+
+        if valid:
+            echo(verdict(1, 'fmf remote id is valid'))
+            return True
+
+        echo(verdict(0, error))
+        return False
+
     def lint(self):
         """
         Check plan against the L2 metadata specification.
@@ -595,13 +661,14 @@ class Plan(Node):
         Return whether the plan is valid.
         """
         self.ls()
-        execute = self.node.get('execute')
-        echo(verdict(execute is not None, 'execute step must be defined'))
-        if self.summary is None:
-            echo(verdict(2, 'summary is very useful for quick inspection'))
-        elif len(self.summary) > 50:
-            echo(verdict(2, 'summary should not exceed 50 characters'))
-        return execute is not None
+
+        # explore all available plugins
+        tmt.plugins.explore()
+
+        return all([
+            self._lint_summary(),
+            self._lint_execute(),
+            self._lint_discover()])
 
     def go(self):
         """ Execute the plan """

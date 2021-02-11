@@ -4,26 +4,41 @@
 
 rlJournalStart
     rlPhaseStartSetup
-        rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory"
-        rlRun "pushd $tmp"
+        rlRun "pushd data"
         rlRun "set -o pipefail"
         rlRun "tmt init"
-        rlRun "tmt plan create --template mini good"
-        rlRun "echo 'execute:' > bad.fmf"
     rlPhaseEnd
 
     rlPhaseStartTest "Good"
         rlRun "tmt plan lint good"
+        rlRun -s "tmt plan lint valid_fmf"
+        rlAssertGrep "pass fmf remote id is valid" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "Bad"
-        rlRun "tmt plan lint bad | tee output" 1
-        rlAssertGrep 'fail execute step must be defined' output
-        rlAssertGrep 'warn summary is very useful' output
+        rlRun -s "tmt plan lint bad" 1
+        rlAssertGrep 'fail execute step must be defined' $rlRun_LOG
+        rlAssertGrep 'warn summary is very useful' $rlRun_LOG
+        rlRun "rm $rlRun_LOG"
+
+        rlRun -s "tmt plan lint invalid_how" 1
+        rlAssertGrep "fail unknown discover method \"somehow\"" $rlRun_LOG
+        rlRun "rm $rlRun_LOG"
+
+        rlRun -s "tmt plan lint invalid_url" 1
+        rlAssertGrep "fail repo 'http://invalid-url' cannot be cloned" $rlRun_LOG
+        rlRun "rm $rlRun_LOG"
+
+        rlRun -s "tmt plan lint invalid_ref" 1
+        rlAssertGrep "fail git ref 'invalid-ref-123456' is invalid" $rlRun_LOG
+        rlRun "rm $rlRun_LOG"
+
+        rlRun -s "tmt plan lint invalid_path" 1
+        rlAssertGrep "fail path '/invalid-path-123456' is invalid" $rlRun_LOG
+        rlRun "rm $rlRun_LOG"
     rlPhaseEnd
 
     rlPhaseStartCleanup
         rlRun "popd"
-        rlRun "rm -r $tmp" 0 "Removing tmp directory"
     rlPhaseEnd
 rlJournalEnd

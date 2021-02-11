@@ -1,0 +1,4 @@
+discover:
+    how: somehow
+execute:
+    how: tmt

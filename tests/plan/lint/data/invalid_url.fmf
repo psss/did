@@ -1,0 +1,5 @@
+discover:
+    how: fmf
+    url: http://invalid-url
+execute:
+    how: tmt
