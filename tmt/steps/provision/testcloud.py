@@ -255,11 +255,13 @@ class GuestTestcloud(tmt.Guest):
                 if response.ok:
                     return response
             except requests.RequestException:
-                if timeout < 0:
-                    raise ProvisionError(
-                        f'Failed to connect in {DEFAULT_CONNECT_TIMEOUT}s.')
-            self.debug(f'Unable to {message} ({url}). Retrying... '
-                       f'{fmf.utils.listed(timeout, "second")} left.')
+                pass
+            if timeout < 0:
+                raise ProvisionError(
+                    f'Failed to {message} in {DEFAULT_CONNECT_TIMEOUT}s.')
+            self.debug(
+                f'Unable to {message} ({url}), retrying, '
+                f'{fmf.utils.listed(timeout, "second")} left.')
             time.sleep(wait)
             wait += 1
             timeout -= wait
