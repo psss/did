@@ -1192,7 +1192,7 @@ class Status(tmt.utils.Common):
         for plan in run.plans:
             if self.plan_matches_filters(plan):
                 for step in plan.steps(disabled=True):
-                    column = step.status() + ' '
+                    column = (step.status() or '----') + ' '
                     echo(self.colorize_column(column), nl=False)
                 echo(f' {run.workdir}  {plan.name}')
 
