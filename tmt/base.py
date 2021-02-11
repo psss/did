@@ -287,14 +287,23 @@ class Test(Node):
     def create(name, template, tree, force=False):
         """ Create a new test """
         # Create directory
-        directory_path = os.path.join(tree.root, name.lstrip('/'))
-        tmt.utils.create_directory(directory_path, 'test directory')
+        if name == '.':
+            directory_path = os.getcwd()
+        else:
+            directory_path = os.path.join(tree.root, name.lstrip('/'))
+            tmt.utils.create_directory(directory_path, 'test directory')
 
         # Create metadata
         metadata_path = os.path.join(directory_path, 'main.fmf')
-        tmt.utils.create_file(
-            path=metadata_path, content=tmt.templates.TEST_METADATA[template],
-            name='test metadata', force=force)
+        try:
+            tmt.utils.create_file(
+                path=metadata_path,
+                content=tmt.templates.TEST_METADATA[template],
+                name='test metadata',
+                force=force)
+        except KeyError:
+            raise tmt.utils.GeneralError(
+                f"Invalid template '{template}'.")
 
         # Create script
         script_path = os.path.join(directory_path, 'test.sh')
@@ -302,7 +311,7 @@ class Test(Node):
             content = tmt.templates.TEST[template]
         except KeyError:
             raise tmt.utils.GeneralError(
-                "Invalid template '{}'.".format(template))
+                f"Invalid template '{template}'.")
         tmt.utils.create_file(
             path=script_path, content=content,
             name='test script', force=force, mode=0o755)

@@ -369,7 +369,12 @@ _test_templates = listed(tmt.templates.TEST, join='or')
 @verbose_debug_quiet
 @force_dry
 def create(context, name, template, force, **kwargs):
-    """ Create a new test based on given template. """
+    """
+    Create a new test based on given template.
+
+    Specify directory name or use '.' to create tests under the
+    current working directory.
+    """
     tmt.Test._save_context(context)
     tmt.Test.create(name, template, context.obj.tree, force)
 
