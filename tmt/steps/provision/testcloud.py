@@ -6,6 +6,7 @@ import time
 import tmt
 import click
 import requests
+import fmf
 
 from tmt.utils import ProvisionError, WORKDIR_ROOT, retry_session
 
@@ -116,7 +117,7 @@ DOMAIN_TEMPLATE = """<domain type='kvm'>
 
 # VM defaults
 DEFAULT_BOOT_TIMEOUT = 60      # seconds
-DEFAULT_CONNECT_TIMEOUT = 10   # seconds
+DEFAULT_CONNECT_TIMEOUT = 60   # seconds
 
 # Image guessing related variables
 KOJI_URL = 'https://kojipkgs.fedoraproject.org/compose'
@@ -246,17 +247,22 @@ class GuestTestcloud(tmt.Guest):
 
     def _get_url(self, url, message):
         """ Get url, retry when fails, return response """
-        for i in range(1, DEFAULT_CONNECT_TIMEOUT):
+        timeout = DEFAULT_CONNECT_TIMEOUT
+        wait = 1
+        while True:
             try:
                 response = retry_session().get(url)
                 if response.ok:
                     return response
             except requests.RequestException:
-                pass
-            self.debug(f"Unable to {message} ({url}), retry {i}.")
-            time.sleep(3)
-        raise ProvisionError(
-            f'Failed to {message} ({DEFAULT_CONNECT_TIMEOUT} attempts).')
+                if timeout < 0:
+                    raise ProvisionError(
+                        f'Failed to connect in {DEFAULT_CONNECT_TIMEOUT}s.')
+            self.debug(f'Unable to {message} ({url}). Retrying... '
+                       f'{fmf.utils.listed(timeout, "second")} left.')
+            time.sleep(wait)
+            wait += 1
+            timeout -= wait
 
     def _guess_image_url(self, name):
         """ Guess image url for given name """
@@ -420,16 +426,22 @@ class GuestTestcloud(tmt.Guest):
         self.instance.create_ip_file(self.guest)
 
         # Wait a bit until the box is up
-        for i in range(1, DEFAULT_CONNECT_TIMEOUT):
+        timeout = DEFAULT_CONNECT_TIMEOUT
+        wait = 1
+        while True:
             try:
                 self.execute('whoami')
                 break
             except tmt.utils.RunError:
-                self.debug('Failed to connect to machine, retrying.')
-            time.sleep(1)
-        if i == DEFAULT_CONNECT_TIMEOUT:
-            raise ProvisionError(
-                'Failed to connect in {DEFAULT_CONNECT_TIMEOUT}s.')
+                if timeout < 0:
+                    raise ProvisionError(
+                        f'Failed to connect in {DEFAULT_CONNECT_TIMEOUT}s.')
+                self.debug(
+                    f'Failed to connect to machine, retrying, '
+                    f'{fmf.utils.listed(timeout, "second")} left.')
+            time.sleep(wait)
+            wait += 1
+            timeout -= wait
 
     def stop(self):
         """ Stop provisioned guest """
