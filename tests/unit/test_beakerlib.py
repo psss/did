@@ -18,9 +18,27 @@ def test_library():
         assert library.format == 'rpm'
         assert library.repo == 'openssl'
         assert library.url == 'https://github.com/beakerlib/openssl'
-        assert library.ref == 'master'
+        assert library.ref == 'master' # default branch is called master
         assert library.dest == tmt.beakerlib.DEFAULT_DESTINATION
         shutil.rmtree(library.parent.workdir)
+
+
+@pytest.mark.web
+def test_library_from_fmf():
+    """ Fetch beakerlib library referenced by fmf identifier """
+    library = tmt.beakerlib.Library(
+        {
+            'url': 'https://github.com/beakerlib/httpd',
+            'name': '/http'
+        }
+    )
+    assert library.format == 'fmf'
+    assert library.ref == 'master' # default branch is called master
+    assert library.url == 'https://github.com/beakerlib/httpd'
+    assert library.dest == tmt.beakerlib.DEFAULT_DESTINATION
+    assert library.repo == 'httpd'
+    assert library.name == '/http'
+    shutil.rmtree(library.parent.workdir)
 
 
 @pytest.mark.web
@@ -43,7 +61,7 @@ def test_dependencies():
     assert libraries[0].repo == 'httpd'
     assert libraries[0].name == '/http'
     assert libraries[0].url == 'https://github.com/beakerlib/httpd'
-    assert libraries[0].ref == 'master'
+    assert libraries[0].ref == 'master' # default branch is called master
     assert libraries[0].dest == tmt.beakerlib.DEFAULT_DESTINATION
     assert libraries[1].repo == 'openssl'
     assert libraries[1].name == '/certgen'
