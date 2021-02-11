@@ -5,5 +5,4 @@ test: python3 -m pytest
 framework: shell
 require:
   - python3-pytest
-  - python3-mock
 tier: 0

@@ -33,7 +33,7 @@ def test_dependencies():
     for require in ['httpd', 'lsof', 'mod_ssl']:
         assert require in requires
         assert require in libraries[0].require
-    assert 'openssl' in libraries[1].require
+    assert 'openssl' in libraries[2].require
     assert 'forest' in recommends
     assert 'wget' in requires
     # Library require should be in httpd requires but not in the final result

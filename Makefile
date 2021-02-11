@@ -71,4 +71,4 @@ clean:
 	find . -type f -name "*,cover" -delete
 	find . -type d -name "__pycache__" -delete
 	rm -f .coverage tags
-	rm -f examples/convert/main.fmf
+	rm -rf examples/convert/{main.fmf,test.md,Manual}
