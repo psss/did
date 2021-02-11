@@ -113,7 +113,7 @@ class Library(object):
             # The url must be identical
             if library.url != self.url:
                 raise tmt.utils.GeneralError(
-                    f"Library '{self.repo}' with url '{self.url}' conflicts "
+                    f"Library '{self}' with url '{self.url}' conflicts "
                     f"with already fetched library from '{library.url}'.")
             # Use the default branch if no ref provided
             if self.ref is None:
@@ -121,8 +121,9 @@ class Library(object):
             # The same ref has to be used
             if library.ref != self.ref:
                 raise tmt.utils.GeneralError(
-                    f"Library '{self.repo}' using ref '{self.ref}' conflicts "
-                    f"with already fetched library using ref '{library.ref}'.")
+                    f"Library '{self}' using ref '{self.ref}' conflicts "
+                    f"with already fetched library '{library}' "
+                    f"using ref '{library.ref}'.")
             self.parent.debug(f"Library '{self}' already fetched.", level=3)
             # Reuse the existing metadata tree
             self.tree = library.tree
