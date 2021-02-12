@@ -3,4 +3,5 @@ description:
     Check whether the old beakerlib functions which depend on
     the Makefile metadata work with the new metadata.yaml file.
 test: ./test.sh
-framework: beakerlib
+duration: 15m
+tier: 3

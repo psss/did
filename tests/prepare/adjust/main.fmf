@@ -3,5 +3,4 @@ description:
     Verify that required package installation can be adjusted
     based on the context both in test metadata and prepare step.
 test: ./test.sh
-framework: beakerlib
 tag-: [container]

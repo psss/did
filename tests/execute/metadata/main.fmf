@@ -4,6 +4,5 @@ description:
     stored in the 'metadata.yaml' file, that default values are
     present and that custom metadata keys are included as well.
 test: ./test.sh
-framework: beakerlib
 tag-: [container]
 tier: 3
