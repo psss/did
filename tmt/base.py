@@ -1240,8 +1240,14 @@ class Status(tmt.utils.Common):
                 os.path.join(abs_path, 'run.yaml'))
             if not os.path.isdir(abs_path) or invalid_id or invalid_run:
                 continue
+            # Creating a and loading a run may override the data in the
+            # context which could affect the status of the following runs.
+            # Backup the inner context object to later recover it to
+            # its initial state.
+            backup = copy.deepcopy(self._context.obj)
             run = Run(abs_path, self._context.obj.tree, self._context)
             self.process_run(run)
+            self._context.obj = backup
 
 
 class Result(object):
