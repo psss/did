@@ -38,7 +38,7 @@ rlJournalStart
         rlLog "There should be the heading and one run"
         rlAssertGrep "2" "lines"
 
-        rlRun "tmt status -i /not/a/valid/runid | tee output" 0 "Use an invalid ID"
+        rlRun "tmt status -i /not/a/valid/runid | tee output" 0 "Invalid ID"
         rlRun "wc -l output | tee lines" 0 "Get the number of lines"
         rlLog "There should only be the heading"
         rlAssertGrep "1" "lines"
@@ -60,6 +60,11 @@ rlJournalStart
         rlRun "runid=\$(head -n 1 run-output)" 0 "Get the run ID"
         rlRun "tmt status --abandoned | tee output"
         rlAssertGrep "done\s+$runid" "output" -E
+        rlRun "tmt run -a provision -h local prepare -h shell -s false \
+            | tee run-output" 2 "Let the prepare step fail"
+        rlRun "runid=\$(head -n 1 run-output)" 0 "Get the run ID"
+        rlRun "tmt status --active | tee output"
+        rlAssertGrep "todo\s+$runid" "output" -E
     rlPhaseEnd
 
     rlPhaseStartCleanup
