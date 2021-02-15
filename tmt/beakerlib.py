@@ -2,7 +2,6 @@
 
 import re
 import os
-import shutil
 
 import fmf
 import tmt
@@ -52,6 +51,9 @@ class Library(object):
         # Use an empty common class if parent not provided (for logging, cache)
         self.parent = parent or tmt.utils.Common(workdir=True)
 
+        # Default branch is detected from the origin after cloning
+        self.default_branch = None
+
         # The 'library(repo/lib)' format
         if isinstance(identifier, str):
             identifier = identifier.strip()
@@ -62,8 +64,7 @@ class Library(object):
             self.format = 'rpm'
             self.repo, self.name = matched.groups()
             self.url = os.path.join(DEFAULT_REPOSITORY, self.repo)
-            self.ref = None   # final value
-            self.__ref = None # original value
+            self.ref = None
             self.dest = DEFAULT_DESTINATION
 
         # The fmf identifier
@@ -71,8 +72,7 @@ class Library(object):
             self.parent.debug(f"Detected library '{identifier}'.", level=3)
             self.format = 'fmf'
             self.url = identifier.get('url')
-            self.ref = identifier.get('ref', None) # final value
-            self.__ref = None # original value
+            self.ref = identifier.get('ref', None)
             self.dest = identifier.get(
                 'destination', DEFAULT_DESTINATION).lstrip('/')
             self.name = identifier.get('name', '/')
@@ -110,18 +110,19 @@ class Library(object):
         # Check if the library was already fetched
         try:
             library = self.parent._library_cache[self.repo]
+            # The url must be identical
             if library.url != self.url:
                 raise tmt.utils.GeneralError(
                     f"Library '{self.repo}' with url '{self.url}' conflicts "
                     f"with already fetched library from '{library.url}'.")
-            if library.__ref != self.__ref:
-                # .__ref can be None, indicating we want default branch
-                # .ref is always a brach/commit/tag string
-                lib_ref = library.__ref if library.__ref else '<default branch>'
-                self_ref = self.__ref if self.__ref else '<default branch>'
+            # Use the default branch if no ref provided
+            if self.ref is None:
+                self.ref = library.default_branch
+            # The same ref has to be used
+            if library.ref != self.ref:
                 raise tmt.utils.GeneralError(
-                    f"Library '{self.repo}' using ref '{self_ref}' conflicts "
-                    f"with already fetched library using ref '{lib_ref}'.")
+                    f"Library '{self.repo}' using ref '{self.ref}' conflicts "
+                    f"with already fetched library using ref '{library.ref}'.")
             self.parent.debug(f"Library '{self}' already fetched.", level=3)
             # Reuse the existing metadata tree
             self.tree = library.tree
@@ -129,17 +130,20 @@ class Library(object):
         except KeyError:
             self.parent.debug(f"Fetch library '{self}'.", level=3)
             # Prepare path, clone the repository, checkout ref
-            directory = os.path.join(
-                self.parent.workdir, self.dest, self.repo)
+            directory = os.path.join(self.parent.workdir, self.dest, self.repo)
             # Clone repo with disabled prompt to ignore missing/private repos
             try:
                 self.parent.run(
                     ['git', 'clone', self.url, directory],
                     shell=False, env={"GIT_ASKPASS": "echo"})
-                # Store the default_branch
+                # Detect the default branch from the origin
+                # The ref format is 'ref: refs/remotes/origin/master'
                 head = os.path.join(directory, '.git/refs/remotes/origin/HEAD')
-                default = os.path.join(directory, '.git/refs/heads/__DEFAULT__')
-                shutil.copyfile(head, default)
+                with open(head) as ref:
+                    self.default_branch = ref.read().strip().split('/')[-1]
+                # Use the default branch if no ref provided
+                if self.ref is None:
+                    self.ref = self.default_branch
             except tmt.utils.RunError as error:
                 # Fallback to install during the prepare step if in rpm format
                 if self.format == 'rpm':
@@ -148,13 +152,8 @@ class Library(object):
                 self.parent.fail(
                     f"Failed to fetch library '{self}' from '{self.url}'.")
                 raise
-            # Check out the requested branch (sets real name of default branch)
+            # Check out the requested branch
             try:
-                # wants default branch -> replace with the name of real default branch
-                if self.ref is None:
-                    with open(os.path.join(directory, '.git/refs/heads/__DEFAULT__')) as f_head:
-                        # content should be `ref: refs/remotes/origin/master`
-                        self.ref = f_head.read().strip().split('/')[-1]
                 self.parent.run(
                     ['git', 'checkout', self.ref], shell=False, cwd=directory)
             except tmt.utils.RunError as error:
