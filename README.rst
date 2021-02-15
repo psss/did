@@ -213,6 +213,13 @@ Install the latest version from the ``copr`` repository::
     sudo dnf copr enable psss/tmt
     sudo dnf install tmt
 
+Experiment safely and easily inside a container, choose ``mini``
+for core functionality and small image or the ``full`` version
+with all available features::
+
+    podman run -it --rm quay.io/testing-farm/tmt:mini bash
+    podman run -it --rm quay.io/testing-farm/tmt:full bash
+
 When installing using ``pip`` you might need to install additional
 packages on your system::
 

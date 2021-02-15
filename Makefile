@@ -53,6 +53,12 @@ srpm: tarball
 packages: rpm srpm
 
 
+# Containers
+images:
+	podman build -t tmt:mini --squash -f ./containers/Dockerfile.mini .
+	podman build -t tmt:full --squash -f ./containers/Dockerfile.full .
+
+
 # Python packaging
 wheel:
 	python setup.py bdist_wheel
