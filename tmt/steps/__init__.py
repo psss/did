@@ -518,10 +518,15 @@ class Login(tmt.utils.Common):
         commands = self.opt('command')
         self.info('login', 'Starting interactive shell', color='yellow')
         for guest in self.parent.plan.provision.guests():
-            # Make sure the workdir is available on the guest
-            guest.push()
+            # Attempt to push the workdir to the guest
+            try:
+                guest.push()
+                cwd = self.parent.workdir
+            except tmt.utils.GeneralError:
+                self.warn("Failed to push workdir to the guest.")
+                cwd = None
+            # Execute all requested commands
             for command in commands:
                 self.debug(f"Run '{command}' in interactive mode.")
-                guest.execute(
-                    command, interactive=True, cwd=self.parent.workdir)
+                guest.execute(command, interactive=True, cwd=cwd)
         self.info('login', 'Interactive shell finished', color='yellow')

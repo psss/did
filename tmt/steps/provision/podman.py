@@ -80,6 +80,10 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
         """ Return the provisioned guest """
         return self._guest
 
+    def requires(self):
+        """ List of required packages needed for workdir sync """
+        return GuestContainer.requires()
+
 
 class GuestContainer(tmt.Guest):
     """ Container Instance """
@@ -194,3 +198,8 @@ class GuestContainer(tmt.Guest):
         if self.container:
             self.podman(['container', 'rm', '-f', self.container])
             self.info('container', 'removed', 'green')
+
+    @classmethod
+    def requires(cls):
+        """ No packages needed to sync workdir to the container """
+        return []

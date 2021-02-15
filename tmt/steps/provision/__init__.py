@@ -104,6 +104,19 @@ class Provision(tmt.steps.Step):
         """ Return the list of all provisioned guests """
         return self._guests
 
+    def requires(self):
+        """
+        Packages required by all enabled provision plugins
+
+        Return a list of packages which need to be installed on the
+        provisioned guest so that the workdir can be synced to it.
+        Used by the prepare step.
+        """
+        requires = set()
+        for plugin in self.plugins(classes=ProvisionPlugin):
+            requires.update(plugin.requires())
+        return list(requires)
+
 
 class ProvisionPlugin(tmt.steps.Plugin):
     """ Common parent of provision plugins """
@@ -151,6 +164,10 @@ class ProvisionPlugin(tmt.steps.Plugin):
         Should return a provisioned Guest() instance.
         """
         raise NotImplementedError
+
+    def requires(self):
+        """ List of required packages needed for workdir sync """
+        return Guest.requires()
 
 
 class Guest(tmt.utils.Common):
@@ -349,7 +366,7 @@ class Guest(tmt.utils.Common):
         environment = self._export_environment(kwargs.get('env', dict()))
 
         # Change to given directory on guest if cwd provided
-        directory = kwargs.get('cwd', '')
+        directory = kwargs.get('cwd') or ''
         if directory:
             directory = f"cd '{directory}'; "
 
@@ -399,3 +416,8 @@ class Guest(tmt.utils.Common):
         consume any disk resources.
         """
         self.debug(f"Doing nothing to remove guest '{self.guest}'.")
+
+    @classmethod
+    def requires(cls):
+        """ Syncing workdir with the guest needs rsync installed """
+        return ['rsync']

@@ -41,6 +41,10 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
         """ Return the provisioned guest """
         return self._guest
 
+    def requires(self):
+        """ List of required packages needed for workdir sync """
+        return GuestLocal.requires()
+
 
 class GuestLocal(tmt.Guest):
     """ Local Host """
@@ -62,3 +66,8 @@ class GuestLocal(tmt.Guest):
 
     def pull(self):
         """ Nothing to be done to pull workdir """
+
+    @classmethod
+    def requires(cls):
+        """ No packages needed to sync workdir """
+        return []

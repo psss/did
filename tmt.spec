@@ -27,7 +27,7 @@ Source0: https://github.com/psss/tmt/releases/download/%{version}/tmt-%{version}
 
 # Main tmt package requires the Python module
 Requires: python%{python3_pkgversion}-%{name} == %{version}-%{release}
-Requires: git-core sshpass
+Requires: git-core rsync sshpass
 
 %description
 The tmt Python module and command line tool implement the test
@@ -71,7 +71,7 @@ Summary: Virtual machine provisioner for the Test Management Tool
 Obsoletes: tmt-testcloud < 0.17
 Requires: tmt == %{version}-%{release}
 Requires: python%{python3_pkgversion}-testcloud >= 0.3.5
-Requires: ansible openssh-clients rsync
+Requires: ansible openssh-clients
 
 %description provision-virtual
 Dependencies required to run tests in a local virtual machine.

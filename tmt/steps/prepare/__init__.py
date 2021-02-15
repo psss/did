@@ -61,7 +61,10 @@ class Prepare(tmt.steps.Step):
 
         # Required packages
         requires = list(set(
-            self.plan.discover.requires() + self.plan.execute.requires()))
+            self.plan.discover.requires() +
+            self.plan.provision.requires() +
+            self.plan.execute.requires()
+            ))
         if requires:
             data = dict(
                 how='install',
