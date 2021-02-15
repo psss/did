@@ -801,6 +801,85 @@ some of them it is possible to use the ``--all`` option::
 
     tmt run --all provision --how=local
 
+When the particular step is ``done``, it can't be executed repeatedly
+unless ``--force`` is used::
+
+    $ tmt run -l report
+    /var/tmp/tmt/run-759
+
+    /plans/features/core
+        report
+            status: done
+            summary: 10 tests passed
+
+
+    $ tmt run -l report --force
+    /var/tmp/tmt/run-759
+
+    /plans/features/core
+        report
+            how: display
+            summary: 10 tests passed
+
+
+You might need additional information about your already ``done`` run.
+Therefore use ``--force`` with the ``--verbose`` option::
+
+    $ tmt run -l report -v --force
+    /var/tmp/tmt/run-759
+
+    /plans/features/core
+        report
+            how: display
+                pass /tests/core/adjust
+                pass /tests/core/docs
+                pass /tests/core/dry
+                pass /tests/core/env
+                pass /tests/core/error
+                pass /tests/core/force
+                pass /tests/core/ls
+                pass /tests/core/path
+                pass /tests/core/smoke
+                pass /tests/unit
+            summary: 10 tests passed
+
+
+    $ tmt run -l report -vv --force
+    /var/tmp/tmt/run-759
+
+    /plans/features/core
+        report
+            how: display
+                pass /tests/core/adjust
+                    output.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/adjust/output.txt
+                    journal.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/adjust/journal.txt
+                pass /tests/core/docs
+                    output.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/docs/output.txt
+                    journal.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/docs/journal.txt
+                pass /tests/core/dry
+                    output.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/dry/output.txt
+                    journal.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/dry/journal.txt
+                pass /tests/core/env
+                    output.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/env/output.txt
+                    journal.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/env/journal.txt
+                pass /tests/core/error
+                    output.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/error/output.txt
+                    journal.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/error/journal.txt
+                pass /tests/core/force
+                    output.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/force/output.txt
+                    journal.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/force/journal.txt
+                pass /tests/core/ls
+                    output.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/ls/output.txt
+                    journal.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/ls/journal.txt
+                pass /tests/core/path
+                    output.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/path/output.txt
+                pass /tests/core/smoke
+                    output.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/core/smoke/output.txt
+                pass /tests/unit
+                    output.txt: /var/tmp/tmt/run-759/plans/features/core/execute/data/tests/unit/output.txt
+            summary: 10 tests passed
+
+
 
 Provision Options
 ------------------------------------------------------------------
