@@ -9,7 +9,7 @@ description: |
     of tests is usually executed for each of them. The ``trigger``
     dimension supports the following values:
 
-    code
+    commit
         Project source code has changed. This can be either a
         pull/merge request or a new commit pushed to a branch.
 
