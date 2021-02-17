@@ -154,8 +154,16 @@ def implemented_tested_documented(function):
          'to define individual dimensions or the @FILE notation to load data '
          'from provided yaml file. Can be specified multiple times. ')
 @verbose_debug_quiet
+@click.option(
+    '--version', is_flag=True,
+    help='Show tmt version and commit hash.')
 def main(click_contex, root, context, **kwargs):
     """ Test Management Tool """
+    # Show current tmt version and exit
+    if kwargs.get('version'):
+        print(f"tmt version: {tmt.__version__}")
+        raise SystemExit(0)
+
     # Save click context and fmf context for future use
     tmt.utils.Common._save_context(click_contex)
     click_contex.obj = tmt.utils.Common()

@@ -14,6 +14,11 @@ rlJournalStart
         rlRun "set -o pipefail"
     rlPhaseEnd
 
+    rlPhaseStartTest "version"
+        rlRun "tmt --version | tee output" 0 "Check version"
+        rlAssertGrep "tmt version:" "output"
+    rlPhaseEnd
+
     rlPhaseStartTest "help"
         rlRun "tmt --help | tee help" 0 "Run help"
         rlAssertGrep "Test Management Tool" "help"

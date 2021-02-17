@@ -1,6 +1,8 @@
 # Prepare variables
 TMP = $(CURDIR)/tmp
 VERSION = $(shell grep ^Version tmt.spec | sed 's/.* //')
+COMMIT = $(shell git rev-parse --short HEAD)
+REPLACE_VERSION = "s/running from the source/$(VERSION) ($(COMMIT))/"
 PACKAGE = tmt-$(VERSION)
 FILES = LICENSE README.rst \
 		Makefile tmt.spec setup.py \
@@ -40,6 +42,7 @@ source: clean tmp
 	mkdir -p $(TMP)/SOURCES
 	mkdir -p $(TMP)/$(PACKAGE)
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
+	sed -i $(REPLACE_VERSION) $(TMP)/$(PACKAGE)/tmt/__init__.py
 	rm $(TMP)/$(PACKAGE)/tmt/steps/provision/{base,vagrant}.py
 tarball: source man
 	cd $(TMP) && tar cfz SOURCES/$(PACKAGE).tar.gz $(PACKAGE)
@@ -61,8 +64,11 @@ images:
 
 # Python packaging
 wheel:
+	cp -a tmt/__init__.py tmt/__init__.py.backup
+	sed -i $(REPLACE_VERSION) tmt/__init__.py
 	python setup.py bdist_wheel
 	python3 setup.py bdist_wheel
+	mv tmt/__init__.py.backup tmt/__init__.py
 upload:
 	twine upload dist/*.whl
 
