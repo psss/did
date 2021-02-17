@@ -13,9 +13,9 @@ RUN set -x && \
 
 # Prepare files for experimenting
 RUN mkdir /tmt
-COPY ../.fmf /tmt/.fmf
-COPY ../tests /tmt/tests
-COPY ../plans /tmt/plans
+COPY .fmf /tmt/.fmf
+COPY tests /tmt/tests
+COPY plans /tmt/plans
 
 # Run all plans under the regular user by default
 WORKDIR /tmt

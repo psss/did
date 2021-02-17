@@ -13,10 +13,10 @@ RUN set -x && \
 
 # Prepare files for experimenting
 RUN mkdir /tmt
-COPY ../.fmf /tmt/.fmf
-COPY ../tests /tmt/tests
-COPY ../plans/main.fmf /tmt/plans/main.fmf
-COPY ../plans/features/core.fmf /tmt/plans/core.fmf
+COPY .fmf /tmt/.fmf
+COPY tests /tmt/tests
+COPY plans/main.fmf /tmt/plans/main.fmf
+COPY plans/features/core.fmf /tmt/plans/core.fmf
 
 # Run all plans under the regular user by default
 WORKDIR /tmt
