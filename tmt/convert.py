@@ -138,7 +138,7 @@ def html_to_markdown(html):
         import html2text
         md_handler = html2text.HTML2Text()
     except ImportError:
-        raise ConvertError("Install html2text to import manual tests.")
+        raise ConvertError("Install tmt-test-convert to import tests.")
 
     if html is None:
         markdown = ""
@@ -229,7 +229,7 @@ def read(path, makefile, nitrate, purpose, disabled):
                 stdout=subprocess.DEVNULL)
         except FileNotFoundError:
             raise ConvertError(
-                "Install 'make' to convert metadata from Makefile.")
+                "Install tmt-test-convert to convert metadata from Makefile.")
         except subprocess.CalledProcessError:
             raise ConvertError(
                 "Failed to convert metadata using 'make testinfo.desc'.")
@@ -364,12 +364,12 @@ def read_nitrate(beaker_task, common_data, disabled):
     """ Read old metadata from nitrate test cases """
 
     # Need to import nitrate only when really needed. Otherwise we get
-    # traceback when nitrate not installed or config file not available.
+    # traceback when nitrate is not installed or config file not available.
     try:
         import nitrate
         import gssapi
     except ImportError:
-        raise ConvertError('Install nitrate module to import metadata.')
+        raise ConvertError('Install tmt-test-convert to import metadata.')
 
     # Check test case
     echo(style('Nitrate ', fg='blue'), nl=False)

@@ -31,7 +31,8 @@ def import_nitrate():
         DEFAULT_PRODUCT = nitrate.Product(name='RHEL Tests')
         return nitrate
     except ImportError:
-        raise ConvertError("Install nitrate to export tests there.")
+        raise ConvertError(
+            "Install tmt-test-convert to export tests to nitrate.")
     except nitrate.NitrateError as error:
         raise ConvertError(error)
 
