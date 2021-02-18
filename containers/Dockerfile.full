@@ -7,6 +7,8 @@ RUN set -x && \
 
 # Install necessary packages
 RUN set -x && \
+    dnf install -y dnf-plugins-core && \
+    dnf copr enable -y psss/tmt && \
     dnf install -y tmt-all beakerlib python3-{mock,test} && \
     dnf autoremove -y && \
     dnf clean all
@@ -16,6 +18,8 @@ RUN mkdir /tmt
 COPY .fmf /tmt/.fmf
 COPY tests /tmt/tests
 COPY plans /tmt/plans
+COPY stories /tmt/stories
+RUN rm /tmt/plans/provision/minute.fmf
 
 # Run all plans under the regular user by default
 WORKDIR /tmt

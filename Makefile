@@ -55,8 +55,8 @@ packages: rpm srpm
 
 # Containers
 images:
-	podman build -t tmt:mini --squash -f ./containers/Dockerfile.mini .
-	podman build -t tmt:full --squash -f ./containers/Dockerfile.full .
+	podman build -t tmt --squash -f ./containers/Dockerfile.mini .
+	podman build -t tmt-all --squash -f ./containers/Dockerfile.full .
 
 
 # Python packaging

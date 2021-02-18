@@ -197,10 +197,23 @@ available options.
 Install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Currently tmt is supported for Fedora 31 and later, available
-directly in the distro repositories::
+The main ``tmt`` package provides the core features with a minimal
+set of dependencies::
 
     sudo dnf install tmt
+
+In order to enable additional functionality, such as particular
+provision or report plugins, install the respective subpackage::
+
+    sudo dnf install tmt-test-convert
+    sudo dnf install tmt-report-html
+    sudo dnf install tmt-provision-container
+    sudo dnf install tmt-provision-virtual
+
+If you don't care about disk space and want to have all available
+features right at hand install everything::
+
+    sudo dnf install tmt-all
 
 For RHEL 8 and CentOS 8, first make sure that you have enabled the
 EPEL repository::
@@ -208,17 +221,17 @@ EPEL repository::
     sudo dnf install epel-release
     sudo dnf install tmt
 
-Install the latest version from the ``copr`` repository::
+Impatient to try the fresh features as soon as possible? Install
+the latest greatest version from the ``copr`` repository::
 
     sudo dnf copr enable psss/tmt
     sudo dnf install tmt
 
-Experiment safely and easily inside a container, choose ``mini``
-for core functionality and small image or the ``full`` version
-with all available features::
+Not sure, just want to try out how it works? Experiment safely and
+easily inside a container::
 
-    podman run -it --rm quay.io/testing-farm/tmt:mini bash
-    podman run -it --rm quay.io/testing-farm/tmt:full bash
+    podman run -it --rm quay.io/testing-farm/tmt bash
+    podman run -it --rm quay.io/testing-farm/tmt-all bash
 
 When installing using ``pip`` you might need to install additional
 packages on your system::
@@ -226,7 +239,7 @@ packages on your system::
     sudo dnf install gcc {python3,libvirt,krb5,libpq}-devel
     pip install --user tmt
 
-You can omit the ``--user`` flag if in a virtual environment.
+Note: You can omit the ``--user`` flag if in a virtual environment.
 
 
 Develop
