@@ -308,7 +308,7 @@ def tests(context, **kwargs):
 @verbose_debug_quiet
 def ls(context, **kwargs):
     """
-    List available tests
+    List available tests.
 
     Regular expression can be used to filter tests by name.
     Use '.' to select tests under the current working directory.
@@ -324,7 +324,7 @@ def ls(context, **kwargs):
 @verbose_debug_quiet
 def show(context, **kwargs):
     """
-    Show test details
+    Show test details.
 
     Regular expression can be used to filter tests by name.
     Use '.' to select tests under the current working directory.
@@ -344,7 +344,7 @@ def show(context, **kwargs):
 @verbose_debug_quiet
 def lint(context, **kwargs):
     """
-    Check tests against the L1 metadata specification
+    Check tests against the L1 metadata specification.
 
     Regular expression can be used to filter tests for linting.
     Use '.' to select tests under the current working directory.
@@ -481,7 +481,7 @@ def import_(
     help='Provide as much debugging details as possible.')
 def export(context, format_, nitrate, create, general, **kwargs):
     """
-    Export test data into the desired format
+    Export test data into the desired format.
 
     Regular expression can be used to filter tests by name.
     Use '.' to select tests under the current working directory.
@@ -522,7 +522,7 @@ def plans(context, **kwargs):
 @verbose_debug_quiet
 def ls(context, **kwargs):
     """
-    List available plans
+    List available plans.
 
     Regular expression can be used to filter plans by name.
     Use '.' to select plans under the current working directory.
@@ -538,7 +538,7 @@ def ls(context, **kwargs):
 @verbose_debug_quiet
 def show(context, **kwargs):
     """
-    Show plan details
+    Show plan details.
 
     Regular expression can be used to filter plans by name.
     Use '.' to select plans under the current working directory.
@@ -555,7 +555,7 @@ def show(context, **kwargs):
 @verbose_debug_quiet
 def lint(context, **kwargs):
     """
-    Check plans against the L2 metadata specification
+    Check plans against the L2 metadata specification.
 
     Regular expression can be used to filter plans by name.
     Use '.' to select plans under the current working directory.
@@ -633,7 +633,7 @@ def ls(
     context, implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
     """
-    List available stories
+    List available stories.
 
     Regular expression can be used to filter stories by name.
     Use '.' to select stories under the current working directory.
@@ -654,7 +654,7 @@ def show(
     context, implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
     """
-    Show story details
+    Show story details.
 
     Regular expression can be used to filter stories by name.
     Use '.' to select stories under the current working directory.
@@ -699,7 +699,7 @@ def coverage(
     implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
     """
-    Show code, test and docs coverage for given stories
+    Show code, test and docs coverage for given stories.
 
     Regular expression can be used to filter stories by name.
     Use '.' to select stories under the current working directory.
@@ -760,7 +760,7 @@ def export(
     implemented, tested, documented, covered,
     unimplemented, untested, undocumented, uncovered, **kwargs):
     """
-    Export selected stories into desired format
+    Export selected stories into desired format.
 
     Regular expression can be used to filter stories by name.
     Use '.' to select stories under the current working directory.

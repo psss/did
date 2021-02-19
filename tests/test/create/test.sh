@@ -12,32 +12,36 @@ rlJournalStart
         rlRun "tmt init"
     rlPhaseEnd
 
-    rlPhaseStartTest "shell template"
+    rlPhaseStartTest "Shell template"
         rlRun "tmt test create test_shell --template shell"
         rlAssertExists "$tmp/test_shell/main.fmf"
         rlAssertExists "$tmp/test_shell/test.sh"
     rlPhaseEnd
 
-    rlPhaseStartTest "existing directory and files"
-        rlRun -s "tmt test create test_shell --template shell" 2 "test already exists"
-        rlAssertGrep "File '$tmp/test_shell/main.fmf' already exists." "${rlRun_LOG}"
-        rlAssertGrep "Directory '$tmp/test_shell' already exists." "${rlRun_LOG}"
+    rlPhaseStartTest "Existing directory and files"
+        rlRun -s "tmt test create test_shell --template shell" \
+            2 "test already exists"
+        rlAssertGrep "File '$tmp/test_shell/main.fmf' already exists." \
+            "${rlRun_LOG}"
+        rlAssertGrep "Directory '$tmp/test_shell' already exists." \
+            "${rlRun_LOG}"
         rlAssertExists "$tmp/test_shell/main.fmf"
         rlAssertExists "$tmp/test_shell/test.sh"
     rlPhaseEnd
 
-    rlPhaseStartTest "beakerlib template"
+    rlPhaseStartTest "BeakerLib template"
         rlRun "tmt test create test_beakerlib --template beakerlib"
         rlAssertExists "$tmp/test_beakerlib/main.fmf"
         rlAssertExists "$tmp/test_beakerlib/test.sh"
     rlPhaseEnd
 
     rlPhaseStartTest "non-existent template"
-        rlRun -s "tmt test create non-existent --template non-existent" 2 "Template doesn't exist"
+        rlRun -s "tmt test create non-existent --template non-existent" \
+            2 "Template doesn't exist"
         rlAssertGrep "Invalid template 'non-existent'." "${rlRun_LOG}"
     rlPhaseEnd
 
-    rlPhaseStartTest "With '.' syntax"
+    rlPhaseStartTest "Using the '.' syntax"
         rlRun "cd $DIR_DOT_SYNTAX"
         rlRun "tmt test create . --template shell"
         rlAssertExists "$tmp/$DIR_DOT_SYNTAX/main.fmf"

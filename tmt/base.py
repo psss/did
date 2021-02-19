@@ -302,16 +302,14 @@ class Test(Node):
                 name='test metadata',
                 force=force)
         except KeyError:
-            raise tmt.utils.GeneralError(
-                f"Invalid template '{template}'.")
+            raise tmt.utils.GeneralError(f"Invalid template '{template}'.")
 
         # Create script
         script_path = os.path.join(directory_path, 'test.sh')
         try:
             content = tmt.templates.TEST[template]
         except KeyError:
-            raise tmt.utils.GeneralError(
-                f"Invalid template '{template}'.")
+            raise tmt.utils.GeneralError(f"Invalid template '{template}'.")
         tmt.utils.create_file(
             path=script_path, content=content,
             name='test script', force=force, mode=0o755)
