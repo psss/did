@@ -12,7 +12,8 @@ description: |
     distro
         The operating system distribution on which the application
         runs (fedora, fedora-33, centos, centos-8, centos-8.4,
-        rhel, rhel-8, rhel-8.4).
+        rhel, rhel-8, rhel-8.4). The "el-8" abbreviation can be
+        used to cover both rhel-8 and centos-8.
 
     variant
         The distribution variant (Client, Desktop, Server

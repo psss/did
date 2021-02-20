@@ -10,6 +10,8 @@
 /pidof:
     test: pidof sh
     adjust:
-        enabled: false
+      - enabled: false
         when: distro ~< centos-8
         because: pidof is available in centos-8 and later
+      - summary: Running on rhel-8 or centos-8
+        when: distro == el-8
