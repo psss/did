@@ -24,10 +24,12 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         discover:
             how: fmf
             url: https://github.com/psss/tmt
-            ref: master
+            ref: main
             path: /fmf/root
             test: /tests/basic
             filter: 'tier: 1'
+
+    If no 'ref' is provided, the default branch from the origin is used.
 
     It is also possible to limit tests only to those that have changed
     in git since a given revision. This can be particularly useful when
@@ -38,13 +40,13 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     * modified-url - fetched as "reference" remote in the test dir
     * modified-ref - the ref to compare against
 
-    Example to compare local repo against upstream master:
+    Example to compare local repo against upstream 'main' branch:
 
         discover:
             how: fmf
             modified-only: True
             modified-url: https://github.com/psss/tmt
-            modified-ref: reference/master
+            modified-ref: reference/main
 
     Note that internally the modified tests are appended to the list
     specified via 'test', so those tests will also be selected even if
@@ -69,8 +71,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 help='URL of the reference git repository with fmf metadata.'),
             click.option(
                 '--modified-ref', metavar='REVISION',
-                help='Branch, tag or commit specifying '
-                'the reference git revision (master by default).'),
+                help='Branch, tag or commit specifying the reference git '
+                'revision (if not provided, the default branch is used).'),
             click.option(
                 '-m', '--modified-only', is_flag=True,
                 help='If set, select only tests modified '
@@ -85,16 +87,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 '-F', '--filter', metavar='FILTERS', multiple=True,
                 help='Include only tests matching the filter.'),
             ] + super().options(how)
-
-    def default(self, option, default=None):
-        """ Return default data for given option """
-        # Git revision defaults to master if url provided
-        if option == 'ref' and self.get('url'):
-            return 'master'
-        if option == 'modified-ref':
-            return 'master'
-        # No other defaults available
-        return default
 
     def show(self):
         """ Show discover details """
@@ -130,11 +122,14 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         path = self.get('path')
         testdir = os.path.join(self.workdir, 'tests')
 
-        # Clone provided git repository (if url given)
+        # Clone provided git repository (if url given) with disabled
+        # prompt to ignore possibly missing or private repositories
         if url:
             self.info('url', url, 'green')
             self.debug(f"Clone '{url}' to '{testdir}'.")
-            self.run(['git', 'clone', url, testdir], shell=False)
+            self.run(
+                ['git', 'clone', url, testdir],
+                shell=False, env={"GIT_ASKPASS": "echo"})
         # Copy git repository root to workdir
         else:
             if path and not os.path.isdir(path):
@@ -162,6 +157,13 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.info('ref', ref, 'green')
             self.debug(f"Checkout ref '{ref}'.")
             self.run(['git', 'checkout', '-f', ref], cwd=testdir, shell=False)
+
+        # Show current commit hash if inside a git repository
+        try:
+            hash_, _ = self.run('git rev-parse --short HEAD', cwd=testdir)
+            self.verbose('hash', hash_.strip(), 'green')
+        except (tmt.utils.RunError, AttributeError):
+            pass
 
         # Adjust path and optionally show
         if path is None or path == '.':
@@ -194,7 +196,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                      cwd=testdir, shell=False)
             self.run(['git', 'fetch', 'reference'], cwd=testdir, shell=False)
         if modified_only:
-            modified_ref = self.get('modified-ref')
+            modified_ref = self.get(
+                'modified-ref', tmt.utils.default_branch(testdir))
             self.info('modified-ref', modified_ref, 'green')
             output = self.run(
                 ['git', 'log', '--format=', '--stat', '--name-only',

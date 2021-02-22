@@ -138,10 +138,7 @@ class Library(object):
                     ['git', 'clone', self.url, directory],
                     shell=False, env={"GIT_ASKPASS": "echo"})
                 # Detect the default branch from the origin
-                # The ref format is 'ref: refs/remotes/origin/master'
-                head = os.path.join(directory, '.git/refs/remotes/origin/HEAD')
-                with open(head) as ref:
-                    self.default_branch = ref.read().strip().split('/')[-1]
+                self.default_branch = tmt.utils.default_branch(directory)
                 # Use the default branch if no ref provided
                 if self.ref is None:
                     self.ref = self.default_branch

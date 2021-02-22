@@ -1,5 +1,5 @@
 execute:
-    how: shell
+    how: tmt
 
 /smoke:
     provision:

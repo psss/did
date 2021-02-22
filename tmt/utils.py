@@ -952,6 +952,18 @@ def remove_color(text):
     return re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', text)
 
 
+def default_branch(repository, remote='origin'):
+    """ Detect default branch from given local git repository """
+    head = os.path.join(repository, f'.git/refs/remotes/{remote}/HEAD')
+    # Make sure the HEAD reference is available
+    if not os.path.exists(head):
+        subprocess.run(
+            f'git remote set-head {remote} --auto'.split(), cwd=repository)
+    # The ref format is 'ref: refs/remotes/origin/main'
+    with open(head) as ref:
+        return ref.read().strip().split('/')[-1]
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  StructuredField
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

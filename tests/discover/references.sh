@@ -59,7 +59,7 @@ rlJournalStart
     rlPhaseStartTest $plan
         rlRun 'tmt run -dddv discover plan --name $plan | tee output'
         rlAssertGrep 'Cloning into' output
-        rlAssertGrep 'Checkout ref.*master' output
+        rlAssertNotGrep 'Checkout ref.*master' output
         rlAssertGrep /tests/core/docs output
         rlAssertGrep /tests/core/env output
         rlAssertGrep /tests/core/ls output
@@ -69,7 +69,7 @@ rlJournalStart
     rlPhaseStartTest $plan
         rlRun 'tmt run -dddv discover plan --name $plan | tee output'
         rlAssertGrep 'Cloning into' output
-        rlAssertGrep 'Checkout ref.*master' output
+        rlAssertNotGrep 'Checkout ref.*master' output
         rlAssertGrep '2 tests selected' output
         rlAssertGrep /tests/full output
         rlAssertGrep /tests/smoke output
@@ -80,6 +80,7 @@ rlJournalStart
         rlRun 'tmt run -dddv discover plan --name $plan | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*5407fe5' output
+        rlAssertGrep 'hash.*5407fe5' output
         rlAssertGrep '2 tests selected' output
         rlAssertGrep /tests/docs output
         rlAssertNotGrep /tests/env output
@@ -91,6 +92,7 @@ rlJournalStart
         rlRun 'tmt run -dddv discover plan --name $plan | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*eae4d52' output
+        rlAssertGrep 'hash.*eae4d52' output
         rlAssertGrep '2 tests selected' output
         rlAssertGrep /tests/full output
         rlAssertGrep /tests/smoke output
