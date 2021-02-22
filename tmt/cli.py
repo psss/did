@@ -487,7 +487,10 @@ def import_(
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-def export(context, format_, nitrate, create, general, **kwargs):
+@click.option(
+    '--no-duplicate', is_flag=True,
+    help='Search for Nitrate cases for fmf identifier before creating new one')
+def export(context, format_, nitrate, create, general, no_duplicate, **kwargs):
     """
     Export test data into the desired format.
 
@@ -497,7 +500,7 @@ def export(context, format_, nitrate, create, general, **kwargs):
     tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
         if nitrate:
-            test.export(format_='nitrate', create=create, general=general)
+            test.export(format_='nitrate', create=create, general=general, find_nitrate_cases=no_duplicate)
         else:
             echo(test.export(format_=format_))
 

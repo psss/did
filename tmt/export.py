@@ -37,7 +37,29 @@ def import_nitrate():
         raise ConvertError(error)
 
 
-def export_to_nitrate(test, create, general):
+def __nitrate_find_fmf_testcases(test):
+    """
+    Find all testcases in all component general plans what contains same fmf identifier
+    """
+    for component in test.component:
+        try:
+            for testcase in find_general_plan(component).testcases:
+                struct_field = tmt.utils.StructuredField(testcase.notes)
+                fmf_id = tmt.utils.dict_to_yaml(test.fmf_id)
+                try:
+                    fmf_part = struct_field.get('fmf')
+
+                    if fmf_part == fmf_id:
+                        echo(style(
+                            f"Test case '{testcase.identifier}' found. (Plan search)", fg='magenta'))
+                        yield testcase
+                except tmt.utils.StructuredFieldError:
+                    pass
+        except nitrate.NitrateError:
+            pass
+
+
+def export_to_nitrate(test, create, general, find_nitrate_cases):
     """ Export fmf metadata to nitrate test cases """
     import_nitrate()
 
@@ -51,7 +73,17 @@ def export_to_nitrate(test, create, general):
     except TypeError:
         # Create a new nitrate test case
         if create:
-            nitrate_case = create_nitrate_case(test)
+            nitrate_case = None
+            if find_nitrate_cases:
+                # find if there exists duplicates already inside TCMS (not linked to FMF files)
+                testcases = __nitrate_find_fmf_testcases(test)
+                try:
+                    # select fist found testcase if any
+                    nitrate_case = next(testcases)
+                except StopIteration:
+                    pass
+            if not nitrate_case:
+                nitrate_case = create_nitrate_case(test)
             new_test_created = True
         else:
             raise ConvertError("Nitrate test case id not found.")
