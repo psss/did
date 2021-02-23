@@ -19,7 +19,7 @@ log = fmf.utils.Logging('tmt').logger
 
 
 # Test case relevancy regular expressions
-RELEVANCY_COMMENT =  r"^([^#]*)#\s*(.+)$"
+RELEVANCY_COMMENT =  r"^([^#]*?)\s*#\s*(.+)$"
 RELEVANCY_RULE = r"^([^:]+)\s*:\s*(.+)$"
 RELEVANCY_EXPRESSION = (
     r"^\s*(.*?)\s*(!?contains|!?defined|[=<>!]+)\s*(.*?)\s*$")
