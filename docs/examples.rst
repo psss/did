@@ -562,8 +562,8 @@ available for binary status filtering::
     $ tmt stories show --help | grep only
       -i, --implemented    Implemented stories only.
       -I, --unimplemented  Unimplemented stories only.
-      -t, --tested         Tested stories only.
-      -T, --untested       Untested stories only.
+      -t, --verified       Stories verified by tests.
+      -T, --unverified     Stories not verified by tests.
       -d, --documented     Documented stories only.
       -D, --undocumented   Undocumented stories only.
       -c, --covered        Covered stories only.

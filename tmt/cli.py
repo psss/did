@@ -104,33 +104,33 @@ def name_filter_condition_long(function):
     return function
 
 
-def implemented_tested_documented(function):
+def implemented_verified_documented(function):
     """ Common story options """
 
     options = [
         click.option(
-            '-i', '--implemented', is_flag=True,
+            '--implemented', is_flag=True,
             help='Implemented stories only.'),
         click.option(
-            '-I', '--unimplemented', is_flag=True,
+            '--unimplemented', is_flag=True,
             help='Unimplemented stories only.'),
         click.option(
-            '-t', '--tested', is_flag=True,
-            help='Tested stories only.'),
+            '--verified', is_flag=True,
+            help='Stories verified by tests.'),
         click.option(
-            '-T', '--untested', is_flag=True,
-            help='Untested stories only.'),
+            '--unverified', is_flag=True,
+            help='Stories not verified by tests.'),
         click.option(
-            '-d', '--documented', is_flag=True,
+            '--documented', is_flag=True,
             help='Documented stories only.'),
         click.option(
-            '-D', '--undocumented', is_flag=True,
+            '--undocumented', is_flag=True,
             help='Undocumented stories only.'),
         click.option(
-            '-c', '--covered', is_flag=True,
+            '--covered', is_flag=True,
             help='Covered stories only.'),
         click.option(
-            '-C', '--uncovered', is_flag=True,
+            '--uncovered', is_flag=True,
             help='Uncovered stories only.'),
         ]
 
@@ -635,11 +635,11 @@ def stories(context, **kwargs):
 @stories.command()
 @click.pass_context
 @name_filter_condition_long
-@implemented_tested_documented
+@implemented_verified_documented
 @verbose_debug_quiet
 def ls(
-    context, implemented, tested, documented, covered,
-    unimplemented, untested, undocumented, uncovered, **kwargs):
+    context, implemented, verified, documented, covered,
+    unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
     List available stories.
 
@@ -648,19 +648,19 @@ def ls(
     """
     tmt.Story._save_context(context)
     for story in context.obj.tree.stories():
-        if story._match(implemented, tested, documented, covered,
-                unimplemented, untested, undocumented, uncovered):
+        if story._match(implemented, verified, documented, covered,
+                unimplemented, unverified, undocumented, uncovered):
             story.ls()
 
 
 @stories.command()
 @click.pass_context
 @name_filter_condition_long
-@implemented_tested_documented
+@implemented_verified_documented
 @verbose_debug_quiet
 def show(
-    context, implemented, tested, documented, covered,
-    unimplemented, untested, undocumented, uncovered, **kwargs):
+    context, implemented, verified, documented, covered,
+    unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
     Show story details.
 
@@ -669,8 +669,8 @@ def show(
     """
     tmt.Story._save_context(context)
     for story in context.obj.tree.stories():
-        if story._match(implemented, tested, documented, covered,
-                unimplemented, untested, undocumented, uncovered):
+        if story._match(implemented, verified, documented, covered,
+                unimplemented, unverified, undocumented, uncovered):
             story.show()
             echo()
 
@@ -700,12 +700,12 @@ def create(context, name, template, force, **kwargs):
     '--code', is_flag=True, help='Show code coverage.')
 @click.pass_context
 @name_filter_condition_long
-@implemented_tested_documented
+@implemented_verified_documented
 @verbose_debug_quiet
 def coverage(
     context, code, test, docs,
-    implemented, tested, documented, covered,
-    unimplemented, untested, undocumented, uncovered, **kwargs):
+    implemented, verified, documented, covered,
+    unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
     Show code, test and docs coverage for given stories.
 
@@ -723,7 +723,11 @@ def coverage(
     if not any([code, test, docs]):
         code = test = docs = True
     for story in context.obj.tree.stories():
-        # Header
+        # Check conditions
+        if not story._match(implemented, verified, documented, covered,
+                unimplemented, unverified, undocumented, uncovered):
+            continue
+        # Show header once
         if not header:
             if code:
                 headfoot('code')
@@ -734,15 +738,15 @@ def coverage(
             headfoot('story')
             echo()
             header = True
-        # Coverage
-        if story._match(implemented, tested, documented, covered,
-                unimplemented, untested, undocumented, uncovered):
-            status = story.coverage(code, test, docs)
-            total += 1
-            code_coverage += status[0]
-            test_coverage += status[1]
-            docs_coverage += status[2]
+        # Show individual stats
+        status = story.coverage(code, test, docs)
+        total += 1
+        code_coverage += status[0]
+        test_coverage += status[1]
+        docs_coverage += status[2]
     # Summary
+    if not total:
+        return
     if code:
         headfoot('{}%'.format(round(100 * code_coverage / total)))
     if test:
@@ -756,7 +760,7 @@ def coverage(
 @stories.command()
 @click.pass_context
 @name_filter_condition_long
-@implemented_tested_documented
+@implemented_verified_documented
 @click.option(
     '--format', 'format_', default='rst', show_default=True, metavar='FORMAT',
     help='Output format.')
@@ -765,8 +769,8 @@ def coverage(
     help='Provide as much debugging details as possible.')
 def export(
     context, format_,
-    implemented, tested, documented, covered,
-    unimplemented, untested, undocumented, uncovered, **kwargs):
+    implemented, verified, documented, covered,
+    unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
     Export selected stories into desired format.
 
@@ -776,8 +780,8 @@ def export(
     tmt.Story._save_context(context)
 
     for story in context.obj.tree.stories(whole=True):
-        if story._match(implemented, tested, documented, covered,
-                unimplemented, untested, undocumented, uncovered):
+        if story._match(implemented, verified, documented, covered,
+                unimplemented, unverified, undocumented, uncovered):
             echo(story.export(format_))
 
 

@@ -24,8 +24,8 @@ story: 'As a developer I want to comfortably work with stories'
         - tmt story ls REGEXP
         - tmt story ls --implemented
         - tmt story ls --unimplemented
-        - tmt story ls --tested
-        - tmt story ls --untested
+        - tmt story ls --verified
+        - tmt story ls --unverified
         - tmt story ls --documented
         - tmt story ls --undocumented
     implemented: /tmt/cli

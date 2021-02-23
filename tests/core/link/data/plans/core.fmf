@@ -1,0 +1,9 @@
+summary:
+    Basic functionality
+execute:
+    how: tmt
+link:
+  - verifies: /stories/covered
+  - verifies: /stories/verified
+  - blocks: /plans/full
+  - https://github.com/psss/tmt/pull/215

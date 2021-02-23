@@ -45,7 +45,7 @@ class Node(tmt.utils.Common):
     """
 
     # Supported attributes
-    _keys = ['name']
+    _keys = ['summary', 'description', 'link']
 
     def __init__(self, node, parent=None):
         """ Initialize the node """
@@ -57,6 +57,14 @@ class Node(tmt.utils.Common):
         # Once the whole node has been initialized,
         # self._update_metadata() must be called to work correctly.
         self._metadata = self.node.data.copy()
+
+        # Set all core attributes
+        for key in self._keys:
+            setattr(self, key, self.node.get(key))
+
+        # Convert link into the canonical form, store the object
+        self._link = Link(self.link)
+        self.link = self._link.get()
 
     def __str__(self):
         """ Node name """
@@ -202,6 +210,7 @@ class Test(Node):
         # Filtering attributes
         'tag',
         'tier',
+        'link',
         ]
 
     def __init__(self, data, name=None):
@@ -229,10 +238,6 @@ class Test(Node):
         else:
             node = data
         super().__init__(node)
-
-        # Set all supported attributes
-        for key in self._keys:
-            setattr(self, key, self.node.get(key))
 
         # Path defaults to the directory where metadata are stored or to
         # the root '/' if fmf metadata were not stored on the filesystem
@@ -318,6 +323,10 @@ class Test(Node):
         """ Show test details """
         self.ls()
         for key in self._keys:
+            # Special handling for the link attribute
+            if key == 'link':
+                self._link.show()
+                continue
             value = getattr(self, key)
             if value not in [None, list(), dict()]:
                 echo(tmt.utils.format(key, value))
@@ -396,9 +405,7 @@ class Plan(Node):
 
     def __init__(self, node, run=None):
         """ Initialize the plan """
-        super(Plan, self).__init__(node, parent=run)
-        self.summary = node.get('summary')
-        self.description = node.get('description')
+        super().__init__(node, parent=run)
         self.run = run
 
         # Initialize test steps
@@ -546,6 +553,7 @@ class Plan(Node):
         if self.environment:
             echo(tmt.utils.format(
                 'environment', self.environment, key_color='blue'))
+        self._link.show()
         if self._fmf_context():
             echo(tmt.utils.format(
                 'context', self._fmf_context(), key_color='blue'))
@@ -616,9 +624,7 @@ class Story(Node):
         'story',
         'description',
         'example',
-        'implemented',
-        'tested',
-        'documented',
+        'link',
         ]
 
     def __init__(self, node):
@@ -630,26 +636,42 @@ class Story(Node):
             setattr(self, key, self.node.get(key))
         self._update_metadata()
 
+    @property
+    def documented(self):
+        """ Return links to relevant documentation """
+        return self._link.get('documented-by')
+
+    @property
+    def verified(self):
+        """ Return links to relevant test coverage """
+        return self._link.get('verified-by')
+
+    @property
+    def implemented(self):
+        """ Return links to relevant source code """
+        return self._link.get('implemented-by')
+
     def _match(
-        self, implemented, tested, documented, covered,
-        unimplemented, untested, undocumented, uncovered):
+        self, implemented, verified, documented, covered,
+        unimplemented, unverified, undocumented, uncovered):
         """ Return true if story matches given conditions """
         if implemented and not self.implemented:
             return False
-        if tested and not self.tested:
+        if verified and not self.verified:
             return False
         if documented and not self.documented:
             return False
         if unimplemented and self.implemented:
             return False
-        if untested and self.tested:
+        if unverified and self.verified:
             return False
         if undocumented and self.documented:
             return False
-        if uncovered and self.implemented and self.tested and self.documented:
+        if uncovered and (
+                self.implemented and self.verified and self.documented):
             return False
         if covered and not (
-                self.implemented and self.tested and self.documented):
+                self.implemented and self.verified and self.documented):
             return False
         return True
 
@@ -691,6 +713,9 @@ class Story(Node):
         """ Show story details """
         self.ls()
         for key in self._keys:
+            if key == 'link':
+                self._link.show()
+                continue
             value = getattr(self, key)
             if value is not None:
                 wrap = False if key == 'example' else 'auto'
@@ -704,7 +729,7 @@ class Story(Node):
             code = bool(self.implemented)
             echo(verdict(code, good='done', bad='todo') + ' ', nl=False)
         if test:
-            test = bool(self.tested)
+            test = bool(self.verified)
             echo(verdict(test, good='done', bad='todo') + ' ', nl=False)
         if docs:
             docs = bool(self.documented)
@@ -746,7 +771,7 @@ class Story(Node):
         # Status
         if not self.node.children:
             status = []
-            for coverage in ['implemented', 'tested', 'documented']:
+            for coverage in ['implemented', 'verified', 'documented']:
                 if getattr(self, coverage):
                     status.append(coverage)
             output += "\nStatus: {}\n".format(
@@ -1347,3 +1372,89 @@ class Result(object):
         if self.note:
             data['note'] = self.note
         return data
+
+
+class Link(object):
+    """ Core attribute link parsing """
+
+    # The list of all supported link relations
+    _relations = [
+        'verifies', 'verified-by',
+        'implements', 'implemented-by',
+        'documents', 'documented-by',
+        'blocks', 'blocked-by',
+        'duplicates', 'duplicated-by',
+        'parent', 'child',
+        'relates',
+        ]
+
+    # The list of valid fmf id keys
+    _fmf_id_keys = ['url', 'ref', 'path', 'name']
+
+    def __init__(self, data=None):
+        """ Convert link data into canonical form """
+        # Nothing to do if no data provided
+        self.links = []
+        if data is None:
+            return
+        if not isinstance(data, list):
+            data = [data]
+
+        # Ensure that each link is in the canonical form
+        for link in data:
+
+            # It should be a string
+            if isinstance(link, str):
+                self.links.append(dict(relates=link))
+                continue
+
+            # Or a dictionary
+            if not isinstance(link, dict):
+                raise tmt.utils.SpecificationError(
+                    f"Invalid link target (should be 'str' or 'dict', "
+                    f"got '{type(link).__name__}'.")
+
+            # Verify the relation
+            relations = []
+            for key in link:
+                # Skip fmf id keys and optional link note for now
+                if key in self._fmf_id_keys + ['note']:
+                    continue
+                if key in self._relations:
+                    relations.append(key)
+                    continue
+                raise tmt.utils.SpecificationError(
+                    f"Invalid link relation '{key}' (should be "
+                    f"{fmf.utils.listed(self._relations, join='or')}).")
+            # More relations (error)
+            if len(relations) > 1:
+                raise tmt.utils.SpecificationError(
+                    f"Multiple relations specified for the link "
+                    f"({fmf.utils.listed(relations)}).")
+            # No relation (fmf id)
+            if len(relations) == 0:
+                self.links.append(dict(relates=link))
+                continue
+            # The link should contain a relation and an optional note
+            allowed_keys = set(relations + ['note'])
+            extra_keys = set(link.keys()).difference(allowed_keys)
+            if extra_keys:
+                extra_keys = fmf.utils.listed(extra_keys, quote="'")
+                raise tmt.utils.SpecificationError(
+                    f"Unexpected link key {extra_keys}. Store the dictionary "
+                    f"with the fmf id under the '{relations[0]}' key.")
+            # Valid link
+            self.links.append(link)
+
+    def get(self, relation=None):
+        """ Get links with given relation, all by default """
+        return [
+            link for link in self.links
+            if relation in link or relation is None]
+
+    def show(self):
+        """ Format a list of links with their relations """
+        for link in self.links:
+            relation = [key for key in link.keys() if key != 'note'][0]
+            echo(tmt.utils.format(
+                relation.rstrip('-by'), f"{link[relation]}", key_color='cyan'))

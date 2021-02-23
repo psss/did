@@ -1,0 +1,6 @@
+summary: Basic smoke test
+test: tmt --version
+link:
+  - verifies: /stories/covered
+  - verifies: /stories/verified
+  - https://github.com/psss/tmt/pull/215
