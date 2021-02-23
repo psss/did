@@ -21,13 +21,6 @@ rlJournalStart
         # CentOS 7 (disabled)
         rlRun "tmt -c distro=centos-7 test show pidof | tee $output"
         rlAssertGrep 'enabled\s+no' $output -E
-        # The 'el' shortcut for 'rhel' and 'centos'
-        for distro in 'rhel' 'centos'; do
-            rlRun "tmt -c distro=$distro-8 test show pidof | tee $output"
-            rlAssertGrep 'Running on rhel-8 or centos-8' $output
-            rlRun "tmt -c distro=$distro-7 test show pidof | tee $output"
-            rlAssertNotGrep 'Running on rhel-7 or centos-8' $output
-        done
         # Context file (pidof disabled, uptime duration adjusted)
         rlRun "tmt -c @context.yaml test show pidof | tee $output"
         rlAssertGrep 'enabled\s+no' $output -E

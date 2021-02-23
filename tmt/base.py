@@ -765,29 +765,10 @@ class Tree(tmt.utils.Common):
         self._custom_context = context
 
     def _fmf_context(self):
-        """
-        Return the processed fmf context for adjusting the tree
-
-        Use custom fmf context if provided during intialization, default
-        context from the command line otherwise. Process special context
-        values, such the 'el-x' shortcuts for the 'distro' dimension.
-        """
+        """ Use custom fmf context if provided, default otherwise """
         if self._custom_context is not None:
-            context = self._custom_context
-        else:
-            context = super()._fmf_context()
-
-        # Add the 'el-x' shortcuts for 'rhel-x' and 'centos-x'
-        # values into the distro dimension
-        try:
-            shortcuts = set([
-                re.sub('^(rhel|centos)-', 'el-', distro)
-                for distro in context['distro']])
-            context['distro'].extend(shortcuts)
-        except KeyError:
-            pass
-
-        return context
+            return self._custom_context
+        return super()._fmf_context()
 
     def _filters_conditions(self, nodes, filters, conditions):
         """ Apply filters and conditions, return pruned nodes """
