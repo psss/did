@@ -1048,6 +1048,7 @@ class Run(tmt.utils.Common):
         """ Go and do test steps for selected plans """
         # Show run id / workdir path
         self.info(self.workdir, color='magenta')
+        self.debug(f"tmt version: {tmt.__version__}")
         # Attempt to load run data
         self.load()
 
