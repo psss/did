@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.2.1
+Version: 1.3.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -171,6 +171,69 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Tue Feb 23 2021 Petr Šplíchal <psplicha@redhat.com> - 1.3.0-1
+- Show the current tmt version in the debug log
+- Revert support for the 'el' distro shortcut
+- Strip whitespace before relevancy comment
+- Ensure rsync is installed on the guest if needed
+- Use the default branch in the discover fmf plugin
+- Suport the 'el' shortcut for the distro context
+- Implement the 'tmt --version' option [fix #445]
+- Adjust test create test, fix missing dots
+- Support creating tests in the current directory
+- Rename container images, update install docs
+- Fixup Dockerfiles to build in quay.io.
+- Support building mini and full tmt container image
+- Add a Dockerfile for container with tmt
+- Fix dependency error messages
+- Use a better trigger name for source code changes
+- Add a new 'Check Report' section to examples
+- Add the --force explanation in the documentation
+- Extend the test coverage to check for active runs
+- Add basic test coverage for tmt status
+- Restore context after processing each run
+- Correctly handle an undefined step status
+- Load default plan when no root is present
+- Implement tmt status command
+- Define command-line interface for status command
+- Print library in error message during ref conflict
+- Adjust the default branch handling for libraries
+- Handle default branch in Library
+- Adjust test duration, clean up old test metadata
+- Improve timeout handling (fix an infinite loop)
+- Adjust default timeout in the testcloud provision
+- Remove obsolete unit test coverage for steps
+- Adjust the filtering support, fix docs building
+- Allow filtering using custom L1 metadata
+- Allow filtering with lowercase bool names
+- Handle exceptions when applying filters and conditions
+- Share code for filters & conditions, test coverage
+- Apply filters after applying defaults and conversions
+- Fix IPv4 parsing when booting minute machine
+- Remove all hacks for the old cruncher executor
+- Remove the whole rhts-lint line during test import
+- Remove the old convert test from unit tests
+- Adjust contact handling to work with manual tests
+- Fix contacts without name during tmt test import
+- Finalize the specification of the 'link' attribute
+- Add specification of the new core attribute 'link'
+- Enough of dreaming, let's go to the forest! :)
+- Update the overview of core classes, minor cleanup
+- Add missing required packages for pip install
+- Implement tmt run --follow option for checking log
+- Extra check for required packages when using yum
+- Clean up obsolete names in examples and templates
+- Update the test checking for relevancy conversion
+- Adjust storing test case id for new nitrate cases
+- Append nitrate id when exporting instead of rewrite
+- Skip prereserve check if custom flavor requested
+- Use special compare operators only if minor given
+- Adjust support for selecting modified tests
+- Allow selecting only tests that have changed in git
+- Remove the duplicate build job from packit config
+- Verify the old beakerlib functions using Makefile
+- Enable debug output using the TMT_DEBUG variable
+
 * Fri Dec 11 2020 Petr Šplíchal <psplicha@redhat.com> - 1.2.1-1
 - Manual state for manual nitrate tests
 - Define framework for all beakerlib libraries tests
