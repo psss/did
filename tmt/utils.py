@@ -861,11 +861,14 @@ def format(
     return output
 
 
-def create_directory(path, name, quiet=False):
+def create_directory(path, name, dry=False, quiet=False):
     """ Create a new directory, handle errors """
     say = log.debug if quiet else echo
     if os.path.isdir(path):
         say("Directory '{}' already exists.".format(path))
+        return
+    if dry:
+        say("Directory '{}' would be created.".format(path))
         return
     try:
         os.makedirs(path, exist_ok=True)
@@ -875,15 +878,21 @@ def create_directory(path, name, quiet=False):
             name, path, error))
 
 
-def create_file(path, content, name, force=False, mode=0o664, quiet=False):
+def create_file(path, content, name,
+                dry=False, force=False, mode=0o664, quiet=False):
     """ Create a new file, handle errors """
     say = log.debug if quiet else echo
-    action = 'created'
+    action = 'would be created' if dry else 'created'
     if os.path.exists(path):
         if force:
-            action = 'overwritten'
+            action = 'would be overwritten' if dry else 'overwritten'
         else:
             raise FileError("File '{}' already exists.".format(path))
+
+    if dry:
+        say("{} '{}' {}.".format(name.capitalize(), path, action))
+        return
+
     try:
         with open(path, 'w') as file_:
             file_.write(content)

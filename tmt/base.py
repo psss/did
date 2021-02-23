@@ -293,20 +293,23 @@ class Test(Node):
     @staticmethod
     def create(name, template, tree, force=False):
         """ Create a new test """
+        dry = Test._opt('dry')
+
         # Create directory
         if name == '.':
             directory_path = os.getcwd()
         else:
             directory_path = os.path.join(tree.root, name.lstrip('/'))
-            tmt.utils.create_directory(directory_path, 'test directory')
+            tmt.utils.create_directory(directory_path, 'test directory', dry=dry)
 
         # Create metadata
-        metadata_path = os.path.join(directory_path, 'main.fmf')
         try:
+            metadata_path = os.path.join(directory_path, 'main.fmf')
             tmt.utils.create_file(
                 path=metadata_path,
                 content=tmt.templates.TEST_METADATA[template],
                 name='test metadata',
+                dry=dry,
                 force=force)
         except KeyError:
             raise tmt.utils.GeneralError(f"Invalid template '{template}'.")
@@ -319,7 +322,7 @@ class Test(Node):
             raise tmt.utils.GeneralError(f"Invalid template '{template}'.")
         tmt.utils.create_file(
             path=script_path, content=content,
-            name='test script', force=force, mode=0o755)
+            name='test script', dry=dry, force=force, mode=0o755)
 
     def show(self):
         """ Show test details """
@@ -512,6 +515,7 @@ class Plan(Node):
     @staticmethod
     def create(name, template, tree, force=False):
         """ Create a new plan """
+        dry = Plan._opt('dry')
         # Prepare paths
         (directory, plan) = os.path.split(name)
         directory_path = os.path.join(tree.root, directory.lstrip('/'))
@@ -520,7 +524,7 @@ class Plan(Node):
                                 plan + ('' if has_fmf_ext else '.fmf'))
 
         # Create directory & plan
-        tmt.utils.create_directory(directory_path, 'plan directory')
+        tmt.utils.create_directory(directory_path, 'plan directory', dry=dry)
         try:
             content = tmt.templates.PLAN[template]
         except KeyError:
@@ -532,7 +536,7 @@ class Plan(Node):
 
         tmt.utils.create_file(
             path=plan_path, content=content,
-            name='plan', force=force)
+            name='plan', dry=dry, force=force)
 
     def steps(self, enabled=True, disabled=False, names=False, skip=[]):
         """
@@ -693,6 +697,8 @@ class Story(Node):
     @staticmethod
     def create(name, template, tree, force=False):
         """ Create a new story """
+        dry = Story._opt('dry')
+
         # Prepare paths
         (directory, story) = os.path.split(name)
         directory_path = os.path.join(tree.root, directory.lstrip('/'))
@@ -701,7 +707,7 @@ class Story(Node):
                                   story + ('' if has_fmf_ext else '.fmf'))
 
         # Create directory & story
-        tmt.utils.create_directory(directory_path, 'story directory')
+        tmt.utils.create_directory(directory_path, 'story directory', dry=dry)
         try:
             content = tmt.templates.STORY[template]
         except KeyError:
@@ -710,7 +716,8 @@ class Story(Node):
 
         tmt.utils.create_file(
             path=story_path, content=content,
-            name='story', force=force)
+            name='story', dry=dry, force=force)
+
 
     @staticmethod
     def overview(tree):
