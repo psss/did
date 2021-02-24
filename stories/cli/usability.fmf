@@ -9,7 +9,8 @@ story:
             - tmt story show
             - tmt st sh
             - tmt s s
-        implemented: /tmt/cli
+        link:
+          - implemented-by: /tmt/cli.py
 
     /options:
         summary: Allow option abbreviation
@@ -21,4 +22,5 @@ story:
 /completion:
     summary: Support bash completion
     example: tmt st<tabl> sh<tab>
-    implemented: /tmt.spec
+    link:
+      - implemented-by: /tmt.spec

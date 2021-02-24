@@ -21,12 +21,8 @@ description: |
         prepare:
             how: shell
             script: dnf install -y httpd
-    implemented:
-        - /tmt/steps/provision/localhost
-        - /tmt/steps/provision/podman
-        - /tmt/steps/provision/vagrant
-        - /tmt/steps/provision/testcloud
-        - /tmt/steps/provision/minute
+    link:
+      - implemented-by: /tmt/steps/provision
 
 /ansible:
     summary:
@@ -46,12 +42,8 @@ description: |
             playbook:
                 - common.yml
                 - rhel7.yml
-    implemented:
-        - /tmt/steps/provision/localhost
-        - /tmt/steps/provision/podman
-        - /tmt/steps/provision/vagrant
-        - /tmt/steps/provision/testcloud
-        - /tmt/steps/provision/minute
+    link:
+      - implemented-by: /tmt/steps/provision
 
 /install:
     summary:
@@ -89,9 +81,5 @@ description: |
             package: tmt-all
             missing: fail
 
-    implemented:
-      - /tmt/steps/provision/localhost
-      - /tmt/steps/provision/podman
-      - /tmt/steps/provision/vagrant
-      - /tmt/steps/provision/testcloud
-      - /tmt/steps/provision/minute
+    link:
+      - implemented-by: /tmt/steps/provision

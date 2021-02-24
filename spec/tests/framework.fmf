@@ -22,4 +22,6 @@ example: |
 
     framework: beakerlib
 
-implemented: /tmt/base
+link:
+  - implemented-by: /tmt/base.py
+  - verified-by: /tests/execute/framework

@@ -1,12 +1,15 @@
 story: As a Fedora user I want to easily install tmt on my system.
 
+link:
+  - implemented-by: /tmt.spec
+  - documented-by: /docs/guide.rst
+
 /minimal:
     summary: Minimal tmt installation with core features only
     example: dnf install tmt
-    tested: /plans/install/minimal
+    link+:
+      - verified-by: /plans/install/minimal
 
 /all:
     summary: Install tmt with all available plugins and dependencies
     example: dnf install tmt-all
-
-implemented: tmt.spec

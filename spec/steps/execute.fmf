@@ -87,10 +87,9 @@ description: |
     example: |
         execute:
             how: tmt
-    implemented:
-      - /tmt/steps/execute/internal.py
-    tested:
-      - /tests/execute/framework
+    link:
+      - implemented-by: /tmt/steps/execute/internal.py
+      - verified-by: /tests/execute/framework
 
 /detach:
     summary: Detached test executor
@@ -105,10 +104,9 @@ description: |
     example: |
         execute:
             how: detach
-    implemented:
-      - /tmt/steps/execute/detach.py
-    tested:
-      - /tests/execute/framework
+    link:
+      - implemented-by: /tmt/steps/execute/detach.py
+      - verified-by: /tests/execute/framework
 
 /script:
     summary: Execute shell scripts
@@ -129,9 +127,9 @@ description: |
             how: tmt
             script: a-long-test-suite
             duration: 3h
-    implemented:
-      - /tmt/steps/execute/internal.py
-      - /tmt/steps/execute/detach.py
+    link:
+      - implemented-by: /tmt/steps/execute/internal.py
+      - implemented-by: /tmt/steps/execute/detach.py
 
     /simple:
         summary: Simple use case should be super simple to write

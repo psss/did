@@ -23,7 +23,8 @@ example: |
         provision:
             how: virtual
             image: fedora/31-cloud-base
-    implemented: /tmt/steps/provision/vagrant.py
+    link:
+      - implemented-by: /tmt/steps/provision/testcloud.py
 
 /local:
     summary: Use the localhost for testing
@@ -35,7 +36,9 @@ example: |
     example: |
         provision:
             how: local
-    implemented: /tmt/steps/provision/localhost.py
+    link:
+      - implemented-by: /tmt/steps/provision/local.py
+      - verified-by: /tests/init/base
 
 /container:
     summary: Provision a container
@@ -46,7 +49,8 @@ example: |
         provision:
             how: container
             image: fedora:latest
-    implemented: /tmt/steps/provision/podman.py
+    link:
+      - implemented-by: /tmt/steps/provision/podman.py
 
 /openstack:
     summary: Provision a virtual machine in OpenStack
@@ -81,7 +85,8 @@ example: |
             user password to be used to log in
         key
             path to the file with private key
-    implemented: /tmt/steps/provision/vagrant.py
+    link:
+      - implemented-by: /tmt/steps/provision/connect.py
 
     example: |
         provision:
@@ -111,7 +116,8 @@ example: |
             how: minute
             image: 1MT-Fedora-32
             flavor: m1.large
-    implemented: /tmt/steps/provision/minute.py
+    link:
+      - implemented-by: /tmt/steps/provision/minute.py
 
 /environment:
     summary: Environment specification

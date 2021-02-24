@@ -40,9 +40,8 @@ Level 2
 Level 3
     User :ref:`/spec/stories` can be used to define expected
     features of the application and to easily track which
-    functionality has been already
-    :ref:`/spec/stories/implemented`, :ref:`/spec/stories/tested`
-    and :ref:`/spec/stories/documented`.
+    functionality has been already implemented, verified and
+    documented.
 
 .. toctree::
     :maxdepth: 2

@@ -34,39 +34,43 @@
     /default:
         story: 'Use default config or provision a virtual machine'
         example: tmt run provision
-        implemented: /tmt/steps/provision
-        documented: /docs/examples#provision-options
+        link:
+          - implemented-by: /tmt/steps/provision
+          - documented-by: /docs/examples.rst#provision-options
 
     /local:
         story: 'Use localhost for testing'
         example: tmt run provision --how=local
-        implemented: /tmt/steps/provision/localhost.py
-        documented: /docs/examples#provision-options
+        link:
+          - implemented-by: /tmt/steps/provision/localhost.py
+          - documented-by: /docs/examples.rst#provision-options
+          - verified-by: /tests/init/base
 
     /virtual:
         story: 'Provision a virtual machine'
         example: tmt run provision --how=virtual --image=fedora/31-cloud-base
-        implemented:
-            - /tmt/steps/provision/vagrant.py
-            - /tmt/steps/provision/testcloud.py
-        documented: /docs/examples#provision-options
+        link:
+          - implemented-by: /tmt/steps/provision/testcloud.py
+          - documented-by: /docs/examples.rst#provision-options
 
     /container:
         story: 'Provision a container'
         example: tmt run provision --how=container --image=fedora:latest
-        implemented: /tmt/steps/provision/podman.py
-        documented: /docs/examples#provision-options
+        link:
+          - implemented-by: /tmt/steps/provision/podman.py
+          - documented-by: /docs/examples.rst#provision-options
 
     /connect:
         story: 'Connect to a provisioned box'
         description:
             Do not provision a new system. Instead, use provided
             authentication data to connect to a running machine.
-        implemented: /tmt/steps/provision/vagrant.py
+        link:
+          - implemented-by: /tmt/steps/provision/vagrant.py
+          - documented-by: /docs/examples.rst#provision-options
         example:
             - tmt run provision --how=connect --guest=name-or-ip --user=login --password=secret
             - tmt run provision --how=connect --guest=name-or-ip --key=private-key-path
-        documented: /docs/examples#provision-options
 
 /prepare:
     story: 'Select or adjust the prepare step'
@@ -103,8 +107,8 @@
           - tmt run -vv
           - tmt run -vvv
           - tmt run --all execute -vvv
-        implemented:
-          - /tmt/steps/execute/internal.py
+        link:
+          - implemented-by: /tmt/steps/execute/internal.py
 
     /interactive:
         summary: Interactive test debugging
@@ -121,10 +125,9 @@
             executor only.
         example:
           - tmt run --all execute --how tmt --interactive
-        implemented:
-          - /tmt/steps/execute/internal.py
-        documented:
-          - /docs/examples.rst
+        link:
+          - implemented-by: /tmt/steps/execute/internal.py
+          - documented-by: /docs/examples.rst
 
 /report:
     story: 'Select or adjust the report step'

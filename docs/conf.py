@@ -258,7 +258,6 @@ tree = tmt.Tree('.')
 areas = {
     '/stories/docs': 'Documentation',
     '/stories/cli': 'Command Line',
-    '/stories/api': 'API',
     '/stories/install': 'Installation',
     '/stories/coverage': 'Coverage',
     '/spec/core': 'Core',

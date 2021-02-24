@@ -20,4 +20,5 @@ example: |
         is performed for different recursion depth specified by
         the "--level=depth" option.
 
-implemented: /tmt/base
+link:
+  - implemented-by: /tmt/base.py

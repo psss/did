@@ -1,7 +1,8 @@
 story: As a user I want to start using tmt in my git repository.
 summary: Initialize a new metadata tree
-implemented: /tmt/cli
-tested: /tests/unit
+link:
+  - implemented-by: /tmt/cli.py
+  - verified-by: /tests/unit
 
 /empty:
     summary: Create an empty metadata tree
@@ -14,6 +15,8 @@ tested: /tests/unit
 /base:
     summary: Create a tree with some examples
     example: tmt init --template base
+    link+:
+      - verified-by: /tests/init/base
 
 /full:
     summary: Create a tree with full examples

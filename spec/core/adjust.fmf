@@ -61,7 +61,7 @@ example: |
       - when: distro ~< centos-6
         enabled: false
 
-implemented: /tmt/base
-tested:
-  - /tests/core/adjust
-  - /tests/prepare/adjust
+link:
+  - implemented-by: /tmt/base.py
+  - verified-by: /tests/core/adjust
+  - verified-by: /tests/prepare/adjust

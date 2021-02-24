@@ -73,4 +73,5 @@ description: |
 example: |
   manual: true
 
-implemented: /tmp/base
+link:
+  - implemented-by: /tmp/base.py

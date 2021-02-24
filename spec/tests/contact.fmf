@@ -18,4 +18,5 @@ example: |
         - First Person <first@address.org>
         - Second Person <second@address.org>
 
-implemented: /tmt/base
+link:
+  - implemented-by: /tmt/base.py

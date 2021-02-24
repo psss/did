@@ -17,16 +17,19 @@ story:
         - tmt test show -v
         - tmt test show -vvv
         - tmt test show --verbose
-    implemented: /tmt/cli
-    documented: /tmt/cli
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /tmt/cli.py
+      - verified-by: /tests/core/dry
 
 /quiet:
     summary: Enable quiet mode of the command
     example:
         - tmt test show -q
         - tmt test show --quiet
-    implemented: /tmt/cli
-    documented: /tmt/cli
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /tmt/cli.py
 
 /force:
     summary: Force dangerous operations like overwriting files
@@ -35,8 +38,9 @@ story:
         - tmt test create --force
     related:
         - /stories/cli/test/create
-    implemented: /tmt/cli
-    documented: /tmt/cli
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /tmt/cli.py
 
 /format:
     summary: Provide machine readable output in given format
@@ -44,8 +48,10 @@ story:
         - tmt test ls --format json
         - tmt plan show --format yaml
         - tmt story export --format rst
-    implemented: /tmt/cli
-    documented: /tmt/cli
+    link:
+      - implemented-by: /tmt/cli.py
+      - implemented-by: /tmt/base.py
+      - documented-by: /tmt/cli.py
 
 /debug:
     summary: Print additional information for debugging
@@ -62,8 +68,10 @@ story:
         - tmt run -d
         - tmt run -ddd
         - tmt run --debug
-    implemented: /tmt/cli
-    documented: /tmt/cli
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /tmt/cli.py
+      - verified-by: /tests/core/dry
 
 /dry:
     summary: Run in dry mode, just let me know what would be done
@@ -74,5 +82,7 @@ story:
     example:
         - tmt run -n
         - tmt run --dry
-    implemented: /tmt/cli
-    documented: /tmt/cli
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /tmt/cli.py
+      - verified-by: /tests/core/dry

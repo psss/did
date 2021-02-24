@@ -14,7 +14,6 @@ couple of examples demonstrating expected usage.
     stories/install
     stories/docs
     stories/cli
-    stories/api
     stories/coverage
 
 

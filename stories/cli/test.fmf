@@ -3,15 +3,17 @@ story: 'As a user I want to comfortably work with tests'
 /ls:
     story: 'List available tests'
     example: tmt test ls
-    implemented: /tmt/cli
-    tested: /tests/ls
-    documented: /docs/examples#explore-tests
+    link:
+      - implemented-by: /tmt/cli.py
+      - verified-by: /tests/core/ls
+      - documented-by: /docs/examples.rst#explore-tests
 
 /show:
     story: 'Show test metadata'
     example: tmt test show
-    implemented: /tmt/cli
-    documented: /docs/examples#explore-tests
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /docs/examples.rst#explore-tests
 
 /lint:
     story: 'Check test against the L1 metadata specification'
@@ -20,8 +22,9 @@ story: 'As a user I want to comfortably work with tests'
         specification, e.g. that all required attributes are
         present and that all attributes have correct type.
     example: tmt test lint
-    implemented: /tmt/cli
-    documented: /docs/examples#lint-tests
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /docs/examples.rst#lint-tests
 
 /create:
     story: 'Create a new test skeleton'
@@ -36,15 +39,17 @@ story: 'As a user I want to comfortably work with tests'
         - tmt test create /tests/area/feature
         - tmt test create /tests/area/feature --skeleton beakerlib
         - tmt test create /tests/area/feature --duration=1h
-    implemented: /tmt/cli
-    documented: /docs/examples#create-tests
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /docs/examples.rst#create-tests
 
 /import:
     story: 'As a tester I want to import test metadata.'
     example: tmt test import
-    implemented: /tmt/convert
-    tested: /tests/test_convert
-    documented: /docs/examples#convert-tests
+    link:
+      - implemented-by: /tmt/convert.py
+      - verified-by: /tests/test_convert
+      - documented-by: /docs/examples.rst#convert-tests
 
 /export:
     story: 'As a tester I want to export test metadata.'
@@ -52,7 +57,8 @@ story: 'As a user I want to comfortably work with tests'
     /format:
         story: 'I want to export test metadata into given format.'
         example: tmt test export --format yaml
-        implemented: /tmt/base
+        link:
+          - implemented-by: /tmt/base.py
 
     /nitrate:
         story: 'I want to export test metadata into nitrate.'
@@ -97,8 +103,9 @@ story: 'As a user I want to comfortably work with tests'
             should be added to the nitrate test case in order to
             allow easy search for migrated test cases directly
             from the web interface.
-        implemented: /tmt/export
-        documented: /docs/questions#nitrate-migration
+        link:
+          - implemented-by: /tmt/export.py
+          - documented-by: /docs/questions#nitrate-migration
 
 /coverage:
     story: 'Test coverage overview'
@@ -118,5 +125,7 @@ story: 'As a user I want to comfortably work with tests'
         - tmt test show --filter tier:1
         - tmt test show --condition 'int(tier) < 2'
         - tmt test show --condition '"gcc" in require'
-    implemented: /tmt/base.py
-    documented: /docs/examples#filter-tests
+    link:
+      - implemented-by: /tmt/base.py
+      - documented-by: /docs/examples.rst#filter-tests
+      - verified-by: /tests/test/select

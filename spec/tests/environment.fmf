@@ -17,4 +17,6 @@ example: |
         PACKAGE: python37
         PYTHON: python3.7
 
-implemented: /tmt/base
+link:
+  - implemented-by: /tmt/base.py
+  - verified-by: /tests/core/env

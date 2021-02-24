@@ -14,6 +14,7 @@ example: |
             script:
                 - echo "Testing $KOJI_TASK_ID on release $RELEASE"
 
-implemented:
-    - /tmt/base
-    - /tmt/steps/discover
+link:
+  - implemented-by: /tmt/base.py
+  - implemented-by: /tmt/steps/discover
+  - verified-by: /tests/core/env

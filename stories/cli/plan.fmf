@@ -3,15 +3,18 @@ story: 'As a user I want to comfortably work with plans'
 /ls:
     story: 'List available plans'
     example: tmt plan ls
-    implemented: /tmt/cli
-    tested: /tests/ls
-    documented: /docs/examples#explore-plans
+    link:
+      - implemented-by: /tmt/cli.py
+      - verified-by: /tests/core/ls
+      - documented-by: /docs/examples.rst#explore-plans
 
 /show:
     story: 'Show plan configuration'
     example: tmt plan show
-    implemented: /tmt/cli
-    documented: /docs/examples#explore-plans
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /docs/examples.rst#explore-plans
+      - verified-by: /tests/plans/select
 
 /filter:
     story: 'Filter available plans'
@@ -22,8 +25,10 @@ story: 'As a user I want to comfortably work with plans'
         - tmt plan ls .
         - tmt plan ls REGEXP
         - tmt plan show --filter artifact:build
-    implemented: /tmt/base.py
-    documented: /docs/examples#explore-plans
+    link:
+      - implemented-by: /tmt/base.py
+      - documented-by: /docs/examples.rst#explore-plans
+      - verified-by: /tests/plans/select
 
 /lint:
     story: 'Check plan against the L2 metadata specification'
@@ -32,7 +37,9 @@ story: 'As a user I want to comfortably work with plans'
         specification, e.g. that all required attributes are
         present and that all attributes have correct type.
     example: tmt plan lint
-    implemented: /tmt/cli
+    link:
+      - implemented-by: /tmt/cli.py
+      - verified-by: /tests/plan/lint
 
 /create:
     story: 'As a developer I want to easily enable CI'
@@ -43,5 +50,7 @@ story: 'As a user I want to comfortably work with plans'
     example:
         - tmt plan create /plans/smoke --template=mini
         - tmt plan create /plans/features --template=full
-    implemented: /tmt/cli
-    documented: /docs/examples#create-plans
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /docs/examples.rst#create-plans
+      - verified-by: /tests/plan/create

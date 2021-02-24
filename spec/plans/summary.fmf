@@ -19,4 +19,5 @@ example: |
         /features:
             summary: Verify important features
 
-implemented: /tmt/base
+link:
+  - implemented-by: /tmt/base.py

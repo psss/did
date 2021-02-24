@@ -3,15 +3,17 @@ story: 'As a developer I want to comfortably work with stories'
 /ls:
     story: 'List available stories'
     example: tmt story ls
-    implemented: /tmt/cli
-    tested: /tests/ls
-    documented: /docs/examples#explore-stories
+    link:
+      - implemented-by: /tmt/cli.py
+      - verified-by: /tests/core/ls
+      - documented-by: /docs/examples.rst#explore-stories
 
 /show:
     story: 'Show story details'
     example: tmt story show
-    implemented: /tmt/cli
-    documented: /docs/examples#explore-stories
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /docs/examples.rst#explore-stories
 
 /filter:
     story: 'Search available stories'
@@ -28,8 +30,9 @@ story: 'As a developer I want to comfortably work with stories'
         - tmt story ls --unverified
         - tmt story ls --documented
         - tmt story ls --undocumented
-    implemented: /tmt/cli
-    documented: /docs/examples#filter-stories
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /docs/examples.rst#filter-stories
 
 /create:
     story: 'As a developer I want to easily create new story.'
@@ -40,8 +43,9 @@ story: 'As a developer I want to comfortably work with stories'
         - tmt story create /stories/area/story
         - tmt story create /stories/area/story --template mini
         - tmt story create /stories/area/story --template mini --force
-    implemented: /tmt/cli
-    documented: /docs/examples#create-stories
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /docs/examples.rst#create-stories
 
 /coverage:
     summary: 'Show story coverage'
@@ -49,8 +53,9 @@ story: 'As a developer I want to comfortably work with stories'
         As a developer I want to easily view which stories
         have been implemented, are covered by tests and
         documented and which still need work to be done.
-    implemented: /tmt/cli
-    documented: /docs/examples#story-coverage
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /docs/examples.rst#story-coverage
 
     /overview:
         summary: 'General coverage overview'
@@ -85,9 +90,9 @@ story: 'As a developer I want to comfortably work with stories'
         description:
             So that they can be included in tmt documentation.
         example: tmt story export --rst
-        implemented:
-            - /tmt/cli
-            - /tmt/base
+        link:
+          - implemented-by: /tmt/cli.py
+          - implemented-by: /tmt/base.py
 
     /html:
         story: 'Export stories into html'

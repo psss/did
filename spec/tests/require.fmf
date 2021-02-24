@@ -57,9 +57,8 @@ example: |
           nick: openssl
           name: /certgen
 
-implemented:
-    - /tmt/base
-    - /tmt/steps/discover
-    - /tmt/steps/prepare
-tested:
-    - /tests/prepare/require
+link:
+  - implemented-by: /tmt/base.py
+  - implemented-by: /tmt/steps/discover
+  - implemented-by: /tmt/steps/prepare
+  - verified-by: /tests/prepare/require

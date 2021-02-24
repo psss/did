@@ -37,9 +37,8 @@ example: |
         - mariadb
         - mysql
 
-implemented:
-    - /tmt/base
-    - /tmt/steps/discover
-    - /tmt/steps/prepare
-tested:
-    - /tests/prepare/recommend
+link:
+  - implemented-by: /tmt/base.py
+  - implemented-by: /tmt/steps/discover
+  - implemented-by: /tmt/steps/prepare
+  - verified-by: /tests/prepare/recommend

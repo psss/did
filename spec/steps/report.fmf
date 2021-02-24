@@ -19,7 +19,8 @@ description:
         tmt run -l report -v     # individual test results
         tmt run -l report -vv    # show full paths to logs
         tmt run -l report -vvv   # provide complete test output
-    implemented: tmt/steps/report/display.py
+    link:
+      - implemented-by: /tmt/steps/report/display.py
 
 /html:
     summary: Generate a web page with test results
@@ -33,7 +34,8 @@ description:
         tmt run --all report --how html
         tmt run --all report --how html --open
         tmt run -l report -h html -o
-    implemented: tmt/steps/report/html.py
+    link:
+      - implemented-by: /tmt/steps/report/html.py
 
 /file:
     description: |

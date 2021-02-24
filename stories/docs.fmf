@@ -14,8 +14,9 @@ story:
         - tmt --help
         - tmt run --help
         - tmt test import --help
-    tested: /tests/docs
-    implemented: /tmt/cli
+    link:
+      - verified-by: /tests/core/docs
+      - implemented-by: /tmt/cli.py
 
 /man:
     story:
@@ -27,8 +28,9 @@ story:
         and a list of essential commands and options.
     example:
         - man tmt
-    tested: /tests/docs
-    implemented: README.rst
+    link:
+      - verified-by: /tests/core/docs
+      - implemented-by: README.rst
 
 /examples:
     story:
@@ -44,8 +46,9 @@ story:
         tmt test ls
         tmt plan ls
         tmt run
-    tested: /tests/docs
-    implemented: /examples
+    link:
+      - verified-by: /tests/core/docs
+      - implemented-by: /examples
 
 /guide:
     story:
@@ -57,6 +60,6 @@ story:
         scenarios and showing mapping of old command to the new
         syntax.
     example:
-        - How do I do '1minutetip fedora' with tmt?
-        - How do I do 'wow --reserve' with tmt?
-        - How do I do 'make run' with tmt?
+      - How do I do '1minutetip fedora' with tmt?
+      - How do I do 'wow --reserve' with tmt?
+      - How do I do 'make run' with tmt?

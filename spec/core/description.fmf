@@ -6,4 +6,5 @@ description:
     detailed examples using a dedicated attributes 'examples'
     should be considered.
 
-implemented: /tmt/base
+link:
+  - implemented-by: /tmt/base.py

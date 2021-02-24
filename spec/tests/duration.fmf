@@ -16,7 +16,7 @@ example: |
     duration: 2h
     duration: 1d
 
-implemented: /tmt/base
-tested:
-  - /tests/discover/duration
-  - /tests/execute/duration
+link:
+  - implemented-by: /tmt/base
+  - verified-by: /tests/discover/duration
+  - verified-by: /tests/execute/duration

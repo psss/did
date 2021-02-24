@@ -58,7 +58,8 @@ description: |
               test: ./smoke.sh
               path: /tests/shell
               duration: 1m
-    implemented: /tmt/steps/discover/shell
+    link:
+      - implemented-by: /tmt/steps/discover/shell.py
 
 /fmf:
     summary: Discover available tests using the fmf format
@@ -117,4 +118,5 @@ description: |
             path: /metadata/tree/path
             test: [regexp]
             filter: tier:1
-    implemented: /tmt/steps/discover/fmf
+    link:
+      - implemented-by: /tmt/steps/discover/fmf.py

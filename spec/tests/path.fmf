@@ -18,7 +18,7 @@ description:
 example: |
     path: /protocols/https
 
-links:
-    - http://fmf.readthedocs.io/en/latest/features.html#virtual
-
-implemented: /tmt/base
+link:
+  - implemented-by: /tmt/base.py
+  - verified-by: /tests/execute/basic
+  - http://fmf.readthedocs.io/en/latest/features.html#virtual

@@ -15,4 +15,5 @@ description:
 example: |
     title: Nice title
 
-implemented: /tmt/base
+link:
+  - implemented-by: /tmt/base.py

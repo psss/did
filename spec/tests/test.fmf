@@ -24,4 +24,6 @@ example: |
     test: manual.md
     manual: true
 
-implemented: /tmt/base
+link:
+  - implemented-by: /tmt/base.py
+  - verified-by: /tests/execute

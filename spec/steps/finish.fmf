@@ -10,4 +10,5 @@ example: |
         how: shell
         script: upload-logs.sh
 
-implemented: /tmt/steps/finish/shell
+link:
+  - implemented-by: /tmt/steps/finish/shell.py

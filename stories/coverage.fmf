@@ -31,12 +31,10 @@ story:
         so that user stories can be covered by test cases from a
         different repository.
     description:
-        It should be possible to use a full fmf identifier in the
-        :ref:`/spec/stories/tested`,
-        :ref:`/spec/stories/implemented` and
-        :ref:`/spec/stories/documented` story attributes.
+        It is possible to use a full fmf identifier in the
+        :ref:`/spec/core/link` attribute.
     example: |
-        tested:
+        verified-by:
             url: https://github.com/psss/fmf
             ref: master
             name: /tests/basic/repo
@@ -70,3 +68,5 @@ story:
         example: |
             tmt story ls --filter "tag:fast"
         priority: should
+        link:
+          - implemented-by: /tmt/base.py

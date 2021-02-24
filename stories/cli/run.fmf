@@ -11,8 +11,10 @@ story: 'As a user I want to execute tests easily'
             that the test environment can be safely prepared and
             adjusted as needed without affecting or possibly
             breaking user environment such as laptop.
-        implemented: /tmt/base.py
-        documented: /docs/examples.rst#run
+        link:
+          - implemented-by: /tmt/base.py
+          - documented-by: /docs/examples.rst#run
+          - documented-by: /docs/guide.rst
         example: tmt run
     /plan:
         summary: 'Plan should not be required for test execution'
@@ -50,42 +52,43 @@ story: 'As a user I want to execute tests easily'
                     how: shell
                 execute:
                     how: shell
-        implemented: /tmt/base.py
-        tested: /tests/run/default
-        documented: /docs/examples.rst#run
+        link:
+          - implemented-by: /tmt/base.py
+          - verified-by: /tests/run/default
+          - documented-by: /docs/examples.rst#run
 
 /select:
     story: 'Select multiple steps to be executed'
+
+    link:
+      - implemented-by: /tmt/base.py
+      - verified-by: /tests/steps/select
+      - documented-by: /docs/examples.rst#select-steps
 
     /pick:
         story: 'Choose steps to be executed'
         example:
             - tmt run provision prepare
             - tmt run discover provision prepare
-        implemented: /tmt/base
     /until:
         story: 'Run all steps until the given one'
         example:
             - tmt run --until prepare
             - tmt run --until execute
-        implemented: /tmt/base
     /since:
         story: 'Run all steps since the given one'
         example:
             - tmt run --since prepare
             - tmt run --since execute
-        implemented: /tmt/base
     /skip:
         story: 'Skip given step during execution'
         example:
             - tmt run --skip prepare
             - tmt run --skip finish
-        implemented: /tmt/base
     /all:
         story: 'Run all test steps, customize some'
         example:
             - tmt run --all provision --how=container
-        implemented: /tmt/base
 
 /interactive:
     story: 'Provide way similar to git rebase --interactive'
@@ -155,7 +158,10 @@ story: 'As a user I want to execute tests easily'
             - tmt run plan --name=NAME
             - tmt run plan --filter=FILTER
             - tmt run plan --condition=CONDITION
-        implemented: /tmt/base.py
+        link:
+          - implemented-by: /tmt/base.py
+          - documented-by: /docs/examples.rst#select-plans
+          - verified-by: /tests/plan/select
     /test:
         story: 'Select tests for execution'
         example:
@@ -163,7 +169,10 @@ story: 'As a user I want to execute tests easily'
             - tmt run test --filter=FILTER
             - tmt run test --condition=CONDITION
             - tmt run plan --name=NAME2 test --name=NAME1
-        implemented: /tmt/base.py
+        link:
+          - implemented-by: /tmt/base.py
+          - documented-by: /docs/examples.rst#select-tests
+          - verified-by: /tests/test/select
 
 /keep:
     story: Store test step status, keep machines running
@@ -172,7 +181,9 @@ story: 'As a user I want to execute tests easily'
         - tmt run --id ID discover execute
         - tmt run --id ID execute
         - tmt run --id ID execute
-    implemented: /tmp/base.py
+    link:
+      - implemented-by: /tmp/base.py
+      - documented-by: /docs/examples.rst#debug-tests
 
 /debug:
     summary: Handsfree debugging
@@ -230,8 +241,9 @@ story: 'As a user I want to execute tests easily'
             tmt run --id PREVIOUS_RUN
 
         Note that ``tmt`` saves last run id on each new execution.
-    implemented: /tmt/base
-    documented: /docs/examples#debug-tests
+    link:
+      - implemented-by: /tmt/base.py
+      - documented-by: /docs/examples.rst#debug-tests
     example:
         - tmt run -l
         - tmt run --last
@@ -243,9 +255,10 @@ story: 'As a user I want to execute tests easily'
         that I can adjust the environment before the test is run
         or investigate what happened after the test is finished.
 
-    implemented: /tmt/step
-    tested: /tests/login
-    documented: /docs/examples.rst#guest-login
+    link:
+      - implemented-by: /tmt/step
+      - verified-by: /tests/login
+      - documented-by: /docs/examples.rst#guest-login
 
     /last:
         summary: 'Log in at the end of the last enabled step'

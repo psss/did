@@ -17,4 +17,6 @@ example: |
     # list only enabled tests
     tmt tests ls --filter enabled:true
 
-implemented: /tmt/base
+link:
+  - implemented-by: /tmt/base.py
+  - verified-by: /tests/test/select
