@@ -1,3 +1,3 @@
-path: /
+path: not-absolute
 summary: Just true...
 test: /bin/true

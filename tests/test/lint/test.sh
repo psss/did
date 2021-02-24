@@ -27,6 +27,11 @@ rlJournalStart
     rlPhaseStartTest "Bad"
         rlRun "tmt test lint bad | tee output" 1
         rlAssertGrep 'fail test script must be defined' output
+        rlRun "tmt test lint bad-path | tee output" 1
+        rlAssertGrep 'fail directory path must exist' output
+        rlRun "tmt test lint bad-not-absolute | tee output" 1
+        rlAssertGrep 'fail directory path must be absolute' output
+        rlAssertGrep 'fail directory path must exist' output
         rlRun "tmt test lint relevancy | tee output" 1
         rlAssertGrep 'fail relevancy has been obsoleted' output
         # There should be no change without --fix

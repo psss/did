@@ -343,11 +343,20 @@ class Test(Node):
         Return whether the test is valid.
         """
         self.ls()
-        valid = self.test is not None and self.path is not None
+
+        valid = self.test is not None
+        # Check that the path is absolute (it is defined and starts with /)
+        # and that it exists.
+        stripped_path = self.path.strip()
+        test_path = self.node.root + stripped_path
+        if not stripped_path.startswith('/') or not os.path.exists(test_path):
+            valid = False
 
         # Check test, path and summary
         echo(verdict(self.test is not None, 'test script must be defined'))
-        echo(verdict(self.path is not None, 'directory path must be defined'))
+        echo(verdict(stripped_path.startswith('/'),
+                     'directory path must be absolute'))
+        echo(verdict(os.path.exists(test_path), 'directory path must exist'))
         if self.summary is None:
             echo(verdict(2, 'summary is very useful for quick inspection'))
         elif len(self.summary) > 50:
