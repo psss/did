@@ -134,7 +134,7 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 export LANG=en_US.utf-8
 %endif
 
-%{__python3} -m pytest -vv -m 'not web'
+%{__python3} -m pytest -vv -m 'not web' --ignore=tests/integration
 
 
 %{!?_licensedir:%global license %%doc}

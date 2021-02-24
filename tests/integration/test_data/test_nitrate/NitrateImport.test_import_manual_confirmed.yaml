@@ -1,0 +1,138 @@
+_requre:
+  DataTypes: 1
+  key_strategy: StorageKeysInspectSimple
+  version_storage_file: 3
+nitrate.xmlrpc_driver:
+  single_request_with_cookies:
+  - metadata:
+      guess_type: Tuple
+      latency: 3.268909215927124
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.base
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - alias: ''
+      arguments: ''
+      attachment: []
+      author: jscotka
+      author_id: 2150
+      case_id: 609704
+      case_status: CONFIRMED
+      case_status_id: 2
+      category: '      Regression    '
+      category_id: 702
+      component:
+      - 59911
+      create_date: '2021-02-26 16:08:04'
+      default_tester: null
+      default_tester_id: null
+      estimated_time: 00:00:00
+      extra_link: ''
+      is_automated: 0
+      is_automated_proposed: false
+      notes: ''
+      plan:
+      - 29309
+      priority: P1
+      priority_id: 1
+      requirement: ''
+      reviewer: null
+      reviewer_id: null
+      script: ''
+      summary: Imported Test Case
+      tag:
+      - Tier1
+      text:
+        action: ''
+        action_checksum: d41d8cd98f00b204e9800998ecf8427e
+        author: jscotka
+        author_id: 2150
+        breakdown: ''
+        breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
+        case: Imported Test Case
+        case_id: 609704
+        case_text_version: 1
+        create_date: '2021-02-26 16:08:05'
+        effect: ''
+        effect_checksum: d41d8cd98f00b204e9800998ecf8427e
+        id: 878148
+        setup: <p>This is example testcase, what should be imported to TMT metadata</p>
+        setup_checksum: 463767f3925475195ac71c898cdf6223
+  - metadata:
+      guess_type: Tuple
+      latency: 1.4591169357299805
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - id: 923
+        name: Tier1
+  - metadata:
+      guess_type: Tuple
+      latency: 1.3929762840270996
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - description: test component for TMT usage
+        id: 59911
+        initial_owner: jscotka
+        initial_owner_id: 2150
+        initial_qa_contact: jscotka
+        initial_qa_contact_id: 2150
+        name: tmt_test_component
+        product: RHEL Tests
+        product_id: 182
+  - metadata:
+      guess_type: Tuple
+      latency: 1.9782366752624512
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - []

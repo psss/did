@@ -6,6 +6,7 @@ python:
 before_install:
   - "sudo apt-get -y install vagrant libvirt-dev"
   - "pip install -U pip setuptools virtualenv python-coveralls fmf click mock testcloud"
+  - "pip install git+https://github.com/packit/requre.git"
 script:
   - "coverage run --source=bin,tmt -m py.test $CAPTURE tests"
 after_success:

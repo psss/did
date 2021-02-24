@@ -1,0 +1,405 @@
+_requre:
+  DataTypes: 1
+  key_strategy: StorageKeysInspectSimple
+  version_storage_file: 3
+nitrate.xmlrpc_driver:
+  single_request_with_cookies:
+  - metadata:
+      guess_type: Tuple
+      latency: 1.4106683731079102
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.base
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - alias: ''
+      arguments: ' '
+      attachment: []
+      author: jscotka
+      author_id: 2150
+      case_id: 609686
+      case_status: CONFIRMED
+      case_status_id: 2
+      category: Sanity
+      category_id: 518
+      component: []
+      create_date: '2021-02-24 01:07:39'
+      default_tester: null
+      default_tester_id: null
+      estimated_time: 00:05:00
+      extra_link: ''
+      is_automated: 1
+      is_automated_proposed: false
+      notes: 'Test case has been migrated to git. Any changes made here might be overwritten.
+
+        See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
+
+
+        [structured-field-start]
+
+        This is StructuredField version 1. Please, edit with care.
+
+
+        [description]
+
+        This is case what already exists inside nitrate
+
+
+        [fmf]
+
+        name: /existing_testcase
+
+        url: ''''
+
+        ref: ''''
+
+        path: /..
+
+
+        [structured-field-end]
+
+        '
+      plan:
+      - 29309
+      priority: P3
+      priority_id: 3
+      requirement: ''
+      reviewer: null
+      reviewer_id: null
+      script: null
+      summary: This is case what already exists inside nitrate
+      tag:
+      - fmf-export
+      text:
+        action: ''
+        action_checksum: d41d8cd98f00b204e9800998ecf8427e
+        author: jscotka
+        author_id: 2150
+        breakdown: ''
+        breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
+        case: This is case what already exists inside nitrate
+        case_id: 609686
+        case_text_version: 1
+        create_date: '2021-02-24 01:07:39'
+        effect: ''
+        effect_checksum: d41d8cd98f00b204e9800998ecf8427e
+        id: 878121
+        setup: ''
+        setup_checksum: d41d8cd98f00b204e9800998ecf8427e
+  - metadata:
+      guess_type: Tuple
+      latency: 0.9168417453765869
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - []
+  - metadata:
+      guess_type: Tuple
+      latency: 0.8514275550842285
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - id: 10700
+        name: fmf-export
+  - metadata:
+      guess_type: Tuple
+      latency: 2.991704225540161
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - alias: ''
+        arguments: ' '
+        attachment: []
+        author: jscotka
+        author_id: 2150
+        case_id: 609686
+        case_status: CONFIRMED
+        case_status_id: 2
+        category: Sanity
+        category_id: 518
+        component: []
+        create_date: '2021-02-24 01:07:39'
+        default_tester: null
+        default_tester_id: null
+        estimated_time: 00:05:00
+        extra_link: ''
+        is_automated: 1
+        is_automated_proposed: false
+        notes: 'Test case has been migrated to git. Any changes made here might be
+          overwritten.
+
+          See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
+
+
+          [structured-field-start]
+
+          This is StructuredField version 1. Please, edit with care.
+
+
+          [description]
+
+          This is case what already exists inside nitrate
+
+
+          [fmf]
+
+          name: /existing_testcase
+
+          url: ''''
+
+          ref: ''''
+
+          path: /..
+
+
+          [structured-field-end]
+
+          '
+        plan:
+        - 29309
+        priority: P3
+        priority_id: 3
+        requirement: ''
+        reviewer: null
+        reviewer_id: null
+        script: null
+        summary: This is case what already exists inside nitrate
+        tag:
+        - 10700
+  - metadata:
+      guess_type: Tuple
+      latency: 1.7316391468048096
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - alias: ''
+      arguments: ''
+      attachment: []
+      author: jscotka
+      author_id: 2150
+      case_id: 609912
+      case_status: PROPOSED
+      case_status_id: 1
+      category: Sanity
+      category_id: 518
+      component: []
+      create_date: '2021-03-11 17:26:25'
+      default_tester: null
+      default_tester_id: null
+      estimated_time: 00:00:00
+      extra_link: ''
+      is_automated: 1
+      is_automated_proposed: false
+      notes: null
+      plan: []
+      priority: P3
+      priority_id: 3
+      requirement: ''
+      reviewer: null
+      reviewer_id: null
+      script: null
+      summary: This is new testcase inside nitrate
+      tag: []
+      text:
+        action: ''
+        action_checksum: d41d8cd98f00b204e9800998ecf8427e
+        author: jscotka
+        author_id: 2150
+        breakdown: ''
+        breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
+        case: This is new testcase inside nitrate
+        case_id: 609912
+        case_text_version: 1
+        create_date: '2021-03-11 17:26:25'
+        effect: ''
+        effect_checksum: d41d8cd98f00b204e9800998ecf8427e
+        id: 878396
+        setup: ''
+        setup_checksum: d41d8cd98f00b204e9800998ecf8427e
+  - metadata:
+      guess_type: Tuple
+      latency: 0.9782402515411377
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - []
+  - metadata:
+      guess_type: Tuple
+      latency: 1.0409677028656006
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - null
+  - metadata:
+      guess_type: Tuple
+      latency: 1.8775432109832764
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - alias: ''
+        arguments: ' '
+        attachment: []
+        author: jscotka
+        author_id: 2150
+        case_id: 609912
+        case_status: CONFIRMED
+        case_status_id: 2
+        category: Sanity
+        category_id: 518
+        component: []
+        create_date: '2021-03-11 17:26:25'
+        default_tester: null
+        default_tester_id: null
+        estimated_time: 00:05:00
+        extra_link: ''
+        is_automated: 1
+        is_automated_proposed: false
+        notes: 'Test case has been migrated to git. Any changes made here might be
+          overwritten.
+
+          See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
+
+
+          [structured-field-start]
+
+          This is StructuredField version 1. Please, edit with care.
+
+
+          [description]
+
+          This is new testcase inside nitrate
+
+
+          [purpose-file]
+
+          Please remove this case before data regeneration
+
+
+          [fmf]
+
+          name: /new_testcase
+
+          url: ''''
+
+          ref: ''''
+
+          path: /..
+
+
+          [structured-field-end]
+
+          '
+        plan: []
+        priority: P3
+        priority_id: 3
+        requirement: ''
+        reviewer: null
+        reviewer_id: null
+        script: null
+        summary: This is new testcase inside nitrate
+        tag:
+        - 10700

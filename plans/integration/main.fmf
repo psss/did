@@ -1,0 +1,12 @@
+summary: Verify integration with other systems
+description:
+    Run integration tests using requre project for mocking interaction with
+    external systems (e.g. nitrate)
+discover:
+    how: fmf
+    filter: 'tag: integration'
+prepare:
+  - name: Install Requre
+    script: pip3 install git+https://github.com/packit/requre.git
+  - name: Create default nitrate config
+    script: "test -e ~/.nitrate || echo -en '[nitrate]\nurl = https://nitrate.server/xmlrpc/\n' | tee ~/.nitrate"

@@ -582,7 +582,7 @@ def read_nitrate_case(testcase, makefile_data=None):
     # Extend bugs detected from Makefile with those linked in Nitrate
     try:
         data['link'] = makefile_data['link'].copy()
-    except KeyError:
+    except (KeyError, TypeError):
         pass
     for bug in testcase.bugs:
         add_bug(bug.bug, data)

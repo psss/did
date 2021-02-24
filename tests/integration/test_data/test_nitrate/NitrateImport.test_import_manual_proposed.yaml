@@ -1,0 +1,72 @@
+_requre:
+  DataTypes: 1
+  key_strategy: StorageKeysInspectSimple
+  version_storage_file: 3
+nitrate.xmlrpc_driver:
+  single_request_with_cookies:
+  - metadata:
+      guess_type: Tuple
+      latency: 1.0541234016418457
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.base
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - alias: ''
+      arguments: ''
+      attachment: []
+      author: jscotka
+      author_id: 2150
+      case_id: 609705
+      case_status: PROPOSED
+      case_status_id: 1
+      category: '      Regression    '
+      category_id: 702
+      component:
+      - 59911
+      create_date: '2021-02-26 16:29:52'
+      default_tester: jscotka
+      default_tester_id: 2150
+      estimated_time: 00:00:00
+      extra_link: ''
+      is_automated: 0
+      is_automated_proposed: false
+      notes: ''
+      plan:
+      - 29309
+      priority: P1
+      priority_id: 1
+      requirement: ''
+      reviewer: null
+      reviewer_id: null
+      script: ''
+      summary: Imported Test Case
+      tag:
+      - Tier1
+      text:
+        action: ''
+        action_checksum: d41d8cd98f00b204e9800998ecf8427e
+        author: jscotka
+        author_id: 2150
+        breakdown: ''
+        breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
+        case: Imported Test Case
+        case_id: 609705
+        case_text_version: 1
+        create_date: '2021-02-26 16:29:52'
+        effect: ''
+        effect_checksum: d41d8cd98f00b204e9800998ecf8427e
+        id: 878149
+        setup: <p>This is example testcase, what should be imported to TMT metadata</p>
+        setup_checksum: 463767f3925475195ac71c898cdf6223

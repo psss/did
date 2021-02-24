@@ -1,0 +1,277 @@
+_requre:
+  DataTypes: 1
+  key_strategy: StorageKeysInspectSimple
+  version_storage_file: 3
+nitrate.xmlrpc_driver:
+  single_request_with_cookies:
+  - metadata:
+      guess_type: Tuple
+      latency: 0.8607161045074463
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - nitrate.base
+      - nitrate.immutable
+      - nitrate.base
+      - nitrate.xmlrpc_driver
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - ckmmoxvfrb2kqj7t04nyhwwkrtiyhym0
+  - metadata:
+      guess_type: Tuple
+      latency: 0.8907873630523682
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - nitrate.base
+      - nitrate.immutable
+      - nitrate.base
+      - nitrate.immutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - classification: Other
+        classification_id: 5
+        default_milestone: '---'
+        description: Test coverage for Red Hat Enterprise Linux. Use for tracking
+          bugs in automated and manual test cases.
+        disallow_new: false
+        id: 182
+        max_vote_super_bug: 10000
+        milestone_url: SomeText
+        name: RHEL Tests
+        vote_super_user: 0
+        votes_to_confirm: false
+  - metadata:
+      guess_type: Tuple
+      latency: 0.9082512855529785
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - nitrate.base
+      - nitrate.immutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - description: ''
+      id: 518
+      name: Sanity
+      product: RHEL Tests
+      product_id: 182
+  - metadata:
+      guess_type: Tuple
+      latency: 1.176401138305664
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - alias: ''
+      arguments: ''
+      attachment: []
+      author: jscotka
+      author_id: 2150
+      case_id: 609911
+      case_status: PROPOSED
+      case_status_id: 1
+      category: Sanity
+      category_id: 518
+      component: []
+      create_date: '2021-03-11 17:26:12'
+      default_tester: null
+      default_tester_id: null
+      estimated_time: 00:00:00
+      extra_link: ''
+      is_automated: 1
+      is_automated_proposed: false
+      notes: null
+      plan: []
+      priority: P3
+      priority_id: 3
+      requirement: ''
+      reviewer: null
+      reviewer_id: null
+      script: null
+      summary: This is new testcase inside nitrate
+      tag: []
+      text:
+        action: ''
+        action_checksum: d41d8cd98f00b204e9800998ecf8427e
+        author: jscotka
+        author_id: 2150
+        breakdown: ''
+        breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
+        case: This is new testcase inside nitrate
+        case_id: 609911
+        case_text_version: 1
+        create_date: '2021-03-11 17:26:12'
+        effect: ''
+        effect_checksum: d41d8cd98f00b204e9800998ecf8427e
+        id: 878395
+        setup: ''
+        setup_checksum: d41d8cd98f00b204e9800998ecf8427e
+  - metadata:
+      guess_type: Tuple
+      latency: 1.0211031436920166
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - []
+  - metadata:
+      guess_type: Tuple
+      latency: 0.9151051044464111
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - null
+  - metadata:
+      guess_type: Tuple
+      latency: 3.068148374557495
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - alias: ''
+        arguments: ' '
+        attachment: []
+        author: jscotka
+        author_id: 2150
+        case_id: 609911
+        case_status: CONFIRMED
+        case_status_id: 2
+        category: Sanity
+        category_id: 518
+        component: []
+        create_date: '2021-03-11 17:26:12'
+        default_tester: null
+        default_tester_id: null
+        estimated_time: 00:05:00
+        extra_link: ''
+        is_automated: 1
+        is_automated_proposed: false
+        notes: 'Test case has been migrated to git. Any changes made here might be
+          overwritten.
+
+          See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
+
+
+          [structured-field-start]
+
+          This is StructuredField version 1. Please, edit with care.
+
+
+          [description]
+
+          This is new testcase inside nitrate
+
+
+          [purpose-file]
+
+          Please remove this case before data regeneration
+
+
+          [fmf]
+
+          name: /new_testcase
+
+          url: ''''
+
+          ref: ''''
+
+          path: /..
+
+
+          [structured-field-end]
+
+          '
+        plan: []
+        priority: P3
+        priority_id: 3
+        requirement: ''
+        reviewer: null
+        reviewer_id: null
+        script: null
+        summary: This is new testcase inside nitrate
+        tag:
+        - 10700
