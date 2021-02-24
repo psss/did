@@ -49,6 +49,8 @@ CONFIG_PATH = '~/.config/tmt'
 # Special process return code
 PROCESS_TIMEOUT = 124
 
+# Default select.select(timeout) in seconds
+DEFAULT_SELECT_TIMEOUT = 5
 
 class Config(object):
     """ User configuration """
@@ -317,7 +319,8 @@ class Common(object):
             # Capture the output
             while process.poll() is None:
                 # Check which file descriptors are ready for read
-                selected = select.select(descriptors, [], [], timeout)
+                selected = select.select(
+                    descriptors, [], [], DEFAULT_SELECT_TIMEOUT)
 
                 for descriptor in selected[0]:
                     # Handle stdout
@@ -340,7 +343,7 @@ class Common(object):
             timer.cancel()
 
         # Check for possible additional output
-        selected = select.select(descriptors, [], [], timeout)
+        selected = select.select(descriptors, [], [], DEFAULT_SELECT_TIMEOUT)
         for descriptor in selected[0]:
             if descriptor == process.stdout.fileno():
                 for line in process.stdout.readlines():
