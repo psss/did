@@ -339,6 +339,15 @@ class Test(Node):
         if self.opt('verbose'):
             self._sources()
             self._fmf_id()
+        if self.opt('verbose', 0) >= 2:
+            # Print non-empty unofficial attributes
+            for key in sorted(self.node.get().keys()):
+                # Already asked to be printed
+                if key in self._keys:
+                    continue
+                value = self.node.get(key)
+                if value not in [None, list(), dict()]:
+                    echo(tmt.utils.format(key, value, key_color='blue'))
 
     def lint(self):
         """
