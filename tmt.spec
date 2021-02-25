@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.3.0
+Version: 1.3.1
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -171,7 +171,14 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Thu Feb 25 2021 Petr Šplíchal <psplicha@redhat.com> - 1.3.1-1
+- Add test for prepare freeze
+- Make file descriptors non-blocking
+- Update the specification and stories to use link
+- Implement the new core attribute 'link'
+
 * Tue Feb 23 2021 Petr Šplíchal <psplicha@redhat.com> - 1.3.0-1
+- Set timeout on select calls in utils._run()
 - Show the current tmt version in the debug log
 - Revert support for the 'el' distro shortcut
 - Strip whitespace before relevancy comment
