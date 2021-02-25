@@ -16,6 +16,7 @@ import yaml
 import re
 import io
 import os
+import fcntl
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -315,6 +316,11 @@ class Common(object):
             # Start the timer
             timer = Timer(timeout, kill)
             timer.start()
+
+            # Make sure that the read operation on the file descriptors
+            # never blocks
+            for fd in descriptors:
+                fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
 
             # Capture the output
             while process.poll() is None:
