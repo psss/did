@@ -11,6 +11,7 @@ rlJournalStart
         rlPhaseStartTest "Test $method"
             rlRun "tmt run -vfi $tmp -a execute -h $method test --name good" 0
             rlRun "tmt run -vfi $tmp -a execute -h $method test --name long" 2
+            rlRun "tmt run -vfi $tmp -a execute -h $method test --name beakerlib" 2
         rlPhaseEnd
     done
 

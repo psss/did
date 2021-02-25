@@ -6,3 +6,9 @@
     summary: Test exceeding the duration limit
     duration: 3s
     test: sleep 10s
+
+/beakerlib:
+    summary: Beakerlib test exceeding the duration limit
+    duration: 3s
+    framework: beakerlib
+    test: bash long_beakerlib.sh
