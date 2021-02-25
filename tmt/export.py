@@ -119,6 +119,11 @@ def export_to_nitrate(test):
     # Components
     # First remove any components that are already there
     nitrate_case.components.clear()
+    if general:
+        # Remove also all general plans linked to testcase
+        for nitrate_plan in nitrate_case.testplans:
+            if nitrate_plan.type.name == "General":
+                nitrate_case.testplans.remove(nitrate_plan)
     # Then add fmf ones
     if test.component:
         echo(style('components: ', fg='green') + ' '.join(test.component))
