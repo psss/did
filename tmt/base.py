@@ -860,7 +860,7 @@ class Tree(tmt.utils.Common):
         if Test._opt('conditions'):
             conditions.extend(Test._opt('conditions'))
         # Build the list and convert to objects
-        keys.append('test')
+        keys = keys + ['test']
         return self._filters_conditions(
             [Test(test) for test in self.tree.prune(keys=keys, names=names)],
             filters, conditions)
