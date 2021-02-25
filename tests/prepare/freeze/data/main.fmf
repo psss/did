@@ -1,0 +1,13 @@
+/plan:
+    discover:
+        how: fmf
+    provision:
+        how: container
+    prepare:
+        how: shell
+        script: timeout 4 bash -c 'while :; do echo -n yes; echo -n no 1>&2; done'
+    execute:
+        how: tmt
+
+/test:
+    test: echo yes

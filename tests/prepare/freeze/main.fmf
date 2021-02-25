@@ -1,0 +1,6 @@
+test: bash test.sh
+summary: Too much output in prepare script could freeze tmt
+description: |
+  Runs prepare script which produces a lot of text but is killed fast.
+  Command tmt run can't wait forever on more output.
+  Original issue was found when ssh to remote or podman exec were used.
