@@ -2,4 +2,4 @@
     discover:
         how: fmf
     execute:
-        how: shell
+        how: tmt

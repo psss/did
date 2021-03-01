@@ -3,4 +3,4 @@ discover:
 provision:
     how: container
 execute:
-    how: shell
+    how: tmt

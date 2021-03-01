@@ -6,5 +6,5 @@ prepare:
     copr: '@oamg/convert2rhel'
     package: convert2rhel
 execute:
-    how: shell
+    how: tmt
     script: rpm -q convert2rhel

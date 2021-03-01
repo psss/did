@@ -1,7 +1,7 @@
 provision:
     how: container
 execute:
-    how: shell
+    how: tmt
 
 /available:
     discover:

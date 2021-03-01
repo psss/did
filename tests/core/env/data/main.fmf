@@ -16,7 +16,7 @@
     provision:
         how: local
     execute:
-        how: shell
+        how: tmt
 
     /yes:
         summary: This is a plan with variables

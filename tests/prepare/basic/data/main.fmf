@@ -5,5 +5,5 @@ prepare:
     how: install
     package: tmt
 execute:
-    how: shell
+    how: tmt
     script: tmt --help

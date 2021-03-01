@@ -5,5 +5,5 @@ prepare:
     how: install
     package: dnf-command(copr)
 execute:
-    how: shell
+    how: tmt
     script: rpm -q dnf-plugins-core

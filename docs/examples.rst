@@ -647,7 +647,7 @@ steps for all discovered test plans are executed::
             package: beakerlib
             summary: 2 preparations applied
         execute
-            how: beakerlib
+            how: tmt
             summary: 15 tests executed
         report
             how: display
@@ -692,7 +692,7 @@ Choose which plans should be executed::
         provision
         prepare
         execute
-            how: beakerlib
+            how: tmt
             result: 2 tests passed, 0 tests failed
         report
         finish

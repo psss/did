@@ -5,7 +5,7 @@
             how: fmf
             test: default
         execute:
-            how: shell
+            how: tmt
     /execute:
         summary: 'Default duration in the execute step'
         execute:
@@ -18,7 +18,7 @@
               - name: script
                 test: test
         execute:
-            how: shell
+            how: tmt
 
 /defined:
     /fmf:
@@ -27,7 +27,7 @@
             how: fmf
             test: defined
         execute:
-            how: shell
+            how: tmt
     /execute:
         summary: 'Defined duration in the execute step'
         execute:
@@ -42,4 +42,4 @@
                 test: test
                 duration: 5h
         execute:
-            how: shell
+            how: tmt
