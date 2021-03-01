@@ -10,6 +10,7 @@ import yaml
 import click
 import pprint
 import subprocess
+import functools
 
 import tmt.steps
 import tmt.utils
@@ -109,6 +110,7 @@ class Node(tmt.utils.Common):
         echo(tmt.utils.format('fmf-id', self.fmf_id, key_color='magenta'))
 
     @property
+    @functools.lru_cache(maxsize=None)
     def fmf_id(self):
         """ Return full fmf identifier of the node """
 
