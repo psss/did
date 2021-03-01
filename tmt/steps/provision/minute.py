@@ -372,8 +372,20 @@ class GuestMinute(tmt.Guest):
         if self.opt('dry'):
             return
         self.mt_image = self._convert_image(self.image)
-        self.instance_start = datetime.datetime.utcnow().strftime(
-            '%Y-%m-%d-%H-%M')
+        date_service = self.api_url
+        date_service += '/date-service.php?output_format=instantion'
+        try:
+            self.debug("Trying to get date from the date-service.")
+            response = retry_session().get(date_service, verify=False)
+            response.raise_for_status()
+            self.instance_start = response.text
+        except (requests.exceptions.ConnectionError,
+                requests.exceptions.HTTPError):
+            # Fall-back to local datetime
+            self.debug("Date-service failed, falling back to local time.")
+            self.instance_start = datetime.datetime.utcnow().strftime(
+                '%Y-%m-%d-%H-%M')
+        self.debug(f"Instance start: {self.instance_start}")
         self.instance_name = (
             f'{self.username}-{self.mt_image}-'
             f'{os.getpid()}-{self.instance_start}')
