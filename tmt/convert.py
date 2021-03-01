@@ -24,6 +24,9 @@ RELEVANCY_RULE = r"^([^:]+)\s*:\s*(.+)$"
 RELEVANCY_EXPRESSION = (
     r"^\s*(.*?)\s*(!?contains|!?defined|[=<>!]+)\s*(.*?)\s*$")
 
+# Bug url prefix
+BUGZILLA_URL = 'https://bugzilla.redhat.com/show_bug.cgi?id='
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  YAML
@@ -170,6 +173,19 @@ def write_markdown(path, content):
         raise ConvertError(f"Unable to write '{path}'.")
 
 
+def add_bug(bug, data):
+    """ Add relevant bug into data under the 'link' key """
+    new_link = dict(relates=f"{BUGZILLA_URL}{bug}")
+    try:
+        # Make sure there are no duplicates
+        if new_link in data['link']:
+            return
+        data['link'].append(new_link)
+    except KeyError:
+        data['link'] = [new_link]
+    echo(style('relates: ', fg='green') + new_link['relates'])
+
+
 def read(path, makefile, nitrate, purpose, disabled):
     """
     Read old metadata from various sources
@@ -308,6 +324,10 @@ def read(path, makefile, nitrate, purpose, disabled):
                 recommend for line in recommends for recommend in line.split()]
             echo(
                 style('recommend: ', fg='green') + ' '.join(data['recommend']))
+
+        # Add relevant bugs to the 'link' attribute
+        for bug in re.findall(r'^Bug:\s*([0-9]+)', testinfo, re.M):
+            add_bug(bug, data)
 
         # Restore the original testinfo.desc content (if existed)
         if old_testinfo:
@@ -558,6 +578,14 @@ def read_nitrate_case(testcase, makefile_data=None):
             echo(tmt.utils.dict_to_yaml(data['adjust']).strip())
     except tmt.utils.StructuredFieldError:
         pass
+
+    # Extend bugs detected from Makefile with those linked in Nitrate
+    try:
+        data['link'] = makefile_data['link'].copy()
+    except KeyError:
+        pass
+    for bug in testcase.bugs:
+        add_bug(bug.bug, data)
 
     # Header and footer from notes
     data['description'] = field.header() + field.footer()

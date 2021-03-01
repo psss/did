@@ -45,5 +45,6 @@ $(METADATA): Makefile
 	@echo "Environment:     TEST=one two three" >> $(METADATA)
 	@echo "Environment:     CONTEXT=distro=fedora" >> $(METADATA)
 	@echo "Releases:        -RHEL4 -RHELClient5 -RHELServer5" >> $(METADATA)
+	@echo "Bug:             1234567" >> $(METADATA)
 
 	rhts-lint $(METADATA)

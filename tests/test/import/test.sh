@@ -48,6 +48,11 @@ rlJournalStart
         rlAssertGrep 'CONTEXT: distro=fedora' 'output'
     rlPhaseEnd
 
+    rlPhaseStartTest 'Relevant bugs'
+        rlRun 'tmt test show | tee output'
+        rlAssertGrep 'relates.*1234567' 'output'
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "rm -r $tmp" 0 "Removing tmp directory"
         rlRun 'popd'
