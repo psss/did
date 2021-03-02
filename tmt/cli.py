@@ -485,12 +485,13 @@ def import_(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
     help='Output format.')
 @click.option(
+    '--duplicate / --no-duplicate', default=False, show_default=True,
+    help='Allow or prevent creating duplicates in Nitrate by searching for '
+         'existing test cases with the same fmf identifier.')
+@click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-@click.option(
-    '--no-duplicate', is_flag=True,
-    help='Search for Nitrate cases for fmf identifier before creating new one')
-def export(context, format_, nitrate, create, general, no_duplicate, **kwargs):
+def export(context, format_, nitrate, **kwargs):
     """
     Export test data into the desired format.
 
@@ -500,7 +501,7 @@ def export(context, format_, nitrate, create, general, no_duplicate, **kwargs):
     tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
         if nitrate:
-            test.export(format_='nitrate', create=create, general=general, find_nitrate_cases=no_duplicate)
+            test.export(format_='nitrate')
         else:
             echo(test.export(format_=format_))
 

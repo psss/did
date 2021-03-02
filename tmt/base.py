@@ -379,7 +379,7 @@ class Test(Node):
         return valid
 
     def export(
-            self, format_='yaml', keys=None, create=False, general=False, find_nitrate_cases=False):
+            self, format_='yaml', keys=None):
         """
         Export test data into requested format
 
@@ -404,7 +404,7 @@ class Test(Node):
 
         # Export to Nitrate test case management system
         elif format_ == 'nitrate':
-            tmt.export.export_to_nitrate(self, create, general, find_nitrate_cases)
+            tmt.export.export_to_nitrate(self)
 
         # Common node export otherwise
         else:

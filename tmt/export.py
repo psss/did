@@ -37,21 +37,22 @@ def import_nitrate():
         raise ConvertError(error)
 
 
-def __nitrate_find_fmf_testcases(test):
+def _nitrate_find_fmf_testcases(test):
     """
-    Find all testcases in all component general plans what contains same fmf identifier
+    Find all Nitrate test cases with the same fmf identifier
+
+    All component general plans are explored for possible duplicates.
     """
     for component in test.component:
         try:
             for testcase in find_general_plan(component).testcases:
                 struct_field = tmt.utils.StructuredField(testcase.notes)
-                fmf_id = tmt.utils.dict_to_yaml(test.fmf_id)
                 try:
-                    fmf_part = struct_field.get('fmf')
-
-                    if fmf_part == fmf_id:
+                    fmf_id = tmt.utils.yaml_to_dict(struct_field.get('fmf'))
+                    if fmf_id == test.fmf_id:
                         echo(style(
-                            f"Test case '{testcase.identifier}' found. (Plan search)", fg='magenta'))
+                            f"Existing test case '{testcase.identifier}' "
+                            f"found for given fmf id.", fg='magenta'))
                         yield testcase
                 except tmt.utils.StructuredFieldError:
                     pass
@@ -59,11 +60,16 @@ def __nitrate_find_fmf_testcases(test):
             pass
 
 
-def export_to_nitrate(test, create, general, find_nitrate_cases):
+def export_to_nitrate(test):
     """ Export fmf metadata to nitrate test cases """
     import_nitrate()
-
     new_test_created = False
+
+    # Check command line options
+    create = test.opt('create')
+    general = test.opt('general')
+    duplicate = test.opt('duplicate')
+
     # Check nitrate test case
     try:
         nitrate_id = test.node.get('extra-nitrate')[3:]
@@ -74,11 +80,11 @@ def export_to_nitrate(test, create, general, find_nitrate_cases):
         # Create a new nitrate test case
         if create:
             nitrate_case = None
-            if find_nitrate_cases:
-                # find if there exists duplicates already inside TCMS (not linked to FMF files)
-                testcases = __nitrate_find_fmf_testcases(test)
+            # Check for existing Nitrate tests with the same fmf id
+            if not duplicate:
+                testcases = _nitrate_find_fmf_testcases(test)
                 try:
-                    # select fist found testcase if any
+                    # Select the first found testcase if any
                     nitrate_case = next(testcases)
                 except StopIteration:
                     pass
