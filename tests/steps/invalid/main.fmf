@@ -1,0 +1,2 @@
+summary: Check that invalid steps are handled correctly
+test: ./test.sh

@@ -594,7 +594,15 @@ class Plan(Node):
         self.debug('wake', color='cyan', shift=0, level=2)
         for step in self.steps(disabled=True):
             self.debug(str(step), color='blue', level=2)
-            step.wake()
+            try:
+                step.wake()
+            except tmt.utils.SpecificationError as e:
+                # Re-raise the exception if the step is enabled (invalid
+                # step data), otherwise just warn the user and continue.
+                if step.enabled:
+                    raise e
+                else:
+                    self.warn(e.args[0])
 
         # Run enabled steps except 'finish'
         self.debug('go', color='cyan', shift=0, level=2)

@@ -1,0 +1,5 @@
+summary: Essential command line features
+provision:
+    how: invalid
+execute:
+    how: tmt
