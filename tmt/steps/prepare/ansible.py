@@ -20,6 +20,7 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
               - playbook/two.yml
               - playbook/three.yml
 
+    The playbook path should be relative to the metadata tree root.
     Use 'order' attribute to select in which order preparation should
     happen if there are multiple configs. Default order is '50'.
     Default order of required packages installation is '70'.

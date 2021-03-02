@@ -30,18 +30,14 @@ description: |
     description:
         One or more playbooks can be provided as a list under the
         ``playbooks`` attribute.  Each of them will be applied
-        using ``ansible-playbook`` in the given order.  Optional
-        attribute ``roles`` can be used to enable additional
-        roles.  Role can be either an ansible galaxy role name,
-        git url or a path to file with detailed requirements.
+        using ``ansible-playbook`` in the given order. The path
+        should be relative to the metadata tree root.
     example: |
         prepare:
             how: ansible
-            role:
-                - nginxinc.nginx
             playbook:
-                - common.yml
-                - rhel7.yml
+                - playbooks/common.yml
+                - playbooks/os/rhel7.yml
     link:
       - implemented-by: /tmt/steps/provision
 
