@@ -596,13 +596,13 @@ class Plan(Node):
             self.debug(str(step), color='blue', level=2)
             try:
                 step.wake()
-            except tmt.utils.SpecificationError as e:
+            except tmt.utils.SpecificationError as error:
                 # Re-raise the exception if the step is enabled (invalid
                 # step data), otherwise just warn the user and continue.
                 if step.enabled:
-                    raise e
+                    raise error
                 else:
-                    self.warn(e.args[0])
+                    step.warn(error)
 
         # Run enabled steps except 'finish'
         self.debug('go', color='cyan', shift=0, level=2)
