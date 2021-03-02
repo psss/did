@@ -877,7 +877,7 @@ class Tree(tmt.utils.Common):
         if Plan._opt('conditions'):
             conditions.extend(Plan._opt('conditions'))
         # Build the list and convert to objects
-        keys.append('execute')
+        keys = keys + ['execute']
         return self._filters_conditions(
             [Plan(plan, run=run)
                 for plan in self.tree.prune(keys=keys, names=names)],
@@ -894,7 +894,7 @@ class Tree(tmt.utils.Common):
         if Story._opt('conditions'):
             conditions.extend(Story._opt('conditions'))
         # Build the list and convert to objects
-        keys.append('story')
+        keys = keys + ['story']
         return self._filters_conditions(
             [Story(story) for story in self.tree.prune(
                 keys=keys, names=names, whole=whole)],
