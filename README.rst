@@ -242,6 +242,24 @@ packages on your system::
 Note: You can omit the ``--user`` flag if in a virtual environment.
 
 
+Enable shell completion for Bash, Fish, or Zsh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For Bash, add this to ~/.bashrc::
+
+    eval "$(_TMT_COMPLETE=source_bash tmt)"
+
+For Zsh, add this to ~/.zshrc::
+
+    eval "$(_TMT_COMPLETE=source_zsh tmt)"
+
+For Fish, add this to ~/.config/fish/completions/tmt.fish::
+
+    eval (env _TMT_COMPLETE=source_fish tmt)
+
+Open a new shell to enable completion. Or run the ``eval`` command directly in
+your current shell to enable it temporarily.
+
 Develop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
