@@ -434,10 +434,10 @@ class Plan(Node):
             self.node.get('finish'), self)
 
         # Relevant gates (convert to list if needed)
-        self.gates = node.get('gates')
-        if self.gates:
-            if not isinstance(self.gates, list):
-                self.gates = [self.gates]
+        self.gate = node.get('gate')
+        if self.gate:
+            if not isinstance(self.gate, list):
+                self.gate = [self.gate]
 
         # Environment variables, make sure that values are string
         self._environment = dict([

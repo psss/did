@@ -13,7 +13,7 @@ description: |
     release-update
         block releasing an erratum / bodhi update
 
-    Each testset can define one or more gates it should be blocking.
+    Each plan can define one or more gates it should be blocking.
     Attached is an example of configuring multiple gates.
 
 example: |
@@ -37,7 +37,7 @@ example: |
             /features:
                 summary: Verify important features
         /update:
-            # This enables the 'release-update' gate for all three testsets
+            # This enables the 'release-update' gate for all three plans
             gate:
                 - release-update
             /basic:
