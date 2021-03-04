@@ -433,15 +433,11 @@ class Plan(Node):
         self.finish = tmt.steps.finish.Finish(
             self.node.get('finish'), self)
 
-        # Relevant artifacts & gates (convert to list if needed)
-        self.artifacts = node.get('artifacts')
-        if self.artifacts:
-            if not isinstance(artifacts, list):
-                artifacts = [artifacts]
+        # Relevant gates (convert to list if needed)
         self.gates = node.get('gates')
         if self.gates:
-            if not isinstance(gates, list):
-                gates = [gates]
+            if not isinstance(self.gates, list):
+                self.gates = [self.gates]
 
         # Environment variables, make sure that values are string
         self._environment = dict([
