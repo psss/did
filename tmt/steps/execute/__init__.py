@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import fmf
 import tmt
 import click
@@ -229,7 +230,8 @@ class ExecutePlugin(tmt.steps.Plugin):
     def check_shell(self, test):
         """ Check result of a shell test """
         # Prepare the log path
-        data = {'log': self.data_path(test, TEST_OUTPUT_FILENAME)}
+        data = {'log': self.data_path(test, TEST_OUTPUT_FILENAME),
+                'duration': click.unstyle(test.duration)}
         # Process the exit code
         try:
             data['result'] = {0: 'pass', 1: 'fail'}[test.returncode]
@@ -243,7 +245,9 @@ class ExecutePlugin(tmt.steps.Plugin):
     def check_beakerlib(self, test):
         """ Check result of a beakerlib test """
         # Initialize data, prepare log paths
-        data = {'result': 'error', 'log': []}
+        data = {'result': 'error',
+                'log': [],
+                'duration': click.unstyle(test.duration)}
         for log in [TEST_OUTPUT_FILENAME, 'journal.txt']:
             if os.path.isfile(self.data_path(test, log, full=True)):
                 data['log'].append(self.data_path(test, log))
@@ -278,3 +282,8 @@ class ExecutePlugin(tmt.steps.Plugin):
         else:
             data['result'] = result.lower()
         return tmt.Result(data, test.name)
+
+    @staticmethod
+    def test_duration(start, end):
+        duration = time.strftime("%H:%M:%S", time.gmtime(end - start))
+        return click.style(duration, fg='cyan')

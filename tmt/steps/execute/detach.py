@@ -1,4 +1,5 @@
 import os
+import time
 import tmt
 import shutil
 import click
@@ -114,6 +115,7 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
 
             # Push workdir to guest and execute tests
             guest.push()
+            start = time.time()
             try:
                 guest.execute(
                     f'./{RUNNER} -v .. stdout.log stderr.log',
@@ -123,11 +125,12 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
                 self.info('error', 'Test execution failed.', color='red')
                 self.check_output(error)
                 raise
-
+            end = time.time()
             # Pull logs from guest, show logs and check results
             guest.pull()
             self.show_logs()
             for test in self.step.plan.discover.tests():
+                test.duration = self.test_duration(start, end)
                 self._results.append(self.check(test))
 
     def results(self):

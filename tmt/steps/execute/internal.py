@@ -89,11 +89,10 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         self.write(
             self.data_path(test, TEST_OUTPUT_FILENAME, full=True),
             stdout or '', level=3)
-        duration = time.strftime("%H:%M:%S", time.gmtime(end - start))
-        duration = click.style(duration, fg='cyan')
+        test.duration = self.test_duration(start, end)
         shift = 1 if self.opt('verbose') < 2 else 2
         self.verbose(
-            f"{duration} {test.name}{timeout}", color='cyan', shift=shift)
+            f"{test.duration} {test.name}{timeout}", color='cyan', shift=shift)
 
     def check(self, test):
         """ Check the test result """

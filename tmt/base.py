@@ -1307,6 +1307,7 @@ class Result(object):
         result ........... test execution result
         log .............. one or more log files
         note ............. additional result details
+        duration.......... test execution time (hh:mm:ss)
 
     Required parameter 'name' should contain a unique test name.
     """
@@ -1328,6 +1329,7 @@ class Result(object):
             raise tmt.utils.SpecificationError(f"Invalid test name '{name}'.")
         self.name = name
         self.note = data.get('note')
+        self.duration = data.get('duration')
 
         # Check for valid results
         try:
@@ -1386,6 +1388,8 @@ class Result(object):
         data = dict(result=self.result, log=self.log)
         if self.note:
             data['note'] = self.note
+        if self.duration:
+            data['duration'] = self.duration
         return data
 
 
