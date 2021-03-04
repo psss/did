@@ -214,8 +214,11 @@ story: 'As a user I want to execute tests easily'
         freshly built rpm package.
     example: |
         tmt run --all \
-        prepare --artifact=tmt-0.4-1.fc29.noarch.rpm \
-        execute --script='tmt --help'
+        prepare -h install -p tmt-0.4-1.fc29.noarch.rpm \
+        execute -h tmt --script 'tmt --help'
+    link:
+      - implemented-by: /tmt/steps/execute
+      - implemented-by: /tmt/steps/prepare/install.py
 
 /restraint:
     story:

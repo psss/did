@@ -30,6 +30,8 @@ coverage: tmp
 
 # Build documentation, prepare man page
 docs: man
+	echo -e '.. _overview:' > docs/overview.rst
+	cat README.rst >> docs/overview.rst
 	cd docs && make html
 man: source
 	cp docs/header.txt $(TMP)/man.rst
@@ -78,7 +80,7 @@ tags:
 	find tmt -name '*.py' | xargs ctags --python-kinds=-i
 clean:
 	rm -rf $(TMP) build dist .cache .pytest_cache
-	rm -rf docs/_build docs/stories docs/spec
+	rm -rf docs/{overview.rst,_build,stories,spec}
 	find . -type f -name "*.py[co]" -delete
 	find . -type f -name "*,cover" -delete
 	find . -type d -name "__pycache__" -delete

@@ -5,10 +5,10 @@
     example:
         - tmt run discover
         - tmt run discover --how=fmf
-        - tmt run discover --how=fmf --repo=url
-        - tmt run discover --how=list
+        - tmt run discover --how=fmf --url=url
         - tmt run discover --how=shell
-        - tmt run discover --how=nitrate
+    link:
+      - implemented-by: /tmt/steps/discover
 
 /provision:
     story: 'Select or adjust the provision step'
@@ -18,18 +18,10 @@
     example:
         - tmt run provision
         - tmt run provision --how=virtual
-        - tmt run provision --how=testing-farm
-        - tmt run provision --how=testing-farm --memory-min=8GB
-        - tmt run provision --how=openstack
+        - tmt run provision --how=testing-farm --memory=2048MB
         - tmt run provision --how=container
-        - tmt run provision --how=podman
-        - tmt run provision --how=docker
-        - tmt run provision --how=podman --image=fedora:rawhide
-        - tmt run provision --how=beaker --distro=rhel-8
-        - tmt run provision --how=beaker --arch=s390x
+        - tmt run provision --how=container --image=fedora:rawhide
         - tmt run provision --how=local
-        - tmt run provision --how=qemu
-        - tmt run provision --how=vagrant
 
     /default:
         story: 'Use default config or provision a virtual machine'
@@ -79,8 +71,12 @@
         environment needed for testing.
     example:
         - tmt run prepare
+        - tmt run prepare --how=install
+        - tmt run prepare --how=install --package=fresh.rpm
         - tmt run prepare --how=ansible
         - tmt run prepare --how=ansible --playbook=server.yaml
+    link:
+      - implemented-by: /tmt/steps/prepare
 
 /execute:
     story: 'Select or adjust the execute step'
@@ -136,8 +132,10 @@
         results.
     example:
         - tmt run report
-        - tmt run report --email=email@example.com
-        - tmt run report --irc=room
+        - tmt run report --how=html
+        - tmt run report --how=html --open
+    link:
+      - implemented-by: /tmt/steps/report
 
 /finish:
     story: 'Select or adjust the finish step'
@@ -147,3 +145,5 @@
         prepare step useful for various cleanup actions.
     example:
         - tmt run finish
+    link:
+      - implemented-by: /tmt/steps/finish

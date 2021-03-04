@@ -31,3 +31,6 @@ example: |
         how: tmt
     context:
         component: dash
+
+link:
+  - implemented-by: /tmt/base.py

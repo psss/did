@@ -790,6 +790,10 @@ class Story(Node):
             output += '\n{}\n'.format(self.summary)
         if self.story != self.node.parent.get('story'):
             output += '\n*{}*\n'.format(self.story.strip())
+        # Insert note about unimplemented feature (leaf nodes only)
+        if not self.node.children and not self.implemented:
+            output += '\n.. note:: This is a draft, '
+            output += 'the story is not implemented yet.\n'
         if self.description:
             output += '\n{}\n'.format(self.description)
 

@@ -17,19 +17,19 @@ data duplication and maintenance.
 
 The following metadata levels are defined:
 
-Level 0
+Level 0: Core
     :ref:`/spec/core` attributes such as :ref:`/spec/core/summary`
     for short overview, :ref:`/spec/core/description` for detailed
     texts or the :ref:`/spec/core/order` which are common and can
     be used across all metadata levels.
 
-Level 1
+Level 1: Tests
     Metadata closely related to individual :ref:`/spec/tests` such
     as the :ref:`/spec/tests/test` script, directory
     :ref:`/spec/tests/path` or maximum :ref:`/spec/tests/duration`
     which are stored directly with the test code.
 
-Level 2
+Level 2: Plans
     This level represents :ref:`/spec/plans` made up of individual
     :ref:`/spec/steps` describing how to
     :ref:`/spec/steps/provision` the environment for testing and
@@ -37,7 +37,7 @@ Level 2
     should be used to :ref:`/spec/steps/execute` tests relevant
     for given :ref:`/spec/plans/context`.
 
-Level 3
+Level 3: Stories
     User :ref:`/spec/stories` can be used to define expected
     features of the application and to easily track which
     functionality has been already implemented, verified and

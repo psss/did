@@ -107,13 +107,6 @@ story: 'As a user I want to comfortably work with tests'
           - implemented-by: /tmt/export.py
           - documented-by: /docs/questions#nitrate-migration
 
-/coverage:
-    story: 'Test coverage overview'
-    description:
-        Show current status of test coverage.
-        Alias for /stories/cli/story/coverage/test
-    example: tmt test coverage
-
 /filter:
     story: 'Filter available tests'
     description:

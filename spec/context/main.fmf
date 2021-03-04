@@ -32,3 +32,6 @@ example: |
 
     tmt -c distro=fedora test show
     tmt -c distro=fedora plan show
+
+link:
+  - implemented-by: /tmt/base.py
