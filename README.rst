@@ -374,7 +374,8 @@ Petr Menšík, Leoš Pol, Miroslav Vadkerti, Pavel Valena, Jakub
 Heger, Honza Horák, Rachel Sibley, František Nečas, Michal
 Ruprich, Martin Kyral, Miloš Prchlík, Tomáš Navrátil, František
 Lachman, Patrik Kis, Ondrej Mosnáček, Andrea Ficková, Denis
-Karpelevich, Jan Ščotka and Michal Srb.
+Karpelevich, Michal Srb, Jan Ščotka, Artem Zhukov and Vinzenz
+Feenstra.
 
 
 Copyright
