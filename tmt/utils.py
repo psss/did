@@ -153,9 +153,15 @@ class Common(object):
         Get an option from the command line context
 
         Checks also parent options. For flags (boolean values) parent's
-        True wins over child's False (e.g. run --verbose enables verbose
-        mode for all included plans and steps). Environment variables
-        override command line options.
+        True wins over child's False (e.g. run --quiet enables quiet
+        mode for all included plans and steps).
+
+        For options that can be used multiple times, the child overrides
+        the parent if it was defined (e.g. run -av provision -vvv runs
+        all steps except for provision in mildly verbose mode, provision
+        is run with the most verbosity).
+
+        Environment variables override command line options.
         """
         # Translate dashes to underscores to match click's conversion
         option = option.replace('-', '_')
@@ -179,16 +185,20 @@ class Common(object):
         if self.parent:
             parent = self.parent.opt(option)
         # Special handling for special flags (parent's yes always wins)
-        if option in ['verbose', 'debug', 'quiet', 'force', 'dry']:
-            winner = parent if parent else local
+        if option in ['quiet', 'force', 'dry']:
+            return parent if parent else local
+        # Special handling for counting options (child overrides the
+        # parent if it was defined)
+        elif option in ['debug', 'verbose']:
+            winner = local if local else parent
             # Convert tuple of booleans into debug/verbose level (int)
-            if option in ['verbose', 'debug']:
-                if isinstance(winner, tuple):
-                    winner = len(winner)
-                if winner is None:
-                    winner = 0
+            if isinstance(winner, tuple):
+                winner = len(winner)
+            if winner is None:
+                winner = 0
             return winner
-        return parent if parent is not None else local
+        else:
+            return parent if parent is not None else local
 
     def _level(self):
         """ Hierarchy level """
