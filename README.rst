@@ -325,6 +325,11 @@ TMT_DEBUG
     levels from 1 to 3. However, some of the plugins go even
     deeper when needed.
 
+NO_COLOR
+    Disable colors in the terminal output. Output only plain,
+    non-colored text. See https://no-color.org/ for more
+    information.
+
 
 Links
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

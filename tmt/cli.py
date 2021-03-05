@@ -164,6 +164,10 @@ def main(click_contex, root, context, **kwargs):
         print(f"tmt version: {tmt.__version__}")
         raise SystemExit(0)
 
+    # Disable coloring if NO_COLOR is set
+    if 'NO_COLOR' in os.environ:
+        click_contex.color = False
+
     # Save click context and fmf context for future use
     tmt.utils.Common._save_context(click_contex)
     click_contex.obj = tmt.utils.Common()
