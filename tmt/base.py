@@ -300,7 +300,8 @@ class Test(Node):
             directory_path = os.getcwd()
         else:
             directory_path = os.path.join(tree.root, name.lstrip('/'))
-            tmt.utils.create_directory(directory_path, 'test directory', dry=dry)
+            tmt.utils.create_directory(
+                directory_path, 'test directory', dry=dry)
 
         # Create metadata
         try:

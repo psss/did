@@ -878,8 +878,8 @@ def create_directory(path, name, dry=False, quiet=False):
             name, path, error))
 
 
-def create_file(path, content, name,
-                dry=False, force=False, mode=0o664, quiet=False):
+def create_file(
+    path, content, name, dry=False, force=False, mode=0o664, quiet=False):
     """ Create a new file, handle errors """
     say = log.debug if quiet else echo
     action = 'would be created' if dry else 'created'

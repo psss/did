@@ -49,31 +49,29 @@ rlJournalStart
         rlAssertExists "$tmp/$DIR_DOT_SYNTAX/test.sh"
     rlPhaseEnd
 
-    rlPhaseStartTest "Using --dry option"
-         rlPhaseStartTest "Using the --dry option"
-          rlRun -s "tmt test create -n -t beakerlib example-test"
-          rlAssertGrep "Directory .* would be created." "${rlRun_LOG}"
-          rlAssertGrep "Test metadata .* would be created." "${rlRun_LOG}"
-          rlAssertGrep "Test script .* would be created." "${rlRun_LOG}"
-          rlAssertNotExists "$tmp/example-test"
-          rlAssertNotExists "$tmp/example-test/main.fmf"
-          rlAssertNotExists "$tmp/example-test/test.sh"
+    rlPhaseStartTest "Using the --dry option"
+        rlRun -s "tmt test create -n -t beakerlib example-test"
+        rlAssertGrep "Directory .* would be created." "${rlRun_LOG}"
+        rlAssertGrep "Test metadata .* would be created." "${rlRun_LOG}"
+        rlAssertGrep "Test script .* would be created." "${rlRun_LOG}"
+        rlAssertNotExists "$tmp/example-test"
+        rlAssertNotExists "$tmp/example-test/main.fmf"
+        rlAssertNotExists "$tmp/example-test/test.sh"
 
-         rlRun -s "tmt test create -t beakerlib example-test"
-          rlRun "echo '$TEST_STRING' >> $tmp/example-test/test.sh" \
-                0 "Inserting testing comment into the test.sh"
-           rlRun -s "tmt test create -n -t beakerlib example-test" \
-                   2 "Test already exists"
-          rlRun "grep '$TEST_STRING' $tmp/example-test/test.sh" \
-                0 "Check testing comment was not overwritten"
+        rlRun -s "tmt test create -t beakerlib example-test"
+        rlRun "echo '$TEST_STRING' >> $tmp/example-test/test.sh" \
+            0 "Inserting testing comment into the test.sh"
+        rlRun -s "tmt test create -n -t beakerlib example-test" \
+            2 "Test already exists"
+        rlRun "grep '$TEST_STRING' $tmp/example-test/test.sh" \
+            0 "Check testing comment was not overwritten"
 
-           rlRun -s "tmt test create -nf -t beakerlib example-test"
-          rlAssertGrep "Directory .* already exists." "${rlRun_LOG}"
-          rlAssertGrep "Test metadata .* would be overwritten." "${rlRun_LOG}"
-          rlAssertGrep "Test script .* would be overwritten." "${rlRun_LOG}"
-          rlRun "grep '$TEST_STRING' $tmp/example-test/test.sh" \
-                 0 "Check testing comment was not overwritten"
-      rlPhaseEnd
+        rlRun -s "tmt test create -nf -t beakerlib example-test"
+        rlAssertGrep "Directory .* already exists." "${rlRun_LOG}"
+        rlAssertGrep "Test metadata .* would be overwritten." "${rlRun_LOG}"
+        rlAssertGrep "Test script .* would be overwritten." "${rlRun_LOG}"
+        rlRun "grep '$TEST_STRING' $tmp/example-test/test.sh" \
+            0 "Check testing comment was not overwritten"
     rlPhaseEnd
 
     rlPhaseStartCleanup
