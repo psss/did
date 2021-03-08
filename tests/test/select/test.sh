@@ -33,13 +33,19 @@ rlJournalStart
     for name in '-n' '--name'; do
         rlPhaseStartTest "tmt run test $name <name>"
             tmt='tmt run -rv discover'
+            # Existing
             rlRun "$tmt test $name enabled | tee $output"
             rlAssertGrep "/tests/enabled/default" $output
             rlAssertNotGrep "/tests/enabled/disabled" $output
             rlAssertNotGrep "/tests/tag/default" $output
             rlAssertNotGrep "/tests/tier/default" $output
+            # Missing
             rlRun "$tmt test $name non-existent | tee $output"
             rlAssertGrep "No tests found" $output
+            # Using 'test --name' overrides 'test' in discover
+            rlRun "$tmt test $name tier/one | tee $output"
+            rlAssertGrep "/tests/tier/one" $output
+            rlAssertNotGrep "/tests/tier/two" $output
         rlPhaseEnd
     done
 

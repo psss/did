@@ -182,7 +182,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         filters = self.get('filter', [])
         for filter_ in filters:
             self.info('filter', filter_, 'green')
-        names = self.get('test', [])
+        # Check the 'test --name' option first, then 'test' from discover
+        names = list(tmt.base.Test._opt('names') or self.get('test', []))
         if names:
             self.info('names', fmf.utils.listed(names), 'green')
 

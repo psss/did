@@ -1,0 +1,11 @@
+execute:
+    how: tmt
+
+/all:
+    discover:
+        how: fmf
+
+/selected:
+    discover:
+        how: fmf
+        test: tier
