@@ -851,9 +851,9 @@ class Tree(tmt.utils.Common):
             except fmf.utils.FilterError as error:
                 # Handle missing attributes as if condition failed
                 continue
-            except SyntaxError as error:
+            except Exception as error:
                 raise tmt.utils.GeneralError(
-                    f"Invalid condition syntax: {error}")
+                    f"Invalid --condition raised exception: {error}")
             # Filters
             try:
                 if not all([fmf.utils.filter(filter_, filter_vars, regexp=True)
