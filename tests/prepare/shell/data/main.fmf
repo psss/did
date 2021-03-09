@@ -1,0 +1,14 @@
+provision:
+    how: container
+    image: fedora
+prepare:
+    - name: Install package
+      how: install
+      package: tmt
+    - name: Run preparation script
+      how: shell
+      script: ./prepare.sh
+
+execute:
+    how: tmt
+    script: /usr/bin/own-program

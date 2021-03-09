@@ -382,21 +382,34 @@ class Guest(tmt.utils.Common):
             [f'{environment}{directory}{command}'])
         return self.run(command, shell=False, **kwargs)
 
-    def push(self):
+    def push(self, src="", dest="", opts=""):
         """ Push workdir to guest """
-        self.debug(f"Push workdir to guest '{self.guest}'.")
+        if not src:
+            self.debug(f"Push workdir to guest '{self.guest}'.")
+            src = self.parent.plan.workdir
+            opts = opts or "-Rrz --links --safe-links --delete"
+        if not dest:
+            dest = "/"
+        self.debug(f"Copy files to guest '{self.guest}' {src} -> {dest}")
         self.run(
-            f'rsync -Rrz --links --safe-links --delete '
+            f'rsync {opts} '
             f'-e "{self._ssh_command(join=True)}" '
-            f'--safe-links {self.parent.plan.workdir} {self._ssh_guest()}:/')
+            f'{src} {self._ssh_guest()}:{dest}')
 
-    def pull(self):
+    def pull(self, src="", dest="", opts=""):
         """ Pull workdir from guest """
-        self.debug(f"Pull workdir from guest '{self.guest}'.")
+        if not src:
+            self.debug(f"Pull workdir from guest '{self.guest}'.")
+            src = self.parent.plan.workdir
+            opts = opts or "-Rrz --links --safe-links"
+        if not dest:
+            dest = "/"
+        self.debug(f"Copy files from guest '{self.guest}' {src} -> {dest}")
         self.run(
-            f'rsync -Rrz --links --safe-links '
+            f'rsync {opts} '
             f'-e "{self._ssh_command(join=True)}" '
-            f'{self._ssh_guest()}:{self.parent.plan.workdir} /')
+            f'{self._ssh_guest()}:{src} {dest}')
+
 
     def stop(self):
         """

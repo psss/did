@@ -153,7 +153,10 @@ class GuestContainer(tmt.Guest):
 
     def podman(self, command, **kwargs):
         """ Run given command via podman """
-        return self.run(['podman'] + command, shell=False, **kwargs)
+        if isinstance(command, str):
+            return self.run('podman ' + command, shell=True, **kwargs)
+        else:
+            return self.run(['podman'] + command, shell=False, **kwargs)
 
     def execute(self, command, **kwargs):
         """ Execute given commands in podman via shell """
@@ -181,10 +184,10 @@ class GuestContainer(tmt.Guest):
             ['exec'] + interactive +
             [self.container or 'dry', 'sh', '-c', command], **kwargs)
 
-    def push(self):
+    def push(self, src="", dest="", opts=""):
         """ Nothing to be done to push workdir """
 
-    def pull(self):
+    def pull(self, src="", dest="", opts=""):
         """ Nothing to be done to pull workdir """
 
     def stop(self):
