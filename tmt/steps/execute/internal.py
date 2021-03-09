@@ -84,6 +84,10 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             test.returncode = error.returncode
             if test.returncode == tmt.utils.PROCESS_TIMEOUT:
                 timeout = ' (timeout)'
+                stdout += f"""
+Test duration '{test.duration}' exceeded.
+HINT: https://tmt.readthedocs.io/en/latest/spec/tests.html#duration
+                """
                 self.debug(f"Test duration '{test.duration}' exceeded.")
         end = time.time()
         self.write(

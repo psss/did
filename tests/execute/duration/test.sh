@@ -11,6 +11,11 @@ rlJournalStart
         rlPhaseStartTest "Test $method"
             rlRun "tmt run -vfi $tmp -a execute -h $method test --name good" 0
             rlRun "tmt run -vfi $tmp -a execute -h $method test --name long" 2
+            if [ "$method" == "tmt" ]; then
+                rlRun -s "tmt run --last report -fvvv" 2
+                rlAssertGrep "Test duration '3s' exceeded." $rlRun_LOG
+                rlAssertGrep "HINT: https://tmt.readthedocs.io/en/latest/spec/tests.html#duration" $rlRun_LOG
+            fi
         rlPhaseEnd
     done
 
