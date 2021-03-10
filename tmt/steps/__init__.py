@@ -130,6 +130,15 @@ class Step(tmt.utils.Common):
             self.debug("Step has not finished. Let's try once more!", level=2)
             self._workdir_cleanup()
 
+        # Special handling for the report step to always enable force mode in
+        # order to cover a very frequent use case 'tmt run --last report'
+        # FIXME find a better way how to enable always-force per plugin
+        if (isinstance(self, tmt.steps.report.Report) and
+                self.data[0].get('how') in ['display', 'html']):
+            self.debug("Report step always force mode enabled.")
+            self._workdir_cleanup()
+            self.status('todo')
+
         # Insert login plugins if requested on the command line
         for plugin in Login.plugins(step=self):
             self.debug(
