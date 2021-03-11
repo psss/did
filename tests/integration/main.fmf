@@ -1,40 +1,46 @@
-summary: Run all python integration tests using requre.
+summary: Integration tests with requre support
 description: |
-  # Integration tests with requre support
-  This part of testsuite uses project requre: https://github.com/packit/requre
+    This part of the testsuite uses project requre. It stores
+    communication with nitrate server to local `test_data`
+    directory where tests are defined.
 
-  It stores communication with nitrate server to local files (`test_data` directory) where tests are defined.
+    Regeneration
 
-  ## Regeneration
-  If you want to regenerate some file for test, just remove existing response file and run it
-  on your machine with your credentials:
-  ```
-  rm -rf tests/integration/test_data/*
-  cd tests/integration
-  pytest -v
-  ```
+    If you want to regenerate some file for test, just remove
+    existing response file and run it on your machine with your
+    credentials::
 
-  ## Remove sensitive data
-  If there are any sensitive data you can use requre-patch tool from requre project and remove
-  whatever you want, e.g. timestamps, any sensitive urls, tokens, passwords
-  syntax is `key_identifiers:key_in_response:python_type:replaced_value`
+        rm -rf tests/integration/test_data/*
+        cd tests/integration
+        pytest -v
 
-  Example:
-  ```
-  requre-patch purge --replaces :milestone_url:str:SomeText tests/integration/test_data/test_nitrate/*
-  ```
+    Remove sensitive data
 
-  ## Debugging
-  To see if there is no network communication, just use e.g. `unshare` command
-  ```
-  cd tests/integration
-  sudo unshare -n sudo -u `whoami` pytest -v test_nitrate.py
-  ```
+    If there are any sensitive data you can use the requre-patch
+    tool from requre project to remove timestamps, sensitive urls,
+    tokens or passwords. The syntax is as follows::
+
+        key_identifiers:key_in_response:python_type:replaced_value
+
+    Example::
+
+        requre-patch purge --replaces :milestone_url:str:SomeText \
+            tests/integration/test_data/test_nitrate/*
+
+    Debugging
+
+    To see if there is no network communication, just use e.g. the
+    `unshare` command::
+
+        cd tests/integration
+        sudo unshare -n sudo -u `whoami` pytest -v test_nitrate.py
+
 test: "python3 -m pytest -v"
 environment:
-  REQURE_MODE: read
+    REQURE_MODE: read
 framework: shell
 require:
   - python3-pytest
 tag: [integration]
 tier: null
+link: https://github.com/packit/requre

@@ -1,7 +1,7 @@
 summary: Verify integration with other systems
 description:
-    Run integration tests using requre project for mocking interaction with
-    external systems (e.g. nitrate)
+    Run integration tests using the requre project for mocking
+    interaction with external systems (e.g. nitrate).
 discover:
     how: fmf
     filter: 'tag: integration'
