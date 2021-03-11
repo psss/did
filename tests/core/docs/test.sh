@@ -27,6 +27,7 @@ rlJournalStart
     rlPhaseStartTest "man"
         rlRun "man tmt | tee man" 0 "Check man page"
         rlAssertGrep "usage is straightforward" "man"
+        rlAssertNotGrep "WARNING" "man"
     rlPhaseEnd
 
     rlPhaseStartTest "examples"

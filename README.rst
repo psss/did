@@ -1,3 +1,4 @@
+.. _overview:
 
 ======================
     tmt
@@ -193,6 +194,8 @@ Various utility options.
 Check help message of individual commands for the full list of
 available options.
 
+
+.. _install:
 
 Install
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
