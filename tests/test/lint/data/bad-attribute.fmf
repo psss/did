@@ -1,0 +1,2 @@
+test: true
+requires: "typo, should be require"

@@ -188,6 +188,11 @@ class Node(tmt.utils.Common):
             raise tmt.utils.GeneralError(
                 f"Invalid test export format '{format_}'.")
 
+    def lint_attributes(self, additional_attributes):
+        """ Return list of invalid attributes used, empty when all good """
+        known_attributes = additional_attributes + self._keys
+        return [key for key in self.node.get().keys() if key not in known_attributes]
+
 
 class Test(Node):
     """ Test object (L1 Metadata) """
@@ -389,6 +394,16 @@ class Test(Node):
                 valid = verdict(
                     False, 'relevancy has been obsoleted by adjust')
 
+        # Check for unknown attributes
+        # FIXME - Make additional attributes configurable
+        unofficial_attributes = "relevancy extra-nitrate extra-hardware extra-pepa extra-summary extra-task".split()
+        invalid_attributes = self.lint_attributes(unofficial_attributes)
+        if invalid_attributes:
+            valid = False
+            for attr in invalid_attributes:
+                echo(verdict(False, f"Unknown attribute '{attr}' is used"))
+        else:
+            echo(verdict(True, "Correct attributes are used"))
         return valid
 
     def export(

@@ -39,6 +39,8 @@ rlJournalStart
             rlAssertGrep 'relevancy' "relevancy-$format.fmf"
             rlAssertNotGrep 'adjust:' "relevancy-$format.fmf"
         done
+        rlRun "tmt test lint bad-attribute | tee output" 1
+        rlAssertGrep "fail Unknown attribute 'requires' is used" output
     rlPhaseEnd
 
     rlPhaseStartTest "Fix"
