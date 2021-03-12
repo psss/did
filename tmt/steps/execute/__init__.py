@@ -231,7 +231,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         """ Check result of a shell test """
         # Prepare the log path
         data = {'log': self.data_path(test, TEST_OUTPUT_FILENAME),
-                'duration': click.unstyle(test.duration)}
+                'duration': test.real_duration}
         # Process the exit code
         try:
             data['result'] = {0: 'pass', 1: 'fail'}[test.returncode]
@@ -240,6 +240,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             # Add note about the exceeded duration
             if test.returncode == tmt.utils.PROCESS_TIMEOUT:
                 data['note'] = 'timeout'
+                self.timeout_hint(test)
         return tmt.Result(data, test.name)
 
     def check_beakerlib(self, test):
@@ -247,7 +248,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         # Initialize data, prepare log paths
         data = {'result': 'error',
                 'log': [],
-                'duration': click.unstyle(test.duration)}
+                'duration': test.real_duration}
         for log in [TEST_OUTPUT_FILENAME, 'journal.txt']:
             if os.path.isfile(self.data_path(test, log, full=True)):
                 data['log'].append(self.data_path(test, log))
@@ -274,6 +275,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         if test.returncode == tmt.utils.PROCESS_TIMEOUT:
             data['result'] = 'error'
             data['note'] = 'timeout'
+            self.timeout_hint(test)
         # Test results should be in complete state
         elif state != 'complete':
             data['result'] = 'error'
@@ -285,5 +287,15 @@ class ExecutePlugin(tmt.steps.Plugin):
 
     @staticmethod
     def test_duration(start, end):
-        duration = time.strftime("%H:%M:%S", time.gmtime(end - start))
-        return click.style(duration, fg='cyan')
+        """ Convert duration to a human readable format """
+        return time.strftime("%H:%M:%S", time.gmtime(end - start))
+
+    def timeout_hint(self, test):
+        """ Append a duration increase hint to the test output """
+        output = self.data_path(test, TEST_OUTPUT_FILENAME, full=True)
+        self.write(
+            output,
+            f"\nMaximum test time '{test.duration}' exceeded.\n"
+            f"Adjust the test 'duration' attribute if necessary.\n"
+            f"https://tmt.readthedocs.io/en/stable/spec/tests.html#duration\n",
+            mode='a', level=3)

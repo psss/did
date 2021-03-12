@@ -130,7 +130,7 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
             guest.pull()
             self.show_logs()
             for test in self.step.plan.discover.tests():
-                test.duration = self.test_duration(start, end)
+                test.real_duration = self.test_duration(start, end)
                 self._results.append(self.check(test))
 
     def results(self):

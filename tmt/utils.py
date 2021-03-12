@@ -420,17 +420,18 @@ class Common(object):
         except OSError as error:
             raise FileError(f"Failed to read '{path}'.\n{error}")
 
-    def write(self, path, data, level=2):
+    def write(self, path, data, mode='w', level=2):
         """ Write a file to the workdir """
         if self.workdir:
             path = os.path.join(self.workdir, path)
-        self.debug(f"Write file '{path}'.", level=level)
+        action = 'Append to' if mode == 'a' else 'Write'
+        self.debug(f"{action} file '{path}'.", level=level)
         # Dry mode
         if self.opt('dry'):
             return
         try:
-            with open(path, 'w', encoding='utf-8', errors='replace') as target:
-                return target.write(data)
+            with open(path, mode, encoding='utf-8', errors='replace') as file:
+                return file.write(data)
         except OSError as error:
             raise FileError(f"Failed to write '{path}'.\n{error}")
 

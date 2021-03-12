@@ -84,19 +84,15 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             test.returncode = error.returncode
             if test.returncode == tmt.utils.PROCESS_TIMEOUT:
                 timeout = ' (timeout)'
-                stdout += f"""
-Test duration '{test.duration}' exceeded.
-HINT: https://tmt.readthedocs.io/en/latest/spec/tests.html#duration
-                """
                 self.debug(f"Test duration '{test.duration}' exceeded.")
         end = time.time()
         self.write(
             self.data_path(test, TEST_OUTPUT_FILENAME, full=True),
             stdout or '', level=3)
-        test.duration = self.test_duration(start, end)
+        test.real_duration = self.test_duration(start, end)
+        duration = click.style(test.real_duration, fg='cyan')
         shift = 1 if self.opt('verbose') < 2 else 2
-        self.verbose(
-            f"{test.duration} {test.name}{timeout}", color='cyan', shift=shift)
+        self.verbose(f"{duration} {test.name}{timeout}", shift=shift)
 
     def check(self, test):
         """ Check the test result """
