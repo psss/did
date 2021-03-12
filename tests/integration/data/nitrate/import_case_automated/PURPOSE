@@ -1,0 +1,6 @@
+PURPOSE of /tmt/integration
+Description: Simple smoke test
+Author: Petr Splichal <psplicha@redhat.com>
+
+Just run 'tmt --help' to make sure the binary is sane.
+This is really that simple. Nothing more here. Really.

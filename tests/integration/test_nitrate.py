@@ -105,3 +105,91 @@ class NitrateImport(RequreTestCase):
         self.assertEqual(result.output.strip(), "")
         fmf_node = Tree(self.tmpdir).find("/import_case")
         self.assertEqual(fmf_node, None)
+
+
+class NitrateImportAutomated(RequreTestCase):
+    test_md_content= """# Setup
+Do this and that to setup the environment.
+
+# Test
+
+## Step
+Step one.
+
+Step two.
+
+Step three.
+
+## Expect
+Expect one.
+
+Expect two
+
+Expect three.
+
+# Cleanup
+This is a breakdown.
+"""
+    main_fmf_content= """summary: Simple smoke test
+description: |
+    Just run 'tmt --help' to make sure the binary is sane.
+    This is really that simple. Nothing more here. Really.
+contact: Petr Šplíchal <psplicha@redhat.com>
+component:
+- tmt
+test: ./runtest.sh
+framework: beakerlib
+require:
+- fmf
+recommend:
+- tmt
+duration: 5m
+enabled: true
+tag: []
+link:
+-   relates: https://bugzilla.redhat.com/show_bug.cgi?id=12345
+-   relates: https://bugzilla.redhat.com/show_bug.cgi?id=1234567
+adjust:
+-   because: comment
+    enabled: false
+    when: distro == rhel-4, rhel-5
+    continue: false
+-   environment:
+        PHASES: novalgrind
+    when: arch == s390x
+    continue: false
+extra-nitrate: TC#0609926
+extra-summary: /tmt/integration
+extra-task: /tmt/integration
+"""
+    def setUp(self):
+        super().setUp()
+        self.tmpdir = Path(tempfile.mktemp())
+        shutil.copytree(NITRATE_EXAMPLE, self.tmpdir)
+        self.cwd = os.getcwd()
+
+    def tearDown(self):
+        os.chdir(self.cwd)
+        shutil.rmtree(self.tmpdir)
+        super().tearDown()
+
+    def test_basic(self):
+        os.chdir(self.tmpdir / "import_case_automated")
+        files = os.listdir()
+        self.assertIn("Makefile", files)
+        self.assertNotIn("main.fmf", files)
+        self.assertNotIn("test.md", files)
+        runner = CliRunner()
+        result = runner.invoke(
+            tmt.cli.main, [ "test", "import", "--nitrate"])
+        self.assertEqual(result.exit_code, 0)
+        files = os.listdir()
+        self.assertIn("Makefile", files)
+        self.assertIn("test.md", files)
+        with open("test.md") as file:
+            self.assertIn(self.test_md_content, file.read())
+        self.assertIn("main.fmf", files)
+        with open("main.fmf") as file:
+            generated = yaml.safe_load(file)
+            referenced = yaml.safe_load(self.main_fmf_content)
+            self.assertEqual(generated, referenced)

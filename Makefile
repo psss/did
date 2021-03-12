@@ -26,6 +26,12 @@ coverage: tmp
 	coverage run --source=tmt,bin -m py.test tests
 	coverage report
 	coverage annotate
+# Regenerate test data for integration tests
+# remove selected/all response files in tests/integration/test_data directory
+requre:
+	cd tests/integration; python3 -m pytest -v -x
+	# response files cleanup
+	requre-patch purge --replaces :milestone_url:str:SomeText tests/integration/test_data/test_nitrate/*
 
 
 # Build documentation, prepare man page

@@ -7,6 +7,6 @@ discover:
     filter: 'tag: integration'
 prepare:
   - name: Install Requre
-    script: pip3 install git+https://github.com/packit/requre.git
+    script: pip3 install requre
   - name: Create default nitrate config
     script: "test -e ~/.nitrate || echo -en '[nitrate]\nurl = https://nitrate.server/xmlrpc/\n' | tee ~/.nitrate"
