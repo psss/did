@@ -179,7 +179,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         prefix_path = os.path.join('/tests', path.lstrip('/'))
 
         # Show filters and test names if provided
-        filters = self.get('filter', [])
+        # Check the 'test --filter' option first, then from discover
+        filters = list(tmt.base.Test._opt('filters') or self.get('filter', []))
         for filter_ in filters:
             self.info('filter', filter_, 'green')
         # Check the 'test --name' option first, then 'test' from discover

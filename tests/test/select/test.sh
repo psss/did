@@ -64,7 +64,8 @@ rlJournalStart
             rlAssertGrep '/tests/enabled/disabled' $output
         done
 
-        for tmt in 'tmt test ls' 'tmt run -rv discover test'; do
+        for tmt in 'tmt test ls' 'tmt run -rv discover test' \
+            'tmt run -rv plans --name /plans/filtered discover test'; do
             # Tag
             rlRun "$tmt --filter tag:slow | tee $output"
             rlAssertNotGrep '/tests/tag/default' $output

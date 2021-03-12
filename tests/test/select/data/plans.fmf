@@ -9,3 +9,8 @@ execute:
     discover:
         how: fmf
         test: tier
+
+/filtered:
+    discover:
+        how: fmf
+        filter: tag:nonsense
