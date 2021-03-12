@@ -397,12 +397,15 @@ class GuestTestcloud(tmt.Guest):
             self.info('progress', 'downloading...', 'cyan')
         try:
             self.image.prepare()
-        except FileNotFoundError:
-            raise ProvisionError(f"Image '{self.image.local_path}' not found.")
-        except testcloud.exceptions.TestcloudPermissionsError:
+        except FileNotFoundError as e:
+            raise ProvisionError(
+                f"Image '{self.image.local_path}' not found.\n {str(e)}"
+            )
+        except testcloud.exceptions.TestcloudPermissionsError as e:
             raise ProvisionError(
                 f"Failed to prepare the image. "
-                f"Check the '{TESTCLOUD_IMAGES}' directory permissions.")
+                f"Check the '{TESTCLOUD_IMAGES}' directory permissions.\n"
+                f"{str(e)}")
 
         # Create instance
         self.instance_name = self._random_name()
