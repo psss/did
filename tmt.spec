@@ -47,6 +47,7 @@ BuildRequires: python%{python3_pkgversion}-fmf
 BuildRequires: python%{python3_pkgversion}-mock
 BuildRequires: python%{python3_pkgversion}-requests
 BuildRequires: python%{python3_pkgversion}-testcloud
+BuildRequires: python%{python3_pkgversion}-markdown
 # Required for tests
 BuildRequires: rsync
 %{?python_provide:%python_provide python%{python3_pkgversion}-%{name}}
@@ -80,7 +81,7 @@ Dependencies required to run tests in a local virtual machine.
 
 %package test-convert
 Summary: Test import and export dependencies
-Requires: make python3-nitrate python3-html2text
+Requires: make python3-nitrate python3-html2text python3-markdown
 
 %description test-convert
 Additional dependencies needed for test metadata import and export.

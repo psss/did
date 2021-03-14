@@ -38,7 +38,7 @@ extras_require = {
     'docs': ['sphinx', 'sphinx_rtd_theme', 'mock'],
     'tests': ['pytest', 'python-coveralls', 'mock', 'requre'],
     'provision': ['testcloud>=0.5.0'],
-    'convert': ['nitrate'],
+    'convert': ['nitrate', 'markdown'],
     'report-html': ['jinja2'],
 }
 extras_require['all'] = [dependency

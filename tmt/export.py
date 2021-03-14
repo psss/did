@@ -10,7 +10,7 @@ import fmf
 import os
 import re
 
-from tmt.utils import ConvertError
+from tmt.utils import ConvertError, markdown_to_html
 
 log = fmf.utils.Logging('tmt').logger
 
@@ -59,6 +59,97 @@ def _nitrate_find_fmf_testcases(test):
                     pass
         except nitrate.NitrateError:
             pass
+
+
+def convert_manual_instructions_to_export_sections(test_md):
+    """
+    Convert Markdown document to html sections. These sections
+    can be exported to nitrate.
+
+    Expects: Markdown document as a file.
+    Returns: tuple of (step, expect, setup, cleanup) sections
+    as html strings.
+    """
+
+    sections_headings = {'<h1>Setup</h1>': [],
+                         '<h1>Test</h1>': [],
+                         '<h1>Test .*</h1>': [],
+                         '<h2>Step</h2>': [],
+                         '<h2>Test Step</h2>': [],
+                         '<h2>Expect</h2>': [],
+                         '<h2>Result</h2>': [],
+                         '<h2>Expected Result</h2>': [],
+                         '<h1>Cleanup</h1>': []}
+
+    html = markdown_to_html(test_md)
+    html_splitlines = html.splitlines()
+
+    for key in sections_headings.keys():
+        result = []
+        i = 0
+        while html_splitlines:
+            try:
+                if re.search("^" + key + "$", html_splitlines[i]):
+                    html_content = str()
+                    if key.startswith('<h1>Test'):
+                        html_content = html_splitlines[i].\
+                            replace('<h1>', '<b>').\
+                            replace('</h1>', '</b>')
+                    for j in range(i + 1, len(html_splitlines)):
+                        if re.search("^<h[1-4]>(.+?)</h[1-4]>$",
+                                     html_splitlines[j]):
+                            result.append([i, html_content])
+                            i = j - 1
+                            break
+                        html_content += html_splitlines[j] + "\n"
+                        # Check end of the file
+                        if j + 1 == len(html_splitlines):
+                            result.append([i, html_content])
+            except IndexError:
+                sections_headings[key] = result
+                break
+            i += 1
+            if i >= len(html_splitlines):
+                sections_headings[key] = result
+                break
+
+    def concatenate_headings_content(headings):
+        content = list()
+        for v in headings:
+            content += sections_headings[v]
+        return content
+
+    def enumerate_content(content):
+        content.sort()
+        for c in range(len(content)):
+            content[c][1] = f"<p>Step {c + 1}. </p>" + content[c][1]
+        return content
+
+    sorted_test = sorted(concatenate_headings_content((
+        '<h1>Test</h1>',
+        '<h1>Test .*</h1>')))
+
+    sorted_step = sorted(enumerate_content(concatenate_headings_content((
+        '<h2>Step</h2>',
+        '<h2>Test Step</h2>'))) + sorted_test)
+    step = ''.join([f"{v[1]}" for v in sorted_step])
+
+    sorted_expect = sorted(enumerate_content(concatenate_headings_content((
+        '<h2>Expect</h2>',
+        '<h2>Result</h2>',
+        '<h2>Expected Result</h2>'))) + sorted_test)
+    expect = ''.join([f"{v[1]}" for v in sorted_expect])
+
+    def check_section_exists(text):
+        try:
+            return sections_headings[text][0][1]
+        except (IndexError, KeyError):
+            return ''
+
+    setup = check_section_exists('<h1>Setup</h1>')
+    cleanup = check_section_exists('<h1>Cleanup</h1>')
+
+    return step, expect, setup, cleanup
 
 
 def export_to_nitrate(test):
@@ -230,6 +321,20 @@ def export_to_nitrate(test):
 
     # Saving case.notes with edited StructField
     nitrate_case.notes = struct_field.save()
+
+    # Export manual tests from test.md to nitrate as html
+    md_path = os.getcwd() + '/test.md'
+    if os.path.exists(md_path):
+        step, expect, setup, cleanup = convert_manual_instructions_to_export_sections(md_path)
+
+        nitrate.User()._server.TestCase.store_text(nitrate_case.id,
+                                                   step,
+                                                   expect,
+                                                   setup,
+                                                   cleanup)
+        echo(style(f"Export large text fields of a case from \n"
+                   f"'{md_path}' to test case '{nitrate_case.identifier}'",
+                   fg='green'))
 
     # Append id of newly created nitrate case to its file
     if new_test_created:
