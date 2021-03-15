@@ -97,7 +97,7 @@
             In order to see progress of the testing use the
             ``--verbose`` or ``-v`` switch. Applying the option
             multiple times increases verbosity. This is supported
-            by the :ref:`/spec/steps/execute/tmt` executor only.
+            by the :ref:`/spec/plans/execute/tmt` executor only.
         example:
           - tmt run -v
           - tmt run -vv
@@ -117,7 +117,7 @@
             directly with the test from the terminal. For example,
             for tests written in shell you can insert a ``bash``
             command in the middle of the script and investigate.
-            Supported by the :ref:`/spec/steps/execute/tmt`
+            Supported by the :ref:`/spec/plans/execute/tmt`
             executor only.
         example:
           - tmt run --all execute --how tmt --interactive

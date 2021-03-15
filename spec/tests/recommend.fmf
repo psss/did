@@ -15,7 +15,7 @@ description: |
     names and only those which are available will be installed.
 
     If possible, for the second use case it is recommended to
-    specify such packages using the :ref:`/spec/steps/prepare`
+    specify such packages using the :ref:`/spec/plans/prepare`
     step configuration which is usually branched according to the
     version and thus can better ensure that the right packages are
     correctly installed as expected.

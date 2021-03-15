@@ -3,9 +3,21 @@ story:
     source code.
 
 description: |
-    These test metadata are closely related to individual tests
-    so it makes sense to store them directly with the test code.
-    For each attribute we standardize a clear, unique and well
-    chosen name and type. Each definition contains at least one
-    apt example of the usage and a user story illustrating the
-    motivation.
+    Tests, or L1 metadata, define attributes which are closely
+    related to individual test cases such :ref:`/spec/tests/test`
+    script, :ref:`/spec/tests/framework`, directory
+    :ref:`/spec/tests/path` where the test should be executed,
+    maximum test :ref:`/spec/tests/duration` or packages required
+    to run the test.
+
+    In addition to the attributes defined here, tests also support
+    common :ref:`/spec/core` attributes which are shared across
+    all metadata levels.
+
+example: |
+    summary: Check the man page
+    test: man tmt | grep friendly
+    require: grep
+    duration: 1m
+    tier: 1
+    tag: docs

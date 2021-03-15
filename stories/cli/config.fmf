@@ -30,3 +30,30 @@ description:
         report:
             how: irc
             channel: #tmt
+
+/levels:
+    summary: Configuration levels
+    description: |
+        There are several levels of test execution data
+        configuration.
+
+        default
+            global default settings (common for most instances)
+        detect
+            detect from previous steps output (e.g. distro from
+            build)
+        define
+            allow to override value by explicit user configuration
+
+        Let's demonstrate these on a simple example with a
+        distribution compose (C) and the amount of memory (M).
+
+        * CI system is configured by ``default`` to use compose
+          ``C1`` installed on machines with ``M1`` GB of memory.
+        * When inspecting an artifact CI can ``detect`` that for
+          this particular build target, compose ``C2`` is a much
+          better choice, and memory is fine as it is.
+        * User can still explicitly ``define`` in the
+          configuration that at least ``M2`` GB of memory is
+          needed for successful test execution which overrides
+          both default and detected values.

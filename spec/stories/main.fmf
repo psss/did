@@ -1,3 +1,31 @@
 story:
     As a developer I want to define application features and track
     which have been already implemented, verified and documented.
+
+description: |
+    Stories, which implement the L3 metadata, can be used to track
+    implementation, test and documentation coverage for individual
+    features or requirements. Thanks to this you can track
+    everything in one place, including the project implementation
+    progress.
+
+    In addition to the attributes defined here, stories also
+    support common :ref:`/spec/core` attributes which are shared
+    across all metadata levels.
+
+example: |
+    story:
+        As a user I want to see more detailed information for
+        particular command.
+    description:
+        Different verbose levels can be enabled by using the
+        option several times.
+    example:
+      - tmt test show -v
+      - tmt test show -vvv
+      - tmt test show --verbose
+    link:
+      - implemented-by: /tmt/cli.py
+      - documented-by: /tmt/cli.py
+      - verified-by: /tests/core/dry
+    priority: must

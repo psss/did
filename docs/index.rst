@@ -28,9 +28,8 @@ Table of Contents
 
     Overview <overview>
     Guide <guide>
-    Stories <stories>
     Specification <spec>
     Examples <examples>
+    Stories <stories>
     Questions <questions>
-    Modules <modules>
     Contribute <contribute>

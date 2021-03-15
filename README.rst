@@ -10,27 +10,44 @@ Test Management Tool
 Description
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``tmt`` python module and command-line tool implement the
-Metadata Specification which allows storing all needed test
-execution data directly within a git repository. In this way, it
-makes testing independent on any external test management system.
+The ``tmt`` tool provides a user-friendly way to work with tests.
+You can comfortably create new tests, safely and easily run tests
+across different environments, review test results, debug test
+code and enable tests in the CI using a consistent and concise
+config.
+
+The python module and command-line tool implement the Metadata
+Specification which allows storing all needed test execution data
+directly within a git repository. Together with possibility to
+reference remote repositories it makes it easy to share test
+coverage across projects and distros.
 
 The Flexible Metadata Format ``fmf`` is used to store data in both
 human and machine readable way close to the source code. Thanks to
 inheritance and elasticity metadata are organized in the structure
 efficiently, preventing unnecessary duplication.
 
-The tool provides a user-friendly way to create, debug and easily
-run tests from your laptop across different environments. It also
-allows to easily convert old metadata, list and filter available
-tests and verify them against the L1 specification.
 
-Plans are used to group tests and configure individual test steps
-defined by the L2 specification. They describe how to select tests
-for execution, how to provision the environment, how to prepare it
-for testing or how the test results should be reported.
+Specification
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Stories, defined by the L3 specification, can be used to track
+There are several metadata levels defined by the specification:
+
+**Core** attributes such as `summary` or `description` which are
+common across all levels are defined by the special L0 metadata.
+
+**Tests**, or L1 metadata, define attributes which are closely
+related to individual test cases such as `test` script,
+`framework`, directory `path` where the test should be executed,
+maximum test `duration` or packages required to run the test.
+
+**Plans**, also called L2 metadata, are used to group relevant
+tests and enable them in the CI. They describe how to `discover`
+tests for execution, how to `provision` the environment, how to
+`prepare` it for testing, how to `execute` tests and `report` test
+results.
+
+**Stories**, which implement the L3 metadata, can be used to track
 implementation, test and documentation coverage for individual
 features or requirements. Thanks to this you can track everything
 in one place, including the project implementation progress.

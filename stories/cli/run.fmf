@@ -24,7 +24,7 @@ story: 'As a user I want to execute tests easily'
         description: |
             Even if there are no :ref:`/spec/plans` defined it is
             still possible to execute tests and custom scripts. In
-            that case the default :ref:`/spec/steps` configuration
+            that case the default :ref:`/spec/plans` configuration
             is applied and tests are executed using the ``shell``
             method.
 

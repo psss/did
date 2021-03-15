@@ -20,7 +20,7 @@ directory::
     Found 3 plans: /plans/basic, /plans/helps and /plans/smoke.
     Found 109 stories: /spec/core/description, /spec/core/order,
     /spec/core/summary, /spec/plans/artifact, /spec/plans/gate,
-    /spec/plans/summary, /spec/steps/discover and 103 more.
+    /spec/plans/summary, /spec/plans/discover and 103 more.
 
 
 
@@ -336,7 +336,7 @@ In order to prevent unnecessary test code duplication it makes
 sense to use a test library which implements frequently repeated
 actions. Currently beakerlib libraries are supported. They can be
 defined in the :ref:`/spec/tests/require` attribute and are
-fetched during the :ref:`/spec/steps/discover` step.
+fetched during the :ref:`/spec/plans/discover` step.
 
 Use the short backward-compatible syntax to fetch libraries from
 the `default repository`__::
@@ -465,7 +465,7 @@ Multiple Configs
 
 Step can contain multiple configurations. In this case provide
 each config with a unique name. Applying ansible playbook and
-executing custom script in a single :ref:`/spec/steps/prepare`
+executing custom script in a single :ref:`/spec/plans/prepare`
 step could look like this::
 
     prepare:
@@ -478,7 +478,7 @@ step could look like this::
 
 Another common use case which can be easily covered by multiple
 configs can be fetching tests from multiple repositories during
-the :ref:`/spec/steps/discover` step::
+the :ref:`/spec/plans/discover` step::
 
     discover:
       - name: upstream
@@ -528,7 +528,7 @@ Exploring ``stories`` is quite similar to using ``tests`` or
     $ tmt stories
     Found 109 stories: /spec/core/description, /spec/core/order,
     /spec/core/summary, /spec/plans/artifact, /spec/plans/gate,
-    /spec/plans/summary, /spec/steps/discover and 102 more.
+    /spec/plans/summary, /spec/plans/discover and 102 more.
 
 The ``tmt stories ls`` and ``tmt stories show`` commands output
 the names and the detailed information, respectively::

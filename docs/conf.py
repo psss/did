@@ -263,7 +263,6 @@ areas = {
     '/spec/core': 'Core',
     '/spec/tests': 'Tests',
     '/spec/plans': 'Plans',
-    '/spec/steps': 'Steps',
     '/spec/stories': 'Stories',
     '/spec/context': 'Context',
     }

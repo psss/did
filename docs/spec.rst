@@ -30,16 +30,18 @@ Level 1: Tests
     which are stored directly with the test code.
 
 Level 2: Plans
-    This level represents :ref:`/spec/plans` made up of individual
-    :ref:`/spec/steps` describing how to
-    :ref:`/spec/steps/provision` the environment for testing and
-    how to :ref:`/spec/steps/prepare` it or which frameworks
-    should be used to :ref:`/spec/steps/execute` tests relevant
-    for given :ref:`/spec/plans/context`.
+    :ref:`/spec/plans` are used to group relevant tests and enable
+    them in the CI. They describe how to
+    :ref:`/spec/plans/discover` tests for execution, how to
+    :ref:`/spec/plans/provision` the environment and
+    :ref:`/spec/plans/prepare` it for testing, how to
+    :ref:`/spec/plans/execute` tests and :ref:`/spec/plans/report`
+    test results.
 
 Level 3: Stories
-    User :ref:`/spec/stories` can be used to define expected
-    features of the application and to easily track which
+    User :ref:`/spec/stories` can be used to describe expected
+    features of the application by defining the user
+    :ref:`/spec/stories/story` and to easily track which
     functionality has been already implemented, verified and
     documented.
 
@@ -49,6 +51,5 @@ Level 3: Stories
     spec/core
     spec/tests
     spec/plans
-    spec/steps
     spec/stories
     spec/context

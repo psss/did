@@ -159,7 +159,7 @@ class Execute(tmt.steps.Step):
         Results from executed tests
 
         Return a dictionary with test results according to the spec:
-        https://tmt.readthedocs.io/en/latest/spec/steps.html#execute
+        https://tmt.readthedocs.io/en/latest/spec/plans.html#execute
         """
         return self._results
 

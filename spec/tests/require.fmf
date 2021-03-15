@@ -14,7 +14,7 @@ description: |
 
     For tests shared across multiple components or product
     versions where required packages have different names it is
-    recommended to use the :ref:`/spec/steps/prepare` step
+    recommended to use the :ref:`/spec/plans/prepare` step
     configuration to specify required packages for each component
     or product version individually.
 

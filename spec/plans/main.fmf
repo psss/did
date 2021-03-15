@@ -1,33 +1,60 @@
 story:
-    As a tester I want to easily execute a group of selected tests
-    in given environment.
+    As a tester I want to easily execute selected tests or
+    selected test steps in given environment.
 
 description: |
-    These metadata contain information for execution of multiple
-    test cases such as how the environment for testing should be
-    prepared, which set of test cases is relevant for testing
-    specific artifact or which frameworks should be used for
-    execution. Main points which motivated this effort:
+    **Plans**, also called L2 metadata, are used to group relevant
+    tests and enable the CI. They describe how to `discover` tests
+    for execution, how to `provision` the environment, how to
+    `prepare` it for testing, how to `execute` tests, `report`
+    results and finally how to `finish` the test job.
 
-    * Additional metadata for test execution needed, stored on various places
-    * The tests.yml file defined by Standard Test Interface is limited
-    * Human readable configuration for gating (replace gating.yaml)
-    * Multiple gates in the release pipeline (pull request, build, update/errata)
-    * Clearly separate testing steps (discover, provision, prepare, execute, report)
-    * Support multiple tools implementing individual testing steps
+    Each of the six steps mentioned above supports multiple
+    implementations.  The default methods are listed below.
 
-    There are several levels of test execution data configuration.
+     * :ref:`/spec/plans/discover`: shell
+     * :ref:`/spec/plans/provision`: virtual
+     * :ref:`/spec/plans/prepare`: shell
+     * :ref:`/spec/plans/execute`: tmt
+     * :ref:`/spec/plans/report`: display
+     * :ref:`/spec/plans/finish`: shell
 
-    default
-        global default settings (common for most instances)
-    detect
-        detect from previous steps output (e.g. distro from build)
-    define
-        allow to override value by explicit user configuration
+    Thanks to clearly separated test steps it is possible to run
+    only selected steps, for example ``tmt run discover`` to see
+    which tests would be executed.
 
-    Let's demonstrate these on a simple example with a
-    distribution compose (C) and the amount of memory (M).
+    In addition to the attributes defined here, plans also support
+    common :ref:`/spec/core` attributes which are shared across
+    all metadata levels.
 
-    * CI system is configured by ``default`` to use compose ``C1`` installed on machines with ``M1`` GB of memory.
-    * When inspecting an artifact CI can ``detect`` that for this particular build target, compose ``C2`` is a much better choice, and memory is fine as it is.
-    * User can still explicitly ``define`` in the configuration that at least ``M2`` GB of memory is needed for successful test execution which overrides both default and detected values.
+example: |
+    # Enabled a minimal smoke test
+    execute:
+        script: foo --version
+
+    # Run tier one tests in a container
+    discover:
+        how: fmf
+        filter: tier:1
+    provision:
+        how: container
+    execute:
+        how: tmt
+
+    # Verify that apache can serve pages
+    summary: Basic httpd smoke test
+    provision:
+        how: virtual
+        memory: 4096
+    prepare:
+      - name: packages
+        how: install
+        package: [httpd, curl]
+      - name: service
+        how: shell
+        script: systemctl start httpd
+    execute:
+        how: shell
+        script:
+        - echo foo > /var/www/html/index.html
+        - curl http://localhost/ | grep foo
