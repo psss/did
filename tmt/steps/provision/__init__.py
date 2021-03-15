@@ -200,6 +200,8 @@ class Guest(tmt.utils.Common):
 
     def _ssh_guest(self):
         """ Return user@guest """
+        if ":" in self.guest:
+            return f'{self.user}@{self.guest.split(":")[0]}'
         return f'{self.user}@{self.guest}'
 
     def _ssh_options(self, join=False):
@@ -208,6 +210,8 @@ class Guest(tmt.utils.Common):
             '-oStrictHostKeyChecking=no',
             '-oUserKnownHostsFile=/dev/null',
             ]
+        if ":" in self.guest:
+            options.append(f'-p {self.guest.split(":")[1]}')
         if self.key:
             options.extend(['-i', self.key])
         return ' '.join(options) if join else options

@@ -52,11 +52,11 @@ runcmd:
 # Libvirt domain XML template related variables
 DOMAIN_TEMPLATE_NAME = 'domain-template.jinja'
 DOMAIN_TEMPLATE_FILE = os.path.join(TESTCLOUD_DATA, DOMAIN_TEMPLATE_NAME)
-DOMAIN_TEMPLATE = """<domain type='kvm'>
-    <name>{{ domain_name }}</name>
-    <uuid>{{ uuid }}</uuid>
-    <memory unit='KiB'>{{ memory }}</memory>
-    <currentMemory unit='KiB'>{{ memory }}</currentMemory>
+DOMAIN_TEMPLATE = """<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+  <name>{{ domain_name }}</name>
+  <uuid>{{ uuid }}</uuid>
+  <memory unit='KiB'>{{ memory }}</memory>
+  <currentMemory unit='KiB'>{{ memory }}</currentMemory>
   <vcpu placement='static'>1</vcpu>
   <os>
     <type arch='x86_64' machine='pc'>hvm</type>
@@ -95,10 +95,10 @@ DOMAIN_TEMPLATE = """<domain type='kvm'>
       <target dev='vdb' bus='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
     </disk>
-    <interface type='network'>
-        <mac address="{{ mac_address }}"/>
-      <source network='default'/>
-      <model type='rtl8139'/>
+    <interface type='user'>
+      <mac address="{{ mac_address }}"/>
+      <ip family='ipv4' address='172.17.2.0' prefix='24'/>
+      <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
     </interface>
     <serial type='pty'>
@@ -115,6 +115,7 @@ DOMAIN_TEMPLATE = """<domain type='kvm'>
       <backend model='random'>/dev/urandom</backend>
     </rng>
   </devices>
+  {{ qemu_args }}
 </domain>
 """
 
@@ -344,7 +345,8 @@ class GuestTestcloud(tmt.Guest):
         self.prepare_config()
         self.image = testcloud.image.Image(self.image_url)
         self.instance = testcloud.instance.Instance(
-            self.instance_name, image=self.image)
+            self.instance_name, image=self.image,
+            connection='qemu:///session')
 
     def prepare_ssh_key(self):
         """ Prepare ssh key for authentication """
@@ -412,7 +414,7 @@ class GuestTestcloud(tmt.Guest):
         # Create instance
         self.instance_name = self._random_name()
         self.instance = testcloud.instance.Instance(
-            name=self.instance_name, image=self.image)
+            name=self.instance_name, image=self.image, connection='qemu:///session')
         self.verbose('name', self.instance_name, 'green')
 
         # Prepare ssh key
@@ -429,9 +431,11 @@ class GuestTestcloud(tmt.Guest):
         except (testcloud.exceptions.TestcloudInstanceError,
                 libvirt.libvirtError) as error:
             raise ProvisionError(
-                f'Failed to boot the testcloud instance.', original=error)
-        self.guest = self.instance.get_ip()
-        self.instance.create_ip_file(self.guest)
+                f'Failed to boot testcloud instance ({error}).')
+        self.instance.create_ip_file(self.instance.get_ip())
+        # create_port_file(self.guest) is called by tescloud in write_domain_xml() that gets
+        # called by spawn_vm()
+        self.guest = "%s:%s" % (self.instance.get_ip(), self.instance.get_instance_port())
 
         # Wait a bit until the box is up
         timeout = DEFAULT_CONNECT_TIMEOUT
