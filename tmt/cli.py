@@ -871,6 +871,134 @@ def status(context, path, abandoned, active, finished, **kwargs):
             "Options --abandoned, --active and --finished cannot be "
             "used together.")
     if not os.path.exists(path):
-        raise tmt.utils.GeneralError(f"Path {path} doesn't exist.")
+        raise tmt.utils.GeneralError(f"Path '{path}' doesn't exist.")
     status_obj = tmt.Status(context=context)
     status_obj.show()
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Clean
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+dry = tmt.options.force_dry[1]
+
+
+@main.group(chain=True, invoke_without_command=True, cls=CustomGroup)
+@click.pass_context
+@verbose_debug_quiet
+@dry
+def clean(context, **kwargs):
+    """
+    Clean workdirs, guests or images.
+
+    Without any command, clean everything, stop the guests, remove
+    all runs and then remove all images. Search for runs in
+    /var/tmp/tmt, if runs are stored elsewhere, the path to them can
+    be set using a subcommand (either runs or guests subcommand).
+    """
+    clean_obj = tmt.Clean(parent=context.obj, context=context)
+    context.obj.clean = clean_obj
+    exit_code = 0
+    if context.invoked_subcommand is None:
+        echo(style('clean', fg='red'))
+        # Set path to default
+        context.params['path'] = tmt.utils.WORKDIR_ROOT
+        # Create another level to the hierarchy so that logging indent is
+        # consistent between the command and subcommands
+        clean_obj = tmt.Clean(parent=clean_obj, context=context)
+        if os.path.exists(tmt.utils.WORKDIR_ROOT):
+            if not clean_obj.guests():
+                exit_code = 1
+            if not clean_obj.runs():
+                exit_code = 1
+        else:
+            clean_obj.warn(
+                f"Directory '{tmt.utils.WORKDIR_ROOT}' does not exist, "
+                f"skipping guest and run cleanup.")
+        clean_obj.images()
+        raise SystemExit(exit_code)
+
+
+@clean.command()
+@click.pass_context
+@click.argument('path', default=tmt.utils.WORKDIR_ROOT)
+@click.option(
+    '-l', '--last', is_flag=True, help='Clean the workdir of the last run.')
+@click.option(
+    '-i', '--id', 'id_', metavar="ID",
+    help='Run id (name or directory path) to clean workdir of.')
+@click.option(
+    '-k', '--keep', type=int,
+    help='The number of latest workdirs to keep, clean the rest.')
+@verbose_debug_quiet
+@dry
+def runs(context, path, last, id_, keep, **kwargs):
+    """
+    Clean workdirs of past runs.
+
+    Remove all runs in /var/tmp/tmt by default. Path to where runs
+    should be searched can be specified using PATH argument.
+    """
+    echo(style('clean', fg='red'))
+    defined = [last is True, id_ is not None, keep is not None]
+    if defined.count(True) > 1:
+        raise tmt.utils.GeneralError(
+            "Options --last, --id and --keep cannot be used together.")
+    if keep is not None and keep < 0:
+        raise tmt.utils.GeneralError("--keep must not be a negative number.")
+    if not os.path.exists(path):
+        raise tmt.utils.GeneralError(f"Path '{path}' doesn't exist.")
+    exit_code = 0
+    if not tmt.Clean(parent=context.obj.clean, context=context).runs():
+        exit_code = 1
+    raise SystemExit(exit_code)
+
+
+@clean.command()
+@click.pass_context
+@click.argument('path', default=tmt.utils.WORKDIR_ROOT)
+@click.option(
+    '-l', '--last', is_flag=True, help='Stop the guest of the last run.')
+@click.option(
+    '-i', '--id', 'id_', metavar="ID", help=
+    'Run id (name or directory path) to stop the guest of.')
+@click.option(
+    '-h', '--how', metavar='METHOD',
+    help='Stop guests of the specified provision method.')
+@verbose_debug_quiet
+@dry
+def guests(context, path, last, id_, **kwargs):
+    """
+    Stop running guests of runs.
+
+    Stop guests of all runs in /var/tmp/tmt by default. Path to where
+    runs should be searched can be specified using PATH argument.
+    """
+    echo(style('clean', fg='red'))
+    if last and id_ is not None:
+        raise tmt.utils.GeneralError(
+            "Options --last and --id cannot be used together.")
+    if not os.path.exists(path):
+        raise tmt.utils.GeneralError(f"Path '{path}' doesn't exist.")
+    exit_code = 0
+    if not tmt.Clean(parent=context.obj.clean, context=context).guests():
+        exit_code = 1
+    raise SystemExit(exit_code)
+
+
+@clean.command()
+@click.pass_context
+@verbose_debug_quiet
+@dry
+def images(context, **kwargs):
+    """
+    Remove images of supported provision methods.
+
+    Currently supported methods are:
+     - testcloud
+    """
+    echo(style('clean', fg='red'))
+    # FIXME: If there are more provision methods supporting this,
+    #        we should add options to specify which provision should be
+    #        cleaned, similarly to guests.
+    tmt.Clean(parent=context.obj.clean, context=context).images()

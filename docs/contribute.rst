@@ -180,7 +180,9 @@ Here's the overview of core classes::
     │   ├── GuestLocal
     │   ├── GuestMinute
     │   └── GuestTestcloud
-    └── Run
+    ├── Run
+    ├── Status
+    └── Clean
 
 
 Attributes

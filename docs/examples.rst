@@ -1083,3 +1083,156 @@ one enabled step has not been finished)::
     $ tmt status --active
     status     id
     prepare    /var/tmp/tmt/run-002
+
+
+
+Clean
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When running tests, a lot of metadata can gather over time taking
+a lot of space. It may be useful to clean it every now and then
+using the ``clean`` command. Its goal is to stop the running
+guests, remove working directories or remove images. Without any
+subcommand, all of these actions are done::
+
+    $ tmt clean
+    clean
+        guests
+        runs
+        images
+            testcloud
+
+It may be useful to see exactly which runs are affected using
+the ``--verbose`` option::
+
+    $ tmt clean -v
+    clean
+        guests
+            Stopping guests in run '/var/tmp/tmt/run-001' plan '/base'.
+        runs
+            Removing workdir '/var/tmp/tmt/run-003'.
+            Removing workdir '/var/tmp/tmt/run-002'.
+            Removing workdir '/var/tmp/tmt/run-001'.
+        images
+            testcloud
+                warn: Directory '/var/tmp/tmt/testcloud/images' does not exist.
+
+However, before cleaning up all available metadata, you may want
+to see what would actually happen using ``--dry`` mode::
+
+    $ tmt clean -v --dry
+    clean
+        guests
+            Would stop guests in run '/var/tmp/tmt/run-001' plan '/advanced'.
+            Would stop guests in run '/var/tmp/tmt/run-001' plan '/base'.
+        runs
+            Would remove workdir '/var/tmp/tmt/run-002'.
+            Would remove workdir '/var/tmp/tmt/run-001'.
+        images
+            testcloud
+                warn: Directory '/var/tmp/tmt/testcloud/images' does not exist.
+
+In some cases, you may want to have a bit more control over the
+behaviour which can be achieved using subcommands and their
+options. All of the options described above can be used with
+individual subcommands too.
+
+
+Clean guests
+------------------------------------------------------------------
+
+The subcommand ``clean guests`` aims to stop all running guests.
+By default, runs are taken from ``/var/tmp/tmt``, this can be
+changed using an argument to the subcommand::
+
+    $ tmt clean guests -v /tmp/run
+    clean
+        guests
+            Stopping guests in run '/tmp/run/002' plan '/advanced'.
+            Stopping guests in run '/tmp/run/002' plan '/base'.
+
+You may also want to clean the guests in only one run using
+``--id`` or ``--last`` options. This serves as an alternative
+to ``tmt run --last finish``::
+
+    $ tmt clean guests -v --last
+    clean
+        guests
+            Stopping guests in run '/var/tmp/tmt/run-003' plan '/advanced'.
+            Stopping guests in run '/var/tmp/tmt/run-003' plan '/base'.
+
+The type of provision to be cleaned can be changed using
+``--how`` option::
+
+    $ tmt run provision -h container
+    /var/tmp/tmt/run-001
+    ...
+
+    $ tmt run provision -h virtual
+    /var/tmp/tmt/run-002
+    ...
+
+    $ tmt clean guests --how container
+    clean
+        guests
+            Stopping guests in run '/var/tmp/tmt/run-001' plan '/advanced'.
+            Stopping guests in run '/var/tmp/tmt/run-001' plan '/base'.
+
+    $ tmt clean guests --how virtual
+    clean
+        guests
+            Stopping guests in run '/var/tmp/tmt/run-002' plan '/advanced'.
+            Stopping guests in run '/var/tmp/tmt/run-002' plan '/base'.
+
+
+Clean workdirs
+------------------------------------------------------------------
+
+The goal of ``clean runs`` is to remove workdirs of past runs.
+Similarly to above, ``/var/tmp/tmt`` is used by default as run
+location and this can be changed using an argument::
+
+    $ tmt clean runs /tmp/run
+    clean
+        runs
+            Removing workdir '/tmp/run/001'.
+
+Only one specific run can also be removed using ``--id`` or
+``--last`` options, similarly to ``clean guests``::
+
+    $ tmt clean runs -v -i /var/tmp/tmt/run-001
+    clean
+        runs
+            Removing workdir '/var/tmp/tmt/run-001'.
+
+You may also want to remove only old runs. This can be achieved
+using ``--keep`` option which allows you to specify the number
+of latest runs to keep::
+
+    $ for i in $(seq 1 10); do tmt run; done
+    ...
+
+    $ tmt clean runs --dry -v --keep 5
+    clean
+        runs
+            Would remove workdir '/var/tmp/tmt/run-005'.
+            Would remove workdir '/var/tmp/tmt/run-004'.
+            Would remove workdir '/var/tmp/tmt/run-003'.
+            Would remove workdir '/var/tmp/tmt/run-002'.
+            Would remove workdir '/var/tmp/tmt/run-001'.
+
+
+Clean images
+------------------------------------------------------------------
+
+The subcommand ``clean images`` removes images of all provision
+methods that support it. Currently, only testcloud provision
+supports this option, the images are removed from
+``/var/tmp/tmt/testcloud/images``::
+
+    $ tmt clean images
+    clean
+        images
+            testcloud
+                Removing '/var/tmp/tmt/testcloud/images/Fedora-Cloud-Base-34_Beta-1.3.x86_64.qcow2'.
+

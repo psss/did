@@ -170,6 +170,10 @@ class ProvisionPlugin(tmt.steps.Plugin):
         """ List of required packages needed for workdir sync """
         return Guest.requires()
 
+    @classmethod
+    def clean_images(cls, clean, dry):
+        """ Remove the images of one particular plugin """
+
 
 class Guest(tmt.utils.Common):
     """

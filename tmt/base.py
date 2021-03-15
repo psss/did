@@ -5,6 +5,7 @@ import copy
 import functools
 import os
 import re
+import shutil
 import subprocess
 import time
 
@@ -1103,7 +1104,7 @@ class Tree(tmt.utils.Common):
 class Run(tmt.utils.Common):
     """ Test run, a container of plans """
 
-    def __init__(self, id_=None, tree=None, context=None):
+    def __init__(self, id_=None, tree=None, context=None, save_last=True):
         """ Initialize tree, workdir and plans """
         # Use the last run id if requested
         self.config = tmt.utils.Config()
@@ -1117,7 +1118,8 @@ class Run(tmt.utils.Common):
                 "Run id has to be specified in order to use --follow.")
         super().__init__(workdir=id_ or True, context=context)
         # Store workdir as the last run id
-        self.config.last_run(self.workdir)
+        if save_last:
+            self.config.last_run(self.workdir)
         self._save_tree(tree)
         self._plans = None
         self._environment = dict()
@@ -1162,6 +1164,38 @@ class Run(tmt.utils.Common):
             'remove': self.remove,
             }
         self.write('run.yaml', tmt.utils.dict_to_yaml(data))
+
+    def load_from_workdir(self):
+        """
+        Load the run from its workdir, do not require the root in
+        run.yaml to exist. Doest not load the fmf tree.
+
+        Use only when the data in workdir is sufficient (e.g. tmt
+        clean and status only require the steps to be loaded and
+        their status).
+        """
+        try:
+            data = tmt.utils.yaml_to_dict(self.read('run.yaml'))
+        except tmt.utils.FileError:
+            self.debug('Run data not found.')
+            return
+        self._environment = data.get('environment')
+        self._context.obj.steps = set(data['steps'])
+        plans = []
+        # The root directory of the tree may not be available, create
+        # a partial Node object that only contains the necessary
+        # attributes required for plan/step loading.
+        for plan in data.get('plans'):
+            node = type('Node', (), {
+                'name': plan,
+                'data': {},
+                # No attributes will ever need to be accessed, just create
+                # a compatible method signature
+                'get': lambda section, item=None: item,
+            })
+            plans.append(Plan(node, run=self))
+
+        self._plans = plans
 
     def load(self):
         """ Load list of selected plans and enabled steps """
@@ -1432,14 +1466,10 @@ class Status(tmt.utils.Common):
 
     def process_run(self, run):
         """ Display the status of the given run based on verbosity """
-        try:
-            run.load()
-        except tmt.utils.GeneralError as error:
-            self.warn(f'Failed to check {run.workdir} ({error}).')
+        loaded, error = tmt.utils.load_run(run)
+        if not loaded:
+            self.warn(f"Failed to load run '{run.workdir}': {error}")
             return
-        for plan in run.plans:
-            for step in plan.steps(disabled=True):
-                step.load()
         if self.opt('verbose') == 0:
             self.print_run_status(run)
         elif self.opt('verbose') == 1:
@@ -1464,24 +1494,119 @@ class Status(tmt.utils.Common):
         # Prepare absolute workdir path if --id was used
         id_ = self.opt('id')
         path = self.opt('path')
-        if id_ and '/' not in id_:
-            id_ = os.path.join(path, id_)
         self.print_header()
-        for filename in os.listdir(path):
-            abs_path = os.path.join(path, filename)
-            invalid_id = id_ and abs_path != id_
-            invalid_run = not os.path.exists(
-                os.path.join(abs_path, 'run.yaml'))
-            if not os.path.isdir(abs_path) or invalid_id or invalid_run:
-                continue
-            # Creating a and loading a run may override the data in the
-            # context which could affect the status of the following runs.
-            # Backup the inner context object to later recover it to
-            # its initial state.
-            backup = copy.deepcopy(self._context.obj)
-            run = Run(abs_path, self._context.obj.tree, self._context)
+        for abs_path in tmt.utils.generate_runs(path, id_):
+            run = Run(abs_path, self._context.obj.tree, self._context, False)
             self.process_run(run)
-            self._context.obj = backup
+
+
+class Clean(tmt.utils.Common):
+    """ A class for cleaning up workdirs, guests or images """
+
+    def images(self):
+        """ Clean images of provision plugins """
+        self.info('images', color='blue')
+        for method in tmt.steps.provision.ProvisionPlugin.methods():
+            method.class_.clean_images(self, self.opt('dry'))
+
+    def _matches_how(self, plan):
+        """ Check if the given plan matches options """
+        how = plan.provision.data[0]['how']
+        target_how = self.opt('how')
+        if target_how:
+            return how == target_how
+        # No target provision method, always matches
+        return True
+
+    def _stop_running_guests(self, run):
+        """ Stop all running guests of a run """
+        loaded, error = tmt.utils.load_run(run)
+        if not loaded:
+            self.warn(f"Failed to load run '{run.workdir}': {error}")
+            return False
+        # Clean guests if provision is done but finish is not done
+        successful = True
+        for plan in run.plans:
+            if plan.provision.status() == 'done':
+                if plan.finish.status() != 'done':
+                    # Wake up provision to load the active guests
+                    plan.provision.wake()
+                    if not self._matches_how(plan):
+                        continue
+                    if self.opt('dry'):
+                        self.verbose(
+                            f"Would stop guests in run '{run.workdir}'"
+                            f" plan '{plan.name}'.", shift=1)
+                    else:
+                        self.verbose(f"Stopping guests in run '{run.workdir}' "
+                                     f"plan '{plan.name}'.", shift=1)
+                        # Set --quiet to avoid finish logging to terminal
+                        quiet = self._context.params['quiet']
+                        self._context.params['quiet'] = True
+                        try:
+                            plan.finish.go()
+                        except tmt.utils.GeneralError as error:
+                            self.warn(f"Could not stop guest in run "
+                                      f"'{run.workdir}': {error}.", shift=1)
+                            successful = False
+                        finally:
+                            self._context.params['quiet'] = quiet
+        return successful
+
+    def guests(self):
+        """ Clean guests of runs """
+        self.info('guests', color='blue')
+        path = self.opt('path')
+        id_ = self.opt('id_')
+        if self.opt('last'):
+            # Pass the context containing --last to Run to choose
+            # the correct one.
+            return self._stop_running_guests(Run(context=self._context,
+                                                 save_last=False))
+        successful = True
+        for abs_path in tmt.utils.generate_runs(path, id_):
+            run = Run(abs_path, self._context.obj.tree, self._context, False)
+            if not self._stop_running_guests(run):
+                successful = False
+        return successful
+
+    def _clean_workdir(self, path):
+        """ Remove a workdir (unless in dry mode) """
+        if self.opt('dry'):
+            self.verbose(f"Would remove workdir '{path}'.", shift=1)
+        else:
+            self.verbose(f"Removing workdir '{path}'.", shift=1)
+            try:
+                shutil.rmtree(path)
+            except OSError as error:
+                self.warn(f"Failed to remove '{path}': {error}.", shift=1)
+                return False
+        return True
+
+    def runs(self):
+        """ Clean workdirs of runs """
+        self.info('runs', color='blue')
+        path = self.opt('path')
+        id_ = self.opt('id_')
+        if self.opt('last'):
+            # Pass the context containing --last to Run to choose
+            # the correct one.
+            last_run = Run(context=self._context, save_last=False)
+            return self._clean_workdir(last_run.workdir)
+        all_workdirs = [path for path in tmt.utils.generate_runs(path, id_)]
+        keep = self.opt('keep')
+        if keep is not None:
+            # Sort by modify time of the workdirs and keep the newest workdirs
+            all_workdirs.sort(key=lambda workdir: os.path.getmtime(
+                os.path.join(workdir, 'run.yaml')), reverse=True)
+            all_workdirs = all_workdirs[keep:]
+
+        successful = True
+        for workdir in all_workdirs:
+            if not self._clean_workdir(workdir):
+                successful = False
+
+        return successful
 
 
 class Result(object):

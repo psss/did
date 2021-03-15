@@ -520,6 +520,7 @@ class Common(object):
         return self._workdir
 
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Exceptions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1076,6 +1077,44 @@ def validate_fmf_id(fmf_id):
         return (False, errors[0] if errors else str(error))
 
     return (True, '')
+
+
+def generate_runs(path, id_):
+    """ Generate absolute paths to runs from path """
+    # Prepare absolute workdir path if --id was used
+    if id_:
+        if '/' not in id_:
+            id_ = os.path.join(path, id_)
+        if os.path.isabs(id_):
+            if os.path.exists(id_):
+                yield id_
+            return
+    if not os.path.exists(path):
+        return
+    for filename in os.listdir(path):
+        abs_path = os.path.join(path, filename)
+        # If id_ is None, the abs_path is considered valid (no filtering
+        # is being applied). If it is defined, it has been transformed
+        # to absolute path and must be equal to abs_path for the run
+        # in abs_path to be generated.
+        invalid_id = id_ and abs_path != id_
+        invalid_run = not os.path.exists(
+            os.path.join(abs_path, 'run.yaml'))
+        if not os.path.isdir(abs_path) or invalid_id or invalid_run:
+            continue
+        yield abs_path
+
+
+def load_run(run):
+    """ Load a run and its steps from the workdir """
+    try:
+        run.load_from_workdir()
+    except GeneralError as error:
+        return False, error
+    for plan in run.plans:
+        for step in plan.steps(disabled=True):
+            step.load()
+    return True, None
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
