@@ -147,6 +147,9 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
             plugin = 'yum-plugin-copr'
         self.debug(f"Using '{command}' for all package operations.")
 
+        # Enable copr repositories
+        self.enable_copr(command, plugin, guest)
+
         # Check parameters, bail out if nothing to do
         packages = self.get('package', [])
         repo_packages = []
@@ -155,9 +158,6 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
         if not packages and not directories:
             self.debug("No packages for installation found.", level=3)
             return
-
-        # Enable copr repositories
-        self.enable_copr(command, plugin, guest)
 
         # Detect local packages and directories
         for package in packages:

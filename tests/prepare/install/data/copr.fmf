@@ -1,0 +1,9 @@
+summary: Just enable a copr repository
+provision:
+    how: container
+prepare:
+    how: install
+    copr: psss/fmf
+execute:
+    how: tmt
+    script: dnf repolist | grep 'Copr repo for fmf'

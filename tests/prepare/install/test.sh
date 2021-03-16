@@ -6,6 +6,10 @@ rlJournalStart
         rlRun "pushd data"
     rlPhaseEnd
 
+    rlPhaseStartTest "Just enable copr"
+        rlRun "tmt run -adddvvv plan --name copr"
+    rlPhaseEnd
+
     rlPhaseStartTest "Escape package names"
         rlRun "tmt run -adddvvv plan --name escape"
     rlPhaseEnd
