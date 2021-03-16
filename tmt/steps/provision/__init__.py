@@ -382,33 +382,49 @@ class Guest(tmt.utils.Common):
             [f'{environment}{directory}{command}'])
         return self.run(command, shell=False, **kwargs)
 
-    def push(self, src="", dest="", opts=""):
-        """ Push workdir to guest """
-        if not src:
-            self.debug(f"Push workdir to guest '{self.guest}'.")
-            src = self.parent.plan.workdir
-            opts = opts or "-Rrz --links --safe-links --delete"
-        if not dest:
-            dest = "/"
-        self.debug(f"Copy files to guest '{self.guest}' {src} -> {dest}")
-        self.run(
-            f'rsync {opts} '
-            f'-e "{self._ssh_command(join=True)}" '
-            f'{src} {self._ssh_guest()}:{dest}')
+    def push(self, source=None, destination=None, options=None):
+        """
+        Push files to the guest
 
-    def pull(self, src="", dest="", opts=""):
-        """ Pull workdir from guest """
-        if not src:
-            self.debug(f"Pull workdir from guest '{self.guest}'.")
-            src = self.parent.plan.workdir
-            opts = opts or "-Rrz --links --safe-links"
-        if not dest:
-            dest = "/"
-        self.debug(f"Copy files from guest '{self.guest}' {src} -> {dest}")
+        By default the whole plan workdir is synced to the same location
+        on the guest. Use the 'source' and 'destination' to sync custom
+        location and the 'options' parametr to modify default options
+        which are '-Rrz --links --safe-links --delete'.
+        """
+        if options is None:
+            options = "-Rrz --links --safe-links --delete"
+        if destination is None:
+            destination = "/"
+        if source is None:
+            source = self.parent.plan.workdir
+            self.debug(f"Push workdir to guest '{self.guest}'.")
+        else:
+            self.debug(f"Copy '{source}' to '{destination}' on the guest.")
         self.run(
-            f'rsync {opts} '
-            f'-e "{self._ssh_command(join=True)}" '
-            f'{self._ssh_guest()}:{src} {dest}')
+            f'rsync {options} -e "{self._ssh_command(join=True)}" '
+            f'{source} {self._ssh_guest()}:{destination}')
+
+    def pull(self, source=None, destination=None, options=None):
+        """
+        Pull files from the guest
+
+        By default the whole plan workdir is synced from the same
+        location on the guest. Use the 'source' and 'destination' to
+        sync custom location and the 'options' parametr to modify
+        default options which are '-Rrz --links --safe-links'.
+        """
+        if options is None:
+            options = "-Rrz --links --safe-links"
+        if destination is None:
+            destination = "/"
+        if source is None:
+            source = self.parent.plan.workdir
+            self.debug(f"Pull workdir from guest '{self.guest}'.")
+        else:
+            self.debug(f"Copy '{source}' from the guest to '{destination}'.")
+        self.run(
+            f'rsync {options} -e "{self._ssh_command(join=True)}" '
+            f'{self._ssh_guest()}:{source} {destination}')
 
 
     def stop(self):

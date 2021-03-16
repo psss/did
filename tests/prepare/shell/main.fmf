@@ -1,2 +1,3 @@
-summary: Test shell execution
-framework: shell
+summary: Test preparing guest using a shell script
+link:
+  - verifies: https://github.com/psss/tmt/issues/423

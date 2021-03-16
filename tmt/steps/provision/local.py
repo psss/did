@@ -61,10 +61,10 @@ class GuestLocal(tmt.Guest):
         """ Execute command on localhost """
         return self.run(command, **kwargs)
 
-    def push(self, src="", dest="", opts=""):
+    def push(self, source=None, destination=None, options=None):
         """ Nothing to be done to push workdir """
 
-    def pull(self, src="", dest="", opts=""):
+    def pull(self, source=None, destination=None, options=None):
         """ Nothing to be done to pull workdir """
 
     @classmethod
