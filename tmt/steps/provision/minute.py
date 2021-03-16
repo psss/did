@@ -91,6 +91,9 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             click.option(
                 '-F', '--flavor', metavar='FLAVOR',
                 help="Flavor, see '1minutetip list-flavors' for options."),
+            click.option(
+                '--allow-ipv4-only', is_flag=True,
+                help="Allow using a network without IPv6.")
             ] + super().options(how)
 
     def default(self, option, default=None):
@@ -98,6 +101,7 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
         defaults = {
             'image': 'fedora',
             'flavor': DEFAULT_FLAVOR,
+            'allow_ipv4_only': False,
         }
         return defaults.get(option, default)
 
@@ -107,7 +111,7 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
 
     def wake(self, data=None):
         """ Override options and wake up the guest """
-        super().wake(['image', 'flavor'])
+        super().wake(['image', 'flavor', 'allow_ipv4_only'])
         if self.opt('dry'):
             return
 
@@ -134,9 +138,9 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
         super().go()
 
         data = dict(user=DEFAULT_USER)
-        for opt in ['image', 'flavor', 'api_url']:
+        for opt in ['image', 'flavor', 'api_url', 'allow_ipv4_only']:
             val = self.get(opt)
-            if opt != 'api_url':
+            if opt != 'api_url' and opt != 'allow_ipv4_only':
                 self.info(opt, val, 'green')
             data[opt] = val
 
@@ -164,6 +168,7 @@ class GuestMinute(tmt.Guest):
         self.api_url = data.get('api_url')
         self.image = data.get('image')
         self.flavor = data.get('flavor')
+        self.allow_ipv4_only = data.get('allow_ipv4_only')
         self.username = getpass.getuser()
         self.instance_name = data.get('instance')
 
@@ -173,23 +178,43 @@ class GuestMinute(tmt.Guest):
         data['instance'] = self.instance_name
         data['image'] = self.image
         data['flavor'] = self.flavor
+        data['allow_ipv4_only'] = self.allow_ipv4_only
         return data
 
-    def _guess_net_id(self):
-        self.debug("Check the network IP availability.")
+    def _get_networks(self, ip_version):
+        """ Get available networks for an IP version """
+        self.debug(f"Get the network availability for IPv{ip_version}.")
         _, networks = run_openstack(
-            self.api_url, 'ip availability list -f json')
+            self.api_url,
+            f'ip availability list --ip-version {ip_version} -f json')
         try:
-            networks = json.loads(networks)
+            return [network for network in json.loads(networks)
+                    if re.match(NETWORK_NAME_RE, network['Network Name'])]
         except json.decoder.JSONDecodeError:
             raise tmt.utils.ProvisionError(
                 "Failed to decode network data from the minute API.")
-        networks = [
-            network for network in networks
-            if re.match(NETWORK_NAME_RE, network['Network Name'])]
+
+    def _guess_net_id(self):
+        """
+        Guess the best network to use based on the number of free IPs.
+
+        If allow_ipv4_only is not set, require the chosen network to
+        have IPv6 enabled. Otherwise use any IPv4-enabled network.
+        """
+        self.debug("Detect the best network to use.")
+        ipv4_networks = self._get_networks(4)
+        ipv6_networks = self._get_networks(6)
+        if self.allow_ipv4_only:
+            networks = ipv4_networks
+        else:
+            # Find all networks that have both IPv4 and IPv6 enabled.
+            # Use IP statistics from IPv4 (IPv6 pool is large).
+            ipv6_ids = {net['Network ID'] for net in ipv6_networks}
+            networks = [net for net in ipv4_networks
+                        if net['Network ID'] in ipv6_ids]
         self.debug(
             f'Available networks:\n{json.dumps(networks, indent=2)}',
-            level=2, shift=0)
+            level=3, shift=0)
         if not networks:
             return None, None
 
