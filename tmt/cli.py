@@ -213,10 +213,10 @@ def main(click_contex, root, context, **kwargs):
     help='Enable given step and all following steps.')
 @click.option(
     '-A', '--after', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
-    help='Enable all steps before the given one.')
+    help='Enable all steps after the given one.')
 @click.option(
     '-B', '--before', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
-    help='Enable all steps after the given one.')
+    help='Enable all steps before the given one.')
 @click.option(
     '-S', '--skip', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
     help='Skip given step(s) during test run execution.', multiple=True)

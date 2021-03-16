@@ -1125,7 +1125,7 @@ class Run(tmt.utils.Common):
         before = self.opt('before')
         skip = self.opt('skip')
 
-        if all_steps or since or until:
+        if any([all_steps, since, until, after, before]):
             # Detect index of the first and last enabled step
             if since:
                 first = tmt.steps.STEPS.index(since)

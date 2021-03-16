@@ -44,7 +44,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Until"
-        rlRun "tmt run --until execute | tee output"
+        rlRun "tmt run --until execute discover -h shell | tee output"
         for step in discover provision prepare execute; do
             rlAssertGrep $step output
         done
@@ -55,7 +55,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Since"
-        rlRun "tmt run --last --since report | tee output"
+        rlRun "tmt run --last --since report finish -h shell | tee output"
         for step in discover provision prepare execute; do
             rlAssertNotGrep $step output
         done
@@ -66,7 +66,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Before"
-        rlRun "tmt run --before report | tee output"
+        rlRun "tmt run --before report discover -h shell | tee output"
         for step in discover provision prepare execute; do
             rlAssertGrep $step output
         done
@@ -77,7 +77,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "After"
-        rlRun "tmt run --last --after execute | tee output"
+        rlRun "tmt run --last --after execute finish -h shell | tee output"
         for step in discover provision prepare execute; do
             rlAssertNotGrep $step output
         done
