@@ -518,13 +518,19 @@ class Common(object):
 
 class GeneralError(Exception):
     """ General error """
+    def __init__(self, *args, **kwargs):
+        # Store the original exception for future use
+        self.original = kwargs.get('original')
 
 class FileError(GeneralError):
     """ File operation error """
 
 class RunError(GeneralError):
     """ Command execution error """
-    def __init__(self, message, command, returncode, stdout=None, stderr=None):
+    def __init__(
+            self, message, command, returncode,
+            stdout=None, stderr=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.message = message
         self.command = command
         self.returncode = returncode

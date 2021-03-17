@@ -3,11 +3,12 @@
 import re
 import os
 import time
-import tmt
+
+import fmf
 import click
 import requests
-import fmf
 
+import tmt
 from tmt.utils import ProvisionError, WORKDIR_ROOT, retry_session
 
 def import_testcloud():
@@ -17,9 +18,11 @@ def import_testcloud():
     Until we have a separate package for each plugin.
     """
     global testcloud
+    global libvirt
     try:
         import testcloud.image
         import testcloud.instance
+        import libvirt
     except ImportError:
         raise ProvisionError(
             "Install 'testcloud' to provision using this method.")
@@ -397,15 +400,14 @@ class GuestTestcloud(tmt.Guest):
             self.info('progress', 'downloading...', 'cyan')
         try:
             self.image.prepare()
-        except FileNotFoundError as e:
+        except FileNotFoundError as error:
             raise ProvisionError(
-                f"Image '{self.image.local_path}' not found.\n {str(e)}"
-            )
-        except testcloud.exceptions.TestcloudPermissionsError as e:
+                f"Image '{self.image.local_path}' not found.", original=error)
+        except (testcloud.exceptions.TestcloudPermissionsError,
+                PermissionError) as error:
             raise ProvisionError(
-                f"Failed to prepare the image. "
-                f"Check the '{TESTCLOUD_IMAGES}' directory permissions.\n"
-                f"{str(e)}")
+                f"Failed to prepare the image. Check the '{TESTCLOUD_IMAGES}' "
+                f"directory permissions.", original=error)
 
         # Create instance
         self.instance_name = self._random_name()
@@ -424,9 +426,10 @@ class GuestTestcloud(tmt.Guest):
         self.instance.spawn_vm()
         try:
             self.instance.start(DEFAULT_BOOT_TIMEOUT)
-        except testcloud.exceptions.TestcloudInstanceError as error:
+        except (testcloud.exceptions.TestcloudInstanceError,
+                libvirt.libvirtError) as error:
             raise ProvisionError(
-                f'Failed to boot testcloud instance ({error}).')
+                f'Failed to boot the testcloud instance.', original=error)
         self.guest = self.instance.get_ip()
         self.instance.create_ip_file(self.guest)
 
