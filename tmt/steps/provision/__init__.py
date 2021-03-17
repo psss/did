@@ -177,6 +177,7 @@ class Guest(tmt.utils.Common):
     The following keys are expected in the 'data' dictionary::
 
         guest ...... hostname or ip address
+        port ....... port to connect to
         user ....... user name to log in
         key ........ private key
         password ... password
@@ -187,7 +188,7 @@ class Guest(tmt.utils.Common):
 
     # List of supported keys
     # (used for import/export to/from attributes during load and save)
-    _keys = ['guest', 'user', 'key', 'password']
+    _keys = ['guest', 'port', 'user', 'key', 'password']
 
     def __init__(self, data, name=None, parent=None):
         """ Initialize guest data """
@@ -200,8 +201,6 @@ class Guest(tmt.utils.Common):
 
     def _ssh_guest(self):
         """ Return user@guest """
-        if ":" in self.guest:
-            return f'{self.user}@{self.guest.split(":")[0]}'
         return f'{self.user}@{self.guest}'
 
     def _ssh_options(self, join=False):
@@ -210,8 +209,8 @@ class Guest(tmt.utils.Common):
             '-oStrictHostKeyChecking=no',
             '-oUserKnownHostsFile=/dev/null',
             ]
-        if ":" in self.guest:
-            options.append(f'-p {self.guest.split(":")[1]}')
+        if self.port:
+            options.extend(['-p', str(self.port)])
         if self.key:
             options.extend(['-i', self.key])
         return ' '.join(options) if join else options

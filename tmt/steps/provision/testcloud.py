@@ -314,9 +314,8 @@ class GuestTestcloud(tmt.Guest):
 
     @staticmethod
     def _create_template():
-        """ Create libvirt domain template if it does not exist """
-        if os.path.exists(DOMAIN_TEMPLATE_FILE):
-            return
+        """ Create libvirt domain template """
+        # Write always to ovewrite possible outdated version
         with open(DOMAIN_TEMPLATE_FILE, 'w') as template:
             template.write(DOMAIN_TEMPLATE)
 
@@ -414,7 +413,8 @@ class GuestTestcloud(tmt.Guest):
         # Create instance
         self.instance_name = self._random_name()
         self.instance = testcloud.instance.Instance(
-            name=self.instance_name, image=self.image, connection='qemu:///session')
+            name=self.instance_name, image=self.image,
+            connection='qemu:///session')
         self.verbose('name', self.instance_name, 'green')
 
         # Prepare ssh key
@@ -432,10 +432,11 @@ class GuestTestcloud(tmt.Guest):
                 libvirt.libvirtError) as error:
             raise ProvisionError(
                 f'Failed to boot testcloud instance ({error}).')
-        self.instance.create_ip_file(self.instance.get_ip())
-        # create_port_file(self.guest) is called by tescloud in write_domain_xml() that gets
-        # called by spawn_vm()
-        self.guest = "%s:%s" % (self.instance.get_ip(), self.instance.get_instance_port())
+        self.guest = self.instance.get_ip()
+        self.port = self.instance.get_instance_port()
+        self.verbose('ip', self.guest, 'green')
+        self.verbose('port', self.port, 'green')
+        self.instance.create_ip_file(self.guest)
 
         # Wait a bit until the box is up
         timeout = DEFAULT_CONNECT_TIMEOUT
