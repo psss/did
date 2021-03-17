@@ -171,10 +171,16 @@ tmt_run_shell () {
 tmt_run_beakerlib () {
     local result
     local environment
+    local code
 
     environment="BEAKERLIB_DIR='$(pwd)' $2"
 
     tmt_run_shell "$1" "$environment" "$3"
+
+    code=$?
+
+    # Non-standard exit
+    [[ $? -eq 0 ]] || return $code
 
     #[[ -z "$tmt_VERBOSE" ]] || {
     #    tmt_verbose 2 "$tmt_JOURNAL_F:"
@@ -183,9 +189,6 @@ tmt_run_beakerlib () {
 
     result="$(grep '::   OVERALL RESULT: ' "$tmt_JOURNAL_F")" \
         || { tmt_error "Result not found" ; return 1 ; }
-
-    # probably not needed
-    #result="$(cut -d' ' -f3- <<< "$result")"
 
     grep -q 'PASS' <<< "$result" \
         && return 0
