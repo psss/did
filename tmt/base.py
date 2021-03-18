@@ -291,15 +291,16 @@ class Test(Node):
             ), fg='blue'))
 
     @staticmethod
-    def create(name, template, tree, force=False):
+    def create(name, template, path, force=False, dry=None):
         """ Create a new test """
-        dry = Test._opt('dry')
+        if dry is None:
+            dry = Test._opt('dry')
 
         # Create directory
         if name == '.':
             directory_path = os.getcwd()
         else:
-            directory_path = os.path.join(tree.root, name.lstrip('/'))
+            directory_path = os.path.join(path, name.lstrip('/'))
             tmt.utils.create_directory(
                 directory_path, 'test directory', dry=dry)
 
@@ -523,12 +524,14 @@ class Plan(Node):
             ), fg='blue'))
 
     @staticmethod
-    def create(name, template, tree, force=False):
+    def create(name, template, path, force=False, dry=None):
         """ Create a new plan """
-        dry = Plan._opt('dry')
         # Prepare paths
+        if dry is None:
+            dry = Plan._opt('dry')
+
         (directory, plan) = os.path.split(name)
-        directory_path = os.path.join(tree.root, directory.lstrip('/'))
+        directory_path = os.path.join(path, directory.lstrip('/'))
         has_fmf_ext = os.path.splitext(plan)[1] == '.fmf'
         plan_path = os.path.join(directory_path,
                                 plan + ('' if has_fmf_ext else '.fmf'))
@@ -706,13 +709,14 @@ class Story(Node):
         return True
 
     @staticmethod
-    def create(name, template, tree, force=False):
+    def create(name, template, path, force=False, dry=None):
         """ Create a new story """
-        dry = Story._opt('dry')
+        if dry is None:
+            dry = Story._opt('dry')
 
         # Prepare paths
         (directory, story) = os.path.split(name)
-        directory_path = os.path.join(tree.root, directory.lstrip('/'))
+        directory_path = os.path.join(path, directory.lstrip('/'))
         has_fmf_ext = os.path.splitext(story)[1] == '.fmf'
         story_path = os.path.join(directory_path,
                                   story + ('' if has_fmf_ext else '.fmf'))
@@ -930,6 +934,61 @@ class Tree(tmt.utils.Common):
             [Story(story) for story in self.tree.prune(
                 keys=keys, names=names, whole=whole)],
             filters, conditions)
+
+    @staticmethod
+    def init(path, template, force, **kwargs):
+        _init_templates = listed(tmt.templates.INIT_TEMPLATE_CHOICES,
+                                 join='or')
+        path = os.path.realpath(path)
+        dry = Tree._opt('dry')
+
+        # Check for existing tree
+        try:
+            tree = tmt.Tree(path)
+            # Are we creating a new tree under the existing one?
+            if path == tree.root:
+                echo("Tree '{}' already exists.".format(tree.root))
+            else:
+                tree = None
+        except tmt.utils.GeneralError:
+            tree = None
+
+        # Create a new tree
+        if tree is None:
+            if dry:
+
+                echo(f"Tree '{path}' would be initialized.")
+            else:
+                try:
+                    fmf.Tree.init(path)
+                    tree = tmt.Tree(path)
+                    path = tree.root
+                except fmf.utils.GeneralError as error:
+                    raise tmt.utils.GeneralError(
+                        "Failed to initialize tree in '{}': {}".format(
+                            path, error))
+                echo("Tree '{}' initialized.".format(tree.root))
+
+        # Populate the tree with example objects if requested
+        if template == 'empty':
+            non_empty_choices = [c for c in tmt.templates.INIT_TEMPLATE_CHOICES
+                                 if c != 'empty']
+            echo(
+                "To populate it with example content, use --template with "
+                "{}.".format(listed(non_empty_choices, join='or')))
+        else:
+            echo("Applying template '{}'.".format(template,
+                                                  _init_templates))
+
+        if template == 'mini':
+            tmt.Plan.create('/plans/example', 'mini', path, force, dry)
+        elif template == 'base':
+            tmt.Test.create('/tests/example', 'beakerlib', path, force, dry)
+            tmt.Plan.create('/plans/example', 'base', path, force, dry)
+        elif template == 'full':
+            tmt.Test.create('/tests/example', 'shell', path, force, dry)
+            tmt.Plan.create('/plans/example', 'full', path, force, dry)
+            tmt.Story.create('/stories/example', 'full', path, force, dry)
 
 
 class Run(tmt.utils.Common):

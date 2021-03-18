@@ -388,7 +388,7 @@ def create(context, name, template, force, **kwargs):
     current working directory.
     """
     tmt.Test._save_context(context)
-    tmt.Test.create(name, template, context.obj.tree, force)
+    tmt.Test.create(name, template, context.obj.tree.root, force)
 
 
 @tests.command(name='import')
@@ -616,7 +616,7 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
 def create(context, name, template, force, **kwargs):
     """ Create a new plan based on given template. """
     tmt.Plan._save_context(context)
-    tmt.Plan.create(name, template, context.obj.tree, force)
+    tmt.Plan.create(name, template, context.obj.tree.root, force)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Story
@@ -696,7 +696,7 @@ _story_templates = listed(tmt.templates.STORY, join='or')
 def create(context, name, template, force, **kwargs):
     """ Create a new story based on given template. """
     tmt.Story._save_context(context)
-    tmt.base.Story.create(name, template, context.obj.tree, force)
+    tmt.base.Story.create(name, template, context.obj.tree.root, force)
 
 
 @stories.command()
@@ -797,14 +797,13 @@ def export(
 #  Init
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-_init_template_choices = ['empty', 'mini', 'base', 'full']
-_init_templates = listed(_init_template_choices, join='or')
+_init_templates = listed(tmt.templates.INIT_TEMPLATE_CHOICES, join='or')
 @main.command()
 @click.pass_context
 @click.argument('path', default='.')
 @click.option(
     '-t', '--template', default='empty', metavar='TEMPLATE',
-    type=click.Choice(_init_template_choices),
+    type=click.Choice(tmt.templates.INIT_TEMPLATE_CHOICES),
     help='Template ({}).'.format(_init_templates))
 @verbose_debug_quiet
 @force_dry
@@ -822,44 +821,10 @@ def init(context, path, template, force, **kwargs):
     * 'full' template contains a 'full' story, an 'full' plan and a shell test.
     """
 
-    # Check for existing tree
-    path = os.path.realpath(path)
-    try:
-        tree = tmt.Tree(path)
-        # Are we creating a new tree under the existing one?
-        if path == tree.root:
-            echo("Tree '{}' already exists.".format(tree.root))
-        else:
-            tree = None
-    except tmt.utils.GeneralError:
-        tree = None
-    # Create a new tree
-    if tree is None:
-        try:
-            fmf.Tree.init(path)
-            tree = tmt.Tree(path)
-        except fmf.utils.GeneralError as error:
-            raise tmt.utils.GeneralError(
-                "Failed to initialize tree in '{}': {}".format(
-                    path, error))
-        echo("Tree '{}' initialized.".format(tree.root))
-
-    # Populate the tree with example objects if requested
-    if template == 'empty':
-        non_empty_choices = [c for c in _init_template_choices if c != 'empty']
-        echo("To populate it with example content, use --template with "
-             "{}.".format(listed(non_empty_choices, join='or')))
-    else:
-        echo("Applying template '{}'.".format(template, _init_templates))
-    if template == 'mini':
-        tmt.Plan.create('/plans/example', 'mini', tree, force)
-    elif template == 'base':
-        tmt.Test.create('/tests/example', 'beakerlib', tree, force)
-        tmt.Plan.create('/plans/example', 'base', tree, force)
-    elif template == 'full':
-        tmt.Test.create('/tests/example', 'shell', tree, force)
-        tmt.Plan.create('/plans/example', 'full', tree, force)
-        tmt.Story.create('/stories/example', 'full', tree, force)
+    #import pdb
+    #pdb.set_trace()
+    tmt.base.Tree._save_context(context)
+    tmt.base.Tree.init(path, template, force, **kwargs)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
