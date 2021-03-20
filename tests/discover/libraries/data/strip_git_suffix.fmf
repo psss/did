@@ -1,0 +1,30 @@
+summary: Check libraries can end in '.git' suffix
+description:
+    User doesn't need to care/remember whether to use '.git'
+    suffix or not in the 'require' or 'recommend' section -
+    both are allowed.
+test: ./file.sh
+
+/test1:
+  recommend:
+    - url: https://github.com/beakerlib/database.git
+      name: /mysql
+    - library(database/postgresql)
+  require:
+    - library(database/mariadb)
+    - url: https://github.com/beakerlib/test
+      name: /very/deep/file
+/test2:
+  require:
+    - library(database/mariadb)
+    - url: https://github.com/beakerlib/squid.git
+      name: /squid
+  recommend:
+    - url: https://github.com/beakerlib/database.git
+      name: /postgresql
+    - library(database/postgresql)
+    - url: https://github.com/psss/fmf.git
+/test3:
+  recommend:
+    - url: https://github.com/beakerlib/database.git
+      name: /postgresql

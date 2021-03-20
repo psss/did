@@ -17,6 +17,11 @@ execute:
     provision:
         how: virtual
 
+/strip_git_suffix:
+    summary: "Check libraries can end in '.git' suffix"
+    discover+:
+        test: strip_git_suffix
+
 /certificate:
     /rpm:
         summary: "Certificate test (rpm format)"

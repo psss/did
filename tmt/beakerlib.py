@@ -72,6 +72,11 @@ class Library(object):
             self.parent.debug(f"Detected library '{identifier}'.", level=3)
             self.format = 'fmf'
             self.url = identifier.get('url')
+            for i in ['https://github.com',
+                      'https://gitlab.com',
+                      'https://pagure.io']:
+                if self.url.startswith(i) and self.url.endswith('.git'):
+                    self.url = self.url.rstrip('.git')
             self.ref = identifier.get('ref', None)
             self.dest = identifier.get(
                 'destination', DEFAULT_DESTINATION).lstrip('/')
