@@ -397,6 +397,7 @@ class GuestMinute(tmt.Guest):
         if self.opt('dry'):
             return
         self.mt_image = self._convert_image(self.image)
+        self.verbose('1mt-image', self.mt_image, 'green')
         date_service = self.api_url
         date_service += '/date-service.php?output_format=instantion'
         try:
