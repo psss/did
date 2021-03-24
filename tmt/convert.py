@@ -587,8 +587,9 @@ def read_nitrate_case(testcase, makefile_data=None):
     for bug in testcase.bugs:
         add_bug(bug.bug, data)
 
-    # Header and footer from notes
-    data['description'] = field.header() + field.footer()
+    # Header and footer from notes (do not import the warning back)
+    data['description'] = re.sub(
+        tmt.export.WARNING, '', field.header() + field.footer())
 
     # Extras: [pepa] and [hardware]
     try:

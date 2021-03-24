@@ -41,7 +41,13 @@ nitrate.xmlrpc_driver:
         extra_link: ''
         is_automated: 2
         is_automated_proposed: false
-        notes: '[structured-field-start]
+        notes: 'Test case has been migrated to git. Any changes made here might be
+          overwritten.
+
+          See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
+
+
+          [structured-field-start]
 
           This is StructuredField version 1. Please, edit with care.
 
@@ -138,7 +144,12 @@ nitrate.xmlrpc_driver:
       extra_link: ''
       is_automated: 2
       is_automated_proposed: false
-      notes: '[structured-field-start]
+      notes: 'Test case has been migrated to git. Any changes made here might be overwritten.
+
+        See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
+
+
+        [structured-field-start]
 
         This is StructuredField version 1. Please, edit with care.
 
