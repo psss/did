@@ -794,11 +794,12 @@ class Story(Node):
         if not self.node.children and not self.implemented:
             output += '\n.. note:: This is a draft, '
             output += 'the story is not implemented yet.\n'
-        if self.description:
+        if (self.description and
+                self.description != self.node.parent.get('description')):
             output += '\n{}\n'.format(self.description)
 
         # Examples
-        if self.example:
+        if self.example and self.example != self.node.parent.get('example'):
             output += '\nExamples::\n\n'
             output += tmt.utils.format(
                 '', self.example, wrap=False, indent=4,
