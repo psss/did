@@ -483,8 +483,9 @@ def import_(
     '--create', is_flag=True,
     help="Create test cases in nitrate if they don't exist.")
 @click.option(
-    '--general / --no-general', default=True,
-    help="Link Nitrate case to component's General plan.")
+    '--general / --no-general', default=False,
+    help="Link Nitrate case to component's General plan. Disabled by default. "
+         "Note that this will unlink any previously connected general plans.")
 @click.option(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
     help='Output format.')

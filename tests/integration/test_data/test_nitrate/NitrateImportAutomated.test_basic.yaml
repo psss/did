@@ -85,30 +85,6 @@ nitrate.xmlrpc_driver:
         - 10700
   - metadata:
       guess_type: Tuple
-      latency: 1.0886764526367188
-      module_call_list:
-      - unittest.case
-      - integration.test_nitrate
-      - click.testing
-      - click.core
-      - click.decorators
-      - tmt.cli
-      - tmt.convert
-      - nitrate.mutable
-      - nitrate.containers
-      - nitrate.immutable
-      - nitrate.base
-      - nitrate.immutable
-      - xmlrpc.client
-      - requre.objects
-      - requre.cassette
-      - nitrate.xmlrpc_driver
-      - single_request_with_cookies
-    output:
-    - - id: 10700
-        name: fmf-export
-  - metadata:
-      guess_type: Tuple
       latency: 1.084463119506836
       module_call_list:
       - unittest.case

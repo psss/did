@@ -184,6 +184,26 @@ nitrate.xmlrpc_driver:
       - tmt.cli
       - tmt.base
       - tmt.export
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - []
+  - metadata:
+      guess_type: Tuple
+      latency: 1.0243017673492432
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
       - nitrate.mutable
       - nitrate.containers
       - xmlrpc.client
