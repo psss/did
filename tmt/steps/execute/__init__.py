@@ -259,6 +259,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             results = self.read(beakerlib_results_file, level=3)
         except tmt.utils.FileError:
             self.debug(f"Unable to read '{beakerlib_results_file}'.", level=3)
+            data['note'] = 'beakerlib: TestResults FileError'
             return tmt.Result(data, test.name)
         try:
             result = re.search(
@@ -270,6 +271,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             self.debug(
                 f"No result or state found in '{beakerlib_results_file}'.",
                 level=3)
+            data['note'] = 'beakerlib: Result/State missing'
             return tmt.Result(data, test.name)
         # Check if it was killed by timeout (set by tmt executor)
         if test.returncode == tmt.utils.PROCESS_TIMEOUT:
@@ -279,7 +281,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         # Test results should be in complete state
         elif state != 'complete':
             data['result'] = 'error'
-            data['note'] = f"beakerlib state: {state}"
+            data['note'] = f"beakerlib: State '{state}'"
         # Finally we have a valid result
         else:
             data['result'] = result.lower()
