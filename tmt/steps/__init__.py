@@ -26,12 +26,12 @@ class Step(tmt.utils.Common):
     # except for provision (virtual) and report (display)
     how = 'shell'
 
-    def __init__(self, data={}, plan=None, name=None):
+    def __init__(self, data=None, plan=None, name=None):
         """ Initialize and check the step data """
         super().__init__(name=name, parent=plan)
         # Initialize data
         self.plan = plan
-        self.data = data
+        self.data = data or {}
         self._status = None
         self._plugins = []
 

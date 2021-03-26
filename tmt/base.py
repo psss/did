@@ -548,7 +548,7 @@ class Plan(Node):
             path=plan_path, content=content,
             name='plan', dry=dry, force=force)
 
-    def steps(self, enabled=True, disabled=False, names=False, skip=[]):
+    def steps(self, enabled=True, disabled=False, names=False, skip=None):
         """
         Iterate over enabled / all steps
 
@@ -556,6 +556,7 @@ class Plan(Node):
         yield step names only and 'disabled=True' to iterate over all.
         Use 'skip' to pass the list of steps to be skipped.
         """
+        skip = skip or []
         for name in tmt.steps.STEPS:
             if name in skip:
                 continue
@@ -887,8 +888,13 @@ class Tree(tmt.utils.Common):
         """ Metadata root """
         return self.tree.root
 
-    def tests(self, keys=[], names=[], filters=[], conditions=[]):
+    def tests(self, keys=None, names=None, filters=None, conditions=None):
         """ Search available tests """
+        keys = (keys or [])[:]
+        names = (names or [])[:]
+        filters = (filters or [])[:]
+        conditions = (conditions or [])[:]
+
         # Apply possible command line options
         if Test._opt('names'):
             names.extend(Test._opt('names'))
@@ -902,8 +908,14 @@ class Tree(tmt.utils.Common):
             [Test(test) for test in self.tree.prune(keys=keys, names=names)],
             filters, conditions)
 
-    def plans(self, keys=[], names=[], filters=[], conditions=[], run=None):
+    def plans(self, keys=None, names=None, filters=None, conditions=None,
+              run=None):
         """ Search available plans """
+        keys = (keys or [])[:]
+        names = (names or [])[:]
+        filters = (filters or [])[:]
+        conditions = (conditions or [])[:]
+
         # Apply possible command line options
         if Plan._opt('names'):
             names.extend(Plan._opt('names'))
@@ -918,9 +930,14 @@ class Tree(tmt.utils.Common):
                 for plan in self.tree.prune(keys=keys, names=names)],
             filters, conditions)
 
-    def stories(
-            self, keys=[], names=[], filters=[], conditions=[], whole=False):
+    def stories(self, keys=None, names=None, filters=None, conditions=None,
+                whole=False):
         """ Search available stories """
+        keys = (keys or [])[:]
+        names = (names or [])[:]
+        filters = (filters or [])[:]
+        conditions = (conditions or [])[:]
+
         # Apply possible command line options
         if Story._opt('names'):
             names.extend(Story._opt('names'))
