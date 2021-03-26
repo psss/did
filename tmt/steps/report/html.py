@@ -57,7 +57,6 @@ HTML_TEMPLATE = """
         td {
             background: #f8f8f8;
             border-radius: 0.5ex;
-            word-spacing: 1ex;
         }
 
         td.result {
@@ -85,6 +84,14 @@ HTML_TEMPLATE = """
         td.error {
             background: #b4d;
         }
+
+        td.log {
+            word-spacing: 1ex;
+        }
+
+        td.note {
+            color: #c00;
+        }
     </style>
 </head>
 <body>
@@ -109,6 +116,9 @@ HTML_TEMPLATE = """
             <a href="{{ base_dir }}/{{ log }}">{{ log | basename }}</a>
         {% endfor %}
         </td>
+        {% if result.note %}
+        <td class="note">{{ result.note|e }}</td>
+        {% endif %}
     </tr>
     {% endfor %}
 </table>
