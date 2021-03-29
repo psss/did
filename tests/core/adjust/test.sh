@@ -11,19 +11,19 @@ rlJournalStart
     rlPhaseStartTest "Show tests"
         # Default context
         rlRun "tmt test show pidof | tee $output"
-        rlAssertGrep 'enabled\s+yes' $output -E
+        rlAssertGrep 'enabled\s+true' $output -E
         # Fedora 33 (enabled)
         rlRun "tmt -c distro=fedora-33 test show pidof | tee $output"
-        rlAssertGrep 'enabled\s+yes' $output -E
+        rlAssertGrep 'enabled\s+true' $output -E
         # CentOS 8 (enabled)
         rlRun "tmt -c distro=centos-8 test show pidof | tee $output"
-        rlAssertGrep 'enabled\s+yes' $output -E
+        rlAssertGrep 'enabled\s+true' $output -E
         # CentOS 7 (disabled)
         rlRun "tmt -c distro=centos-7 test show pidof | tee $output"
-        rlAssertGrep 'enabled\s+no' $output -E
+        rlAssertGrep 'enabled\s+false' $output -E
         # Context file (pidof disabled, uptime duration adjusted)
         rlRun "tmt -c @context.yaml test show pidof | tee $output"
-        rlAssertGrep 'enabled\s+no' $output -E
+        rlAssertGrep 'enabled\s+false' $output -E
         rlRun "tmt -c @context.yaml test show uptime | tee $output"
         rlAssertGrep 'duration\s+1m' $output -E
     rlPhaseEnd

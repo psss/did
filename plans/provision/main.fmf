@@ -2,3 +2,9 @@
 discover:
     how: fmf
     filter: 'tag: virtual & tier:1'
+
+# Run only during a full testing
+enabled: false
+adjust:
+    enabled: true
+    when: how == full

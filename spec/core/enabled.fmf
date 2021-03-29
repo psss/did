@@ -1,0 +1,33 @@
+summary: Allow disabling individual tests, plans or stories
+
+story:
+    As a developer or tester I want selected tests or plans to be
+    skipped during test execution.
+
+description: |
+    When a test or a plan is broken or it is not relevant for
+    given :ref:`/spec/context` it can be disabled so that it's
+    skipped during the execution. For stories, this attribute
+    might be used to mark stories which should be skipped when
+    generating the documentation.
+
+    Should be a ``boolean``. The default value is ``true``.
+
+example: |
+    # Mark as disabled
+    enabled: false
+
+    # Disable for older distros
+    enabled: true
+    adjust:
+        enabled: false
+        when: distro < fedora-33
+        because: the feature was added in Fedora 33
+
+    # List only enabled tests
+    tmt tests ls --filter enabled:true
+
+link:
+  - implemented-by: /tmt/base.py
+  - verified-by: /tests/test/select
+  - verified-by: /tests/core/enabled

@@ -1,0 +1,4 @@
+summary: Verify the core attribute 'enabled'
+description:
+    Check that selecting enabled and disabled stories, plans and
+    tests works as expected and that the value is shown correctly.

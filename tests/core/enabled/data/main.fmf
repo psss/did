@@ -1,0 +1,25 @@
+
+/tests:
+    summary: Example test
+    test: ./test.sh
+    /enabled:
+        enabled: true
+    /disabled:
+        enabled: false
+
+/plans:
+    summary: Example plan
+    execute:
+        how: tmt
+    /enabled:
+        enabled: true
+    /disabled:
+        enabled: false
+
+/stories:
+    summary: Example story
+    story: As a user I want this.
+    /enabled:
+        enabled: true
+    /disabled:
+        enabled: false

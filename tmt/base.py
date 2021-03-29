@@ -45,8 +45,8 @@ class Node(tmt.utils.Common):
     Implements common Test, Plan and Story methods.
     """
 
-    # Supported attributes
-    _keys = ['summary', 'description', 'link']
+    # Core attributes (supported across all levels)
+    _keys = ['summary', 'description', 'enabled', 'link']
 
     def __init__(self, node, parent=None):
         """ Initialize the node """
@@ -62,6 +62,9 @@ class Node(tmt.utils.Common):
         # Set all core attributes
         for key in self._keys:
             setattr(self, key, self.node.get(key))
+
+        # Check whether the node is enabled, handle the default
+        self._check('enabled', expected=bool, default=True)
 
         # Convert link into the canonical form, store the object
         self._link = Link(self.link)
@@ -273,7 +276,6 @@ class Test(Node):
         # Default duration, manual, enabled and result
         self._check('duration', expected=str, default=DEFAULT_TEST_DURATION_L1)
         self._check('manual', expected=bool, default=False)
-        self._check('enabled', expected=bool, default=True)
         self._check('result', expected=str, default='respect')
 
         self._update_metadata()
@@ -578,6 +580,7 @@ class Plan(Node):
         if self.environment:
             echo(tmt.utils.format(
                 'environment', self.environment, key_color='blue'))
+        echo(tmt.utils.format('enabled', self.enabled, key_color='cyan'))
         self._link.show()
         if self._fmf_context():
             echo(tmt.utils.format(
@@ -657,16 +660,13 @@ class Story(Node):
         'story',
         'description',
         'example',
+        'enabled',
         'link',
         ]
 
     def __init__(self, node):
         """ Initialize the story """
-        super(Story, self).__init__(node)
-        self.summary = node.get('summary')
-        # Get all supported attributes
-        for key in self._keys:
-            setattr(self, key, self.node.get(key))
+        super().__init__(node)
         self._update_metadata()
 
     @property
@@ -1092,7 +1092,7 @@ class Run(tmt.utils.Common):
     def plans(self):
         """ Test plans for execution """
         if self._plans is None:
-            self._plans = self.tree.plans(run=self)
+            self._plans = self.tree.plans(run=self, filters=['enabled:true'])
         return self._plans
 
     def finish(self):

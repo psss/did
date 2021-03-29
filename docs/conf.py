@@ -276,4 +276,5 @@ for area in areas:
         doc.write('{}\n{}\n'.format(areas[area], '=' * len(areas[area])))
         # Included stories
         for story in tree.stories(names=[area], whole=True):
-            doc.write(story.export(title=story.name != area))
+            if story.enabled:
+                doc.write(story.export(title=story.name != area))

@@ -839,7 +839,7 @@ def format(
         output = style(output, fg=key_color)
     # Bool
     if isinstance(value, bool):
-        output += ('yes' if value else 'no')
+        output += ('true' if value else 'false')
     # List
     elif isinstance(value, list):
         # Make sure everything is string, prepare list, check for spaces
