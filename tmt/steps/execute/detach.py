@@ -76,9 +76,8 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
             except tmt.utils.FileError:
                 pass
 
-    def remove_logs(self, logs=None):
+    def remove_logs(self):
         """ Clean up possible old logs """
-        logs = logs or []
         for log in LOGS:
             path = os.path.join(self.step.workdir, log)
             if os.path.exists(path):

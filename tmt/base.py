@@ -890,20 +890,13 @@ class Tree(tmt.utils.Common):
 
     def tests(self, keys=None, names=None, filters=None, conditions=None):
         """ Search available tests """
-        keys = (keys or [])[:]
-        names = (names or [])[:]
-        filters = (filters or [])[:]
-        conditions = (conditions or [])[:]
+        # Handle defaults, apply possible command line options
+        keys = (keys or []) + ['test']
+        names = (names or []) + list(Test._opt('names', []))
+        filters = (filters or []) + list(Test._opt('filters', []))
+        conditions = (conditions or []) + list(Test._opt('conditions', []))
 
-        # Apply possible command line options
-        if Test._opt('names'):
-            names.extend(Test._opt('names'))
-        if Test._opt('filters'):
-            filters.extend(Test._opt('filters'))
-        if Test._opt('conditions'):
-            conditions.extend(Test._opt('conditions'))
         # Build the list and convert to objects
-        keys = keys + ['test']
         return self._filters_conditions(
             [Test(test) for test in self.tree.prune(keys=keys, names=names)],
             filters, conditions)
@@ -911,20 +904,13 @@ class Tree(tmt.utils.Common):
     def plans(self, keys=None, names=None, filters=None, conditions=None,
               run=None):
         """ Search available plans """
-        keys = (keys or [])[:]
-        names = (names or [])[:]
-        filters = (filters or [])[:]
-        conditions = (conditions or [])[:]
+        # Handle defaults, apply possible command line options
+        keys = (keys or []) + ['execute']
+        names = (names or []) + list(Plan._opt('names', []))
+        filters = (filters or []) + list(Plan._opt('filters', []))
+        conditions = (conditions or []) + list(Plan._opt('conditions', []))
 
-        # Apply possible command line options
-        if Plan._opt('names'):
-            names.extend(Plan._opt('names'))
-        if Plan._opt('filters'):
-            filters.extend(Plan._opt('filters'))
-        if Plan._opt('conditions'):
-            conditions.extend(Plan._opt('conditions'))
         # Build the list and convert to objects
-        keys = keys + ['execute']
         return self._filters_conditions(
             [Plan(plan, run=run)
                 for plan in self.tree.prune(keys=keys, names=names)],
@@ -933,20 +919,13 @@ class Tree(tmt.utils.Common):
     def stories(self, keys=None, names=None, filters=None, conditions=None,
                 whole=False):
         """ Search available stories """
-        keys = (keys or [])[:]
-        names = (names or [])[:]
-        filters = (filters or [])[:]
-        conditions = (conditions or [])[:]
+        # Handle defaults, apply possible command line options
+        keys = (keys or []) + ['story']
+        names = (names or []) + list(Story._opt('names', []))
+        filters = (filters or []) + list(Story._opt('filters', []))
+        conditions = (conditions or []) + list(Story._opt('conditions', []))
 
-        # Apply possible command line options
-        if Story._opt('names'):
-            names.extend(Story._opt('names'))
-        if Story._opt('filters'):
-            filters.extend(Story._opt('filters'))
-        if Story._opt('conditions'):
-            conditions.extend(Story._opt('conditions'))
         # Build the list and convert to objects
-        keys = keys + ['story']
         return self._filters_conditions(
             [Story(story) for story in self.tree.prune(
                 keys=keys, names=names, whole=whole)],

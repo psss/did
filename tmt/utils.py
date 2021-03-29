@@ -138,7 +138,7 @@ class Common(object):
     def _opt(cls, option, default=None):
         """ Get an option from the command line context (class version) """
         if cls._context is None:
-            return None
+            return default
         return cls._context.params.get(option, default)
 
     def _fmf_context(self):
