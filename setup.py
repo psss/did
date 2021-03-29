@@ -5,14 +5,13 @@ import re
 from io import open
 from setuptools import setup
 
-# Parse the version and release from the spec file
+# Parse version from the spec file
 with open('tmt.spec', encoding='utf-8') as specfile:
     lines = "\n".join(line.rstrip() for line in specfile)
     version = re.search('Version: (.+)', lines).group(1).rstrip()
-    release = re.search('Release: (\d+)', lines).group(1).rstrip()
 
 # acceptable version schema: major.minor[.patch][sub]
-__version__ = '.'.join([version, release])
+__version__ = version
 __pkg__ = 'tmt'
 __pkgdir__ = {}
 __pkgs__ = [
