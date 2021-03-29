@@ -797,14 +797,14 @@ def export(
 #  Init
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-_init_templates = listed(tmt.templates.INIT_TEMPLATE_CHOICES, join='or')
 @main.command()
 @click.pass_context
 @click.argument('path', default='.')
 @click.option(
     '-t', '--template', default='empty', metavar='TEMPLATE',
-    type=click.Choice(tmt.templates.INIT_TEMPLATE_CHOICES),
-    help='Template ({}).'.format(_init_templates))
+    type=click.Choice(['empty'] + tmt.templates.INIT_TEMPLATES),
+    help='Template ({}).'.format(
+        listed(tmt.templates.INIT_TEMPLATES, join='or')))
 @verbose_debug_quiet
 @force_dry
 def init(context, path, template, force, **kwargs):
@@ -821,8 +821,6 @@ def init(context, path, template, force, **kwargs):
     * 'full' template contains a 'full' story, an 'full' plan and a shell test.
     """
 
-    #import pdb
-    #pdb.set_trace()
     tmt.base.Tree._save_context(context)
     tmt.base.Tree.init(path, template, force, **kwargs)
 

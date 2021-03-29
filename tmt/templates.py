@@ -2,7 +2,7 @@
 
 """ Default Templates """
 
-INIT_TEMPLATE_CHOICES = ['empty', 'mini', 'base', 'full']
+INIT_TEMPLATES = ['mini', 'base', 'full']
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Test Templates

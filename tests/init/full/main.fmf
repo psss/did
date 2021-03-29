@@ -1,3 +1,4 @@
-summary: Concise summary describing what the test does
-test: ./test.sh
-framework: beakerlib
+summary: Initialize tree with the full template
+description:
+    Verify initializing a new the tree with the full template
+    containing a story, a plan and a test.

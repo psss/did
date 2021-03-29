@@ -937,8 +937,7 @@ class Tree(tmt.utils.Common):
 
     @staticmethod
     def init(path, template, force, **kwargs):
-        _init_templates = listed(tmt.templates.INIT_TEMPLATE_CHOICES,
-                                 join='or')
+        """ Initialize a new tmt tree, optionally with a template """
         path = os.path.realpath(path)
         dry = Tree._opt('dry')
 
@@ -956,7 +955,6 @@ class Tree(tmt.utils.Common):
         # Create a new tree
         if tree is None:
             if dry:
-
                 echo(f"Tree '{path}' would be initialized.")
             else:
                 try:
@@ -965,20 +963,17 @@ class Tree(tmt.utils.Common):
                     path = tree.root
                 except fmf.utils.GeneralError as error:
                     raise tmt.utils.GeneralError(
-                        "Failed to initialize tree in '{}': {}".format(
-                            path, error))
-                echo("Tree '{}' initialized.".format(tree.root))
+                        f"Failed to initialize tree in '{path}': {error}")
+                echo(f"Tree '{tree.root}' initialized.")
 
         # Populate the tree with example objects if requested
         if template == 'empty':
-            non_empty_choices = [c for c in tmt.templates.INIT_TEMPLATE_CHOICES
-                                 if c != 'empty']
+            choices = listed(tmt.templates.INIT_TEMPLATES, join='or')
             echo(
-                "To populate it with example content, use --template with "
-                "{}.".format(listed(non_empty_choices, join='or')))
+                f"To populate it with example content, "
+                f"use --template with {choices}.")
         else:
-            echo("Applying template '{}'.".format(template,
-                                                  _init_templates))
+            echo(f"Applying template '{template}'.")
 
         if template == 'mini':
             tmt.Plan.create('/plans/example', 'mini', path, force, dry)
