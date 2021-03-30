@@ -98,6 +98,8 @@ description: |
 
         modified-only
             Set to True if you want to filter modified tests only.
+            The test is modified if its name starts with the name
+            of any directory modified since modified-ref.
         modified-url
             Will be fetched as a "reference" remote in the test
             dir.

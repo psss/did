@@ -205,7 +205,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 ['git', 'log', '--format=', '--stat', '--name-only',
                 f"{modified_ref}..HEAD"], cwd=testdir, shell=False)[0]
             modified = set(
-                f"^/{re.escape(name)}$"
+                f"^/{re.escape(name)}"
                 for name in map(os.path.dirname, output.split('\n')) if name)
             self.debug(f"Limit to modified test dirs: {modified}", level=3)
             names.extend(modified)
