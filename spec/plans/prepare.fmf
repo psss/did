@@ -53,6 +53,9 @@ description: |
         Additionaly, the ``directory`` attribute can be used to
         install all packages from the given directory. Copr
         repositories can be enabled using the ``copr`` attribute.
+        Use the ``exclude`` option to skip selected packages from
+        installation (globbing characters are supported as well).
+
         It's possible to change the behaviour when a package is
         missing using the ``missing`` attribute. The missing
         packages can either be silently ignored ('skip') or a
@@ -70,6 +73,9 @@ description: |
             how: install
             directory:
                 - tmp/RPMS/noarch
+            exclude:
+                - tmt-all
+                - tmt-provision-virtual
 
         prepare:
             how: install
@@ -79,3 +85,4 @@ description: |
 
     link:
       - implemented-by: /tmt/steps/provision
+      - verified-by: /tests/prepare/install

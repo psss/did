@@ -1,0 +1,10 @@
+summary: Exclude packages during installation
+provision:
+    how: container
+prepare:
+    how: install
+    package: httpd-*
+    exclude: httpd-manual
+execute:
+    how: tmt
+    script: rpm -q httpd-manual && exit 1 || echo 'Good!'

@@ -32,11 +32,13 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
                 - tmp/RPMS/noarch/tmt-0.15-1.fc31.noarch.rpm
                 - tmp/RPMS/noarch/python3-tmt-0.15-1.fc31.noarch.rpm
 
-    Use 'directory' to install all packages from given folder:
+    Use 'directory' to install all packages from given folder and
+    'exclude' to skip selected packages:
 
         prepare:
             how: install
             directory: tmp/RPMS/noarch
+            exclude: tmt-provision-virtual
 
     Use 'order' attribute to select in which order preparation should
     happen if there are multiple configs. Default order is '50'.
@@ -60,6 +62,9 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
                 '-c', '--copr', metavar='REPO', multiple=True,
                 help='Copr repository to be enabled.'),
             click.option(
+                '-x', '--exclude', metavar='PACKAGE', multiple=True,
+                help='Packages to be skipped during installation.'),
+            click.option(
                 '-m', '--missing', metavar='ACTION',
                 type=click.Choice(['fail', 'skip']),
                 help='Action on missing packages, fail (default) or skip.'),
@@ -69,19 +74,22 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
         """ Return default data for given option """
         if option == 'missing':
             return 'fail'
+        if option == 'exclude':
+            return []
         return default
 
     def show(self):
         """ Show provided scripts """
-        super().show(['package', 'directory', 'copr', 'missing'])
+        super().show(['package', 'directory', 'copr', 'exclude', 'missing'])
 
     def wake(self, data=None):
         """ Override options and wake up the guest """
-        super().wake(['package', 'directory', 'copr', 'missing'])
+        super().wake(['package', 'directory', 'copr', 'exclude', 'missing'])
 
         # Convert to list if necessary
         tmt.utils.listify(
-            self.data, split=True, keys=['package', 'directory', 'copr'])
+            self.data, split=True, keys=[
+                'package', 'directory', 'copr', 'exclude'])
 
     def enable_copr_epel6(self, copr, guest):
         """ Manually enable copr repositories for epel6 """
@@ -177,6 +185,11 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
                     self.debug(f"Found rpm '{filename}'.", level=3)
                     local_packages.append(os.path.join(directory, filename))
 
+        # Prepare the install options
+        options = '-y'
+        for package in self.get('exclude'):
+            options += " --exclude " + tmt.utils.quote(package)
+
         # Install from local filesystem
         if local_packages:
             rpms_directory = os.path.join(self.step.workdir, 'rpms')
@@ -192,8 +205,8 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
 
             # Use both dnf install/reinstall to get all packages refreshed
             # FIXME Simplify this once BZ#1831022 is fixed/implemeted.
-            guest.execute(f"{command} install -y {rpms_directory}/*")
-            guest.execute(f"{command} reinstall -y {rpms_directory}/*")
+            guest.execute(f"{command} install {options} {rpms_directory}/*")
+            guest.execute(f"{command} reinstall {options} {rpms_directory}/*")
             summary = fmf.utils.listed(local_packages, 'local package')
             self.info('total', f"{summary} installed", 'green')
 
@@ -215,5 +228,5 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
             check = f'rpm -q --whatprovides {packages}'
             # Check and install (extra check for yum to workaround BZ#1920176)
             guest.execute(
-                f'{check} || {command} install -y {packages}' +
+                f'{check} || {command} install {options} {packages}' +
                 (f' && {check}' if 'yum' in command else ''))

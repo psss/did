@@ -14,6 +14,10 @@ rlJournalStart
         rlRun "tmt run -adddvvv plan --name escape"
     rlPhaseEnd
 
+    rlPhaseStartTest "Exclude selected packages"
+        rlRun "tmt run -adddvvv plan --name exclude"
+    rlPhaseEnd
+
     rlPhaseStartTest "Install from epel7 copr"
         rlRun "tmt run -adddvvv plan --name epel7"
     rlPhaseEnd
