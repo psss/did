@@ -11,7 +11,6 @@ import click
 import pprint
 import subprocess
 import functools
-import collections
 
 import tmt.steps
 import tmt.utils
@@ -593,7 +592,7 @@ class Plan(Node):
         """ Lint execute step """
         execute = self.node.get('execute')
         if not execute:
-            echo(verdict(0, 'execute step must be defined with "how"'))
+            echo(verdict(0, "execute step must be defined with 'how'"))
             return False
 
         how = execute.get('how')
@@ -602,14 +601,14 @@ class Plan(Node):
             for method in tmt.steps.execute.ExecutePlugin.methods()]
 
         if how not in methods:
-            echo(verdict(0, f'unsupported execute method "{how}"'))
+            echo(verdict(0, f"unsupported execute method '{how}'"))
             return False
 
         return True
 
     def _lint_summary(self):
         """ Lint summary step """
-        # summary is advised with a resonable length
+        # Summary is advised with a resonable length
         if self.summary is None:
             echo(verdict(2, 'summary is very useful for quick inspection'))
         elif len(self.summary) > 50:
@@ -619,7 +618,7 @@ class Plan(Node):
 
     def _lint_discover(self):
         """ Lint discover step """
-        # discover step is optional
+        # The discover step is optional
         discover = self.node.get('discover')
         if not discover:
             return True
@@ -630,22 +629,22 @@ class Plan(Node):
             for method in tmt.steps.discover.DiscoverPlugin.methods()]
 
         if how not in methods:
-            echo(verdict(0, f'unknown discover method "{how}"'))
+            echo(verdict(0, f"unknown discover method '{how}'"))
             return False
+
+        # FIXME Add check for the shell discover method
+        if how == 'shell':
+            return True
 
         return self._lint_discover_fmf(discover)
 
     @staticmethod
     def _lint_discover_fmf(discover):
         """ Lint fmf discover method """
-        # default to `None` for non-existing keys
-        fmf_id = collections.defaultdict(lambda: None, {
-            key: value for key, value in discover.items()
-            if key in ['url', 'ref', 'path'] and value
-            })
-
-        # validate remote id and translate to human readable errors
-        valid, error = tmt.utils.validate_fmf_id(fmf_id)
+        # Validate remote id and translate to human readable errors
+        valid, error = tmt.utils.validate_fmf_id(
+            {key: value for key, value in discover.items()
+                if key in ['url', 'ref', 'path']})
 
         if valid:
             echo(verdict(1, 'fmf remote id is valid'))
@@ -656,13 +655,13 @@ class Plan(Node):
 
     def lint(self):
         """
-        Check plan against the L2 metadata specification.
+        Check plan against the L2 metadata specification
 
         Return whether the plan is valid.
         """
         self.ls()
 
-        # explore all available plugins
+        # Explore all available plugins
         tmt.plugins.explore()
 
         return all([

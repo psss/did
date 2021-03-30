@@ -1,3 +1,1 @@
 summary: Checks whether plan linting works correctly
-
-test: ./test.sh

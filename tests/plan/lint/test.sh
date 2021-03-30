@@ -1,18 +1,21 @@
 #!/bin/bash
-# vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
 . /usr/share/beakerlib/beakerlib.sh || exit 1
 
 rlJournalStart
     rlPhaseStartSetup
         rlRun "pushd data"
-        rlRun "set -o pipefail"
-        rlRun "tmt init"
     rlPhaseEnd
 
     rlPhaseStartTest "Good"
-        rlRun "tmt plan lint good"
+        rlRun -s "tmt plan lint good"
+        rlAssertGrep "/good" $rlRun_LOG
+        rlAssertNotGrep 'warn summary ' $rlRun_LOG
+        rlRun "rm $rlRun_LOG"
+
         rlRun -s "tmt plan lint valid_fmf"
         rlAssertGrep "pass fmf remote id is valid" $rlRun_LOG
+        rlAssertNotGrep 'warn summary ' $rlRun_LOG
+        rlRun "rm $rlRun_LOG"
     rlPhaseEnd
 
     rlPhaseStartTest "Bad"
@@ -22,11 +25,13 @@ rlJournalStart
         rlRun "rm $rlRun_LOG"
 
         rlRun -s "tmt plan lint invalid_how" 1
-        rlAssertGrep "fail unknown discover method \"somehow\"" $rlRun_LOG
+        rlAssertGrep "fail unknown discover method 'somehow'" $rlRun_LOG
+        rlAssertGrep "fail unsupported execute method 'somehow'" $rlRun_LOG
         rlRun "rm $rlRun_LOG"
 
         rlRun -s "tmt plan lint invalid_url" 1
-        rlAssertGrep "fail repo 'http://invalid-url' cannot be cloned" $rlRun_LOG
+        rlAssertGrep "fail repo 'http://invalid-url' cannot be cloned" \
+            $rlRun_LOG
         rlRun "rm $rlRun_LOG"
 
         rlRun -s "tmt plan lint invalid_ref" 1
