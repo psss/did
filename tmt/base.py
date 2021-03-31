@@ -360,23 +360,21 @@ class Test(Node):
         """
         self.ls()
 
-        valid = self.test is not None
         # Check that the path is absolute (it is defined and starts with /)
         # and that it exists.
         stripped_path = self.path.strip()
         test_path = self.node.root + stripped_path
-        if not stripped_path.startswith('/') or not os.path.exists(test_path):
-            valid = False
 
         # Check test, path and summary
-        echo(verdict(self.test is not None, 'test script must be defined'))
-        echo(verdict(stripped_path.startswith('/'),
-                     'directory path must be absolute'))
-        echo(verdict(os.path.exists(test_path), 'directory path must exist'))
+        valid = verdict(bool(self.test), 'test script must be defined')
+        valid = valid and verdict(stripped_path.startswith('/'),
+                                  'directory path must be absolute')
+        valid = valid and verdict(os.path.exists(test_path),
+                                  'directory path must exist')
         if self.summary is None:
-            echo(verdict(2, 'summary is very useful for quick inspection'))
+            verdict(None, 'summary is very useful for quick inspection')
         elif len(self.summary) > 50:
-            echo(verdict(2, 'summary should not exceed 50 characters'))
+            verdict(None, 'summary should not exceed 50 characters')
 
         # Check for possible test case relevancy rules
         filename = self.node.sources[-1]
@@ -387,10 +385,9 @@ class Test(Node):
             if self.opt('fix'):
                 metadata['adjust'] = tmt.convert.relevancy_to_adjust(relevancy)
                 self.write(filename, tmt.utils.dict_to_yaml(metadata))
-                echo(verdict(2, 'relevancy converted into adjust'))
+                verdict(None, 'relevancy converted into adjust')
             else:
-                echo(verdict(0, 'relevancy has been obsoleted by adjust'))
-                valid = False
+                valid = verdict(False, 'relevancy has been obsoleted by adjust')
 
         return valid
 
@@ -830,13 +827,13 @@ class Story(Node):
         """ Show story coverage """
         if code:
             code = bool(self.implemented)
-            echo(verdict(code, good='done', bad='todo') + ' ', nl=False)
+            verdict(code, good='done ', bad='todo ', nl=False)
         if test:
             test = bool(self.verified)
-            echo(verdict(test, good='done', bad='todo') + ' ', nl=False)
+            verdict(test, good='done ', bad='todo ', nl=False)
         if docs:
             docs = bool(self.documented)
-            echo(verdict(docs, good='done', bad='todo') + ' ', nl=False)
+            verdict(docs, good='done ', bad='todo ', nl=False)
         echo(self)
         return (code, test, docs)
 

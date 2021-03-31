@@ -798,25 +798,31 @@ def duration_to_seconds(duration):
         raise SpecificationError(f"Invalid duration '{duration}'.")
 
 
-def verdict(decision, comment=None, good='pass', bad='fail', problem='warn'):
+def verdict(decision, comment=None, good='pass', bad='fail', problem='warn', **kwargs):
     """
-    Return verdict in green or red based on the decision
+    Print verdict in green, red or yellow based on the decision and return back the decision
 
-    0 or False ... good (green)
-    1 or True .... bad (red)
-    otherwise .... problem (yellow)
+    True  ... good (green)
+    False ... bad (red)
+    None  ... problem (yellow)
+    other ... will traceback
+
+    Additional arguments are passed to `echo` function
     """
 
-    if decision == 0:
+    if decision is False:
         text = style(bad, fg='red')
-    elif decision == 1:
+    elif decision is True:
         text = style(good, fg='green')
-    else:
+    elif decision is None:
         text = style(problem, fg='yellow')
-    if comment:
-        return text + ' ' + comment
     else:
-        return text
+        raise GeneralError(
+            "Invalid decision value, must be 'True', 'False' or 'None'")
+    if comment:
+        text = text + ' ' + comment
+    echo(text, **kwargs)
+    return decision
 
 
 def format(
