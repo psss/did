@@ -410,6 +410,11 @@ class Common(object):
 
         # Run the command, handle the exit code
         cwd = cwd or self.workdir
+
+        # Fail nicely if the working directory does not exist
+        if not os.path.exists(cwd):
+            raise GeneralError(f"The working directory '{cwd}' does not exist.")
+
         try:
             return self._run(
                 command, cwd, shell, env, log, join, interactive, timeout)

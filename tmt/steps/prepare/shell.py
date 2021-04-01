@@ -61,4 +61,4 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
         # Execute each script on the guest
         for script in scripts:
             self.verbose('script', script, 'green')
-            guest.execute(script, cwd=self.step.workdir)
+            guest.execute(script, cwd=self.step.plan.workdir_tree)

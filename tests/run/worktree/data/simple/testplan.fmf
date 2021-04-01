@@ -1,0 +1,24 @@
+prepare:
+    script: grep CHECK testfile
+
+execute:
+    script: grep CHECK testfile
+
+finish:
+    script: grep CHECK testfile
+
+/local:
+    provision:
+        how: local
+
+# /minute:
+#     provision:
+#         how: minute
+
+# /virtual:
+#     provision:
+#         how: minute
+
+/container:
+    provision:
+        how: container

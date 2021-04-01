@@ -75,7 +75,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             tests.child(name, data)
 
         # Copy directory tree (if defined) to the workdir
-        directory = self.step.plan.run.tree.root
+        directory = self.step.plan.my_run.tree.root
         testdir = os.path.join(self.workdir, 'tests')
         if directory:
             self.info('directory', directory, 'green')

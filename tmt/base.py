@@ -430,7 +430,7 @@ class Plan(Node):
     def __init__(self, node, run=None):
         """ Initialize the plan """
         super().__init__(node, parent=run)
-        self.run = run
+        self.my_run = run
 
         # Initialize test steps
         self.discover = tmt.steps.discover.Discover(
@@ -445,6 +445,9 @@ class Plan(Node):
             self.node.get('report'), self)
         self.finish = tmt.steps.finish.Finish(
             self.node.get('finish'), self)
+
+        # Initialize workdir tree
+        self._initialize_workdir_tree()
 
         # Relevant gates (convert to list if needed)
         self.gate = node.get('gate')
@@ -465,12 +468,29 @@ class Plan(Node):
     @property
     def environment(self):
         """ Return combined environment from plan data and command line """
-        if self.run and self.run.environment:
+        if self.my_run and self.my_run.environment:
             combined = self._environment.copy()
-            combined.update(self.run.environment)
+            combined.update(self.my_run.environment)
             return combined
         else:
             return self._environment
+
+    def _initialize_workdir_tree(self):
+        """
+        Workdir tree, a copy of the tree root, used as cwd in prepare, execute
+        and finish steps
+        """
+        # Bail out if workdir does not exist, e.g. not running the plan ...
+        if not self.workdir:
+            return
+
+        self.workdir_tree = os.path.join(self.workdir, 'tree')
+        tree_root = self.my_run.tree.root
+        if not tree_root:
+            self.debug('skipping workdir tree init, not tree root present')
+            return
+
+        self.run(f'rsync -ar --exclude .git {tree_root}/ {self.workdir_tree}')
 
     def _fmf_context(self):
         """ Return combined context from plan data and command line """
@@ -790,7 +810,6 @@ class Story(Node):
         tmt.utils.create_file(
             path=story_path, content=content,
             name='story', dry=dry, force=force)
-
 
     @staticmethod
     def overview(tree):

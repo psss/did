@@ -135,7 +135,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             if path and not os.path.isdir(path):
                 raise tmt.utils.DiscoverError(
                     f"Provided path '{path}' is not a directory.")
-            fmf_root = path or self.step.plan.run.tree.root
+            fmf_root = path or self.step.plan.my_run.tree.root
             # Check git repository root (use fmf root if not found)
             try:
                 output = self.run(

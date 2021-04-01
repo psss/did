@@ -1,5 +1,7 @@
+import os
 import tmt
 import click
+
 
 class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
     """
@@ -128,27 +130,33 @@ class GuestContainer(tmt.Guest):
                 ['pull', '-q', self.image],
                 message=f"Pull image '{self.image}'.")
 
-        # Deduce container name from run id, as it can be a path,
+        # Mount the whole plan directory in the container
+        workdir = self.parent.plan.workdir
+
+        # Deduce container name from workdir, because it is a path
         # make it podman container name friendly
-        tmt_workdir = self.parent.plan.workdir
-        self.container = 'tmt' + tmt_workdir.replace('/', '-')
+        self.container = 'tmt' + workdir.replace('/', '-')
         self.verbose('name', self.container, 'green')
 
         # Run the container
         self.container_id = self.podman(
             ['run'] + ['--name', self.container,
-            '-v', f'{tmt_workdir}:{tmt_workdir}:Z', '-itd', self.image],
+            '-v', f'{workdir}:{workdir}:Z', '-itd', self.image],
             message=f"Start container '{self.image}'.")[0].strip()
 
     def ansible(self, playbook):
         """ Prepare container using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
+        # as non-root we must run with podman unshare
+        podman_unshare = 'podman unshare ' if os.geteuid() != 0 else ''
         stdout, stderr = self.run(
             f'stty cols {tmt.utils.OUTPUT_WIDTH}; '
             f'{self._export_environment()}'
-            f'podman unshare ansible-playbook'
+            f'{podman_unshare}'
+            f'ansible-playbook '
             f'{self._ansible_verbosity()} -c podman -i {self.container}, '
-            f'{playbook}')
+            f'{playbook}',
+            cwd=self.parent.plan.workdir_tree)
         self._ansible_summary(stdout)
 
     def podman(self, command, **kwargs):

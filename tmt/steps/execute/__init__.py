@@ -41,7 +41,7 @@ class Execute(tmt.steps.Step):
         # FIXME remove when we drop the old execution methods
         self._framework = DEFAULT_FRAMEWORK
         # Map old methods now if there is no run (and thus no wake up)
-        if not self.plan.run:
+        if not self.plan.my_run:
             self._map_old_methods()
 
     def load(self):

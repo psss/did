@@ -6,8 +6,7 @@ prepare:
     package: tmt
   - name: Run preparation script
     how: shell
-    # FIXME change to "./prepare.sh" once #423 is fixed
-    script: ../discover/default/tests/prepare.sh
+    script: ./prepare.sh
 execute:
     how: tmt
     script: /usr/bin/own-program | grep hello

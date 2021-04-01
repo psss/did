@@ -93,6 +93,7 @@ class Provision(tmt.steps.Step):
             plugin.go()
             if isinstance(plugin, ProvisionPlugin):
                 plugin.guest().details()
+                plugin.guest().push()
                 self._guests.append(plugin.guest())
 
         # Give a summary, update status and save
@@ -324,7 +325,7 @@ class Guest(tmt.utils.Common):
         """ Prepare full ansible playbook path """
         # Playbook paths should be relative to the metadata tree root
         self.debug(f"Applying playbook '{playbook}' on guest '{self.guest}'.")
-        playbook = os.path.join(self.parent.plan.run.tree.root, playbook)
+        playbook = os.path.join(self.parent.plan.my_run.tree.root, playbook)
         self.debug(f"Playbook full path: '{playbook}'", level=2)
         return playbook
 
@@ -350,7 +351,8 @@ class Guest(tmt.utils.Common):
             f'stty cols {tmt.utils.OUTPUT_WIDTH}; ansible-playbook '
             f'--ssh-common-args="{self._ssh_options(join=True)}" '
             f'-e ansible_python_interpreter=auto'
-            f'{self._ansible_verbosity()} -i {self._ssh_guest()}, {playbook}')
+            f'{self._ansible_verbosity()} -i {self._ssh_guest()}, {playbook}',
+            cwd=self.parent.plan.workdir_tree)
         self._ansible_summary(stdout)
 
     def execute(self, command, **kwargs):

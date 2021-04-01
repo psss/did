@@ -1,0 +1,4 @@
+summary: Check whether worktree is correctly set.
+description:
+    For `prepare` and `finish` steps, the current working directory
+    must be set to the metadata tree root for best user experience.

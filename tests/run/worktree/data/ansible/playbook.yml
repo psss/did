@@ -1,0 +1,6 @@
+- hosts: all
+  tasks:
+    - copy:
+        src: testfile
+        dest: /tmp/testfile
+    - command: grep PASS /tmp/testfile

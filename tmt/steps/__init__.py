@@ -61,7 +61,7 @@ class Step(tmt.utils.Common):
     def enabled(self):
         """ True if the step is enabled """
         try:
-            return self.name in self.plan.run._context.obj.steps
+            return self.name in self.plan.my_run._context.obj.steps
         except AttributeError:
             return None
 
