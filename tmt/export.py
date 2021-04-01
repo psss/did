@@ -61,25 +61,26 @@ def _nitrate_find_fmf_testcases(test):
             pass
 
 
-def convert_manual_instructions_to_export_sections(test_md):
+def convert_manual_to_nitrate(test_md):
     """
-    Convert Markdown document to html sections. These sections
-    can be exported to nitrate.
+    Convert Markdown document to html sections.
 
+    These sections can be exported to nitrate.
     Expects: Markdown document as a file.
     Returns: tuple of (step, expect, setup, cleanup) sections
     as html strings.
     """
 
-    sections_headings = {'<h1>Setup</h1>': [],
-                         '<h1>Test</h1>': [],
-                         '<h1>Test .*</h1>': [],
-                         '<h2>Step</h2>': [],
-                         '<h2>Test Step</h2>': [],
-                         '<h2>Expect</h2>': [],
-                         '<h2>Result</h2>': [],
-                         '<h2>Expected Result</h2>': [],
-                         '<h1>Cleanup</h1>': []}
+    sections_headings = {
+        '<h1>Setup</h1>': [],
+        '<h1>Test</h1>': [],
+        '<h1>Test .*</h1>': [],
+        '<h2>Step</h2>': [],
+        '<h2>Test Step</h2>': [],
+        '<h2>Expect</h2>': [],
+        '<h2>Result</h2>': [],
+        '<h2>Expected Result</h2>': [],
+        '<h1>Cleanup</h1>': []}
 
     html = markdown_to_html(test_md)
     html_splitlines = html.splitlines()
@@ -122,7 +123,7 @@ def convert_manual_instructions_to_export_sections(test_md):
     def enumerate_content(content):
         content.sort()
         for c in range(len(content)):
-            content[c][1] = f"<p>Step {c + 1}. </p>" + content[c][1]
+            content[c][1] = f"<p>Step {c + 1}.</p>" + content[c][1]
         return content
 
     sorted_test = sorted(concatenate_headings_content((
@@ -322,19 +323,13 @@ def export_to_nitrate(test):
     # Saving case.notes with edited StructField
     nitrate_case.notes = struct_field.save()
 
-    # Export manual tests from test.md to nitrate as html
+    # Export manual test instructions from test.md to nitrate as html
     md_path = os.getcwd() + '/test.md'
     if os.path.exists(md_path):
-        step, expect, setup, cleanup = convert_manual_instructions_to_export_sections(md_path)
-
-        nitrate.User()._server.TestCase.store_text(nitrate_case.id,
-                                                   step,
-                                                   expect,
-                                                   setup,
-                                                   cleanup)
-        echo(style(f"Export large text fields of a case from \n"
-                   f"'{md_path}' to test case '{nitrate_case.identifier}'",
-                   fg='green'))
+        step, expect, setup, cleanup = convert_manual_to_nitrate(md_path)
+        nitrate.User()._server.TestCase.store_text(
+            nitrate_case.id, step, expect, setup, cleanup)
+        echo(style(f"manual steps:", fg='green') + f" found in {md_path}")
 
     # Append id of newly created nitrate case to its file
     if new_test_created:

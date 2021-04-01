@@ -766,7 +766,7 @@ def yaml_to_dict(data):
     return yaml.safe_load(data)
 
 
-def markdown_to_html(test_md):
+def markdown_to_html(filename):
     """
     Convert markdown to html
 
@@ -779,11 +779,11 @@ def markdown_to_html(test_md):
         raise ConvertError("Install tmt-test-convert to export tests.")
 
     try:
-        with open(test_md, 'r') as f:
-            text = f.read()
+        with open(filename, 'r') as file:
+            text = file.read()
             return markdown.markdown(text)
     except IOError:
-        raise ConvertError(f"Unable to open '{test_md}'.")
+        raise ConvertError(f"Unable to open '{filename}'.")
 
 
 def shell_variables(data):
