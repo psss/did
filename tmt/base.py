@@ -359,18 +359,17 @@ class Test(Node):
         Return whether the test is valid.
         """
         self.ls()
-
-        # Check that the path is absolute (it is defined and starts with /)
-        # and that it exists.
         stripped_path = self.path.strip()
         test_path = self.node.root + stripped_path
 
-        # Check test, path and summary
-        valid = verdict(bool(self.test), 'test script must be defined')
-        valid = valid and verdict(stripped_path.startswith('/'),
-                                  'directory path must be absolute')
-        valid = valid and verdict(os.path.exists(test_path),
-                                  'directory path must exist')
+        # Check test, path and summary (use bitwise '&' because 'and' is
+        # lazy and would skip all verdicts following the first fail)
+        valid = verdict(
+            bool(self.test), 'test script must be defined')
+        valid &= verdict(
+            stripped_path.startswith('/'), 'directory path must be absolute')
+        valid &= verdict(
+            os.path.exists(test_path), 'directory path must exist')
         if self.summary is None:
             verdict(None, 'summary is very useful for quick inspection')
         elif len(self.summary) > 50:
@@ -387,7 +386,8 @@ class Test(Node):
                 self.write(filename, tmt.utils.dict_to_yaml(metadata))
                 verdict(None, 'relevancy converted into adjust')
             else:
-                valid = verdict(False, 'relevancy has been obsoleted by adjust')
+                valid = verdict(
+                    False, 'relevancy has been obsoleted by adjust')
 
         return valid
 
@@ -589,8 +589,7 @@ class Plan(Node):
         """ Lint execute step """
         execute = self.node.get('execute')
         if not execute:
-            echo(verdict(0, "execute step must be defined with 'how'"))
-            return False
+            return verdict(False, "execute step must be defined with 'how'")
 
         how = execute.get('how')
         methods = [
@@ -598,8 +597,7 @@ class Plan(Node):
             for method in tmt.steps.execute.ExecutePlugin.methods()]
 
         if how not in methods:
-            echo(verdict(0, f"unsupported execute method '{how}'"))
-            return False
+            return verdict(False, f"unsupported execute method '{how}'")
 
         return True
 
@@ -607,9 +605,9 @@ class Plan(Node):
         """ Lint summary step """
         # Summary is advised with a resonable length
         if self.summary is None:
-            echo(verdict(2, 'summary is very useful for quick inspection'))
+            verdict(None, 'summary is very useful for quick inspection')
         elif len(self.summary) > 50:
-            echo(verdict(2, 'summary should not exceed 50 characters'))
+            verdict(None, 'summary should not exceed 50 characters')
 
         return True
 
@@ -626,8 +624,7 @@ class Plan(Node):
             for method in tmt.steps.discover.DiscoverPlugin.methods()]
 
         if how not in methods:
-            echo(verdict(0, f"unknown discover method '{how}'"))
-            return False
+            return verdict(False, f"unknown discover method '{how}'")
 
         # FIXME Add check for the shell discover method
         if how == 'shell':
@@ -644,11 +641,9 @@ class Plan(Node):
                 if key in ['url', 'ref', 'path']})
 
         if valid:
-            echo(verdict(1, 'fmf remote id is valid'))
-            return True
+            return verdict(True, 'fmf remote id is valid')
 
-        echo(verdict(0, error))
-        return False
+        return verdict(False, error)
 
     def lint(self):
         """
