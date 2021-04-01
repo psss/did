@@ -93,7 +93,6 @@ class Provision(tmt.steps.Step):
             plugin.go()
             if isinstance(plugin, ProvisionPlugin):
                 plugin.guest().details()
-                plugin.guest().push()
                 self._guests.append(plugin.guest())
 
         # Give a summary, update status and save
@@ -352,7 +351,7 @@ class Guest(tmt.utils.Common):
             f'--ssh-common-args="{self._ssh_options(join=True)}" '
             f'-e ansible_python_interpreter=auto'
             f'{self._ansible_verbosity()} -i {self._ssh_guest()}, {playbook}',
-            cwd=self.parent.plan.workdir_tree)
+            cwd=self.parent.plan.worktree)
         self._ansible_summary(stdout)
 
     def execute(self, command, **kwargs):

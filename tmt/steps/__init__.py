@@ -530,7 +530,7 @@ class Login(tmt.utils.Common):
             # Attempt to push the workdir to the guest
             try:
                 guest.push()
-                cwd = self.parent.workdir
+                cwd = self.parent.plan.worktree
             except tmt.utils.GeneralError:
                 self.warn("Failed to push workdir to the guest.")
                 cwd = None

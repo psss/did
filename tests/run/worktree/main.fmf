@@ -1,4 +1,17 @@
-summary: Check whether worktree is correctly set.
+summary: Check whether worktree is correctly set
 description:
-    For `prepare` and `finish` steps, the current working directory
-    must be set to the metadata tree root for best user experience.
+    For the `prepare` and `finish` steps, the current working
+    directory must be set to the metadata tree root for best user
+    experience. By default tested in a `container, for pull
+    requests also against `local` and during `full` testing using
+    `virtual` as well.
+
+environment:
+    METHODS: 'container'
+adjust:
+  - environment:
+        METHODS: 'container local'
+    when: trigger == commit
+  - environment:
+        METHODS: 'container local virtual'
+    when: how == full

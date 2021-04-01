@@ -60,4 +60,4 @@ class FinishShell(tmt.steps.finish.FinishPlugin):
         # Execute each script on the guest
         for script in scripts:
             self.verbose('script', script, 'green')
-            guest.execute(script, cwd=self.step.plan.workdir_tree)
+            guest.execute(script, cwd=self.step.plan.worktree)

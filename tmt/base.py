@@ -447,7 +447,7 @@ class Plan(Node):
             self.node.get('finish'), self)
 
         # Initialize workdir tree
-        self._initialize_workdir_tree()
+        self._initialize_worktree()
 
         # Relevant gates (convert to list if needed)
         self.gate = node.get('gate')
@@ -475,22 +475,24 @@ class Plan(Node):
         else:
             return self._environment
 
-    def _initialize_workdir_tree(self):
+    def _initialize_worktree(self):
         """
-        Workdir tree, a copy of the tree root, used as cwd in prepare, execute
-        and finish steps
+        Prepare the worktree, a copy of the metadata tree root
+
+        Used as cwd in prepare, execute and finish steps.
         """
-        # Bail out if workdir does not exist, e.g. not running the plan ...
+        # Bail out if workdir does not exist (not running the plan)
         if not self.workdir:
             return
 
-        self.workdir_tree = os.path.join(self.workdir, 'tree')
+        self.worktree = os.path.join(self.workdir, 'tree')
         tree_root = self.my_run.tree.root
         if not tree_root:
-            self.debug('skipping workdir tree init, not tree root present')
+            self.debug('Skipping worktree init, no tree root present.')
             return
 
-        self.run(f'rsync -ar --exclude .git {tree_root}/ {self.workdir_tree}')
+        self.debug(f"Sync the worktree to '{self.worktree}'.")
+        self.run(f'rsync -ar --exclude .git {tree_root}/ {self.worktree}')
 
     def _fmf_context(self):
         """ Return combined context from plan data and command line """

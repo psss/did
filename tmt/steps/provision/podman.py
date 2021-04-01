@@ -147,16 +147,15 @@ class GuestContainer(tmt.Guest):
     def ansible(self, playbook):
         """ Prepare container using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
-        # as non-root we must run with podman unshare
+        # As non-root we must run with podman unshare
         podman_unshare = 'podman unshare ' if os.geteuid() != 0 else ''
         stdout, stderr = self.run(
             f'stty cols {tmt.utils.OUTPUT_WIDTH}; '
             f'{self._export_environment()}'
-            f'{podman_unshare}'
-            f'ansible-playbook '
+            f'{podman_unshare}ansible-playbook '
             f'{self._ansible_verbosity()} -c podman -i {self.container}, '
             f'{playbook}',
-            cwd=self.parent.plan.workdir_tree)
+            cwd=self.parent.plan.worktree)
         self._ansible_summary(stdout)
 
     def podman(self, command, **kwargs):

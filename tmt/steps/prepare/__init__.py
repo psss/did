@@ -86,10 +86,11 @@ class Prepare(tmt.steps.Step):
                 missing='skip')
             self._plugins.append(PreparePlugin.delegate(self, data))
 
-        # Prepare guests
+        # Prepare guests (including workdir sync)
         for guest in self.plan.provision.guests():
             for plugin in self.plugins():
                 plugin.go(guest)
+            guest.push()
 
         # Give a summary, update status and save
         self.summary()

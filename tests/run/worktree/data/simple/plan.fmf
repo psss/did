@@ -1,0 +1,8 @@
+provision:
+    how: container
+prepare:
+    script: grep CHECK testfile
+execute:
+    script: grep CHECK testfile
+finish:
+    script: grep CHECK testfile

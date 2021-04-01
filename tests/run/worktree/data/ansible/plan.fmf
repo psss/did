@@ -1,0 +1,18 @@
+prepare:
+  - name: ansible
+    how: ansible
+    playbook: playbook.yml
+  - name: shell
+    how: shell
+    script: grep PASS /tmp/testfile
+
+execute:
+    script: grep PASS /tmp/testfile
+
+finish:
+    script:
+      - grep PASS /tmp/testfile
+      # note that for local execution ansible runs as root
+      # thus we need to use `sudo` here, so it works as
+      # designed
+      - sudo rm /tmp/testfile
