@@ -60,18 +60,23 @@ class Prepare(tmt.steps.Step):
             return
 
         # Required packages
-        requires = list(set(
+        requires = set(
             self.plan.discover.requires() +
             self.plan.provision.requires() +
             self.plan.execute.requires()
-            ))
+            )
+        try:
+            requires.remove('rsync')
+            rsync_required = True
+        except KeyError:
+            rsync_required = False
         if requires:
             data = dict(
                 how='install',
                 name='requires',
                 summary='Install required packages',
                 order=tmt.utils.DEFAULT_PLUGIN_ORDER_REQUIRES,
-                package=requires)
+                package=list(requires))
             self._plugins.append(PreparePlugin.delegate(self, data))
 
         # Recommended packages
@@ -88,9 +93,14 @@ class Prepare(tmt.steps.Step):
 
         # Prepare guests (including workdir sync)
         for guest in self.plan.provision.guests():
+            # Make sure rsync is installed, push the workdir
+            if rsync_required:
+                self.debug('Ensure that rsync is installed on the guest.')
+                guest.execute('rpm -q rsync || yum install -y rsync')
+            guest.push()
+            # Execute each prepare plugin
             for plugin in self.plugins():
                 plugin.go(guest)
-            guest.push()
 
         # Give a summary, update status and save
         self.summary()
