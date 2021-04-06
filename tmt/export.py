@@ -213,7 +213,7 @@ def export_to_nitrate(test):
     nitrate_case.components.clear()
     if general:
         # Remove also all general plans linked to testcase
-        for nitrate_plan in nitrate_case.testplans:
+        for nitrate_plan in [plan for plan in nitrate_case.testplans]:
             if nitrate_plan.type.name == "General":
                 nitrate_case.testplans.remove(nitrate_plan)
     # Then add fmf ones
