@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.3.1
+Version: 1.4.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -174,6 +174,82 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Tue Apr 06 2021 Petr Šplíchal <psplicha@redhat.com> - 1.4.0-1
+- Create a copy of nitrate testplans for iteration
+- Check the rsync as the first preparation step
+- Use an empty worktree if no metadata tree found
+- Adjust manual test instructions export to nitrate
+- Export manual test case fields to nitrate
+- Adjust the worktree implementation and test
+- Implement shared worktree for the tests
+- Adjust the improved verdict implementation
+- Correct the verdict function, align docstring
+- Print final image name in minute plugin
+- Adjust the improved plan linting a bit
+- Improve plan linting
+- Implement port in Guest, show in verbose mode
+- Use qemu user mode in the testcloud provision
+- Support excluding packages during installation
+- Support enabling/disabling plans and stories
+- Do not link and remove general plans by default
+- Improve general plans handling during test export
+- Match by name prefix in discover.modified-only
+- Passthrough non-zero exits for beakerlib execution
+- Adjust the dry mode implementation for tmt init
+- Implement dry mode for the tmt init command
+- Do not use the spec release for the pip version
+- Simplify story, plan and test search methods
+- Do not use mutable objects as default arguments
+- Prevent duplicate content in generated docs
+- Ignore the nitrate migration warning during import
+- Better summary for new exported tests
+- Adjust exception handling in the testcloud plugin
+- Make the testcloud ProvisionError more verbose
+- Use IPv6 enabled 1MT network by default
+- Improve debugging of tests using click runner
+- Fix step selection for --before and --after
+- Adjust the prepare test and pull/push enhancements
+- Add prepare/shell test and pull/push enhancements
+- Test filter on command line overrides config
+- Improve handling of verbose and debug options
+- Verify automated test case import from nitrate
+- Enable copr repo even if no package is provided
+- Improve documentation of tests, plans and stories
+- Use fmf to store the newly created nitrate case id
+- Adjust the hint about increasing the test duration
+- Add hint to stdout in case of timeout
+- Catch all exceptions when evaluating --condition
+- Fix missing overview on the readthedocs.org site
+- Adjust style of the new nitrate integration test
+- Nitrate integration testsuite with requre
+- Always enable force mode for display/html report
+- Improve documentation, clearly show draft stories
+- Test filter on command line overrides config
+- Print unofficial attributes in tmt tests show -vv
+- Adjust dry mode fix for test/plan/story create
+- Implement dry mode for tmt test/plan/story create
+- Support NO_COLOR to disable colored output
+- Add test duration to `results.yaml`
+- Adjust checking for duplicates during test export
+- Prevent creating duplicate test cases in Nitrate
+- Use singular for 'gate' as defined in the spec
+- Fix gates conversion & drop artifacts
+- Adjust a bit the shell completion instructions
+- Describe how to enable shell completions
+- Extend the duration test to cover positive results
+- Detect timeout for Beakerlib, use TESTRESULT_STATE
+- Improve tmt test path linting
+- Clarify playbook path for ansible prepare plugin
+- Adjust warning about the invalid disabled step
+- Only warn on invalid disabled step
+- Use date-service to get correct instantiation time
+- Prevent keys mutation when searching plans/stories
+- Cache fmf_id property
+- Store relevant bugs during test import
+- Avoid mutating `keys` default in .tests()
+- Use the new execute method syntax for tmt tests
+- Clean up obsolete test metadata
+
 * Thu Feb 25 2021 Petr Šplíchal <psplicha@redhat.com> - 1.3.1-1
 - Add test for prepare freeze
 - Make file descriptors non-blocking
