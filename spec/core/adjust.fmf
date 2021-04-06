@@ -42,24 +42,36 @@ description: |
     __ https://docs.fedoraproject.org/en-US/ci/test-case-relevancy
 
 example: |
+    # Disable a test for older distros
     enabled: true
     adjust:
         enabled: false
-        when: distro ~< fedora-33
+        when: distro < fedora-33
         because: the feature was added in Fedora 33
 
+    # Adjust the required package name
     require: procps-ng
     adjust:
       - require: procps
         when: distro == centos-6
 
+    # Extend the environment variables, use multiple rules
     adjust:
       - environment+:
             SH: bash
         when: component == bash
         continue: true
-      - when: distro ~< centos-6
+      - when: distro < centos-6
         enabled: false
+
+    # Install the fresh pytest from pip on older distros
+    adjust:
+        prepare+:
+         - how: shell
+           name: fresh-pytest
+           order: 90
+           script: 'python3 -m pip install -U pytest'
+        when: distro < rhel-8
 
 link:
   - implemented-by: /tmt/base.py
