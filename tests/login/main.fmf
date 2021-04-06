@@ -6,3 +6,6 @@
     summary: Check login result condition
     test: ./when.sh
 
+/reserve:
+    summary: Reserve a guest for experimenting
+    test: ./reserve.sh

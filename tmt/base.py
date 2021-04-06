@@ -487,10 +487,14 @@ class Plan(Node):
 
         self.worktree = os.path.join(self.workdir, 'tree')
         tree_root = self.my_run.tree.root
+
+        # Create an empty directory if there's no metadata tree
         if not tree_root:
-            self.debug('Skipping worktree init, no tree root present.')
+            self.debug('Create an empty worktree (no metadata tree).')
+            os.makedirs(self.worktree, exist_ok=True)
             return
 
+        # Sync metadata root to the worktree
         self.debug(f"Sync the worktree to '{self.worktree}'.")
         self.run(f'rsync -ar --exclude .git {tree_root}/ {self.worktree}')
 
