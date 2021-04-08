@@ -345,6 +345,26 @@ def read(path, makefile, nitrate, purpose, disabled):
         for bug in re.findall(r'^Bug:\s*([0-9]+)', testinfo, re.M):
             add_bug(bug, data)
 
+        # Warn if makefile has 2 or more lines in target run:
+        def target_content(regexp):
+            target = re.search(regexp,
+                               makefile,
+                               re.M).group(1)
+            return [i.strip('\t') for i in target.splitlines()]
+
+        run_target_list = target_content(r'^run:.*\n((?:\t[^\n]*\n?)*)')
+        if data['test'] and len(run_target_list) > 1:
+            run_target_list.remove(data["test"])
+            echo((style(f'Lines of the target run were skipped during '
+                        f'conversion:\n"{", ".join(run_target_list)}".',
+                        fg='yellow')))
+
+        build_target_list = target_content(
+            r'^build:.*\n((?:\t[^\n]*\n?)*)')
+        if len(build_target_list) > 1:
+            echo((style(f'Makefile target build was skipped during conversion',
+                        fg='yellow')))
+
         # Restore the original testinfo.desc content (if existed)
         if old_testinfo:
             try:
