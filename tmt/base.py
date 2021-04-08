@@ -36,6 +36,11 @@ DEFAULT_TEST_DURATION_L2 = '1h'
 # How many already existing lines should tmt run --follow show
 FOLLOW_LINES = 10
 
+# Unofficial temporary test keys
+EXTRA_TEST_KEYS = (
+    "relevancy extra-nitrate extra-hardware extra-pepa "
+    "extra-summary extra-task".split())
+
 
 class Node(tmt.utils.Common):
     """
@@ -188,10 +193,10 @@ class Node(tmt.utils.Common):
             raise tmt.utils.GeneralError(
                 f"Invalid test export format '{format_}'.")
 
-    def lint_attributes(self, additional_attributes):
-        """ Return list of invalid attributes used, empty when all good """
-        known_attributes = additional_attributes + self._keys
-        return [key for key in self.node.get().keys() if key not in known_attributes]
+    def lint_keys(self, additional_keys):
+        """ Return list of invalid keys used, empty when all good """
+        known_keys = additional_keys + self._keys
+        return [key for key in self.node.get().keys() if key not in known_keys]
 
 
 class Test(Node):
@@ -396,18 +401,16 @@ class Test(Node):
 
         # Check for unknown attributes
         # FIXME - Make additional attributes configurable
-        unofficial_attributes = "relevancy extra-nitrate extra-hardware extra-pepa extra-summary extra-task".split()
-        invalid_attributes = self.lint_attributes(unofficial_attributes)
-        if invalid_attributes:
+        invalid_keys = self.lint_keys(EXTRA_TEST_KEYS)
+        if invalid_keys:
             valid = False
-            for attr in invalid_attributes:
-                echo(verdict(False, f"Unknown attribute '{attr}' is used"))
+            for key in invalid_keys:
+                verdict(False, f"unknown attribute '{key}' is used")
         else:
-            echo(verdict(True, "Correct attributes are used"))
+            verdict(True, "correct attributes are used")
         return valid
 
-    def export(
-            self, format_='yaml', keys=None):
+    def export(self, format_='yaml', keys=None):
         """
         Export test data into requested format
 

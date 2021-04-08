@@ -13,6 +13,7 @@ rlJournalStart
     rlPhaseStartTest "Perfect"
         rlRun "tmt test lint perfect | tee output"
         rlAssertGrep 'pass' output
+        rlAssertGrep 'pass correct attributes are used' output
         rlAssertNotGrep 'warn' output
         rlAssertNotGrep 'fail' output
     rlPhaseEnd
@@ -40,7 +41,7 @@ rlJournalStart
             rlAssertNotGrep 'adjust:' "relevancy-$format.fmf"
         done
         rlRun "tmt test lint bad-attribute | tee output" 1
-        rlAssertGrep "fail Unknown attribute 'requires' is used" output
+        rlAssertGrep "fail unknown attribute 'requires' is used" output
     rlPhaseEnd
 
     rlPhaseStartTest "Fix"
