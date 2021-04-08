@@ -195,9 +195,14 @@ class Guest(tmt.utils.Common):
         super().__init__(parent, name)
         self.load(data)
 
-    def _random_name(self):
+    def _random_name(self, prefix='', length=16):
         """ Generate a random name """
-        return ''.join(random.choices(string.ascii_letters, k=16))
+        # Append at least 5 random characters
+        min_random_part = max(5, length-len(prefix))
+        name = prefix + ''.join(
+            random.choices(string.ascii_letters, k=min_random_part))
+        # Return tail (containing random characters) of name
+        return name[-length:]
 
     def _ssh_guest(self):
         """ Return user@guest """
