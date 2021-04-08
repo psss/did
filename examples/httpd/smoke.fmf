@@ -6,7 +6,7 @@ provision:
 prepare:
   - name: packages
     how: install
-    package: httpd curl
+    package: [httpd, curl]
   - name: service
     how: shell
     script: systemctl start httpd

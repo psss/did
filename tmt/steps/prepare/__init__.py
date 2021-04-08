@@ -9,8 +9,9 @@ class Prepare(tmt.steps.Step):
     Prepare the environment for testing.
 
     Use the 'order' attribute to select in which order preparation
-    should happen if there are multiple configs. Default order is 50.
-    Default order of required packages installation is 70.
+    should happen if there are multiple configs. Default order is '50'.
+    Default order of required packages installation is '70', for the
+    recommended packages it is '75'.
     """
 
     def __init__(self, data, plan):

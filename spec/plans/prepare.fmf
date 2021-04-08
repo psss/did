@@ -1,16 +1,39 @@
-summary: Prepare system for testing
+summary: Prepare the environment for testing
 
 description: |
-    Additional configuration of the provisioned environment needed
-    for testing.
+    The ``prepare`` step is used to define how the guest
+    environment should be prepared so that the tests can be
+    successfully executed.
 
-    * Install artifact (customizable according to user needs)
-        * Conflicts between rpms
-        * Optionally add debuginfo
-        * Install with devel module
-    * Additional setup possible if needed
-        * Inject arbitrary commands
-        * Before/after artifact installation
+    The :ref:`/spec/plans/prepare/install` plugin provides an easy
+    way to install required or recommended packages from disk and
+    from the offical distribution or copr repositories. Use the
+    :ref:`/spec/plans/prepare/ansible` plugin for applying custom
+    playbooks or execute :ref:`/spec/plans/prepare/shell` scripts
+    to perform arbitrary preparation tasks.
+
+    Use the ``order`` attribute to select in which order the
+    preparation should happen if there are multiple configs.
+    Default order is ``50``. For installation of required packages
+    gathered from the :ref:`/spec/tests/require` attribute of
+    individual tests order ``70`` is used, for recommended
+    packages it is ``75``.
+
+example: |
+    # Install fresh packages from a custom copr repository
+    prepare:
+      - how: install
+        copr: psss/tmt
+        package: tmt-all
+
+    # Install required packages and start the service
+    prepare:
+      - name: packages
+        how: install
+        package: [httpd, curl]
+      - name: service
+        how: shell
+        script: systemctl start httpd
 
 /shell:
     summary:
