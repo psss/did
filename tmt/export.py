@@ -90,16 +90,12 @@ def convert_manual_to_nitrate(test_md):
     as html strings.
     """
 
-    sections_headings = {
-        '<h1>Setup</h1>': [],
-        '<h1>Test</h1>': [],
-        '<h1>Test .*</h1>': [],
-        '<h2>Step</h2>': [],
-        '<h2>Test Step</h2>': [],
-        '<h2>Expect</h2>': [],
-        '<h2>Result</h2>': [],
-        '<h2>Expected Result</h2>': [],
-        '<h1>Cleanup</h1>': []}
+    values = []
+    sections_headings = {}
+    for _ in list(tmt.base.SECTIONS_HEADINGS.values()):
+        values += _
+    for _ in values:
+        sections_headings[_] = []
 
     html = markdown_to_html(test_md)
     html_splitlines = html.splitlines()
@@ -407,8 +403,8 @@ def export_to_nitrate(test):
     # Saving case.notes with edited StructField
     nitrate_case.notes = struct_field.save()
 
-    # Export manual test instructions from test.md to nitrate as html
-    md_path = os.getcwd() + '/test.md'
+    # Export manual test instructions from *.md file to nitrate as html
+    md_path = return_markdown_file()
     if os.path.exists(md_path):
         step, expect, setup, cleanup = convert_manual_to_nitrate(md_path)
         nitrate.User()._server.TestCase.store_text(
@@ -459,6 +455,164 @@ def export_to_nitrate(test):
                 " ".join([f"BZ#{bz_id}" for bz_id in verifies_bug_ids])), fg='magenta'))
         except Exception as err:
             raise ConvertError("Couldn't update bugs", original=err)
+
+
+def check_md_file_respects_spec(md_path):
+    warnings_list = []
+    sections_headings = tmt.base.SECTIONS_HEADINGS
+    required_headings = set(sections_headings['Step'] +
+                            sections_headings['Expect'])
+    values = []
+    for _ in list(sections_headings.values()):
+        values += _
+
+    md_to_html = tmt.utils.markdown_to_html(md_path)
+    html_headings_from_file = [i[0] for i in
+                               re.findall('(^<h[1-4]>(.+?)</h[1-4]>$)',
+                                          md_to_html,
+                                          re.M)]
+
+    # No invalid headings in the file w/o headings
+    if not html_headings_from_file:
+        invalid_headings = []
+    else:
+        # Find invalid headings in the file
+        invalid_headings = [key for key in set(html_headings_from_file)
+                            if (key not in values) !=
+                            bool(re.search(
+                                sections_headings['Test'][1], key))]
+
+    # Remove invalid headings from html_headings_from_file
+    for index in invalid_headings:
+        warnings_list.append(f'unknown html heading "{index}" is used')
+        html_headings_from_file = [i for i in html_headings_from_file
+                                   if i != index]
+
+    def count_html_headings(heading):
+        if html_headings_from_file.count(heading) > 1:
+            warnings_list.append(
+                f'{html_headings_from_file.count(heading)}'
+                f' headings "{heading}" are used')
+
+    # Warn if 2 or more # Setup or # Cleanup are used
+    count_html_headings(sections_headings['Setup'][0])
+    count_html_headings(sections_headings['Cleanup'][0])
+
+    warn_outside_test_section = 'Heading "{}" from the section "{}" is '\
+                                'used \noutside of Test sections.'
+    warn_headings_not_in_pairs = 'The number of headings from the section' \
+                                 ' "Step" - {}\ndoesn\'t equal to the ' \
+                                 'number of headings from the section \n' \
+                                 '"Expect" - {} in the test section "{}"'
+    warn_required_section_is_absent = '"{}" section doesn\'t exist in ' \
+                                      'the Markdown file'
+    warn_unexpected_headings = 'Headings "{}" aren\'t expected in the ' \
+                               'section "{}"'
+
+    def required_section_exists(section, section_name, prefix):
+        res = list(filter(
+            lambda t: t.startswith(prefix), section))
+        if not res:
+            warnings_list.append(
+                warn_required_section_is_absent.format(section_name))
+            return 0
+        else:
+            return len(res)
+
+    # Required sections don't exist
+    if not required_section_exists(html_headings_from_file,
+                                   'Test',
+                                   '<h1>Test'):
+        return warnings_list
+
+    # Remove Optional heading #Cleanup if it's in the end of document
+    if html_headings_from_file[-1] == '<h1>Cleanup</h1>':
+        html_headings_from_file.pop()
+        # Add # Test heading to close the file
+        html_headings_from_file.append(sections_headings['Test'][0])
+
+    index = 0
+    while html_headings_from_file:
+        # # Step cannot be used outside of test sections.
+        if html_headings_from_file[index] == \
+                sections_headings['Step'][0] or \
+                html_headings_from_file[index] == \
+                sections_headings['Step'][1]:
+            warnings_list.append(warn_outside_test_section.format(
+                html_headings_from_file[index], 'Step'))
+
+        # # Expect cannot be used outside of test sections.
+        if html_headings_from_file[index] == \
+                sections_headings['Expect'][0] or \
+                html_headings_from_file[index] == \
+                sections_headings['Expect'][1] or \
+                html_headings_from_file[index] == \
+                sections_headings['Expect'][2]:
+            warnings_list.append(warn_outside_test_section.format(
+                html_headings_from_file[index], 'Expect'))
+
+        if html_headings_from_file[index].startswith('<h1>Test'):
+            test_section_name = html_headings_from_file[index]
+            try:
+                html_headings_from_file[index + 1]
+            except IndexError:
+                break
+            for i, v in enumerate(html_headings_from_file[index + 1:]):
+                if re.search('^<h1>(Test .*|Test)</h1>$', v):
+                    test_section = html_headings_from_file[index + 1:
+                                                           index + 1 + i]
+
+                    # Unexpected headings inside Test section
+                    unexpected_headings = set(test_section) - \
+                        required_headings
+                    if unexpected_headings:
+                        warnings_list.append(
+                            warn_unexpected_headings.
+                            format(', '.join(unexpected_headings),
+                                   test_section_name))
+
+                    amount_of_steps = required_section_exists(
+                        test_section,
+                        'Step',
+                        tuple(sections_headings['Step']))
+                    amount_of_expects = required_section_exists(
+                        test_section,
+                        'Expect',
+                        tuple(sections_headings['Expect']))
+
+                    # # Step isn't in pair with # Expect
+                    if amount_of_steps != amount_of_expects != 0:
+                        warnings_list.append(warn_headings_not_in_pairs.
+                                             format(amount_of_steps,
+                                                    amount_of_expects,
+                                                    test_section_name))
+                    index += i
+                    break
+
+        index += 1
+        if index >= len(html_headings_from_file) - 1:
+            break
+    return warnings_list
+
+
+def return_markdown_file():
+    """ Return path to the markdown file """
+    files = '\n'.join(os.listdir())
+    reg_exp = r'.+\.md$'
+    md_files = re.findall(reg_exp, files, re.M)
+    fail_message = "in the current working directory.\n" \
+                   "Manual steps couldn't be exported"
+    if len(md_files) == 1:
+        md_path = os.path.join(os.getcwd(), md_files[0])
+    elif len(md_files) == 0:
+        md_path = ''
+        echo((style(f'Markdown file doesn\'t exist {fail_message}',
+                    fg='yellow')))
+    else:
+        md_path = ''
+        echo((style(f'{len(md_files)} Markdown files found {fail_message}',
+                    fg='yellow')))
+    return md_path
 
 
 def create_nitrate_case(test):

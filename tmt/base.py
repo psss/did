@@ -43,6 +43,18 @@ EXTRA_TEST_KEYS = (
     "extra-nitrate extra-hardware extra-pepa "
     "extra-summary extra-task".split())
 
+SECTIONS_HEADINGS = {
+    'Setup': ['<h1>Setup</h1>'],
+    'Test': ['<h1>Test</h1>',
+             '<h1>Test .*</h1>'],
+    'Step': ['<h2>Step</h2>',
+             '<h2>Test Step</h2>'],
+    'Expect': ['<h2>Expect</h2>',
+               '<h2>Result</h2>',
+               '<h2>Expected Result</h2>'],
+    'Cleanup': ['<h1>Cleanup</h1>']
+    }
+
 
 class Core(tmt.utils.Common):
     """
@@ -429,6 +441,18 @@ class Test(Core):
                 verdict(False, f"unknown attribute '{key}' is used")
         else:
             verdict(True, "correct attributes are used")
+
+        # Check if the format of Markdown file respects the specification
+        # https://tmt.readthedocs.io/en/latest/spec/tests.html#manual
+        md_path = tmt.export.return_markdown_file()
+        if os.path.exists(md_path):
+            invalid_md_file = tmt.export.check_md_file_respects_spec(md_path)
+            if invalid_md_file:
+                for i in invalid_md_file:
+                    verdict(False, i)
+            else:
+                verdict(True, "correct headings are used in the Markdown file")
+
         return valid
 
     def export(self, format_='yaml', keys=None):
