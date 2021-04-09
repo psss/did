@@ -346,10 +346,10 @@ class GitLabStats(StatsGroup):
             MergeRequestsCommented(
                 option=option + "-merge-requests-commented", parent=self,
                 name="Issues commented on {0}".format(option)),
-            MergeRequestsClosed(
-                option=option + "-merge-requests-closed", parent=self,
-                name="Merge requests closed on {0}".format(option)),
             MergeRequestsApproved(
                 option=option + "-merge-requests-approved", parent=self,
                 name="Merge requests approved on {0}".format(option)),
+            MergeRequestsClosed(
+                option=option + "-merge-requests-closed", parent=self,
+                name="Merge requests closed on {0}".format(option)),
             ]
