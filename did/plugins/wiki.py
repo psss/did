@@ -7,13 +7,23 @@ Config example::
     [wiki]
     type = wiki
     wiki test = http://moinmo.in/
+
+The optional key 'api' can be used to change the default
+xmlrpc api endpoint::
+
+    [wiki]
+    type = wiki
+    api = ?action=xmlrpc2
+    wiki test = http://moinmo.in/
 """
 
 import xmlrpc.client
 
 from did.utils import item
-from did.base import Config
+from did.base import Config, ConfigError
 from did.stats import Stats, StatsGroup
+
+DEFAULT_API = '?action=xmlrpc2'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -22,11 +32,11 @@ from did.stats import Stats, StatsGroup
 
 class WikiChanges(Stats):
     """ Wiki changes """
-    def __init__(self, option, name=None, parent=None, url=None):
+    def __init__(self, option, name=None, parent=None, url=None, api=None):
         self.url = url
+        self.api = api or DEFAULT_API
         self.changes = 0
-        self.proxy = xmlrpc.client.ServerProxy(
-            "{0}?action=xmlrpc2".format(url))
+        self.proxy = xmlrpc.client.ServerProxy("{0}{1}".format(url, self.api))
         Stats.__init__(self, option, name, parent)
 
     def fetch(self):
@@ -67,7 +77,11 @@ class WikiStats(StatsGroup):
 
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
-        for wiki, url in Config().section(option):
+        try:
+            api = Config().item(option, 'api')
+        except ConfigError:
+            api = None
+        for wiki, url in Config().section(option, skip=['type', 'api']):
             self.stats.append(WikiChanges(
-                option=wiki, parent=self, url=url,
+                option=wiki, parent=self, url=url, api=api,
                 name="Updates on {0}".format(wiki)))
