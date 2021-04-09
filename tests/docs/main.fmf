@@ -3,4 +3,3 @@ summary:
 description:
     Create a minimal config file.
     Check help message and man page.
-test: ./test.sh
