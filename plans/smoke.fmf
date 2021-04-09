@@ -3,4 +3,4 @@ summary:
 discover:
     how: fmf
 execute:
-    how: beakerlib.tmt
+    how: tmt
