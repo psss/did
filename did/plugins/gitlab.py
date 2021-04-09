@@ -282,6 +282,19 @@ class MergeRequestsClosed(Stats):
             for mr in results]
 
 
+class MergeRequestsApproved(Stats):
+    """ Merge requests approved """
+    def fetch(self):
+        log.info("Searching for Merge requests approved by {0}".format(
+            self.user))
+        results = self.parent.gitlab.search(
+            self.user.login, self.options.since, self.options.until,
+            'MergeRequest', 'approved')
+        self.stats = [
+            MergeRequest(mr, self.parent.gitlab)
+            for mr in results]
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -336,4 +349,7 @@ class GitLabStats(StatsGroup):
             MergeRequestsClosed(
                 option=option + "-merge-requests-closed", parent=self,
                 name="Merge requests closed on {0}".format(option)),
+            MergeRequestsApproved(
+                option=option + "-merge-requests-approved", parent=self,
+                name="Merge requests approved on {0}".format(option)),
             ]

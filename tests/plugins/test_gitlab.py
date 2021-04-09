@@ -12,6 +12,7 @@ import time
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 INTERVAL = "--since 2017-05-24 --until 2017-05-26"
+APPROVED_INTERVAL = "--since 2021-04-8 --until 2021-04-9"
 
 CONFIG_NOTOKEN = """
 [general]
@@ -83,6 +84,15 @@ def test_gitlab_merge_requests_closed():
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[5].stats
     assert any([
         "did.tester/test-project#001 - Update README.md" in str(stat)
+        for stat in stats])
+
+def test_gitlab_merge_requests_approved():
+    """ Closed merge approved """
+    did.base.Config(CONFIG)
+    option = "--gitlab-merge-requests-approved "
+    stats = did.cli.main(option + APPROVED_INTERVAL)[0][0].stats[0].stats[6].stats
+    assert any([
+        "did.tester/test-project#003 - Use a nice complete sentence for description" in str(stat)
         for stat in stats])
 
 def test_github_invalid_token():
