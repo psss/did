@@ -120,6 +120,11 @@ def test_operators_special():
     check('collection contains http24', 'collection == http24')
     check('collection !contains http24', 'collection != http24')
 
+def test_not_equal_comma_separated():
+    """ Special handling for comma-separated values with != """
+    check(
+        'distro != centos-7, centos-8',
+        'distro != centos-7 and distro != centos-8')
 
 # Invalid rules
 

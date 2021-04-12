@@ -266,7 +266,7 @@ class ExecutePlugin(tmt.steps.Plugin):
                 'TESTRESULT_RESULT_STRING=(.*)', results).group(1)
             # States are: started, incomplete and complete
             # FIXME In quotes until beakerlib/beakerlib/pull/92 is merged
-            state = re.search('TESTRESULT_STATE="?(\w+)"?', results).group(1)
+            state = re.search(r'TESTRESULT_STATE="?(\w+)"?', results).group(1)
         except AttributeError:
             self.debug(
                 f"No result or state found in '{beakerlib_results_file}'.",

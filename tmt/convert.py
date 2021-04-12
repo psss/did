@@ -746,6 +746,13 @@ def relevancy_to_adjust(relevancy):
                 except KeyError:
                     raise tmt.utils.ConvertError(
                         f"Invalid test case relevancy operator '{operator}'.")
+            # Special handling for the '!=' operator with comma-separated
+            # values (in relevancy this was treated as 'no value equals')
+            values = re.split(r'\s*,\s*', right)
+            if operator == '!=' and len(values) > 1:
+                for value in values:
+                    expressions.append(f"{left} != {value}")
+                continue
             # Join 'left operator right' with spaces
             expressions.append(
                 ' '.join([item for item in [left, operator, right] if item]))
