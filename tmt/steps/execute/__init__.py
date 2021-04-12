@@ -1,9 +1,11 @@
 import os
 import re
 import time
-import fmf
-import tmt
+
 import click
+import fmf
+
+import tmt
 
 # Test data directory name
 TEST_DATA = 'data'

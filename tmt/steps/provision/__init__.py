@@ -1,10 +1,11 @@
 import os
-import re
-import click
 import random
+import re
 import string
 
+import click
 import fmf
+
 import tmt
 
 

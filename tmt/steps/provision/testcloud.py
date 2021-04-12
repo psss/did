@@ -1,11 +1,11 @@
 # coding: utf-8
 
-import re
 import os
+import re
 import time
 
-import fmf
 import click
+import fmf
 import requests
 
 import tmt

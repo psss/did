@@ -4,6 +4,7 @@ import re
 import os
 
 import fmf
+
 import tmt
 
 # Regular expressions for beakerlib libraries

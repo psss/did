@@ -1,9 +1,11 @@
 import os
 import re
-import fmf
-import tmt
-import click
 import shutil
+
+import click
+import fmf
+
+import tmt
 
 COPR_URL = 'https://copr.fedorainfracloud.org/coprs'
 

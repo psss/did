@@ -1,8 +1,10 @@
 import os
-import time
-import tmt
 import shutil
+import time
+
 import click
+
+import tmt
 
 # Simple runner script name
 RUNNER = 'run.sh'

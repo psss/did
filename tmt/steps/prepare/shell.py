@@ -1,6 +1,8 @@
 import fmf
-import tmt
 import click
+
+import tmt
+
 
 class PrepareShell(tmt.steps.prepare.PreparePlugin):
     """

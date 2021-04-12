@@ -2,21 +2,21 @@
 
 """ Command line interface for the Test Management Tool """
 
+import os
+
+import click
+import fmf
 from click import echo, style
 from fmf.utils import listed
 
-import click
-import os
-
-import fmf
 import tmt
-import tmt.utils
-import tmt.plugins
 import tmt.convert
 import tmt.export
+import tmt.options
+import tmt.plugins
 import tmt.steps
 import tmt.templates
-import tmt.options
+import tmt.utils
 
 # Explore available plugins (need to detect all supported methods first)
 tmt.plugins.explore()

@@ -1,8 +1,7 @@
 import pytest
 
-import tmt
-from tmt.utils import ConvertError
 from tmt.convert import relevancy_to_adjust
+from tmt.utils import ConvertError
 
 
 @pytest.fixture

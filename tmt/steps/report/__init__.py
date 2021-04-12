@@ -1,7 +1,8 @@
 import re
-import fmf
-import tmt
+
 import click
+
+import tmt
 
 
 class Report(tmt.steps.Step):

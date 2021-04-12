@@ -1,5 +1,7 @@
-import tmt
 import click
+
+import tmt
+
 
 class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
     """

@@ -1,6 +1,7 @@
 import fmf
-import tmt
 import click
+
+import tmt
 
 
 class FinishShell(tmt.steps.finish.FinishPlugin):

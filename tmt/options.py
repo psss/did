@@ -3,6 +3,7 @@
 """ Common options and the MethodCommand class """
 
 import re
+
 import click
 
 # Verbose, debug and quiet output

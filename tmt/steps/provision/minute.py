@@ -1,12 +1,13 @@
 import base64
-import click
 import datetime
 import getpass
 import json
 import os
 import re
-import requests
 import time
+
+import click
+import requests
 import urllib3.exceptions
 
 import tmt

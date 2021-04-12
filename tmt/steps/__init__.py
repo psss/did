@@ -3,12 +3,11 @@
 
 import os
 import re
-import fmf
-import click
-import pprint
-import tmt.utils
 
-from click import echo, style
+import click
+from click import echo
+
+import tmt.utils
 from tmt.utils import GeneralError
 
 STEPS = ['discover', 'provision', 'prepare', 'execute', 'report', 'finish']

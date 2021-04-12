@@ -1,7 +1,8 @@
 import os
-import time
-import click
 import sys
+import time
+
+import click
 
 import tmt
 from tmt.steps.execute import TEST_OUTPUT_FILENAME

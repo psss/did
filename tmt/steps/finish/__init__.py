@@ -1,7 +1,9 @@
 import re
+
 import fmf
-import tmt
 import click
+
+import tmt
 
 
 class Finish(tmt.steps.Step):

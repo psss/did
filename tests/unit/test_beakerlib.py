@@ -1,5 +1,6 @@
-import pytest
 import shutil
+
+import pytest
 
 import tmt
 import tmt.beakerlib

@@ -1,6 +1,8 @@
 import os
-import tmt
+
 import click
+
+import tmt
 
 
 class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):

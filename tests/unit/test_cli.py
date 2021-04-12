@@ -2,10 +2,11 @@
 
 import os
 import shutil
-import tmt.cli
 import tempfile
 
 from click.testing import CliRunner
+
+import tmt.cli
 
 # Prepare path to examples
 PATH = os.path.dirname(os.path.realpath(__file__))

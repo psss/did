@@ -2,14 +2,15 @@
 
 """ Export metadata into nitrate """
 
-from click import echo, style
 
-import tmt.utils
 import email
-import fmf
 import os
 import re
 
+import fmf
+from click import echo, style
+
+import tmt.utils
 from tmt.utils import ConvertError, markdown_to_html
 
 log = fmf.utils.Logging('tmt').logger

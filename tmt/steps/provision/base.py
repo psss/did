@@ -1,9 +1,9 @@
-import tmt
 import os
 import random
 import string
 
-from click import echo
+import tmt
+
 
 class ProvisionBase(tmt.utils.Common):
     def __init__(self, data, step, instance_name=None):

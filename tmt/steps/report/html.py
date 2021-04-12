@@ -1,8 +1,8 @@
 import os
 import os.path
+import webbrowser
 
 import click
-import webbrowser
 
 import tmt
 

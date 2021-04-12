@@ -2,18 +2,14 @@
 
 """ Provision Step Vagrnat Class """
 
-import tmt
-import subprocess
 import os
 import re
 import shutil
 from time import sleep
+from urllib.parse import urlparse
 
 from tmt.steps.provision.base import ProvisionBase
-from tmt.utils import ConvertError, SpecificationError, GeneralError, quote
-
-from click import echo
-from urllib.parse import urlparse
+from tmt.utils import SpecificationError, GeneralError, quote
 
 
 # DATA[*]:

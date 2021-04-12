@@ -1,9 +1,10 @@
 import os
 import shutil
-from pathlib import Path
 import tempfile
-from tmt.export import convert_manual_to_nitrate
+from pathlib import Path
 from unittest import TestCase
+
+from tmt.export import convert_manual_to_nitrate
 
 TEST_DIR = Path(__file__).parent
 

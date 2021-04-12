@@ -1,23 +1,24 @@
 
 """ Test Metadata Utilities """
 
-from click import style, echo, wrap_text
 
-from collections import OrderedDict
-from threading import Timer
-import unicodedata
-import subprocess
-import fmf
-import pprint
-import shlex
-import select
-import shutil
-import yaml
-import re
+import fcntl
 import io
 import os
-import fcntl
+import pprint
+import re
+import select
+import shlex
+import shutil
+import subprocess
+import unicodedata
+from collections import OrderedDict
+from threading import Timer
+
+import fmf
 import requests
+import yaml
+from click import style, echo, wrap_text
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 

@@ -1,10 +1,11 @@
 # coding: utf-8
 
 import os
-import pytest
 import shutil
 import tempfile
+
 import click.testing
+import pytest
 
 import tmt
 import tmt.cli
