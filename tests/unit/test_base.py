@@ -14,6 +14,7 @@ from tmt.utils import SpecificationError
 
 runner = click.testing.CliRunner()
 
+
 def test_invalid_yaml_syntax():
     """ Invalid yaml syntax """
     tmp = tempfile.mkdtemp()
@@ -28,6 +29,7 @@ def test_invalid_yaml_syntax():
     os.chdir(original_directory)
     shutil.rmtree(tmp)
 
+
 def test_test_defaults():
     """ Test default test attributes """
     test = tmt.Test(dict(test='./test.sh'), name='/smoke')
@@ -41,6 +43,7 @@ def test_test_defaults():
     assert test.enabled == True
     assert test.result == 'respect'
     assert test.tag == list()
+
 
 def test_test_invalid():
     """ Test invalid test """
@@ -59,6 +62,7 @@ def test_test_invalid():
     # Listify attributes
     assert tmt.Test({'tag': 'a'}, name='/smoke').tag == ['a']
     assert tmt.Test({'tag': ['a', 'b']}, name='/smoke').tag == ['a', 'b']
+
 
 def test_link():
     """ Test the link attribute parsing """

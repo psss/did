@@ -3,6 +3,7 @@ import os
 import tmt
 from tmt.steps.execute import TEST_OUTPUT_FILENAME
 
+
 class ReportDisplay(tmt.steps.report.ReportPlugin):
     """
     Show test results on the terminal

@@ -3,6 +3,7 @@ from fmf.utils import listed
 
 import tmt
 
+
 class Discover(tmt.steps.Step):
     """ Gather information about test cases to be executed. """
 

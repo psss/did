@@ -11,6 +11,7 @@ import requests
 import tmt
 from tmt.utils import ProvisionError, WORKDIR_ROOT, retry_session
 
+
 def import_testcloud():
     """
     Import testcloud module only when needed

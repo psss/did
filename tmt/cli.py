@@ -21,6 +21,7 @@ import tmt.utils
 # Explore available plugins (need to detect all supported methods first)
 tmt.plugins.explore()
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Custom Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,6 +50,7 @@ class CustomGroup(click.Group):
             return click.Group.get_command(self, context, matches[0])
         context.fail('Did you mean {}?'.format(
             listed(sorted(matches), join='or')))
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Common Options
@@ -293,6 +295,7 @@ def finito(click_context, commands, *args, **kwargs):
     """ Run tests if run defined """
     if hasattr(click_context.obj, 'run'):
         click_context.obj.run.go()
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Test
@@ -618,6 +621,7 @@ def create(context, name, template, force, **kwargs):
     """ Create a new plan based on given template. """
     tmt.Plan._save_context(context)
     tmt.Plan.create(name, template, context.obj.tree.root, force)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Story

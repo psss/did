@@ -8,6 +8,7 @@ import fmf
 
 import tmt.steps.discover
 
+
 class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
     """
     Use provided list of shell script tests

@@ -11,11 +11,14 @@ import tmt.cli
 # Prepare path to examples
 PATH = os.path.dirname(os.path.realpath(__file__))
 
+
 def example(name):
     """ Return path to given example """
     return os.path.join(PATH, "../../examples/", name)
 
+
 runner = CliRunner()
+
 
 def test_mini():
     """ Minimal smoke test """
@@ -25,6 +28,7 @@ def test_mini():
     assert 'Found 1 plan.' in result.output
     assert '1 test selected' in result.output
     assert '/ci' in result.output
+
 
 def test_init():
     """ Tree initialization """
@@ -53,6 +57,7 @@ def test_init():
     os.chdir(original_directory)
     shutil.rmtree(tmp)
 
+
 def test_create():
     """ Test, plan and story creation """
     # Create a test directory
@@ -77,6 +82,7 @@ def test_create():
     os.chdir(original_directory)
     shutil.rmtree(tmp)
 
+
 def test_step():
     """ Select desired step"""
     for step in ['discover', 'provision', 'prepare']:
@@ -85,6 +91,7 @@ def test_step():
         assert result.exit_code == 0
         assert step in result.output
         assert 'finish' not in result.output
+
 
 def test_step_execute():
     """ Test execute step"""
@@ -98,6 +105,7 @@ def test_step_execute():
     assert isinstance(result.exception, tmt.utils.ExecuteError)
     assert step in result.output
     assert 'provision' not in result.output
+
 
 def test_systemd():
     """ Check systemd example """

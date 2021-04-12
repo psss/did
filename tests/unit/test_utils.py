@@ -9,6 +9,7 @@ import pytest
 from tmt.utils import (StructuredField, StructuredFieldError, public_git_url,
                        listify, duration_to_seconds)
 
+
 def test_public_git_url():
     """ Verify url conversion """
     examples = [
@@ -37,6 +38,7 @@ def test_public_git_url():
         ]
     for example in examples:
         assert public_git_url(example['original']) == example['expected']
+
 
 def test_listify():
     """ Check listify functionality """

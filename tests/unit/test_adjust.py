@@ -9,6 +9,7 @@ def mini():
     """ Minimal example """
     return relevancy_to_adjust("distro = fedora: False")
 
+
 @pytest.fixture
 def full():
     """ Full example """
@@ -25,6 +26,7 @@ def full():
     collection contains httpd24 && fips defined: False
     """.replace('    ', ''))
 
+
 def check(condition, expected):
     """ Check condition against expected """
     adjusted = relevancy_to_adjust(f"{condition}: False")[0]['when']
@@ -37,11 +39,13 @@ def test_empty():
     """ Empty relevancy """
     assert relevancy_to_adjust('') == list()
 
+
 def test_comments(full):
     """ Extract comments """
     assert full[0]['because'] == 'feature has been added in Fedora 33'
     assert full[1]['because'] == 'using logical operators'
     assert full[2]['because'] == 'modify environment'
+
 
 def test_disable(mini, full):
     """ Disable test """
@@ -49,13 +53,16 @@ def test_disable(mini, full):
     assert full[0]['enabled'] == False
     assert full[1]['enabled'] == False
 
+
 def test_environment(full):
     """ Modify environment """
     assert full[2]['environment'] == {'PHASES': 'novalgrind'}
 
+
 def test_continue(mini):
     """ Explicit continue """
     assert mini[0]['continue'] == False
+
 
 def test_condition(mini, full):
     """ Expressions conversion """
@@ -65,6 +72,7 @@ def test_condition(mini, full):
     assert full[2]['when'] == 'arch == s390x'
     assert full[3]['when'] == 'collection == httpd24 and fips is defined'
 
+
 def test_operators_basic():
     """ Basic operators unchanged """
     check('component = python', 'component == python')
@@ -72,11 +80,13 @@ def test_operators_basic():
     check('arch == s390x', 'arch == s390x')
     check('arch != s390x', 'arch != s390x')
 
+
 def test_operators_distro_name():
     """ Check distro name """
     check('distro = fedora', 'distro == fedora')
     check('distro == fedora', 'distro == fedora')
     check('distro != fedora', 'distro != fedora')
+
 
 def test_operators_distro_major():
     """ Check distro major version """
@@ -84,6 +94,7 @@ def test_operators_distro_major():
     check('distro > fedora-33', 'distro > fedora-33')
     check('distro <= fedora-33', 'distro <= fedora-33')
     check('distro >= fedora-33', 'distro >= fedora-33')
+
 
 def test_operators_distro_minor():
     """ Check distro minor version """
@@ -94,6 +105,7 @@ def test_operators_distro_minor():
     check('distro > centos-8.3', 'distro ~> centos-8.3')
     check('distro <= centos-8.3', 'distro ~<= centos-8.3')
     check('distro >= centos-8.3', 'distro ~>= centos-8.3')
+
 
 def test_operators_product():
     """ Special handling for product """
@@ -111,6 +123,7 @@ def test_operators_product():
     check('product > rhscl-3.3', 'product ~> rhscl-3.3')
     check('product <= rhscl-3.3', 'product ~<= rhscl-3.3')
     check('product >= rhscl-3.3', 'product ~>= rhscl-3.3')
+
 
 def test_operators_special():
     """ Check 'defined' and 'contains' """
@@ -132,15 +145,18 @@ def test_invalid_rule():
     with pytest.raises(ConvertError, match='Invalid.*rule'):
         relevancy_to_adjust("weird")
 
+
 def test_invalid_decision():
     """ Invalid relevancy decision """
     with pytest.raises(ConvertError, match='Invalid.*decision'):
         relevancy_to_adjust("distro < fedora-33: weird")
 
+
 def test_invalid_expression():
     """ Invalid relevancy expression """
     with pytest.raises(ConvertError, match='Invalid.*expression'):
         relevancy_to_adjust("distro * fedora-33: False")
+
 
 def test_invalid_operator():
     """ Invalid relevancy operator """

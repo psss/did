@@ -12,6 +12,7 @@ import fmf
 
 log = fmf.utils.Logging('tmt').logger
 
+
 def explore():
     """ Explore all available plugins """
 

@@ -1,7 +1,6 @@
 
 """ Test Metadata Utilities """
 
-
 import fcntl
 import io
 import os
@@ -53,6 +52,7 @@ PROCESS_TIMEOUT = 124
 
 # Default select.select(timeout) in seconds
 DEFAULT_SELECT_TIMEOUT = 5
+
 
 class Config(object):
     """ User configuration """
@@ -519,6 +519,7 @@ class Common(object):
             create_directory(self._workdir, 'workdir', quiet=True)
         return self._workdir
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Exceptions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -529,8 +530,10 @@ class GeneralError(Exception):
         # Store the original exception for future use
         self.original = kwargs.get('original')
 
+
 class FileError(GeneralError):
     """ File operation error """
+
 
 class RunError(GeneralError):
     """ Command execution error """
@@ -544,37 +547,48 @@ class RunError(GeneralError):
         self.stdout = stdout
         self.stderr = stderr
 
+
 class MetadataError(GeneralError):
     """ General metadata error """
+
 
 class SpecificationError(MetadataError):
     """ Metadata specification error """
 
+
 class ConvertError(MetadataError):
     """ Metadata conversion error """
 
+
 class StructuredFieldError(GeneralError):
     """ StructuredField parsing error """
+
 
 # Step exceptions
 
 class DiscoverError(GeneralError):
     """ Discover step error """
 
+
 class ProvisionError(GeneralError):
     """ Provision step error """
+
 
 class PrepareError(GeneralError):
     """ Prepare step error """
 
+
 class ExecuteError(GeneralError):
     """ Execute step error """
+
 
 class ReportError(GeneralError):
     """ Report step error """
 
+
 class FinishError(GeneralError):
     """ Finish step error """
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Utilities

@@ -9,6 +9,7 @@ import tmt
 
 COPR_URL = 'https://copr.fedorainfracloud.org/coprs'
 
+
 class PrepareInstall(tmt.steps.prepare.PreparePlugin):
     """
     Install packages on the guest

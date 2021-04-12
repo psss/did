@@ -130,6 +130,7 @@ HTML_TEMPLATE = """
 </html>
 """.strip()
 
+
 def import_jinja2():
     """
     Import jinja2 module only when needed
@@ -142,6 +143,7 @@ def import_jinja2():
     except ImportError:
         raise tmt.utils.ReportError(
             "Missing 'jinja2', fixable by 'pip install tmt[report-html]'")
+
 
 class ReportHtml(tmt.steps.report.ReportPlugin):
     """ Format test results into an html report """

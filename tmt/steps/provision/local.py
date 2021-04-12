@@ -1,5 +1,6 @@
 import tmt
 
+
 class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
     """
     Use local host for test execution

@@ -436,7 +436,6 @@ class Guest(tmt.utils.Common):
             f'rsync {options} -e "{self._ssh_command(join=True)}" '
             f'{self._ssh_guest()}:{source} {destination}')
 
-
     def stop(self):
         """
         Stop the guest
