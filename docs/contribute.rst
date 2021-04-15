@@ -182,19 +182,22 @@ Here's the overview of core classes::
     │   └── GuestTestcloud
     └── Run
 
+
 Attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Object hierarchy is following: ``Run`` -> ``Plans`` -> ``Steps``
--> ``Plugin``, where the ``Run`` is on the top of this hierarchy.
-The objects have the ``parent`` attribute, that is pointing on
-a parent in which current class is contained.
+-> ``Plugins``, where the ``Run`` is on the top of this hierarchy.
+The objects have the ``parent`` attribute, that is pointing to
+the parent in which the current instance is contained.
 
-The ``node`` attribute is based on the original fmf node and
-contains a reference to this node.
+The ``node`` attribute of ``Test``, ``Plan`` and ``Story``
+instances references the original leaf node of the fmf metadata
+tree from which the respective test, plan or story have been
+created.
 
-The original ``fmf.Tree`` from which the ``tmt.Tree`` was
-initialized is available under the ``tree`` property.
-
+In a similar way, the ``tree`` property of the ``Tree`` instance
+points to the original ``fmf.Tree`` from which it was initialized.
 
 
 Essential Classes
