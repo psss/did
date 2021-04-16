@@ -1,0 +1,6 @@
+summary: Multi-execute plan
+execute:
+  - name: a
+    how: tmt
+  - name: b
+    how: detach

@@ -13,8 +13,13 @@ rlJournalStart
         rlRun "rm $rlRun_LOG"
 
         rlRun -s "tmt plan lint valid_fmf"
-        rlAssertGrep "pass fmf remote id is valid" $rlRun_LOG
+        rlAssertGrep "pass fmf remote id in 'default' is valid" $rlRun_LOG
         rlAssertNotGrep 'warn summary ' $rlRun_LOG
+        rlRun "rm $rlRun_LOG"
+
+        rlRun -s "tmt plan lint multi_execute"
+        rlAssertGrep "/multi_execute" $rlRun_LOG
+        rlAssertNotGrep 'fail' $rlRun_LOG
         rlRun "rm $rlRun_LOG"
     rlPhaseEnd
 
@@ -40,6 +45,12 @@ rlJournalStart
 
         rlRun -s "tmt plan lint invalid_path" 1
         rlAssertGrep "fail path '/invalid-path-123456' is invalid" $rlRun_LOG
+        rlRun "rm $rlRun_LOG"
+
+        rlRun -s "tmt plan lint multi_discover" 1
+        rlAssertGrep "pass fmf remote id in 'a' is valid" $rlRun_LOG
+        rlAssertGrep "fail repo 'http://invalid-url' cannot be cloned" \
+            $rlRun_LOG
         rlRun "rm $rlRun_LOG"
     rlPhaseEnd
 

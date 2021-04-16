@@ -634,16 +634,22 @@ class Plan(Node):
         execute = self.node.get('execute')
         if not execute:
             return verdict(False, "execute step must be defined with 'how'")
+        if isinstance(execute, dict):
+            execute = [execute]
 
-        how = execute.get('how')
         methods = [
             method.name
             for method in tmt.steps.execute.ExecutePlugin.methods()]
+        correct = True
+        for configuration in execute:
+            how = configuration.get('how')
+            if how not in methods:
+                name = configuration.get('name')
+                verdict(False,
+                        f"unsupported execute method '{how}' in '{name}'")
+                correct = False
 
-        if how not in methods:
-            return verdict(False, f"unsupported execute method '{how}'")
-
-        return True
+        return correct
 
     def _lint_summary(self):
         """ Lint summary step """
@@ -661,20 +667,28 @@ class Plan(Node):
         discover = self.node.get('discover')
         if not discover:
             return True
+        if isinstance(discover, dict):
+            discover = [discover]
 
-        how = discover.get('how')
         methods = [
             method.name
             for method in tmt.steps.discover.DiscoverPlugin.methods()]
+        correct = True
+        for configuration in discover:
+            how = configuration.get('how')
 
-        if how not in methods:
-            return verdict(False, f"unknown discover method '{how}'")
+            if how not in methods:
+                verdict(False, f"unknown discover method '{how}'")
+                correct = False
+                continue
 
-        # FIXME Add check for the shell discover method
-        if how == 'shell':
-            return True
+            # FIXME Add check for the shell discover method
+            if how == 'shell':
+                continue
 
-        return self._lint_discover_fmf(discover)
+            if not self._lint_discover_fmf(configuration):
+                correct = False
+        return correct
 
     @staticmethod
     def _lint_discover_fmf(discover):
@@ -685,7 +699,8 @@ class Plan(Node):
                 if key in ['url', 'ref', 'path']})
 
         if valid:
-            return verdict(True, 'fmf remote id is valid')
+            name = discover.get('name')
+            return verdict(True, f"fmf remote id in '{name}' is valid")
 
         return verdict(False, error)
 
