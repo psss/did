@@ -1005,3 +1005,81 @@ as well? It might save you some typing::
 
 See the :ref:`/stories/cli/run/login` user stories for more
 details and examples.
+
+
+
+Status
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``status`` command is used to inspect the progress of runs,
+plans and steps that have previously been started::
+
+    $ tmt status
+    status     id
+    prepare    /var/tmp/tmt/run-002
+    done       /var/tmp/tmt/run-001
+
+
+Verbosity Levels
+------------------------------------------------------------------
+
+With no verbosity (the default), the status of whole runs is
+displayed as shown above. The last done step is shown as the run
+status (or 'done' if all enabled steps are completed). With more
+verbosity (-v), the status of plans in runs is shown::
+
+    $ tmt status -v
+    status     id
+    prepare    /var/tmp/tmt/run-002  /base
+    done       /var/tmp/tmt/run-001  /advanced
+    done       /var/tmp/tmt/run-001  /base
+
+With the highest verbosity (-vv), the status of individual steps
+for each plan is displayed::
+
+    $ tmt status -vv
+    disc prov prep exec repo fini  id
+    done done done todo todo todo  /var/tmp/tmt/run-002  /base
+    done done done done todo done  /var/tmp/tmt/run-001  /advanced
+    done done done done todo done  /var/tmp/tmt/run-001  /base
+
+
+Status Filtering
+------------------------------------------------------------------
+
+The runs shown in the status are by default taken from
+``/var/tmp/tmt``. The directory containing runs can be specified
+using an argument to ``tmt status``::
+
+    $ tmt status /tmp/run
+    status     id
+    done       /tmp/run/001
+
+Status of one specific run can also be shown using the ``--id``
+option::
+
+    $ tmt status -vv --id run-002
+    disc prov prep exec repo fini  id
+    done done done todo todo todo  /var/tmp/tmt/run-002  /base
+
+Runs and plans can also be filtered based on their status. Option
+``--abandoned`` can be used to list runs/plans which have
+provision step completed but finish step not yet done. This is
+useful for finding active containers or virtual machines::
+
+    $ tmt status --abandoned
+    status     id
+    prepare    /var/tmp/tmt/run-002
+
+To show only completed runs/plans, ``--finished`` can be used::
+
+    $ tmt status --finished
+    status     id
+    done       /var/tmp/tmt/run-001
+
+Finally, ``--active`` displays runs/plans in progress (at least
+one enabled step has not been finished)::
+
+    $ tmt status --active
+    status     id
+    prepare    /var/tmp/tmt/run-002
