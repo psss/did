@@ -5,4 +5,4 @@ provision:
 enabled: false
 adjust:
     enabled: true
-    when: how == full
+    when: how == full or trigger == commit
