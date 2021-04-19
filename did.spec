@@ -1,5 +1,5 @@
 Name: did
-Version: 0.17
+Version: 0.18
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -53,6 +53,20 @@ export LANG=en_US.utf-8
 %license LICENSE
 
 %changelog
+* Mon Apr 19 2021 Petr Šplíchal <psplicha@redhat.com> - 0.18-1
+- Support custom xmlrpc endpoint for MoinMoin wiki
+- Adjust the approved merge requests for gitlab
+- Add search for approved merge requests in gitlab
+- Enable copr builds from master, simplify tests
+- Add "no prefix" rule to commit message suggestions
+- Simplify packit config, enable epel-8 for testing
+- Do not use interpolation for ConfigParser
+- Expand tilde in config path values
+- Fix a typo in the README format section
+- Update test data for the gerrit plugin
+- Adjust password file support for jira & confluence
+- Add password file options for jira and confluence
+
 * Mon Jul 13 2020 Petr Šplíchal <psplicha@redhat.com> - 0.17-1
 - Prevent exploring tests under the tmt directory
 - Run unit tests always under the English locale
