@@ -119,17 +119,17 @@ example: |
     link:
       - implemented-by: /tmt/steps/provision/minute.py
 
-/environment:
-    summary: Environment specification
+/hardware:
+    summary: Hardware specification
 
     description: |
         As part of the provision step it is possible to specify
         additional requirements for the testing environment.
         Individual requirements are provided as a simple ``key:
         value`` pairs, for example the minimum amount of
-        ``memory`` and ``disk`` space, or the related information
-        is grouped under a common parent, for example ``cores`` or
-        ``model`` under the ``cpu`` key.
+        ``memory`` or the related information is grouped under a
+        common parent, for example ``cores`` or ``model`` under
+        the ``cpu`` key.
 
         When multiple environment requirements are provided the
         provision implementation should attempt to satisfy all of
@@ -146,15 +146,18 @@ example: |
         should be supported everywhere.
 
     example: |
-        # Simple use cases simple
+        # Basic key-value format used to specify the memory size
         memory: 8 GB
-        disk: 500 GB
 
         # Processor-related stuff grouped together
         cpu:
             processors: 2
             cores: 16
             model: 37
+
+        # Disk group used to allow possible future extensions
+        disk:
+            space: 500 GB
 
         # Optional operators at the start of the value
         memory: '> 8 GB'
