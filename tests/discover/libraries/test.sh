@@ -5,7 +5,7 @@
 rlJournalStart
     rlPhaseStartSetup
         rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory"
-        rlRun "tmt='tmt run -avvvddd plan --name'"
+        rlRun "tmt='tmt run -arvvvddd plan --name'"
         rlRun "pushd data"
         rlRun "set -o pipefail"
     rlPhaseEnd
@@ -52,14 +52,15 @@ rlJournalStart
         rlAssertGrep 'the library is stored deep.' $tmp/output
     rlPhaseEnd
 
-    rlPhaseStartTest "strip_git_suffix"
+    rlPhaseStartTest "Strip git suffix"
         rlRun "$tmt strip_git_suffix 2>&1 | tee $tmp/output" 0
         rlAssertGrep "summary: 3 tests selected" "$tmp/output"
         rlAssertGrep "/strip_git_suffix/test2" "$tmp/output"
-        rlAssertGrep "Detected library '{'url': 'https://github.com/psss/fmf.git'}'."\
-                   "$tmp/output"
+        rlAssertGrep \
+            "Detected library '{'url': 'https://github.com/psss/fmf.git'}'." \
+            "$tmp/output"
         rlAssertNotGrep 'Library.*conflicts with already fetched library' \
-                   "$tmp/output"
+            "$tmp/output"
     rlPhaseEnd
 
     rlPhaseStartCleanup

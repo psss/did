@@ -13,6 +13,13 @@ LIBRARY_REGEXP = re.compile(r'^library\(([^/]+)(/[^)]+)\)$')
 DEFAULT_REPOSITORY = 'https://github.com/beakerlib'
 DEFAULT_DESTINATION = 'libs'
 
+# List of git forges for which the .git suffix should be stripped
+STRIP_SUFFIX_FORGES = [
+    'https://github.com',
+    'https://gitlab.com',
+    'https://pagure.io',
+    ]
+
 
 class LibraryError(Exception):
     """ Used when library cannot be parsed from the identifier """
@@ -72,10 +79,8 @@ class Library(object):
             self.parent.debug(f"Detected library '{identifier}'.", level=3)
             self.format = 'fmf'
             self.url = identifier.get('url')
-            for i in ['https://github.com',
-                      'https://gitlab.com',
-                      'https://pagure.io']:
-                if self.url.startswith(i) and self.url.endswith('.git'):
+            for forge in STRIP_SUFFIX_FORGES:
+                if self.url.startswith(forge) and self.url.endswith('.git'):
                     self.url = self.url.rstrip('.git')
             self.ref = identifier.get('ref', None)
             self.dest = identifier.get(
