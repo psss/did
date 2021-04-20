@@ -3,6 +3,7 @@ import datetime
 import getpass
 import json
 import os
+import sys
 import re
 import time
 
@@ -70,17 +71,54 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             image: 1MT-Fedora-32
             flavor: m1.large
 
-    Available images and flavors can be listed using '1minutetip list'
-    and '1minutetip list-flavors'.
+    Available images and flavors can be listed using 'tmt run provision --how minute --list'
+    and 'tmt run provision --how minute --list-flavors'.
     """
 
     # Guest instance
     _guest = None
 
+    # API url for openstack gateway
+    api_url = ""
+
     # Supported methods
     _methods = [
         tmt.steps.Method(name='minute.obsolete', doc=__doc__, order=80),
         ]
+
+    def _populate_api_url(self):
+        """ Get api url from 1minutetip script """
+        # Read API URL from 1minutetip script
+        try:
+            self.debug(f"Get the API URL from '{SCRIPT_PATH}'.")
+            script_content = self.read(SCRIPT_PATH)
+            match = re.search(API_URL_RE, script_content)
+            if not match:
+                raise tmt.utils.ProvisionError(
+                        f"Could not obtain API URL from '{SCRIPT_PATH}'.")
+            self.api_url = match.group('url')
+            self.debug('api_url', self.api_url, level=3)
+        except tmt.utils.FileError:
+            raise tmt.utils.ProvisionError(
+                f"File '{SCRIPT_PATH}' not found. Please install 1minutetip.")
+
+    def _filter_images_list_output(self, image_list_raw):
+        """ Prepare raw image list to terminal """
+        filter_out = ('new', 'obsolete', 'invalid')
+        image_list = list(filter(lambda line:
+            not line.endswith(filter_out) and line.startswith('1MT-'),
+            image_list_raw.splitlines()
+        ))
+        image_list.sort()
+
+        return image_list
+
+    def _print_images_list(self, image_list):
+        os_groups = ('Fedora', 'CentOS', 'RHEL-5', 'RHEL-6', 'RHEL-7', 'RHEL-ALT', 'RHEL-8', 'RHEL-9')
+        for os_group in os_groups:
+            os_list = list(filter(lambda item: os_group in item, image_list))
+            print("\n".join(os_list))
+            sys.stderr.write("-------------------------\n")
 
     @classmethod
     def options(cls, how=None):
@@ -91,10 +129,16 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
                 help="Image, see '1minutetip list' for options."),
             click.option(
                 '-F', '--flavor', metavar='FLAVOR',
-                help="Flavor, see '1minutetip list-flavors' for options."),
+                help="Flavor, see 'tmt run provision --how minute --list-flavors' for options."),
             click.option(
                 '--allow-ipv4-only', is_flag=True,
-                help="Allow using a network without IPv6.")
+                help="Allow using a network without IPv6."),
+            click.option(
+                '--list-flavors', is_flag=True,
+                help="List openstack flavors."),
+            click.option(
+                '--list', is_flag=True,
+                help="List openstack images.")
             ] + super().options(how)
 
     def default(self, option, default=None):
@@ -103,6 +147,8 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             'image': 'fedora',
             'flavor': DEFAULT_FLAVOR,
             'allow_ipv4_only': False,
+            'list' : False,
+            'list-flavors' : False
             }
         return defaults.get(option, default)
 
@@ -112,31 +158,44 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
 
     def wake(self, data=None):
         """ Override options and wake up the guest """
-        super().wake(['image', 'flavor', 'allow_ipv4_only'])
+        super().wake(['image', 'flavor', 'allow_ipv4_only', 'list', 'list-flavors'])
         if self.opt('dry'):
             return
 
         # Read API URL from 1minutetip script
-        try:
-            self.debug(f"Get the API URL from '{SCRIPT_PATH}'.")
-            script_content = self.read(SCRIPT_PATH)
-            match = re.search(API_URL_RE, script_content)
-            if not match:
-                raise tmt.utils.ProvisionError(
-                    f"Could not obtain API URL from '{SCRIPT_PATH}'.")
-            self.data['api_url'] = match.group('url')
-            self.debug('api_url', self.data['api_url'], level=3)
-        except tmt.utils.FileError:
-            raise tmt.utils.ProvisionError(
-                f"File '{SCRIPT_PATH}' not found. Please install 1minutetip.")
+        self._populate_api_url()
 
         if data:
+            data['api_url'] = self.api_url
             self._guest = GuestMinute(data, name=self.name, parent=self.step)
             self._guest.wake()
 
     def go(self):
-        """ Provision the container """
+        """ Provision the container, list flavors or list of images probided by openstack """
         super().go()
+
+        self._populate_api_url()
+
+        opt = self.get('list-flavors')
+        if opt:
+            (code, flavorslist) = run_openstack(
+                self.api_url,
+                f'flavor list --public -f table', False)
+            print(flavorslist)
+            # TODO: Add cleanup similar to:
+            # https://github.com/psss/tmt/blob/master/tmt/base.py#L1230
+            # It needs to obtain somehow Common object with initialized
+            # workdir...
+            raise SystemExit(0)
+
+        opt = self.get('list')
+        if opt:
+            (code, image_list_raw) = run_openstack(
+                self.api_url,
+                f'image list -f value -c Name', True)
+            image_list = self._filter_images_list_output(image_list_raw)
+            self._print_images_list(image_list)
+            raise SystemExit(0)
 
         data = dict(user=DEFAULT_USER)
         for opt in ['image', 'flavor', 'api_url', 'allow_ipv4_only']:
@@ -145,6 +204,7 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
                 self.info(opt, val, 'green')
             data[opt] = val
 
+        data['api_url'] = self.api_url
         self._guest = GuestMinute(data, name=self.name, parent=self.step)
         self._guest.start()
 
