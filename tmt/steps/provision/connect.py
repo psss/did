@@ -45,6 +45,9 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
                 '-g', '--guest', metavar='GUEST',
                 help='Select remote host to connect to (hostname or ip).'),
             click.option(
+                '-P', '--port', metavar='PORT',
+                help='Use specific port to connect to.'),
+            click.option(
                 '-k', '--key', metavar='PRIVATE_KEY',
                 help='Private key for login into the guest system.'),
             click.option(
@@ -65,11 +68,11 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
 
     def show(self):
         """ Show provision details """
-        super().show(['guest', 'key', 'user', 'password'])
+        super().show(['guest', 'key', 'user', 'password', 'port'])
 
     def wake(self, data=None):
         """ Override options and wake up the guest """
-        super().wake(['guest', 'key', 'user', 'password'])
+        super().wake(['guest', 'key', 'user', 'password', 'port'])
         if data:
             self._guest = tmt.Guest(data, name=self.name, parent=self.step)
 
@@ -82,6 +85,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         user = self.get('user')
         key = self.get('key')
         password = self.get('password')
+        port = self.get('port')
 
         # Check guest and auth info
         if not guest:
@@ -90,6 +94,9 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         data = dict(guest=guest, user=user)
         self.info('guest', guest, 'green')
         self.info('user', user, 'green')
+        if port:
+            self.info('port', port, 'green')
+            data['port'] = port
 
         # Use provided password for authentication
         if password:

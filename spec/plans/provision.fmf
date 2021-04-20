@@ -85,6 +85,8 @@ example: |
             user password to be used to log in
         key
             path to the file with private key
+        port
+            use specific port to connect to
     link:
       - implemented-by: /tmt/steps/provision/connect.py
 
