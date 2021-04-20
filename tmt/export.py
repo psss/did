@@ -374,8 +374,8 @@ def create_nitrate_case(test):
     remote_dirname = re.sub('.git$', '', os.path.basename(test.fmf_id['url']))
     if not remote_dirname:
         raise ConvertError("Unable to find git remote url.")
-    summary = test.node.get('extra-summary', remote_dirname + test.name + ' - '
-                            + test.summary)
+    summary = test.node.get('extra-summary', (remote_dirname or "")
+                            + (test.name or "") + ' - ' + (test.summary or ""))
     category = nitrate.Category(name=category, product=DEFAULT_PRODUCT)
     testcase = nitrate.TestCase(summary=summary, category=category)
     echo(style(f"Test case '{testcase.identifier}' created.", fg='blue'))
