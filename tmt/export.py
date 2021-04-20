@@ -6,6 +6,7 @@
 import email
 import os
 import re
+from functools import lru_cache
 
 import fmf
 from click import echo, style
@@ -188,7 +189,9 @@ def export_to_nitrate(test):
             # Newly created tmt tests have special format summary
             test._metadata['extra-summary'] = nitrate_case.summary
         else:
-            raise ConvertError("Nitrate test case id not found.")
+            raise ConvertError(f"Nitrate test case id not found for {test}"
+                               " (You can use --create option to enforce"
+                               " creating testcases)")
     except (nitrate.NitrateError, gssapi.raw.misc.GSSError) as error:
         raise ConvertError(error)
 
@@ -379,6 +382,8 @@ def create_nitrate_case(test):
     return testcase
 
 
+# avoid multiple searching for general plans (it is expensive)
+@lru_cache(maxsize=None)
 def find_general_plan(component):
     """ Return single General Test Plan or raise an error """
     # At first find by linked components
