@@ -42,6 +42,8 @@ rlJournalStart
         done
         rlRun "tmt test lint bad-attribute | tee output" 1
         rlAssertGrep "fail unknown attribute 'requires' is used" output
+        rlRun "tmt test lint coverage | tee output" 1
+        rlAssertGrep "fail coverage has been obsoleted by link" output
     rlPhaseEnd
 
     rlPhaseStartTest "Fix"

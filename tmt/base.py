@@ -35,9 +35,12 @@ DEFAULT_TEST_DURATION_L2 = '1h'
 # How many already existing lines should tmt run --follow show
 FOLLOW_LINES = 10
 
+# Obsoleted test keys
+OBSOLETED_TEST_KEYS = "relevancy coverage".split()
+
 # Unofficial temporary test keys
 EXTRA_TEST_KEYS = (
-    "relevancy extra-nitrate extra-hardware extra-pepa "
+    "extra-nitrate extra-hardware extra-pepa "
     "extra-summary extra-task".split())
 
 
@@ -50,7 +53,7 @@ class Node(tmt.utils.Common):
     """
 
     # Core attributes (supported across all levels)
-    _keys = ['summary', 'description', 'enabled', 'link']
+    _keys = ['summary', 'description', 'enabled', 'link', 'adjust']
 
     def __init__(self, node, parent=None):
         """ Initialize the node """
@@ -398,9 +401,15 @@ class Test(Node):
                 valid = verdict(
                     False, 'relevancy has been obsoleted by adjust')
 
+        # Check for possible coverage attribute
+        coverage = metadata.pop('coverage', None)
+        if coverage:
+            valid = verdict(False, 'coverage has been obsoleted by link')
         # Check for unknown attributes
         # FIXME - Make additional attributes configurable
-        invalid_keys = self.lint_keys(EXTRA_TEST_KEYS)
+        # We don't want adjust in show/export so it is not yet in Test._keys
+        invalid_keys = self.lint_keys(
+            EXTRA_TEST_KEYS + OBSOLETED_TEST_KEYS + ['adjust'])
         if invalid_keys:
             valid = False
             for key in invalid_keys:

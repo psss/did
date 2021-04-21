@@ -1,0 +1,8 @@
+summary: Metadata used by tmt itself are valid
+discover:
+    how: shell
+    tests:
+      - name: /lint/tests
+        test: tmt tests lint
+      - name: /lint/plans
+        test: tmt plans lint

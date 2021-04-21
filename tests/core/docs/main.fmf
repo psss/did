@@ -1,3 +1,4 @@
 summary: Check that essential documentation is working
-coverage: /stories/docs
+link:
+  - verifies: /stories/docs
 tag-: [container] # docs are not installed in containers
