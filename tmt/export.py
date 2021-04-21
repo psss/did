@@ -14,7 +14,7 @@ import fmf
 from click import echo, style
 
 import tmt.utils
-from tmt.utils import ConvertError, markdown_to_html
+from tmt.utils import ConvertError, check_git_url, markdown_to_html
 
 log = fmf.utils.Logging('tmt').logger
 
@@ -271,6 +271,9 @@ def export_to_nitrate(test):
                                " creating testcases)")
     except (nitrate.NitrateError, gssapi.raw.misc.GSSError) as error:
         raise ConvertError(error)
+
+    # Check if URL is accessible, to be able to reach from nitrate
+    check_git_url(test.fmf_id['url'])
 
     # Summary
     summary = (test._metadata.get('extra-summary')

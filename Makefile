@@ -29,9 +29,9 @@ coverage: tmp
 # Regenerate test data for integration tests
 # remove selected/all response files in tests/integration/test_data directory
 requre:
-	cd tests/integration; python3 -m pytest -v -x
+	cd tests/integration; python3 -m pytest -v
 	# response files cleanup
-	requre-patch purge --replaces :milestone_url:str:SomeText tests/integration/test_data/test_nitrate/*
+	requre-patch purge --replaces :milestone_url:str:SomeText --replaces :latency:float:0 tests/integration/test_data/test_nitrate/*
 
 
 # Build documentation, prepare man page

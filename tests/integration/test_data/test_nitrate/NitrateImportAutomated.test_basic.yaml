@@ -6,7 +6,7 @@ nitrate.xmlrpc_driver:
   single_request_with_cookies:
   - metadata:
       guess_type: Tuple
-      latency: 1.7679779529571533
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -85,7 +85,7 @@ nitrate.xmlrpc_driver:
         - 10700
   - metadata:
       guess_type: Tuple
-      latency: 1.084463119506836
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -191,7 +191,7 @@ nitrate.xmlrpc_driver:
         setup_checksum: 3204d675db9fa1a1c424fd2e38b55d13
   - metadata:
       guess_type: Tuple
-      latency: 1.1528244018554688
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -218,13 +218,13 @@ nitrate.xmlrpc_driver:
         is_active: true
         is_staff: true
         is_superuser: false
-        last_login: '2021-03-12 22:09:08'
+        last_login: '2021-11-08 20:34:17'
         last_name: "\u0160pl\xEDchal"
         user_permissions: []
         username: psplicha
   - metadata:
       guess_type: Tuple
-      latency: 1.176745891571045
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -244,7 +244,7 @@ nitrate.xmlrpc_driver:
         name: fmf-export
   - metadata:
       guess_type: Tuple
-      latency: 1.3980920314788818
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -271,7 +271,7 @@ nitrate.xmlrpc_driver:
         product_id: 182
   - metadata:
       guess_type: Tuple
-      latency: 1.0268909931182861
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate

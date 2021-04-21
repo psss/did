@@ -6,7 +6,7 @@ nitrate.xmlrpc_driver:
   single_request_with_cookies:
   - metadata:
       guess_type: Tuple
-      latency: 0.8607161045074463
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -27,10 +27,10 @@ nitrate.xmlrpc_driver:
       - nitrate.xmlrpc_driver
       - single_request_with_cookies
     output:
-    - ckmmoxvfrb2kqj7t04nyhwwkrtiyhym0
+    - z5dcrtsa1hxotxtnnfz1a634ehry18gb
   - metadata:
       guess_type: Tuple
-      latency: 0.8907873630523682
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -65,7 +65,7 @@ nitrate.xmlrpc_driver:
         votes_to_confirm: false
   - metadata:
       guess_type: Tuple
-      latency: 0.9082512855529785
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -91,7 +91,7 @@ nitrate.xmlrpc_driver:
       product_id: 182
   - metadata:
       guess_type: Tuple
-      latency: 1.176401138305664
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -113,13 +113,13 @@ nitrate.xmlrpc_driver:
       attachment: []
       author: jscotka
       author_id: 2150
-      case_id: 609911
+      case_id: 612631
       case_status: PROPOSED
       case_status_id: 1
       category: Sanity
       category_id: 518
       component: []
-      create_date: '2021-03-11 17:26:12'
+      create_date: '2021-12-01 15:53:08'
       default_tester: null
       default_tester_id: null
       estimated_time: 00:00:00
@@ -134,7 +134,7 @@ nitrate.xmlrpc_driver:
       reviewer: null
       reviewer_id: null
       script: null
-      summary: This is new testcase inside nitrate
+      summary: tmt/new_testcase - This is new testcase inside nitrate
       tag: []
       text:
         action: ''
@@ -143,18 +143,18 @@ nitrate.xmlrpc_driver:
         author_id: 2150
         breakdown: ''
         breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
-        case: This is new testcase inside nitrate
-        case_id: 609911
+        case: tmt/new_testcase - This is new testcase inside nitrate
+        case_id: 612631
         case_text_version: 1
-        create_date: '2021-03-11 17:26:12'
+        create_date: '2021-12-01 15:53:08'
         effect: ''
         effect_checksum: d41d8cd98f00b204e9800998ecf8427e
-        id: 878395
+        id: 881907
         setup: ''
         setup_checksum: d41d8cd98f00b204e9800998ecf8427e
   - metadata:
       guess_type: Tuple
-      latency: 1.0211031436920166
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -174,7 +174,7 @@ nitrate.xmlrpc_driver:
     - []
   - metadata:
       guess_type: Tuple
-      latency: 0.9151051044464111
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -194,7 +194,7 @@ nitrate.xmlrpc_driver:
     - []
   - metadata:
       guess_type: Tuple
-      latency: 1.0243017673492432
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -204,7 +204,6 @@ nitrate.xmlrpc_driver:
       - tmt.cli
       - tmt.base
       - tmt.export
-      - nitrate.mutable
       - nitrate.containers
       - xmlrpc.client
       - requre.objects
@@ -215,7 +214,7 @@ nitrate.xmlrpc_driver:
     - null
   - metadata:
       guess_type: Tuple
-      latency: 3.068148374557495
+      latency: 0.0
       module_call_list:
       - unittest.case
       - integration.test_nitrate
@@ -225,6 +224,132 @@ nitrate.xmlrpc_driver:
       - tmt.cli
       - tmt.base
       - tmt.export
+      - nitrate.base
+      - nitrate.mutable
+      - nitrate.base
+      - nitrate.immutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - description: ''
+      id: 518
+      name: Sanity
+      product: RHEL Tests
+      product_id: 182
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.base
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - alias: ''
+        arguments: ''
+        attachment: []
+        author: jscotka
+        author_id: 2150
+        case_id: 612631
+        case_status: PROPOSED
+        case_status_id: 1
+        category: Sanity
+        category_id: 518
+        component: []
+        create_date: '2021-12-01 15:53:08'
+        default_tester: null
+        default_tester_id: null
+        estimated_time: 00:05:00
+        extra_link: ''
+        is_automated: 1
+        is_automated_proposed: false
+        notes: null
+        plan: []
+        priority: P3
+        priority_id: 3
+        requirement: ''
+        reviewer: null
+        reviewer_id: null
+        script: null
+        summary: tmt/new_testcase - This is new testcase inside nitrate
+        tag:
+        - 10700
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.base
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - alias: ''
+        arguments: ''
+        attachment: []
+        author: jscotka
+        author_id: 2150
+        case_id: 612631
+        case_status: CONFIRMED
+        case_status_id: 2
+        category: Sanity
+        category_id: 518
+        component: []
+        create_date: '2021-12-01 15:53:08'
+        default_tester: null
+        default_tester_id: null
+        estimated_time: 00:05:00
+        extra_link: ''
+        is_automated: 1
+        is_automated_proposed: false
+        notes: null
+        plan: []
+        priority: P3
+        priority_id: 3
+        requirement: ''
+        reviewer: null
+        reviewer_id: null
+        script: null
+        summary: tmt/new_testcase - This is new testcase inside nitrate
+        tag:
+        - 10700
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.base
       - nitrate.mutable
       - xmlrpc.client
       - requre.objects
@@ -237,13 +362,62 @@ nitrate.xmlrpc_driver:
         attachment: []
         author: jscotka
         author_id: 2150
-        case_id: 609911
+        case_id: 612631
         case_status: CONFIRMED
         case_status_id: 2
         category: Sanity
         category_id: 518
         component: []
-        create_date: '2021-03-11 17:26:12'
+        create_date: '2021-12-01 15:53:08'
+        default_tester: null
+        default_tester_id: null
+        estimated_time: 00:05:00
+        extra_link: ''
+        is_automated: 1
+        is_automated_proposed: false
+        notes: null
+        plan: []
+        priority: P3
+        priority_id: 3
+        requirement: ''
+        reviewer: null
+        reviewer_id: null
+        script: null
+        summary: tmt/new_testcase - This is new testcase inside nitrate
+        tag:
+        - 10700
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.base
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - alias: ''
+        arguments: ' '
+        attachment: []
+        author: jscotka
+        author_id: 2150
+        case_id: 612631
+        case_status: CONFIRMED
+        case_status_id: 2
+        category: Sanity
+        category_id: 518
+        component: []
+        create_date: '2021-12-01 15:53:08'
         default_tester: null
         default_tester_id: null
         estimated_time: 00:05:00
@@ -275,11 +449,11 @@ nitrate.xmlrpc_driver:
 
           name: /new_testcase
 
-          url: ''''
+          url: https://github.com/psss/tmt.git
 
-          ref: ''''
+          ref: bad_url
 
-          path: /..
+          path: /tests/integrationtu2j02xw
 
 
           [structured-field-end]
@@ -292,6 +466,25 @@ nitrate.xmlrpc_driver:
         reviewer: null
         reviewer_id: null
         script: null
-        summary: This is new testcase inside nitrate
+        summary: tmt/new_testcase - This is new testcase inside nitrate
         tag:
         - 10700
+tmt.utils:
+  check_git_url:
+  - metadata:
+      guess_type: Simple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - requre.objects
+      - requre.cassette
+      - tmt.utils
+      - check_git_url
+    output: https://github.com/psss/tmt.git

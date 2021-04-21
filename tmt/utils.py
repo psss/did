@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import unicodedata
 from collections import OrderedDict
+from functools import lru_cache
 from pathlib import Path
 from threading import Thread
 from typing import Dict, Iterable
@@ -543,6 +544,10 @@ class GeneralError(Exception):
     def __init__(self, *args, **kwargs):
         # Store the original exception for future use
         self.original = kwargs.get('original')
+
+
+class GitUrlError(GeneralError):
+    """ Remote git url is not reachable """
 
 
 class FileError(GeneralError):
@@ -1078,6 +1083,21 @@ def create_file(
     except OSError as error:
         raise FileError("Failed to create {} '{}' ({})".format(
             name, path, error))
+
+
+# Avoid multiple subprocess calls for the same url
+@lru_cache(maxsize=None)
+def check_git_url(url):
+    """ Check that a remote git url is accessible """
+    try:
+        log.debug(f"Check git url '{url}'.")
+        subprocess.check_call(
+            ["git", "ls-remote", "--heads", url],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            env={"GIT_ASKPASS": "echo", "GIT_TERMINAL_PROMPT": "0"})
+        return url
+    except subprocess.CalledProcessError:
+        raise GitUrlError(f"Unable to contact remote git via '{url}'.")
 
 
 def public_git_url(url):
