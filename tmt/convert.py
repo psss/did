@@ -327,6 +327,16 @@ def read(path, makefile, nitrate, purpose, disabled):
             echo(
                 style('recommend: ', fg='green') + ' '.join(data['recommend']))
 
+        # Multihost (from Type) -> Add tag for now
+        try:
+            mkfile_type = re.search(r'^Type:\s*(.*)', testinfo, re.M).group(1)
+            if "Multihost" in mkfile_type:
+                data['tag'] = ['multihost']
+                echo(
+                    style('multihost: ', fg='green')
+                    + 'Marked with the "multihost" tag')
+        except AttributeError:
+            pass
         # Add relevant bugs to the 'link' attribute
         for bug in re.findall(r'^Bug:\s*([0-9]+)', testinfo, re.M):
             add_bug(bug, data)
@@ -501,7 +511,7 @@ def read_nitrate(beaker_task, common_data, disabled):
 
 def read_nitrate_case(testcase, makefile_data=None):
     """ Read old metadata from nitrate test case """
-    data = dict()
+    data = {'tag': []}
     echo("test case found '{0}'.".format(testcase.identifier))
     # Test identifier
     data['extra-nitrate'] = testcase.identifier
@@ -534,6 +544,9 @@ def read_nitrate_case(testcase, makefile_data=None):
         else:
             echo(style('environment:', fg='green'))
             echo(pprint.pformat(data['environment']))
+    # Possible multihost tag (detected in Makefile)
+    if makefile_data:
+        data['tag'].extend(makefile_data.get('tag', []))
     # Tags
     if testcase.tags:
         tags = []
@@ -553,8 +566,8 @@ def read_nitrate_case(testcase, makefile_data=None):
                         data['tier'] = num
                 else:
                     data['tier'] = num
-
-        data['tag'] = sorted(tags)
+        # Include possible multihost tag (avoid duplicates)
+        data['tag'] = sorted(set(tags + data['tag']))
         echo(style('tag: ', fg='green') + str(data['tag']))
     # Tier
     try:

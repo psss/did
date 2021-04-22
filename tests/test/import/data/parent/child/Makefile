@@ -32,7 +32,7 @@ $(METADATA): Makefile
 	@echo "TestVersion:     $(TESTVERSION)" >> $(METADATA)
 	@echo "Path:            $(TEST_DIR)" >> $(METADATA)
 	@echo "Description:     Simple smoke test" >> $(METADATA)
-	@echo "Type:            Sanity" >> $(METADATA)
+	@echo "Type:            Multihost" >> $(METADATA)
 	@echo "TestTime:        5m" >> $(METADATA)
 	@echo "RunFor:          tmt" >> $(METADATA)
 	@echo "Requires:        fmf" >> $(METADATA)

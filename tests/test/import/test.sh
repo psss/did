@@ -53,6 +53,11 @@ rlJournalStart
         rlAssertGrep 'relates.*1234567' 'output'
     rlPhaseEnd
 
+    rlPhaseStartTest 'Multihost'
+        rlRun "tmt tests ls . --filter 'tag:multihost' | tee output"
+        rlAssertGrep "/parent/child" 'output'
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "rm -r $tmp" 0 "Removing tmp directory"
         rlRun 'popd'
