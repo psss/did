@@ -1,0 +1,14 @@
+/plan:
+    discover:
+        how: fmf
+    provision:
+        how: container
+    execute:
+        how: tmt
+
+/test:
+    test: ./test.sh
+    framework: beakerlib
+    require:
+      - path: PATH
+        name: /file

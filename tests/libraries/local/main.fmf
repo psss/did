@@ -1,0 +1,8 @@
+summary: Libraries referenced from the local filesystem
+description:
+    Make sure that fetching a beakerlib library using a local path
+    works as expected. Fetches the example library from upstream,
+    modifies it a bit, references it from a test and verifies the
+    changed functionality by running the test in a container.
+require: git
+tier: 3

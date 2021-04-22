@@ -2,6 +2,7 @@
 
 import os
 import re
+import shutil
 
 import fmf
 
@@ -72,6 +73,7 @@ class Library(object):
             self.format = 'rpm'
             self.repo, self.name = matched.groups()
             self.url = os.path.join(DEFAULT_REPOSITORY, self.repo)
+            self.path = None
             self.ref = None
             self.dest = DEFAULT_DESTINATION
 
@@ -80,9 +82,16 @@ class Library(object):
             self.parent.debug(f"Detected library '{identifier}'.", level=3)
             self.format = 'fmf'
             self.url = identifier.get('url')
-            for forge in STRIP_SUFFIX_FORGES:
-                if self.url.startswith(forge) and self.url.endswith('.git'):
-                    self.url = self.url.rstrip('.git')
+            self.path = identifier.get('path')
+            if not self.url and not self.path:
+                raise tmt.utils.SpecificationError(
+                    "Need 'url' or 'path' to fetch a beakerlib library.")
+            # Strip the '.git' suffix from url for known forges
+            if self.url:
+                for forge in STRIP_SUFFIX_FORGES:
+                    if (self.url.startswith(forge)
+                            and self.url.endswith('.git')):
+                        self.url = self.url.rstrip('.git')
             self.ref = identifier.get('ref', None)
             self.dest = identifier.get(
                 'destination', DEFAULT_DESTINATION).lstrip('/')
@@ -90,13 +99,21 @@ class Library(object):
             if not self.name.startswith('/'):
                 raise tmt.utils.SpecificationError(
                     f"Library name '{self.name}' does not start with a '/'.")
-            # Use provided repository nick name or parse it from the url
-            try:
-                self.repo = identifier.get('nick') or re.search(
-                    r'/([^/]+?)(/|\.git)?$', self.url).group(1)
-            except AttributeError:
-                raise tmt.utils.GeneralError(
-                    f"Unable to parse repository name from '{self.url}'.")
+            # Use provided repository nick name or parse it from the url/path
+            self.repo = identifier.get('nick')
+            if not self.repo and self.url:
+                try:
+                    self.repo = re.search(
+                        r'/([^/]+?)(/|\.git)?$', self.url).group(1)
+                except AttributeError:
+                    raise tmt.utils.GeneralError(
+                        f"Unable to parse repository name from '{self.url}'.")
+            if not self.repo and self.path:
+                try:
+                    self.repo = os.path.basename(self.path)
+                except TypeError:
+                    raise tmt.utils.GeneralError(
+                        f"Unable to parse repository name from '{self.path}'.")
         # Something weird
         else:
             raise LibraryError
@@ -145,9 +162,15 @@ class Library(object):
             directory = os.path.join(self.parent.workdir, self.dest, self.repo)
             # Clone repo with disabled prompt to ignore missing/private repos
             try:
-                self.parent.run(
-                    ['git', 'clone', self.url, directory],
-                    shell=False, env={"GIT_ASKPASS": "echo"})
+                if self.url:
+                    self.parent.run(
+                        ['git', 'clone', self.url, directory],
+                        shell=False, env={"GIT_ASKPASS": "echo"})
+                else:
+                    self.parent.debug(
+                        f"Copy local library '{self.path}' to '{directory}'.",
+                        level=3)
+                    shutil.copytree(self.path, directory, symlinks=True)
                 # Detect the default branch from the origin
                 self.default_branch = tmt.utils.default_branch(directory)
                 # Use the default branch if no ref provided
