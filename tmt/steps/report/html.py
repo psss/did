@@ -46,6 +46,10 @@ HTML_TEMPLATE = """
             margin: -1ex 0ex 1ex 7px;
         }
 
+        p.footer {
+            margin: 30px 7px 0px 7px;
+        }
+
         table {
             border-spacing: 7px;
         }
@@ -125,6 +129,9 @@ HTML_TEMPLATE = """
 {% else %}
 <b>No test results found.</b>
 {% endif %}
+<p class="footer">
+    Links: <a href="{{ plan.my_run.workdir }}/log.txt">full debug log</a>
+</p>
 </div>
 </body>
 </html>
