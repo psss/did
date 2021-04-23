@@ -1,0 +1,3 @@
+/basic:
+    summary: A basic test to verify prepare with ansible
+    test: whoami

@@ -1,0 +1,4 @@
+summary: Check that ansible prepare works for basic images
+description:
+    Try to provision a container with specific image (fedora, centos) and
+    prepare it with an ansible playbook.

@@ -359,7 +359,6 @@ class Guest(tmt.utils.Common):
         stdout, stderr = self.run(
             f'stty cols {tmt.utils.OUTPUT_WIDTH}; ansible-playbook '
             f'--ssh-common-args="{self._ssh_options(join=True)}" '
-            f'-e ansible_python_interpreter=auto'
             f'{self._ansible_verbosity()} -i {self._ssh_guest()}, {playbook}',
             cwd=self.parent.plan.worktree)
         self._ansible_summary(stdout)
