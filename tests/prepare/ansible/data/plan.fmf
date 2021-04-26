@@ -1,11 +1,9 @@
+discover:
+    how: fmf
 provision:
     how: container
+prepare:
+    how: ansible
+    playbook: playbook.yml
 execute:
     how: tmt
-
-/basic:
-    discover:
-        how: fmf
-    prepare:
-        how: ansible
-        playbook: ./tests/prepare/ansible/data/basic-playbook.yml

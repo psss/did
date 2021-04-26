@@ -1,0 +1,6 @@
+- hosts: all
+  tasks:
+    - name: Create a simple test file
+      copy:
+        dest: /tmp/prepared
+        content: pass

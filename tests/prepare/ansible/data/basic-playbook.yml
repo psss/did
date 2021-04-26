@@ -1,4 +1,0 @@
-- hosts: all
-  tasks:
-    - name: Try to run whoami command
-      command: whoami

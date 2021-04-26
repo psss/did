@@ -1,3 +1,2 @@
-/basic:
-    summary: A basic test to verify prepare with ansible
-    test: whoami
+summary: Verify that the test file was prepared
+test: grep pass /tmp/prepared
