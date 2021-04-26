@@ -229,7 +229,12 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
             packages = ' '.join(
                 [tmt.utils.quote(package) for package in repo_packages])
             check = f'rpm -q --whatprovides {packages}'
-            # Check and install (extra check for yum to workaround BZ#1920176)
+            # Extra ignore/check for yum to workaround BZ#1920176
+            if 'yum' in command:
+                yum_check = " || true" if skip else f" && {check}"
+            else:
+                yum_check = ""
+            # Check and install
             guest.execute(
-                f'{check} || {command} install {options} {packages}' +
-                (f' && {check}' if 'yum' in command else ''))
+                f"{check} || {command} install {options} "
+                f"{packages}{yum_check}")

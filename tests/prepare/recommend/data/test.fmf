@@ -1,2 +1,7 @@
-test: rpm -q tree
-recommend: [tree, forest]
+/mixed:
+    test: rpm -q tree
+    recommend: [tree, forest]
+
+/weird:
+    test: /bin/true
+    recommend: weird-package
