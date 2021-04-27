@@ -286,37 +286,6 @@ Open a new shell to enable completion. Or run the ``eval`` command
 directly in your current shell to enable it temporarily.
 
 
-Develop
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In order to experiment, play with the latest bits and develop
-improvements it is best to use a virtual environment::
-
-    mkvirtualenv tmt
-    git clone https://github.com/psss/tmt
-    cd tmt
-    pip install -e .
-
-Install ``python3-virtualenvwrapper`` to easily create and enable
-virtual environments using ``mkvirtualenv`` and ``workon``. Note
-that if you have freshly installed the package you need to open a
-new shell session to enable the wrapper functions.
-
-The main ``tmt`` package contains only the core dependencies. For
-building documentation, testing changes, importing/exporting test
-cases or advanced provisioning options install the extra deps::
-
-    pip install '.[docs]'
-    pip install '.[tests]'
-    pip install '.[convert]'
-    pip install '.[provision]'
-
-Or simply install all extra dependencies to make sure you have
-everything needed for the tmt development ready on your system::
-
-    pip install '.[all]'
-
-
 Exit Codes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
