@@ -111,15 +111,16 @@ example: |
         1minutetip backend. Use it, if it exists, otherwise boot a
         new machine using the OpenStack backend.
 
-        Note that you need to have the ``1minutetip`` script
-        installed in order for this provision method to work.
+        Note that this internal-only plugin is now available in the
+        ``tmt-redhat-provision-minute`` package which you can
+        install from the internal copr repository.
     example: |
         provision:
             how: minute
             image: 1MT-Fedora-32
             flavor: m1.large
     link:
-      - implemented-by: /tmt/steps/provision/minute.py
+      - implemented-by: /tmt/steps/provision/minute_obsolete.py
 
 /hardware:
     summary: Hardware specification

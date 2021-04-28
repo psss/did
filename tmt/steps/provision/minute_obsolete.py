@@ -79,7 +79,7 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
 
     # Supported methods
     _methods = [
-        tmt.steps.Method(name='minute', doc=__doc__, order=50),
+        tmt.steps.Method(name='minute.obsolete', doc=__doc__, order=80),
         ]
 
     @classmethod

@@ -19,7 +19,6 @@ COPY .fmf /tmt/.fmf
 COPY tests /tmt/tests
 COPY plans /tmt/plans
 COPY stories /tmt/stories
-RUN rm /tmt/plans/provision/minute.fmf
 
 # Run all plans under the regular user by default
 WORKDIR /tmt

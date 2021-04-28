@@ -241,6 +241,13 @@ EPEL repository::
     sudo dnf install epel-release
     sudo dnf install tmt
 
+For plugins which cannot work outside of VPN and so live within
+its walls you need to enable the internal copr repository first.
+Then you can install either everything or only those you need::
+
+    sudo dnf install tmt-redhat-all
+    sudo dnf install tmt-redhat-*
+
 Impatient to try the fresh features as soon as possible? Install
 the latest greatest version from the ``copr`` repository::
 
