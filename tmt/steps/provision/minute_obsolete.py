@@ -213,8 +213,16 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             if opt != 'api_url' and opt != 'allow_ipv4_only':
                 self.info(opt, val, 'green')
             data[opt] = val
-
         data['api_url'] = self.api_url
+
+        # The plugin has been obsoleted by the internal package
+        self.warn(
+            "The 'minute' provision plugin has been obsoleted "
+            "and will be removed.")
+        self.warn(
+            "Use the 'tmt-redhat-provision-minute' package "
+            "from the internal copr instead.")
+
         self._guest = GuestMinute(data, name=self.name, parent=self.step)
         self._guest.start()
 
