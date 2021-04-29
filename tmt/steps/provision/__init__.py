@@ -293,7 +293,7 @@ class Guest(tmt.utils.Common):
         try:
             distro = self.execute('cat /etc/os-release')[0].strip()
             distro = re.search('PRETTY_NAME="(.*)"', distro).group(1)
-        except tmt.utils.RunError:
+        except (tmt.utils.RunError, AttributeError):
             # Check for lsb-release
             try:
                 distro = self.execute('cat /etc/lsb-release')[0].strip()
@@ -305,6 +305,12 @@ class Guest(tmt.utils.Common):
                     distro = self.execute('cat /etc/redhat-release')[0].strip()
                 except (tmt.utils.RunError, AttributeError):
                     distro = None
+
+        # Handle standard cloud images message when connecting
+        if distro is not None and 'Please login as the user' in distro:
+            raise tmt.utils.GeneralError(
+                f'Login to the guest failed.\n{distro}')
+
         if distro:
             self.info('distro', distro, 'green')
 
@@ -413,9 +419,16 @@ class Guest(tmt.utils.Common):
             self.debug(f"Push workdir to guest '{self.guest}'.")
         else:
             self.debug(f"Copy '{source}' to '{destination}' on the guest.")
-        self.run(
-            f'rsync {options} -e "{self._ssh_command(join=True)}" '
-            f'{source} {self._ssh_guest()}:{destination}')
+        try:
+            self.run(
+                f'rsync {options} -e "{self._ssh_command(join=True)}" '
+                f'{source} {self._ssh_guest()}:{destination}')
+        except tmt.utils.RunError:
+            # Provide a reasonable error to the user
+            self.fail(
+                f"Failed to push workdir to the guest. This usually means "
+                f"login as '{self.user}' to the test machine does not work.")
+            raise
 
     def pull(self, source=None, destination=None, options=None):
         """
