@@ -16,7 +16,7 @@ rlJournalStart
     rlPhaseEnd
 
     for execute in 'shell.detach' 'shell.tmt'; do
-        tmt="tmt run -avvv execute --how $execute"
+        tmt="tmt run -avvvr execute --how $execute"
 
         rlPhaseStartTest "Variable in L1 ($execute)"
             rlRun "$tmt plan --name no test --name yes | tee output"
@@ -33,7 +33,7 @@ rlJournalStart
         rlPhaseStartTest "Variable in option ($execute)"
             for plan in yes no; do
                 for test in yes no; do
-                    rlRun "tmt run -avvv -e STR=O -e INT=0 \
+                    rlRun "tmt run -avvvr -e STR=O -e INT=0 \
                         execute --how $execute \
                         plan --name $plan \
                         test --name $test | tee output"
@@ -47,7 +47,7 @@ rlJournalStart
         rlPhaseStartTest "Variable in YAML file ($execute)"
             for plan in yes no; do
                 for test in yes no; do
-                    rlRun "tmt run -avvv -e @vars.yaml \
+                    rlRun "tmt run -avvvr -e @vars.yaml \
                         execute --how $execute \
                         plan --name $plan \
                         test --name $test | tee output"

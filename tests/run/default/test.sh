@@ -10,7 +10,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "No Metadata"
-        rlRun "tmt run $options execute -h shell -s 'touch $tmp/no-metadata'"
+        rlRun "tmt run -r $options execute -h shell -s 'touch $tmp/no-metadata'"
         rlAssertExists "$tmp/no-metadata"
     rlPhaseEnd
 
@@ -20,7 +20,7 @@ rlJournalStart
         rlRun "echo 'touch $tmp/no-plan' >> tests/smoke/test.sh"
         rlRun "tmt run $options"
         rlAssertExists "$tmp/no-plan"
-        rlRun "tmt run --last report -fv" 0 "Try --last report (verify #287)"
+        rlRun "tmt run -r --last report -fv finish -f" 0 "Try --last report (verify #287)"
     rlPhaseEnd
 
     rlPhaseStartCleanup

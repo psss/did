@@ -4,13 +4,14 @@
 
 rlJournalStart
     rlPhaseStartSetup
+        rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory for failed run"
         rlRun 'pushd data'
         rlRun 'set -o pipefail'
     rlPhaseEnd
 
     plan=fmf/nourl/noref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dv discover plan --name $plan | tee output'
+        rlRun 'tmt run -dvr discover plan --name $plan finish | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertNotGrep 'Checkout ref' output
         rlAssertGrep '3 tests selected' output
@@ -22,8 +23,8 @@ rlJournalStart
     plan=fmf/nourl/noref/path
     path=$(realpath .)
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dv discover --how fmf --path $path plan --name $plan \
-            | tee output'
+        rlRun 'tmt run -dvr discover --how fmf --path $path plan --name $plan \
+            finish | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertNotGrep 'Checkout ref' output
         rlAssertGrep '3 tests selected' output
@@ -34,7 +35,7 @@ rlJournalStart
 
     plan=fmf/nourl/ref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dv discover plan --name $plan | tee output'
+        rlRun 'tmt run -dvr discover plan --name $plan finish | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*5407fe5' output
         rlAssertGrep /tests/docs output
@@ -46,8 +47,8 @@ rlJournalStart
     path=$(realpath ../../../examples/together)
     echo $path
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dddv discover --how fmf --path $path \
-            plan --name $plan | tee output'
+        rlRun 'tmt run -dddvr discover --how fmf --path $path \
+            plan --name $plan finish | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*eae4d52' output
         rlAssertGrep '2 tests selected' output
@@ -57,7 +58,7 @@ rlJournalStart
 
     plan=fmf/url/noref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dddv discover plan --name $plan | tee output'
+        rlRun 'tmt run -dddvr discover plan --name $plan finish | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertNotGrep 'Checkout ref.*master' output
         rlAssertGrep /tests/core/docs output
@@ -67,7 +68,7 @@ rlJournalStart
 
     plan=fmf/url/noref/path
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dddv discover plan --name $plan | tee output'
+        rlRun 'tmt run -dddvr discover plan --name $plan finish | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertNotGrep 'Checkout ref.*master' output
         rlAssertGrep '2 tests selected' output
@@ -77,7 +78,7 @@ rlJournalStart
 
     plan=fmf/url/ref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dddv discover plan --name $plan | tee output'
+        rlRun 'tmt run -dddvr discover plan --name $plan finish | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*5407fe5' output
         rlAssertGrep 'hash.*5407fe5' output
@@ -89,7 +90,7 @@ rlJournalStart
 
     plan=fmf/url/ref/path
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dddv discover plan --name $plan | tee output'
+        rlRun 'tmt run -dddvr discover plan --name $plan finish | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*eae4d52' output
         rlAssertGrep 'hash.*eae4d52' output
@@ -97,12 +98,13 @@ rlJournalStart
         rlAssertGrep /tests/full output
         rlAssertGrep /tests/smoke output
         # Before the change was committed
-        rlRun 'tmt run -d discover --how fmf --ref eae4d52^ plan --name $plan \
-            2>&1 | tee output' 2
+        rlRun "tmt run -i $tmp -d discover --how fmf --ref eae4d52^ plan \
+            --name $plan 2>&1 | tee output" 2
         rlAssertGrep 'Metadata tree path .* not found.' output
     rlPhaseEnd
 
     rlPhaseStartCleanup
+        rlRun "rm -r $tmp" 0 "Removing tmp directory"
         rlRun 'rm -f output' 0 'Removing tmp file'
         rlRun 'popd'
     rlPhaseEnd

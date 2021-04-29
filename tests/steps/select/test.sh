@@ -5,16 +5,18 @@ steps='discover provision prepare execute report finish'
 
 rlJournalStart
     rlPhaseStartSetup
+        rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory"
         rlRun "pushd data"
         rlRun "set -o pipefail"
     rlPhaseEnd
 
+    options='-fi $tmp'
     for selected_step in $steps; do
         rlPhaseStartTest "Select $selected_step"
             exitcode=0
             [[ $selected_step == execute ]] && exitcode=2
             [[ $selected_step == report ]] && exitcode=3
-            rlRun "tmt run $selected_step | tee output" $exitcode
+            rlRun "tmt run $options $selected_step | tee output" $exitcode
             for step in $steps; do
                 if [[ $step == $selected_step ]]; then
                     rlAssertGrep $step output
@@ -26,14 +28,14 @@ rlJournalStart
     done
 
     rlPhaseStartTest "All steps"
-        rlRun "tmt run --all provision -h local | tee output"
+        rlRun "tmt run $options --all provision -h local | tee output"
         for step in $steps; do
             rlAssertGrep $step output
         done
     rlPhaseEnd
 
     rlPhaseStartTest "Skip steps"
-        rlRun "tmt run --skip prepare | tee output"
+        rlRun "tmt run $options --skip prepare | tee output"
         for step in $steps; do
             if [[ $step == prepare ]]; then
                 rlAssertNotGrep $step output
@@ -44,7 +46,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Until"
-        rlRun "tmt run --until execute discover -h shell | tee output"
+        rlRun "tmt run $options --until execute discover -h shell | tee output"
         for step in discover provision prepare execute; do
             rlAssertGrep $step output
         done
@@ -66,7 +68,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Before"
-        rlRun "tmt run --before report discover -h shell | tee output"
+        rlRun "tmt run $options --before report discover -h shell | tee output"
         for step in discover provision prepare execute; do
             rlAssertGrep $step output
         done
@@ -89,7 +91,7 @@ rlJournalStart
 
     rlPhaseStartTest "Invalid"
         for option in 'since' 'until' 'skip'; do
-            rlRun "tmt run --$option invalid 2>&1 | tee output" 2
+            rlRun "tmt run $options --$option invalid 2>&1 | tee output" 2
             rlAssertGrep "Invalid value" output
         done
     rlPhaseEnd
@@ -97,5 +99,6 @@ rlJournalStart
     rlPhaseStartCleanup
         rlRun "rm -f output" 0 "Removing tmp file"
         rlRun "popd"
+        rlRun "rm -rf $tmp" 0 "Removing tmp directory"
     rlPhaseEnd
 rlJournalEnd

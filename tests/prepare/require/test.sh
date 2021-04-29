@@ -9,7 +9,7 @@ rlJournalStart
 
     for image in fedora centos:7 ; do
         # Prepare the tmt command and expected error message
-        tmt="tmt run -av provision -h container -i $image"
+        tmt="tmt run -avr provision -h container -i $image"
         if [[ $image == fedora ]]; then
             error='Unable to find a match: forest'
         else

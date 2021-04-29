@@ -3,9 +3,9 @@
 
 rlJournalStart
     rlPhaseStartTest
-        rlRun "tmt run --dry"
-        rlRun "tmt run --dry -dv"
-        rlRun "tmt run --dry -ddvv"
-        rlRun "tmt run --dry -dddvvv"
+        rlRun "tmt run --dry -r"
+        rlRun "tmt run --dry -dvr"
+        rlRun "tmt run --dry -ddvvr"
+        rlRun "tmt run --dry -dddvvvr"
     rlPhaseEnd
 rlJournalEnd

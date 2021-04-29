@@ -11,7 +11,7 @@ rlJournalStart
     rlPhaseStartTest "Filter by test name"
         plan='plan --name fmf/nourl/noref/nopath'
         discover='discover --how fmf --test discover1'
-        rlRun 'tmt run -dv $discover $plan | tee output'
+        rlRun 'tmt run -dvr $discover $plan finish | tee output'
         rlAssertGrep '1 test selected' output
         rlAssertGrep '/tests/discover1' output
         rlAssertNotGrep '/tests/discover2' output
@@ -21,7 +21,7 @@ rlJournalStart
     rlPhaseStartTest "Filter by advanced filter"
         plan='plan --name fmf/nourl/noref/nopath'
         discover='discover --how fmf --filter tier:1,2'
-        rlRun 'tmt run -dv $discover $plan | tee output'
+        rlRun 'tmt run -dvr $discover $plan finish | tee output'
         rlAssertGrep '2 tests selected' output
         rlAssertGrep '/tests/discover1' output
         rlAssertGrep '/tests/discover2' output

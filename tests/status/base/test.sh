@@ -56,20 +56,26 @@ rlJournalStart
     rlPhaseStartTest "Filters"
         rlRun "tmt status --finished | tee output"
         rlAssertGrep "done\s+$runid" "output" -E
-        rlRun "tmt run provision -h local | tee run-output"
+        # Remove the initial run, we do not need it anymore
+        rlRun "rm -r $runid"
+        rlRun "tmt run -r provision -h local | tee run-output"
         rlRun "runid=\$(head -n 1 run-output)" 0 "Get the run ID"
         rlRun "tmt status --abandoned | tee output"
         rlAssertGrep "done\s+$runid" "output" -E
-        rlRun "tmt run -a provision -h local prepare -h shell -s false \
+        rlRun "tmt run -l finish"
+
+        rlRun "tmt run -ar provision -h local prepare -h shell -s false \
             | tee run-output" 2 "Let the prepare step fail"
         rlRun "runid=\$(head -n 1 run-output)" 0 "Get the run ID"
         rlRun "tmt status --active | tee output"
         rlAssertGrep "todo\s+$runid" "output" -E
+        rlRun "tmt run -l finish"
     rlPhaseEnd
 
     rlPhaseStartCleanup
         rlRun "tmt run -i $runid finish" 0 "Get rid of an active provision"
         rlRun "popd"
+        rlRun "rm -r $runid" 0 "Remove the initial testing run"
         rlRun "rm -r $tmp" 0 "Remove tmp directory"
         rlRun "rm -r $tmprun" 0 "Remove a temporary directory for runs"
     rlPhaseEnd

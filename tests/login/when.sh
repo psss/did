@@ -4,7 +4,7 @@
 rlJournalStart
     rlPhaseStartSetup
         rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory"
-        rlRun "tmt='tmt run -a provision -h local execute -h shell -s '"
+        rlRun "tmt='tmt run -ar provision -h local execute -h shell -s '"
         rlRun "pushd $tmp"
         rlRun "set -o pipefail"
         rlRun "tmt init -t mini"

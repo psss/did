@@ -4,7 +4,7 @@
 rlJournalStart
     rlPhaseStartSetup
         rlRun "tmp=\$(mktemp -d)" 0 "Creating tmp directory"
-        rlRun "tmt='tmt run -a provision -h local'"
+        rlRun "tmt='tmt run -ar provision -h local'"
         rlRun "pushd $tmp"
         rlRun "set -o pipefail"
         rlRun "tmt init -t mini"
@@ -33,8 +33,8 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Last run"
-        rlRun "$tmt"
-        rlRun "tmt run -l login -c true | tee output"
+        rlRun "tmt run -a provision -h local"
+        rlRun "tmt run -rl login -c true | tee output"
         rlAssertGrep "interactive" "output"
     rlPhaseEnd
 

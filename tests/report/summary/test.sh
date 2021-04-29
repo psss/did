@@ -8,7 +8,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Check summary"
-        rlRun "tmt run | tee output" 2 "Run tests in concise mode"
+        rlRun "tmt run -r | tee output" 2 "Run tests in concise mode"
         rlAssertGrep "3 tests passed, 2 tests failed and 1 error" "output"
     rlPhaseEnd
 
@@ -25,7 +25,7 @@ rlJournalStart
     rlPhaseStartTest "Check the last run"
         rlRun "tmt run -l | tee output" 2 "Last run in concise mode "
         rlAssertGrep "3 tests passed, 2 tests failed and 1 error" "output"
-        rlRun "tmt run -lv | tee output" 2 "Last run in verbose mode "
+        rlRun "tmt run -lvr | tee output" 2 "Last run in verbose mode "
         rlAssertGrep "3 tests passed, 2 tests failed and 1 error" "output"
         rlAssertGrep "fail /test/bad/one" "output"
         rlAssertGrep "pass /test/good/one" "output"

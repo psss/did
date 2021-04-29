@@ -63,6 +63,7 @@ rlJournalStart
 
     rlPhaseStartCleanup
         rlRun "popd"
+        rlRun "rm -r $runid" 0 "Remove initial run"
         rlRun "rm -r $tmp" 0 "Remove tmp directory"
         rlRun "rm -r $tmprun" 0 "Remove a temporary directory for runs"
     rlPhaseEnd

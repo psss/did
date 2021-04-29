@@ -32,7 +32,7 @@ rlJournalStart
 
     for name in '-n' '--name'; do
         rlPhaseStartTest "tmt run test $name <name>"
-            tmt='tmt run -rv discover'
+            tmt='tmt run -rv discover finish'
             # Existing
             rlRun "$tmt test $name enabled | tee $output"
             rlAssertGrep "/tests/enabled/default" $output
@@ -64,8 +64,8 @@ rlJournalStart
             rlAssertGrep '/tests/enabled/disabled' $output
         done
 
-        for tmt in 'tmt test ls' 'tmt run -rv discover test' \
-            'tmt run -rv plans --name /plans/filtered discover test'; do
+        for tmt in 'tmt test ls' 'tmt run -rv discover finish test' \
+            'tmt run -rv plans --name /plans/filtered discover finish test'; do
             # Tag
             rlRun "$tmt --filter tag:slow | tee $output"
             rlAssertNotGrep '/tests/tag/default' $output
@@ -107,7 +107,7 @@ rlJournalStart
         rlAssertNotGrep '/tests/enabled/defined' $output
         rlAssertGrep '/tests/enabled/disabled' $output
 
-        for tmt in 'tmt test ls' 'tmt run -rv discover test'; do
+        for tmt in 'tmt test ls' 'tmt run -rv discover finish test'; do
             # Tag
             rlRun "$tmt --condition '\"slow\" in tag' | tee $output"
             rlAssertNotGrep '/tests/tag/default' $output

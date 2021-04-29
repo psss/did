@@ -22,12 +22,15 @@ runner = CliRunner()
 
 def test_mini():
     """ Minimal smoke test """
+    tmp = tempfile.mkdtemp()
     result = runner.invoke(
-        tmt.cli.main, ['--root', example('mini'), 'run', '-dv', 'discover'])
+        tmt.cli.main,
+        ['--root', example('mini'), 'run', '-i', tmp, '-dv', 'discover'])
     assert result.exit_code == 0
     assert 'Found 1 plan.' in result.output
     assert '1 test selected' in result.output
     assert '/ci' in result.output
+    shutil.rmtree(tmp)
 
 
 def test_init():
@@ -86,25 +89,29 @@ def test_create():
 def test_step():
     """ Select desired step"""
     for step in ['discover', 'provision', 'prepare']:
+        tmp = tempfile.mkdtemp()
         result = runner.invoke(
-            tmt.cli.main, ['--root', example('local'), 'run', step])
+            tmt.cli.main, ['--root', example('local'), 'run', '-i', tmp, step])
         assert result.exit_code == 0
         assert step in result.output
         assert 'finish' not in result.output
+        shutil.rmtree(tmp)
 
 
 def test_step_execute():
     """ Test execute step"""
+    tmp = tempfile.mkdtemp()
     step = 'execute'
 
     result = runner.invoke(
-        tmt.cli.main, ['--root', example('local'), 'run', step])
+        tmt.cli.main, ['--root', example('local'), 'run', '-i', tmp, step])
 
     # Test execute empty with discover output missing
     assert result.exit_code != 0
     assert isinstance(result.exception, tmt.utils.ExecuteError)
     assert step in result.output
     assert 'provision' not in result.output
+    shutil.rmtree(tmp)
 
 
 def test_systemd():

@@ -3,6 +3,7 @@
 
 rlJournalStart
     rlPhaseStartSetup
+        rlRun "tmp=\$(mktemp -d)" 0 "Create temporary run workdir"
         rlRun "output=\$(mktemp)" 0 "Create output file"
         rlRun "set -o pipefail"
     rlPhaseEnd
@@ -34,7 +35,7 @@ rlJournalStart
 
     for name in '-n' '--name'; do
         rlPhaseStartTest "tmt run plan $name <name>"
-            tmt='tmt run -r discover'
+            tmt='tmt run -i $tmp discover'
             rlRun "$tmt plan $name core | tee $output"
             rlAssertGrep "^/plans/features/core" $output
             rlAssertNotGrep "^/plans/features/basic" $output
@@ -44,6 +45,7 @@ rlJournalStart
     done
 
     rlPhaseStartCleanup
+        rlRun "rm -r $tmp" 0 "Remove temporary run workdir"
         rlRun "rm $output" 0 "Remove output file"
     rlPhaseEnd
 rlJournalEnd

@@ -7,19 +7,19 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Just enable copr"
-        rlRun "tmt run -adddvvv plan --name copr"
+        rlRun "tmt run -adddvvvr plan --name copr"
     rlPhaseEnd
 
     rlPhaseStartTest "Escape package names"
-        rlRun "tmt run -adddvvv plan --name escape"
+        rlRun "tmt run -adddvvvr plan --name escape"
     rlPhaseEnd
 
     rlPhaseStartTest "Exclude selected packages"
-        rlRun "tmt run -adddvvv plan --name exclude"
+        rlRun "tmt run -adddvvvr plan --name exclude"
     rlPhaseEnd
 
     rlPhaseStartTest "Install from epel7 copr"
-        rlRun "tmt run -adddvvv plan --name epel7"
+        rlRun "tmt run -adddvvvr plan --name epel7"
     rlPhaseEnd
 
     rlPhaseStartCleanup
