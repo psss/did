@@ -1,0 +1,5 @@
+title: Package Preparation
+summary: Preparing packages for testing
+story:
+    As a user, I want a flexible and comfortable way to prepare
+    packages on the guest for testing.

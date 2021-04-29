@@ -2,12 +2,12 @@ summary:
     Install specific packages
 story:
     As a developer I would like to install certain packages
-    required for testing. In case of execution from CI I want
-    these packages to be installed from a given Koji build, even
-    if they have same or lower NVR.
+    required for testing.
 description:
-    I have conflicting subpackages in my package. The specifiction
-    for local execution and CI should be the same.
+    In case of execution from CI I want these packages to be
+    installed from a given Koji build, even if they have same or
+    lower NVR. I have conflicting subpackages in my package. The
+    specification for local execution and CI should be the same.
 example: |
     /plan/curl:
         prepare:

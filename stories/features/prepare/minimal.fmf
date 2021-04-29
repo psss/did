@@ -2,8 +2,8 @@ summary:
     Install a minimal set of freshly built required packages
 story:
     As a developer who has just built fresh rpms in given local
-    directory I want to prepare the guest the minimal set of
-    required packages.
+    directory I want to prepare on the guest only the minimal set
+    of required packages.
 description:
     After building new rpm packages locally there should be an
     easy way to install on the guest only those packages which are
@@ -11,4 +11,5 @@ description:
     prepare step.
 example: |
     make rpm
-    tmt run plan --name install/minimal
+    tmt run test --name smoke \
+        prepare --how install --directory fresh/rpms

@@ -259,7 +259,7 @@ areas = {
     '/stories/docs': 'Documentation',
     '/stories/cli': 'Command Line',
     '/stories/install': 'Installation',
-    '/stories/coverage': 'Coverage',
+    '/stories/features': 'Features',
     '/spec/core': 'Core',
     '/spec/tests': 'Tests',
     '/spec/plans': 'Plans',
