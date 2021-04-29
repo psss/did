@@ -1116,7 +1116,7 @@ class Tree(tmt.utils.Common):
 class Run(tmt.utils.Common):
     """ Test run, a container of plans """
 
-    def __init__(self, id_=None, tree=None, context=None, save_last=True):
+    def __init__(self, id_=None, tree=None, context=None):
         """ Initialize tree, workdir and plans """
         # Use the last run id if requested
         self.config = tmt.utils.Config()
@@ -1128,10 +1128,11 @@ class Run(tmt.utils.Common):
         if context.params.get('follow') and id_ is None:
             raise tmt.utils.GeneralError(
                 "Run id has to be specified in order to use --follow.")
-        super().__init__(workdir=id_ or True, context=context)
-        # Store workdir as the last run id
-        if save_last:
-            self.config.last_run(self.workdir)
+        # Do not create workdir now, postpone it until later, as options
+        # have not been processed yet and we do not want commands such as
+        # tmt run discover --how fmf --help to create a new workdir.
+        super().__init__(context=context)
+        self._workdir_path = id_ or True
         self._save_tree(tree)
         self._plans = None
         self._environment = dict()
@@ -1186,6 +1187,7 @@ class Run(tmt.utils.Common):
         clean and status only require the steps to be loaded and
         their status).
         """
+        self._workdir_load(self._workdir_path)
         try:
             data = tmt.utils.yaml_to_dict(self.read('run.yaml'))
         except tmt.utils.FileError:
@@ -1318,6 +1320,9 @@ class Run(tmt.utils.Common):
 
     def go(self):
         """ Go and do test steps for selected plans """
+        # Create the workdir and save last run
+        self._workdir_load(self._workdir_path)
+        self.config.last_run(self.workdir)
         # Show run id / workdir path
         self.info(self.workdir, color='magenta')
         self.debug(f"tmt version: {tmt.__version__}")
@@ -1508,7 +1513,7 @@ class Status(tmt.utils.Common):
         path = self.opt('path')
         self.print_header()
         for abs_path in tmt.utils.generate_runs(path, id_):
-            run = Run(abs_path, self._context.obj.tree, self._context, False)
+            run = Run(abs_path, self._context.obj.tree, self._context)
             self.process_run(run)
 
 
@@ -1573,11 +1578,10 @@ class Clean(tmt.utils.Common):
         if self.opt('last'):
             # Pass the context containing --last to Run to choose
             # the correct one.
-            return self._stop_running_guests(Run(context=self._context,
-                                                 save_last=False))
+            return self._stop_running_guests(Run(context=self._context))
         successful = True
         for abs_path in tmt.utils.generate_runs(path, id_):
-            run = Run(abs_path, self._context.obj.tree, self._context, False)
+            run = Run(abs_path, self._context.obj.tree, self._context)
             if not self._stop_running_guests(run):
                 successful = False
         return successful
@@ -1603,7 +1607,8 @@ class Clean(tmt.utils.Common):
         if self.opt('last'):
             # Pass the context containing --last to Run to choose
             # the correct one.
-            last_run = Run(context=self._context, save_last=False)
+            last_run = Run(context=self._context)
+            last_run._workdir_load(last_run._workdir_path)
             return self._clean_workdir(last_run.workdir)
         all_workdirs = [path for path in tmt.utils.generate_runs(path, id_)]
         keep = self.opt('keep')

@@ -121,10 +121,7 @@ class Common(object):
             self._context = context
 
         # Initialize the workdir if requested
-        if workdir is True:
-            self._workdir_init()
-        elif workdir is not None:
-            self._workdir_init(workdir)
+        self._workdir_load(workdir)
 
     def __str__(self):
         """ Name is the default string representation """
@@ -498,6 +495,17 @@ class Common(object):
             return None
         # Join parent name with self
         return os.path.join(self.parent.workdir, self.name.lstrip('/'))
+
+    def _workdir_load(self, workdir):
+        """
+        Create the given workdir if it is not None
+
+        If workdir=True, the directory name is automatically generated.
+        """
+        if workdir is True:
+            self._workdir_init()
+        elif workdir is not None:
+            self._workdir_init(workdir)
 
     def _workdir_cleanup(self, path=None):
         """ Clean up the work directory """
