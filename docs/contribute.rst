@@ -84,6 +84,11 @@ everything needed for the tmt development ready on your system::
 
     pip install '.[all]'
 
+Install the ``pre-commit`` hooks to run all available checks
+for your commits to the project::
+
+    pre-commit install
+
 
 Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
