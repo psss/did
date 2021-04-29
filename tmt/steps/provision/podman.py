@@ -140,11 +140,14 @@ class GuestContainer(tmt.Guest):
         self.container = 'tmt' + workdir.replace('/', '-')
         self.verbose('name', self.container, 'green')
 
+        # FIXME: Workaround for BZ#1900021 (f34 container on centos-8)
+        workaround = ['--security-opt', 'seccomp=unconfined']
+
         # Run the container
+        self.debug(f"Start container '{self.image}'.")
         self.container_id = self.podman(
-            ['run'] + ['--name', self.container,
-            '-v', f'{workdir}:{workdir}:Z', '-itd', self.image],
-            message=f"Start container '{self.image}'.")[0].strip()
+            ['run'] + workaround + ['--name', self.container,
+            '-v', f'{workdir}:{workdir}:Z', '-itd', self.image])[0].strip()
 
     def ansible(self, playbook):
         """ Prepare container using ansible playbook """
