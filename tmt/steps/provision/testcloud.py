@@ -428,8 +428,9 @@ class GuestTestcloud(tmt.Guest):
                 f"directory permissions.", original=error)
 
         # Create instance
+        _, run_id = os.path.split(self.parent.plan.my_run.workdir)
         self.instance_name = self._random_name(
-            prefix="tmt-{0}-".format(self.parent.plan.my_run.workdir[-3:]))
+            prefix="tmt-{0}-".format(run_id[-3:]))
         self.instance = testcloud.instance.Instance(
             name=self.instance_name, image=self.image,
             connection='qemu:///session')
