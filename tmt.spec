@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.4.0
+Version: 1.5.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -174,6 +174,47 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Fri Apr 30 2021 Petr Šplíchal <psplicha@redhat.com> - 1.5.0-1
+- Enable and document `pre-commit` and `autopep8`
+- Reorganize feature stories, fix title duplication
+- Prepare/install story for package development.
+- Add package preparation scenarios from Fedora CI
+- Prepare/install story for released packages
+- Add new stories related to package preparation
+- Fix login not working for cloud images
+- Work around a seccomp podman issue on centos-8
+- Tag multihost tests during import from Makefile
+- Adjust the simple test for ansible prepare
+- Remove hardcoded ansible_python_interpreter=auto
+- Fix lint and use it on the tmt repo itself
+- Obsolete the minute provision plugin
+- Update the documentation for contributors
+- Do not assert installed packages for recommend
+- Show link to the full debug log in the html report
+- Implement tmt clean command
+- Require a newer fmf which supports storing data
+- Allow to specify port in provision.connect
+- Surround classes and functions with 2 blank lines
+- Fix order of imports, sort them alphabetically
+- Update the provision step hardware specification
+- Fix tmt plan lint for multiple configurations
+- Add tmt status examples section
+- Add a context adjust example for the prepare step
+- Adjust the git suffix stripping for known forges
+- Strip git suffix from pagure/gitlab/github repos
+- Enable install plans for pull request testing
+- Adjust the essential attributes description
+- Document the essential class attributes
+- Improve the prepare step documentation
+- Correctly convert relevancy with the `!=` operator
+- Print note in report.html if it exists
+- Add note about error for beakerlib results
+- Adjust progress bar for the internal executor
+- Add test progress bar to non-verbose mode
+- Adjust the attribute linting for tests
+- Lint attribute names for test
+- Human friendly names for VMs
+
 * Tue Apr 06 2021 Petr Šplíchal <psplicha@redhat.com> - 1.4.0-1
 - Create a copy of nitrate testplans for iteration
 - Check the rsync as the first preparation step
