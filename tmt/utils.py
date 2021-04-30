@@ -257,7 +257,7 @@ class Common(object):
         self.info('fail', message, color='red', shift=shift, err=True)
 
     def verbose(
-        self, key, value=None, color=None, shift=0, level=1, err=False):
+            self, key, value=None, color=None, shift=0, level=1, err=False):
         """ Show message if in requested verbose mode level """
         self._log(self._indent(key, value, color=None, shift=shift))
         if self.opt('verbose') >= level:
@@ -270,8 +270,8 @@ class Common(object):
             echo(self._indent(key, value, color, shift), err=err)
 
     def _run(
-        self, command, cwd, shell, env, log, join=False, interactive=False,
-        timeout=None):
+            self, command, cwd, shell, env, log, join=False, interactive=False,
+            timeout=None):
         """
         Run command, capture the output
 
@@ -520,13 +520,13 @@ class Common(object):
         return self._workdir
 
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Exceptions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class GeneralError(Exception):
     """ General error """
+
     def __init__(self, *args, **kwargs):
         # Store the original exception for future use
         self.original = kwargs.get('original')
@@ -538,6 +538,7 @@ class FileError(GeneralError):
 
 class RunError(GeneralError):
     """ Command execution error """
+
     def __init__(
             self, message, command, returncode,
             stdout=None, stderr=None, *args, **kwargs):
@@ -608,7 +609,7 @@ def ascii(text):
     except NameError:
         if not isinstance(text, str):
             text = str(text)
-    return unicodedata.normalize('NFKD', text).encode('ascii','ignore')
+    return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
 
 
 def listify(data, split=False, keys=None):
@@ -760,15 +761,17 @@ def dict_to_yaml(data, width=None, sort=False):
         width=width, indent=4, default_flow_style=False)
     return output.getvalue()
 
+
 # FIXME: Temporary workaround for rhel-8 to disable key sorting
 # https://stackoverflow.com/questions/31605131/
 # https://github.com/psss/tmt/issues/207
 try:
     output = dict_to_yaml(dict(one=1, two=2, three=3))
 except TypeError:
-    representer = lambda self, data: self.represent_mapping(
-        'tag:yaml.org,2002:map', data.items())
+    def representer(self, data):
+        return self.represent_mapping('tag:yaml.org,2002:map', data.items())
     yaml.add_representer(dict, representer, Dumper=yaml.SafeDumper)
+
     def dict_to_yaml(data, width=None, sort=False):
         """ Convert dictionary into yaml (ignore sort) """
         output = io.StringIO()
@@ -915,7 +918,7 @@ def format(
         if wrap == 'auto':
             wrap = any(
                 [len(line) + indent - 7 > width
-                for line in value.split('\n')])
+                 for line in value.split('\n')])
         if wrap:
             output += (wrap_text(
                 value, width=width,
@@ -948,7 +951,7 @@ def create_directory(path, name, dry=False, quiet=False):
 
 
 def create_file(
-    path, content, name, dry=False, force=False, mode=0o664, quiet=False):
+        path, content, name, dry=False, force=False, mode=0o664, quiet=False):
     """ Create a new file, handle errors """
     say = log.debug if quiet else echo
     action = 'would be created' if dry else 'created'
@@ -1027,7 +1030,7 @@ def retry_session(retries=3, backoff_factor=0.1, method_whitelist=False,
         status_forcelist=status_forcelist,
         method_whitelist=method_whitelist,
         raise_on_status=False,
-    )
+        )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('http://', adapter)
     session.mount('https://', adapter)
@@ -1071,7 +1074,7 @@ def validate_fmf_id(fmf_id):
             ('directory path', f"path '{fmf_id.get('path')}' is invalid"),
             ('tree root',
              f"No tree found in repo '{fmf_id.get('url')}', "
-              "missing an '.fmf' directory?")
+             f"missing an '.fmf' directory?")
             ]
         errors = [err[1] for err in error_map if err[0] in str(error)]
         return (False, errors[0] if errors else str(error))
@@ -1312,9 +1315,9 @@ class StructuredField(object):
         """ Load version 1+ format """
         # The text must exactly match the format
         format = re.compile(
-                r"(.*)^\[structured-field-start\][ \t]*\n"
-                r"(.*)\n\[structured-field-end\][ \t]*\n(.*)",
-                re.DOTALL + re.MULTILINE)
+            r"(.*)^\[structured-field-start\][ \t]*\n"
+            r"(.*)\n\[structured-field-end\][ \t]*\n(.*)",
+            re.DOTALL + re.MULTILINE)
         # No match ---> plain text or broken structured field
         matched = format.search(text)
         if not matched:
@@ -1337,12 +1340,12 @@ class StructuredField(object):
         try:
             self.version(int(re.search(
                 r"version (\d+)", parts[0]).groups()[0]))
-            log.debug("Detected StructuredField version {0}".format(
-                    self.version()))
+            log.debug(
+                "Detected StructuredField version {0}".format(self.version()))
         except AttributeError:
             log.error(parts[0])
             raise StructuredFieldError(
-                    "Unable to detect StructuredField version")
+                "Unable to detect StructuredField version")
         # Convert to dictionary, remove escapes and save the order
         keys = parts[1::2]
         escape = re.compile(r"^\[structured-field-escape\]", re.MULTILINE)
@@ -1376,12 +1379,12 @@ class StructuredField(object):
         # Sections
         if self:
             result.append(
-                    u"[structured-field-start]\n"
-                    u"This is StructuredField version {0}. "
-                    u"Please, edit with care.\n".format(self._version))
+                u"[structured-field-start]\n"
+                u"This is StructuredField version {0}. "
+                u"Please, edit with care.\n".format(self._version))
             for section, content in self.iterate():
-                result.append(u"[{0}]\n{1}".format(section,
-                        escape.sub("[structured-field-escape]\\1", content)))
+                result.append(u"[{0}]\n{1}".format(section, escape.sub(
+                    "[structured-field-escape]\\1", content)))
             result.append(u"[structured-field-end]\n")
         # Footer
         if self._footer:
@@ -1440,7 +1443,7 @@ class StructuredField(object):
                 self._version = version
             else:
                 raise StructuredFieldError(
-                        "Bad StructuredField version: {0}".format(version))
+                    "Bad StructuredField version: {0}".format(version))
         return self._version
 
     def load(self, text, version=None):
@@ -1451,13 +1454,13 @@ class StructuredField(object):
         try:
             if not isinstance(text, basestring):
                 raise StructuredFieldError(
-                        "Invalid StructuredField, expecting string or unicode")
+                    "Invalid StructuredField, expecting string or unicode")
             if not isinstance(text, unicode):
                 text = text.decode("utf8")
         except NameError:
             if not isinstance(text, str):
                 raise StructuredFieldError(
-                        "Invalid StructuredField, expecting string")
+                    "Invalid StructuredField, expecting string")
         # Remove possible carriage returns
         text = re.sub("\r\n", "\n", text)
         # Make sure the text has a new line at the end
@@ -1499,7 +1502,7 @@ class StructuredField(object):
             content = self._sections[section]
         except KeyError:
             raise StructuredFieldError(
-                    "Section [{0}] not found".format(ascii(section)))
+                "Section [{0}] not found".format(ascii(section)))
         # Return the whole section content
         if item is None:
             return content
@@ -1508,7 +1511,7 @@ class StructuredField(object):
             return self._read_section(content)[item]
         except KeyError:
             raise StructuredFieldError(
-                    "Unable to read '{0}' from section '{1}'".format(
+                "Unable to read '{0}' from section '{1}'".format(
                     ascii(item), ascii(section)))
 
     def set(self, section, content, item=None):
@@ -1520,7 +1523,7 @@ class StructuredField(object):
                     content = unicode(content)
                 elif not isinstance(content, unicode):
                     content = content.decode("utf8")
-            except:
+            except BaseException:
                 if not isinstance(content, str):
                     content = str(content)
         # Set the whole section content
@@ -1551,7 +1554,7 @@ class StructuredField(object):
                 del self._order[self._order.index(section)]
             except KeyError:
                 raise StructuredFieldError(
-                        "Section [{0}] not found".format(ascii(section)))
+                    "Section [{0}] not found".format(ascii(section)))
         # Remove only selected item from the section
         else:
             try:
@@ -1559,6 +1562,6 @@ class StructuredField(object):
                 del(dictionary[item])
             except KeyError:
                 raise StructuredFieldError(
-                        "Unable to remove '{0}' from section '{1}'".format(
+                    "Unable to remove '{0}' from section '{1}'".format(
                         ascii(item), ascii(section)))
             self._sections[section] = self._write_section(dictionary)

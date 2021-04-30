@@ -49,7 +49,6 @@ source: clean tmp
 	mkdir -p $(TMP)/$(PACKAGE)
 	cp -a $(FILES) $(TMP)/$(PACKAGE)
 	sed -i $(REPLACE_VERSION) $(TMP)/$(PACKAGE)/tmt/__init__.py
-	rm $(TMP)/$(PACKAGE)/tmt/steps/provision/{base,vagrant}.py
 tarball: source man
 	cd $(TMP) && tar cfz SOURCES/$(PACKAGE).tar.gz $(PACKAGE)
 	@echo ./tmp/SOURCES/$(PACKAGE).tar.gz

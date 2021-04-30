@@ -20,7 +20,7 @@ log = fmf.utils.Logging('tmt').logger
 
 
 # Test case relevancy regular expressions
-RELEVANCY_COMMENT =  r"^([^#]*?)\s*#\s*(.+)$"
+RELEVANCY_COMMENT = r"^([^#]*?)\s*#\s*(.+)$"
 RELEVANCY_RULE = r"^([^:]+)\s*:\s*(.+)$"
 RELEVANCY_EXPRESSION = (
     r"^\s*(.*?)\s*(!?contains|!?defined|[=<>!]+)\s*(.*?)\s*$")
@@ -38,20 +38,24 @@ BUGZILLA_URL = 'https://bugzilla.redhat.com/show_bug.cgi?id='
 # Python 2 version
 try:
     yaml.SafeDumper.orig_represent_unicode = yaml.SafeDumper.represent_unicode
+
     def repr_unicode(dumper, data):
         if '\n' in data:
             return dumper.represent_scalar(
                 u'tag:yaml.org,2002:str', data, style='|')
         return dumper.orig_represent_unicode(data)
+
     yaml.add_representer(unicode, repr_unicode, Dumper=yaml.SafeDumper)
 # Python 3 version
 except AttributeError:
     yaml.SafeDumper.orig_represent_str = yaml.SafeDumper.represent_str
+
     def repr_str(dumper, data):
         if '\n' in data:
             return dumper.represent_scalar(
                 u'tag:yaml.org,2002:str', data, style='|')
         return dumper.orig_represent_str(data)
+
     yaml.add_representer(str, repr_str, Dumper=yaml.SafeDumper)
 
 
@@ -234,9 +238,9 @@ def read(path, makefile, nitrate, purpose, disabled):
         # (replace targets, make include optional and remove rhts-lint)
         makefile = makefile.replace('$(METADATA)', 'testinfo.desc')
         makefile = re.sub(
-                r'^include /usr/share/rhts/lib/rhts-make.include',
-                '-include /usr/share/rhts/lib/rhts-make.include',
-                makefile, flags=re.MULTILINE)
+            r'^include /usr/share/rhts/lib/rhts-make.include',
+            '-include /usr/share/rhts/lib/rhts-make.include',
+            makefile, flags=re.MULTILINE)
         makefile = re.sub('.*rhts-lint.*', '', makefile)
 
         # Create testinfo.desc file with resolved variables
@@ -443,12 +447,12 @@ def read_nitrate(beaker_task, common_data, disabled):
     # or try to remove if there isn't.
     md_path = os.getcwd() + '/test.md'
     if md_content:
-        write_markdown(md_path , md_content)
+        write_markdown(md_path, md_content)
     else:
         try:
             os.remove(md_path)
             echo(style(f"Test case file '{md_path}' "
-            "successfully removed.", fg='magenta'))
+                       "successfully removed.", fg='magenta'))
         except FileNotFoundError:
             pass
         except IOError:

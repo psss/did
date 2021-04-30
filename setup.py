@@ -41,7 +41,8 @@ extras_require = {
     'convert': ['nitrate', 'markdown'],
     'report-html': ['jinja2'],
 }
-extras_require['all'] = [dependency
+extras_require['all'] = [
+    dependency
     for extra in extras_require.values()
     for dependency in extra]
 
@@ -66,7 +67,7 @@ default_setup = dict(
     download_url=download_url,
     long_description=readme,
     data_files=[],
-    package_data = {
+    package_data={
         'tmt/steps/execute': ['run.sh']},
     classifiers=[
         'License :: OSI Approved :: MIT License',
@@ -75,7 +76,7 @@ default_setup = dict(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Topic :: Utilities',
-    ],
+        ],
     keywords=['metadata', 'testing'],
     dependency_links=__deplinks__,
     description=__desc__,
@@ -87,6 +88,6 @@ default_setup = dict(
     provides=__provides__,
     scripts=__scripts__,
     version=__version__,
-)
+    )
 
 setup(**default_setup)

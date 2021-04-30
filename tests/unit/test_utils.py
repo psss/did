@@ -16,22 +16,22 @@ def test_public_git_url():
         {
             'original': 'git@github.com:psss/tmt.git',
             'expected': 'https://github.com/psss/tmt.git',
-        }, {
+            }, {
             'original': 'ssh://psplicha@pkgs.devel.redhat.com/tests/bash',
             'expected': 'git://pkgs.devel.redhat.com/tests/bash',
-        }, {
+            }, {
             'original': 'git+ssh://psplicha@pkgs.devel.redhat.com/tests/bash',
             'expected': 'git://pkgs.devel.redhat.com/tests/bash',
-        }, {
+            }, {
             'original': 'ssh://pkgs.devel.redhat.com/tests/bash',
             'expected': 'git://pkgs.devel.redhat.com/tests/bash',
-        }, {
+            }, {
             'original': 'git+ssh://psss@pkgs.fedoraproject.org/tests/shell',
             'expected': 'https://pkgs.fedoraproject.org/tests/shell',
-        }, {
+            }, {
             'original': 'ssh://psss@pkgs.fedoraproject.org/tests/shell',
             'expected': 'https://pkgs.fedoraproject.org/tests/shell',
-        }, {
+            }, {
             'original': 'ssh://git@pagure.io/fedora-ci/metadata.git',
             'expected': 'https://pagure.io/fedora-ci/metadata.git',
             },
@@ -73,13 +73,14 @@ def test_duration_to_seconds():
 
 class test_structured_field(unittest.TestCase):
     """ Self Test """
+
     def setUp(self):
         self.header = "This is a header.\n"
         self.footer = "This is a footer.\n"
         self.start = (
-                "[structured-field-start]\n"
-                "This is StructuredField version 1. "
-                "Please, edit with care.\n")
+            "[structured-field-start]\n"
+            "This is StructuredField version 1. "
+            "Please, edit with care.\n")
         self.end = "[structured-field-end]\n"
         self.zeroend = "[end]\n"
         self.one = "[one]\n1\n"
@@ -208,23 +209,23 @@ class test_structured_field(unittest.TestCase):
             field.set("three", "3")
             self.assertEqual(field.get("three"), "3\n")
         self.assertEqual(field0.save(), "\n".join(
-                [self.sections, self.zeroend]))
+            [self.sections, self.zeroend]))
         self.assertEqual(field1.save(), "\n".join(
-                [self.start, self.sections, self.end]))
+            [self.start, self.sections, self.end]))
 
     def test_remove_section(self):
         """ Remove section """
         field0 = StructuredField(
-                "\n".join([self.sections, self.zeroend]), version=0)
+            "\n".join([self.sections, self.zeroend]), version=0)
         field1 = StructuredField(
-                "\n".join([self.start, self.sections, self.end]))
+            "\n".join([self.start, self.sections, self.end]))
         for field in [field0, field1]:
             field.remove("one")
             field.remove("two")
-        self.assertEqual(field0.save(),
-                "\n".join([self.three, self.zeroend]))
-        self.assertEqual(field1.save(),
-                "\n".join([self.start, self.three, self.end]))
+        self.assertEqual(
+            field0.save(), "\n".join([self.three, self.zeroend]))
+        self.assertEqual(
+            field1.save(), "\n".join([self.start, self.three, self.end]))
 
     def test_section_tag_escaping(self):
         """ Section tag escaping """
@@ -257,7 +258,7 @@ class test_structured_field(unittest.TestCase):
     def test_section_tags_in_header(self):
         """ Section tags in header """
         field = StructuredField("\n".join(
-                ["[something]", self.start, self.one, self.end]))
+            ["[something]", self.start, self.one, self.end]))
         self.assertTrue("something" not in field)
         self.assertTrue("one" in field)
         self.assertEqual(field.get("one"), "1\n")
@@ -285,11 +286,11 @@ class test_structured_field(unittest.TestCase):
     def test_section_item_remove(self):
         """ Remove section item """
         text = "\n".join(
-                [self.start, "[section]\nx = 3\ny = 7\n", self.end])
+            [self.start, "[section]\nx = 3\ny = 7\n", self.end])
         field = StructuredField(text)
         field.remove("section", "x")
         self.assertEqual(field.save(), "\n".join(
-                [self.start, "[section]\ny = 7\n", self.end]))
+            [self.start, "[section]\ny = 7\n", self.end]))
 
     def test_unicode_header(self):
         """ Unicode text in header """

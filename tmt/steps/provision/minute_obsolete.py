@@ -103,7 +103,7 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             'image': 'fedora',
             'flavor': DEFAULT_FLAVOR,
             'allow_ipv4_only': False,
-        }
+            }
         return defaults.get(option, default)
 
     def show(self):
@@ -123,7 +123,7 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             match = re.search(API_URL_RE, script_content)
             if not match:
                 raise tmt.utils.ProvisionError(
-                        f"Could not obtain API URL from '{SCRIPT_PATH}'.")
+                    f"Could not obtain API URL from '{SCRIPT_PATH}'.")
             self.data['api_url'] = match.group('url')
             self.debug('api_url', self.data['api_url'], level=3)
         except tmt.utils.FileError:
@@ -163,6 +163,7 @@ class GuestMinute(tmt.Guest):
         flavor ..... openstack server flavor to use
         api_url .... URL of 1minutetip's openstack API
     """
+
     def load(self, data):
         super().load(data)
         self.key = SSH_KEY
@@ -264,7 +265,7 @@ class GuestMinute(tmt.Guest):
             )
             (,\ .*)?                 # optional IPv6 part
             '''.format(re.escape(network_name)), net_info, re.VERBOSE
-        )
+            )
         if not match:
             self.delete()
             return False

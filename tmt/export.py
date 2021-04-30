@@ -194,10 +194,9 @@ def export_to_nitrate(test):
 
     # Summary
     summary = (test._metadata.get('extra-summary')
-        or test._metadata.get('extra-task')
-        or test.summary
-        or test.name
-        )
+               or test._metadata.get('extra-task')
+               or test.summary
+               or test.name)
     if summary:
         nitrate_case.summary = summary
         echo(style('summary: ', fg='green') + summary)

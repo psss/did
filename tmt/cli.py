@@ -374,6 +374,8 @@ def lint(context, **kwargs):
 
 
 _test_templates = listed(tmt.templates.TEST, join='or')
+
+
 @tests.command()
 @click.pass_context
 @click.argument('name')
@@ -590,6 +592,8 @@ def lint(context, **kwargs):
 
 
 _plan_templates = listed(tmt.templates.PLAN, join='or')
+
+
 @plans.command()
 @click.pass_context
 @click.argument('name')
@@ -651,8 +655,8 @@ def stories(context, **kwargs):
 @implemented_verified_documented
 @verbose_debug_quiet
 def ls(
-    context, implemented, verified, documented, covered,
-    unimplemented, unverified, undocumented, uncovered, **kwargs):
+        context, implemented, verified, documented, covered,
+        unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
     List available stories.
 
@@ -662,7 +666,7 @@ def ls(
     tmt.Story._save_context(context)
     for story in context.obj.tree.stories():
         if story._match(implemented, verified, documented, covered,
-                unimplemented, unverified, undocumented, uncovered):
+                        unimplemented, unverified, undocumented, uncovered):
             story.ls()
 
 
@@ -672,8 +676,8 @@ def ls(
 @implemented_verified_documented
 @verbose_debug_quiet
 def show(
-    context, implemented, verified, documented, covered,
-    unimplemented, unverified, undocumented, uncovered, **kwargs):
+        context, implemented, verified, documented, covered,
+        unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
     Show story details.
 
@@ -683,12 +687,14 @@ def show(
     tmt.Story._save_context(context)
     for story in context.obj.tree.stories():
         if story._match(implemented, verified, documented, covered,
-                unimplemented, unverified, undocumented, uncovered):
+                        unimplemented, unverified, undocumented, uncovered):
             story.show()
             echo()
 
 
 _story_templates = listed(tmt.templates.STORY, join='or')
+
+
 @stories.command()
 @click.pass_context
 @click.argument('name')
@@ -716,9 +722,9 @@ def create(context, name, template, force, **kwargs):
 @implemented_verified_documented
 @verbose_debug_quiet
 def coverage(
-    context, code, test, docs,
-    implemented, verified, documented, covered,
-    unimplemented, unverified, undocumented, uncovered, **kwargs):
+        context, code, test, docs,
+        implemented, verified, documented, covered,
+        unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
     Show code, test and docs coverage for given stories.
 
@@ -737,8 +743,9 @@ def coverage(
         code = test = docs = True
     for story in context.obj.tree.stories():
         # Check conditions
-        if not story._match(implemented, verified, documented, covered,
-                unimplemented, unverified, undocumented, uncovered):
+        if not story._match(
+                implemented, verified, documented, covered, unimplemented,
+                unverified, undocumented, uncovered):
             continue
         # Show header once
         if not header:
@@ -781,9 +788,9 @@ def coverage(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
 def export(
-    context, format_,
-    implemented, verified, documented, covered,
-    unimplemented, unverified, undocumented, uncovered, **kwargs):
+        context, format_,
+        implemented, verified, documented, covered,
+        unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
     Export selected stories into desired format.
 
@@ -794,7 +801,7 @@ def export(
 
     for story in context.obj.tree.stories(whole=True):
         if story._match(implemented, verified, documented, covered,
-                unimplemented, unverified, undocumented, uncovered):
+                        unimplemented, unverified, undocumented, uncovered):
             echo(story.export(format_))
 
 
@@ -838,8 +845,8 @@ def init(context, path, template, force, **kwargs):
 @click.pass_context
 @click.argument('path', default=tmt.utils.WORKDIR_ROOT)
 @click.option(
-    '-i', '--id', help=
-    'Run id (name or directory path) to show status of.', metavar="ID")
+    '-i', '--id', metavar="ID",
+    help='Run id (name or directory path) to show status of.')
 @click.option(
     '--abandoned', is_flag=True, default=False,
     help='List runs which have provision step completed but finish step '
@@ -960,8 +967,8 @@ def runs(context, path, last, id_, keep, **kwargs):
 @click.option(
     '-l', '--last', is_flag=True, help='Stop the guest of the last run.')
 @click.option(
-    '-i', '--id', 'id_', metavar="ID", help=
-    'Run id (name or directory path) to stop the guest of.')
+    '-i', '--id', 'id_', metavar="ID",
+    help='Run id (name or directory path) to stop the guest of.')
 @click.option(
     '-h', '--how', metavar='METHOD',
     help='Stop guests of the specified provision method.')

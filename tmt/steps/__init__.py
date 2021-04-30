@@ -152,7 +152,7 @@ class Step(tmt.utils.Common):
         how = self.opt('how')
         if how is not None:
             for data in self.data:
-                    data['how'] = how
+                data['how'] = how
 
     def plugins(self, classes=None):
         """

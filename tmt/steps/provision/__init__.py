@@ -203,7 +203,7 @@ class Guest(tmt.utils.Common):
     def _random_name(self, prefix='', length=16):
         """ Generate a random name """
         # Append at least 5 random characters
-        min_random_part = max(5, length-len(prefix))
+        min_random_part = max(5, length - len(prefix))
         name = prefix + ''.join(
             random.choices(string.ascii_letters, k=min_random_part))
         # Return tail (containing random characters) of name

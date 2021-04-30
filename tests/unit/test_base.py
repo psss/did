@@ -40,7 +40,7 @@ def test_test_defaults():
     assert test.require == list()
     assert test.environment == dict()
     assert test.duration == '5m'
-    assert test.enabled == True
+    assert test.enabled is True
     assert test.result == 'respect'
     assert test.tag == list()
 
@@ -73,7 +73,7 @@ def test_link():
     assert Link('/fmf/id').get() == [dict(relates='/fmf/id')]
     # Multiple strings (default relation)
     assert Link(['one', 'two']).get() == [
-            dict(relates='one'), dict(relates='two')]
+        dict(relates='one'), dict(relates='two')]
     # Multiple string mixed relation
     assert Link(['implicit', dict(duplicates='explicit')]).get() == [
         dict(relates='implicit'), dict(duplicates='explicit')]

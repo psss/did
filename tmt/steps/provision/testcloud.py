@@ -28,6 +28,7 @@ def import_testcloud():
         raise ProvisionError(
             "Install 'testcloud' to provision using this method.")
 
+
 # Testcloud cache to our tmt's workdir root
 TESTCLOUD_DATA = os.path.join(WORKDIR_ROOT, 'testcloud')
 TESTCLOUD_IMAGES = os.path.join(TESTCLOUD_DATA, 'images')
@@ -327,7 +328,6 @@ class GuestTestcloud(tmt.Guest):
             raise ProvisionError(
                 f"Failed to detect full compose name from '{images}'.")
         return f'{images}/{compose_name}'
-
 
     @staticmethod
     def _create_template():

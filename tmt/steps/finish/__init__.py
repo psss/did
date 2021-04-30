@@ -47,7 +47,7 @@ class Finish(tmt.steps.Step):
 
     def summary(self):
         """ Give a concise summary """
-        tasks  = fmf.utils.listed(self.plugins(), 'task')
+        tasks = fmf.utils.listed(self.plugins(), 'task')
         self.info('summary', f'{tasks} completed', 'green', shift=1)
 
     def go(self):

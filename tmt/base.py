@@ -302,7 +302,7 @@ class Test(Node):
                 listed(tests, 'test'),
                 ': ' if tests else '',
                 listed(tests, max=12)
-            ), fg='blue'))
+                ), fg='blue'))
 
     @staticmethod
     def create(name, template, path, force=False, dry=None):
@@ -572,7 +572,7 @@ class Plan(Node):
                 listed(plans, 'plan'),
                 ': ' if plans else '',
                 listed(plans, max=12)
-            ), fg='blue'))
+                ), fg='blue'))
 
     @staticmethod
     def create(name, template, path, force=False, dry=None):
@@ -584,8 +584,8 @@ class Plan(Node):
         (directory, plan) = os.path.split(name)
         directory_path = os.path.join(path, directory.lstrip('/'))
         has_fmf_ext = os.path.splitext(plan)[1] == '.fmf'
-        plan_path = os.path.join(directory_path,
-                                plan + ('' if has_fmf_ext else '.fmf'))
+        plan_path = os.path.join(
+            directory_path, plan + ('' if has_fmf_ext else '.fmf'))
 
         # Create directory & plan
         tmt.utils.create_directory(directory_path, 'plan directory', dry=dry)
@@ -810,8 +810,8 @@ class Story(Node):
         return self._link.get('implemented-by')
 
     def _match(
-        self, implemented, verified, documented, covered,
-        unimplemented, unverified, undocumented, uncovered):
+            self, implemented, verified, documented, covered,
+            unimplemented, unverified, undocumented, uncovered):
         """ Return true if story matches given conditions """
         if implemented and not self.implemented:
             return False
@@ -868,7 +868,7 @@ class Story(Node):
                 listed(stories, 'story'),
                 ': ' if stories else '',
                 listed(stories, max=12)
-            ), fg='blue'))
+                ), fg='blue'))
 
     def show(self):
         """ Show story details """
@@ -1204,7 +1204,7 @@ class Run(tmt.utils.Common):
                 # No attributes will ever need to be accessed, just create
                 # a compatible method signature
                 'get': lambda section, item=None: item,
-            })
+                })
             plans.append(Plan(node, run=self))
 
         self._plans = plans
@@ -1398,8 +1398,8 @@ class Status(tmt.utils.Common):
     def plan_matches_filters(self, plan):
         """ Check if the given plan matches filters from the command line """
         if self.opt('abandoned'):
-            return plan.provision.status() ==\
-                   'done' and plan.finish.status() == 'todo'
+            return (plan.provision.status() == 'done'
+                    and plan.finish.status() == 'todo')
         if self.opt('active'):
             return any(step.status() == 'todo' for step in plan.steps())
         if self.opt('finished'):
@@ -1661,7 +1661,7 @@ class Result(object):
             raise tmt.utils.SpecificationError("Missing test result.")
         if self.result not in self._results:
             raise tmt.utils.SpecificationError(
-                    f"Invalid result '{self.result}'.")
+                f"Invalid result '{self.result}'.")
 
         # Convert log into list if necessary
         try:

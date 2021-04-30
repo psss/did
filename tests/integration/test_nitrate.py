@@ -28,7 +28,9 @@ class Base(RequreTestCase):
         shutil.rmtree(self.tmpdir)
         os.chdir(self.cwd)
         super().tearDown()
-        if hasattr(self.runner_output, "exit_code") and self.runner_output.exit_code != 0:
+        if hasattr(
+                self.runner_output,
+                "exit_code") and self.runner_output.exit_code != 0:
             print("Return code:", self.runner_output.exit_code)
             print("Output:", self.runner_output.output)
             print("Exception:", self.runner_output.exception)
@@ -68,17 +70,24 @@ class NitrateImport(Base):
     def test_import_manual_confirmed(self):
         runner = CliRunner()
         # TODO: import does not respect --root param anyhow (could)
-        self.runner_output = runner.invoke(tmt.cli.main,
-            ['-vvvvdddd', '--root', self.tmpdir / "import_case", "test",
-                "import", "--nitrate", "--manual", "--case=609704"])
+        self.runner_output = runner.invoke(
+            tmt.cli.main,
+            ['-vvvvdddd', '--root', self.tmpdir / "import_case",
+             "test", "import", "--nitrate", "--manual", "--case=609704"])
         self.assertEqual(self.runner_output.exit_code, 0)
-        self.assertIn("Importing the 'Imported_Test_Case'", self.runner_output.output)
-        self.assertIn("test case found 'TC#0609704'", self.runner_output.output)
-        self.assertIn("Metadata successfully stored into", self.runner_output.output)
-        filename = next(filter(lambda x:
-                               "Metadata successfully stored into"
-                               in x and "main.fmf" in x,
-                               self.runner_output.output.splitlines())).split("'")[1]
+        self.assertIn(
+            "Importing the 'Imported_Test_Case'",
+            self.runner_output.output)
+        self.assertIn(
+            "test case found 'TC#0609704'",
+            self.runner_output.output)
+        self.assertIn(
+            "Metadata successfully stored into",
+            self.runner_output.output)
+        filename = next(
+            filter(
+                lambda x: "Metadata successfully stored into" in x and "main.fmf" in x,
+                self.runner_output.output.splitlines())).split("'")[1]
         # /home/jscotka/git/tmt/Manual/Imported_Test_Case/main.fmf
         # TODO: not possible to specify, where to store data,
         # it always creates Manual subdir, I do not want it.
@@ -105,7 +114,7 @@ class NitrateImport(Base):
 
 
 class NitrateImportAutomated(Base):
-    test_md_content= """# Setup
+    test_md_content = """# Setup
 Do this and that to setup the environment.
 
 # Test
@@ -127,7 +136,7 @@ Expect three.
 # Cleanup
 This is a breakdown.
 """
-    main_fmf_content= """summary: Simple smoke test
+    main_fmf_content = """summary: Simple smoke test
 description: |
     Just run 'tmt --help' to make sure the binary is sane.
     This is really that simple. Nothing more here. Really.
@@ -168,7 +177,7 @@ extra-task: /tmt/integration
         self.assertNotIn("test.md", files)
         runner = CliRunner()
         self.runner_output = runner.invoke(
-            tmt.cli.main, [ "test", "import", "--nitrate"])
+            tmt.cli.main, ["test", "import", "--nitrate"])
         self.assertEqual(self.runner_output.exit_code, 0)
         files = os.listdir()
         self.assertIn("Makefile", files)

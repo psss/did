@@ -19,14 +19,14 @@ def test_library():
         assert library.format == 'rpm'
         assert library.repo == 'openssl'
         assert library.url == 'https://github.com/beakerlib/openssl'
-        assert library.ref == 'master' # The default branch is master
+        assert library.ref == 'master'  # The default branch is master
         assert library.dest == tmt.beakerlib.DEFAULT_DESTINATION
         shutil.rmtree(library.parent.workdir)
 
 
 @pytest.mark.web
 @pytest.mark.parametrize(
-        'url, name, default_branch', [
+    'url, name, default_branch', [
         ('https://github.com/beakerlib/httpd', '/http', 'master'),
         ('https://github.com/beakerlib/example', '/file', 'main')
         ])
@@ -62,7 +62,7 @@ def test_dependencies():
     assert libraries[0].repo == 'httpd'
     assert libraries[0].name == '/http'
     assert libraries[0].url == 'https://github.com/beakerlib/httpd'
-    assert libraries[0].ref == 'master' # The default branch is master
+    assert libraries[0].ref == 'master'  # The default branch is master
     assert libraries[0].dest == tmt.beakerlib.DEFAULT_DESTINATION
     assert libraries[1].repo == 'openssl'
     assert libraries[1].name == '/certgen'

@@ -146,8 +146,9 @@ class GuestContainer(tmt.Guest):
         # Run the container
         self.debug(f"Start container '{self.image}'.")
         self.container_id = self.podman(
-            ['run'] + workaround + ['--name', self.container,
-            '-v', f'{workdir}:{workdir}:Z', '-itd', self.image])[0].strip()
+            ['run'] + workaround +
+            ['--name', self.container, '-v', f'{workdir}:{workdir}:Z',
+             '-itd', self.image])[0].strip()
 
     def ansible(self, playbook):
         """ Prepare container using ansible playbook """
