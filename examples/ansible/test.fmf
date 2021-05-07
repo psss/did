@@ -1,0 +1,4 @@
+summary: Run a simple test written in ansible
+test: ansible-playbook -c local test.yml || exit 1
+framework: shell
+require: ansible

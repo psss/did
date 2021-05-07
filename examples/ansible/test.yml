@@ -1,0 +1,8 @@
+- hosts: localhost
+  tasks:
+    - name: Create a simple test file
+      copy:
+        dest: /tmp/prepared
+        content: pass
+    - name: Check the file content
+      shell: grep pass /tmp/prepared
