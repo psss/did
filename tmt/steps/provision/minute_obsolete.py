@@ -3,7 +3,6 @@ import datetime
 import getpass
 import json
 import os
-import sys
 import re
 import time
 
@@ -95,7 +94,7 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             match = re.search(API_URL_RE, script_content)
             if not match:
                 raise tmt.utils.ProvisionError(
-                        f"Could not obtain API URL from '{SCRIPT_PATH}'.")
+                    f"Could not obtain API URL from '{SCRIPT_PATH}'.")
             self.api_url = match.group('url')
             self.debug('api_url', self.api_url, level=3)
         except tmt.utils.FileError:
@@ -105,20 +104,28 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
     def _filter_images_list_output(self, image_list_raw):
         """ Prepare raw image list to terminal """
         filter_out = ('new', 'obsolete', 'invalid')
-        image_list = list(filter(lambda line:
-            not line.endswith(filter_out) and line.startswith('1MT-'),
-            image_list_raw.splitlines()
-        ))
+        image_list = list(
+            filter(
+                lambda line: not line.endswith(filter_out) and line.startswith('1MT-'),
+                image_list_raw.splitlines()))
         image_list.sort()
 
         return image_list
 
     def _print_images_list(self, image_list):
-        os_groups = ('Fedora', 'CentOS', 'RHEL-5', 'RHEL-6', 'RHEL-7', 'RHEL-ALT', 'RHEL-8', 'RHEL-9')
+        os_groups = (
+            'Fedora',
+            'CentOS',
+            'RHEL-5',
+            'RHEL-6',
+            'RHEL-7',
+            'RHEL-ALT',
+            'RHEL-8',
+            'RHEL-9')
         for os_group in os_groups:
-            os_list = list(filter(lambda item: os_group in item, image_list))
-            print("\n".join(os_list))
-            sys.stderr.write("-------------------------\n")
+            self.info(os_group)
+            for os_name in filter(lambda item: os_group in item, image_list):
+                self.print(os_name, shift=1)
 
     @classmethod
     def options(cls, how=None):
@@ -147,8 +154,8 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             'image': 'fedora',
             'flavor': DEFAULT_FLAVOR,
             'allow_ipv4_only': False,
-            'list' : False,
-            'list-flavors' : False
+            'list': False,
+            'list-flavors': False
             }
         return defaults.get(option, default)
 
@@ -158,7 +165,8 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
 
     def wake(self, data=None):
         """ Override options and wake up the guest """
-        super().wake(['image', 'flavor', 'allow_ipv4_only', 'list', 'list-flavors'])
+        super().wake(
+            ['image', 'flavor', 'allow_ipv4_only', 'list', 'list-flavors'])
         if self.opt('dry'):
             return
 
@@ -181,7 +189,8 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             (code, flavorslist) = run_openstack(
                 self.api_url,
                 f'flavor list --public -f table', False)
-            print(flavorslist)
+            for line in flavorslist.split('\n'):
+                self.print(line)
             # TODO: Add cleanup similar to:
             # https://github.com/psss/tmt/blob/master/tmt/base.py#L1230
             # It needs to obtain somehow Common object with initialized

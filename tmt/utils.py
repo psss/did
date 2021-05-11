@@ -239,6 +239,11 @@ class Common(object):
             with open(os.path.join(self.workdir, LOG_FILENAME), 'a') as log:
                 log.write(remove_color(message) + '\n')
 
+    def print(self, key, value=None, color=None, shift=0, err=False):
+        """ Print a message regardless the quiet mode """
+        self._log(self._indent(key, value, color=None, shift=shift))
+        echo(self._indent(key, value, color, shift), err=err)
+
     def info(self, key, value=None, color=None, shift=0, err=False):
         """ Show a message unless in quiet mode """
         self._log(self._indent(key, value, color=None, shift=shift))
