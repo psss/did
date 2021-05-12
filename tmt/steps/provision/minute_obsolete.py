@@ -22,6 +22,15 @@ NUMBER_OF_RETRIES = 3
 DEFAULT_CONNECT_TIMEOUT = 60
 NETWORK_NAME_RE = r'provider\_net\_cci'
 API_URL_RE = r'PRERESERVE\_URL=\"(?P<url>.+)\"'
+OS_GROUPS = (
+    'Fedora',
+    'CentOS',
+    'RHEL-5',
+    'RHEL-6',
+    'RHEL-7',
+    'RHEL-ALT',
+    'RHEL-8',
+    'RHEL-9')
 
 
 def run_openstack(url, cmd, cached_list=False):
@@ -70,8 +79,10 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             image: 1MT-Fedora-32
             flavor: m1.large
 
-    Available images and flavors can be listed using 'tmt run provision --how minute --list'
-    and 'tmt run provision --how minute --list-flavors'.
+    Available images and flavors can be listed using:
+
+        tmt run provision --how minute --list
+        tmt run provision --how minute --list-flavors
     """
 
     # Guest instance
@@ -104,28 +115,17 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
     def _filter_images_list_output(self, image_list_raw):
         """ Prepare raw image list to terminal """
         filter_out = ('new', 'obsolete', 'invalid')
-        image_list = list(
-            filter(
-                lambda line: not line.endswith(filter_out) and line.startswith('1MT-'),
-                image_list_raw.splitlines()))
-        image_list.sort()
+        return sorted(list(
+            line for line in image_list_raw.splitlines()
+            if line.startswith('1MT-') and not line.endswith(filter_out)))
 
-        return image_list
-
-    def _print_images_list(self, image_list):
-        os_groups = (
-            'Fedora',
-            'CentOS',
-            'RHEL-5',
-            'RHEL-6',
-            'RHEL-7',
-            'RHEL-ALT',
-            'RHEL-8',
-            'RHEL-9')
-        for os_group in os_groups:
+    def _print_images_list(self, images):
+        """ Print the list of images grouped by OS """
+        for os_group in OS_GROUPS:
             self.info(os_group)
-            for os_name in filter(lambda item: os_group in item, image_list):
-                self.print(os_name, shift=1)
+            for image in images:
+                if os_group in image:
+                    self.print(image, shift=1)
 
     @classmethod
     def options(cls, how=None):
@@ -133,19 +133,19 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
         return [
             click.option(
                 '-i', '--image', metavar='IMAGE',
-                help="Image, see '1minutetip list' for options."),
+                help="Image, use '--list-images' to see what's available."),
             click.option(
                 '-F', '--flavor', metavar='FLAVOR',
-                help="Flavor, see 'tmt run provision --how minute --list-flavors' for options."),
+                help="Flavor, use '--list-flavors' to see what's available."),
             click.option(
                 '--allow-ipv4-only', is_flag=True,
                 help="Allow using a network without IPv6."),
             click.option(
                 '--list-flavors', is_flag=True,
-                help="List openstack flavors."),
+                help="List available openstack flavors."),
             click.option(
-                '--list', is_flag=True,
-                help="List openstack images.")
+                '--list-images', is_flag=True,
+                help="List available openstack images."),
             ] + super().options(how)
 
     def default(self, option, default=None):
@@ -154,7 +154,7 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             'image': 'fedora',
             'flavor': DEFAULT_FLAVOR,
             'allow_ipv4_only': False,
-            'list': False,
+            'list-images': False,
             'list-flavors': False
             }
         return defaults.get(option, default)
@@ -165,8 +165,9 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
 
     def wake(self, data=None):
         """ Override options and wake up the guest """
-        super().wake(
-            ['image', 'flavor', 'allow_ipv4_only', 'list', 'list-flavors'])
+        super().wake([
+            'image', 'flavor', 'allow_ipv4_only',
+            'list-images', 'list-flavors'])
         if self.opt('dry'):
             return
 
@@ -179,31 +180,31 @@ class ProvisionMinute(tmt.steps.provision.ProvisionPlugin):
             self._guest.wake()
 
     def go(self):
-        """ Provision the container, list flavors or list of images probided by openstack """
+        """ Provision the guest or list flavors/images """
         super().go()
 
         self._populate_api_url()
 
-        opt = self.get('list-flavors')
-        if opt:
-            (code, flavorslist) = run_openstack(
-                self.api_url,
-                f'flavor list --public -f table', False)
-            for line in flavorslist.split('\n'):
-                self.print(line)
-            # TODO: Add cleanup similar to:
-            # https://github.com/psss/tmt/blob/master/tmt/base.py#L1230
-            # It needs to obtain somehow Common object with initialized
-            # workdir...
-            raise SystemExit(0)
+        if self.get('list-flavors') or self.get('list-images'):
+            # List flavors
+            if self.get('list-flavors'):
+                (code, flavorslist) = run_openstack(
+                    self.api_url,
+                    f'flavor list --public -f table', False)
+                for line in flavorslist.split('\n'):
+                    self.print(line)
 
-        opt = self.get('list')
-        if opt:
-            (code, image_list_raw) = run_openstack(
-                self.api_url,
-                f'image list -f value -c Name', True)
-            image_list = self._filter_images_list_output(image_list_raw)
-            self._print_images_list(image_list)
+            # List images
+            if self.get('list-images'):
+                (code, image_list_raw) = run_openstack(
+                    self.api_url,
+                    f'image list -f value -c Name', True)
+                image_list = self._filter_images_list_output(image_list_raw)
+                self._print_images_list(image_list)
+
+            # Clean up the run workdir and exit
+            self.step.plan.my_run._workdir_cleanup(
+                self.step.plan.my_run.workdir)
             raise SystemExit(0)
 
         data = dict(user=DEFAULT_USER)
