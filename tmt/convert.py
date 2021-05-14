@@ -345,25 +345,29 @@ def read(path, makefile, nitrate, purpose, disabled):
         for bug in re.findall(r'^Bug:\s*([0-9]+)', testinfo, re.M):
             add_bug(bug, data)
 
-        # Warn if makefile has 2 or more lines in target run:
-        def target_content(regexp):
-            target = re.search(regexp,
-                               makefile,
-                               re.M).group(1)
-            return [i.strip('\t') for i in target.splitlines()]
+        # Warn if makefile has extra lines in run and build targets
+        def target_content(target):
+            """ Extract lines from the target content """
+            regexp = rf"^{target}:.*\n((?:\t[^\n]*\n?)*)"
+            target = re.search(regexp, makefile, re.M).group(1)
+            return [line.strip('\t') for line in target.splitlines()]
 
-        run_target_list = target_content(r'^run:.*\n((?:\t[^\n]*\n?)*)')
-        if data['test'] and len(run_target_list) > 1:
-            run_target_list.remove(data["test"])
-            echo((style(f'Lines of the target run were skipped during '
-                        f'conversion:\n"{", ".join(run_target_list)}".',
-                        fg='yellow')))
+        run_target_list = target_content("run")
+        run_target_list.remove(data["test"])
+        if run_target_list:
+            echo(style(
+                f"warn: Extra lines detected in the 'run' target:",
+                fg="yellow"))
+            for line in run_target_list:
+                echo(f"    {line}")
 
-        build_target_list = target_content(
-            r'^build:.*\n((?:\t[^\n]*\n?)*)')
+        build_target_list = target_content("build")
         if len(build_target_list) > 1:
-            echo((style(f'Makefile target build was skipped during conversion',
-                        fg='yellow')))
+            echo(style(
+                f"warn: Multiple lines detected in the 'build' target:",
+                fg="yellow"))
+            for line in build_target_list:
+                echo(f"    {line}")
 
         # Restore the original testinfo.desc content (if existed)
         if old_testinfo:
