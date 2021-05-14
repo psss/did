@@ -1235,4 +1235,3 @@ supports this option, the images are removed from
         images
             testcloud
                 Removing '/var/tmp/tmt/testcloud/images/Fedora-Cloud-Base-34_Beta-1.3.x86_64.qcow2'.
-

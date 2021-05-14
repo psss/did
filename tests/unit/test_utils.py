@@ -1,13 +1,13 @@
 # coding: utf-8
 
 import re
-import tmt
 import unittest
 
 import pytest
 
-from tmt.utils import (StructuredField, StructuredFieldError, public_git_url,
-                       listify, duration_to_seconds)
+import tmt
+from tmt.utils import (StructuredField, StructuredFieldError,
+                       duration_to_seconds, listify, public_git_url)
 
 
 def test_public_git_url():

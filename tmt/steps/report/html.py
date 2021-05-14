@@ -6,7 +6,6 @@ import click
 
 import tmt
 
-
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <head>

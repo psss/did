@@ -1,5 +1,5 @@
-import fmf
 import click
+import fmf
 
 import tmt
 

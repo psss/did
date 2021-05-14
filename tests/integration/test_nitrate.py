@@ -4,8 +4,8 @@ import tempfile
 from pathlib import Path
 
 import yaml
-from fmf import Tree
 from click.testing import CliRunner
+from fmf import Tree
 from requre import RequreTestCase
 
 import tmt.base

@@ -12,7 +12,7 @@
 # To use this, use the command:
 #
 # vagrant --use-staging up
-# 
+#
 # vagrant will prompt you for for fas username for auth to koji. Additionally
 # after the box is finished, you will need to aquire a kerberos ticket periodically
 # with `kinit <fasusername>@STG.FEDORAPROJECT.ORG` for bodhi to be able to auth with

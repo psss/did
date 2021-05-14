@@ -12,17 +12,17 @@ import time
 import click
 import fmf
 import yaml
-from fmf.utils import listed
 from click import echo, style
+from fmf.utils import listed
 
 import tmt.export
 import tmt.steps
 import tmt.steps.discover
-import tmt.steps.provision
-import tmt.steps.prepare
 import tmt.steps.execute
-import tmt.steps.report
 import tmt.steps.finish
+import tmt.steps.prepare
+import tmt.steps.provision
+import tmt.steps.report
 import tmt.templates
 import tmt.utils
 from tmt.utils import verdict

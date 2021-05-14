@@ -402,8 +402,8 @@ def read_nitrate(beaker_task, common_data, disabled):
     # Need to import nitrate only when really needed. Otherwise we get
     # traceback when nitrate is not installed or config file not available.
     try:
-        import nitrate
         import gssapi
+        import nitrate
     except ImportError:
         raise ConvertError('Install tmt-test-convert to import metadata.')
 

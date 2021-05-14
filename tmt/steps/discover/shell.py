@@ -1,11 +1,11 @@
 import copy
 import os
 import shutil
-import tmt
 
 import click
 import fmf
 
+import tmt
 import tmt.steps.discover
 
 

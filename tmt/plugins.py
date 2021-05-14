@@ -6,9 +6,10 @@ import importlib
 import os
 import pkgutil
 import sys
-import tmt
 
 import fmf
+
+import tmt
 
 log = fmf.utils.Logging('tmt').logger
 

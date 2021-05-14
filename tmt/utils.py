@@ -17,7 +17,7 @@ from threading import Timer
 import fmf
 import requests
 import yaml
-from click import style, echo, wrap_text
+from click import echo, style, wrap_text
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 

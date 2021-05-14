@@ -1,7 +1,7 @@
 import re
 
-import fmf
 import click
+import fmf
 
 import tmt
 

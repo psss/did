@@ -13,7 +13,6 @@ import urllib3.exceptions
 import tmt
 from tmt.utils import retry_session
 
-
 DEFAULT_USER = 'root'
 DEFAULT_FLAVOR = 'm1.small'
 SSH_KEY = '/usr/share/qa-tools/1minutetip/1minutetip'

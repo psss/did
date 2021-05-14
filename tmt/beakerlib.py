@@ -1,7 +1,7 @@
 """ Handle BeakerLib Libraries """
 
-import re
 import os
+import re
 
 import fmf
 

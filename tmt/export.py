@@ -28,8 +28,8 @@ def import_nitrate():
     # And we want to keep the core tmt package with minimal dependencies.
     try:
         global nitrate, DEFAULT_PRODUCT, gssapi
-        import nitrate
         import gssapi
+        import nitrate
         DEFAULT_PRODUCT = nitrate.Product(name='RHEL Tests')
         return nitrate
     except ImportError:

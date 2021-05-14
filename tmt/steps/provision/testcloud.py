@@ -9,7 +9,7 @@ import fmf
 import requests
 
 import tmt
-from tmt.utils import ProvisionError, WORKDIR_ROOT, retry_session
+from tmt.utils import WORKDIR_ROOT, ProvisionError, retry_session
 
 
 def import_testcloud():
@@ -21,9 +21,9 @@ def import_testcloud():
     global testcloud
     global libvirt
     try:
+        import libvirt
         import testcloud.image
         import testcloud.instance
-        import libvirt
     except ImportError:
         raise ProvisionError(
             "Install 'testcloud' to provision using this method.")
