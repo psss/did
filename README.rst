@@ -376,7 +376,7 @@ Heger, Honza Horák, Rachel Sibley, František Nečas, Michal
 Ruprich, Martin Kyral, Miloš Prchlík, Tomáš Navrátil, František
 Lachman, Patrik Kis, Ondrej Mosnáček, Andrea Ficková, Denis
 Karpelevich, Michal Srb, Jan Ščotka, Artem Zhukov, Vinzenz
-Feenstra and Inessa Vasilevskaya.
+Feenstra, Inessa Vasilevskaya and Štěpán Němec.
 
 
 Copyright
