@@ -5,7 +5,7 @@ description: |
     should be provisioned. Provides a generic and an extensible
     way to write down essential hardware requirements. For example
     one consistent way how to specify "at least 2 GB of RAM" for
-    all supported provisioners. Might fail if cannot provision
+    all supported provisioners. Might fail if it cannot provision
     according to the constraints.
 
 example: |

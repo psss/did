@@ -8,10 +8,16 @@ story:
 description: |
     The ``adjust`` attribute allows to modify arbitrary object
     metadata based on the context in which they are to be used.
-    For example tests may be relevant only for given environment,
+    For example, tests may be relevant only for given environment,
     the set of required packages may differ across distributions
     or there might be a different set of plans executed for pull
     requests versus for the full compose integration testing.
+
+    .. note::
+        The context currently has to be specified explicitly, see
+        the :ref:`/spec/context` documentation for details. In the
+        future, **tmt** will detect (at least some of) the needed
+        information from the environment.
 
     The value can be a dictionary or a list of dictionaries which
     represent individual rules to be applied. Each rule contains
