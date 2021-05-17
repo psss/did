@@ -363,6 +363,7 @@ class Guest(tmt.utils.Common):
         """ Prepare guest using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
         stdout, stderr = self.run(
+            f'{self._export_environment()}'
             f'stty cols {tmt.utils.OUTPUT_WIDTH}; ansible-playbook '
             f'--ssh-common-args="{self._ssh_options(join=True)}" '
             f'{self._ansible_verbosity()} -i {self._ssh_guest()}, {playbook}',

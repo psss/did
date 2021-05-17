@@ -4,3 +4,8 @@
       copy:
         dest: /tmp/prepared
         content: pass
+    - name: Make sure an env var specified in the plan is respected
+      command: echo "VAR_TO_OVERRIDE is {{ var_to_override }}"
+      failed_when: var_to_override == ''
+  vars:
+    var_to_override: "{{ lookup('env', 'VAR_TO_OVERRIDE') }}"
