@@ -1,11 +1,17 @@
 - hosts: all
+  vars:
+    simple: "{{ lookup('env', 'SIMPLE') }}"
+    spaces: "{{ lookup('env', 'SPACES') }}"
   tasks:
     - name: Create a simple test file
       copy:
         dest: /tmp/prepared
         content: pass
-    - name: Make sure an env var specified in the plan is respected
-      command: echo "VAR_TO_OVERRIDE is {{ var_to_override }}"
-      failed_when: var_to_override == ''
-  vars:
-    var_to_override: "{{ lookup('env', 'VAR_TO_OVERRIDE') }}"
+
+    - name: Make sure a simple environment variable is respected
+      command: echo "SIMPLE='{{ simple }}'"
+      failed_when: simple != 'word'
+
+    - name: Make sure variables with spaces are correctly handed over
+      command: echo "SPACES='{{ spaces }}'"
+      failed_when: spaces != 'several words with spaces'

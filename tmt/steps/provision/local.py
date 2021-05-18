@@ -54,7 +54,8 @@ class GuestLocal(tmt.Guest):
         """ Prepare localhost using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
         stdout, stderr = self.run(
-            f'sudo sh -c "stty cols {tmt.utils.OUTPUT_WIDTH}; ansible-playbook'
+            f'sudo sh -c "stty cols {tmt.utils.OUTPUT_WIDTH}; '
+            f'{self._export_environment()}ansible-playbook'
             f'{self._ansible_verbosity()} -c local -i localhost, {playbook}"')
         self._ansible_summary(stdout)
 

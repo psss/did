@@ -1,7 +1,8 @@
 discover:
     how: fmf
 environment:
-    VAR_TO_OVERRIDE: default
+    SIMPLE: word
+    SPACES: several words with spaces
 provision:
     how: container
 prepare:
