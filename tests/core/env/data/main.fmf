@@ -23,5 +23,9 @@
         environment:
             STR: L
             INT: 2
+        prepare:
+            script:
+              - declare -p STR
+              - declare -p INT
     /no:
         summary: This is a plan without variables

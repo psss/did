@@ -61,7 +61,12 @@ class GuestLocal(tmt.Guest):
 
     def execute(self, command, **kwargs):
         """ Execute command on localhost """
-        return self.run(command, **kwargs)
+        # Prepare the environment (plan/cli variables override)
+        environment = dict()
+        environment.update(kwargs.pop('env', dict()))
+        environment.update(self.parent.plan.environment)
+        # Run the command under the prepared environment
+        return self.run(command, env=environment, **kwargs)
 
     def push(self, source=None, destination=None, options=None):
         """ Nothing to be done to push workdir """
