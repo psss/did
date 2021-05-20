@@ -372,7 +372,7 @@ class GuestTestcloud(tmt.Guest):
 
         # Generate ssh key
         self.debug('Generating an ssh key.')
-        self.run(f'ssh-keygen -f {self.key} -N ""')
+        self.run(["ssh-keygen", "-f", self.key, "-N", ""], shell=False)
         with open(self.pubkey, 'r') as pubkey:
             self.config.USER_DATA = USER_DATA.format(
                 user_name=self.user, public_key=pubkey.read())

@@ -1,4 +1,5 @@
 import os
+import re
 
 import click
 
@@ -137,7 +138,7 @@ class GuestContainer(tmt.Guest):
 
         # Deduce container name from workdir, because it is a path
         # make it podman container name friendly
-        self.container = 'tmt' + workdir.replace('/', '-')
+        self.container = 'tmt' + re.sub('[/ ]', '-', workdir)
         self.verbose('name', self.container, 'green')
 
         # FIXME: Workaround for BZ#1900021 (f34 container on centos-8)

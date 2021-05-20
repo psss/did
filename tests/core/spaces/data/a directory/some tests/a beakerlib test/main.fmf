@@ -1,0 +1,7 @@
+summary: A simple beakerlib test with spaces
+test: ./test.sh
+framework: beakerlib
+
+# FIXME: Disabled until the beakerlib issue is fixed
+# https://github.com/beakerlib/beakerlib/pull/101
+enabled: false

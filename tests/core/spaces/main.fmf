@@ -1,0 +1,13 @@
+summary: Verify paths and names with white-space characters
+description:
+    Ensure that test execution including workdir pull and push
+    works as expected when file names and paths contain spaces.
+test: ./test.sh
+framework: beakerlib
+
+environment:
+    METHODS: local container
+adjust:
+  - when: how == full
+    environment:
+        METHODS: container virtual local

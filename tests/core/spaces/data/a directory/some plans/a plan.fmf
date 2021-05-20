@@ -1,0 +1,7 @@
+discover:
+    name: some discover
+    how: fmf
+provision:
+    how: local
+execute:
+    how: tmt
