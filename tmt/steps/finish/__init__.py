@@ -1,3 +1,4 @@
+import copy
 import re
 
 import click
@@ -63,8 +64,13 @@ class Finish(tmt.steps.Step):
 
         # Go and execute each plugin on all guests
         for guest in self.plan.provision.guests():
+            # Create a guest copy and change its parent so that the
+            # operations inside finish plugins on the guest use the
+            # finish step config rather than provision step config.
+            guest_copy = copy.copy(guest)
+            guest_copy.parent = self
             for plugin in self.plugins():
-                plugin.go(guest)
+                plugin.go(guest_copy)
 
         # Stop and remove provisioned guests
         for guest in self.plan.provision.guests():
