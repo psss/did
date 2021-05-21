@@ -1033,6 +1033,10 @@ class Tree(tmt.utils.Common):
             self._tree.adjust(fmf.context.Context(**self._fmf_context()))
         return self._tree
 
+    @tree.setter
+    def tree(self, new_tree):
+        self._tree = new_tree
+
     @property
     def root(self):
         """ Metadata root """
@@ -1152,7 +1156,7 @@ class Run(tmt.utils.Common):
         # tmt run discover --how fmf --help to create a new workdir.
         super().__init__(context=context)
         self._workdir_path = id_ or True
-        self._save_tree(tree)
+        self._tree = tree
         self._plans = None
         self._environment = dict()
         self.remove = self.opt('remove')
@@ -1171,6 +1175,12 @@ class Run(tmt.utils.Common):
         try:
             self.tree = tree if tree else tmt.Tree('.')
             self.debug(f"Using tree '{self.tree.root}'.")
+            # Clear the tree and insert default plan if requested
+            if Plan._opt("default"):
+                new_tree = fmf.Tree(default_plan)
+                new_tree.root = self.tree.root
+                self.tree.tree = new_tree
+                self.debug(f"Enforcing use of default plan")
             # Insert default plan if no plan detected
             if not list(self.tree.tree.prune(keys=['execute'])):
                 self.tree.tree.update(default_plan)
@@ -1206,6 +1216,7 @@ class Run(tmt.utils.Common):
         clean and status only require the steps to be loaded and
         their status).
         """
+        self._save_tree(self._tree)
         self._workdir_load(self._workdir_path)
         try:
             data = tmt.utils.yaml_to_dict(self.read('run.yaml'))
@@ -1249,7 +1260,7 @@ class Run(tmt.utils.Common):
                 self._use_default_plan()
 
         # Filter plans by name unless specified on the command line
-        plan_options = ['names', 'filters', 'conditions']
+        plan_options = ['names', 'filters', 'conditions', 'default']
         if not any([Plan._opt(option) for option in plan_options]):
             self._plans = [
                 plan for plan in self.tree.plans(run=self)
@@ -1340,6 +1351,7 @@ class Run(tmt.utils.Common):
     def go(self):
         """ Go and do test steps for selected plans """
         # Create the workdir and save last run
+        self._save_tree(self._tree)
         self._workdir_load(self._workdir_path)
         self.config.last_run(self.workdir)
         # Show run id / workdir path

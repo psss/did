@@ -23,6 +23,13 @@ rlJournalStart
         rlRun "tmt run -r --last report -fv finish -f" 0 "Try --last report (verify #287)"
     rlPhaseEnd
 
+    rlPhaseStartTest "Explicit default"
+        rlRun "tmt plan create -t mini plans/plan"
+        rlRun "tmt run $options plan --default | tee output"
+        rlAssertGrep "/plans/default" "output"
+        rlAssertNotgrep "/plans/plan" "output"
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
         rlRun "rm -rf $tmp" 0 "Removing tmp directory"

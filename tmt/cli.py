@@ -256,6 +256,9 @@ run.add_command(tmt.steps.Login.command())
 @click.option(
     '-c', '--condition', 'conditions', metavar="EXPR", multiple=True,
     help="Use arbitrary Python expression for filtering.")
+@click.option(
+    '--default', is_flag=True,
+    help="Use default plans even if others are available.")
 @verbose_debug_quiet
 def plans(context, **kwargs):
     """
