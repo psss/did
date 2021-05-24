@@ -48,6 +48,7 @@ BuildRequires: python%{python3_pkgversion}-mock
 BuildRequires: python%{python3_pkgversion}-requests
 BuildRequires: python%{python3_pkgversion}-testcloud
 BuildRequires: python%{python3_pkgversion}-markdown
+BuildRequires: python%{python3_pkgversion}-junit_xml
 # Required for tests
 BuildRequires: rsync
 %{?python_provide:%python_provide python%{python3_pkgversion}-%{name}}
@@ -94,6 +95,13 @@ Requires: python3-jinja2
 Generate test results in the html format. Quickly review test
 output thanks to direct links to output logs.
 
+%package report-junit
+Summary: Report plugin with support for generating JUnit output file
+Requires: python3-junit_xml
+
+%description report-junit
+Generate test results in the JUnit format.
+
 %package all
 Summary: Extra dependencies for the Test Management Tool
 Requires: tmt >= %{version}
@@ -101,6 +109,7 @@ Requires: tmt-provision-container >= %{version}
 Requires: tmt-provision-virtual >= %{version}
 Requires: tmt-test-convert >= %{version}
 Requires: tmt-report-html >= %{version}
+Requires: tmt-report-junit >= %{version}
 
 %description all
 All extra dependencies of the Test Management Tool. Install this
@@ -156,6 +165,7 @@ export LANG=en_US.utf-8
 %license LICENSE
 %exclude %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}{podman,testcloud}.*
 %exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}html.*
+%exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}junit.*
 
 %files provision-container
 %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}podman.*
@@ -165,6 +175,9 @@ export LANG=en_US.utf-8
 
 %files report-html
 %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}html.*
+
+%files report-junit
+%{python3_sitelib}/%{name}/steps/report/{,__pycache__/}junit.*
 
 %files test-convert
 %license LICENSE

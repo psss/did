@@ -1,0 +1,29 @@
+/plan:
+    discover:
+        how: fmf
+    provision:
+        how: local
+    execute:
+        how: tmt
+
+/test:
+    path: /
+    /beakerlib:
+        framework: beakerlib
+        /pass:
+            test: ./runtest.sh pass
+        /fail:
+            test: ./runtest.sh fail
+        /timeout:
+            test: ./runtest.sh timeout
+            duration: 2s
+
+    /shell:
+        framework: shell
+        /pass:
+            test: "true"
+        /fail:
+            test: "false"
+        /timeout:
+            test: sleep 10
+            duration: 2s

@@ -41,6 +41,7 @@ extras_require = {
     'provision': ['testcloud>=0.5.0'],
     'convert': ['nitrate', 'markdown'],
     'report-html': ['jinja2'],
+    'report-junit': ['junit_xml'],
 }
 extras_require['all'] = [
     dependency
