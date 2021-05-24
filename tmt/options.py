@@ -68,6 +68,7 @@ def create_method_class(methods):
                 for method in methods:
                     if method.startswith(how):
                         self._method = methods[method]
+                        break
 
         def parse_args(self, context, args):
             self._check_method(args)
