@@ -88,7 +88,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             os.makedirs(testdir)
 
         # Use a tmt.Tree to apply possible command line filters
-        tests = tmt.Tree(tree=tests).tests()
+        tests = tmt.Tree(tree=tests).tests(conditions=["manual is False"])
         self._tests = tests
 
     def tests(self):
