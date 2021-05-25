@@ -805,6 +805,26 @@ def export(
             echo(story.export(format_))
 
 
+@stories.command()
+@click.pass_context
+@name_filter_condition
+@verbose_debug_quiet
+def lint(context, **kwargs):
+    """
+    Check stories against the L3 metadata specification.
+
+    Regular expression can be used to filter stories by name.
+    Use '.' to select stories under the current working directory.
+    """
+    tmt.Story._save_context(context)
+    exit_code = 0
+    for story in context.obj.tree.stories():
+        if not story.lint():
+            exit_code = 1
+        echo()
+    raise SystemExit(exit_code)
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Init
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

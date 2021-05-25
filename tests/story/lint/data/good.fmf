@@ -1,0 +1,9 @@
+summary:
+    Basic smoke test
+story:
+    I want to print help message to help myself
+example:
+    - tmt --help
+    - tmt stories --help
+description:
+    This is interesting description

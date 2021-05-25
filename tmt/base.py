@@ -949,6 +949,23 @@ class Story(Core):
 
         return output
 
+    def _lint_story(self):
+        story = self.node.get('story')
+        if not story:
+            return verdict(False, "story is required")
+
+    def lint(self):
+        self.ls()
+        invalid_keys = self.lint_keys([])
+
+        if invalid_keys:
+            for key in invalid_keys:
+                verdict(False, f"unknown attribute '{key}' is used")
+        else:
+            verdict(True, "correct attributes are used")
+
+        return all([self._lint_summary(), self._lint_story()])
+
 
 class Tree(tmt.utils.Common):
     """ Test Metadata Tree """

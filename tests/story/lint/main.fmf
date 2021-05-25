@@ -1,0 +1,3 @@
+summary: Testing lint for story
+test: ./test.sh
+framework: beakerlib

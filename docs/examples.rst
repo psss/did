@@ -619,6 +619,23 @@ based on given template::
 
 Use ``-f`` or ``--force`` to overwrite existing files.
 
+Lint Stories
+-------------------------------------------------------------------
+
+The ``tmt story lint`` checks defined story metadata against the L3
+Metadata Specification::
+
+    $ tmt story lint
+
+    /spec/tests/recommend
+    pass correct attributes are used
+    warn summary should not exceed 50 characters
+
+    /spec/tests/result
+    pass correct attributes are used
+
+    /spec/tests/summary
+    fail unknown attribute 'links' is used
 
 
 Run

@@ -1,0 +1,8 @@
+summary:
+    Short description summarizing the story which is so long it took me a lot of time to read and write as well
+story:
+    As a user I want to do this and that
+    so that I can achieve this.
+example:
+    - One example is worth thousand words.
+    - Of course, there can be more than one.
