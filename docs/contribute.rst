@@ -233,7 +233,7 @@ Here's the overview of core classes::
 
     Common
     ├── Tree
-    ├── Node
+    ├── Core
     │   ├── Plan
     │   ├── Story
     │   └── Test

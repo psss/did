@@ -50,6 +50,7 @@ class Core(tmt.utils.Common):
 
     Corresponds to given fmf.Tree node.
     Implements common Test, Plan and Story methods.
+    Also defines L0 metadata and its manipulation.
     """
 
     # Core attributes (supported across all levels)
@@ -902,7 +903,7 @@ class Story(Core):
     def export(self, format_='rst', title=True):
         """ Export story data into requested format """
 
-        # Use common Node export unless 'rst' requested
+        # Use common Core export unless 'rst' requested
         if format_ != 'rst':
             return super().export(format_=format_)
 
