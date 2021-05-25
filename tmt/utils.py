@@ -189,9 +189,6 @@ class Common(object):
         # parent if it was defined)
         elif option in ['debug', 'verbose']:
             winner = local if local else parent
-            # Convert tuple of booleans into debug/verbose level (int)
-            if isinstance(winner, tuple):
-                winner = len(winner)
             if winner is None:
                 winner = 0
             return winner
