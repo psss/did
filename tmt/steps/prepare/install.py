@@ -136,21 +136,20 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
                 self.info('copr', copr, 'green')
                 guest.execute(f'{command} copr enable -y {copr}')
 
-    def _prepare_install(self, package_list):
+    def prepare_packages(self, package_list, title):
+        """ Show package info and return quoted package names """
         # Show a brief summary by default
         if not self.opt('verbose'):
             summary = fmf.utils.listed(package_list, max=3)
-            self.info('package', summary, 'green')
+            self.info(title, summary, 'green')
         # Provide a full list of packages in verbose mode
         else:
             summary = fmf.utils.listed(package_list, 'package')
-            self.info('package', summary + ' requested', 'green')
+            self.info(title, summary + ' requested', 'green')
             for package in sorted(package_list):
                 self.verbose(package, shift=1)
-        # Quote package names and prepare the rpm check
-        packages = ' '.join(
-            [tmt.utils.quote(package) for package in package_list])
-        return packages
+        # Return quoted package names
+        return " ".join([tmt.utils.quote(package) for package in package_list])
 
     def go(self, guest):
         """ Prepare the guests """
@@ -187,20 +186,17 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
             self.debug("No packages for installation found.", level=3)
             return
 
-        # Detect local packages and directories
-        # and split debug{info,source} if installing from repo
+        # Detect local, debuginfo and repository packages
         for package in packages:
             if package.endswith('.rpm'):
                 local_packages.append(package)
+            elif re.search(r"-debug(info|source)(\.|$)", package):
+                # Strip the '-debuginfo' string from package name
+                # (installing with it doesn't work on RHEL7)
+                package = re.sub(r"-debuginfo((?=\.)|$)", "", package)
+                debuginfo_packages.append(package)
             else:
-                if 'debuginfo' in package or 'debugsource' in package:
-                    # strip -debuginfo suffix from package name
-                    # installing with it doesn't work on RHEL7
-                    if re.search(r"-debuginfo\\.|-debuginfo$", package):
-                        package = package.replace('-debuginfo', '')
-                    debuginfo_packages.append(package)
-                else:
-                    repo_packages.append(package)
+                repo_packages.append(package)
 
         # Check rpm packages in local directories
         for directory in directories:
@@ -240,9 +236,9 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
 
         # Install from repositories
         if repo_packages:
-            packages = self._prepare_install(repo_packages)
-            check = f'rpm -q --whatprovides {packages}'
+            packages = self.prepare_packages(repo_packages, title="package")
             # Extra ignore/check for yum to workaround BZ#1920176
+            check = f'rpm -q --whatprovides {packages}'
             if 'yum' in command:
                 yum_check = " || true" if skip else f" && {check}"
             else:
@@ -254,7 +250,8 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
 
         # Install debug{info,source} from repos
         if debuginfo_packages:
-            packages = self._prepare_install(debuginfo_packages)
-            # make sure debuginfo-install is present on the target system
+            packages = self.prepare_packages(
+                debuginfo_packages, title="debuginfo")
+            # Make sure debuginfo-install is present on the target system
             guest.execute(f"{command} install -y /usr/bin/debuginfo-install")
             guest.execute(f"debuginfo-install -y {packages}")

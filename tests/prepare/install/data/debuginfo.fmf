@@ -1,0 +1,41 @@
+summary:
+    Install debuginfo packages
+provision:
+    how: container
+prepare:
+  - name: debuginfo
+    how: install
+    package:
+      - bash-debuginfo
+      - elfutils-debuginfod-debuginfo
+execute:
+    script:
+      - rpm -q bash-debuginfo bash-debugsource
+      - rpm -q elfutils-debuginfo elfutils-debugsource
+
+/fedora:
+    summary+: " on Fedora"
+
+/centos-8:
+    summary+: " on CentOS 8"
+    provision+:
+        image: centos:8
+
+    # FIXME This is needed for CentOS 8, but why? Filed:
+    # https://bugzilla.redhat.com/show_bug.cgi?id=1964505
+    prepare+:
+      - name: enable-debuginfo-repo
+        script:
+          - dnf install -y 'dnf-command(config-manager)'
+          - dnf config-manager --enable debuginfo
+        order: 10
+
+/centos-7:
+    summary+: " on CentOS 7"
+    provision+:
+        image: centos:7
+    prepare:
+        how: install
+        package: bash-debuginfo
+    execute:
+        script: rpm -q bash-debuginfo

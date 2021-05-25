@@ -22,6 +22,10 @@ rlJournalStart
         rlRun "tmt run -adddvvvr plan --name epel7"
     rlPhaseEnd
 
+    rlPhaseStartTest "Install debuginfo packages"
+        rlRun "tmt run -adddvvvr plan --name debuginfo"
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
     rlPhaseEnd
