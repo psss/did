@@ -44,7 +44,7 @@ EXTRA_TEST_KEYS = (
     "extra-summary extra-task".split())
 
 
-class Node(tmt.utils.Common):
+class Core(tmt.utils.Common):
     """
     General node object
 
@@ -57,7 +57,7 @@ class Node(tmt.utils.Common):
 
     def __init__(self, node, parent=None):
         """ Initialize the node """
-        super(Node, self).__init__(parent=parent, name=node.name)
+        super(Core, self).__init__(parent=parent, name=node.name)
         self.node = node
 
         # Store original metadata with applied defaults and including
@@ -152,7 +152,7 @@ class Node(tmt.utils.Common):
     @classmethod
     def _save_context(cls, context):
         """ Save provided command line context for future use """
-        super(Node, cls)._save_context(context)
+        super(Core, cls)._save_context(context)
 
         # Handle '.' as an alias for the current working directory
         names = cls._opt('names')
@@ -200,8 +200,20 @@ class Node(tmt.utils.Common):
         known_keys = additional_keys + self._keys
         return [key for key in self.node.get().keys() if key not in known_keys]
 
+    def _lint_summary(self):
+        """ Lint summary attribute """
+        # Summary is advised with a resonable length
+        if self.summary is None:
+            verdict(None, "summary is very useful for quick inspection")
+        elif len(self.summary) > 50:
+            verdict(None, "summary should not exceed 50 characters")
+        return True
 
-class Test(Node):
+
+Node = Core
+
+
+class Test(Core):
     """ Test object (L1 Metadata) """
 
     # Supported attributes (listed in display order)
@@ -382,10 +394,7 @@ class Test(Node):
             stripped_path.startswith('/'), 'directory path must be absolute')
         valid &= verdict(
             os.path.exists(test_path), 'directory path must exist')
-        if self.summary is None:
-            verdict(None, 'summary is very useful for quick inspection')
-        elif len(self.summary) > 50:
-            verdict(None, 'summary should not exceed 50 characters')
+        self._lint_summary()
 
         # Check for possible test case relevancy rules
         filename = self.node.sources[-1]
@@ -450,7 +459,7 @@ class Test(Node):
             return super(Test, self).export(format_, keys)
 
 
-class Plan(Node):
+class Plan(Core):
     """ Plan object (L2 Metadata) """
 
     def __init__(self, node, run=None):
@@ -661,16 +670,6 @@ class Plan(Node):
 
         return correct
 
-    def _lint_summary(self):
-        """ Lint summary step """
-        # Summary is advised with a resonable length
-        if self.summary is None:
-            verdict(None, 'summary is very useful for quick inspection')
-        elif len(self.summary) > 50:
-            verdict(None, 'summary should not exceed 50 characters')
-
-        return True
-
     def _lint_discover(self):
         """ Lint discover step """
         # The discover step is optional
@@ -777,7 +776,7 @@ class Plan(Node):
                 self.finish.go()
 
 
-class Story(Node):
+class Story(Core):
     """ User story object """
 
     # Supported attributes (listed in display order)
@@ -1199,10 +1198,10 @@ class Run(tmt.utils.Common):
         self._context.obj.steps = set(data['steps'])
         plans = []
         # The root directory of the tree may not be available, create
-        # a partial Node object that only contains the necessary
+        # a partial Core object that only contains the necessary
         # attributes required for plan/step loading.
         for plan in data.get('plans'):
-            node = type('Node', (), {
+            node = type('Core', (), {
                 'name': plan,
                 'data': {},
                 # No attributes will ever need to be accessed, just create
