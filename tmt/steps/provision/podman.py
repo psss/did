@@ -16,7 +16,7 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
             how: container
             image: fedora:latest
 
-    In order to always pull the fresh container image use 'pull: yes'.
+    In order to always pull the fresh container image use 'pull: true'.
     """
 
     # Guest instance

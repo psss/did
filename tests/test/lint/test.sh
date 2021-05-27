@@ -25,6 +25,11 @@ rlJournalStart
         rlAssertNotGrep 'fail' output
     rlPhaseEnd
 
+    rlPhaseStartTest "Old yaml"
+        rlRun "tmt test lint old-yaml | tee output"
+        rlAssertGrep 'warn seems to use YAML 1.1' output
+    rlPhaseEnd
+
     rlPhaseStartTest "Bad"
         rlRun "tmt test lint bad | tee output" 1
         rlAssertGrep 'fail test script must be defined' output
@@ -52,6 +57,7 @@ rlJournalStart
         rlAssertGrep 'relevancy converted into adjust' output
         for format in list text; do
             rlAssertNotGrep 'relevancy' "relevancy-$format.fmf"
+            rlIsFedora && rlAssertGrep '#comment' "relevancy-$format.fmf"
             rlAssertGrep 'adjust:' "relevancy-$format.fmf"
             rlAssertGrep 'when: distro == rhel' "relevancy-$format.fmf"
         done

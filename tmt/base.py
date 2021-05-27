@@ -11,9 +11,9 @@ import time
 
 import click
 import fmf
-import yaml
 from click import echo, style
 from fmf.utils import listed
+from ruamel.yaml.error import MarkedYAMLError
 
 import tmt.export
 import tmt.steps
@@ -399,7 +399,10 @@ class Test(Core):
 
         # Check for possible test case relevancy rules
         filename = self.node.sources[-1]
-        metadata = tmt.utils.yaml_to_dict(self.read(filename))
+        syntax_ok, metadata = tmt.utils.yaml_to_dict(self.read(filename), True)
+        if not syntax_ok:
+            verdict(None, 'seems to use YAML 1.1 syntax which will be '
+                          'deprecated in tmt 2.0')
         relevancy = metadata.pop('relevancy', None)
         if relevancy:
             # Convert into adjust rules if --fix enabled
@@ -579,12 +582,18 @@ class Plan(Core):
             # For each option check for valid yaml and store
             for option in options:
                 try:
-                    data = tmt.utils.yaml_to_dict(option)
+                    # FIXME: Ruamel.yaml "remembers" the used formatting when
+                    #        using round-trip mode and since it comes from the
+                    #        command-line, no formatting is applied resulting
+                    #        in inconsistent formatting. Using a safe loader in
+                    #        this case is a hack to make it forget, though there
+                    #        may be a better way to do this.
+                    data = tmt.utils.yaml_to_dict(option, yaml_type='safe')
                     if not data:
                         raise tmt.utils.GeneralError(
                             f"Invalid step data for {step}: '{data}'.")
                     step_data.append(data)
-                except yaml.parser.ParserError as error:
+                except MarkedYAMLError as error:
                     raise tmt.utils.GeneralError(
                         f"Invalid yaml data for {step}:\n{error}")
 

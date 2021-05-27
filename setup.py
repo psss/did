@@ -34,6 +34,7 @@ install_requires = [
     'fmf>=0.16.0',
     'click',
     'requests',
+    'ruamel.yaml'
 ]
 extras_require = {
     'docs': ['sphinx', 'sphinx_rtd_theme', 'mock'],

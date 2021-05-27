@@ -10,7 +10,6 @@ import subprocess
 from io import open
 
 import fmf.utils
-import yaml
 from click import echo, style
 
 import tmt.utils
@@ -27,36 +26,6 @@ RELEVANCY_EXPRESSION = (
 
 # Bug url prefix
 BUGZILLA_URL = 'https://bugzilla.redhat.com/show_bug.cgi?id='
-
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#  YAML
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Special hack to store multiline text with the '|' style
-# See https://stackoverflow.com/questions/45004464/
-# Python 2 version
-try:
-    yaml.SafeDumper.orig_represent_unicode = yaml.SafeDumper.represent_unicode
-
-    def repr_unicode(dumper, data):
-        if '\n' in data:
-            return dumper.represent_scalar(
-                u'tag:yaml.org,2002:str', data, style='|')
-        return dumper.orig_represent_unicode(data)
-
-    yaml.add_representer(unicode, repr_unicode, Dumper=yaml.SafeDumper)
-# Python 3 version
-except AttributeError:
-    yaml.SafeDumper.orig_represent_str = yaml.SafeDumper.represent_str
-
-    def repr_str(dumper, data):
-        if '\n' in data:
-            return dumper.represent_scalar(
-                u'tag:yaml.org,2002:str', data, style='|')
-        return dumper.orig_represent_str(data)
-
-    yaml.add_representer(str, repr_str, Dumper=yaml.SafeDumper)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

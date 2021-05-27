@@ -1,3 +1,4 @@
 test: /bin/true
+#comment
 relevancy:
   - 'distro = rhel: False'

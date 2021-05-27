@@ -49,11 +49,12 @@ BuildRequires: python%{python3_pkgversion}-requests
 BuildRequires: python%{python3_pkgversion}-testcloud
 BuildRequires: python%{python3_pkgversion}-markdown
 BuildRequires: python%{python3_pkgversion}-junit_xml
+BuildRequires: python%{python3_pkgversion}-ruamel-yaml
 # Required for tests
 BuildRequires: rsync
 %{?python_provide:%python_provide python%{python3_pkgversion}-%{name}}
 %if %{with oldreqs}
-Requires:       python%{python3_pkgversion}-PyYAML
+Requires:       python%{python3_pkgversion}-ruamel-yaml
 %endif
 
 %description -n python%{python3_pkgversion}-%{name}
