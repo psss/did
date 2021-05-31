@@ -455,6 +455,9 @@ class Guest(tmt.utils.Common):
             self.debug(f"Push workdir to guest '{self.guest}'.")
         else:
             self.debug(f"Copy '{source}' to '{destination}' on the guest.")
+        # Make sure rsync is present, note: tests can remove it
+        self.debug('Ensure that rsync is installed on the guest.', level=3)
+        self.install_rsync()
         # Run the rsync command
         try:
             self.run(
@@ -488,6 +491,9 @@ class Guest(tmt.utils.Common):
             self.debug(f"Pull workdir from guest '{self.guest}'.")
         else:
             self.debug(f"Copy '{source}' from the guest to '{destination}'.")
+        # Make sure rsync is present, note: tests can remove it
+        self.debug('Ensure that rsync is installed on the guest.', level=3)
+        self.install_rsync()
         # Run the rsync command
         self.run(
             ["rsync"] + options
@@ -545,7 +551,14 @@ class Guest(tmt.utils.Common):
         """
         self.debug(f"Doing nothing to remove guest '{self.guest}'.")
 
+    def install_rsync(self):
+        """
+        Install rsync on the guest. For now works only with RHEL based
+        distributions.
+        """
+        self.execute('rpm -q rsync || yum install -y rsync')
+
     @classmethod
     def requires(cls):
         """ Syncing workdir with the guest needs rsync installed """
-        return ['rsync']
+        return []

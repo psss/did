@@ -1,0 +1,7 @@
+summary: Correctly handle rsync removed during test
+enabled: False
+
+adjust:
+  enabled: True
+  when: how == full
+  because: this can be run only with a full virtualization

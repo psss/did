@@ -69,11 +69,7 @@ class Prepare(tmt.steps.Step):
             self.plan.provision.requires() +
             self.plan.execute.requires()
             )
-        try:
-            requires.remove('rsync')
-            rsync_required = True
-        except KeyError:
-            rsync_required = False
+
         if requires:
             data = dict(
                 how='install',
@@ -97,10 +93,6 @@ class Prepare(tmt.steps.Step):
 
         # Prepare guests (including workdir sync)
         for guest in self.plan.provision.guests():
-            # Make sure rsync is installed, push the workdir
-            if rsync_required:
-                self.debug('Ensure that rsync is installed on the guest.')
-                guest.execute('rpm -q rsync || yum install -y rsync')
             guest.push()
             # Create a guest copy and change its parent so that the
             # operations inside prepare plugins on the guest use the
