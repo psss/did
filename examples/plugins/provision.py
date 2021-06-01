@@ -2,10 +2,14 @@ import click
 
 import tmt
 
+# See the online documentation for more details about writing plugins
+# https://tmt.readthedocs.io/en/stable/plugins.html
+
 
 class ProvisionExample(tmt.steps.provision.ProvisionPlugin):
     """
     Provision guest using nothing. Just example
+
     Minimal configuration using the latest nothing image:
 
         provision:
@@ -20,9 +24,7 @@ class ProvisionExample(tmt.steps.provision.ProvisionPlugin):
     _guest = None
 
     # Supported methods
-    _methods = [
-        tmt.steps.Method(name='example', doc=__doc__, order=999),
-        ]
+    _methods = [tmt.steps.Method(name='example', doc=__doc__, order=50)]
 
     @classmethod
     def options(cls, how=None):
@@ -56,7 +58,6 @@ class ProvisionExample(tmt.steps.provision.ProvisionPlugin):
         Wake up the guest based on provided guest data.
         """
         super().wake(['what', 'switch'])
-
         print("wake() called")
 
         # Don't schedule anything if ve are in dry mode
@@ -70,15 +71,14 @@ class ProvisionExample(tmt.steps.provision.ProvisionPlugin):
     def go(self):
         """ Provision the container """
         super().go()
-
         print("go() called")
 
-        # Data dictionary is used to pass informations among classes.
+        # Data dictionary is used to pass information among classes.
         data = dict(what='Another default what. Object variable can be used.')
 
         for opt in ['what', 'switch']:
             val = self.get(opt)
-            # You can hide some not important informations about provisioning.
+            # You can hide some not important information about provisioning.
             if opt != 'switch':
                 self.info(opt, val, 'green')
             data[opt] = val
@@ -190,10 +190,10 @@ class GuestExample(tmt.Guest):
     # For advanced development
     def execute(self, command, **kwargs):
         """
-        OPTIONALLY you can overload how commands going to be executed
+        Optionally you can overload how commands going to be executed
         on guest (provisioned machine). If you don't want to use
         ssh to connect to guest, you need to overload this method
-        however you need to provide some expected informations.
+        however you need to provide some expected information.
 
         Execute command on the guest
 
@@ -205,14 +205,14 @@ class GuestExample(tmt.Guest):
         If necessary, quote escaping has to be handled by the caller.
         """
 
-        print("execute() called. This is OPTIONAL overload..")
+        print("execute() called. This is an optional overload...")
 
-        output = ["Fedora", "whaterver"]
+        output = ["Fedora", "whatever"]
         return output
 
     def delete(self):
-        self.debug(
-            f"Remove the example instance. You should place code for cleanup here.")
+        """ Remove the example instance """
+        self.debug("You should place code for cleanup here.")
 
     def remove(self):
         """ Remove the guest """

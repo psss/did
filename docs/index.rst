@@ -33,4 +33,5 @@ Table of Contents
     Stories <stories>
     Questions <questions>
     Contribute <contribute>
+    Classes <classes>
     Plugins <plugins>

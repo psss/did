@@ -8,18 +8,21 @@ import fmf
 import tmt
 import tmt.steps.discover
 
-# For more informations please take a look at docs/example.rst file
-# or online documentation.
+# See the online documentation for more details about writing plugins
+# https://tmt.readthedocs.io/en/stable/plugins.html
 
 
 class DiscoverExample(tmt.steps.discover.DiscoverPlugin):
     """
-    You must provide docs here otherwise traceback happens. Also it's good
-    to let know what this should do.
+    A concise summary of what the plugin does
+
+    Here goes the detailed plugin description which is displayed
+    in the --help message. It is recommended to include a couple
+    of configuration examples as well.
     """
 
     # Supported methods
-    _methods = [tmt.steps.Method(name='example', doc=__doc__, order=999)]
+    _methods = [tmt.steps.Method(name='example', doc=__doc__, order=50)]
 
     def show(self):
         """ Show plugin details for given or all available keys """
@@ -42,11 +45,11 @@ class DiscoverExample(tmt.steps.discover.DiscoverPlugin):
 
     def go(self):
         """
-        Go and perform the plugin task.
+        Go and perform the plugin task
+
         Discover available tests in this case.
         """
-        super(DiscoverExample, self).go()
-
+        super().go()
         print("go() called")
 
         # Prepare test environment

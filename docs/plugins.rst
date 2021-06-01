@@ -1,38 +1,58 @@
-.. _Plugins:
+.. _plugins:
 
-======================
+===============
     Plugins
-======================
+===============
 
-Let's have a look at a plugins.
+Let's have a look at plugins. Each of the six steps defined by
+:ref:`/spec/plans` supports multiple methods. These methods are
+implemented by plugins which are dynamically loaded from the
+standard location under ``tmt/steps`` and from all directories
+provided in the ``TMT_PLUGINS`` environment variable.
 
-Skeletons for example plugin are located in:
-examples/plugins/
 
-Plugin can contain more steps so plugin is not only one file but it can
-be more files which covers different steps.
-
-Example plugin covers two steps: discover and provision.
-
-How to create a plugin
+Inheritance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Let's use our example plugin and describe discover step.
+The plugin is implemented by a class which inherits from the
+corresponding step class, for example ``ProvisionPodman`` inherits
+from the ``ProvisionPlugin`` class. See the :ref:`classes` page
+for more details about the class structure. The plugin class
+defines a couple of essential methods:
 
-There is example.py file in tmt/steps/discover/ directory
-and it contains latest changes. There is a lot of comments
-and you can use it as skeleton for your new plugin.
+options()
+    command line options specific for given plugin
 
-Most important part is, that you need to overload 4 methods:
+wake()
+    additional plugin data processing after the wake-up
 
-- show()
-- wake()
-- go()
-- tests()
+show()
+    give a concise overview of the step configuration
 
-Another step covered here is provision step. You can find example.py file in
-tmt/steps/provision/ directory. This step is more complex and is divided to 2 classes.
-One part is provisioning itself and second part is Guest class.
+go()
+    the main implementation of the plugin functionality
 
-Your Class needs to inherit from tmt.steps.provision.ProvisionPlugin.
-Then file should contains class which inherits from tmt.Guest.
+There may be additional required methods which need to be
+implemented. See individual plugin examples for details.
+
+
+Examples
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Example plugin skeletons are located in the `examples/plugins`__
+directory. Get some inspiration for writing plugins there. There
+is a lot of comments and you can use the examples as a skeleton
+for your new plugin.
+
+The ``discover`` plugin example demonstrates a simple plugin
+functionality defining an additional ``tests()`` method which
+returns a list of discovered tests.
+
+The ``provision`` step example is more complex and consists of two
+classes. In addition to the provisioning part itself it also
+implements the ``GuestExample`` class which inherits from
+``Guest`` and overloads its methods to handle special guest
+features which cannot be covered by generic ssh implementation of
+the ``Guest`` class.
+
+__ https://github.com/psss/tmt/tree/master/examples/plugins
