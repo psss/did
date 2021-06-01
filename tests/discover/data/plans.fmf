@@ -58,3 +58,9 @@ execute:
             ref: 8329db0
             modified-only: true
             modified-ref: 8329db0^
+
+    /integer:
+        summary: Integer reference
+        discover:
+            how: fmf
+            ref: 5788736
