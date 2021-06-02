@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.5.0
+Version: 1.6.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -187,6 +187,43 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Wed Jun 02 2021 Petr Šplíchal <psplicha@redhat.com> - 1.6.0-1
+- Adjust the new plugin documentation
+- Add plugin examples and documentation
+- Ensure that the discover git reference is a string
+- Report plugin for JUnit output
+- Fix issue when raising error for NoneType
+- Print better error when nitrate testcase not found.
+- Use `count=True` for multiple flag options
+- Add option to explicitly use default plan
+- Adjust debuginfo installation, add test coverage
+- Use debuginfo-install for installing debuginfos
+- Update the documentation based on refactoring
+- Implement tmt story lint
+- Refactor Node class to Core
+- Correctly handle spaces in file/directory names
+- Hand over plan environment during local execution
+- Do not execute manual test cases
+- Fix option handling for plugins with common prefix
+- Propagate options to guests based on the step
+- Support fetching libraries from a local directory
+- Add a simple example of a test written in ansible
+- Pass environment variables to ansible (local)
+- Pass environment variables to ansible (virtual)
+- Adjust warning for extra lines in Makefile targets
+- Add test import warning for run and build targets
+- Enable a few more pre-commit hooks, sort imports
+- Give a warning about the obsoleted minute plugin
+- Clarify adjust dependency on explicit context
+- Fix the EPEL installation instructions
+- Adjust the new list options for the minute plugin
+- New print method, used now in minute plugin
+- Implement listing available minute images/flavors
+- Update default option values for verbose and debug
+- Avoid creating workdir on --help
+- Do not keep run workdir during testing
+- Clean up the code style, remove the vagrant plugin
+
 * Fri Apr 30 2021 Petr Šplíchal <psplicha@redhat.com> - 1.5.0-1
 - Enable and document `pre-commit` and `autopep8`
 - Reorganize feature stories, fix title duplication
