@@ -4,6 +4,7 @@ description:
     works as expected when file names and paths contain spaces.
 test: ./test.sh
 framework: beakerlib
+tag-: [container, virtual]
 
 environment:
     METHODS: local container
