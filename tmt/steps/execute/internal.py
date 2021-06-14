@@ -1,11 +1,34 @@
+import json
 import os
+import re
 import sys
 import time
 
 import click
 
 import tmt
+import tmt.utils
 from tmt.steps.execute import TEST_OUTPUT_FILENAME
+from tmt.steps.provision.local import GuestLocal
+
+REBOOT_VARIABLE = "REBOOT_COUNT"
+REBOOT_TYPE = "reboot"
+REBOOT_SCRIPT_PATHS = (
+    "/usr/bin/rstrnt-reboot",
+    "/usr/bin/rhts-reboot",
+    "/usr/bin/tmt-reboot")
+REBOOT_SCRIPT = f"""\
+#!/bin/sh
+if [ -z "${REBOOT_VARIABLE}" ]; then
+    export {REBOOT_VARIABLE}=0
+fi
+echo "{{token}}:{{{{\
+    \\"type\\": \\"{REBOOT_TYPE}\\",\
+    \\"version\\": \\"0.1\\",\
+    \\"{REBOOT_VARIABLE}\\": ${REBOOT_VARIABLE}\
+}}}}"
+"""
+REBOOT_TEMPLATE_NAME = "reboot_template"
 
 
 class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
@@ -141,7 +164,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         end = time.time()
         self.write(
             self.data_path(test, TEST_OUTPUT_FILENAME, full=True),
-            stdout or '', level=3)
+            stdout or '', mode='a', level=3)
         test.real_duration = self.test_duration(start, end)
         duration = click.style(test.real_duration, fg='cyan')
         shift = 1 if self.opt('verbose') < 2 else 2
@@ -156,10 +179,64 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         else:
             return self.check_shell(test)
 
+    def _setup_reboot(self, guest):
+        """ Prepare the guest environment for potential reboot """
+        # Ignore local provision
+        if isinstance(guest, GuestLocal):
+            return
+        script = REBOOT_SCRIPT.format(token=self.parent.reboot_token)
+        reboot_script_path = os.path.join(self.workdir, REBOOT_TEMPLATE_NAME)
+        with open(reboot_script_path, 'w') as template:
+            template.write(script)
+        guest.push(reboot_script_path)
+        for reboot_file in REBOOT_SCRIPT_PATHS:
+            self.debug(f"Replacing {reboot_file} with tmt implementation if "
+                       f"not already present")
+            guest.execute(f'if [ ! -e "{reboot_file}" ]; then '
+                          f'cp "{reboot_script_path}" "{reboot_file}" && '
+                          f'chmod +x "{reboot_file}"; fi')
+
+    def _handle_reboot(self, test, guest):
+        """
+        Reboot the guest if the test requested it.
+
+        Check the previously fetched test log for signs of reboot request
+        and orchestrate the reboot if it was requested. Also increment
+        REBOOT_COUNT variable, reset it to 0 if no reboot was requested
+        (going forward to the next test). Return whether reboot was done.
+        """
+        output = self.read(
+            self.data_path(test, TEST_OUTPUT_FILENAME, full=True))
+        # Search only in the newly added output to avoid infinite looping
+        new_output = output[self._previous_output_length:]
+        self._previous_output_length = len(output)
+        token = self.parent.reboot_token
+        # Use the last occurrence in the output log
+        match = None
+        for match in re.finditer(
+                r"{}:(?P<data>.+)".format(re.escape(token)), new_output):
+            continue
+        if match:
+            data = json.loads(match.group("data"))
+            if data.get("type") == REBOOT_TYPE:
+                current_count = data.get(REBOOT_VARIABLE, 0)
+                self.debug(f"Rebooting during test {test}, "
+                           f"reboot count: {current_count}")
+                try:
+                    guest.reboot()
+                except tmt.utils.ProvisionError:
+                    self.warn("Guest does not soft reboot, trying hard reboot")
+                    guest.reboot(hard=True)
+                test.environment[REBOOT_VARIABLE] = str(current_count + 1)
+                return True
+        test.environment[REBOOT_VARIABLE] = "0"
+        return False
+
     def go(self):
         """ Execute available tests """
         super().go()
         self._results = []
+        self._previous_output_length = 0
 
         # Nothing to do in dry mode
         if self.opt('dry'):
@@ -169,18 +246,20 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         # For each guest execute all tests
         tests = self.prepare_tests()
         for guest in self.step.plan.provision.guests():
-
+            self._setup_reboot(guest)
             # Push workdir to guest and execute tests
             guest.push()
-            for index, test in enumerate(tests):
+            index = 0
+            while index < len(tests):
+                test = tests[index]
                 self.execute(test, guest, progress=f"{index + 1}/{len(tests)}")
+                guest.pull(source=self.data_path(test, full=True))
+                if self._handle_reboot(test, guest):
+                    continue
+                self._results.append(self.check(test))
+                index += 1
             # Overwrite the progress bar, the test data is irrelevant
             self._show_progress('', '', True)
-
-            # Pull logs from guest and check results
-            guest.pull()
-            for test in tests:
-                self._results.append(self.check(test))
 
     def results(self):
         """ Return test results """

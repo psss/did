@@ -1,5 +1,7 @@
 import os
 import re
+import secrets
+import string
 import time
 
 import click
@@ -15,6 +17,12 @@ DEFAULT_FRAMEWORK = 'shell'
 
 # The main test output filename
 TEST_OUTPUT_FILENAME = 'output.txt'
+
+# Length of the token used for identifying reboot request
+REBOOT_TOKEN_LEN = 32
+
+# Key under which the token is stored in step.yaml
+REBOOT_TOKEN_KEY = 'reboot_token'
 
 
 class Execute(tmt.steps.Step):
@@ -39,6 +47,10 @@ class Execute(tmt.steps.Step):
         # List of Result() objects representing test results
         self._results = []
 
+        token_alphabet = string.ascii_letters + string.digits
+        self.reboot_token = ''.join(secrets.choice(token_alphabet)
+                                    for _ in range(REBOOT_TOKEN_LEN))
+
         # Default test framework and mapping old methods
         # FIXME remove when we drop the old execution methods
         self._framework = DEFAULT_FRAMEWORK
@@ -46,9 +58,11 @@ class Execute(tmt.steps.Step):
         if not self.plan.my_run:
             self._map_old_methods()
 
-    def load(self):
+    def load(self, extra_keys=None):
         """ Load test results """
-        super().load()
+        extra_keys = extra_keys or []
+        extra_keys.append(REBOOT_TOKEN_KEY)
+        super().load(extra_keys)
         try:
             results = tmt.utils.yaml_to_dict(self.read('results.yaml'))
             self._results = [
@@ -56,9 +70,11 @@ class Execute(tmt.steps.Step):
         except tmt.utils.FileError as error:
             self.debug('Test results not found.', level=2)
 
-    def save(self):
+    def save(self, data=None):
         """ Save test results to the workdir """
-        super().save()
+        data = data or {}
+        data.update({REBOOT_TOKEN_KEY: self.reboot_token})
+        super().save(data)
         results = dict([
             (result.name, result.export()) for result in self.results()])
         self.write('results.yaml', tmt.utils.dict_to_yaml(results))

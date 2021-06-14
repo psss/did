@@ -27,17 +27,19 @@ class Provision(tmt.steps.Step):
         self._guests = []
         self._guest_data = {}
 
-    def load(self):
+    def load(self, extra_keys=None):
         """ Load guest data from the workdir """
-        super().load()
+        extra_keys = extra_keys or []
+        super().load(extra_keys)
         try:
             self._guest_data = tmt.utils.yaml_to_dict(self.read('guests.yaml'))
         except tmt.utils.FileError:
             self.debug('Provisioned guests not found.', level=2)
 
-    def save(self):
+    def save(self, data=None):
         """ Save guest data to the workdir """
-        super().save()
+        data = data or {}
+        super().save(data)
         try:
             guests = dict(
                 [(guest.name, guest.save()) for guest in self.guests()])

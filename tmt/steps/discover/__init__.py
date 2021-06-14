@@ -14,9 +14,10 @@ class Discover(tmt.steps.Step):
         # List of Test() objects representing discovered tests
         self._tests = []
 
-    def load(self):
+    def load(self, extra_keys=None):
         """ Load step data from the workdir """
-        super(Discover, self).load()
+        extra_keys = extra_keys or []
+        super(Discover, self).load(extra_keys)
         try:
             tests = tmt.utils.yaml_to_dict(self.read('tests.yaml'))
             self._tests = [
@@ -24,9 +25,10 @@ class Discover(tmt.steps.Step):
         except tmt.utils.FileError:
             self.debug('Discovered tests not found.', level=2)
 
-    def save(self):
+    def save(self, data=None):
         """ Save step data to the workdir """
-        super(Discover, self).save()
+        data = data or {}
+        super(Discover, self).save(data)
 
         # Create tests.yaml with the full test data
         tests = dict([
