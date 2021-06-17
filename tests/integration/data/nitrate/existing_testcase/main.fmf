@@ -1,2 +1,5 @@
 summary: This is case what already exists inside nitrate
 extra-nitrate: TC#0609686
+link:
+- verifies: https://bugzilla.redhat.com/show_bug.cgi?id=1925518
+- https://bugzilla.redhat.com/show_bug.cgi?id=1923314

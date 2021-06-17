@@ -40,7 +40,7 @@ extras_require = {
     'docs': ['sphinx', 'sphinx_rtd_theme', 'mock'],
     'tests': ['pytest', 'python-coveralls', 'mock', 'requre', 'pre-commit'],
     'provision': ['testcloud>=0.6.1'],
-    'convert': ['nitrate', 'markdown'],
+    'convert': ['nitrate', 'markdown', 'python-bugzilla'],
     'report-html': ['jinja2'],
     'report-junit': ['junit_xml'],
 }
@@ -78,6 +78,7 @@ default_setup = dict(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Utilities',
         ],
     keywords=['metadata', 'testing'],

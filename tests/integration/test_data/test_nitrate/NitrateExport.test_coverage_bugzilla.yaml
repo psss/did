@@ -1,0 +1,537 @@
+_requre:
+  DataTypes: 1
+  key_strategy: StorageKeysInspectSimple
+  version_storage_file: 3
+nitrate.xmlrpc_driver:
+  single_request_with_cookies:
+  - metadata:
+      guess_type: Tuple
+      latency: 1.021317720413208
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.base
+      - nitrate.mutable
+      - nitrate.base
+      - nitrate.xmlrpc_driver
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - oqybpy20lj0xhzgikwe2x6k077fh6rox
+  - metadata:
+      guess_type: Tuple
+      latency: 0.9072721004486084
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.base
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - alias: ''
+      arguments: ' '
+      attachment: []
+      author: jscotka
+      author_id: 2150
+      case_id: 609686
+      case_status: CONFIRMED
+      case_status_id: 2
+      category: Sanity
+      category_id: 518
+      component: []
+      create_date: '2021-02-24 01:07:39'
+      default_tester: null
+      default_tester_id: null
+      estimated_time: 00:05:00
+      extra_link: ''
+      is_automated: 1
+      is_automated_proposed: false
+      notes: 'Test case has been migrated to git. Any changes made here might be overwritten.
+
+        See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
+
+
+        [structured-field-start]
+
+        This is StructuredField version 1. Please, edit with care.
+
+
+        [description]
+
+        This is case what already exists inside nitrate
+
+
+        [fmf]
+
+        name: /existing_testcase
+
+        url: https://github.com/psss/tmt.git
+
+        ref: lzachar-export-bz
+
+        path: /tests/integration_5dy2mg9
+
+
+        [structured-field-end]
+
+        '
+      plan:
+      - 29309
+      priority: P3
+      priority_id: 3
+      requirement: ''
+      reviewer: null
+      reviewer_id: null
+      script: null
+      summary: This is case what already exists inside nitrate
+      tag:
+      - fmf-export
+      text:
+        action: ''
+        action_checksum: d41d8cd98f00b204e9800998ecf8427e
+        author: jscotka
+        author_id: 2150
+        breakdown: ''
+        breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
+        case: This is case what already exists inside nitrate
+        case_id: 609686
+        case_text_version: 1
+        create_date: '2021-02-24 01:07:39'
+        effect: ''
+        effect_checksum: d41d8cd98f00b204e9800998ecf8427e
+        id: 878121
+        setup: ''
+        setup_checksum: d41d8cd98f00b204e9800998ecf8427e
+  - metadata:
+      guess_type: Tuple
+      latency: 0.9036877155303955
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - []
+  - metadata:
+      guess_type: Tuple
+      latency: 0.9099326133728027
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - id: 10700
+        name: fmf-export
+  - metadata:
+      guess_type: Tuple
+      latency: 0.9249658584594727
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - bug_id: '1925518'
+        bug_system: Bugzilla
+        bug_system_id: 1
+        case: This is case what already exists inside nitrate
+        case_id: 609686
+        case_run: null
+        case_run_id: null
+        description: ''
+        id: 250305
+        summary: ''
+  - metadata:
+      guess_type: Tuple
+      latency: 0.8624577522277832
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - nitrate.base
+      - nitrate.immutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - description: ''
+      id: 518
+      name: Sanity
+      product: RHEL Tests
+      product_id: 182
+  - metadata:
+      guess_type: Tuple
+      latency: 1.9875798225402832
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - alias: ''
+        arguments: ' '
+        attachment: []
+        author: jscotka
+        author_id: 2150
+        case_id: 609686
+        case_status: CONFIRMED
+        case_status_id: 2
+        category: Sanity
+        category_id: 518
+        component: []
+        create_date: '2021-02-24 01:07:39'
+        default_tester: null
+        default_tester_id: null
+        estimated_time: 00:05:00
+        extra_link: ''
+        is_automated: 1
+        is_automated_proposed: false
+        notes: 'Test case has been migrated to git. Any changes made here might be
+          overwritten.
+
+          See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
+
+
+          [structured-field-start]
+
+          This is StructuredField version 1. Please, edit with care.
+
+
+          [description]
+
+          This is case what already exists inside nitrate
+
+
+          [fmf]
+
+          name: /existing_testcase
+
+          url: https://github.com/psss/tmt.git
+
+          ref: lzachar-export-bz
+
+          path: /tests/integrationqk67wvkc
+
+
+          [structured-field-end]
+
+          '
+        plan:
+        - 29309
+        priority: P3
+        priority_id: 3
+        requirement: ''
+        reviewer: null
+        reviewer_id: null
+        script: null
+        summary: This is case what already exists inside nitrate
+        tag:
+        - 10700
+requests.sessions:
+  send:
+    POST:
+      https://bugzilla.redhat.com/xmlrpc.cgi:
+      - metadata:
+          latency: 0.8715624809265137
+          module_call_list:
+          - unittest.case
+          - integration.test_nitrate
+          - click.testing
+          - click.core
+          - click.decorators
+          - tmt.cli
+          - tmt.base
+          - tmt.export
+          - bugzilla.base
+          - bugzilla._backendxmlrpc
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - bugzilla._session
+          - requests.sessions
+          - requre.objects
+          - requre.cassette
+          - requests.sessions
+          - send
+        output:
+          __store_indicator: 1
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>version</name><value><string>5.0.4.rh56</string></value></member></struct></value></param></params></methodResponse>
+          _next: null
+          elapsed: 0.870112
+          encoding: ISO-8859-1
+          headers:
+            Cache-Control: no-cache, no-store
+            Connection: close
+            Content-Encoding: gzip
+            Content-Type: text/xml
+            Date: Fri, 18 Jun 2021 10:46:18 GMT
+            ETag: 7tA/qr9x3KS7RnQJUgmnpw
+            SOAPServer: SOAP::Lite/Perl/1.11
+            Server: Apache
+            Set-Cookie: Bugzilla_login_request_cookie=EOGYkfRr0N; domain=bugzilla.redhat.com;
+              path=/; HttpOnly; SameSite=Lax
+            Transfer-Encoding: chunked
+            Vary: Accept-Encoding,User-Agent
+            X-content-type-options: nosniff
+            X-frame-options: SAMEORIGIN
+            X-xss-protection: 1; mode=block
+          raw: !!binary ""
+          reason: OK
+          status_code: 200
+      - metadata:
+          latency: 1.1678190231323242
+          module_call_list:
+          - unittest.case
+          - integration.test_nitrate
+          - click.testing
+          - click.core
+          - click.decorators
+          - tmt.cli
+          - tmt.base
+          - tmt.export
+          - bugzilla.base
+          - bugzilla._backendxmlrpc
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - bugzilla._session
+          - requests.sessions
+          - requre.objects
+          - requre.cassette
+          - requests.sessions
+          - send
+        output:
+          __store_indicator: 1
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>users</name><value><array><data><value><struct><member><name>real_name</name><value><string>Need
+            Real Name</string></value></member><member><name>email</name><value><string>aander07@packetmaster.com</string></value></member><member><name>name</name><value><string>aander07@packetmaster.com</string></value></member><member><name>id</name><value><int>1</int></value></member><member><name>can_login</name><value><boolean>1</boolean></value></member></struct></value></data></array></value></member></struct></value></param></params></methodResponse>
+          _next: null
+          elapsed: 1.167032
+          encoding: ISO-8859-1
+          headers:
+            Cache-Control: no-cache, no-store
+            Connection: close
+            Content-Encoding: gzip
+            Content-Type: text/xml
+            Date: Fri, 18 Jun 2021 10:46:11 GMT
+            ETag: O6zBQsTG+AbgcJDlcPMIsg
+            SOAPServer: SOAP::Lite/Perl/1.11
+            Server: Apache
+            Transfer-Encoding: chunked
+            Vary: Accept-Encoding,User-Agent
+            X-content-type-options: nosniff
+            X-frame-options: SAMEORIGIN
+            X-xss-protection: 1; mode=block
+          raw: !!binary ""
+          reason: OK
+          status_code: 200
+      - metadata:
+          latency: 1.3847901821136475
+          module_call_list:
+          - unittest.case
+          - integration.test_nitrate
+          - click.testing
+          - click.core
+          - click.decorators
+          - tmt.cli
+          - tmt.base
+          - tmt.export
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - bugzilla._session
+          - requests.sessions
+          - requre.objects
+          - requre.cassette
+          - requests.sessions
+          - send
+        output:
+          __store_indicator: 1
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>faults</name><value><array><data
+            /></array></value></member><member><name>bugs</name><value><array><data><value><struct><member><name>external_bugs</name><value><array><data
+            /></array></value></member><member><name>flags</name><value><array><data
+            /></array></value></member><member><name>id</name><value><int>1925518</int></value></member></struct></value></data></array></value></member></struct></value></param></params></methodResponse>
+          _next: null
+          elapsed: 1.383814
+          encoding: ISO-8859-1
+          headers:
+            Cache-Control: no-cache, no-store
+            Connection: close
+            Content-Encoding: gzip
+            Content-Type: text/xml
+            Date: Fri, 18 Jun 2021 10:46:28 GMT
+            ETag: wtTJ8Uk+3VST17ep4YNK/w
+            SOAPServer: SOAP::Lite/Perl/1.11
+            Server: Apache
+            Transfer-Encoding: chunked
+            Vary: Accept-Encoding,User-Agent
+            X-content-type-options: nosniff
+            X-frame-options: SAMEORIGIN
+            X-xss-protection: 1; mode=block
+          raw: !!binary ""
+          reason: OK
+          status_code: 200
+      - metadata:
+          latency: 1.312206506729126
+          module_call_list:
+          - unittest.case
+          - integration.test_nitrate
+          - click.testing
+          - click.core
+          - click.decorators
+          - tmt.cli
+          - tmt.base
+          - tmt.export
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - bugzilla._session
+          - requests.sessions
+          - requre.objects
+          - requre.cassette
+          - requests.sessions
+          - send
+        output:
+          __store_indicator: 1
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><fault><value><struct><member><name>faultString</name><value><string>No
+            data given for change or flag name invalid.</string></value></member><member><name>faultCode</name><value><int>700</int></value></member></struct></value></fault></methodResponse>
+          _next: null
+          elapsed: 1.311867
+          encoding: ISO-8859-1
+          headers:
+            Cache-Control: no-cache, no-store
+            Connection: close
+            Content-Encoding: gzip
+            Content-Type: text/xml
+            Date: Fri, 18 Jun 2021 10:46:29 GMT
+            ETag: EO13om6PW6n8rJLIjuuntQ
+            SOAPServer: SOAP::Lite/Perl/1.11
+            Server: Apache
+            Transfer-Encoding: chunked
+            Vary: Accept-Encoding,User-Agent
+            X-content-type-options: nosniff
+            X-frame-options: SAMEORIGIN
+            X-xss-protection: 1; mode=block
+          raw: !!binary ""
+          reason: OK
+          status_code: 200
+      - metadata:
+          latency: 3.484098196029663
+          module_call_list:
+          - unittest.case
+          - integration.test_nitrate
+          - click.testing
+          - click.core
+          - click.decorators
+          - tmt.cli
+          - tmt.base
+          - tmt.export
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - bugzilla._session
+          - requests.sessions
+          - requre.objects
+          - requre.cassette
+          - requests.sessions
+          - send
+        output:
+          __store_indicator: 1
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>bugs</name><value><array><data><value><struct><member><name>changes</name><value><struct><member><name>extra_versions</name><value><struct><member><name>removed</name><value><string
+            /></value></member><member><name>added</name><value><string /></value></member></struct></value></member><member><name>extra_components</name><value><struct><member><name>removed</name><value><string
+            /></value></member><member><name>added</name><value><string /></value></member></struct></value></member><member><name>ext_bz_bug_map.ext_bz_bug_id</name><value><struct><member><name>removed</name><value><string
+            /></value></member><member><name>added</name><value><string>TCMS Test
+            Case 609686</string></value></member></struct></value></member></struct></value></member><member><name>last_change_time</name><value><dateTime.iso8601>20210618T10:46:31</dateTime.iso8601></value></member><member><name>id</name><value><int>1925518</int></value></member><member><name>alias</name><value><array><data
+            /></array></value></member></struct></value></data></array></value></member></struct></value></param></params></methodResponse>
+          _next: null
+          elapsed: 3.483175
+          encoding: ISO-8859-1
+          headers:
+            Cache-Control: no-cache, no-store
+            Connection: close
+            Content-Encoding: gzip
+            Content-Type: text/xml
+            Date: Fri, 18 Jun 2021 10:46:23 GMT
+            ETag: mQAR7Oe6VHOWnNHZQP3U4w
+            SOAPServer: SOAP::Lite/Perl/1.11
+            Server: Apache
+            Transfer-Encoding: chunked
+            Vary: Accept-Encoding,User-Agent
+            X-content-type-options: nosniff
+            X-frame-options: SAMEORIGIN
+            X-xss-protection: 1; mode=block
+          raw: !!binary ""
+          reason: OK
+          status_code: 200

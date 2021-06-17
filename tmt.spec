@@ -84,6 +84,7 @@ Dependencies required to run tests in a local virtual machine.
 %package test-convert
 Summary: Test import and export dependencies
 Requires: make python3-nitrate python3-html2text python3-markdown
+Requires: python3-bugzilla
 
 %description test-convert
 Additional dependencies needed for test metadata import and export.

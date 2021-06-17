@@ -502,6 +502,9 @@ def import_(
     '--nitrate', is_flag=True,
     help='Export test metadata to Nitrate.')
 @click.option(
+    '--bugzilla', is_flag=True,
+    help='Link Nitrate case to Bugzilla in link.verifies')
+@click.option(
     '--create', is_flag=True,
     help="Create test cases in nitrate if they don't exist.")
 @click.option(
@@ -521,7 +524,7 @@ def import_(
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-def export(context, format_, nitrate, **kwargs):
+def export(context, format_, nitrate, bugzilla, **kwargs):
     """
     Export test data into the desired format.
 
@@ -529,6 +532,9 @@ def export(context, format_, nitrate, **kwargs):
     Use '.' to select tests under the current working directory.
     """
     tmt.Test._save_context(context)
+    if bugzilla and not nitrate:
+        raise tmt.utils.GeneralError(
+            "--bugzilla is supported only with --nitrate for now")
     for test in context.obj.tree.tests():
         if nitrate:
             test.export(format_='nitrate')

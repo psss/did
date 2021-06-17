@@ -64,6 +64,17 @@ class NitrateExport(Base):
 
         self.assertEqual(fmf_node.data["extra-nitrate"], "TC#0609686")
 
+    def test_coverage_bugzilla(self):
+        fmf_node = Tree(self.tmpdir).find("/existing_testcase")
+        self.assertEqual(fmf_node.data["extra-nitrate"], "TC#0609686")
+
+        os.chdir(self.tmpdir / "existing_testcase")
+        runner = CliRunner()
+        self.runner_output = runner.invoke(tmt.cli.main,
+                                           ["test", "export", "--nitrate",
+                                            "--bugzilla", "."])
+        assert self.runner_output.exit_code == 0
+
 
 class NitrateImport(Base):
 

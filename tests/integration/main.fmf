@@ -35,7 +35,6 @@ description: |
         cd tests/integration
         sudo unshare -n sudo -u `whoami` pytest -v test_nitrate.py
 
-test: "python3 -m pytest -v"
 environment:
     REQURE_MODE: read
 framework: shell
@@ -44,3 +43,9 @@ require:
 tag: [integration]
 tier: null
 link: https://github.com/packit/requre
+
+/coverage_bugzilla:
+    test: "python3 -m pytest -v -k 'test_coverage_bugzilla'"
+
+/the_rest:
+    test: "python3 -m pytest -v -k 'not test_coverage_bugzilla'"
