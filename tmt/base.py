@@ -463,6 +463,12 @@ class Test(Core):
 class Plan(Core):
     """ Plan object (L2 Metadata) """
 
+    extra_L2_keys = [
+        'context',
+        'environment',
+        'gate',
+        ]
+
     def __init__(self, node, run=None):
         """ Initialize the plan """
         self.my_run = run
@@ -747,10 +753,21 @@ class Plan(Core):
         # Explore all available plugins
         tmt.plugins.explore()
 
+        invalid_keys = self.lint_keys(
+            list(self.steps(enabled=True, disabled=True, names=True)) +
+            self.extra_L2_keys)
+
+        if invalid_keys:
+            for key in invalid_keys:
+                verdict(False, f"unknown attribute '{key}' is used")
+        else:
+            verdict(True, "correct attributes are used")
+
         return all([
             self._lint_summary(),
             self._lint_execute(),
-            self._lint_discover()])
+            self._lint_discover(),
+            len(invalid_keys) == 0])
 
     def go(self):
         """ Execute the plan """

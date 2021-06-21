@@ -52,6 +52,12 @@ rlJournalStart
         rlAssertGrep "fail repo 'http://invalid-url' cannot be cloned" \
             $rlRun_LOG
         rlRun "rm $rlRun_LOG"
+
+        rlRun -s "tmt plan lint invalid_attr" 1
+        rlAssertGrep "fail unknown attribute 'discove' is used" $rlRun_LOG
+        rlAssertGrep "fail unknown attribute 'environmen' is used" $rlRun_LOG
+        rlAssertGrep "fail unknown attribute 'summaryABCDEF' is used" $rlRun_LOG
+        rlRun "rm $rlRun_LOG"
     rlPhaseEnd
 
     rlPhaseStartCleanup

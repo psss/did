@@ -1,0 +1,9 @@
+summaryABCDEF: Basic smoke test
+environmen:
+        KOJI_TASK_ID: 42890031
+        RELEASE: f33
+execute:
+    script: tmt --help
+discove:
+  - name: a
+    how: fmf

@@ -427,6 +427,25 @@ Options ``-f`` or ``--force`` can be used to overwrite existing
 files.
 
 
+Lint Plans
+------------------------------------------------------------------
+
+Use ``tmt plan lint`` to check defined plan metadata against the L2
+Metadata Specification::
+
+    $ tmt plan lint
+    /plans/smoke
+    pass correct attributes are used
+
+    /plans/features/advanced
+    pass correct attributes are used
+    pass fmf remote id in 'default' is valid
+
+    /plans/features/basic
+    pass correct attributes are used
+    pass fmf remote id in 'default' is valid
+
+
 Inherit Plans
 ------------------------------------------------------------------
 
