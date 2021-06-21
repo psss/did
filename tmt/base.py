@@ -954,8 +954,14 @@ class Story(Core):
         story = self.node.get('story')
         if not story:
             return verdict(False, "story is required")
+        return True
 
     def lint(self):
+        """
+        Check story against the L3 metadata specification.
+
+        Return whether the story is valid.
+        """
         self.ls()
         invalid_keys = self.lint_keys([])
 
@@ -965,7 +971,9 @@ class Story(Core):
         else:
             verdict(True, "correct attributes are used")
 
-        return all([self._lint_summary(), self._lint_story()])
+        return all([self._lint_summary(),
+                    self._lint_story(),
+                    len(invalid_keys) == 0])
 
 
 class Tree(tmt.utils.Common):

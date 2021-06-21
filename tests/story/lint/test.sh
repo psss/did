@@ -8,14 +8,14 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Correct story"
-        rlRun -s "tmt stories lint good" 1
+        rlRun -s "tmt stories lint good" 0
         rlAssertGrep "pass correct attributes are used" $rlRun_LOG
         rlAssertNotGrep "warn summary" $rlRun_LOG
         rlAssertNotGrep "fail" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "Incorrect story"
-        rlRun -s "tmt stories lint long_summary" 1
+        rlRun -s "tmt stories lint long_summary" 0
         rlAssertGrep "warn summary should not exceed 50 characters" $rlRun_LOG
         rlRun "rm $rlRun_LOG"
 
