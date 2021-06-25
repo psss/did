@@ -220,11 +220,16 @@ class Guest(tmt.utils.Common):
             '-oStrictHostKeyChecking=no',
             '-oUserKnownHostsFile=/dev/null',
             ]
+        if self.key or self.password:
+            # Skip ssh-agent (it adds additional identities)
+            options.extend(['-oIdentitiesOnly=yes'])
         if self.port:
             options.extend(['-p', str(self.port)])
         if self.key:
             key = shlex.quote(self.key) if join else self.key
             options.extend(['-i', key])
+        if self.password:
+            options.extend(['-oPasswordAuthentication=yes'])
         return ' '.join(options) if join else options
 
     def _ssh_command(self, join=False):
