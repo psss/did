@@ -1,0 +1,11 @@
+summary:
+    Short description summarizing the story and it's really not good idea to write it that long. Lazy people don't want to read that much :(.
+story:
+    Toys story?
+description:
+    Text describing all important aspects of the object.
+    Usually spans across several paragraphs. It should not
+    contain detailed examples. Those should be stored
+    under the 'examples' attribute.
+exampleee:
+    - tmt story create -t mini ahoj

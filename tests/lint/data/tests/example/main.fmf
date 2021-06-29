@@ -1,0 +1,2 @@
+summarrry: Concise summary describing what the test does
+test: ./test.sh

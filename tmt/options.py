@@ -29,6 +29,10 @@ force_dry = [
         help='Run in dry mode. No changes, please.'),
     ]
 
+fix = click.option(
+    '-f', '--fix', is_flag=True,
+    help='Attempt to fix all discovered issues.')
+
 
 def create_method_class(methods):
     """

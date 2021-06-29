@@ -70,6 +70,10 @@ def force_dry(function):
     return function
 
 
+def fix(function):
+    return tmt.options.fix(function)
+
+
 def name_filter_condition(function):
     """ Common filter options (short & long) """
     options = [
@@ -353,14 +357,12 @@ def show(context, **kwargs):
         echo()
 
 
-@tests.command()
+@tests.command('lint')
 @click.pass_context
 @name_filter_condition
-@click.option(
-    '-f', '--fix', is_flag=True,
-    help='Attempt to fix all discovered issues.')
+@fix
 @verbose_debug_quiet
-def lint(context, **kwargs):
+def lint_test(context, **kwargs):
     """
     Check tests against the L1 metadata specification.
 
@@ -579,11 +581,11 @@ def show(context, **kwargs):
         echo()
 
 
-@plans.command()
+@plans.command('lint')
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
-def lint(context, **kwargs):
+def lint_plan(context, **kwargs):
     """
     Check plans against the L2 metadata specification.
 
@@ -813,11 +815,11 @@ def export(
             echo(story.export(format_))
 
 
-@stories.command()
+@stories.command('lint')
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
-def lint(context, **kwargs):
+def lint_stories(context, **kwargs):
     """
     Check stories against the L3 metadata specification.
 
@@ -1037,3 +1039,21 @@ def images(context, **kwargs):
     #        we should add options to specify which provision should be
     #        cleaned, similarly to guests.
     tmt.Clean(parent=context.obj.clean, context=context).images()
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Lint
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+@main.command()
+@click.pass_context
+@fix
+@verbose_debug_quiet
+def lint(context, **kwargs):
+    exit_code = 0
+    for command in (lint_test, lint_plan, lint_stories):
+        try:
+            context.forward(command)
+        except SystemExit as e:
+            exit_code |= e.code
+    raise SystemExit(exit_code)

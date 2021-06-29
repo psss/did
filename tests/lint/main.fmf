@@ -1,0 +1,3 @@
+summary: Tests `tmt lint` command
+test: ./test.sh
+framework: beakerlib
