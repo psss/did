@@ -412,6 +412,11 @@ def create(context, name, template, force, **kwargs):
     '--makefile / --no-makefile', default=True,
     help='Convert Beaker Makefile metadata')
 @click.option(
+    '--type', 'type_', metavar='TYPE', default=['multihost'], multiple=True,
+    show_default=True,
+    help='Convert Type from Beaker Makefile to the tag section. '
+         'Use "all" to convert all detected types.')
+@click.option(
     '--disabled', default=False, is_flag=True,
     help='Import disabled test cases from Nitrate as well.')
 @click.option(
@@ -429,8 +434,8 @@ def create(context, name, template, force, **kwargs):
 @verbose_debug_quiet
 @force_dry
 def import_(
-        context, paths, makefile, nitrate, purpose, disabled, manual, plan,
-        case, with_script, **kwargs):
+        context, paths, makefile, type_, nitrate, purpose, disabled, manual,
+        plan, case, with_script, **kwargs):
     """
     Import old test metadata into the new fmf format.
 
@@ -464,7 +469,7 @@ def import_(
                 "Path '{0}' is not a directory.".format(path))
         # Gather old metadata and store them as fmf
         common, individual = tmt.convert.read(
-            path, makefile, nitrate, purpose, disabled)
+            path, makefile, nitrate, purpose, disabled, type_)
         # Add path to common metadata if there are virtual test cases
         if individual:
             root = fmf.Tree(path).root

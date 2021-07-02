@@ -58,6 +58,21 @@ rlJournalStart
         rlAssertGrep "/parent/child" 'output'
     rlPhaseEnd
 
+    rlPhaseStartTest 'Type'
+        rlRun 'tmt test import --no-nitrate --type all | tee output'
+        rlAssertGrep "All \"Type\" fields added to tag section:
+Multihost, Sanity, KernelTier1" 'output'
+        rlRun 'tmt test show | tee output'
+        rlAssertGrep "tag Multihost, Sanity and KernelTier1" 'output'
+        rlRun 'tmt test import --no-nitrate --type KernelTier1 | tee output'
+        rlAssertGrep 'tags: KernelTier1' 'output'
+        rlRun 'tmt test show | tee output'
+        rlAssertGrep "tag KernelTier1" 'output'
+        rlRun 'tmt test import --no-nitrate --type KernelTier1 --type SaNiTy |
+tee output'
+        rlAssertGrep "tags: KernelTier1, SaNiTy" 'output'
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "rm -r $tmp" 0 "Removing tmp directory"
         rlRun 'popd'

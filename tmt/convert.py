@@ -192,7 +192,7 @@ def add_bug(bug, data):
     echo(style('relates: ', fg='green') + new_link['relates'])
 
 
-def read(path, makefile, nitrate, purpose, disabled):
+def read(path, makefile, nitrate, purpose, disabled, type_):
     """
     Read old metadata from various sources
 
@@ -331,14 +331,20 @@ def read(path, makefile, nitrate, purpose, disabled):
             echo(
                 style('recommend: ', fg='green') + ' '.join(data['recommend']))
 
-        # Multihost (from Type) -> Add tag for now
+        # Convert Type from Makefile to tag
         try:
+            data['tag'] = []
             mkfile_type = re.search(r'^Type:\s*(.*)', testinfo, re.M).group(1)
-            if "Multihost" in mkfile_type:
-                data['tag'] = ['multihost']
-                echo(
-                    style('multihost: ', fg='green')
-                    + 'Marked with the "multihost" tag')
+            if 'all' in [t.lower() for t in type_]:
+                data['tag'] = mkfile_type.split()
+                echo(style('All "Type" fields added to tag section: ',
+                           fg='green') + f'{", ".join(data["tag"])}')
+            else:
+                for i in type_:
+                    if i.lower() in mkfile_type.lower().split():
+                        data['tag'].append(i)
+                echo(style(f'tags: ', fg='green') +
+                     f'{", ".join(data["tag"])}')
         except AttributeError:
             pass
         # Add relevant bugs to the 'link' attribute
