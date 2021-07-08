@@ -6,6 +6,9 @@ discover:
     how: fmf
     filter: 'tag: integration'
 prepare:
+  - name: Install pip
+    how: install
+    package: python3-pip
   - name: Install Requre
     script: pip3 install requre
   - name: Create default nitrate config
