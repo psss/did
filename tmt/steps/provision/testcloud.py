@@ -24,6 +24,7 @@ def import_testcloud():
         import libvirt
         import testcloud.image
         import testcloud.instance
+        import testcloud.util
     except ImportError:
         raise ProvisionError(
             "Install 'testcloud' to provision using this method.")
@@ -124,9 +125,6 @@ DOMAIN_TEMPLATE = """<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/d
 # VM defaults
 DEFAULT_BOOT_TIMEOUT = 60      # seconds
 DEFAULT_CONNECT_TIMEOUT = 60   # seconds
-
-# Image guessing related variables
-KOJI_URL = 'https://kojipkgs.fedoraproject.org/compose'
 
 
 class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
@@ -292,43 +290,52 @@ class GuestTestcloud(tmt.Guest):
     def _guess_image_url(self, name):
         """ Guess image url for given name """
 
-        def latest_release():
-            """ Get the latest released Fedora number """
-            try:
-                response = self._get_url(KOJI_URL, 'check Fedora composes')
-                releases = re.findall(r'>(\d\d)/<', response.text)
-                return releases[-1]
-            except IndexError:
-                raise ProvisionError(
-                    f"Latest Fedora release not found at '{KOJI_URL}'.")
-
         # Try to check if given url is a local file
         if os.path.isabs(name) and os.path.isfile(name):
             return f'file://{name}'
 
-        # Map fedora aliases (e.g. rawhide, fedora, fedora-32, f-32, f32)
         name = name.lower().strip()
-        matched = re.match(r'^f(edora)?-?(\d+)$', name)
-        if matched:
-            release = matched.group(2)
-        elif 'rawhide' in name:
-            release = 'rawhide'
-        elif name == 'fedora':
-            release = latest_release()
-        else:
-            raise ProvisionError(f"Could not map '{name}' to compose.")
+        url = None
 
-        # Prepare the full qcow name
-        images = f"{KOJI_URL}/{release}/latest-Fedora-{release.capitalize()}"
-        images += "/compose/Cloud/x86_64/images"
-        response = self._get_url(images, 'get the full qcow name')
-        matched = re.search(">(Fedora-Cloud[^<]*qcow2)<", response.text)
-        try:
-            compose_name = matched.group(1)
-        except AttributeError:
-            raise ProvisionError(
-                f"Failed to detect full compose name from '{images}'.")
-        return f'{images}/{compose_name}'
+        # Map fedora aliases (e.g. rawhide, fedora, fedora-32, f-32, f32)
+        matched_fedora = re.match(r'^f(edora)?-?(\d+)$', name)
+        # Map centos aliases (e.g. centos:X, centos, centos-stream:X)
+        matched_centos = [re.match(r'^c(entos)?-?(\d+)$', name),
+                          re.match(r'^c(entos-stream)?-?(\d+)$', name)]
+        matched_ubuntu = re.match(r'^u(buntu)?-?(\w+)$', name)
+        matched_debian = re.match(r'^d(ebian)?-?(\w+)$', name)
+
+        # Plain name match means we want the latest release
+        if name == 'fedora':
+            url = testcloud.util.get_fedora_image_url("latest")
+        elif name == 'centos':
+            url = testcloud.util.get_centos_image_url("latest")
+        elif name == 'centos-stream':
+            url = testcloud.util.get_centos_image_url(
+                "latest", stream=True)
+        elif name == 'ubuntu':
+            url = testcloud.util.get_ubuntu_image_url("latest")
+        elif name == 'debian':
+            url = testcloud.util.get_debian_image_url("latest")
+
+        elif matched_fedora:
+            url = testcloud.util.get_fedora_image_url(matched_fedora.group(2))
+        elif matched_centos[0]:
+            url = testcloud.util.get_centos_image_url(
+                matched_centos[0].group(2))
+        elif matched_centos[1]:
+            url = testcloud.util.get_centos_image_url(
+                matched_centos[1].group(2), stream=True)
+        elif matched_ubuntu:
+            url = testcloud.util.get_ubuntu_image_url(matched_ubuntu.group(2))
+        elif matched_debian:
+            url = testcloud.util.get_debian_image_url(matched_debian.group(2))
+        elif 'rawhide' in name:
+            url = testcloud.util.get_fedora_image_url("rawhide")
+
+        if not url:
+            raise ProvisionError(f"Could not map '{name}' to compose.")
+        return url
 
     @staticmethod
     def _create_template():
