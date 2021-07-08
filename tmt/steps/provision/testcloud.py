@@ -153,7 +153,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
 
         https://kojipkgs.fedoraproject.org/compose/
 
-    Use full path for image stored on local disk, for example:
+    Use the full path for images stored on local disk, for example:
 
         /var/tmp/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2
     """
@@ -172,7 +172,8 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
         return [
             click.option(
                 '-i', '--image', metavar='IMAGE',
-                help='Select image to use. Short name or complete url.'),
+                help='Select image to be used. Provide a short name, '
+                     'full path to a local file or a complete url.'),
             click.option(
                 '-m', '--memory', metavar='MEMORY',
                 help='Set available memory in MB, 2048 MB by default.'),
@@ -302,7 +303,7 @@ class GuestTestcloud(tmt.Guest):
                     f"Latest Fedora release not found at '{KOJI_URL}'.")
 
         # Try to check if given url is a local file
-        if os.path.exists(name):
+        if os.path.isabs(name) and os.path.isfile(name):
             return f'file://{name}'
 
         # Map fedora aliases (e.g. rawhide, fedora, fedora-32, f-32, f32)
