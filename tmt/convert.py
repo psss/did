@@ -192,7 +192,7 @@ def add_bug(bug, data):
     echo(style('relates: ', fg='green') + new_link['relates'])
 
 
-def read(path, makefile, nitrate, purpose, disabled, type_):
+def read(path, makefile, nitrate, purpose, disabled, types):
     """
     Read old metadata from various sources
 
@@ -331,20 +331,18 @@ def read(path, makefile, nitrate, purpose, disabled, type_):
             echo(
                 style('recommend: ', fg='green') + ' '.join(data['recommend']))
 
-        # Convert Type from Makefile to tag
+        # Convert Type into tags
         try:
-            data['tag'] = []
-            mkfile_type = re.search(r'^Type:\s*(.*)', testinfo, re.M).group(1)
-            if 'all' in [t.lower() for t in type_]:
-                data['tag'] = mkfile_type.split()
-                echo(style('All "Type" fields added to tag section: ',
-                           fg='green') + f'{", ".join(data["tag"])}')
+            makefile_type = re.search(
+                r'^Type:\s*(.*)', testinfo, re.M).group(1)
+            if 'all' in [type_.lower() for type_ in types]:
+                tags = makefile_type.split()
             else:
-                for i in type_:
-                    if i.lower() in mkfile_type.lower().split():
-                        data['tag'].append(i)
-                echo(style(f'tags: ', fg='green') +
-                     f'{", ".join(data["tag"])}')
+                tags = [type_ for type_ in types
+                        if type_.lower() in makefile_type.lower().split()]
+            if tags:
+                echo(style("tag: ", fg="green") + " ".join(tags))
+                data["tag"] = tags
         except AttributeError:
             pass
         # Add relevant bugs to the 'link' attribute

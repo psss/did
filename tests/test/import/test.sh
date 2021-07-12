@@ -59,18 +59,17 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest 'Type'
-        rlRun 'tmt test import --no-nitrate --type all | tee output'
-        rlAssertGrep "All \"Type\" fields added to tag section:
-Multihost, Sanity, KernelTier1" 'output'
+        import="tmt test import --no-nitrate"
+        rlRun "$import --type all | tee output"
+        rlAssertGrep "tag: Multihost Sanity KernelTier1" 'output'
         rlRun 'tmt test show | tee output'
         rlAssertGrep "tag Multihost, Sanity and KernelTier1" 'output'
-        rlRun 'tmt test import --no-nitrate --type KernelTier1 | tee output'
-        rlAssertGrep 'tags: KernelTier1' 'output'
+        rlRun "$import --type KernelTier1 | tee output"
+        rlAssertGrep 'tag: KernelTier1$' 'output'
         rlRun 'tmt test show | tee output'
-        rlAssertGrep "tag KernelTier1" 'output'
-        rlRun 'tmt test import --no-nitrate --type KernelTier1 --type SaNiTy |
-tee output'
-        rlAssertGrep "tags: KernelTier1, SaNiTy" 'output'
+        rlAssertGrep "tag KernelTier1$" 'output'
+        rlRun "$import --type KernelTier1 --type SaNiTy | tee output"
+        rlAssertGrep "tag: KernelTier1 SaNiTy" 'output'
     rlPhaseEnd
 
     rlPhaseStartCleanup
