@@ -185,7 +185,7 @@ class Guest(tmt.utils.Common):
         guest ...... hostname or ip address
         port ....... port to connect to
         user ....... user name to log in
-        key ........ private key
+        key ........ path to the private key (str or list)
         password ... password
 
     These are by default imported into instance attributes (see the
@@ -226,8 +226,9 @@ class Guest(tmt.utils.Common):
         if self.port:
             options.extend(['-p', str(self.port)])
         if self.key:
-            key = shlex.quote(self.key) if join else self.key
-            options.extend(['-i', key])
+            keys = self.key if isinstance(self.key, list) else [self.key]
+            for key in keys:
+                options.extend(['-i', shlex.quote(key) if join else key])
         if self.password:
             options.extend(['-oPasswordAuthentication=yes'])
         return ' '.join(options) if join else options
