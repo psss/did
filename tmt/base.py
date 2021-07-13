@@ -815,6 +815,9 @@ class Plan(Core):
                 else:
                     step.warn(error)
 
+        for step in self.steps(disabled=True):
+            step.setup_login()
+
         # Run enabled steps except 'finish'
         self.debug('go', color='cyan', shift=0, level=2)
         try:

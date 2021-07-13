@@ -138,12 +138,6 @@ class Step(tmt.utils.Common):
             self._workdir_cleanup()
             self.status('todo')
 
-        # Insert login plugins if requested on the command line
-        for plugin in Login.plugins(step=self):
-            self.debug(
-                f"Insert login plugin with order '{plugin.order}'.", level=2)
-            self._plugins.append(plugin)
-
         # Nothing more to do when the step is already done
         if self.status() == 'done':
             return
@@ -153,6 +147,13 @@ class Step(tmt.utils.Common):
         if how is not None:
             for data in self.data:
                 data['how'] = how
+
+    def setup_login(self):
+        """Insert login plugins if requested on the command line"""
+        for plugin in Login.plugins(step=self):
+            self.debug(
+                f"Insert login plugin with order '{plugin.order}'.", level=2)
+            self._plugins.append(plugin)
 
     def plugins(self, classes=None):
         """
@@ -460,8 +461,16 @@ class Login(tmt.utils.Common):
 
         # Use the end of the last enabled step if no --step given
         if not options:
-            last_enabled_step = list(step.plan.steps())[-1]
-            phases[last_enabled_step.name] = [PHASE_END]
+            if step.plan.my_run.opt('last'):
+                # The last run may have failed before all enabled steps were
+                # completed, select the last step done
+                steps = [s for s in step.plan.steps() if s.status() == 'done']
+                login_during = steps[-1] if steps else None
+            else:
+                login_during = list(step.plan.steps())[-1]
+            # Only login if the error occurred after provision
+            if login_during != step.plan.discover:
+                phases[login_during.name] = [PHASE_END]
 
         # Process provided options
         for option in options:

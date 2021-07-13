@@ -38,6 +38,12 @@ rlJournalStart
         rlAssertGrep "interactive" "output"
     rlPhaseEnd
 
+    rlPhaseStartTest "Last run failed"
+        rlRun "tmt run provision -h local prepare --how shell --script false" 2
+        rlRun "tmt run -rl login -c true | tee output" 2
+        rlAssertGrep "interactive" "output"
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
         rlRun "rm -r $tmp" 0 "Removing tmp directory"
