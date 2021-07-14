@@ -236,9 +236,12 @@ features right at hand install everything::
     sudo dnf install tmt-all
 
 For RHEL 8 and CentOS 8, first make sure that you have available
-the `EPEL <https://fedoraproject.org/wiki/EPEL>`_ repository::
+the `EPEL <https://fedoraproject.org/wiki/EPEL>`_ repository. You
+might also have to enable additional repositories::
 
     sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    sudo dnf config-manager --enable powertools  # CentOS 8
+    sudo dnf config-manager --enable rhel-CRB    # RHEL 8
     sudo dnf install tmt
 
 For plugins which cannot work outside of VPN and so live within
