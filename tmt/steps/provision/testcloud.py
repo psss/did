@@ -151,6 +151,9 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
 
         https://kojipkgs.fedoraproject.org/compose/
 
+    Short names are also provided for 'centos', 'centos-stream',
+    'debian' and 'ubuntu' (e.g. 'centos-8' or 'c8').
+
     Use the full path for images stored on local disk, for example:
 
         /var/tmp/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2
