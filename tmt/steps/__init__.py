@@ -322,6 +322,21 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
             step.info(
                 'hint', "See 'tmt run provision --help' for all "
                 "available provision options.", color='blue')
+        elif step.name == 'report':
+            if data['how'] == 'html':
+                step.info(
+                    'hint', "Install 'tmt-report-html' to format results "
+                    "as a html report.", color='blue')
+            if data['how'] == 'junit':
+                step.info(
+                    'hint', "Install 'tmt-report-junit' to write results "
+                    "in JUnit format.", color='blue')
+            step.info(
+                'hint', "Use the 'display' method to show test results "
+                "on the terminal.", color='blue')
+            step.info(
+                'hint', "See 'tmt run report --help' for all "
+                "available report options.", color='blue')
 
         # Report invalid method
         raise tmt.utils.SpecificationError(
