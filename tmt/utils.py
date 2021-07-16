@@ -314,10 +314,14 @@ class Common(object):
                 return None if join else (None, None)
 
         # Create the process
-        process = subprocess.Popen(
-            command, cwd=cwd, shell=shell, env=environment,
-            stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT if join else subprocess.PIPE)
+        try:
+            process = subprocess.Popen(
+                command, cwd=cwd, shell=shell, env=environment,
+                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT if join else subprocess.PIPE)
+        except FileNotFoundError as error:
+            raise RunError(
+                f"File '{error.filename}' not found.", command, 127)
         if join:
             descriptors = [process.stdout.fileno()]
         else:
@@ -430,6 +434,7 @@ class Common(object):
                 command, cwd, shell, env, log, join, interactive, timeout)
         except RunError as error:
             self.debug(error.message, level=3)
+            message += f" Reason: {error.message}"
             raise RunError(
                 message, error.command, error.returncode,
                 error.stdout, error.stderr)
