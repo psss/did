@@ -486,9 +486,9 @@ class GuestTestcloud(tmt.Guest):
         self.info('progress', 'booting...', 'cyan')
         self.instance.ram = self.memory
         self.instance.disk_size = self.disk
-        self.instance.prepare()
-        self.instance.spawn_vm()
         try:
+            self.instance.prepare()
+            self.instance.spawn_vm()
             self.instance.start(DEFAULT_BOOT_TIMEOUT)
         except (testcloud.exceptions.TestcloudInstanceError,
                 libvirt.libvirtError) as error:
