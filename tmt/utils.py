@@ -2,6 +2,7 @@
 """ Test Metadata Utilities """
 
 import contextlib
+import datetime
 import fcntl
 import io
 import os
@@ -235,7 +236,8 @@ class Common(object):
             self.parent._log(message)
         else:
             with open(os.path.join(self.workdir, LOG_FILENAME), 'a') as log:
-                log.write(remove_color(message) + '\n')
+                log.write(datetime.datetime.utcnow().strftime('%H:%M:%S') + ' '
+                          + remove_color(message) + '\n')
 
     def print(self, key, value=None, color=None, shift=0, err=False):
         """ Print a message regardless the quiet mode """
