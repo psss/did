@@ -463,6 +463,22 @@ class GuestTestcloud(tmt.Guest):
             connection='qemu:///session')
         self.verbose('name', self.instance_name, 'green')
 
+        # Decide which networking setup to use
+        # Autodetect works with libguestfs python bindings
+        # We fall back to basic heuristics based on file name
+        # without that installed (eg. from pypi).
+        # https://bugzilla.redhat.com/show_bug.cgi?id=1075594
+        try:
+            import guestfs
+        except ImportError:
+            match_legacy = re.match(
+                r'(.*)rhel-(.*)-7.(.*).qcow2',
+                self.image_url.lower())
+            if match_legacy:
+                self.instance.pci_net = "e1000"
+            else:
+                self.instance.pci_net = "virtio-net-pci"
+
         # Prepare ssh key
         self.prepare_ssh_key()
 
