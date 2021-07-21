@@ -95,16 +95,21 @@ class Provision(tmt.steps.Step):
 
         # Provision guests
         self._guests = []
-        for plugin in self.plugins():
-            plugin.go()
-            if isinstance(plugin, ProvisionPlugin):
-                plugin.guest().details()
-                self._guests.append(plugin.guest())
+        try:
+            for plugin in self.plugins():
+                try:
+                    plugin.go()
+                    if isinstance(plugin, ProvisionPlugin):
+                        plugin.guest().details()
+                finally:
+                    if isinstance(plugin, ProvisionPlugin):
+                        self._guests.append(plugin.guest())
 
-        # Give a summary, update status and save
-        self.summary()
-        self.status('done')
-        self.save()
+            # Give a summary, update status and save
+            self.summary()
+            self.status('done')
+        finally:
+            self.save()
 
     def guests(self):
         """ Return the list of all provisioned guests """
