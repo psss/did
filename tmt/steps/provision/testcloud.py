@@ -50,6 +50,16 @@ runcmd:
   - sed -i -e '/^.*PermitRootLogin/s/^.*$/PermitRootLogin yes/'
     /etc/ssh/sshd_config
   - systemctl reload sshd
+  - [sh, -c, 'mkdir -p /etc/systemd/network/']
+  # echo multiple times, sh echo doesn't support newline
+  - [sh, -c, 'if [ ! -f /etc/systemd/network/20-tc-usernet.network ];
+  then echo "[Match]" >> /etc/systemd/network/20-tc-usernet.network &&
+  echo "Name=en*" >> /etc/systemd/network/20-tc-usernet.network &&
+  echo "[Network]" >> /etc/systemd/network/20-tc-usernet.network &&
+  echo "DHCP=yes" >> /etc/systemd/network/20-tc-usernet.network; fi']
+  - [sh, -c, 'if systemctl status systemd-networkd |
+  grep -q "enabled;\\svendor\\spreset:\\senabled"; then
+  systemctl restart systemd-networkd; fi']
 """
 
 # Libvirt domain XML template related variables
