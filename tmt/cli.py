@@ -512,6 +512,9 @@ def import_(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
     help='Output format.')
 @click.option(
+    '--fmf-id', is_flag=True,
+    help='Show fmf identifiers')
+@click.option(
     '--duplicate / --no-duplicate', default=False, show_default=True,
     help='Allow or prevent creating duplicates in Nitrate by searching for '
          'existing test cases with the same fmf identifier.')
@@ -530,8 +533,10 @@ def export(context, format_, nitrate, **kwargs):
         if nitrate:
             test.export(format_='nitrate')
         else:
-            echo(test.export(format_=format_))
-
+            if kwargs.get('fmf_id'):
+                echo(test.export(format_=format_, keys='fmf-id'), nl=False)
+            else:
+                echo(test.export(format_=format_), nl=False)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Plan

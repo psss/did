@@ -843,7 +843,7 @@ def context_to_dict(context):
         for key, value in environment_to_dict(context).items()}
 
 
-def dict_to_yaml(data, width=None, sort=False):
+def dict_to_yaml(data, width=None, sort=False, start=False):
     """ Convert dictionary into yaml """
     output = io.StringIO()
     yaml = YAML()
@@ -852,6 +852,7 @@ def dict_to_yaml(data, width=None, sort=False):
     yaml.allow_unicode = True
     yaml.encoding = 'utf-8'
     yaml.width = width
+    yaml.explicit_start = start
     # Convert multiline strings
     scalarstring.walk_tree(data)
     if sort:

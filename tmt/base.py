@@ -459,6 +459,14 @@ class Test(Core):
             tmt.export.export_to_nitrate(self)
 
         # Common node export otherwise
+        elif keys == 'fmf-id':
+            if format_ == 'dict':
+                return self.fmf_id
+            elif format_ == "yaml":
+                return tmt.utils.dict_to_yaml(self.fmf_id, start=True)
+            else:
+                raise tmt.utils.GeneralError(
+                    f"Invalid test export format '{format_}'.")
         else:
             return super(Test, self).export(format_, keys)
 
