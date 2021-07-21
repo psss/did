@@ -87,7 +87,7 @@ DOMAIN_TEMPLATE = """<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/d
   <devices>
     <emulator>{{ emulator_path }}</emulator>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='qcow2'/>
+      <driver name='qemu' type='qcow2' cache='unsafe'/>
       <source file="{{ disk }}"/>
       <target dev='vda' bus='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
