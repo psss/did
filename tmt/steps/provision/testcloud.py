@@ -60,6 +60,9 @@ runcmd:
   - [sh, -c, 'if systemctl status systemd-networkd |
   grep -q "enabled;\\svendor\\spreset:\\senabled"; then
   systemctl restart systemd-networkd; fi']
+  # CentOS and RHEL 8 keeps waiting before restarting sshd causing delays
+  - [sh, -c, 'if cat /etc/os-release |
+  grep -q platform:el8; then systemctl restart sshd; fi']
 """
 
 # Libvirt domain XML template related variables
