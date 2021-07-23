@@ -512,6 +512,25 @@ package then could be done in the following way::
             - python3-mock
 
 
+Parametrize plans
+------------------------------------------------------------------
+
+It is possible to parametrize plans using environment variables.
+This may be useful to reduce duplication, for example in CI.
+The syntax is standard, both ``$var`` and ``${var}`` may be used.
+The values of variables are taken from the existing environment,
+command line (``--environment`` option) and the ``environment``
+plan attribute (with descending precedence, variables already
+set in the environment have the highest priority)::
+
+    discover:
+        how: fmf
+        url: https://github.com/psss/${REPO}
+
+    $ REPO=tmt tmt run
+    $ tmt run -e REPO=tmt
+
+
 Stories
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

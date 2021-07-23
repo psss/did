@@ -1,6 +1,7 @@
 
 """ Test Metadata Utilities """
 
+import contextlib
 import fcntl
 import io
 import os
@@ -745,6 +746,18 @@ def environment_to_dict(variables):
                 _add_simple_var(result, var)
 
     return result
+
+
+@contextlib.contextmanager
+def modify_environ(**new_elements):
+    """ A context manager for os.environ that restores the initial state """
+    environ_backup = os.environ.copy()
+    os.environ.update(new_elements)
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(environ_backup)
 
 
 def context_to_dict(context):

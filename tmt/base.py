@@ -465,8 +465,14 @@ class Plan(Core):
 
     def __init__(self, node, run=None):
         """ Initialize the plan """
-        super().__init__(node, parent=run)
         self.my_run = run
+
+        # Environment variables, make sure that values are string
+        self._environment = dict([
+            (key, str(value)) for key, value
+            in node.get('environment', dict()).items()])
+        self._expand_node_vars(node)
+        super().__init__(node, parent=run)
 
         # Initialize test steps
         self.discover = tmt.steps.discover.Discover(
@@ -491,15 +497,31 @@ class Plan(Core):
             if not isinstance(self.gate, list):
                 self.gate = [self.gate]
 
-        # Environment variables, make sure that values are string
-        self._environment = dict([
-            (key, str(value)) for key, value
-            in node.get('environment', dict()).items()])
-
         # Test execution context defined in the plan
         self._plan_context = self.node.get('context', dict())
 
         self._update_metadata()
+
+    def _expand_node_vars_rec(self, node):
+        """ Recursively expand the node structure """
+        if isinstance(node, str):
+            return os.path.expandvars(node)
+        elif isinstance(node, dict):
+            for key, value in node.items():
+                node[key] = self._expand_node_vars_rec(value)
+        elif isinstance(node, list):
+            for i in range(len(node)):
+                node[i] = self._expand_node_vars_rec(node[i])
+        return node
+
+    def _expand_node_vars(self, node):
+        """ Expand environment variables in a node """
+        with tmt.utils.modify_environ():
+            # Give precedence to present env variables over plan environment
+            for key, value in self.environment.items():
+                if key not in os.environ:
+                    os.environ[key] = value
+            self._expand_node_vars_rec(node.data)
 
     @property
     def environment(self):

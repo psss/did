@@ -21,3 +21,7 @@
 /scripts:
     summary: Check test discovery from the execute step
     test: ./scripts.sh
+
+/parametrize:
+    summary: Check that plan parametrization works
+    test: ./parametrize.sh

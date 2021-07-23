@@ -32,6 +32,17 @@ execute:
                 discover:
                     how: fmf
                     url: https://github.com/psss/tmt
+        /parametrize:
+            /environment:
+                environment:
+                    REPO: tmt
+                discover:
+                    how: fmf
+                    url: https://github.com/psss/$REPO
+            /noenvironment:
+                discover:
+                    how: fmf
+                    url: https://github.com/psss/${REPO}
     /nourl:
         /ref:
             /path:
