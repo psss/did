@@ -23,7 +23,7 @@ class Execute(tmt.steps.Step):
 
     Note that the old execution methods 'shell.tmt', 'beakerlib.tmt',
     'shell.detach' and 'beakerlib.detach' have been deprecated and the
-    backward-compatible support for them will be dropped in March 2021.
+    backward-compatible support for them will be dropped in tmt-2.0.
 
     Use the new L1 metadata attribute 'framework' instead to specify
     which test framework should be used for execution. This allows to
@@ -83,7 +83,7 @@ class Execute(tmt.steps.Step):
         framework = matched.group(1)
         self.warn(f"Set 'framework: {framework}' in test metadata (L1).")
         self._framework = framework
-        self.warn("Support for old methods will be dropped in March 2021.")
+        self.warn("Support for old methods will be dropped in tmt-2.0.")
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """

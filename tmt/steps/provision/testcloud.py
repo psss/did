@@ -157,6 +157,9 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
     Use the full path for images stored on local disk, for example:
 
         /var/tmp/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2
+
+    In addition to the qcow2 format, vagrant boxes can be used as well,
+    testcloud will take care of unpacking the image for you.
     """
 
     # Guest instance
