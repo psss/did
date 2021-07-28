@@ -502,17 +502,17 @@ class Plan(Core):
 
         self._update_metadata()
 
-    def _expand_node_vars_rec(self, node):
-        """ Recursively expand the node structure """
-        if isinstance(node, str):
-            return os.path.expandvars(node)
-        elif isinstance(node, dict):
-            for key, value in node.items():
-                node[key] = self._expand_node_vars_rec(value)
-        elif isinstance(node, list):
-            for i in range(len(node)):
-                node[i] = self._expand_node_vars_rec(node[i])
-        return node
+    def _expand_node_data(self, data):
+        """ Recursively expand variables in node data """
+        if isinstance(data, str):
+            return os.path.expandvars(data)
+        elif isinstance(data, dict):
+            for key, value in data.items():
+                data[key] = self._expand_node_data(value)
+        elif isinstance(data, list):
+            for i in range(len(data)):
+                data[i] = self._expand_node_data(data[i])
+        return data
 
     def _expand_node_vars(self, node):
         """ Expand environment variables in a node """
@@ -521,7 +521,7 @@ class Plan(Core):
             for key, value in self.environment.items():
                 if key not in os.environ:
                     os.environ[key] = value
-            self._expand_node_vars_rec(node.data)
+            self._expand_node_data(node.data)
 
     @property
     def environment(self):
