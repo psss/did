@@ -226,10 +226,17 @@ def main(click_contex, root, context, **kwargs):
 @click.option(
     '-S', '--skip', type=click.Choice(tmt.steps.STEPS), metavar='STEP',
     help='Skip given step(s) during test run execution.', multiple=True)
-@click.option(
-    '-e', '--environment', metavar='KEY=VALUE|@FILE', multiple='True',
-    help='Set environment variable. Can be specified multiple times. '
-         'The "@" prefix marks a YAML file to load.')
+@click.option('-e',
+              '--environment',
+              metavar='KEY=VALUE|@FILE',
+              multiple='True',
+              help='Set environment variable. Can be specified multiple times. '
+              'The "@" prefix marks a file to load (yaml or dotenv formats supported.')
+@click.option('--environment-file',
+              metavar='FILE|URL',
+              multiple='True',
+              help='Set environment variables from file or url (yaml or dotenv formats are supported. '
+              ' Can be specified multiple times.')
 @verbose_debug_quiet
 @force_dry
 def run(context, id_, **kwargs):

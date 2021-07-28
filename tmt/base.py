@@ -475,11 +475,7 @@ class Plan(Core):
     def __init__(self, node, run=None):
         """ Initialize the plan """
         self.my_run = run
-
-        # Environment variables, make sure that values are string
-        self._environment = dict([
-            (key, str(value)) for key, value
-            in node.get('environment', dict()).items()])
+        self._environment = self._get_environment_vars(node)
         # Expand all environment variables in the node
         with tmt.utils.modify_environ(self.environment):
             self._expand_node_data(node.data)
@@ -530,10 +526,33 @@ class Plan(Core):
         """ Return combined environment from plan data and command line """
         if self.my_run and self.my_run.environment:
             combined = self._environment.copy()
+
+            # vars sets in cli takes precedence
             combined.update(self.my_run.environment)
             return combined
         else:
             return self._environment
+
+    @staticmethod
+    def _get_environment_vars(node):
+        # Environment variables from files
+        env_files = node.get("environment-file") or []
+        if not isinstance(env_files, list):
+            raise tmt.utils.SpecificationError(
+                f"environment-file parameter should be a list. "
+                f"Received {type(env_files)}"
+                )
+        environment = tmt.utils.environment_file_to_dict(env_files)
+
+        # Environment variables, make sure that values are string
+        env_vars = dict([
+            (key, str(value)) for key, value
+            in node.get('environment', dict()).items()])
+
+        # combine all env sources into one (env_vars takes precendence)
+        environment.update(**env_vars)
+
+        return environment
 
     def _initialize_worktree(self):
         """
@@ -1242,7 +1261,16 @@ class Run(tmt.utils.Common):
     def environment(self):
         """ Return environment combined from wake up and command line """
         combined = self._environment.copy()
-        combined.update(tmt.utils.environment_to_dict(self.opt('environment')))
+        environment_vars = tmt.utils.environment_to_dict(
+            self.opt('environment'))
+        environment_file_vars = tmt.utils.environment_file_to_dict(
+            self.opt('environment-file') or []
+            )
+
+        # combine all env sources into one (environment_vars takes precedence)
+        combined.update(environment_file_vars)
+        combined.update(environment_vars)
+
         return combined
 
     def save(self):

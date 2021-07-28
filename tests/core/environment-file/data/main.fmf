@@ -1,0 +1,21 @@
+/test:
+    summary: This is a test with variables
+#    require: python3-pytest
+    test: python3 -m pytest -svv environment_file_data.py
+
+
+/plan:
+    summary: This is a plan with variables
+    discover:
+        how: fmf
+    provision:
+        how: local
+    execute:
+        how: tmt
+    environment:
+        # testing that environment takes precedence over environment-file
+        YAML_STR: yaml_str_overwritten
+    environment-file:
+        - "env"
+        - "env.yaml"
+        - "https://raw.githubusercontent.com/psss/tmt/22a46a4a6760517e3eadbbff0c9bebdb95442760/tests/core/env/data/vars.yaml"

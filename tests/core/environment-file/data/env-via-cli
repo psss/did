@@ -1,0 +1,2 @@
+DOTENV_STR="dotenv_via_cli_str"
+DOTENV_INT=2
