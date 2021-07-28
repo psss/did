@@ -437,6 +437,7 @@ class GuestTestcloud(tmt.Guest):
         # mapping value and try to guess the URL
         if not re.match(r'^(?:https?|file)://.*', self.image_url):
             self.image_url = self._guess_image_url(self.image_url)
+            self.debug(f"Guessed image url: '{self.image_url}'", level=3)
 
         # Initialize and prepare testcloud image
         self.image = testcloud.image.Image(self.image_url)
@@ -471,9 +472,8 @@ class GuestTestcloud(tmt.Guest):
         try:
             import guestfs
         except ImportError:
-            match_legacy = re.match(
-                r'(.*)rhel-(.*)-7.(.*).qcow2',
-                self.image_url.lower())
+            match_legacy = re.search(
+                r'(rhel|centos).*-7', self.image_url.lower())
             if match_legacy:
                 self.instance.pci_net = "e1000"
             else:
