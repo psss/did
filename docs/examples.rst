@@ -676,6 +676,30 @@ Metadata Specification::
     fail unknown attribute 'links' is used
 
 
+Lint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``tmt lint`` command checks all the present metadata against
+the L1, L2 and L3 Metadata Specification. It combines all the
+partial lint commands (test, plan and story) into one::
+
+    $ tmt lint
+    /tests/plan/create
+    pass test script must be defined
+    pass directory path must be absolute
+    pass directory path must exist
+    warn summary should not exceed 50 characters
+    pass correct attributes are used
+
+    /spec/plans/prepare/ansible
+    pass correct attributes are used
+    warn summary should not exceed 50 characters
+
+    /stories/cli/story/create
+    pass correct attributes are used
+    warn summary is very useful for quick inspection
+
+
 Run
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1290,26 +1314,3 @@ supports this option, the images are removed from
         images
             testcloud
                 Removing '/var/tmp/tmt/testcloud/images/Fedora-Cloud-Base-34_Beta-1.3.x86_64.qcow2'.
-
-
-Lint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Command ``tmt lint`` checks defined test metadata against the L1,
-L2 and L3 Metadata Specification::
-
-    $ tmt lint
-    /tests/plan/create
-    pass test script must be defined
-    pass directory path must be absolute
-    pass directory path must exist
-    warn summary should not exceed 50 characters
-    pass correct attributes are used
-
-    /spec/plans/prepare/ansible
-    pass correct attributes are used
-    warn summary should not exceed 50 characters
-
-    /stories/cli/story/create
-    pass correct attributes are used
-    warn summary is very useful for quick inspection

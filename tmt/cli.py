@@ -362,13 +362,15 @@ def show(context, **kwargs):
 @name_filter_condition
 @fix
 @verbose_debug_quiet
-def lint_test(context, **kwargs):
+def lint_tests(context, **kwargs):
     """
     Check tests against the L1 metadata specification.
 
     Regular expression can be used to filter tests for linting.
     Use '.' to select tests under the current working directory.
     """
+    # FIXME: Workaround https://github.com/pallets/click/pull/1840 for click 7
+    context.params.update(kwargs)
     tmt.Test._save_context(context)
     exit_code = 0
     for test in context.obj.tree.tests():
@@ -585,13 +587,15 @@ def show(context, **kwargs):
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
-def lint_plan(context, **kwargs):
+def lint_plans(context, **kwargs):
     """
     Check plans against the L2 metadata specification.
 
     Regular expression can be used to filter plans by name.
     Use '.' to select plans under the current working directory.
     """
+    # FIXME: Workaround https://github.com/pallets/click/pull/1840 for click 7
+    context.params.update(kwargs)
     tmt.Plan._save_context(context)
     exit_code = 0
     for plan in context.obj.tree.plans():
@@ -826,6 +830,8 @@ def lint_stories(context, **kwargs):
     Regular expression can be used to filter stories by name.
     Use '.' to select stories under the current working directory.
     """
+    # FIXME: Workaround https://github.com/pallets/click/pull/1840 for click 7
+    context.params.update(kwargs)
     tmt.Story._save_context(context)
     exit_code = 0
     for story in context.obj.tree.stories():
@@ -1047,11 +1053,22 @@ def images(context, **kwargs):
 
 @main.command()
 @click.pass_context
+@name_filter_condition
 @fix
 @verbose_debug_quiet
 def lint(context, **kwargs):
+    """
+    Check all the present metadata against the specification.
+
+    Combines all the partial linting (tests, plans and stories)
+    into one command. Options are applied to all parts of the lint.
+
+    Regular expression can be used to filter metadata by name.
+    Use '.' to select tests, plans and stories under the current
+    working directory.
+    """
     exit_code = 0
-    for command in (lint_test, lint_plan, lint_stories):
+    for command in (lint_tests, lint_plans, lint_stories):
         try:
             context.forward(command)
         except SystemExit as e:
