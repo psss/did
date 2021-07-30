@@ -754,7 +754,8 @@ def environment_to_dict(variables):
 
 
 def environment_file_to_dict(env_files: Iterable[str]) -> Dict[str, str]:
-    """Create dict from files.
+    """
+    Create dict from files.
 
     Files should be in yaml/yml or dotenv format.
 
@@ -769,21 +770,19 @@ def environment_file_to_dict(env_files: Iterable[str]) -> Dict[str, str]:
         C: D
         ```
     """
-    res = {}
+    result = {}
     for env_file in env_files:
         if str(env_file).startswith("http"):
             content = requests.get(env_file).text
         else:
             if not Path(env_file).is_file():
-                raise GeneralError(f"'{env_file}' doesn't exist.")
+                raise GeneralError(f"File '{env_file}' doesn't exist.")
             content = Path(env_file).read_text()
-        res.update(
-            parse_yaml(content) if
-            Path(env_file).suffix in (".yaml", ".yml")
-            else
-            parse_dotenv(content)
-            )
-    return res
+        if Path(env_file).suffix in (".yaml", ".yml"):
+            result.update(parse_yaml(content))
+        else:
+            result.update(parse_dotenv(content))
+    return result
 
 
 @contextlib.contextmanager
@@ -1123,22 +1122,23 @@ def default_branch(repository, remote='origin'):
 
 
 def parse_dotenv(content: str) -> Dict[str, str]:
+    """ Parse dotenv (shell) format of variables """
     try:
         return dict([line.split("=")
                     for line in shlex.split(content, comments=True)])
     except ValueError:
-        raise ValueError(f"Can't extract variables from {content}. "
-                         f"Ensure it has proper format (i.e. A=B)")
+        raise GeneralError(f"Failed to extract variables from:\n{content}"
+                           f"Ensure it has the proper format (i.e. A=B).")
 
 
 def parse_yaml(content: str) -> Dict[str, str]:
+    """ Parse variables from yaml, ensure flat dictionary format """
     yaml_as_dict = yaml.safe_load(content)
     if any(isinstance(val, dict) for val in yaml_as_dict.values()):
         raise GeneralError(
             "Can't set the environment from the nested yaml config. The "
-            "config should be just key, value pairs."
-            )
-    return {k: str(v) for k, v in yaml_as_dict.items()}
+            "config should be just key, value pairs.")
+    return {key: str(value) for key, value in yaml_as_dict.items()}
 
 
 def validate_fmf_id(fmf_id):

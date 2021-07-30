@@ -526,8 +526,7 @@ class Plan(Core):
         """ Return combined environment from plan data and command line """
         if self.my_run and self.my_run.environment:
             combined = self._environment.copy()
-
-            # vars sets in cli takes precedence
+            # Command line variables take precedence
             combined.update(self.my_run.environment)
             return combined
         else:
@@ -535,24 +534,23 @@ class Plan(Core):
 
     @staticmethod
     def _get_environment_vars(node):
+        """ Get variables from 'environment' and 'environment-file' keys """
         # Environment variables from files
-        env_files = node.get("environment-file") or []
-        if not isinstance(env_files, list):
+        environment_files = node.get("environment-file") or []
+        if not isinstance(environment_files, list):
             raise tmt.utils.SpecificationError(
-                f"environment-file parameter should be a list. "
-                f"Received {type(env_files)}"
-                )
-        environment = tmt.utils.environment_file_to_dict(env_files)
+                f"The 'environment-file' should be a list. "
+                f"Received '{type(environment_files).__name__}'.")
+        combined = tmt.utils.environment_file_to_dict(environment_files)
 
-        # Environment variables, make sure that values are string
-        env_vars = dict([
+        # Environment variables from key, make sure that values are string
+        environment = dict([
             (key, str(value)) for key, value
             in node.get('environment', dict()).items()])
 
-        # combine all env sources into one (env_vars takes precendence)
-        environment.update(**env_vars)
-
-        return environment
+        # Combine both sources into one ('environment' key takes precendence)
+        combined.update(environment)
+        return combined
 
     def _initialize_worktree(self):
         """
@@ -1261,15 +1259,12 @@ class Run(tmt.utils.Common):
     def environment(self):
         """ Return environment combined from wake up and command line """
         combined = self._environment.copy()
-        environment_vars = tmt.utils.environment_to_dict(
-            self.opt('environment'))
-        environment_file_vars = tmt.utils.environment_file_to_dict(
-            self.opt('environment-file') or []
-            )
-
-        # combine all env sources into one (environment_vars takes precedence)
-        combined.update(environment_file_vars)
-        combined.update(environment_vars)
+        # Merge variables gathered from 'environment-file' options
+        combined.update(tmt.utils.environment_file_to_dict(
+            self.opt('environment-file') or []))
+        # Merge variables from 'environment' options (highest priority)
+        combined.update(tmt.utils.environment_to_dict(
+            self.opt('environment')))
 
         return combined
 

@@ -5,6 +5,8 @@ description:
     Plugins need to include these environment variables while
     running commands or other programs. These environment
     variables should override L1 ``environment`` if present.
+    Use the :ref:`/spec/plans/environment-file` key to load
+    variables from files.
 example: |
     /plan:
         environment:

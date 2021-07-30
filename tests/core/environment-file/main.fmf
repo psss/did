@@ -1,6 +1,7 @@
-summary: Check the work with env_file
+summary: Check that environment-file is working
 description:
     Verify that
     - environment-file can get vars from the file and url of dotenv and yaml fmts
     - environment option takes precedence over environment-file
     - cli specified options takes precendence over fmf one
+require: python3-pytest

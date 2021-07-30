@@ -1,0 +1,28 @@
+summary: Environment variables from files
+
+description:
+    In addition to the :ref:`/spec/plans/environment` key it is
+    also possible to provide environment variables in a file.
+    Supported formats are dotenv/shell with ``KEY=VALUE`` pairs
+    and ``yaml``. Full `url` can be used to fetch variables from a
+    remote source. The ``environment`` key has a higher priority.
+example: |
+    # Load from a dotenv/shell format
+    /plan:
+        environment-file:
+          - env
+
+    # Load from a yaml format
+    /plan:
+        environment-file:
+          - environment.yml
+          - environment.yaml
+
+    # Fetch from remote source
+    /plan:
+        environment-file:
+          - https://example.org/project/environment.yaml
+
+link:
+  - implemented-by: /tmt/base.py
+  - verified-by: /tests/core/environment-file

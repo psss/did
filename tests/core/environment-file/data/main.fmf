@@ -1,8 +1,6 @@
 /test:
     summary: This is a test with variables
-#    require: python3-pytest
     test: python3 -m pytest -svv environment_file_data.py
-
 
 /plan:
     summary: This is a plan with variables
