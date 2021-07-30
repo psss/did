@@ -477,7 +477,9 @@ class Plan(Core):
         self._environment = dict([
             (key, str(value)) for key, value
             in node.get('environment', dict()).items()])
-        self._expand_node_vars(node)
+        # Expand all environment variables in the node
+        with tmt.utils.modify_environ(self.environment):
+            self._expand_node_data(node.data)
         super().__init__(node, parent=run)
 
         # Initialize test steps
@@ -519,15 +521,6 @@ class Plan(Core):
             for i in range(len(data)):
                 data[i] = self._expand_node_data(data[i])
         return data
-
-    def _expand_node_vars(self, node):
-        """ Expand environment variables in a node """
-        with tmt.utils.modify_environ():
-            # Give precedence to present env variables over plan environment
-            for key, value in self.environment.items():
-                if key not in os.environ:
-                    os.environ[key] = value
-            self._expand_node_data(node.data)
 
     @property
     def environment(self):

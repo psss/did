@@ -23,17 +23,12 @@ rlJournalStart
         rlAssertGrep 'url: https://github.com/psss/fmf' 'output'
     rlPhaseEnd
 
-    rlPhaseStartTest 'From existing environment'
-        rlRun "REPO=tmt tmt run -r $plan $steps | tee output"
-        rlAssertGrep 'url: https://github.com/psss/tmt' 'output'
-        # Precedence of existing environment over environment attribute
+    rlPhaseStartTest 'Process environment should be ignored'
         rlRun "REPO=fmf tmt run -r $plan_env $steps | tee output"
-        rlAssertGrep 'url: https://github.com/psss/fmf' 'output'
-        # Precedence of existing environment over option
-        rlRun "REPO=fmf tmt run -r -e REPO=tmt $plan_env $steps | tee output"
-        rlAssertGrep 'url: https://github.com/psss/fmf' 'output'
-        rlRun "REPO=fmf tmt run -r -e REPO=tmt $plan $steps | tee output"
-        rlAssertGrep 'url: https://github.com/psss/fmf' 'output'
+        rlAssertGrep 'url: https://github.com/psss/tmt' 'output'
+        # No substitution should happen
+        rlRun "REPO=tmt tmt run -r $plan $steps | tee output" 2
+        rlAssertGrep 'url: https://github.com/psss/${REPO}' 'output'
     rlPhaseEnd
 
     rlPhaseStartTest 'Undefined variable'

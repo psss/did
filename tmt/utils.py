@@ -751,9 +751,10 @@ def environment_to_dict(variables):
 
 
 @contextlib.contextmanager
-def modify_environ(**new_elements):
+def modify_environ(new_elements):
     """ A context manager for os.environ that restores the initial state """
     environ_backup = os.environ.copy()
+    os.environ.clear()
     os.environ.update(new_elements)
     try:
         yield
