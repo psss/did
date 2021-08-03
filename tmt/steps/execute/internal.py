@@ -122,7 +122,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         start = time.time()
         try:
             stdout = guest.execute(
-                test.test, cwd=workdir, env=environment,
+                test.test_with_shell_options, cwd=workdir, env=environment,
                 join=True, interactive=self.get('interactive'), log=log,
                 timeout=tmt.utils.duration_to_seconds(test.duration))
             test.returncode = 0

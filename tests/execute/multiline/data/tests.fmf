@@ -1,0 +1,9 @@
+/good:
+    test: |
+        /bin/true
+        /bin/true
+
+/bad:
+    test: |
+        /bin/false
+        /bin/true

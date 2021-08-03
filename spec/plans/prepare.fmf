@@ -40,6 +40,10 @@ example: |
         Prepare system using shell commands
     description:
         Execute arbitratry shell commands to set up the system.
+
+        Default shell options are applied to the script, see
+        :ref:`/spec/tests/test` for more details.
+
     example: |
         prepare:
             how: shell

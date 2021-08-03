@@ -58,6 +58,9 @@ PROCESS_TIMEOUT = 124
 # Default select.select(timeout) in seconds
 DEFAULT_SELECT_TIMEOUT = 5
 
+# Shell options to be set for all run shell scripts
+SHELL_OPTIONS = 'set -eo pipefail'
+
 
 class Config(object):
     """ User configuration """

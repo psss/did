@@ -2,6 +2,7 @@ import click
 from fmf.utils import listed
 
 import tmt
+import tmt.utils
 
 
 class Discover(tmt.steps.Step):

@@ -1,0 +1,26 @@
+provision:
+    how: local
+
+/default:
+    execute:
+        script: |
+            /bin/false
+            /bin/true
+
+/override:
+    execute:
+        script: |
+            set +eo pipefail
+            /bin/false
+            /bin/true
+
+/discovered:
+    discover:
+        how: fmf
+    execute:
+        how: tmt
+
+/listed:
+    execute:
+        script:
+            - /bin/false; /bin/true

@@ -15,6 +15,12 @@ description: |
 
     Should be a ``string``. This is a **required** attribute.
 
+    Shell options ``errexit`` and ``pipefail`` are applied
+    by default to the shell script (using
+    ``set -eo pipefail``) to avoid potential errors going
+    unnoticed. You may however revert this setting explicitly
+    in the attribute, e.g. using ``set +eo pipefail``.
+
 example: |
     test: ./test.sh
     test: ./test.sh --depth 1000

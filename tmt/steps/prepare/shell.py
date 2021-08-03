@@ -2,6 +2,7 @@ import click
 import fmf
 
 import tmt
+import tmt.utils
 
 
 class PrepareShell(tmt.steps.prepare.PreparePlugin):
@@ -60,7 +61,10 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
         overview = fmf.utils.listed(scripts, 'script')
         self.info('overview', f'{overview} found', 'green')
 
-        # Execute each script on the guest
+        # Execute each script on the guest with default options
+        self.debug(f"Applying default shell options to prepare"
+                   f"scripts: '{tmt.utils.SHELL_OPTIONS}'")
         for script in scripts:
             self.verbose('script', script, 'green')
-            guest.execute(script, cwd=self.step.plan.worktree)
+            script_with_options = f'{tmt.utils.SHELL_OPTIONS}\n{script}'
+            guest.execute(script_with_options, cwd=self.step.plan.worktree)

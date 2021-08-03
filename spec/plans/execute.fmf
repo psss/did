@@ -115,6 +115,9 @@ description: |
         Execute arbitratry shell commands and check their exit
         code which is used as a test result.
 
+        Default shell options are applied to the script, see
+        :ref:`/spec/tests/test` for more details.
+
         The default :ref:`/spec/tests/duration` for tests defined
         directly under the execute step is ``1h``. Use the
         ``duration`` attribute to modify the default limit.
