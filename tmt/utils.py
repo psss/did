@@ -775,6 +775,13 @@ def environment_file_to_dict(env_files: Iterable[str]) -> Dict[str, str]:
         if str(env_file).startswith("http"):
             content = requests.get(env_file).text
         else:
+            try:
+                Path(env_file).resolve().relative_to(
+                    Path(".").resolve())
+            except ValueError:
+                raise GeneralError(
+                    f"Only relative paths should be used for 'environment-file' option. Got '{env_file}' instead."
+                    )
             if not Path(env_file).is_file():
                 raise GeneralError(f"File '{env_file}' doesn't exist.")
             content = Path(env_file).read_text()
@@ -1127,8 +1134,9 @@ def parse_dotenv(content: str) -> Dict[str, str]:
         return dict([line.split("=")
                     for line in shlex.split(content, comments=True)])
     except ValueError:
-        raise GeneralError(f"Failed to extract variables from:\n{content}"
-                           f"Ensure it has the proper format (i.e. A=B).")
+        raise GeneralError(
+            f"Failed to extract variables from environment file. "
+            f"Ensure it has the proper format (i.e. A=B).")
 
 
 def parse_yaml(content: str) -> Dict[str, str]:
