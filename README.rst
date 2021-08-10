@@ -300,6 +300,16 @@ For Fish, add this to ``~/.config/fish/completions/tmt.fish``::
 Open a new shell to enable completion. Or run the ``eval`` command
 directly in your current shell to enable it temporarily.
 
+This is however run every time you start a shell which can cause
+some delay. To speed it up, write the generated script to a file
+and then source it from your shell's configuration file. All
+of this can be achieved using ``tmt setup completion`` command.
+By default, it outputs the completion script to the terminal but
+it can also add it to your ``~/.bashrc`` or ``~/.zshrc`` using
+the ``--install`` option::
+
+    tmt setup completion {bash, zsh, fish} --install
+
 
 Exit Codes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
