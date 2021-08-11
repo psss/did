@@ -58,17 +58,25 @@ Develop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to experiment, play with the latest bits and develop
-improvements it is best to use a virtual environment::
+improvements it is best to use a virtual environment. First make
+sure that you have all required packages installed on your box::
+
+    sudo dnf install gcc {python3,libvirt,krb5,libpq}-devel
+
+Install ``python3-virtualenvwrapper`` to easily create and enable
+virtual environments using ``mkvirtualenv`` and ``workon``. Note
+that if you have freshly installed the package you need to open a
+new shell session to enable the wrapper functions::
+
+    sudo dnf install python3-virtualenvwrapper
+
+Now let's create a new virtual environment and install ``tmt`` in
+editable mode there::
 
     mkvirtualenv tmt
     git clone https://github.com/psss/tmt
     cd tmt
     pip install -e .
-
-Install ``python3-virtualenvwrapper`` to easily create and enable
-virtual environments using ``mkvirtualenv`` and ``workon``. Note
-that if you have freshly installed the package you need to open a
-new shell session to enable the wrapper functions.
 
 The main ``tmt`` package contains only the core dependencies. For
 building documentation, testing changes, importing/exporting test
