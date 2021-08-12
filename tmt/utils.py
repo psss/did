@@ -753,7 +753,8 @@ def environment_to_dict(variables):
     return result
 
 
-def environment_file_to_dict(env_files: Iterable[str]) -> Dict[str, str]:
+def environment_file_to_dict(
+        env_files: Iterable[str], root=".") -> Dict[str, str]:
     """
     Create dict from files.
 
@@ -769,26 +770,40 @@ def environment_file_to_dict(env_files: Iterable[str]) -> Dict[str, str]:
         A: B
         C: D
         ```
+
+    Path to the file should be relative to the metadata tree root.
     """
     result = {}
     for env_file in env_files:
+        # Fetch a remote file
         if str(env_file).startswith("http"):
             content = requests.get(env_file).text
+        # Read a local file
         else:
+            # Ensure we don't escape from the metadata tree root
             try:
-                Path(env_file).resolve().relative_to(
-                    Path(".").resolve())
+                root = Path(root).resolve()
+                full_path = (Path(root) / Path(env_file)).resolve()
+                full_path.relative_to(root)
             except ValueError:
                 raise GeneralError(
-                    f"Only relative paths should be used for 'environment-file' option. Got '{env_file}' instead."
-                    )
-            if not Path(env_file).is_file():
-                raise GeneralError(f"File '{env_file}' doesn't exist.")
-            content = Path(env_file).read_text()
-        if Path(env_file).suffix in (".yaml", ".yml"):
+                    f"The 'environment-file' path '{full_path}' is outside "
+                    f"of the metadata tree root '{root}'.")
+            if not Path(full_path).is_file():
+                raise GeneralError(f"File '{full_path}' doesn't exist.")
+            content = Path(full_path).read_text()
+        # Parse yaml file
+        if Path(full_path).suffix in (".yaml", ".yml"):
             result.update(parse_yaml(content))
+        # Parse dotenv file
         else:
-            result.update(parse_dotenv(content))
+            try:
+                result.update(parse_dotenv(content))
+            except ValueError:
+                raise GeneralError(
+                    f"Failed to extract variables from environment file "
+                    f"'{full_path}'. Ensure it has the proper format "
+                    f"(i.e. A=B).")
     return result
 
 
@@ -1130,18 +1145,13 @@ def default_branch(repository, remote='origin'):
 
 def parse_dotenv(content: str) -> Dict[str, str]:
     """ Parse dotenv (shell) format of variables """
-    try:
-        return dict([line.split("=")
-                    for line in shlex.split(content, comments=True)])
-    except ValueError:
-        raise GeneralError(
-            f"Failed to extract variables from environment file. "
-            f"Ensure it has the proper format (i.e. A=B).")
+    return dict([line.split("=", maxsplit=1)
+                for line in shlex.split(content, comments=True)])
 
 
 def parse_yaml(content: str) -> Dict[str, str]:
     """ Parse variables from yaml, ensure flat dictionary format """
-    yaml_as_dict = yaml.safe_load(content)
+    yaml_as_dict = YAML(typ="safe").load(content)
     if any(isinstance(val, dict) for val in yaml_as_dict.values()):
         raise GeneralError(
             "Can't set the environment from the nested yaml config. The "

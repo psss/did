@@ -7,19 +7,33 @@ rlJournalStart
         rlRun 'set -o pipefail'
     rlPhaseEnd
 
+    good="plan --name good"
+
     rlPhaseStartTest "Check environment-file option reads properly"
-        rlRun "tmt run -rvvvddd | tee output"
+        rlRun "tmt run -rvvvddd $good | tee output"
         rlAssertGrep "total: 1 test passed" 'output'
     rlPhaseEnd
 
     rlPhaseStartTest "Check if --environment overwrites --environment-file"
-        rlRun "tmt run --environment STR=bad_str -rvvvddd 2>&1 | tee output" 1
+        rlRun "tmt run --environment STR=bad_str -rvvvddd $good 2>&1 \
+            | tee output" 1
         rlAssertGrep "AssertionError: assert 'bad_str' == 'O'" 'output'
     rlPhaseEnd
 
     rlPhaseStartTest "Check if cli environment-file overwrites fmf"
-        rlRun "tmt run --environment-file env-via-cli -rvvvddd 2>&1 | tee output" 1
+        rlRun "tmt run --environment-file env-via-cli -rvvvddd $good 2>&1 \
+            | tee output" 1
         rlAssertGrep "AssertionError: assert '2' == '1'" 'output'
+    rlPhaseEnd
+
+    rlPhaseStartTest "Bad dotenv format"
+        rlRun "tmt run -rvvvddd plan -n bad 2>&1 | tee output" 2
+        rlAssertGrep "Failed to extract variables.*data/bad" 'output'
+    rlPhaseEnd
+
+    rlPhaseStartTest "Escape from the tree"
+        rlRun "tmt run -rvvvddd plan -n escape 2>&1 | tee output" 2
+        rlAssertGrep "path '/etc/secret' is outside" 'output'
     rlPhaseEnd
 
     rlPhaseStartCleanup

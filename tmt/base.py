@@ -532,8 +532,7 @@ class Plan(Core):
         else:
             return self._environment
 
-    @staticmethod
-    def _get_environment_vars(node):
+    def _get_environment_vars(self, node):
         """ Get variables from 'environment' and 'environment-file' keys """
         # Environment variables from files
         environment_files = node.get("environment-file") or []
@@ -541,7 +540,8 @@ class Plan(Core):
             raise tmt.utils.SpecificationError(
                 f"The 'environment-file' should be a list. "
                 f"Received '{type(environment_files).__name__}'.")
-        combined = tmt.utils.environment_file_to_dict(environment_files)
+        combined = tmt.utils.environment_file_to_dict(
+            environment_files, root=node.root)
 
         # Environment variables from key, make sure that values are string
         environment = dict([
@@ -1261,7 +1261,7 @@ class Run(tmt.utils.Common):
         combined = self._environment.copy()
         # Merge variables gathered from 'environment-file' options
         combined.update(tmt.utils.environment_file_to_dict(
-            self.opt('environment-file') or []))
+            (self.opt('environment-file') or []), root=self.tree.root))
         # Merge variables from 'environment' options (highest priority)
         combined.update(tmt.utils.environment_to_dict(
             self.opt('environment')))
@@ -1305,6 +1305,7 @@ class Run(tmt.utils.Common):
             node = type('Core', (), {
                 'name': plan,
                 'data': {},
+                'root': None,
                 # No attributes will ever need to be accessed, just create
                 # a compatible method signature
                 'get': lambda section, item=None: item,

@@ -10,10 +10,18 @@
         how: local
     execute:
         how: tmt
-    environment:
-        # testing that environment takes precedence over environment-file
-        YAML_STR: yaml_str_overwritten
-    environment-file:
-        - "env"
-        - "env.yaml"
-        - "https://raw.githubusercontent.com/psss/tmt/22a46a4a6760517e3eadbbff0c9bebdb95442760/tests/core/env/data/vars.yaml"
+
+    /good:
+        environment:
+            # testing that environment takes precedence over environment-file
+            YAML_STR: yaml_str_overwritten
+        environment-file:
+          - env
+          - env.yaml
+          - https://raw.githubusercontent.com/psss/tmt/22a46a4a6760517e3eadbbff0c9bebdb95442760/tests/core/env/data/vars.yaml
+    /bad:
+        environment-file:
+          - bad
+    /escape:
+        environment-file:
+          - ../../../../../../../../../../../../../../etc/secret

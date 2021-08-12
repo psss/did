@@ -11,6 +11,7 @@ env_vars_parametrization = (
         ("DOTENV_INT", "1"),
         ("YAML_STR", "yaml_str_overwritten"),
         ("YAML_INT", "1"),
+        ("SPECIAL", "/=(;-)"),
         ),
 )
 
