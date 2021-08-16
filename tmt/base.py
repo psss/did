@@ -305,10 +305,6 @@ class Test(Core):
 
         self._update_metadata()
 
-        # Apply default shell options to the script
-        self.test_with_shell_options = f'{tmt.utils.SHELL_OPTIONS}\n' \
-                                       f'{self.test}'
-
     @staticmethod
     def overview(tree):
         """ Show overview of available tests """
@@ -448,7 +444,7 @@ class Test(Core):
         if format_ == 'execute':
             name = self.name
             data = dict()
-            data['test'] = self.test_with_shell_options
+            data['test'] = self.test
             data['path'] = self.path
             data['framework'] = self.framework
             if self.duration is not None:

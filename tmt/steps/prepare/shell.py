@@ -61,10 +61,8 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
         overview = fmf.utils.listed(scripts, 'script')
         self.info('overview', f'{overview} found', 'green')
 
-        # Execute each script on the guest with default options
-        self.debug(f"Applying default shell options to prepare"
-                   f"scripts: '{tmt.utils.SHELL_OPTIONS}'")
+        # Execute each script on the guest (with default shell options)
         for script in scripts:
             self.verbose('script', script, 'green')
-            script_with_options = f'{tmt.utils.SHELL_OPTIONS}\n{script}'
+            script_with_options = f'{tmt.utils.SHELL_OPTIONS}; {script}'
             guest.execute(script_with_options, cwd=self.step.plan.worktree)

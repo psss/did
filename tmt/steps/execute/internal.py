@@ -113,6 +113,12 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             environment = environment.copy()
             environment['BEAKERLIB_DIR'] = data_directory
 
+        # Prepare the test command (use default options for shell tests)
+        if test.framework == "shell":
+            command = f"{tmt.utils.SHELL_OPTIONS}; {test.test}"
+        else:
+            command = test.test
+
         # Prepare custom function to log output in verbose mode
         def log(key, value=None, color=None, shift=1, level=1):
             self.verbose(key, value, color, shift=2, level=3)
@@ -122,7 +128,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         start = time.time()
         try:
             stdout = guest.execute(
-                test.test_with_shell_options, cwd=workdir, env=environment,
+                command, cwd=workdir, env=environment,
                 join=True, interactive=self.get('interactive'), log=log,
                 timeout=tmt.utils.duration_to_seconds(test.duration))
             test.returncode = 0

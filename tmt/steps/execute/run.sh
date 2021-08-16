@@ -130,7 +130,14 @@ tmt_run_test () {
     # Let the nested shell handle environment vars
     prefix="env >'${log_dir}/environment.txt'; "
 
-    cmd="${prefix}${duration}${test}"
+    # Set the default shell options
+    if [[ "$framework" == "shell" ]]; then
+        options="set -eo pipefail; "
+    else
+        options=""
+    fi
+
+    cmd="${prefix}${options}${duration}${test}"
 
     tmt_verbose 2 "path: $path"
     tmt_verbose 2 "environment: $environment"

@@ -15,11 +15,11 @@ description: |
 
     Should be a ``string``. This is a **required** attribute.
 
-    Shell options ``errexit`` and ``pipefail`` are applied
-    by default to the shell script (using
-    ``set -eo pipefail``) to avoid potential errors going
-    unnoticed. You may however revert this setting explicitly
-    in the attribute, e.g. using ``set +eo pipefail``.
+    Shell options ``errexit`` and ``pipefail`` are applied by
+    default using ``set -eo pipefail`` to avoid potential errors
+    going unnoticed. You may revert this setting by explicitly
+    using ``set +eo pipefail``. These options are not applied when
+    ``beakerlib`` is used as the :ref:`/spec/tests/framework`.
 
 example: |
     test: ./test.sh
