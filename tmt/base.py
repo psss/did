@@ -818,7 +818,7 @@ class Plan(Core):
         # Set up login plugins for all steps
         self.debug("login", color="blue", level=2)
         for step in self.steps(disabled=True):
-            step.setup_login()
+            step.setup_actions()
 
         # Run enabled steps except 'finish'
         self.debug('go', color='cyan', shift=0, level=2)

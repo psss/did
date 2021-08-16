@@ -539,3 +539,10 @@ class GuestTestcloud(tmt.Guest):
                 raise tmt.utils.ProvisionError(
                     f"Failed to remove testcloud instance: {error}")
             self.info('guest', 'removed', 'green')
+
+    def reboot(self, hard=False):
+        if not self.instance:
+            raise tmt.utils.ProvisionError(
+                f"No instance initialized!")
+
+        self.instance.reboot(not hard)

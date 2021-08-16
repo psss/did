@@ -17,6 +17,9 @@ PHASE_START = 10
 PHASE_BASE = 50
 PHASE_END = 90
 
+# Timeout in seconds
+CONNECTION_TIMEOUT = 60 * 4
+
 
 class Step(tmt.utils.Common):
     """ Common parent of all test steps """
@@ -148,12 +151,17 @@ class Step(tmt.utils.Common):
             for data in self.data:
                 data['how'] = how
 
-    def setup_login(self):
-        """ Insert login plugins if requested on the command line """
+    def setup_actions(self):
+        """ Insert login and reboot plugins if requested on the command line """
         for plugin in Login.plugins(step=self):
             self.debug(
                 f"Insert a login plugin into the '{self}' step "
                 f"with order '{plugin.order}'.", level=2)
+            self._plugins.append(plugin)
+
+        for plugin in Reboot.plugins(step=self):
+            self.debug(
+                f"Insert reboot plugin with order '{plugin.order}'.", level=2)
             self._plugins.append(plugin)
 
     def plugins(self, classes=None):
@@ -169,9 +177,11 @@ class Step(tmt.utils.Common):
                 if classes is None or isinstance(plugin, classes)],
             key=lambda plugin: plugin.order)
 
-    def try_running_login(self):
-        """ Run all loaded Login plugin instances of the step """
+    def actions(self):
+        """ Run all loaded Login or Reboot plugin instances of the step """
         for plugin in self.plugins():
+            if isinstance(plugin, Reboot):
+                plugin.go()
             if isinstance(plugin, Login):
                 plugin.go()
 
@@ -394,11 +404,123 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         self.verbose('order', self.order, 'magenta', level=3)
 
 
-class Login(tmt.utils.Common):
-    """ Log into the guest """
+class ActionStep(tmt.utils.Common):
+    """ A special step which performs an action during a normal step. """
 
     # Dictionary containing list of requested phases for each enabled step
     _phases = None
+
+    @classmethod
+    def phases(cls, step):
+        """ Return list of phases enabled for given step """
+        # Build the phase list unless done before
+        if cls._phases is None:
+            cls._phases = cls._parse_phases(step)
+        # Return enabled phases, empty list if step not found
+        try:
+            return cls._phases[step.name]
+        except KeyError:
+            return []
+
+    @classmethod
+    def _parse_phases(cls, step):
+        """ Parse options and store phase order """
+        phases = dict()
+        options = cls._opt('step', default=[])
+
+        # Use the end of the last enabled step if no --step given
+        if not options:
+            if step.plan.my_run.opt('last'):
+                # The last run may have failed before all enabled steps were
+                # completed, select the last step done
+                steps = [s for s in step.plan.steps() if s.status() == 'done']
+                login_during = steps[-1] if steps else None
+            else:
+                login_during = list(step.plan.steps())[-1]
+            # Only login if the error occurred after provision
+            if login_during != step.plan.discover:
+                phases[login_during.name] = [PHASE_END]
+
+        # Process provided options
+        for option in options:
+            # Parse the step:phase format
+            matched = re.match(r'(\w+)(:(\w+))?', option)
+            if matched:
+                step_name, _, phase = matched.groups()
+            if not matched or step_name not in STEPS:
+                raise tmt.utils.GeneralError(f"Invalid step '{option}'.")
+            # Check phase format, convert into int, use end by default
+            try:
+                phase = int(phase)
+            except TypeError:
+                phase = PHASE_END
+            except ValueError:
+                # Convert 'start' and 'end' aliases
+                try:
+                    phase = dict(start=PHASE_START, end=PHASE_END)[phase]
+                except KeyError:
+                    raise tmt.utils.GeneralError(f"Invalid phase '{phase}'.")
+            # Store the phase for given step
+            try:
+                phases[step_name].append(phase)
+            except KeyError:
+                phases[step_name] = [phase]
+        return phases
+
+
+class Reboot(ActionStep):
+    """ Reboot guest """
+
+    # True if reboot enabled
+    _enabled = False
+
+    def __init__(self, step, order):
+        """ Initialize relations, store the reboot order """
+        super().__init__(parent=step, name='reboot')
+        self.order = order
+
+    @classmethod
+    def command(cls, method_class=None, usage=None):
+        """ Create the reboot command """
+        @click.command()
+        @click.pass_context
+        @click.option(
+            '-s', '--step', metavar='STEP[:PHASE]', multiple=True,
+            help='Reboot machine during given phase of selected step(s).')
+        @click.option(
+            '--hard', is_flag=True,
+            help='Hard reboot of provisioned machine.')
+        @click.option(
+            '--name', metavar='MACHINE_NAME', multiple=False,
+            default=None, help='Provisioned machine name.')
+        def reboot(context, **kwargs):
+            """
+            Reboot machine.
+            """
+            Reboot._save_context(context)
+            Reboot._enabled = True
+
+        return reboot
+
+    @classmethod
+    def plugins(cls, step):
+        """ Return list of reboot instances for given step """
+        if not Reboot._enabled:
+            return []
+        return [Reboot(step, phase) for phase in cls.phases(step)]
+
+    def go(self, *args, **kwargs):
+        """ Reboot the guest(s) """
+
+        # Run the interactive command
+        self.info('reboot', 'Rebooting machine', color='yellow')
+        for guest in self.parent.plan.provision.guests():
+            guest.reboot(self.opt('hard'), self.opt('name'))
+        self.info('reboot', 'Reboot finished', color='yellow')
+
+
+class Login(ActionStep):
+    """ Log into the guest """
 
     # True if interactive login enabled
     _enabled = False
@@ -454,63 +576,6 @@ class Login(tmt.utils.Common):
             Login._enabled = True
 
         return login
-
-    @classmethod
-    def _parse_phases(cls, step):
-        """ Parse options and store phase order """
-        phases = dict()
-        options = cls._opt('step')
-
-        # Use the end of the last enabled step if no --step given
-        if not options:
-            if step.plan.my_run.opt('last'):
-                # The last run may have failed before all enabled steps were
-                # completed, select the last step done
-                steps = [s for s in step.plan.steps() if s.status() == 'done']
-                login_during = steps[-1] if steps else None
-            else:
-                login_during = list(step.plan.steps())[-1]
-            # Only login if the error occurred after provision
-            if login_during != step.plan.discover:
-                phases[login_during.name] = [PHASE_END]
-
-        # Process provided options
-        for option in options:
-            # Parse the step:phase format
-            matched = re.match(r'(\w+)(:(\w+))?', option)
-            if matched:
-                step_name, _, phase = matched.groups()
-            if not matched or step_name not in STEPS:
-                raise tmt.utils.GeneralError(f"Invalid step '{option}'.")
-            # Check phase format, convert into int, use end by default
-            try:
-                phase = int(phase)
-            except TypeError:
-                phase = PHASE_END
-            except ValueError:
-                # Convert 'start' and 'end' aliases
-                try:
-                    phase = dict(start=PHASE_START, end=PHASE_END)[phase]
-                except KeyError:
-                    raise tmt.utils.GeneralError(f"Invalid phase '{phase}'.")
-            # Store the phase for given step
-            try:
-                phases[step_name].append(phase)
-            except KeyError:
-                phases[step_name] = [phase]
-        return phases
-
-    @classmethod
-    def phases(cls, step):
-        """ Return list of phases enabled for given step """
-        # Build the phase list unless done before
-        if cls._phases is None:
-            cls._phases = cls._parse_phases(step)
-        # Return enabled phases, empty list if step not found
-        try:
-            return cls._phases[step.name]
-        except KeyError:
-            return []
 
     @classmethod
     def plugins(cls, step):

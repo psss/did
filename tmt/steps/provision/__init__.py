@@ -86,7 +86,7 @@ class Provision(tmt.steps.Step):
         if self.status() == 'done':
             self.info('status', 'done', 'green', shift=1)
             self.summary()
-            self.try_running_login()
+            self.actions()
             return
 
         # Provision guests
@@ -484,6 +484,38 @@ class Guest(tmt.utils.Common):
         necessary to store the instance status to disk.
         """
         self.debug(f"Doing nothing to stop guest '{self.guest}'.")
+
+    def reboot(self, hard=False):
+        """
+        Reboot the guest
+
+        Reboot machine.
+        hard option defines how reboot will proceed.
+        hard set to true means, that machine should be rebooted
+        by way which is not clean in sense that data can be loss.
+        hard option set to false means, that reboot should be
+        done gracefully.
+        """
+        if hard:
+            raise ProvisionErrorUnsupported("Method not supported")
+
+        self.debug(f"Calling 'reboot' on guest: '{self.guest}'.")
+        self.execute("reboot")
+
+    def reconnect(self):
+        self.debug("Wait for an connection to the machine.")
+        for i in range(1, CONNECTION_TIMEOUT):
+            try:
+                self.execute('whoami')
+                break
+            except tmt.utils.RunError:
+                self.debug('Failed to connect to the machine, retrying.')
+            time.sleep(1)
+
+        if i == CONNECTION_TIMEOUT:
+            self.debug("Connection to machine failed after reboot.")
+            return False
+        return True
 
     def remove(self):
         """

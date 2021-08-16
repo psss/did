@@ -595,6 +595,10 @@ class ProvisionError(GeneralError):
     """ Provision step error """
 
 
+class ProvisionErrorUnsupported(GeneralError):
+    """ Provision step error - unsupported """
+
+
 class PrepareError(GeneralError):
     """ Prepare step error """
 

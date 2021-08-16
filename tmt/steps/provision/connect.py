@@ -64,6 +64,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         if option == 'user':
             return 'root'
         # No other defaults available
+
         return default
 
     def show(self):
@@ -110,8 +111,18 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
             data['key'] = key
 
         # And finally create the guest
-        self._guest = tmt.Guest(data, name=self.name, parent=self.step)
+        self._guest = GuestConnect(data, name=self.name, parent=self.step)
 
     def guest(self):
         """ Return the provisioned guest """
         return self._guest
+
+
+class GuestConnect(tmt.Guest):
+    """
+    Guest connection class.
+    """
+
+    def reboot(self, hard=False):
+        super().reboot(hard)
+        return super().reconnect()
