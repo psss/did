@@ -149,10 +149,11 @@ class Step(tmt.utils.Common):
                 data['how'] = how
 
     def setup_login(self):
-        """Insert login plugins if requested on the command line"""
+        """ Insert login plugins if requested on the command line """
         for plugin in Login.plugins(step=self):
             self.debug(
-                f"Insert login plugin with order '{plugin.order}'.", level=2)
+                f"Insert a login plugin into the '{self}' step "
+                f"with order '{plugin.order}'.", level=2)
             self._plugins.append(plugin)
 
     def plugins(self, classes=None):
@@ -427,9 +428,10 @@ class Login(tmt.utils.Common):
             """
             Provide user with an interactive shell on the guest.
 
-            By default the shell si provided at the end of the last
-            enabled step. Use one or more --step options to select a
-            different step instead.
+            By default the shell is provided at the end of the last
+            enabled step. When used together with the --last option the
+            last completed step is selected. Use one or more --step
+            options to select a different step instead.
 
             Optional phase can be provided to specify the exact phase of
             the step when the shell should be provided. The following
