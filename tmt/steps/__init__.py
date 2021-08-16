@@ -17,9 +17,6 @@ PHASE_START = 10
 PHASE_BASE = 50
 PHASE_END = 90
 
-# Timeout in seconds
-CONNECTION_TIMEOUT = 60 * 4
-
 
 class Step(tmt.utils.Common):
     """ Common parent of all test steps """
@@ -489,10 +486,7 @@ class Reboot(ActionStep):
             help='Reboot machine during given phase of selected step(s).')
         @click.option(
             '--hard', is_flag=True,
-            help='Hard reboot of provisioned machine.')
-        @click.option(
-            '--name', metavar='MACHINE_NAME', multiple=False,
-            default=None, help='Provisioned machine name.')
+            help='Hard reboot of the machine. Unsaved data may be lost.')
         def reboot(context, **kwargs):
             """
             Reboot machine.
@@ -511,11 +505,9 @@ class Reboot(ActionStep):
 
     def go(self, *args, **kwargs):
         """ Reboot the guest(s) """
-
-        # Run the interactive command
         self.info('reboot', 'Rebooting machine', color='yellow')
         for guest in self.parent.plan.provision.guests():
-            guest.reboot(self.opt('hard'), self.opt('name'))
+            guest.reboot(self.opt('hard'))
         self.info('reboot', 'Reboot finished', color='yellow')
 
 

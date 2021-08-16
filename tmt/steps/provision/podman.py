@@ -151,21 +151,15 @@ class GuestContainer(tmt.Guest):
             ['--name', self.container, '-v', f'{workdir}:{workdir}:Z',
              '-itd', self.image])[0].strip()
 
-    def reboot(self, hard=False, container_name=None):
-        if not self.podman:
-            self.debug('container', 'No podman instance provided.', 'red')
-            return
-
-        self.info('container', 'Rebooting via podman', 'green')
-        container_name_win = container_name
-        if self.container:
-            container_name_win = self.container
-
-        # restart just stops and start container so it doesn't matter
-        # if we set hard flag on
-        self.podman(['container', 'restart', container_name_win])
-
-        return super().reconnect()
+    def reboot(self, hard=False):
+        if not hard:
+            raise tmt.utils.ProvisionError(
+                "Containers do not support soft reboot, they can only be"
+                "stopped and started again (hard reboot)")
+        # Restart just stops and starts the container so it doesn't matter
+        # if hard flag is set
+        self.podman(['container', 'restart', self.container])
+        return self.reconnect()
 
     def ansible(self, playbook):
         """ Prepare container using ansible playbook """

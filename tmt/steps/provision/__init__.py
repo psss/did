@@ -3,11 +3,15 @@ import random
 import re
 import shlex
 import string
+import time
 
 import click
 import fmf
 
 import tmt
+
+# Timeout in seconds of waiting for a connection
+CONNECTION_TIMEOUT = 60 * 4
 
 
 class Provision(tmt.steps.Step):
@@ -492,18 +496,19 @@ class Guest(tmt.utils.Common):
         Reboot machine.
         hard option defines how reboot will proceed.
         hard set to true means, that machine should be rebooted
-        by way which is not clean in sense that data can be loss.
+        by way which is not clean in sense that data can be lost.
         hard option set to false means, that reboot should be
         done gracefully.
         """
         if hard:
-            raise ProvisionErrorUnsupported("Method not supported")
+            raise tmt.utils.ProvisionError(
+                "Method does not support hard reboot")
 
-        self.debug(f"Calling 'reboot' on guest: '{self.guest}'.")
         self.execute("reboot")
+        return self.reconnect()
 
     def reconnect(self):
-        self.debug("Wait for an connection to the machine.")
+        self.debug("Wait for a connection to the machine.")
         for i in range(1, CONNECTION_TIMEOUT):
             try:
                 self.execute('whoami')

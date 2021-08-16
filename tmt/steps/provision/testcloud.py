@@ -542,7 +542,7 @@ class GuestTestcloud(tmt.Guest):
 
     def reboot(self, hard=False):
         if not self.instance:
-            raise tmt.utils.ProvisionError(
-                f"No instance initialized!")
+            raise tmt.utils.ProvisionError("No instance initialized!")
 
-        self.instance.reboot(not hard)
+        self.instance.reboot(soft=not hard)
+        return self.reconnect()
