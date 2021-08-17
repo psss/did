@@ -328,6 +328,10 @@ directory::
     url: https://github.com/psss/tmt.git
     Test case 'TC#0603489' successfully exported to nitrate.
 
+Use the ``--bugzilla`` option together with ``--nitrate`` to link
+bugs marked as ``verifies`` in the :ref:`/spec/core/link`
+attribute with the corresponding Nitrate test case.
+
 
 Test Libraries
 ------------------------------------------------------------------

@@ -54,7 +54,7 @@ def import_bugzilla():
         import bugzilla
     except ImportError:
         raise ConvertError(
-            "Install tmt-test-convert to link test to the bugzilla")
+            "Install 'tmt-test-convert' to link test to the bugzilla.")
 
 
 def _nitrate_find_fmf_testcases(test):
@@ -176,9 +176,9 @@ def bz_set_coverage(bz_instance, bug_ids, case_id):
     """ Set coverage in Bugzilla """
     overall_pass = True
     no_email = 1  # Do not send emails about the change
-    get_bz_dict = {'ids': bug_ids,
-                   'include_fields': ['id', 'external_bugs', 'flags']
-                   }
+    get_bz_dict = {
+        'ids': bug_ids,
+        'include_fields': ['id', 'external_bugs', 'flags']}
     bugs_data = bz_instance._proxy.Bug.get(get_bz_dict)
     for bug in bugs_data['bugs']:
         # Process flag (might fail for some types)
@@ -196,10 +196,9 @@ def bz_set_coverage(bz_instance, bug_ids, case_id):
                     })
             except xmlrpc.client.Fault as err:
                 log.debug(f"Update flag failed: {err}")
-                echo(
-                    style(
-                        f"Failed to set qe_test_coverage+ flag for BZ#{bug_id}",
-                        fg='red'))
+                echo(style(
+                    f"Failed to set qe_test_coverage+ flag for BZ#{bug_id}",
+                    fg='red'))
         # Process external tracker - should succeed
         current = set([int(b['ext_bz_bug_id']) for b in bug['external_bugs']
                        if b['ext_bz_id'] == EXTERNAL_TRACKER_ID])
@@ -220,7 +219,7 @@ def bz_set_coverage(bz_instance, bug_ids, case_id):
                 echo(style(f"Failed to link to BZ#{bug_id}", fg='red'))
                 overall_pass = False
     if not overall_pass:
-        raise ConvertError("Failed to link the case to bugs")
+        raise ConvertError("Failed to link the case to bugs.")
 
 
 def export_to_nitrate(test):
@@ -241,11 +240,11 @@ def export_to_nitrate(test):
         except Exception as exc:
             log.debug(traceback.format_exc())
             raise ConvertError(
-                "Couldn't initialize Bugzilla client",
-                original=exc)
+                "Couldn't initialize the Bugzilla client.", original=exc)
         if not bz_instance.logged_in:
             raise ConvertError(
-                "Not logged to Bugzilla, check `man bugzilla` - AUTHENTICATION CACHE AND API KEYS")
+                "Not logged to Bugzilla, check `man bugzilla` section "
+                "'AUTHENTICATION CACHE AND API KEYS'.")
 
     # Check nitrate test case
     try:
@@ -437,13 +436,7 @@ def export_to_nitrate(test):
     for link in test.link:
         try:
             verifies_bug_ids.append(
-                int(
-                    re.search(
-                        RE_BUGZILLA_URL,
-                        link['verifies']
-                        ).group(1)
-                    )
-                )
+                int(re.search(RE_BUGZILLA_URL, link['verifies']).group(1)))
         except Exception as err:
             log.debug(err)
 

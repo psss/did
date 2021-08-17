@@ -503,7 +503,8 @@ def import_(
     help='Export test metadata to Nitrate.')
 @click.option(
     '--bugzilla', is_flag=True,
-    help='Link Nitrate case to Bugzilla in link.verifies')
+    help="Link Nitrate case to Bugzilla specified in the 'link' attribute "
+         "with the relation 'verifies'.")
 @click.option(
     '--create', is_flag=True,
     help="Create test cases in nitrate if they don't exist.")
@@ -534,7 +535,7 @@ def export(context, format_, nitrate, bugzilla, **kwargs):
     tmt.Test._save_context(context)
     if bugzilla and not nitrate:
         raise tmt.utils.GeneralError(
-            "--bugzilla is supported only with --nitrate for now")
+            "The --bugzilla option is supported only with --nitrate for now.")
     for test in context.obj.tree.tests():
         if nitrate:
             test.export(format_='nitrate')
