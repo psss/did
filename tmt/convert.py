@@ -212,24 +212,6 @@ def read(path, makefile, nitrate, purpose, disabled, types):
             makefile, flags=re.MULTILINE)
         makefile = re.sub('.*rhts-lint.*', '', makefile)
 
-        # Detect framework
-        try:
-            test_script = \
-                re.search(r'^run:.*\n\t\.\/(.*)$', makefile, re.M).group(1)
-            test_path = os.path.join(path, test_script)
-        except AttributeError:
-            raise ConvertError("Unable to parse '.sh' file from a makefile.")
-        try:
-            with open(test_path, encoding='utf-8') as test_file:
-                test = test_file.read()
-                if re.search('beakerlib', test, re.M).group() == 'beakerlib':
-                    data['framework'] = 'beakerlib'
-                else:
-                    data['framework'] = 'shell'
-            echo(style('framework: ', fg='green') + data['framework'])
-        except IOError:
-            raise ConvertError("Unable to open '{0}'.".format(test_path))
-
         # Create testinfo.desc file with resolved variables
         try:
             process = subprocess.run(
@@ -272,6 +254,18 @@ def read(path, makefile, nitrate, purpose, disabled, types):
             echo(style('test: ', fg='green') + data['test'])
         except AttributeError:
             raise ConvertError("Makefile is missing the 'run' target.")
+        # Detect framework
+        try:
+            test_path = os.path.join(path, data["test"])
+            with open(test_path, encoding="utf-8") as test_file:
+                if re.search("beakerlib", test_file.read()):
+                    data["framework"] = "beakerlib"
+                else:
+                    data["framework"] = "shell"
+            echo(style("framework: ", fg="green") + data["framework"])
+        except IOError:
+            raise ConvertError("Unable to open '{0}'.".format(test_path))
+
         # Contact
         try:
             data['contact'] = re.search(
