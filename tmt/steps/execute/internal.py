@@ -190,8 +190,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             template.write(script)
         guest.push(reboot_script_path)
         for reboot_file in REBOOT_SCRIPT_PATHS:
-            self.debug(f"Replacing {reboot_file} with tmt implementation if "
-                       f"not already present")
+            self.debug(f"Replace '{reboot_file}' with tmt implementation if "
+                       f"not already present.")
             guest.execute(f'if [ ! -e "{reboot_file}" ]; then '
                           f'cp "{reboot_script_path}" "{reboot_file}" && '
                           f'chmod +x "{reboot_file}"; fi')
@@ -225,7 +225,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 try:
                     guest.reboot()
                 except tmt.utils.ProvisionError:
-                    self.warn("Guest does not soft reboot, trying hard reboot")
+                    self.warn(
+                        "Guest does not support soft reboot, "
+                        "trying hard reboot.")
                     guest.reboot(hard=True)
                 test.environment[REBOOT_VARIABLE] = str(current_count + 1)
                 return True

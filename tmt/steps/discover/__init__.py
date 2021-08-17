@@ -9,7 +9,7 @@ class Discover(tmt.steps.Step):
 
     def __init__(self, data, plan):
         """ Store supported attributes, check for sanity """
-        super(Discover, self).__init__(data, plan)
+        super().__init__(data, plan)
 
         # List of Test() objects representing discovered tests
         self._tests = []
@@ -17,7 +17,7 @@ class Discover(tmt.steps.Step):
     def load(self, extra_keys=None):
         """ Load step data from the workdir """
         extra_keys = extra_keys or []
-        super(Discover, self).load(extra_keys)
+        super().load(extra_keys)
         try:
             tests = tmt.utils.yaml_to_dict(self.read('tests.yaml'))
             self._tests = [
@@ -28,7 +28,7 @@ class Discover(tmt.steps.Step):
     def save(self, data=None):
         """ Save step data to the workdir """
         data = data or {}
-        super(Discover, self).save(data)
+        super().save(data)
 
         # Create tests.yaml with the full test data
         tests = dict([
@@ -76,7 +76,7 @@ class Discover(tmt.steps.Step):
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """
-        super(Discover, self).wake()
+        super().wake()
 
         # Check execute step for possible tests (unless already done)
         if self.status() is None:
@@ -113,7 +113,7 @@ class Discover(tmt.steps.Step):
 
     def go(self):
         """ Execute all steps """
-        super(Discover, self).go()
+        super().go()
 
         # Nothing more to do if already done
         if self.status() == 'done':
