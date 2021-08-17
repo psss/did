@@ -152,12 +152,11 @@ class GuestContainer(tmt.Guest):
              '-itd', self.image])[0].strip()
 
     def reboot(self, hard=False):
+        """ Restart the container, return True if successful  """
         if not hard:
             raise tmt.utils.ProvisionError(
-                "Containers do not support soft reboot, they can only be"
-                "stopped and started again (hard reboot)")
-        # Restart just stops and starts the container so it doesn't matter
-        # if hard flag is set
+                "Containers do not support soft reboot, they can only be "
+                "stopped and started again (hard reboot).")
         self.podman(['container', 'restart', self.container])
         return self.reconnect()
 

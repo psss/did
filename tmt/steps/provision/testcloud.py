@@ -541,8 +541,8 @@ class GuestTestcloud(tmt.Guest):
             self.info('guest', 'removed', 'green')
 
     def reboot(self, hard=False):
+        """ Reboot the guest, return True if successful """
         if not self.instance:
-            raise tmt.utils.ProvisionError("No instance initialized!")
-
+            raise tmt.utils.ProvisionError("No instance initialized.")
         self.instance.reboot(soft=not hard)
         return self.reconnect()

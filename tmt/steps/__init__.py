@@ -149,7 +149,7 @@ class Step(tmt.utils.Common):
                 data['how'] = how
 
     def setup_actions(self):
-        """ Insert login and reboot plugins if requested on the command line """
+        """ Insert login and reboot plugins if requested """
         for plugin in Login.plugins(step=self):
             self.debug(
                 f"Insert a login plugin into the '{self}' step "
@@ -158,7 +158,8 @@ class Step(tmt.utils.Common):
 
         for plugin in Reboot.plugins(step=self):
             self.debug(
-                f"Insert reboot plugin with order '{plugin.order}'.", level=2)
+                f"Insert a reboot plugin into the '{self}' step "
+                f"with order '{plugin.order}'.", level=2)
             self._plugins.append(plugin)
 
     def plugins(self, classes=None):
@@ -177,9 +178,7 @@ class Step(tmt.utils.Common):
     def actions(self):
         """ Run all loaded Login or Reboot plugin instances of the step """
         for plugin in self.plugins():
-            if isinstance(plugin, Reboot):
-                plugin.go()
-            if isinstance(plugin, Login):
+            if isinstance(plugin, (Reboot, Login)):
                 plugin.go()
 
     def go(self):
@@ -401,8 +400,8 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         self.verbose('order', self.order, 'magenta', level=3)
 
 
-class ActionStep(tmt.utils.Common):
-    """ A special step which performs an action during a normal step. """
+class Action(tmt.utils.Common):
+    """ A special action performed during a normal step. """
 
     # Dictionary containing list of requested phases for each enabled step
     _phases = None
@@ -465,7 +464,7 @@ class ActionStep(tmt.utils.Common):
         return phases
 
 
-class Reboot(ActionStep):
+class Reboot(Action):
     """ Reboot guest """
 
     # True if reboot enabled
@@ -488,9 +487,7 @@ class Reboot(ActionStep):
             '--hard', is_flag=True,
             help='Hard reboot of the machine. Unsaved data may be lost.')
         def reboot(context, **kwargs):
-            """
-            Reboot machine.
-            """
+            """ Reboot the guest. """
             Reboot._save_context(context)
             Reboot._enabled = True
 
@@ -505,13 +502,13 @@ class Reboot(ActionStep):
 
     def go(self, *args, **kwargs):
         """ Reboot the guest(s) """
-        self.info('reboot', 'Rebooting machine', color='yellow')
+        self.info('reboot', 'Rebooting guest', color='yellow')
         for guest in self.parent.plan.provision.guests():
             guest.reboot(self.opt('hard'))
         self.info('reboot', 'Reboot finished', color='yellow')
 
 
-class Login(ActionStep):
+class Login(Action):
     """ Log into the guest """
 
     # True if interactive login enabled

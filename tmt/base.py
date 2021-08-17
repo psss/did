@@ -815,8 +815,8 @@ class Plan(Core):
                 else:
                     step.warn(error)
 
-        # Set up login plugins for all steps
-        self.debug("login", color="blue", level=2)
+        # Set up login and reboot plugins for all steps
+        self.debug("action", color="blue", level=2)
         for step in self.steps(disabled=True):
             step.setup_actions()
 

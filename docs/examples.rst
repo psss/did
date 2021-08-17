@@ -971,6 +971,13 @@ directly on your ``local`` host::
 
     tmt run --all provision --how=local
 
+In order to reboot a provisioned guest use the ``reboot`` command.
+By default a soft reboot is performed which should prevent data
+loss, use ``--hard`` to force a hard reboot::
+
+    tmt run --last reboot
+    tmt run --last reboot --hard
+
 
 Debug Tests
 ------------------------------------------------------------------

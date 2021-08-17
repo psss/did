@@ -491,34 +491,32 @@ class Guest(tmt.utils.Common):
 
     def reboot(self, hard=False):
         """
-        Reboot the guest
+        Reboot the guest, return True if successful
 
-        Reboot machine.
-        hard option defines how reboot will proceed.
-        hard set to true means, that machine should be rebooted
-        by way which is not clean in sense that data can be lost.
-        hard option set to false means, that reboot should be
-        done gracefully.
+        Parameter 'hard' set to True means that guest should be
+        rebooted by way which is not clean in sense that data can be
+        lost. When set to False reboot should be done gracefully.
         """
         if hard:
             raise tmt.utils.ProvisionError(
-                "Method does not support hard reboot")
+                "Method does not support hard reboot.")
 
         self.execute("reboot")
         return self.reconnect()
 
     def reconnect(self):
-        self.debug("Wait for a connection to the machine.")
-        for i in range(1, CONNECTION_TIMEOUT):
+        """ Ensure the connection to the guest is working after reboot """
+        self.debug("Wait for a connection to the guest.")
+        for attempt in range(1, CONNECTION_TIMEOUT):
             try:
                 self.execute('whoami')
                 break
             except tmt.utils.RunError:
-                self.debug('Failed to connect to the machine, retrying.')
+                self.debug('Failed to connect to the guest, retrying.')
             time.sleep(1)
 
-        if i == CONNECTION_TIMEOUT:
-            self.debug("Connection to machine failed after reboot.")
+        if attempt == CONNECTION_TIMEOUT:
+            self.debug("Connection to guest failed after reboot.")
             return False
         return True
 
