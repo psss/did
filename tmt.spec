@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.6.0
+Version: 1.7.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -188,6 +188,59 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Wed Aug 18 2021 Petr Šplíchal <psplicha@redhat.com> - 1.7.0-1
+- Adjust support for exporting test fmf identifiers
+- Add --fmf-id option for tests export
+- Fix regression in image listing
+- Update hardware spec with units and current status
+- Adjust the reboot support in the internal executor
+- Add support for reboot to internal executor
+- Always try to save guest details
+- Give hints about available report methods
+- Handle libvirt exceptions correctly
+- Handle FileNotFoundError when running commands
+- Adjust framework detection during test import
+- Detect test framework during test import
+- Adjust the reboot command test, minor enhancements
+- Adjust reboot command implementation
+- Implement the reboot class and subcommand
+- Adjust the improved login step selection
+- Login after last done step without --step option
+- Adjust default shell options implementation a bit
+- Make multiline shell scripts fail on error
+- Ensure environment files are within metadata tree
+- Add pycharm .idea to .gitignore
+- Ensure environment-file paths are only relative
+- Adjust the 'environment-file' implementation
+- Implement the 'environment-file' option
+- Mention required packages on the Contribute page
+- Migrate to ruamel.yaml
+- Adjust tmt lint implementation
+- Add tmt lint command
+- Do not expand the process environment variables
+- Adjust legacy match to cover both rhel and centos
+- Guess pci/net when libguestfs python is missing
+- Add timestamp to the tmt debug output
+- Restart sshd on EL8 to prevent delays after boot
+- Support systemd-networkd systems without nm too
+- Testcloud: Use cache='unsafe' for a nice IO boost
+- Check invalid attributes in plans with lint
+- Require correct testcloud version in setup.py
+- Adjust the support for plan parametrization
+- Implement plan parametrization from environment
+- Deprecation timing, mention vagrant box support
+- Fix exit code for tmt story lint
+- Require testcloud with the url guessing support
+- Use testcloud for image url guessing
+- Update the RHEL 8 / CentOS 8 install instructions
+- Accept more ssh keys in the API
+- Require a full path for local images in testcloud
+- Adjust the conversion of Makefile types to tags
+- Convert Type from Beaker Makefile into tags
+- Make sure pip is available for integration testing
+- Disable the white space test for container/virtual
+- Use IdentitiesOnly=yes when key or password is set
+
 * Wed Jun 02 2021 Petr Šplíchal <psplicha@redhat.com> - 1.6.0-1
 - Adjust the new plugin documentation
 - Add plugin examples and documentation
