@@ -148,6 +148,20 @@ example: |
         provision implementations. The ``.*`` notation, however,
         should be supported everywhere.
 
+        The `pint`__ library is used for processing various units,
+        both decimal and binary prefixes can be used::
+
+            1 MB = 1 000 000 B
+            1 MiB = 1 048 576 B
+
+        __ https://pint.readthedocs.io/
+
+        .. note::
+
+            Although the hardware specification is not implemented
+            yet we do not expect any significant changes to the
+            currently proposed format.
+
     example: |
         # Basic key-value format used to specify the memory size
         memory: 8 GB
