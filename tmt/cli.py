@@ -510,10 +510,10 @@ def import_(
          "Note that this will unlink any previously connected general plans.")
 @click.option(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
-    help='Output format.')
+    help='Output format (yaml or dict).')
 @click.option(
     '--fmf-id', is_flag=True,
-    help='Show fmf identifiers')
+    help='Show fmf identifiers instead of test metadata.')
 @click.option(
     '--duplicate / --no-duplicate', default=False, show_default=True,
     help='Allow or prevent creating duplicates in Nitrate by searching for '
@@ -537,6 +537,7 @@ def export(context, format_, nitrate, **kwargs):
                 echo(test.export(format_=format_, keys='fmf-id'), nl=False)
             else:
                 echo(test.export(format_=format_), nl=False)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Plan

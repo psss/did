@@ -1,4 +1,4 @@
-summary: Listing tests FMF identificators in yaml format
+summary: Listing tests fmf identifiers in yaml format
 description:
-    Verify that tests FMF identificators are listed in
-    yaml format with a command 'tmt tests export --fmf-id'.
+    Verify that tests fmf identifiers are listed in yaml format
+    with a command 'tmt tests export --fmf-id'.
