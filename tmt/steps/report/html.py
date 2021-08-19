@@ -193,7 +193,7 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
         # Show output file path
         target = os.path.join(self.workdir, filename)
         self.info("output", target, color='yellow')
-        if not self.opt('open'):
+        if not self.get('open'):
             return
 
         # Open target in webbrowser
