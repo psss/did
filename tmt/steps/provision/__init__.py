@@ -97,6 +97,7 @@ class Provision(tmt.steps.Step):
 
         # Provision guests
         self._guests = []
+        save = True
         try:
             for plugin in self.plugins():
                 try:
@@ -110,8 +111,16 @@ class Provision(tmt.steps.Step):
             # Give a summary, update status and save
             self.summary()
             self.status('done')
+        except SystemExit as error:
+            # A plugin will only raise SystemExit if the exit is really desired
+            # and no other actions should be done. An example of this is
+            # listing available images. In such case, the workdir is deleted
+            # as it's redundant and save() would throw an error.
+            save = False
+            raise error
         finally:
-            self.save()
+            if save:
+                self.save()
 
     def guests(self):
         """ Return the list of all provisioned guests """
