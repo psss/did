@@ -8,6 +8,7 @@ import click
 from click import echo
 
 import tmt.utils
+from tmt.options import show_step_method_hints
 from tmt.utils import GeneralError
 
 STEPS = ['discover', 'provision', 'prepare', 'execute', 'report', 'finish']
@@ -312,38 +313,7 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
                     f"for the '{data['how']}' method.", level=2)
                 return method.class_(step, data)
 
-        # Give some hints when provision plugins are not installed
-        if step.name == 'provision':
-            if data['how'] == 'virtual':
-                step.info(
-                    'hint', "Install 'tmt-provision-virtual' "
-                    "to run tests in a virtual machine.", color='blue')
-            if data['how'] == 'container':
-                step.info(
-                    'hint', "Install 'tmt-provision-container' "
-                    "to run tests in a container.", color='blue')
-            step.info(
-                'hint', "Use the 'local' method to execute tests "
-                "directly on your localhost.", color='blue')
-            step.info(
-                'hint', "See 'tmt run provision --help' for all "
-                "available provision options.", color='blue')
-        elif step.name == 'report':
-            if data['how'] == 'html':
-                step.info(
-                    'hint', "Install 'tmt-report-html' to format results "
-                    "as a html report.", color='blue')
-            if data['how'] == 'junit':
-                step.info(
-                    'hint', "Install 'tmt-report-junit' to write results "
-                    "in JUnit format.", color='blue')
-            step.info(
-                'hint', "Use the 'display' method to show test results "
-                "on the terminal.", color='blue')
-            step.info(
-                'hint', "See 'tmt run report --help' for all "
-                "available report options.", color='blue')
-
+        show_step_method_hints(step, step.name, data['how'])
         # Report invalid method
         raise tmt.utils.SpecificationError(
             f"Unsupported {step.name} method '{data['how']}' "
