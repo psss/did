@@ -4,5 +4,5 @@ provision:
 # Run only during a full testing
 enabled: false
 adjust:
-    enabled: true
+  - enabled: true
     when: how == full or trigger == commit
