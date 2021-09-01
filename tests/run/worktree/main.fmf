@@ -5,6 +5,7 @@ description:
     experience. By default tested in a `container, for pull
     requests also against `local` and during `full` testing using
     `virtual` as well.
+require+: [tmt-provision-container]
 
 environment:
     METHODS: 'container'

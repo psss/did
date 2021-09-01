@@ -4,5 +4,5 @@ description:
     works as expected. Fetches the example library from upstream,
     modifies it a bit, references it from a test and verifies the
     changed functionality by running the test in a container.
-require: git
+require+: [tmt-provision-container]
 tier: 3

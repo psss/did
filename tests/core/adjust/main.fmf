@@ -1,3 +1,4 @@
 summary: Verify test/plan adjustments based on context
 description:
     Perform a basic check using 'tmt test/plan show'.
+require+: [tmt-provision-container]

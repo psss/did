@@ -9,6 +9,9 @@ tier: 3
 duration: 15m
 tag-: [virtual, container]
 enabled: False
+require+:
+  - tmt-provision-container
+  - tmt-provision-virtual
 
 adjust:
     enabled: True
