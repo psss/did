@@ -31,9 +31,15 @@ description:
         Create a local ``html`` file with test results arranged in
         a table. Optionally open the page in the default browser.
     example: |
+        # Enable html report from the command line
         tmt run --all report --how html
         tmt run --all report --how html --open
         tmt run -l report -h html -o
+
+        # Use html as the default report for given plan
+        report:
+            how: html
+            open: true
     link:
       - implemented-by: /tmt/steps/report/html.py
 

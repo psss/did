@@ -152,7 +152,15 @@ def import_jinja2():
 
 
 class ReportHtml(tmt.steps.report.ReportPlugin):
-    """ Format test results into an html report """
+    """
+    Format test results into an html report
+
+    Example config:
+
+        report:
+            how: html
+            open: true
+    """
 
     # Supported methods
     _methods = [tmt.steps.Method(name='html', doc=__doc__, order=50)]
