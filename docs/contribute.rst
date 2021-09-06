@@ -232,3 +232,54 @@ make tags
 
 make clean
     Cleanup all temporary files.
+
+
+Release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Follow the steps below to create a new major or minor release:
+
+* Run the full test coverage using ``tmt -c how=full run``
+* Use ``git log --oneline x.y-1..`` to generate the changelog
+* Add a ``Release tmt-x.y.0`` commit with the specfile update
+* Create a pull request with the commit, ensure tests pass
+
+Release a new package to Fedora and EPEL repositories:
+
+* Move the ``fedora`` branch to point to the new release
+* Create a source rpm using the ``make srpm`` command
+* Enable Fedora kerberos ``kinit nick@FEDORAPROJECT.ORG``
+* Change to the fedora rpms git or ``fedpkg clone tmt``
+* Check out the rawhide branch ``git checkout rawhide``
+* Import the srpm using ``fedpkg import /path/to/the/srpm``
+* Restore any files removed by fedpkg if necessary
+* Ensure the proposed changes are ok and commit them
+* Create a pull request against rawhide from your fork
+* After tests pass, merge the pull request to rawhide
+* Build the package for rawhide ``fedkpkg build --nowait``
+* Build package for all `active releases`__
+  ``git checkout f33 && git merge rawhide && git push && fedpkg build --nowait``
+* Create a bodhi update for each release
+  ``git checkout f33 && fedpkg update --type enhancement --notes 'Update title'``
+
+Finally, if everything went well:
+
+* Merge the original release pull request on github
+* Tag the commit with ``x.y.0``, push tags ``git push --tags``
+* Create a new `github release`__ based on the tag above
+* Close the corresponding release milestone
+
+If the automation triggered by publishing the new github release
+was not successful, publish the fresh code to the `pypi`__
+repository manually::
+
+    make wheel
+    make upload
+
+Once the copr build is completed, move the ``quay`` branch to
+point to the release commit as well to build fresh container
+images.
+
+__ https://bodhi.fedoraproject.org/releases/
+__ https://pypi.org/project/tmt/
+__ https://github.com/psss/tmt/releases/
