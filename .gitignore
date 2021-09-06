@@ -1,13 +1,50 @@
-build
-dist
-*.egg
-*.egg-info
-.pytest_cache
+# tmt-specific
+
 /tmp/
 docs/_build
 docs/spec
 docs/stories
-__pycache__
+
+# Python
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Testing
+.pytest_cache
+
+# Virtual environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jetbrains
 .idea/
 
 # Vim
