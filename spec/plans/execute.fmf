@@ -108,6 +108,16 @@ description: |
       - implemented-by: /tmt/steps/execute/detach.py
       - verified-by: /tests/execute/framework
 
+/multi-host:
+    summary: Execute on a given multi-host role
+    description: |
+        Execute test on a given multi-host role specified by ``on``
+        option. By default execution is done on all roles.
+    example: |
+        execute:
+            how: tmt
+            on: server
+
 /script:
     summary: Execute shell scripts
     story: As a user I want to easily run shell script as a test.
@@ -161,7 +171,7 @@ description: |
                     - echo foo > /var/www/html/index.html
                     - curl http://localhost/ | grep foo
 
-    /multi:
+    /multi-line:
         summary: Multi-line shell script
         title: Multi-line script
         description:

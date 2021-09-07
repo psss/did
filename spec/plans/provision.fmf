@@ -5,8 +5,9 @@ description: |
     should be provisioned. Provides a generic and an extensible
     way to write down essential hardware requirements. For example
     one consistent way how to specify "at least 2 GB of RAM" for
-    all supported provisioners. Might fail if it cannot provision
-    according to the constraints.
+    all supported provisioners. Supports not only single-host use
+    case but also multi-host environments. Might fail if it cannot
+    provision according to the constraints.
 
 example: |
     provision:
@@ -184,3 +185,22 @@ example: |
                     model: 67
               - cpu:
                     model: 69
+
+/multi-host:
+    summary: Multi-host testing specification
+
+    description: |
+        As a part of the provision step it is possible to assign
+        a role using ``role`` parameter for multi-host testing.
+        A role can be arbitrary identifier, for example there can
+        be server and client roles for server-client multi-host
+        provisioning.
+
+    example: |
+        provision:
+            - name: server provisioning
+              how: local
+              role: server
+            - name: client provisioning
+              how: local
+              role: client

@@ -19,6 +19,9 @@ description: |
     individual tests order ``70`` is used, for recommended
     packages it is ``75``.
 
+    Use the ``on`` attribute to specify on what role the
+    preparation should happen in multi-host scenario.
+
 example: |
     # Install fresh packages from a custom copr repository
     prepare:
@@ -34,6 +37,12 @@ example: |
       - name: service
         how: shell
         script: systemctl start httpd
+
+    # Stop auditd service on a server
+    prepare:
+      - how: shell
+        on: server
+        script: service auditd stop
 
 /shell:
     summary:
@@ -113,3 +122,13 @@ example: |
     link:
       - implemented-by: /tmt/steps/provision
       - verified-by: /tests/prepare/install
+
+/multi-host:
+    summary: Prepare a given multi-host role
+    description: |
+        Perform preparation on a given multi-host role specified by
+        ``on`` option. By default preparation is done on all roles.
+    example: |
+        execute:
+            how: tmt
+            on: server
