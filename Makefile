@@ -71,7 +71,6 @@ images:
 wheel:
 	cp -a tmt/__init__.py tmt/__init__.py.backup
 	sed -i $(REPLACE_VERSION) tmt/__init__.py
-	python setup.py bdist_wheel
 	python3 setup.py bdist_wheel
 	mv tmt/__init__.py.backup tmt/__init__.py
 upload:
