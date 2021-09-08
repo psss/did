@@ -11,7 +11,9 @@ import tmt.utils
 from tmt.options import show_step_method_hints
 from tmt.utils import GeneralError
 
+# Supported steps and actions
 STEPS = ['discover', 'provision', 'prepare', 'execute', 'report', 'finish']
+ACTIONS = ['login', 'reboot']
 
 # Step phase order
 PHASE_START = 10

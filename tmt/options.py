@@ -91,8 +91,9 @@ def create_method_class(methods):
         def _check_method(self, context, args):
             """ Manually parse the --how option """
             how = None
+            subcommands = (
+                tmt.steps.STEPS + tmt.steps.ACTIONS + ['tests', 'plans'])
 
-            upcoming_value = False
             for index in range(len(args)):
                 # Handle '--how method' or '-h method'
                 if args[index] in ['--how', '-h']:
@@ -109,22 +110,9 @@ def create_method_class(methods):
                 elif args[index].startswith('-h'):
                     how = re.sub('^-h ?', '', args[index])
                     break
-                # Do not check how of other methods if chaining is used
-                # (e.g. tmt run discover provision -h local)
-                elif not upcoming_value and args[index] in tmt.steps.STEPS:
+                # Stop search at the first argument looking like a subcommand
+                elif args[index] in subcommands:
                     break
-                else:
-                    # Check if the current argument expects a value
-                    for opt in self.params:
-                        if not isinstance(opt, click.Option):
-                            continue
-                        expects_value = not opt.count and not opt.is_flag
-                        if args[index] in opt.opts and expects_value:
-                            upcoming_value = True
-                            break
-                    else:
-                        # Value received, reset
-                        upcoming_value = False
 
             # Find method with the first matching prefix
             if how is not None:
@@ -137,7 +125,7 @@ def create_method_class(methods):
                 # Use run for logging, steps may not be initialized yet
                 show_step_method_hints(context.obj.run, self.name, how)
                 raise tmt.utils.SpecificationError(
-                    f"Unsupported {self.name} method '{how}'")
+                    f"Unsupported {self.name} method '{how}'.")
 
         def parse_args(self, context, args):
             self._check_method(context, args)
