@@ -78,7 +78,7 @@ def name_filter_condition(function):
     """ Common filter options (short & long) """
     options = [
         click.argument(
-            'names', nargs=-1, metavar='[REGEXP]'),
+            'names', nargs=-1, metavar='[REGEXP|.]'),
         click.option(
             '-f', '--filter', 'filters', metavar='FILTER', multiple=True,
             help="Apply advanced filter (see 'pydoc fmf.filter')."),
@@ -96,7 +96,7 @@ def name_filter_condition_long(function):
     """ Common filter options (long only) """
     options = [
         click.argument(
-            'names', nargs=-1, metavar='[REGEXP]'),
+            'names', nargs=-1, metavar='[REGEXP|.]'),
         click.option(
             '--filter', 'filters', metavar='FILTER', multiple=True,
             help="Apply advanced filter (see 'pydoc fmf.filter')."),
@@ -257,8 +257,8 @@ run.add_command(tmt.steps.Reboot.command())
 @run.command()
 @click.pass_context
 @click.option(
-    '-n', '--name', 'names', metavar='REGEXP', multiple=True,
-    help="Regular expression to match plan name.")
+    '-n', '--name', 'names', metavar='[REGEXP|.]', multiple=True,
+    help="Regular expression to match plan name or '.' for current directory.")
 @click.option(
     '-f', '--filter', 'filters', metavar='FILTER', multiple=True,
     help="Apply advanced filter (see 'pydoc fmf.filter').")
@@ -282,8 +282,8 @@ def plans(context, **kwargs):
 @run.command()
 @click.pass_context
 @click.option(
-    '-n', '--name', 'names', metavar='REGEXP', multiple=True,
-    help="Regular expression to match test name.")
+    '-n', '--name', 'names', metavar='[REGEXP|.]', multiple=True,
+    help="Regular expression to match test name or '.' for current directory.")
 @click.option(
     '-f', '--filter', 'filters', metavar='FILTER', multiple=True,
     help="Apply advanced filter (see 'pydoc fmf.filter').")
