@@ -7,7 +7,7 @@ rlJournalStart
         rlRun 'set -o pipefail'
     rlPhaseEnd
 
-    good="plan --name good"
+    good="plan --name /plan/good"
 
     rlPhaseStartTest "Check environment-file option reads properly"
         rlRun "tmt run -rvvvddd $good | tee output"
@@ -34,6 +34,17 @@ rlJournalStart
     rlPhaseStartTest "Escape from the tree"
         rlRun "tmt run -rvvvddd plan -n escape 2>&1 | tee output" 2
         rlAssertGrep "path '/etc/secret' is outside" 'output'
+    rlPhaseEnd
+
+    rlPhaseStartTest "Fetch a remote file"
+        # Good
+        rlRun "tmt plan show fetch/good | tee output"
+        rlAssertGrep "STR: O" 'output'
+        rlAssertGrep "INT: 0" 'output'
+        # Bad
+        rlRun "tmt plan show fetch/bad 2>&1 | tee output" 2
+        rlAssertGrep "Failed to fetch the environment file" 'output'
+        rlAssertGrep "Name or service not known" 'output'
     rlPhaseEnd
 
     rlPhaseStartCleanup

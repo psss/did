@@ -783,9 +783,17 @@ def environment_file_to_dict(
     """
     result = {}
     for env_file in env_files:
+        env_file = str(env_file).strip()
         # Fetch a remote file
-        if str(env_file).startswith("http"):
-            content = requests.get(env_file).text
+        if env_file.startswith("http"):
+            try:
+                response = requests.get(env_file)
+                response.raise_for_status()
+                content = response.text
+            except requests.RequestException as error:
+                raise GeneralError(
+                    f"Failed to fetch the environment file from '{env_file}'. "
+                    f"The problem was: '{error}'")
         # Read a local file
         else:
             # Ensure we don't escape from the metadata tree root
@@ -801,7 +809,7 @@ def environment_file_to_dict(
                 raise GeneralError(f"File '{full_path}' doesn't exist.")
             content = Path(full_path).read_text()
         # Parse yaml file
-        if Path(full_path).suffix in (".yaml", ".yml"):
+        if re.match(r".*\.ya?ml$", env_file):
             result.update(parse_yaml(content))
         # Parse dotenv file
         else:
