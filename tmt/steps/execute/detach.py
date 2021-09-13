@@ -98,6 +98,12 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
         else:
             return self.check_shell(test)
 
+    def executed_test_count(self):
+        """ Get the number of executed tests """
+        stdout = self.step.read('stdout.log')
+        # There is letter 'D' at the end marking done, subtract it
+        return len(stdout.strip()) - 1
+
     def go(self):
         """ Execute available tests """
         super().go()
@@ -113,6 +119,7 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
         self.prepare_tests()
 
         # For each guest execute all tests
+        exit_first = ' -x' if self.get('exit-first', default=False) else ''
         for guest in self.step.plan.provision.guests():
 
             # Push workdir to guest and execute tests
@@ -120,7 +127,7 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
             start = time.time()
             try:
                 guest.execute(
-                    f'./{RUNNER} -v .. stdout.log stderr.log',
+                    f'./{RUNNER} -v{exit_first} .. stdout.log stderr.log',
                     cwd=self.step.workdir)
             except tmt.utils.RunError as error:
                 guest.pull()
@@ -131,7 +138,14 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
             # Pull logs from guest, show logs and check results
             guest.pull()
             self.show_logs()
-            for test in self.step.plan.discover.tests():
+            # If --exit-first is used, not all tests may have been executed.
+            # run.sh writes a letter F/. (Fail/pass) to stdout for each test.
+            # Check results only of the executed tests.
+            executed = self.executed_test_count()
+            for i, test in enumerate(self.step.plan.discover.tests()):
+                if i >= executed:
+                    self.warn('Not all tests have been executed.')
+                    break
                 test.real_duration = self.test_duration(start, end)
                 self._results.append(self.check(test))
 

@@ -10,7 +10,8 @@
 #               exitcode.log
 #
 #   Options:
-#       -d    DEBUG output
+#       -d             DEBUG output
+#       --exit-first   Stop execution after the first failure
 #
 #
 
@@ -21,6 +22,7 @@ bash -n "$0"
 
 tmt_WD=
 tmt_VERBOSE=
+tmt_EXIT_FIRST=0
 
 tmt_TESTS_D='discover'
 tmt_TESTS_F="${tmt_TESTS_D}/run.yaml"
@@ -63,6 +65,9 @@ tmt_main () {
         } || {
             [[ "$name" == "$last" ]] || {
                 tmt_run_test "$name" "$test" "$path" "$framework" "$duration" "$environment"
+                if [[ "$?" -ne 0 ]] && [[ "$tmt_EXIT_FIRST" -eq 1 ]]; then
+                    return;
+                fi
                 last="$name"
             }
 
@@ -147,7 +152,8 @@ tmt_run_test () {
     tmt_verbose 2 "Execute '$name' as a '$framework' test."
 
     tmt_run_${framework} "$path" "$environment" "$cmd"
-    echo "$?" >"$tmt_LOGCODE_F"
+    return_value=$?
+    echo "$return_value" >"$tmt_LOGCODE_F"
 
     grep -q '^0$' "$tmt_LOGCODE_F" \
         && echo -n "." \
@@ -167,7 +173,7 @@ tmt_run_test () {
         } >&2
     }
 
-    return 0
+    return $return_value
 }
 
 # Wrappers
@@ -244,6 +250,9 @@ tmt_verbose () {
 
 [[ "$1" == "-v" || "$1" == '--verbose' ]] \
     && { shift; tmt_VERBOSE=y; } ||:
+
+[[ "$1" == "-x" || "$1" == "--exit-first" ]] \
+    && { shift; tmt_EXIT_FIRST=1; } ||:
 
 ## Mandatory args
 tmt_WD="$(readlink -f "$1")"

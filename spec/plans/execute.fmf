@@ -74,6 +74,26 @@ description: |
             how: tmt
             isolate: true
 
+/exit-first:
+    summary: Stop execution after a test fails
+    story:
+        As a user I want to avoid waiting for all discovered
+        tests to finish if one of them fails.
+    description:
+        Optional boolean attribute `exit-first` can be used to
+        make the executor stop executing tests once a test
+        failure is encountered. Currently, both
+        :ref:`/spec/plans/execute/tmt` and
+        :ref:`/spec/plans/execute/detach` executors support this.
+    example: |
+        execute:
+            how: tmt
+            exit-first: true
+    link:
+      - implemented-by: /tmt/steps/execute/internal.py
+      - implemented-by: /tmt/steps/execute/detach.py
+      - verified-by: /tests/execute/exit-first
+
 /tmt:
     summary: Internal test executor
     story: As a user I want to execute tests directly from tmt.

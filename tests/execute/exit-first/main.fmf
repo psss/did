@@ -1,0 +1,2 @@
+summary: Check that exit after first fail works
+test: ./test.sh

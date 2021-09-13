@@ -66,13 +66,15 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             help='Disable interactive progress bar showing the current test.'))
         return options + super().options(how)
 
-    def show(self):
+    def show(self, keys=None):
         """ Show execute details """
-        super().show(['script', 'interactive'])
+        keys = (keys or []) + ['script', 'interactive']
+        super().show(keys)
 
-    def wake(self):
+    def wake(self, options=None):
         """ Wake up the plugin (override data with command line) """
-        super().wake(options=['script', 'interactive'])
+        options = (options or []) + ['script', 'interactive']
+        super().wake(options=options)
         # Make sure that script is a list
         tmt.utils.listify(self.data, keys=['script'])
 
@@ -247,6 +249,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
         # For each guest execute all tests
         tests = self.prepare_tests()
+        exit_first = self.get('exit-first', default=False)
         for guest in self.step.plan.provision.guests():
             self._setup_reboot(guest)
             # Push workdir to guest and execute tests
@@ -259,6 +262,12 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 if self._handle_reboot(test, guest):
                     continue
                 self._results.append(self.check(test))
+                if exit_first and \
+                        self._results[-1].result not in ('pass', 'info'):
+                    # Clear the progress bar before outputting
+                    self._show_progress('', '', True)
+                    self.warn(f'Test {test.name} failed, stopping execution.')
+                    break
                 index += 1
             # Overwrite the progress bar, the test data is irrelevant
             self._show_progress('', '', True)

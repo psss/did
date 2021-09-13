@@ -1,0 +1,18 @@
+provision:
+    how: local
+execute:
+    script:
+      - /bin/false
+      - /bin/true
+
+/do-not-exit:
+    /tmt:
+        execute+:
+            how: tmt
+    /detach:
+        execute+:
+            how: detach
+
+/exit-first:
+    execute+:
+        exit-first: true

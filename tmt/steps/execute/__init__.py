@@ -191,6 +191,9 @@ class ExecutePlugin(tmt.steps.Plugin):
     # Internal executor is the default implementation
     how = 'tmt'
 
+    # List of keys supported for all execute plugins
+    _keys = ['exit-first']
+
     @classmethod
     def base_command(cls, method_class=None, usage=None):
         """ Create base click command (common for all execute plugins) """
@@ -210,6 +213,26 @@ class ExecutePlugin(tmt.steps.Plugin):
             Execute._save_context(context)
 
         return execute
+
+    @classmethod
+    def options(cls, how=None):
+        # Add option to exit after the first test failure
+        options = [click.option(
+            '-x', '--exit-first', is_flag=True,
+            help='Stop execution after the first test failure.')]
+        return options + super().options(how)
+
+    def show(self, keys=None):
+        keys = (keys or []) + self._keys
+        super().show(keys)
+
+    def wake(self, options=None):
+        options = (options or []) + self._keys
+        super().wake(options)
+
+    def go(self):
+        super().go()
+        self.info('exit-first', self.get('exit-first', default=False), 'green')
 
     def data_path(self, test, filename=None, full=False, create=False):
         """
