@@ -496,8 +496,8 @@ class Common(object):
             raise GeneralError(
                 f"Invalid workdir '{id_}', expected a string or None.")
 
-        # Cleanup possible old workdir if called with --force
-        if self.opt('force'):
+        # Cleanup possible old workdir if called with --scratch
+        if self.opt('scratch'):
             self._workdir_cleanup(workdir)
 
         # Create the workdir

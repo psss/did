@@ -28,7 +28,7 @@ rlJournalStart
 
     if [[ "$METHODS" =~ virtual ]]; then
         rlPhaseStartTest "Virtual"
-            rlRun "tmt run -fi $run provision -h virtual"
+            rlRun "tmt run --scratch -i $run provision -h virtual"
 
             rlRun -s "tmt run -l reboot"
             rlAssertGrep "Reboot finished" $rlRun_LOG

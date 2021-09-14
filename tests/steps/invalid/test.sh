@@ -9,9 +9,9 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "tmt run -fi $tmp 2>&1 | tee output" 2 "Expect the run to fail"
+        rlRun "tmt run --scratch -i $tmp 2>&1 | tee output" 2 "Expect the run to fail"
         rlAssertGrep "Unsupported provision method" "output"
-        rlRun "tmt run -fi $tmp discover 2>&1 | tee output" 0 \
+        rlRun "tmt run --scratch -i $tmp discover 2>&1 | tee output" 0 \
             "Invalid step not enabled, do not fail"
         rlAssertGrep "warn: Unsupported provision method" "output"
     rlPhaseEnd

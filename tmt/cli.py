@@ -207,6 +207,9 @@ def main(click_contex, root, context, **kwargs):
     '-r', '--rm', '--remove', 'remove', is_flag=True,
     help='Remove the workdir when test run is finished.')
 @click.option(
+    '--scratch', is_flag=True,
+    help='Remove the run workdir before executing to start from scratch.')
+@click.option(
     '--follow', is_flag=True,
     help='Output the logfile as it grows.')
 @click.option(

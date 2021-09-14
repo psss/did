@@ -10,7 +10,7 @@ rlJournalStart
         rlRun "set -o pipefail"
     rlPhaseEnd
 
-    options='-fi $tmp'
+    options='--scratch -i $tmp'
     for selected_step in $steps; do
         rlPhaseStartTest "Select $selected_step"
             exitcode=0

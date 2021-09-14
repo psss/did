@@ -22,7 +22,7 @@ rlJournalStart
 
     for verbosity in '' '-dv' '-ddvv' '-dddvvv'; do
         rlPhaseStartTest "Run $verbosity"
-            rlRun "tmt run $verbosity --force --id $run" 2 "Run all plans"
+            rlRun "tmt run $verbosity --scratch --id $run" 2 "Run all plans"
         rlPhaseEnd
     done
 
