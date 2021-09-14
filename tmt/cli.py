@@ -301,7 +301,16 @@ def tests(context, **kwargs):
     tmt.base.Test._save_context(context)
 
 
-@run.resultcallback()
+# FIXME: click 8.0 renamed resultcallback to result_callback. The former
+#        name will be removed in click 8.1. However, click 8.0 will not
+#        be added to F33 and F34. Get rid of this workaround once
+#        all Fedora + EPEL releases have click 8.0 or newer available.
+callback = run.result_callback
+if callback is None:
+    callback = run.resultcallback
+
+
+@callback()
 @click.pass_context
 def finito(click_context, commands, *args, **kwargs):
     """ Run tests if run defined """
