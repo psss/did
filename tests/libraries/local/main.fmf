@@ -6,3 +6,4 @@ description:
     changed functionality by running the test in a container.
 require+: [tmt-provision-container]
 tier: 3
+duration: 15m
