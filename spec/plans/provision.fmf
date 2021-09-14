@@ -102,25 +102,6 @@ example: |
             guest: hostname or ip address
             key: private-key-path
 
-/minute:
-    summary:
-        Provision a virtual machine using the 1minutetip OpenStack
-        backend
-    description: |
-        First check whether a prereserved machine exists using the
-        1minutetip backend. Use it, if it exists, otherwise boot a
-        new machine using the OpenStack backend.
-
-        Note that this internal-only plugin is now available in the
-        ``tmt-redhat-provision-minute`` package which you can
-        install from the internal copr repository.
-    example: |
-        provision:
-            how: minute
-            image: 1MT-Fedora-32
-            flavor: m1.large
-    link:
-      - implemented-by: /tmt/steps/provision/minute_obsolete.py
 
 /hardware:
     summary: Hardware specification

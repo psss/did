@@ -53,6 +53,12 @@ def show_step_method_hints(log_object, step_name, how):
             log_object.info(
                 'hint', "Install 'tmt-provision-container' "
                         "to run tests in a container.", color='blue')
+        if how == 'minute':
+            log_object.info(
+                'hint', "Install 'tmt-redhat-provision-minute' "
+                        "to run tests in 1minutetip OpenStack backend. "
+                        "(Available only from the internal COPR repository.)",
+                        color='blue')
         log_object.info(
             'hint', "Use the 'local' method to execute tests "
                     "directly on your localhost.", color='blue')

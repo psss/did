@@ -2,6 +2,6 @@
 provision:
     how: connect
     guest: my.test.box
-#    key: /home/psss/.ssh/1minutetip_rsa
+#    key: /home/psss/.ssh/shared_rsa
 #    user: root
 #    password: secret
