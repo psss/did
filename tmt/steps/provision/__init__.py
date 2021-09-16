@@ -12,6 +12,8 @@ import tmt
 
 # Timeout in seconds of waiting for a connection
 CONNECTION_TIMEOUT = 60 * 4
+# Wait time when reboot happens in seconds
+SSH_INITIAL_WAIT_TIME = 5
 
 
 class Provision(tmt.steps.Step):
@@ -524,6 +526,8 @@ class Guest(tmt.utils.Common):
 
     def reconnect(self):
         """ Ensure the connection to the guest is working after reboot """
+        # Try to wait for machine to really shutdown sshd
+        time.sleep(SSH_INITIAL_WAIT_TIME)
         self.debug("Wait for a connection to the guest.")
         for attempt in range(1, CONNECTION_TIMEOUT):
             try:
@@ -531,7 +535,7 @@ class Guest(tmt.utils.Common):
                 break
             except tmt.utils.RunError:
                 self.debug('Failed to connect to the guest, retrying.')
-            time.sleep(1)
+                time.sleep(1)
 
         if attempt == CONNECTION_TIMEOUT:
             self.debug("Connection to guest failed after reboot.")
