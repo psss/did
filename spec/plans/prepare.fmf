@@ -19,9 +19,6 @@ description: |
     individual tests order ``70`` is used, for recommended
     packages it is ``75``.
 
-    Use the ``on`` attribute to specify on what role the
-    preparation should happen in multi-host scenario.
-
 example: |
     # Install fresh packages from a custom copr repository
     prepare:
@@ -37,12 +34,6 @@ example: |
       - name: service
         how: shell
         script: systemctl start httpd
-
-    # Stop auditd service on a server
-    prepare:
-      - how: shell
-        on: server
-        script: service auditd stop
 
 /shell:
     summary:
@@ -123,12 +114,26 @@ example: |
       - implemented-by: /tmt/steps/provision
       - verified-by: /tests/prepare/install
 
-/multi-host:
-    summary: Prepare a given multi-host role
+/on:
+    summary: Apply preparation on selected guests
     description: |
-        Perform preparation on a given multi-host role specified by
-        ``on`` option. By default preparation is done on all roles.
+        In the :ref:`/spec/plans/provision/multihost` scenarios it
+        is often necessary to perform different preparation tasks on
+        individual guests. The ``on`` key allows to select guests
+        where the preparation should be applied by providing their
+        ``name`` or the ``role`` they play in the scenario. Use a
+        list to specify multiple names or roles. By default, when
+        the ``on`` key is not defined, preparation is done on all
+        provisioned guests.
     example: |
-        execute:
-            how: tmt
+        # Start Apache on the server
+        prepare:
+          - how: shell
+            script: systemctl start httpd
             on: server
+
+        # Apply common setup on the primary server and all replicas
+        prepare:
+          - how: ansible
+            playbook: common.yaml
+            on: [primary, replica]

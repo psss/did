@@ -5,9 +5,8 @@ description: |
     should be provisioned. Provides a generic and an extensible
     way to write down essential hardware requirements. For example
     one consistent way how to specify "at least 2 GB of RAM" for
-    all supported provisioners. Supports not only single-host use
-    case but also multi-host environments. Might fail if it cannot
-    provision according to the constraints.
+    all supported provisioners. Might fail if it cannot provision
+    according to the constraints.
 
 example: |
     provision:
@@ -186,21 +185,44 @@ example: |
               - cpu:
                     model: 69
 
-/multi-host:
-    summary: Multi-host testing specification
+/multihost:
+    summary: Multihost testing specification
 
     description: |
-        As a part of the provision step it is possible to assign
-        a role using ``role`` parameter for multi-host testing.
-        A role can be arbitrary identifier, for example there can
-        be server and client roles for server-client multi-host
-        provisioning.
+        As a part of the provision step it is possible to request
+        multiple guests to be provisioned for testing. Each guest
+        has to be assigned a unique ``name`` which is used to
+        identify it.
+
+        The optional parameter ``role`` can be used to mark
+        related guests so that common actions can be applied to
+        all such guests at once. An example role name can be
+        `client` or `server` but arbitrary identifier can be used.
+
+        Both `name` and `role` can be used together with the
+        ``on`` key to select guests on which the
+        :ref:`preparation</spec/plans/prepare/on>`
+        tasks should be applied or where the test
+        :ref:`execution</spec/plans/execute/on>` should
+        take place.
 
     example: |
+        # Request two guests
         provision:
-            - name: server provisioning
-              how: local
-              role: server
-            - name: client provisioning
-              how: local
-              role: client
+          - name: server
+            how: virtual
+          - name: client
+            how: virtual
+
+        # Assign role to guests
+        provision:
+          - name: main-server
+            role: primary
+          - name: backup-one
+            role: replica
+          - name: backup-two
+            role: replica
+          - name: tester-one
+            role: client
+          - name: tester-two
+            role: client

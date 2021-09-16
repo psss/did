@@ -108,14 +108,31 @@ description: |
       - implemented-by: /tmt/steps/execute/detach.py
       - verified-by: /tests/execute/framework
 
-/multi-host:
-    summary: Execute on a given multi-host role
+/on:
+    summary: Execute tests on selected guests
     description: |
-        Execute test on a given multi-host role specified by ``on``
-        option. By default execution is done on all roles.
+        In the :ref:`/spec/plans/provision/multihost` scenarios it
+        is often necessary to execute test code on selected guests
+        only or execute different test code on individual guests.
+        The ``on`` key allows to select guests where the tests
+        should be executed by providing their ``name`` or the
+        ``role`` they play in the scenario. Use a list to specify
+        multiple names or roles. By default, when the ``on`` key
+        is not defined, tests are executed on all provisioned
+        guests.
     example: |
+        # Execute discovered tests on the client
         execute:
-            how: tmt
+          - how: tmt
+            on: client
+
+        # Run different script for each role
+        execute:
+          - name: run-the-client-code
+            script: client.py
+            on: client
+          - name: run-the-server-code
+            script: server.py
             on: server
 
 /script:
@@ -171,7 +188,7 @@ description: |
                     - echo foo > /var/www/html/index.html
                     - curl http://localhost/ | grep foo
 
-    /multi-line:
+    /multi:
         summary: Multi-line shell script
         title: Multi-line script
         description:
