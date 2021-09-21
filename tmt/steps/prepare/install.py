@@ -87,7 +87,6 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
     def wake(self, keys=None):
         """ Wake up the plugin, process data, apply options """
         super().wake(keys=keys)
-
         # Convert to list if necessary
         tmt.utils.listify(
             self.data, split=True,
@@ -152,7 +151,7 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
 
     def go(self, guest):
         """ Prepare the guests """
-        super().go()
+        super().go(guest)
         # Nothing to do in dry mode
         if self.opt('dry'):
             return

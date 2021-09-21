@@ -1,3 +1,4 @@
+import collections
 import os
 import random
 import re
@@ -11,6 +12,7 @@ import click
 import fmf
 
 import tmt
+import tmt.utils
 
 # Timeout in seconds of waiting for a connection
 CONNECTION_TIMEOUT = 60 * 4
@@ -27,9 +29,21 @@ class Provision(tmt.steps.Step):
     def __init__(self, data, plan):
         """ Initialize provision step data """
         super().__init__(data, plan)
+        # Check that the names are unique
+        names = [data.get('name') for data in self.data]
+        names_count = collections.defaultdict(int)
+        for name in names:
+            names_count[name] += 1
+        if len(self.data) > 1 and len(self.data) != len(names_count):
+            duplicate = [k for k, v in names_count.items() if v > 1]
+            duplicate_string = ', '.join(duplicate)
+            raise tmt.utils.GeneralError(
+                f"Provision step names must be unique for multihost testing. "
+                f"Duplicate names: {duplicate_string} in plan '{plan.name}'.")
         # List of provisioned guests and loaded guest data
         self._guests = []
         self._guest_data = {}
+        self.is_multihost = False
 
     def load(self, extra_keys=None):
         """ Load guest data from the workdir """
@@ -102,12 +116,16 @@ class Provision(tmt.steps.Step):
         # Provision guests
         self._guests = []
         save = True
+        self.is_multihost = sum([isinstance(plugin, ProvisionPlugin)
+                                for plugin in self.plugins()]) > 1
         try:
             for plugin in self.plugins():
                 try:
                     plugin.go()
                     if isinstance(plugin, ProvisionPlugin):
                         plugin.guest().details()
+                    if self.is_multihost:
+                        self.info('')
                 finally:
                     if isinstance(plugin, ProvisionPlugin):
                         self._guests.append(plugin.guest())
@@ -152,6 +170,9 @@ class ProvisionPlugin(tmt.steps.Plugin):
 
     # List of all supported methods aggregated from all plugins
     _supported_methods = []
+
+    # Common keys for all provision step implementations
+    _common_keys = ['role']
 
     @classmethod
     def base_command(cls, method_class=None, usage=None):
@@ -211,6 +232,7 @@ class Guest(tmt.utils.Common):
         user ....... user name to log in
         key ........ path to the private key (str or list)
         password ... password
+        role ....... guest role in the multihost scenario
 
     These are by default imported into instance attributes (see the
     class attribute '_keys' below).
@@ -218,7 +240,7 @@ class Guest(tmt.utils.Common):
 
     # List of supported keys
     # (used for import/export to/from attributes during load and save)
-    _keys = ['guest', 'port', 'user', 'key', 'password']
+    _keys = ['guest', 'port', 'user', 'key', 'password', 'role']
 
     # Master ssh connection process and socket path
     _ssh_master_process = None
@@ -227,6 +249,8 @@ class Guest(tmt.utils.Common):
     def __init__(self, data, name=None, parent=None):
         """ Initialize guest data """
         super().__init__(parent, name)
+        # Initialize role, it will be overridden by load() if specified
+        self.role = None
         self.load(data)
 
     def _random_name(self, prefix='', length=16):
@@ -237,6 +261,11 @@ class Guest(tmt.utils.Common):
             random.choices(string.ascii_letters, k=min_random_part))
         # Return tail (containing random characters) of name
         return name[-length:]
+
+    def _tmt_name(self):
+        """ Generate a name prefixed with tmt run id """
+        _, run_id = os.path.split(self.parent.plan.my_run.workdir)
+        return self._random_name(prefix="tmt-{0}-".format(run_id[-3:]))
 
     def _ssh_guest(self):
         """ Return user@guest """

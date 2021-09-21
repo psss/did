@@ -1,0 +1,15 @@
+provision:
+  - name: server-one
+    role: server
+    how: container
+  - name: server-two
+    role: server
+    how: container
+  - name: client-one
+    role: client
+    how: container
+  - name: client-two
+    role: client
+    how: container
+execute:
+    script: tmt --help

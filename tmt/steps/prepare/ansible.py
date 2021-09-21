@@ -69,7 +69,7 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
 
     def go(self, guest):
         """ Prepare the guests """
-        super().go()
+        super().go(guest)
 
         # Apply each playbook on the guest
         for playbook in self.get('playbook'):

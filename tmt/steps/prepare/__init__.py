@@ -1,5 +1,5 @@
+import collections
 import copy
-import re
 
 import click
 import fmf
@@ -20,6 +20,7 @@ class Prepare(tmt.steps.Step):
     def __init__(self, data, plan):
         """ Initialize prepare step data """
         super().__init__(data, plan)
+        self.preparations_applied = 0
 
     def wake(self):
         """ Wake up the step (process workdir and command line) """
@@ -49,8 +50,27 @@ class Prepare(tmt.steps.Step):
 
     def summary(self):
         """ Give a concise summary of the preparation """
-        preparations = fmf.utils.listed(self.plugins(), 'preparation')
+        preparations = fmf.utils.listed(
+            self.preparations_applied, 'preparation')
         self.info('summary', f'{preparations} applied', 'green', shift=1)
+
+    def _prepare_roles(self):
+        """ Create a mapping of roles to guest names """
+        role_mapping = collections.defaultdict(list)
+        for guest in self.plan.provision.guests():
+            if guest.role:
+                role_mapping[guest.role].append(guest.name)
+        return role_mapping
+
+    def _prepare_hosts(self):
+        """ Create a mapping of guest names to IP addresses """
+        host_mapping = {}
+        for guest in self.plan.provision.guests():
+            if hasattr(guest, 'guest') and guest.guest:
+                # FIXME: guest.guest may not be simply an IP address but also
+                #        a host name.
+                host_mapping[guest.name] = guest.guest
+        return host_mapping
 
     def go(self):
         """ Prepare the guests """
@@ -91,6 +111,18 @@ class Prepare(tmt.steps.Step):
                 missing='skip')
             self._plugins.append(PreparePlugin.delegate(self, data))
 
+        # Implicit multihost setup
+        if self.plan.provision.is_multihost:
+            data = dict(
+                how='multihost',
+                name='multihost',
+                summary='Setup guest for multihost testing',
+                order=tmt.utils.DEFAULT_PLUGIN_ORDER_MULTIHOST,
+                roles=self._prepare_roles(),
+                hosts=self._prepare_hosts(),
+                )
+            self._plugins.append(PreparePlugin.delegate(self, data))
+
         # Prepare guests (including workdir sync)
         for guest in self.plan.provision.guests():
             guest.push()
@@ -101,7 +133,10 @@ class Prepare(tmt.steps.Step):
             guest_copy.parent = self
             # Execute each prepare plugin
             for plugin in self.plugins():
-                plugin.go(guest_copy)
+                if plugin.enabled_on_guest(guest_copy):
+                    self.preparations_applied += 1
+                    plugin.go(guest_copy)
+                    self.info('')
             # Pull artifacts created in the plan data directory
             # if there was at least one plugin executed
             if self.plugins():
@@ -118,6 +153,9 @@ class PreparePlugin(tmt.steps.Plugin):
 
     # List of all supported methods aggregated from all plugins
     _supported_methods = []
+
+    # Common keys for all prepare step implementations
+    _common_keys = ['where']
 
     @classmethod
     def base_command(cls, method_class=None, usage=None):
@@ -138,3 +176,16 @@ class PreparePlugin(tmt.steps.Plugin):
             Prepare._save_context(context)
 
         return prepare
+
+    def go(self, guest):
+        """ Prepare the guest (common actions) """
+        super().go()
+
+        # Show guest name first in multihost scenarios
+        if self.step.plan.provision.is_multihost:
+            self.info('guest', guest.name, 'green')
+
+        # Show requested role if defined
+        where = self.get('where')
+        if where:
+            self.info('where', where, 'green')

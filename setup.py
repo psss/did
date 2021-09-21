@@ -32,7 +32,7 @@ __scripts__ = ['bin/tmt']
 
 # Prepare install requires and extra requires
 install_requires = [
-    'fmf>=0.16.0',
+    'fmf>=1.0.0',
     'click',
     'requests',
     'ruamel.yaml'

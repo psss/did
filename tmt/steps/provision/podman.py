@@ -70,7 +70,7 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
 
         # Prepare data for the guest instance
         data = dict()
-        for key in self._keys:
+        for key in self._keys + self._common_keys:
             data[key] = self.get(key)
 
         # Create a new GuestTestcloud instance and start it
@@ -103,10 +103,9 @@ class GuestContainer(tmt.Guest):
 
     def save(self):
         """ Save guest data for future wake up """
-        data = {
-            'container': self.container,
-            'image': self.image,
-            }
+        data = super().save()
+        data['container'] = self.container
+        data['image'] = self.image
         return data
 
     def wake(self):
@@ -132,9 +131,7 @@ class GuestContainer(tmt.Guest):
         # Mount the whole plan directory in the container
         workdir = self.parent.plan.workdir
 
-        # Deduce container name from workdir, because it is a path
-        # make it podman container name friendly
-        self.container = 'tmt' + re.sub('[/ ]', '-', workdir)
+        self.container = self._tmt_name()
         self.verbose('name', self.container, 'green')
 
         # FIXME: Workaround for BZ#1900021 (f34 container on centos-8)

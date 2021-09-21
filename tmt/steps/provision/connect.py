@@ -1,6 +1,7 @@
 import click
 
 import tmt
+from tmt.steps.provision import ProvisionPlugin
 
 
 class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
@@ -90,7 +91,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         if not guest:
             raise tmt.utils.SpecificationError(
                 'Provide a host name or an ip address to connect.')
-        data = dict(guest=guest, user=user)
+        data = dict(guest=guest, user=user, role=self.get('role'))
         self.info('guest', guest, 'green')
         self.info('user', user, 'green')
         if port:

@@ -9,6 +9,7 @@ import fmf
 import requests
 
 import tmt
+from tmt.steps.provision import ProvisionPlugin
 from tmt.utils import WORKDIR_ROOT, ProvisionError, retry_session
 
 
@@ -249,7 +250,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
 
         # Give info about provided data
         data = dict()
-        for key in ['image', 'user', 'memory', 'disk', 'connection']:
+        for key in self._keys + self._common_keys:
             data[key] = self.get(key)
             if key == 'memory':
                 self.info('memory', f"{self.get('memory')} MB", 'green')
@@ -258,7 +259,8 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
             elif key == 'connection':
                 self.verbose(key, data[key], 'green')
             else:
-                self.info(key, data[key], 'green')
+                if data[key] is not None:
+                    self.info(key, data[key], 'green')
 
         # Create a new GuestTestcloud instance and start it
         self._guest = GuestTestcloud(data, name=self.name, parent=self.step)
@@ -475,9 +477,7 @@ class GuestTestcloud(tmt.Guest):
                 f"directory permissions.", original=error)
 
         # Create instance
-        _, run_id = os.path.split(self.parent.plan.my_run.workdir)
-        self.instance_name = self._random_name(
-            prefix="tmt-{0}-".format(run_id[-3:]))
+        self.instance_name = self._tmt_name()
         self.instance = testcloud.instance.Instance(
             name=self.instance_name, image=self.image,
             connection=f"qemu:///{self.connection}")

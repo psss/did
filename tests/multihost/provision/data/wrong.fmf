@@ -1,0 +1,5 @@
+provision:
+    - name: client
+    - name: client
+execute:
+    script: tmt --help

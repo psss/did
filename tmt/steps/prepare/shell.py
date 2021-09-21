@@ -53,7 +53,7 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
 
     def go(self, guest):
         """ Prepare the guests """
-        super().go()
+        super().go(guest)
 
         # Give a short summary
         scripts = self.get('script')

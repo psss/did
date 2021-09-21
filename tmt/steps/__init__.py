@@ -42,13 +42,15 @@ class Step(tmt.utils.Common):
             self.data = [{'name': tmt.utils.DEFAULT_NAME}]
         # Convert to list if only a single config provided
         elif isinstance(self.data, dict):
-            # Give it a name unless defined
-            if not self.data.get('name'):
-                self.data['name'] = tmt.utils.DEFAULT_NAME
             self.data = [self.data]
         # Shout about invalid configuration
         elif not isinstance(self.data, list):
             raise GeneralError(f"Invalid '{self}' config in '{self.plan}'.")
+
+        # Assign default names unless specified
+        for data in self.data:
+            if 'name' not in data:
+                data['name'] = tmt.utils.DEFAULT_NAME
 
         # Final sanity checks
         for data in self.data:
@@ -374,6 +376,13 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
             value = self.get(key)
             if value is not None:
                 echo(tmt.utils.format(key, value))
+
+    def enabled_on_guest(self, guest):
+        """ Check if the plugin is enabled on the specific guest """
+        where = self.get('where')
+        if not where:
+            return True
+        return where in (guest.name, guest.role)
 
     def wake(self, keys=None):
         """
