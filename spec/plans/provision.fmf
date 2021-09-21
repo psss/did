@@ -124,7 +124,7 @@ example: |
         be sufficient.
 
         Regular expressions can be used for selected fields such
-        as the ``model_name``. Please note, that the full extent
+        as the ``model-name``. Please note, that the full extent
         of regular expressions might not be supported across all
         provision implementations. The ``.*`` notation, however,
         should be supported everywhere.
@@ -155,7 +155,12 @@ example: |
 
         # Disk group used to allow possible future extensions
         disk:
-            space: 500 GB
+          - size: 500 GB
+
+        # Multiple disks can be requested as well
+        disk:
+          - size: '>= 2 GB'
+          - size: '>= 20 GB'
 
         # Optional operators at the start of the value
         memory: '> 8 GB'
@@ -171,7 +176,19 @@ example: |
 
         # Enable regular expression search
         cpu:
-            model_name: =~ .*AMD.*
+            model-name: =~ .*AMD.*
+
+        # Network interface
+        network:
+          - type: eth
+            vendor-name: =~ Broadcom.*
+            device-name: =~ NetXtreme II BCM.*
+
+        # Features related to virtualization
+        virtualization:
+            is-virtualized: true
+            is-supported: false
+            hypervisor: kvm
 
         # Using advanced logic operators
         and:
