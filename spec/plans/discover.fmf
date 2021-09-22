@@ -73,8 +73,9 @@ description: |
             Current git repository used by default.
         ref
             Branch, tag or commit specifying the desired git
-            revision. Defaults to the ``master`` branch if url
-            given or to the current ``HEAD`` if url not provided.
+            revision. Defaults to the remote repository's default
+            branch if url given or to the current ``HEAD`` if url
+            not provided.
         path
             Path to the metadata tree root. Should be relative to
             the git repository root if url provided, absolute
@@ -101,11 +102,14 @@ description: |
             The test is modified if its name starts with the name
             of any directory modified since modified-ref.
         modified-url
-            Will be fetched as a "reference" remote in the test
-            dir.
+            An additional remote repository to be used as the
+            reference for comparison. Will be fetched as a
+            ``reference`` remote in the test dir.
         modified-ref
-            The ref to compare against, ``master`` branch is used
-            by default.
+            The ref to compare against. Defaults to the local
+            repository's default branch. Note that you need to
+            specify ``reference/<branch>`` to compare to a branch
+            from the repository specified in ``modified-url``.
 
         .. _fmf identifier: https://fmf.readthedocs.io/en/latest/concept.html#identifiers
         .. _Flexible Metadata Format: https://fmf.readthedocs.io/
@@ -120,5 +124,8 @@ description: |
             path: /metadata/tree/path
             test: [regexp]
             filter: tier:1
+            modified-only: true
+            modified-url: https://github.com/psss/tmt-official
+            modified-ref: reference/main
     link:
       - implemented-by: /tmt/steps/discover/fmf.py
