@@ -119,6 +119,15 @@ class Issue(object):
                         "maxResults": MAX_RESULTS,
                         "startAt": batch * MAX_RESULTS})))
             data = response.json()
+            if not response.ok:
+                try:
+                    error = " ".join(data["errorMessages"])
+                except KeyError:
+                    error = "unknown"
+                raise ReportError(
+                    f"Failed to fetch jira issues for query '{query}'. "
+                    f"The reason was '{response.reason}' "
+                    f"and the error was '{error}'.")
             log.debug("Batch {0} result: {1} fetched".format(
                 batch, listed(data["issues"], "issue")))
             log.data(pretty(data))
