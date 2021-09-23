@@ -144,9 +144,15 @@ class Core(tmt.utils.Common):
 
         fmf_id = {'name': self.name}
 
-        # Prepare url (for now handle just the most common schemas)
-        origin = run('git config --get remote.origin.url')
-        fmf_id['url'] = tmt.utils.public_git_url(origin)
+        # Prepare url
+        branch = run(
+            'git rev-parse --abbrev-ref --symbolic-full-name @{u}')
+        try:
+            remote_name = branch[:branch.index('/')]
+        except ValueError:
+            remote_name = 'origin'
+        remote = run('git config --get remote.{}.url'.format(remote_name))
+        fmf_id['url'] = tmt.utils.public_git_url(remote)
 
         # Get the ref (skip for master as it is the default)
         ref = run('git rev-parse --abbrev-ref HEAD')
