@@ -31,6 +31,12 @@ from did.stats import Stats, StatsGroup
 # Identifier padding
 PADDING = 3
 
+# Number of issues to be fetched per page
+# FIXME: Just a quick fix for now to override the default limit of 30,
+# need to implement proper pagination to be able to fetch all issues. It
+# seems that github will not fetch more than 100 items anyway.
+PER_PAGE = 1000
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
@@ -51,7 +57,7 @@ class GitHub(object):
 
     def search(self, query):
         """ Perform GitHub query """
-        url = self.url + "/" + query
+        url = self.url + "/" + query + f"&per_page={PER_PAGE}"
         log.debug("GitHub query: {0}".format(url))
         try:
             request = urllib.request.Request(url, headers=self.headers)
