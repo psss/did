@@ -20,6 +20,7 @@ Configuration example (basic authentication)::
     auth_password_file = ~/.did/confluence_password
 
 Notes:
+
 * Optional parameter ``ssl_verify`` can be used to enable/disable
   SSL verification (default: true)
 * ``auth_url`` parameter is optional. If not provided,

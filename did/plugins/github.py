@@ -15,7 +15,7 @@ queries are limited. For more details see `GitHub API`__ docs.
 Use ``login`` to override the default email address for searching.
 See the :doc:`config` documentation for details on using aliases.
 
-__ https://developer.github.com/guides/getting-started/#authentication
+__ https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
 
 """
 

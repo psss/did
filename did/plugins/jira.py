@@ -32,6 +32,7 @@ Configuration example limiting report only to a single project::
     ssl_verify = true
 
 Notes:
+
 * If your JIRA does not have scriptrunner installed you must set
   ``use_scriptrunner`` to false.
 * You must provide ``login`` variable that matches username if it
