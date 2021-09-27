@@ -139,19 +139,21 @@ class Core(tmt.utils.Common):
 
         def run(command):
             """ Run command, return output """
-            result = subprocess.run(command.split(), stdout=subprocess.PIPE)
+            result = subprocess.run(
+                command.split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL)
             return result.stdout.strip().decode("utf-8")
 
         fmf_id = {'name': self.name}
 
-        # Prepare url
-        branch = run(
-            'git rev-parse --abbrev-ref --symbolic-full-name @{u}')
+        # Prepare url (for now handle just the most common schemas)
+        branch = run("git rev-parse --abbrev-ref --symbolic-full-name @{u}")
         try:
             remote_name = branch[:branch.index('/')]
         except ValueError:
             remote_name = 'origin'
-        remote = run('git config --get remote.{}.url'.format(remote_name))
+        remote = run(f"git config --get remote.{remote_name}.url")
         fmf_id['url'] = tmt.utils.public_git_url(remote)
 
         # Get the ref (skip for master as it is the default)

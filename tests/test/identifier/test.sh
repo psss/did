@@ -13,9 +13,6 @@ rlJournalStart
         for test in $(tmt tests ls); do
             rlAssertGrep "$test" $output
         done
-        remote=$(git status -sb | head -n 1 | grep -oP '(?<=\...).*?(?=/)')
-        url=$(git ls-remote --get-url $remote | grep -oP  '(?<=\:).*')
-        rlAssertGrep "$url" "$output"
     rlPhaseEnd
 
     rlPhaseStartCleanup
