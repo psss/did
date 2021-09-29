@@ -1,1 +1,15 @@
-summary: Verify that reboot during test works
+/basic:
+    summary: Verify that reboot during test works
+    test: ./basic.sh
+
+
+/reuse_provision:
+    summary: Verify that provision can be reused for reboot
+    test: ./reuse.sh
+    duration: 10m
+    enabled: false
+
+    adjust:
+        enabled: true
+        when: how == full
+        because: this can be run only with full virtualization

@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import re
@@ -17,6 +18,7 @@ REBOOT_SCRIPT_PATHS = (
     "/usr/bin/rstrnt-reboot",
     "/usr/bin/rhts-reboot",
     "/usr/bin/tmt-reboot")
+REBOOT_BACKUP_EXT = ".backup"
 REBOOT_SCRIPT = f"""\
 #!/bin/sh
 if [ -z "${REBOOT_VARIABLE}" ]; then
@@ -181,22 +183,55 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         else:
             return self.check_shell(test)
 
-    def _setup_reboot(self, guest):
-        """ Prepare the guest environment for potential reboot """
-        # Ignore local provision
-        if isinstance(guest, GuestLocal):
-            return
+    def _setup_reboot_script(self, guest):
+        """ Set up reboot script on the guest"""
         script = REBOOT_SCRIPT.format(token=self.parent.reboot_token)
         reboot_script_path = os.path.join(self.workdir, REBOOT_TEMPLATE_NAME)
         with open(reboot_script_path, 'w') as template:
             template.write(script)
         guest.push(reboot_script_path)
-        for reboot_file in REBOOT_SCRIPT_PATHS:
-            self.debug(f"Replace '{reboot_file}' with tmt implementation if "
-                       f"not already present.")
-            guest.execute(f'if [ ! -e "{reboot_file}" ]; then '
-                          f'cp "{reboot_script_path}" "{reboot_file}" && '
-                          f'chmod +x "{reboot_file}"; fi')
+        return reboot_script_path
+
+    @contextlib.contextmanager
+    def _setup_reboot(self, guest):
+        """ Prepare the guest environment for potential reboot """
+        # Ignore local provision
+        if isinstance(guest, GuestLocal):
+            yield
+            return
+        backed_up = []
+        try:
+            reboot_script_path = self._setup_reboot_script(guest)
+            for reboot_file in REBOOT_SCRIPT_PATHS:
+                self.debug(f"Back up '{reboot_file}' if present.", level=2)
+                try:
+                    guest.execute(f'[ ! -e "{reboot_file}" ]')
+                except tmt.utils.RunError as error:
+                    if error.returncode == 1:
+                        # File exists, back it up
+                        backup = reboot_file + REBOOT_BACKUP_EXT
+                        self.debug(
+                            f"Back up '{reboot_file}' as '{backup}'.", level=2)
+                        guest.execute(f'mv "{reboot_file}" "{backup}"')
+                        backed_up.append(reboot_file)
+                    else:
+                        # Unrelated error, re-raise
+                        raise error
+                guest.execute(f'cp "{reboot_script_path}" "{reboot_file}" && '
+                              f'chmod +x "{reboot_file}"')
+            yield
+        finally:
+            self.debug("Remove our reboot script implementations.", level=2)
+            for reboot_file in REBOOT_SCRIPT_PATHS:
+                guest.execute(f'rm "{reboot_file}"')
+            # FIXME: This part may not be executed if connection to the guest
+            #        drops in the middle and the guest may be left in an
+            #        inconsistent state.
+            for reboot_file in backed_up:
+                backup = reboot_file + REBOOT_BACKUP_EXT
+                self.debug(
+                    f"Move backup '{backup}' to '{reboot_file}'.", level=2)
+                guest.execute(f'mv "{backup}" "{reboot_file}"')
 
     def _handle_reboot(self, test, guest):
         """
@@ -251,26 +286,28 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         tests = self.prepare_tests()
         exit_first = self.get('exit-first', default=False)
         for guest in self.step.plan.provision.guests():
-            self._setup_reboot(guest)
-            # Push workdir to guest and execute tests
-            guest.push()
-            index = 0
-            while index < len(tests):
-                test = tests[index]
-                self.execute(test, guest, progress=f"{index + 1}/{len(tests)}")
-                guest.pull(source=self.data_path(test, full=True))
-                if self._handle_reboot(test, guest):
-                    continue
-                self._results.append(self.check(test))
-                if exit_first and \
-                        self._results[-1].result not in ('pass', 'info'):
-                    # Clear the progress bar before outputting
-                    self._show_progress('', '', True)
-                    self.warn(f'Test {test.name} failed, stopping execution.')
-                    break
-                index += 1
-            # Overwrite the progress bar, the test data is irrelevant
-            self._show_progress('', '', True)
+            with self._setup_reboot(guest):
+                # Push workdir to guest and execute tests
+                guest.push()
+                index = 0
+                while index < len(tests):
+                    test = tests[index]
+                    self.execute(
+                        test, guest, progress=f"{index + 1}/{len(tests)}")
+                    guest.pull(source=self.data_path(test, full=True))
+                    if self._handle_reboot(test, guest):
+                        continue
+                    self._results.append(self.check(test))
+                    if (exit_first and
+                            self._results[-1].result not in ('pass', 'info')):
+                        # Clear the progress bar before outputting
+                        self._show_progress('', '', True)
+                        self.warn(
+                            f'Test {test.name} failed, stopping execution.')
+                        break
+                    index += 1
+                # Overwrite the progress bar, the test data is irrelevant
+                self._show_progress('', '', True)
 
     def results(self):
         """ Return test results """
