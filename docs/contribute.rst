@@ -240,7 +240,7 @@ Release
 Follow the steps below to create a new major or minor release:
 
 * Run the full test coverage using ``tmt -c how=full run``
-* Use ``git log --oneline x.y-1..`` to generate the changelog
+* Use ``git log --oneline --no-decorate x.y-1..`` to generate the changelog
 * Add a ``Release tmt-x.y.0`` commit with the specfile update
 * Create a pull request with the commit, ensure tests pass
 
@@ -264,22 +264,19 @@ Release a new package to Fedora and EPEL repositories:
 
 Finally, if everything went well:
 
-* Merge the original release pull request on github
+* **Manually** merge the original release pull request on github (to avoid rebase)
+  ``git checkout master && git merge --ff-only <release_branch> && git push origin master``
 * Tag the commit with ``x.y.0``, push tags ``git push --tags``
 * Create a new `github release`__ based on the tag above
+* If the automation triggered by publishing the new github release
+  was not successful, publish the fresh code to the `pypi`__
+  repository manually using ``make wheel && make upload``
+* Once the `copr build`__ is completed, move the ``quay`` branch to
+  point to the release commit as well to build fresh container
+  images.
 * Close the corresponding release milestone
 
-If the automation triggered by publishing the new github release
-was not successful, publish the fresh code to the `pypi`__
-repository manually::
-
-    make wheel
-    make upload
-
-Once the copr build is completed, move the ``quay`` branch to
-point to the release commit as well to build fresh container
-images.
-
 __ https://bodhi.fedoraproject.org/releases/
-__ https://pypi.org/project/tmt/
 __ https://github.com/psss/tmt/releases/
+__ https://pypi.org/project/tmt/
+__ https://copr.fedorainfracloud.org/coprs/psss/tmt/builds/

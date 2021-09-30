@@ -213,7 +213,7 @@ export LANG=en_US.utf-8
 - Produce better errors for unsupported plugins
 - Add more ignored files, categorize gitignore more
 - Extend .gitignore with a few more common patterns
-- (robin/master) Export fields of a case should be checked by lint
+- Export fields of a case should be checked by lint
 - Adjust the bugzilla support in test export
 - Test export can link case to bugzilla
 - Document the support for `open` key in html report
