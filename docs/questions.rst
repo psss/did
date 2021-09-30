@@ -7,7 +7,7 @@
 .. _fmf-and-tmt:
 
 What is the difference between fmf and tmt?
-------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The `Flexible Metadata Format`__ or ``fmf`` is a plain text format
 based on ``yaml`` used to store data in both human and machine
@@ -29,7 +29,7 @@ __ https://tmt.readthedocs.io/en/latest/
 .. _libvirt:
 
 Virtualization Tips
-------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Here's just a couple of hints how to get the virtualization
 quickly working on your laptop. See the `Getting started with
@@ -60,7 +60,7 @@ __ https://kojipkgs.fedoraproject.org/compose/
 
 
 Container Package Cache
-------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Using containers can speed up your testing. However, fetching
 package cache can slow things down substantially. Use this set of
@@ -80,7 +80,7 @@ In this way you can save up to several minutes for each plan.
 
 
 Nitrate Migration
-------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After a nitrate test case is migrated to ``fmf`` git becomes the
 canonical source of the test case metadata. All further changes
@@ -136,3 +136,188 @@ Custom workflow can then consume generated ids and perform desired
 actions such as fetch the tests and execute them.
 
 __ https://fmf.readthedocs.io/en/latest/concept.html#identifiers
+
+
+STI migration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Another possible metadata migration path can from `STI`__.
+Standard test interface is described in ``tests.yml`` Ansible
+playbook. It uses standard test `Ansible roles`__. Ansible
+playbook in YAML has similar but not the same format as FMF.
+
+__ https://docs.fedoraproject.org/en-US/ci/standard-test-interface/
+__ https://docs.fedoraproject.org/en-US/ci/standard-test-roles/#_roles
+
+Below you can see original STI ansible playbooks and it's equivalents
+written in fmf.
+
+Simple running binary
+------------------------------------------------------------------
+
+STI example::
+
+    - hosts: localhost
+      roles:
+      - role: standard-test-basic
+        tags:
+        - classic
+        tests:
+        - simple:
+            dir: .
+            run: binary --help
+
+tmt example plan (L2 metadata)::
+
+    execute:
+        script: binary --help
+
+
+Test plan running script cmd-line-options
+------------------------------------------------------------------
+
+This example prepares testing environment by installing
+required packages.
+
+STI example::
+
+    - hosts: localhost
+      tags:
+      - atomic
+      - classic
+      - container
+      roles:
+      - role: standard-test-beakerlib
+        tests:
+        - cmd-line-options
+        required_packages:
+        - which         # which package required for cmd-line-options
+        - rpm-build     # upstream-testsuite requires rpmbuild command
+        - libtool       # upstream-testsuite requires libtool
+        - gettext       # upstream-testsuite requires gettext
+
+tmt example plan (L2 metadata)::
+
+    summary: Check basics cmd options
+    prepare:
+        how: install
+        package:
+          - which         # which package required for cmd-line-options
+          - rpm-build     # upstream-testsuite requires rpmbuild command
+          - libtool       # upstream-testsuite requires libtool
+          - gettext       # upstream-testsuite requires gettext
+    execute:
+        script: cmd-line-options
+
+
+Test plan from remote repository
+------------------------------------------------------------------
+
+Tests in this plan are also filtered by the tag.
+
+STI example::
+
+    - hosts: localhost
+      roles:
+      - role: standard-test-beakerlib
+        tags:
+        - classic
+        repositories:
+        - repo: "https://src.fedoraproject.org/tests/shell.git"
+          dest: "shell"
+          fmf_filter: "tier: 1"
+
+tmt example plan (L2 metadata)::
+
+    summary: Tier 1 shell test plan
+    discover:
+        how: fmf
+        url: https://src.fedoraproject.org/tests/shell.git
+        filter: "tier: 1"
+
+
+Split metadata to more files
+------------------------------------------------------------------
+
+In this migration of STI is created L2 metadata (plan) and each
+original test is stored in separate L1 metadata file (test). This
+approach allows setup of different environment variables and
+required packages for each test.
+
+STI example::
+
+    - hosts: localhost
+      roles:
+      - role: standard-test-basic
+        tags:
+        - classic
+        tests:
+        - smoke27:
+            dir: tests
+            run: VERSION=2.7 METHOD=virtualenv ./venv.sh
+        - smoke37:
+            dir: tests
+            run: VERSION=3.7 ./venv.sh
+        required_packages:
+        - python27
+        - python37
+        - python2-virtualenv
+        - python3-virtualenv
+        - python2-devel
+        - python3-devel
+
+
+tmt example: plan (L2 metadata) and tests (L1 metadata)
+
+plans/example.fmf::
+
+    discover:
+        how: fmf
+    execute:
+        how: tmt
+
+tests/smoke27.fmf::
+
+    test: ./venv.sh
+    environment:
+        VERSION: 2.7
+        METHOD: virtualenv
+    require:
+      - python27
+      - python2-virtualenv
+      - python2-devel
+
+tests/smoke37.fmf::
+
+    test: ./venv.sh
+    environment:
+        VERSION: 3.7
+    require:
+      - python37
+      - python3-virtualenv
+      - python3-devel
+
+This arrangement can be especially useful when a large number of
+tests is stored in the repository.
+
+
+Using 'dist-git-source' feature of the 'discover' plugin
+------------------------------------------------------------------
+This feature of 'discover' plugin allows to extract tests from the
+extracted (rpm) sources.
+
+STI example::
+
+    - hosts: localhost
+      tags:
+      - classic
+      roles:
+      - role: standard-test-source
+
+tmt example plan (L2 metadata)::
+
+    discover:
+        how: fmf
+        dist-git-source: true
+
+See :ref:`/spec/plans/discover/fmf` for details.
