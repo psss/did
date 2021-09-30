@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.7.0
+Version: 1.8.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -189,6 +189,38 @@ export LANG=en_US.utf-8
 
 
 %changelog
+* Thu Sep 30 2021 Lukáš Zachar <lzachar@redhat.com> - 1.8.0-1
+- Add support for reboot in a reused provision
+- Solve the reboot race condition
+- Adjust the current git remote improvement
+- Use current git remote for url in fmf-id
+- Implement option to exit after first failure
+- Clarify and update spec for the discover step
+- Adjust the multihost test specification
+- Add the multihost testing specification
+- Make run --force behave more expectably
+- Increase duration for tests using containers
+- Rename soon-to-be deprecated resultcallback
+- Remove the minute.obsolete provision plugin
+- Document how to create a new minor/major release
+- Explicitly mention '.' as special value for names
+- Add Github Action for PyPI releases
+- Improve fetching remote environment files
+- Adjust the check for rsync before pull and push
+- Install `rsync` before guest.pull()
+- Second chapter of the Guide: Under The Hood
+- Simplify the search for step method options
+- Produce better errors for unsupported plugins
+- Add more ignored files, categorize gitignore more
+- Extend .gitignore with a few more common patterns
+- (robin/master) Export fields of a case should be checked by lint
+- Adjust the bugzilla support in test export
+- Test export can link case to bugzilla
+- Document the support for `open` key in html report
+- Allow html report to be opened by plan
+- Require essential packages for tmt testing
+- Skip the docs test until the Sphinx issue is fixed
+
 * Wed Aug 18 2021 Petr Šplíchal <psplicha@redhat.com> - 1.7.0-1
 - Adjust support for exporting test fmf identifiers
 - Add --fmf-id option for tests export
