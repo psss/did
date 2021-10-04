@@ -6,6 +6,7 @@
 
 .. _fmf-and-tmt:
 
+
 What is the difference between fmf and tmt?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -27,6 +28,7 @@ __ https://tmt.readthedocs.io/en/latest/
 
 
 .. _libvirt:
+
 
 Virtualization Tips
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -138,24 +140,35 @@ actions such as fetch the tests and execute them.
 __ https://fmf.readthedocs.io/en/latest/concept.html#identifiers
 
 
-STI migration
+How do I migrate STI tests to tmt?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Another possible metadata migration path can from `STI`__.
-Standard test interface is described in ``tests.yml`` Ansible
-playbook. It uses standard test `Ansible roles`__. Ansible
-playbook in YAML has similar but not the same format as FMF.
+`Standard Test Interface`__ tests are enabled using ``tests.yml``
+Ansible playbooks together with the `Standard Test Roles`__ which
+make it easier to execute tests, check their results and perform
+additional actions such as installing required packages. The
+configuration, however, can sometimes be confusing and quite hard
+to understand.
+
+With ``tmt`` it is possible to achieve the same result with much
+more concise and clean syntax. For majority of existing tests the
+conversion is relatively straightforward. Let's demonstrate it on
+a couple of real-life examples. Below you can see the original STI
+ansible playbooks and their ``tmt`` equivalents for inspiration.
+
+As the first step, initialize the metadata tree using the ``tmt
+init`` command in the root of the git repository. Then store the
+new config files with the ``.fmf`` extension. Naming and location
+of the files is up to you. See the :ref:`guide` for more details.
 
 __ https://docs.fedoraproject.org/en-US/ci/standard-test-interface/
-__ https://docs.fedoraproject.org/en-US/ci/standard-test-roles/#_roles
+__ https://docs.fedoraproject.org/en-US/ci/standard-test-roles/
 
-Below you can see original STI ansible playbooks and it's equivalents
-written in fmf.
 
-Simple running binary
+Simple Script
 ------------------------------------------------------------------
 
-STI example::
+Running a simple binary using STI::
 
     - hosts: localhost
       roles:
@@ -167,13 +180,15 @@ STI example::
             dir: .
             run: binary --help
 
-tmt example plan (L2 metadata)::
+The equivalent ``tmt`` plan has only two lines::
 
     execute:
         script: binary --help
 
+Store them for example as ``/plans/smoke.fmf`` and you're done.
 
-Test plan running script cmd-line-options
+
+Required Packages
 ------------------------------------------------------------------
 
 This example prepares testing environment by installing
@@ -191,29 +206,30 @@ STI example::
         tests:
         - cmd-line-options
         required_packages:
-        - which         # which package required for cmd-line-options
-        - rpm-build     # upstream-testsuite requires rpmbuild command
-        - libtool       # upstream-testsuite requires libtool
-        - gettext       # upstream-testsuite requires gettext
+        - which
+        - rpm-build
+        - libtool
+        - gettext
 
 tmt example plan (L2 metadata)::
 
-    summary: Check basics cmd options
+    summary: Check basic command line options
     prepare:
         how: install
         package:
-          - which         # which package required for cmd-line-options
-          - rpm-build     # upstream-testsuite requires rpmbuild command
-          - libtool       # upstream-testsuite requires libtool
-          - gettext       # upstream-testsuite requires gettext
+          - which
+          - rpm-build
+          - libtool
+          - gettext
     execute:
         script: cmd-line-options
 
 
-Test plan from remote repository
+Remote Repository
 ------------------------------------------------------------------
 
-Tests in this plan are also filtered by the tag.
+Tests in the following example are fetched from a remote
+repository and filtered by the provided condition.
 
 STI example::
 
@@ -234,15 +250,17 @@ tmt example plan (L2 metadata)::
         how: fmf
         url: https://src.fedoraproject.org/tests/shell.git
         filter: "tier: 1"
+    execute:
+        how: tmt
 
 
-Split metadata to more files
+Multiple Tests
 ------------------------------------------------------------------
 
-In this migration of STI is created L2 metadata (plan) and each
-original test is stored in separate L1 metadata file (test). This
-approach allows setup of different environment variables and
-required packages for each test.
+In this migration of STI a single plan (L2 metadata) is created
+and each original test is stored in a separate L1 metadata file
+(test). This approach allows the setup of different environment
+variables and required packages for each test.
 
 STI example::
 
@@ -301,10 +319,11 @@ This arrangement can be especially useful when a large number of
 tests is stored in the repository.
 
 
-Using 'dist-git-source' feature of the 'discover' plugin
+Dist Git Source
 ------------------------------------------------------------------
-This feature of 'discover' plugin allows to extract tests from the
-extracted (rpm) sources.
+
+Use the ``dist-git-source`` feature of the ``discover`` step to
+extract tests from the (rpm) sources.
 
 STI example::
 
@@ -320,4 +339,5 @@ tmt example plan (L2 metadata)::
         how: fmf
         dist-git-source: true
 
-See :ref:`/spec/plans/discover/fmf` for details.
+See the :ref:`/spec/plans/discover/fmf` plugin documentation for
+more details.
