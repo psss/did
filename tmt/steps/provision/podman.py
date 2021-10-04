@@ -23,7 +23,7 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
     _guest = None
 
     # Supported keys
-    _keys = ['image', 'container', 'pull']
+    _keys = ["image", "container", "pull"]
 
     # Supported methods
     _methods = [tmt.steps.Method(name='container', doc=__doc__, order=50)]
@@ -51,13 +51,9 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
         # No other defaults available
         return default
 
-    def show(self):
-        """ Show provision details """
-        super().show(self._keys)
-
-    def wake(self, data=None):
-        """ Override options and wake up the guest """
-        super().wake(self._keys)
+    def wake(self, keys=None, data=None):
+        """ Wake up the plugin, process data, apply options """
+        super().wake(keys=keys, data=data)
         # Wake up podman instance
         if data:
             guest = GuestContainer(data, name=self.name, parent=self.step)

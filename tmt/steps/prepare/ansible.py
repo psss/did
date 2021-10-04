@@ -31,6 +31,9 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
     # Supported methods
     _methods = [tmt.steps.Method(name='ansible', doc=__doc__, order=50)]
 
+    # Supported keys
+    _keys = ["playbook"]
+
     def __init__(self, step, data):
         """ Store plugin name, data and parent step """
         super().__init__(step, data)
@@ -53,13 +56,9 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
             return []
         return default
 
-    def show(self):
-        """ Show provided playbooks """
-        super().show(['playbook'])
-
-    def wake(self, data=None):
-        """ Override options and wake up the guest """
-        super().wake(['playbook'])
+    def wake(self, keys=None):
+        """ Wake up the plugin, process data, apply options """
+        super().wake(keys=keys)
 
         # Convert to list if necessary
         tmt.utils.listify(self.data, keys=['playbook'])

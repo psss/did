@@ -188,11 +188,11 @@ class ExecutePlugin(tmt.steps.Plugin):
     # List of all supported methods aggregated from all plugins
     _supported_methods = []
 
+    # Common keys for all execute plugins
+    _common_keys = ["exit-first"]
+
     # Internal executor is the default implementation
     how = 'tmt'
-
-    # List of keys supported for all execute plugins
-    _keys = ['exit-first']
 
     @classmethod
     def base_command(cls, method_class=None, usage=None):
@@ -222,17 +222,11 @@ class ExecutePlugin(tmt.steps.Plugin):
             help='Stop execution after the first test failure.')]
         return options + super().options(how)
 
-    def show(self, keys=None):
-        keys = (keys or []) + self._keys
-        super().show(keys)
-
-    def wake(self, options=None):
-        options = (options or []) + self._keys
-        super().wake(options)
-
     def go(self):
         super().go()
-        self.info('exit-first', self.get('exit-first', default=False), 'green')
+        self.verbose(
+            'exit-first', self.get('exit-first', default=False),
+            'green', level=2)
 
     def data_path(self, test, filename=None, full=False, create=False):
         """

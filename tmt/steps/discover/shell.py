@@ -32,7 +32,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
     # Supported methods
     _methods = [tmt.steps.Method(name='shell', doc=__doc__, order=50)]
 
-    def show(self):
+    def show(self, keys=None):
         """ Show config details """
         super().show([])
         tests = self.get('tests')
@@ -40,7 +40,9 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             test_names = [test['name'] for test in tests]
             click.echo(tmt.utils.format('tests', test_names))
 
-    def wake(self):
+    def wake(self, keys=None):
+        """ Wake up the plugin, process data, apply options """
+        super().wake(keys=keys)
         # Check provided tests, default to an empty list
         if 'tests' not in self.data:
             self.data['tests'] = []

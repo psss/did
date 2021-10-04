@@ -51,6 +51,9 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
     # Supported methods
     _methods = [tmt.steps.Method(name='install', doc=__doc__, order=50)]
 
+    # Supported keys
+    _keys = ["package", "directory", "copr", "exclude", "missing"]
+
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options """
@@ -81,18 +84,14 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
             return []
         return default
 
-    def show(self):
-        """ Show provided scripts """
-        super().show(['package', 'directory', 'copr', 'exclude', 'missing'])
-
-    def wake(self, data=None):
-        """ Override options and wake up the guest """
-        super().wake(['package', 'directory', 'copr', 'exclude', 'missing'])
+    def wake(self, keys=None):
+        """ Wake up the plugin, process data, apply options """
+        super().wake(keys=keys)
 
         # Convert to list if necessary
         tmt.utils.listify(
-            self.data, split=True, keys=[
-                'package', 'directory', 'copr', 'exclude'])
+            self.data, split=True,
+            keys=['package', 'directory', 'copr', 'exclude'])
 
     def enable_copr_epel6(self, copr, guest):
         """ Manually enable copr repositories for epel6 """

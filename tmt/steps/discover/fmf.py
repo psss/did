@@ -65,6 +65,12 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     # Supported methods
     _methods = [tmt.steps.Method(name='fmf', doc=__doc__, order=50)]
 
+    # Supported keys
+    _keys = [
+        "url", "ref", "path", "test", "filter",
+        "modified-only", "modified-url", "modified-ref",
+        "dist-git-source", "dist-git-type"]
+
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for given method """
@@ -104,14 +110,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 help='Use the provided DistGit handler instead of detection.'),
             ] + super().options(how)
 
-    def show(self):
-        """ Show discover details """
-        super().show(['url', 'ref', 'path', 'test',
-                      'filter', 'dist-git-source', 'dist-git-type'])
-
-    def wake(self):
-        """ Wake up the plugin (override data with command line) """
-
+    def wake(self, keys=None):
+        """ Wake up the plugin, process data, apply options """
         # Handle backward-compatible stuff
         if 'repository' in self.data:
             self.data['url'] = self.data.pop('repository')
@@ -119,25 +119,10 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.data['ref'] = self.data.pop('revision')
 
         # Make sure that 'filter' and 'test' keys are lists
-        for key in ['filter', 'test']:
-            if key in self.data and not isinstance(self.data[key], list):
-                self.data[key] = [self.data[key]]
+        tmt.utils.listify(self.data, keys=["filter", "test"])
 
         # Process command line options, apply defaults
-        for option in [
-                'url',
-                'ref',
-                'path',
-                'test',
-                'filter',
-                'modified-only',
-                'modified-url',
-                'modified-ref',
-                'dist-git-source',
-                'dist-git-type']:
-            value = self.opt(option)
-            if value:
-                self.data[option] = value
+        super().wake(keys=keys)
 
     def go(self):
         """ Discover available tests """

@@ -29,6 +29,9 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
         tmt.steps.Method(name='beakerlib.detach', doc=__doc__, order=90),
         ]
 
+    # Supported keys
+    _keys = ["script"]
+
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for given method """
@@ -38,13 +41,9 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
             help='Shell script to be executed as a test.'))
         return options + super().options(how)
 
-    def show(self):
-        """ Show discover details """
-        super().show(['script'])
-
-    def wake(self):
-        """ Wake up the plugin (override data with command line) """
-        super().wake(options=['script'])
+    def wake(self, keys=None):
+        """ Wake up the plugin, process data, apply options """
+        super().wake(keys=keys)
         # Make sure that 'script' is a list
         tmt.utils.listify(self.data, keys=['script'])
 

@@ -198,11 +198,6 @@ class DiscoverPlugin(tmt.steps.Plugin):
 
         return discover
 
-    @classmethod
-    def options(cls, how=None):
-        """ Prepare command line options for given method """
-        return super().options(how)
-
     def tests(self):
         """
         Return discovered tests

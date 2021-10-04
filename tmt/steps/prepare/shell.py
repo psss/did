@@ -26,6 +26,9 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
     # Supported methods
     _methods = [tmt.steps.Method(name='shell', doc=__doc__, order=50)]
 
+    # Supported keys
+    _keys = ["script"]
+
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options """
@@ -41,13 +44,9 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
             return []
         return default
 
-    def show(self):
-        """ Show provided scripts """
-        super().show(['script'])
-
-    def wake(self, data=None):
-        """ Override options and wake up the guest """
-        super().wake(['script'])
+    def wake(self, keys=None):
+        """ Wake up the plugin, process data, apply options """
+        super().wake(keys=keys)
 
         # Convert to list if single script provided
         tmt.utils.listify(self.data, keys=['script'])

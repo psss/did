@@ -250,6 +250,12 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
     # except for provision (virtual) and report (display)
     how = 'shell'
 
+    # Common keys for all plugins of given step
+    _common_keys = []
+
+    # Keys specific for given plugin
+    _keys = []
+
     def __init__(self, step, data):
         """ Store plugin name, data and parent step """
 
@@ -357,7 +363,7 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         # Show all or requested step attributes
         base_keys = ['name', 'how']
         if keys is None:
-            keys = [key for key in self.data.keys() if key not in base_keys]
+            keys = self._common_keys + self._keys
         for key in base_keys + keys:
             # Skip showing the default name
             if key == 'name' and self.name == tmt.utils.DEFAULT_NAME:
@@ -369,19 +375,25 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
             if value is not None:
                 echo(tmt.utils.format(key, value))
 
-    def wake(self, options=None):
+    def wake(self, keys=None):
         """
-        Wake up the plugin (override data with command line)
+        Wake up the plugin, process data, apply options
 
-        If a list of option names is provided, their value will be
-        checked and stored in self.data unless empty or undefined.
+        Check command line options corresponding to plugin keys
+        and store their value into the 'self.data' dictionary if
+        their value is True or non-empty.
+
+        By default, all supported options corresponding to common
+        and plugin-specific keys are processed. List of key names
+        in the 'keys' parameter can be used to override only
+        selected ones.
         """
-        if options is None:
-            return
-        for option in options:
-            value = self.opt(option)
+        if keys is None:
+            keys = self._common_keys + self._keys
+        for key in keys:
+            value = self.opt(key)
             if value:
-                self.data[option] = value
+                self.data[key] = value
 
     def go(self):
         """ Go and perform the plugin task """

@@ -44,7 +44,8 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
     # Supported methods
     _methods = [tmt.steps.Method(name='junit', doc=__doc__, order=50)]
 
-    _keys = ['file']
+    # Supported keys
+    _keys = ["file"]
 
     @classmethod
     def options(cls, how=None):

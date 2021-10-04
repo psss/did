@@ -171,14 +171,14 @@ class ProvisionPlugin(tmt.steps.Plugin):
 
         return provision
 
-    def wake(self, options=None, data=None):
+    def wake(self, keys=None, data=None):
         """
         Wake up the plugin
 
         Override data with command line options.
         Wake up the guest based on provided guest data.
         """
-        super().wake(options)
+        super().wake(keys=keys)
 
     def guest(self):
         """

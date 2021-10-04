@@ -37,6 +37,9 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
     # Supported methods
     _methods = [tmt.steps.Method(name='connect', doc=__doc__, order=50)]
 
+    # Supported keys
+    _keys = ["guest", "key", "user", "password", "port"]
+
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for connect """
@@ -66,13 +69,9 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         # No other defaults available
         return default
 
-    def show(self):
-        """ Show provision details """
-        super().show(['guest', 'key', 'user', 'password', 'port'])
-
-    def wake(self, data=None):
-        """ Override options and wake up the guest """
-        super().wake(['guest', 'key', 'user', 'password', 'port'])
+    def wake(self, keys=None, data=None):
+        """ Wake up the plugin, process data, apply options """
+        super().wake(keys=keys, data=data)
         if data:
             self._guest = tmt.Guest(data, name=self.name, parent=self.step)
 

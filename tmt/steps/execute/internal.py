@@ -60,6 +60,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         tmt.steps.Method(name='beakerlib.tmt', doc=__doc__, order=80),
         ]
 
+    # Supported keys
+    _keys = ["script", "interactive"]
+
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for given method """
@@ -78,15 +81,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             help='Disable interactive progress bar showing the current test.'))
         return options + super().options(how)
 
-    def show(self, keys=None):
-        """ Show execute details """
-        keys = (keys or []) + ['script', 'interactive']
-        super().show(keys)
-
-    def wake(self, options=None):
-        """ Wake up the plugin (override data with command line) """
-        options = (options or []) + ['script', 'interactive']
-        super().wake(options=options)
+    def wake(self, keys=None):
+        """ Wake up the plugin, process data, apply options """
+        super().wake(keys=keys)
         # Make sure that script is a list
         tmt.utils.listify(self.data, keys=['script'])
 

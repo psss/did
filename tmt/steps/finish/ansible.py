@@ -29,6 +29,6 @@ class FinishAnsible(tmt.steps.finish.FinishPlugin, PrepareAnsible):
     # Supported methods
     _methods = [tmt.steps.Method(name='ansible', doc=__doc__, order=50)]
 
-    # Explicitely use theses from FinishPlugin class
+    # Explicitly use these from FinishPlugin class
     _supported_methods = tmt.steps.finish.FinishPlugin._supported_methods
     base_command = tmt.steps.finish.FinishPlugin.base_command
