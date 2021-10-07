@@ -68,7 +68,7 @@ master_man = 'man.1'
 
 # General information about the project.
 project = u'tmt'
-copyright = u'2019, Red Hat'
+copyright = u'Red Hat'
 author = u'Petr Šplíchal'
 
 # The version info for the project you're documenting, acts as replacement for
