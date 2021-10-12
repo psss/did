@@ -411,3 +411,30 @@ class Run(unittest.TestCase):
             join=True)
         self.assertIn("n n", a)
         self.assertEqual(len(a), 200000)
+
+
+def test_get_distgit_handler():
+    for wrong_remotes in [[], ["blah"]]:
+        with pytest.raises(tmt.utils.GeneralError):
+            tmt.utils.get_distgit_handler([])
+    # Fedora detection
+    returned_object = tmt.utils.get_distgit_handler("""
+        remote.origin.url ssh://lzachar@pkgs.fedoraproject.org/rpms/tmt
+        remote.lzachar.url ssh://lzachar@pkgs.fedoraproject.org/forks/lzachar/rpms/tmt.git
+        """.split('\n'))
+    assert isinstance(returned_object, tmt.utils.FedoraDistGit)
+    # CentOS detection
+    returned_object = tmt.utils.get_distgit_handler("""
+        remote.origin.url git+ssh://git@gitlab.com/redhat/centos-stream/rpms/ruby.git
+        """.split('\n'))
+    assert isinstance(returned_object, tmt.utils.CentOSDistGit)
+
+
+def test_FedoraDistGit(tmpdir):
+    # Fake values, production hash is too long
+    tmpdir.join('sources').write(
+        'SHA512 (fn-1.tar.gz) = 09af\n')
+    tmpdir.join('tmt.spec').write('')
+    fedora_sources_obj = tmt.utils.FedoraDistGit()
+    assert ("https://src.fedoraproject.org/repo/pkgs/rpms/tmt/fn-1.tar.gz/sha512/09af/fn-1.tar.gz",
+            "fn-1.tar.gz") == fedora_sources_obj.url_and_name(cwd=tmpdir)

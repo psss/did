@@ -25,3 +25,11 @@
 /parametrize:
     summary: Check that plan parametrization works
     test: ./parametrize.sh
+
+/distgit:
+    summary: Get tests from the source tarball from dist-git lookaside
+    test: ./distgit.sh
+    enabled: false
+    adjust:
+    - enabled: true
+      when: how == full or trigger == commit

@@ -88,6 +88,18 @@ description: |
             Apply advanced filter based on test metadata
             attributes. See ``pydoc fmf.filter`` for more info.
 
+        dist-git-source
+            Set to True if you want discover tests from extracted (rpm) sources.
+            Needs to run on top of the supported DistGit (Fedora, CentOS),
+            'url', can be used to point to such repository.
+            'path' denotes path to the metadata tree root within extracted sources.
+            At this moment no patches are applied, only tarball extraction happens
+
+        dist-git-type
+            Auto detection of DistGit is based on git remotes. Use this option to specify it directly.
+            At least ``FedoraDistGit`` and ``CentOSDistGit`` are supported as values, help will print
+            all possible values.
+
         See also the `fmf identifier`_ documentation.
 
         It is also possible to limit tests only to those that have
@@ -127,5 +139,9 @@ description: |
             modified-only: true
             modified-url: https://github.com/psss/tmt-official
             modified-ref: reference/main
+
+        discover:
+            how: fmf
+            dist-git-source: true
     link:
       - implemented-by: /tmt/steps/discover/fmf.py

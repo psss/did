@@ -3,6 +3,7 @@
 
 import contextlib
 import datetime
+import glob
 import io
 import os
 import pprint
@@ -1674,3 +1675,78 @@ class StructuredField(object):
                     "Unable to remove '{0}' from section '{1}'".format(
                         ascii(item), ascii(section)))
             self._sections[section] = self._write_section(dictionary)
+
+
+class DistGitHandler(object):
+    """
+    Common functionality for DistGit handlers
+    """
+    sources_file_name = 'sources'
+    uri = "/rpms/{name}/{filename}/{hashtype}/{hash}/{filename}"
+    remote_substring = None
+    usage_name = "Name to use for dist-git-type"
+
+    def url_and_name(self, cwd='.'):
+        """
+        Return url and basename of the used source
+
+        'cwd' has to be DistGit directory
+        """
+        # Assumes <package>.spec
+        globbed = glob.glob(
+            os.path.join(
+                cwd,
+                '*.spec'))
+        if len(globbed) != 1:
+            raise GeneralError(f"No .spec file is present in '{cwd}'")
+        package = os.path.basename(globbed[0])[:-len('.spec')]
+        try:
+            with open(os.path.join(cwd, self.sources_file_name)) as f:
+                match = self.re_source.match(f.read())
+        except Exception as error:
+            raise GeneralError(
+                f"Couldn't read '{self.sources_file_name}' file",
+                original=error
+                )
+        used_hash, source_name, hash_value = match.groups()
+        return self.lookaside_server + self.uri.format(
+            name=package,
+            filename=source_name,
+            hash=hash_value,
+            hashtype=used_hash.lower()
+            ), source_name
+
+    def its_me(self, remotes):
+        """ True if self can work with remotes """
+        return any([self.remote_substring.search(item) for item in remotes])
+
+
+class FedoraDistGit(DistGitHandler):
+    usage_name = "Fedora"
+    re_source = re.compile(r"^(\w+) \(([^)]+)\) = ([0-9a-fA-F]+)$")
+    lookaside_server = "https://src.fedoraproject.org/repo/pkgs"
+    remote_substring = re.compile(r'fedoraproject\.org')
+
+
+class CentOSDistGit(DistGitHandler):
+    usage_name = "CentOS"
+    re_source = re.compile(r"^(\w+) \(([^)]+)\) = ([0-9a-fA-F]+)$")
+    lookaside_server = "https://sources.stream.centos.org/sources"
+    remote_substring = re.compile(r'redhat/centos')
+
+
+def get_distgit_handler(remotes=None, usage_name=None):
+    """ Return DistGitHandler which understands specified remotes or by usage_name """
+    for candidate_class in DistGitHandler.__subclasses__():
+        if usage_name is not None and usage_name == candidate_class.usage_name:
+            return candidate_class()
+        if remotes is not None:
+            ret_val = candidate_class()
+            if ret_val.its_me(remotes):
+                return ret_val
+    raise GeneralError(f"No known remote in {remotes}")
+
+
+def get_distgit_handler_names():
+    """ All known distgit handlers """
+    return [i.usage_name for i in DistGitHandler.__subclasses__()]

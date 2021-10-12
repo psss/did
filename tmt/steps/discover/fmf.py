@@ -8,6 +8,7 @@ import fmf
 import tmt
 import tmt.beakerlib
 import tmt.steps.discover
+from tmt.utils import DiscoverError
 
 
 class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
@@ -31,6 +32,14 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             filter: 'tier: 1'
 
     If no 'ref' is provided, the default branch from the origin is used.
+
+    For DistGit repo one can extract source tarball first and discover
+    tests from it by using 'distgit-source: true'. It can be used together with
+    'ref', 'path' and 'url'.
+
+        discover:
+            how: fmf
+            dist-git-source: true
 
     It is also possible to limit tests only to those that have changed
     in git since a given revision. This can be particularly useful when
@@ -87,11 +96,18 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             click.option(
                 '-F', '--filter', metavar='FILTERS', multiple=True,
                 help='Include only tests matching the filter.'),
+            click.option(
+                '--dist-git-source', is_flag=True,
+                help='Extract DistGit sources and run discover on top of it'),
+            click.option(
+                '--dist-git-type', type=click.Choice(tmt.utils.get_distgit_handler_names()),
+                help='Use explicit DistGit handler'),
             ] + super().options(how)
 
     def show(self):
         """ Show discover details """
-        super().show(['url', 'ref', 'path', 'test', 'filter'])
+        super().show(['url', 'ref', 'path', 'test',
+                      'filter', 'dist_git_source', 'dist_git_type'])
 
     def wake(self):
         """ Wake up the plugin (override data with command line) """
@@ -108,8 +124,17 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 self.data[key] = [self.data[key]]
 
         # Process command line options, apply defaults
-        for option in ['url', 'ref', 'modified-url', 'modified-ref', 'path',
-                       'test', 'filter', 'modified-only']:
+        for option in [
+            'url',
+            'ref',
+            'modified-url',
+            'modified-ref',
+            'path',
+            'test',
+            'filter',
+            'modified-only',
+            'dist_git_source',
+                'dist_git_type']:
             value = self.opt(option)
             if value:
                 self.data[option] = value
@@ -122,6 +147,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         url = self.get('url')
         path = self.get('path')
         testdir = os.path.join(self.workdir, 'tests')
+        dist_git_source = self.get('dist_git_source', False)
 
         # Clone provided git repository (if url given) with disabled
         # prompt to ignore possibly missing or private repositories
@@ -133,20 +159,25 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 shell=False, env={"GIT_ASKPASS": "echo"})
         # Copy git repository root to workdir
         else:
-            if path and not os.path.isdir(path):
+            # Path for from:sources cannot be checked until tarball is
+            # extracted
+            if path and not os.path.isdir(path) and not dist_git_source:
                 raise tmt.utils.DiscoverError(
                     f"Provided path '{path}' is not a directory.")
-            fmf_root = path or self.step.plan.my_run.tree.root
-            # Check git repository root (use fmf root if not found)
-            try:
-                output = self.run(
-                    'git rev-parse --show-toplevel', cwd=fmf_root, dry=True)
-                git_root = output[0].strip('\n')
-            except tmt.utils.RunError:
-                self.debug(f"Git root not found, using '{fmf_root}.'")
-                git_root = fmf_root
-            # Set path to relative path from the git root to fmf root
-            path = os.path.relpath(fmf_root, git_root)
+            if dist_git_source:
+                git_root = self.step.plan.my_run.tree.root
+            else:
+                fmf_root = path or self.step.plan.my_run.tree.root
+                # Check git repository root (use fmf root if not found)
+                try:
+                    output = self.run(
+                        'git rev-parse --show-toplevel', cwd=fmf_root, dry=True)
+                    git_root = output[0].strip('\n')
+                except tmt.utils.RunError:
+                    self.debug(f"Git root not found, using '{fmf_root}.'")
+                    git_root = fmf_root
+                # Set path to relative path from the git root to fmf root
+                path = os.path.relpath(fmf_root, git_root)
             self.info('directory', git_root, 'green')
             self.debug(f"Copy '{git_root}' to '{testdir}'.")
             if not self.opt('dry'):
@@ -167,6 +198,14 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.verbose('hash', hash_.strip(), 'green')
         except (tmt.utils.RunError, AttributeError):
             pass
+
+        if dist_git_source:
+            try:
+                self.extract_distgit_source(
+                    testdir, testdir, self.get('dist_git_type'))
+            except Exception as error:
+                raise DiscoverError(f"Error when processing 'dist-git-source'",
+                                    original=error)
 
         # Adjust path and optionally show
         if path is None or path == '.':
