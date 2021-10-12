@@ -112,3 +112,27 @@ The following attributes, if present, are exported as well:
 They have the ``extra`` prefix as they are not part of the L1
 Metadata Specification and are supposed to be synced temporarily
 to keep backward compatibility.
+
+
+How can I integrate tmt tests with other tools?
+------------------------------------------------------------------
+
+Each tmt test has a unique `fmf identifier`__ which can look like
+this::
+
+    name: /tests/core/docs
+    url: https://github.com/psss/tmt.git
+    ref: main
+
+These identifiers can be used for integration with other tools,
+for example to execute tmt tests using custom workflows. For this
+use case ``tmt tests export`` command can be used to produce a
+list of fmf identifiers of selected tests::
+
+    tmt tests export --fmf-id | custom-workflow --fmf-id -
+    tmt tests export core/docs --fmf-id | custom-workflow --fmf-id -
+
+Custom workflow can then consume generated ids and perform desired
+actions such as fetch the tests and execute them.
+
+__ https://fmf.readthedocs.io/en/latest/concept.html#identifiers
