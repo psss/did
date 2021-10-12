@@ -10,6 +10,7 @@ Source0: %{url}/releases/download/%{version}/did-%{version}.tar.bz2
 
 BuildArch: noarch
 BuildRequires: git-core
+BuildRequires: python3-bodhi-client
 BuildRequires: python3-bugzilla
 BuildRequires: python3-dateutil
 BuildRequires: python3-devel
