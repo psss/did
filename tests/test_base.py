@@ -95,15 +95,15 @@ def test_Date_period():
     # This year
     for argument in ["year", "this year"]:
         since, until, period = Date.period(argument)
-        assert str(since) == "2015-03-01"
-        assert str(until) == "2016-03-01"
-        assert period == "this fiscal year"
+        assert str(since) == "2015-01-01"
+        assert str(until) == "2016-01-01"
+        assert period == "this natural year"
     # Last year
     for argument in ["last year"]:
         since, until, period = Date.period(argument)
-        assert str(since) == "2014-03-01"
-        assert str(until) == "2015-03-01"
-        assert period == "the last fiscal year"
+        assert str(since) == "2014-01-01"
+        assert str(until) == "2015-01-01"
+        assert period == "the last natural year"
     # Adding and subtracting days
     assert str(Date('2018-11-29') + 1) == '2018-11-30'
     assert str(Date('2018-11-29') + 2) == '2018-12-01'
