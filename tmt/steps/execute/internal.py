@@ -32,6 +32,16 @@ echo "{{token}}:{{{{\
 """
 REBOOT_TEMPLATE_NAME = "reboot_template"
 
+FILE_SUBMIT_SCRIPT = """\
+#!/bin/sh
+FILENAME="$2"
+STORE_NAME="$BEAKERLIB_DIR/submitted/"
+[ -d $STORE_NAME ] || mkdir -p $STORE_NAME
+cp $FILENAME $STORE_NAME
+echo "File $FILENAME stored to $STORE_NAME"
+"""
+FILE_SUBMIT_NAME = "tmt-file-submit"
+
 
 class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     """
@@ -139,6 +149,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         if test.framework == 'beakerlib':
             environment = environment.copy()
             environment['BEAKERLIB_DIR'] = data_directory
+            environment['BEAKERLIB_COMMAND_SUBMIT_LOG'] = (
+                f"bash {self.step.workdir}/{FILE_SUBMIT_NAME}")
 
         # Prepare the test command (use default options for shell tests)
         if test.framework == "shell":
@@ -282,9 +294,12 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             self._results = []
             return
 
-        # For each guest execute all tests
+        # Prepare tests and helper scripts, check options
         tests = self.prepare_tests()
         exit_first = self.get('exit-first', default=False)
+        self.step.write(FILE_SUBMIT_NAME, FILE_SUBMIT_SCRIPT)
+
+        # For each guest execute all tests
         for guest in self.step.plan.provision.guests():
             with self._setup_reboot(guest):
                 # Push workdir to guest and execute tests
