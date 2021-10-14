@@ -281,7 +281,7 @@ class Date(object):
 
     @staticmethod
     def this_year():
-        """ Return start and end date of this natural year """
+        """ Return start and end date of this year """
         since = TODAY
         while since.month != 1 or since.day != 1:
             since -= delta(days=1)
@@ -290,7 +290,7 @@ class Date(object):
 
     @staticmethod
     def last_year():
-        """ Return start and end date of the last natural year """
+        """ Return start and end date of the last year """
         since, until = Date.this_year()
         since = since.date - delta(years=1)
         until = until.date - delta(years=1)
@@ -320,10 +320,10 @@ class Date(object):
         elif "year" in argument:
             if "last" in argument:
                 since, until = Date.last_year()
-                period = "the last natural year"
+                period = "the last year"
             else:
                 since, until = Date.this_year()
-                period = "this natural year"
+                period = "this year"
         elif "quarter" in argument:
             if "last" in argument:
                 since, until = Date.last_quarter()
