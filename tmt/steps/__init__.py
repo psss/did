@@ -57,7 +57,9 @@ class Step(tmt.utils.Common):
                 data['how'] = self.how
             # Ensure that each config has a name
             if 'name' not in data and len(self.data) > 1:
-                raise GeneralError(f"Missing '{self}' name in '{self.plan}'.")
+                raise GeneralError(
+                    f"Missing 'name' in the {self} step config "
+                    f"of the '{self.plan}' plan.")
 
     @property
     def enabled(self):
@@ -253,7 +255,9 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
 
         # Ensure that plugin data contains name
         if 'name' not in data:
-            raise GeneralError("Missing 'name' in plugin data.")
+            raise GeneralError(
+                f"Missing 'name' in the {step} step config "
+                f"of the '{step.plan}' plan.")
 
         # Store name, data and parent step
         super().__init__(parent=step, name=data['name'])
