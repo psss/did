@@ -146,3 +146,10 @@ wiki
 .. automodule:: did.plugins.wiki
     :members:
     :undoc-members:
+
+zammad
+------
+
+.. automodule:: did.plugins.zammad
+    :members:
+    :undoc-members:
