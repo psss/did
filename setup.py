@@ -17,6 +17,7 @@ __pkg__ = 'tmt'
 __pkgdir__ = {}
 __pkgs__ = [
     'tmt',
+    'tmt/plugins',
     'tmt/steps',
     'tmt/steps/discover',
     'tmt/steps/provision',

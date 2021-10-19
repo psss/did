@@ -1,6 +1,6 @@
 # coding: utf-8
 
-""" Handle Steps Plugins """
+""" Handle Plugins """
 
 import importlib
 import os
@@ -22,6 +22,9 @@ def explore():
     for step in tmt.steps.STEPS:
         for module in discover(os.path.join(root, 'steps', step)):
             import_(f'tmt.steps.{step}.{module}')
+    # Check for possible plugins in the 'plugins' directory
+    for module in discover(os.path.join(root, 'plugins')):
+        import_(f'tmt.plugins.{module}')
 
     # Check environment variable for user plugins
     try:
