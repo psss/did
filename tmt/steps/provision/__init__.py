@@ -521,7 +521,16 @@ class Guest(tmt.utils.Common):
             raise tmt.utils.ProvisionError(
                 "Method does not support hard reboot.")
 
-        self.execute("reboot")
+        try:
+            self.execute("reboot")
+        except tmt.utils.RunError as error:
+            # Connection can be closed by the remote host even before the
+            # reboot command is completed. Let's ignore such errors.
+            if error.returncode == 255:
+                self.debug(
+                    f"Seems the connection was closed too fast, ignoring.")
+            else:
+                raise
         return self.reconnect()
 
     def reconnect(self):
