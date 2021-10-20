@@ -1,0 +1,17 @@
+- hosts: all
+  vars:
+    simple: "{{ lookup('env', 'SIMPLE') }}"
+    spaces: "{{ lookup('env', 'SPACES') }}"
+  tasks:
+    - name: Create a simple test file
+      copy:
+        dest: /tmp/finished
+        content: pass
+
+    - name: Make sure a simple environment variable is respected
+      command: echo "SIMPLE='{{ simple }}'"
+      failed_when: simple != 'word'
+
+    - name: Make sure variables with spaces are correctly handed over
+      command: echo "SPACES='{{ spaces }}'"
+      failed_when: spaces != 'several words with spaces'

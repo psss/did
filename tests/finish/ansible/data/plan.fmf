@@ -1,0 +1,20 @@
+environment:
+    SIMPLE: word
+    SPACES: several words with spaces
+provision:
+    how: container
+finish:
+    - name: State before is valid (no file)
+      order: 20
+      how: shell
+      script: bash -xc "! [ -f /tmp/finished ]"
+    - name: Ansible we want to test
+      how: ansible
+      playbook: playbook.yml
+    - name: State after is as expected (file created)
+      order: 70
+      how: shell
+      script: bash -xc "[ -f /tmp/finished ]"
+execute:
+    how: tmt
+    script: echo fake

@@ -1,0 +1,19 @@
+summary: Check that ansible finish works for basic images
+description:
+    Try to provision a container with specific image (fedora,
+    centos) and finish it with an ansible playbook. Make sure the
+    environment variables are correctly handed over. In the full
+    testing mode check virtual and local provision method as well.
+
+# By default we run under a container only
+environment:
+    METHODS: container
+adjust:
+  - when: trigger == commit
+    environment:
+        METHODS: container local
+    because: the pipeline does not support nested virtualization
+  - when: how == full
+    environment:
+        METHODS: container virtual local
+    because: local/virtual provision needs root/full virtualization

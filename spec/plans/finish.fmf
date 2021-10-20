@@ -3,12 +3,41 @@ summary: Finishing tasks
 description:
     Additional actions to be performed after the test execution
     has been completed.  Counterpart of the ``prepare`` step
-    useful for various cleanup actions.
+    useful for various cleanup actions. Use the 'order' attribute
+    to select in which order finishing tasks  should happen if there
+    are multiple configs. Default order is '50'
 
 example: |
     finish:
         how: shell
         script: upload-logs.sh
 
-link:
-  - implemented-by: /tmt/steps/finish/shell.py
+/shell:
+    summary:
+        Perform finishing tasks using shell scripts
+
+    example: |
+        finish:
+            how: shell
+            script:
+            - upload-logs.sh || true
+            - rm -rf /tmp/temporary-files
+    link:
+      - implemented-by: /tmt/steps/finish/shell.py
+
+/ansible:
+    summary:
+        Perform finishing tasks using ansible
+    description:
+        One or more playbooks can be provided as a list under the
+        ``playbooks`` attribute.  Each of them will be applied
+        using ``ansible-playbook`` in the given order. The path
+        should be relative to the metadata tree root.
+    example: |
+        finish:
+            how: ansible
+            playbook:
+                - playbooks/common.yml
+                - playbooks/os/rhel7.yml
+    link:
+      - implemented-by: /tmt/steps/finish/ansible.py
