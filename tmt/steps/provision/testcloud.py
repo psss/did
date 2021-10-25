@@ -111,10 +111,10 @@ DOMAIN_TEMPLATE = """<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/d
       <target dev='vdb' bus='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
     </disk>
-    <interface type='user'>
+    <interface type='{{ network_type }}'>
       <mac address="{{ mac_address }}"/>
-      <ip family='ipv4' address='172.17.2.0' prefix='24'/>
-      <model type='virtio'/>
+      {{ network_source }}
+      {{ ip_setup }}
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
     </interface>
     <serial type='pty'>
@@ -200,6 +200,10 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
             click.option(
                 '-u', '--user', metavar='USER',
                 help='Username to use for all guest operations.'),
+            click.option(
+                '-c', '--connection',
+                type=click.Choice(['session', 'system']),
+                help='What session type to use, "session" by default'),
             ] + super().options(how)
 
     def default(self, option, default=None):
@@ -209,6 +213,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
             'memory': 2048,
             'disk': 10,
             'image': 'fedora',
+            'connection': 'session',
             }
         if option in defaults:
             return defaults[option]
@@ -216,11 +221,11 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
 
     def show(self):
         """ Show provision details """
-        super().show(['image', 'user', 'memory', 'disk'])
+        super().show(['image', 'user', 'memory', 'disk', 'connection'])
 
     def wake(self, data=None):
         """ Override options and wake up the guest """
-        super().wake(['image', 'memory', 'disk', 'user'])
+        super().wake(['image', 'memory', 'disk', 'user', 'connection'])
 
         # Convert memory and disk to integers
         for key in ['memory', 'disk']:
@@ -239,12 +244,14 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
 
         # Give info about provided data
         data = dict()
-        for key in ['image', 'user', 'memory', 'disk']:
+        for key in ['image', 'user', 'memory', 'disk', 'connection']:
             data[key] = self.get(key)
             if key == 'memory':
                 self.info('memory', f"{self.get('memory')} MB", 'green')
             elif key == 'disk':
                 self.info('disk', f"{self.get('disk')} GB", 'green')
+            elif key == 'connection':
+                self.verbose(key, data[key], 'green')
             else:
                 self.info(key, data[key], 'green')
 
@@ -283,6 +290,7 @@ class GuestTestcloud(tmt.Guest):
         user ....... user name to log in
         memory ..... memory size for vm
         disk ....... disk size for vm
+        connection . either session (default) or system, to be passed to qemu
     """
 
     def _get_url(self, url, message):
@@ -372,12 +380,14 @@ class GuestTestcloud(tmt.Guest):
         self.instance_name = data.get('instance')
         self.memory = data.get('memory')
         self.disk = data.get('disk')
+        self.connection = data.get('connection')
 
     def save(self):
         """ Save guest data for future wake up """
         data = super().save()
         data['instance'] = self.instance_name
         data['image'] = self.image_url
+        data['connection'] = self.connection
         return data
 
     def wake(self):
@@ -389,7 +399,7 @@ class GuestTestcloud(tmt.Guest):
         self.image = testcloud.image.Image(self.image_url)
         self.instance = testcloud.instance.Instance(
             self.instance_name, image=self.image,
-            connection='qemu:///session')
+            connection=f"qemu:///{self.connection}")
 
     def prepare_ssh_key(self):
         """ Prepare ssh key for authentication """
@@ -461,7 +471,7 @@ class GuestTestcloud(tmt.Guest):
             prefix="tmt-{0}-".format(run_id[-3:]))
         self.instance = testcloud.instance.Instance(
             name=self.instance_name, image=self.image,
-            connection='qemu:///session')
+            connection=f"qemu:///{self.connection}")
         self.verbose('name', self.instance_name, 'green')
 
         # Decide which networking setup to use
