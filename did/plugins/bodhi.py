@@ -17,28 +17,27 @@ from did.stats import Stats, StatsGroup
 
 from bodhi.client.bindings import BodhiClient
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 class Bodhi(object):
     """ Bodhi """
 
     def __init__(self, url):
-        """ Initialize url and headers """
+        """ Initialize url """
         self.url = url
 
     def search(self, query):
         """ Perform Bodhi query """
         result = []
         current_page = 1
-        query_orig = query
+        original_query = query
         while current_page:
             log.debug("Bodhi query: {0}".format(query))
-            bodhiclient = BodhiClient(self.url)
-            data = bodhiclient.send_request(
-                query, verb='GET')
+            client = BodhiClient(self.url)
+            data = client.send_request(query, verb='GET')
             objects = data['updates']
             log.debug("Result: {0} fetched".format(
                 listed(len(objects), "item")))
@@ -46,7 +45,7 @@ class Bodhi(object):
             result.extend(objects)
             if current_page < data['pages']:
                 current_page = current_page + 1
-                query = query_orig + "&page=" + str(current_page)
+                query = f"{original_query}&page={current_page}"
             else:
                 current_page = None
         return result
@@ -68,8 +67,7 @@ class Update(object):
 
     def __str__(self):
         """ String representation """
-        return 'Release: {0} - ID: {1} - {2}'.format(
-            self.project, self.identifier, self.title)
+        return f'{self.identifier} - {self.title} [{self.project}]'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -80,16 +78,17 @@ class UpdatesCreated(Stats):
     """ Updates created """
     def fetch(self):
         log.info('Searching for updates created by {0}'.format(self.user))
-        self.stats = [Update(update) for update in self.parent.bodhi.search(
+        self.stats = [
+            Update(update) for update in self.parent.bodhi.search(
             query='updates/?user={0}&submitted_before={1}'
                   '&submitted_since={2}'.format(
                       self.user.login, self.options.until.date,
                       self.options.since.date))]
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 class BodhiStats(StatsGroup):
     """ Bodhi work """

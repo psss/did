@@ -7,6 +7,13 @@
     :members:
     :undoc-members:
 
+bodhi
+-----
+
+.. automodule:: did.plugins.bodhi
+    :members:
+    :undoc-members:
+
 bugzilla
 --------
 
