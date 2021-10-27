@@ -181,7 +181,7 @@ class JiraUpdated(Stats):
             query = (
                 "issueFunction in commented"
                 "('by {0} after {1} before {2}')".format(
-                    self.parent.login or self.user.login,
+                    self.parent.login or self.user.email,
                     self.options.since, self.options.until))
             if self.parent.project:
                 query = query + " AND project = '{0}'".format(
