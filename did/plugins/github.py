@@ -21,8 +21,8 @@ __ https://docs.github.com/en/authentication/keeping-your-account-and-data-secur
 
 import re
 import json
-import urllib.request, urllib.error
-from requests.exceptions import RequestException
+
+import requests
 
 from did.utils import log, pretty, listed
 from did.base import Config, ReportError
@@ -32,10 +32,7 @@ from did.stats import Stats, StatsGroup
 PADDING = 3
 
 # Number of issues to be fetched per page
-# FIXME: Just a quick fix for now to override the default limit of 30,
-# need to implement proper pagination to be able to fetch all issues. It
-# seems that github will not fetch more than 100 items anyway.
-PER_PAGE = 1000
+PER_PAGE = 100
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,18 +54,39 @@ class GitHub(object):
 
     def search(self, query):
         """ Perform GitHub query """
+        result = []
         url = self.url + "/" + query + f"&per_page={PER_PAGE}"
         log.debug("GitHub query: {0}".format(url))
         try:
-            request = urllib.request.Request(url, headers=self.headers)
-            response = urllib.request.urlopen(request)
-            log.debug("Response headers:\n{0}".format(
-                str(response.info()).strip()))
-        except urllib.error.URLError as error:
+            response = requests.get(url, headers=self.headers)
+            log.debug("Response headers:\n{0}".format(response.headers))
+            try:
+                data = json.loads(response.text)["items"]
+                result.extend(data)
+            except requests.exceptions.JSONDecodeError as error:
+                log.debug(error)
+                raise ReportError(
+                    "GitHub JSON failed: {0}.".format(response.text))
+            while 'next' in response.links.keys():
+                log.debug("GitHub query: {0}".format(response.links['next']['url']))
+                try:
+                    response = requests.get(response.links['next']['url'], headers=self.headers)
+                    log.debug("Response headers:\n{0}".format(response.headers))
+                    try:
+                        data = json.loads(response.text)["items"]
+                        result.extend(data)
+                    except requests.exceptions.JSONDecodeError as error:
+                        log.debug(error)
+                        raise ReportError(
+                            "GitHub JSON failed: {0}.".format(response.text))
+                except requests.exceptions.RequestException as error:
+                    log.debug(error)
+                    raise ReportError(
+                        "GitHub search on {0} failed.".format(self.url))
+        except requests.exceptions.RequestException as error:
             log.debug(error)
             raise ReportError(
                 "GitHub search on {0} failed.".format(self.url))
-        result = json.loads(response.read())["items"]
         log.debug("Result: {0} fetched".format(listed(len(result), "item")))
         log.data(pretty(result))
         return result
@@ -110,6 +128,7 @@ class IssuesCreated(Stats):
         self.stats = [
                 Issue(issue) for issue in self.parent.github.search(query)]
 
+
 class IssuesClosed(Stats):
     """ Issues closed """
     def fetch(self):
@@ -119,6 +138,7 @@ class IssuesClosed(Stats):
         query += "+type:issue"
         self.stats = [
                 Issue(issue) for issue in self.parent.github.search(query)]
+
 
 class PullRequestsCreated(Stats):
     """ Pull requests created """
@@ -131,6 +151,7 @@ class PullRequestsCreated(Stats):
         self.stats = [
                 Issue(issue) for issue in self.parent.github.search(query)]
 
+
 class PullRequestsClosed(Stats):
     """ Pull requests closed """
     def fetch(self):
@@ -141,6 +162,7 @@ class PullRequestsClosed(Stats):
         query += "+type:pr"
         self.stats = [
                 Issue(issue) for issue in self.parent.github.search(query)]
+
 
 class PullRequestsReviewed(Stats):
     """ Pull requests reviewed """
