@@ -227,7 +227,8 @@ Evgeni Golov, Stanislav Ochotnický, Maroš Kopec, Robbie Harwood,
 Christopher Sams, Thomas Heute, Giulio Fidente, Han Han, Qiao
 Zhao, Henrique Ferreiro, Jakub Vávra, Luigi Toscano, Lukáš
 Zapletal, Maryna Nalbandian, Dominika Hoďovská, Jakub Haruda,
-Han Han, Štěpán Němec, Evgeny Fedin and Mikel Olasagasti Uranga.
+Han Han, Štěpán Němec, Evgeny Fedin, Mikel Olasagasti Uranga and
+Miloš Malík.
 
 
 Copyright
