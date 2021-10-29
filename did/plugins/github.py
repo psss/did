@@ -56,37 +56,31 @@ class GitHub(object):
         """ Perform GitHub query """
         result = []
         url = self.url + "/" + query + f"&per_page={PER_PAGE}"
-        log.debug("GitHub query: {0}".format(url))
-        try:
-            response = requests.get(url, headers=self.headers)
-            log.debug("Response headers:\n{0}".format(response.headers))
+
+        while True:
+            # Fetch the query
+            log.debug(f"GitHub query: {url}")
+            try:
+                response = requests.get(url, headers=self.headers)
+                log.debug(f"Response headers:\n{response.headers}")
+            except requests.exceptions.RequestException as error:
+                log.debug(error)
+                raise ReportError(f"GitHub search on {self.url} failed.")
+
+            # Parse fetched json data
             try:
                 data = json.loads(response.text)["items"]
                 result.extend(data)
             except requests.exceptions.JSONDecodeError as error:
                 log.debug(error)
-                raise ReportError(
-                    "GitHub JSON failed: {0}.".format(response.text))
-            while 'next' in response.links.keys():
-                log.debug("GitHub query: {0}".format(response.links['next']['url']))
-                try:
-                    response = requests.get(response.links['next']['url'], headers=self.headers)
-                    log.debug("Response headers:\n{0}".format(response.headers))
-                    try:
-                        data = json.loads(response.text)["items"]
-                        result.extend(data)
-                    except requests.exceptions.JSONDecodeError as error:
-                        log.debug(error)
-                        raise ReportError(
-                            "GitHub JSON failed: {0}.".format(response.text))
-                except requests.exceptions.RequestException as error:
-                    log.debug(error)
-                    raise ReportError(
-                        "GitHub search on {0} failed.".format(self.url))
-        except requests.exceptions.RequestException as error:
-            log.debug(error)
-            raise ReportError(
-                "GitHub search on {0} failed.".format(self.url))
+                raise ReportError(f"GitHub JSON failed: {response.text}.")
+
+            # Update url to the next page, break if no next page provided
+            if 'next' in response.links:
+                url = response.links['next']['url']
+            else:
+                break
+
         log.debug("Result: {0} fetched".format(listed(len(result), "item")))
         log.data(pretty(result))
         return result
