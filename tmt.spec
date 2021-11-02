@@ -10,21 +10,6 @@ BuildArch: noarch
 URL: https://github.com/psss/tmt
 Source0: https://github.com/psss/tmt/releases/download/%{version}/tmt-%{version}.tar.gz
 
-# Depending on the distro, we set some defaults.
-# Note that the bcond macros are named for the CLI option they create.
-# "%%bcond_without" means "ENABLE by default and create a --without option"
-
-# Fedora or RHEL 8+
-%if 0%{?fedora} || 0%{?rhel} > 7
-%bcond_with oldreqs
-%bcond_with englocale
-%else
-# The automatic runtime dependency generator doesn't exist yet
-%bcond_without oldreqs
-# The C.UTF-8 locale doesn't exist, Python defaults to C (ASCII)
-%bcond_without englocale
-%endif
-
 # Main tmt package requires the Python module
 Requires: python%{python3_pkgversion}-%{name} == %{version}-%{release}
 Requires: git-core rsync sshpass
@@ -53,9 +38,6 @@ BuildRequires: python%{python3_pkgversion}-ruamel-yaml
 # Required for tests
 BuildRequires: rsync
 %{?python_provide:%python_provide python%{python3_pkgversion}-%{name}}
-%if %{with oldreqs}
-Requires:       python%{python3_pkgversion}-ruamel-yaml
-%endif
 
 %description -n python%{python3_pkgversion}-%{name}
 The tmt Python module and command line tool implement the test
@@ -119,22 +101,14 @@ package to have all available plugins ready for testing.
 
 
 %prep
-%setup -q
+%autosetup
 
 
 %build
-%if %{with englocale}
-export LANG=en_US.utf-8
-%endif
-
 %py3_build
 
 
 %install
-%if %{with englocale}
-export LANG=en_US.utf-8
-%endif
-
 %py3_install
 
 mkdir -p %{buildroot}%{_mandir}/man1
@@ -144,10 +118,6 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 
 
 %check
-%if %{with englocale}
-export LANG=en_US.utf-8
-%endif
-
 %{__python3} -m pytest -vv -m 'not web' --ignore=tests/integration
 
 
