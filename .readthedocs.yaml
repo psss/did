@@ -1,0 +1,7 @@
+# Config for building https://tmt.readthedocs.io/
+version: 2
+python:
+    install:
+      - method: pip
+        path: .
+        extra_requirements: [docs]

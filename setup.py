@@ -38,7 +38,7 @@ install_requires = [
     'ruamel.yaml'
 ]
 extras_require = {
-    'docs': ['sphinx', 'sphinx_rtd_theme', 'mock'],
+    'docs': ['sphinx>=3', 'sphinx_rtd_theme', 'mock'],
     'tests': ['pytest', 'python-coveralls', 'mock', 'requre', 'pre-commit'],
     'provision': ['testcloud>=0.6.1'],
     'convert': ['nitrate', 'markdown', 'python-bugzilla'],
