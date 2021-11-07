@@ -59,12 +59,17 @@ example: |
         ``playbook`` attribute.  Each of them will be applied
         using ``ansible-playbook`` in the given order. The path
         should be relative to the metadata tree root.
+
+        Use ``extra-args`` attribute to enable optional arguments for
+        ``ansible-playbook``.
+
     example: |
         prepare:
             how: ansible
             playbook:
                 - playbooks/common.yml
                 - playbooks/os/rhel7.yml
+            extra-args: '-vvv'
     link:
       - implemented-by: /tmt/steps/provision
 

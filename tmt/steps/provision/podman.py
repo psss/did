@@ -156,7 +156,7 @@ class GuestContainer(tmt.Guest):
         self.podman(['container', 'restart', self.container])
         return self.reconnect()
 
-    def ansible(self, playbook):
+    def ansible(self, playbook, extra_args=None):
         """ Prepare container using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
         # As non-root we must run with podman unshare
@@ -165,8 +165,9 @@ class GuestContainer(tmt.Guest):
             f'stty cols {tmt.utils.OUTPUT_WIDTH}; '
             f'{self._export_environment()}'
             f'{podman_unshare}ansible-playbook '
-            f'{self._ansible_verbosity()} -c podman -i {self.container}, '
-            f'{playbook}',
+            f'{self._ansible_verbosity()} '
+            f'{self._ansible_extra_args(extra_args)} '
+            f'-c podman -i {self.container}, {playbook}',
             cwd=self.parent.plan.worktree)
         self._ansible_summary(stdout)
 

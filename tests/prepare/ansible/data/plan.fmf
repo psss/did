@@ -8,5 +8,6 @@ provision:
 prepare:
     how: ansible
     playbook: playbook.yml
+    extra-args: '-vvv'
 execute:
     how: tmt

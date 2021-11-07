@@ -21,6 +21,13 @@ rlJournalStart
                 rlRun "sudo rm -f /tmp/prepared"
             fi
         rlPhaseEnd
+
+        rlPhaseStartTest "Ansible ($method) - check extra-args attribute"
+            rlRun "tmt run -rddd discover provision -h $method prepare finish \
+                | grep \"ansible-playbook\"\
+                | tee output"
+            rlAssertGrep "-vvv" output
+        rlPhaseEnd
     done
 
     rlPhaseStartCleanup

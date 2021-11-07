@@ -21,6 +21,7 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
               - playbook/one.yml
               - playbook/two.yml
               - playbook/three.yml
+            extra-args: '-vvv'
 
     The playbook path should be relative to the metadata tree root.
     Use 'order' attribute to select in which order preparation should
@@ -32,7 +33,7 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
     _methods = [tmt.steps.Method(name='ansible', doc=__doc__, order=50)]
 
     # Supported keys
-    _keys = ["playbook"]
+    _keys = ["playbook", "extra-args"]
 
     def __init__(self, step, data):
         """ Store plugin name, data and parent step """
@@ -47,7 +48,10 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
         return [
             click.option(
                 '-p', '--playbook', metavar='PLAYBOOK', multiple=True,
-                help='Path to an ansible playbook to run.')
+                help='Path to an ansible playbook to run.'),
+            click.option(
+                '--extra-args', metavar='EXTRA-ARGS',
+                help='Optional arguments for ansible-playbook.')
             ] + super().options(how)
 
     def default(self, option, default=None):
@@ -70,4 +74,4 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
         # Apply each playbook on the guest
         for playbook in self.get('playbook'):
             self.info('playbook', playbook, 'green')
-            guest.ansible(playbook)
+            guest.ansible(playbook, self.get('extra-args'))

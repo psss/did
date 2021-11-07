@@ -361,6 +361,11 @@ class Guest(tmt.utils.Common):
         else:
             return ' -' + (self.opt('debug') - 2) * 'v'
 
+    @staticmethod
+    def _ansible_extra_args(extra_args):
+        """ Prepare extra arguments for ansible-playbook"""
+        return '' if extra_args is None else str(extra_args)
+
     def _ansible_summary(self, output):
         """ Check the output for ansible result summary numbers """
         if not output:
@@ -395,14 +400,16 @@ class Guest(tmt.utils.Common):
         return 'export {}; '.format(
             ' '.join(tmt.utils.shell_variables(environment)))
 
-    def ansible(self, playbook):
+    def ansible(self, playbook, extra_args=None):
         """ Prepare guest using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
         stdout, stderr = self.run(
             f'{self._export_environment()}'
             f'stty cols {tmt.utils.OUTPUT_WIDTH}; ansible-playbook '
             f'--ssh-common-args="{self._ssh_options(join=True)}" '
-            f'{self._ansible_verbosity()} -i {self._ssh_guest()}, {playbook}',
+            f'{self._ansible_verbosity()} '
+            f'{self._ansible_extra_args(extra_args)} -i {self._ssh_guest()},'
+            f' {playbook}',
             cwd=self.parent.plan.worktree)
         self._ansible_summary(stdout)
 
