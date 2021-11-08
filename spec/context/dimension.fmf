@@ -12,7 +12,7 @@ description: |
     distro
         The operating system distribution on which the application
         runs (fedora, fedora-33, centos, centos-8, centos-8.4,
-        rhel, rhel-8, rhel-8.4).
+        centos-stream, centos-stream-9, rhel, rhel-8, rhel-8.4).
 
     variant
         The distribution variant (Client, Desktop, Server
