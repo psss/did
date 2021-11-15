@@ -79,6 +79,7 @@ class Bugzilla(object):
     def search(self, query, options):
         """ Perform Bugzilla search """
         query["query_format"] = "advanced"
+        query["limit"] = "0"
         log.debug("Search query:")
         log.debug(pretty(query))
         # Fetch bug info
