@@ -3,19 +3,17 @@
 
 import contextlib
 import datetime
-import fcntl
 import io
 import os
 import pprint
 import re
-import select
 import shlex
 import shutil
 import subprocess
 import unicodedata
 from collections import OrderedDict
 from pathlib import Path
-from threading import Timer
+from threading import Thread
 from typing import Dict, Iterable
 
 import fmf
@@ -92,6 +90,36 @@ class Config(object):
         if os.path.islink(symlink):
             return os.path.realpath(symlink)
         return None
+
+
+class StreamLogger(Thread):
+    """
+    Reading pipes of running process in threads.
+
+    Code based on:
+    https://github.com/packit/packit/blob/main/packit/utils/logging.py#L10
+    """
+
+    def __init__(self, stream, log_header, logger):
+        super().__init__(daemon=True)
+        self.stream = stream
+        self.output = []
+        self.log_header = log_header
+        self.logger = logger
+
+    def run(self):
+        for line in self.stream:
+            line = line.decode('utf-8', errors='replace')
+            if line != '':
+                self.logger(
+                    self.log_header,
+                    line.rstrip('\n'),
+                    'yellow',
+                    level=3)
+            self.output.append(line)
+
+    def get_output(self):
+        return "".join(self.output)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -322,68 +350,24 @@ class Common(object):
         except FileNotFoundError as error:
             raise RunError(
                 f"File '{error.filename}' not found.", command, 127)
-        if join:
-            descriptors = [process.stdout.fileno()]
-        else:
-            descriptors = [process.stdout.fileno(), process.stderr.fileno()]
-        stdout = ''
-        stderr = ''
 
-        # Prepare kill function for the timer
-        def kill():
-            """ Kill the process and adjust the return code """
+        stdout_thread = StreamLogger(
+            process.stdout, log_header='out', logger=log)
+        stderr_thread = stdout_thread
+        if not join:
+            stderr_thread = StreamLogger(
+                process.stderr, log_header='err', logger=log)
+        stdout_thread.start()
+        if not join:
+            stderr_thread.start()
+        try:
+            process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
             process.kill()
             process.returncode = PROCESS_TIMEOUT
-
-        try:
-            # Start the timer
-            timer = Timer(timeout, kill)
-            timer.start()
-
-            # Make sure that the read operation on the file descriptors
-            # never blocks
-            for fd in descriptors:
-                fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
-
-            # Capture the output
-            while process.poll() is None:
-                # Check which file descriptors are ready for read
-                selected = select.select(
-                    descriptors, [], [], DEFAULT_SELECT_TIMEOUT)
-
-                for descriptor in selected[0]:
-                    # Handle stdout
-                    if descriptor == process.stdout.fileno():
-                        line = process.stdout.readline().decode(
-                            'utf-8', errors='replace')
-                        stdout += line
-                        if line != '':
-                            log('out', line.rstrip('\n'), 'yellow', level=3)
-                    # Handle stderr
-                    if not join and descriptor == process.stderr.fileno():
-                        line = process.stderr.readline().decode(
-                            'utf-8', errors='replace')
-                        stderr += line
-                        if line != '':
-                            log('err', line.rstrip('\n'), 'yellow', level=3)
-
-        finally:
-            # Cancel the timer
-            timer.cancel()
-
-        # Check for possible additional output
-        selected = select.select(descriptors, [], [], DEFAULT_SELECT_TIMEOUT)
-        for descriptor in selected[0]:
-            if descriptor == process.stdout.fileno():
-                for line in process.stdout.readlines():
-                    line = line.decode('utf-8', errors='replace')
-                    stdout += line
-                    log('out', line.rstrip('\n'), 'yellow', level=3)
-            if not join and descriptor == process.stderr.fileno():
-                for line in process.stderr.readlines():
-                    line = line.decode('utf-8', errors='replace')
-                    stderr += line
-                    log('err', line.rstrip('\n'), 'yellow', level=3)
+        stdout_thread.join()
+        if not join:
+            stderr_thread.join()
 
         # Handle the exit code, return output
         if process.returncode != 0:
@@ -391,9 +375,12 @@ class Common(object):
                 command = ' '.join(command)
             raise RunError(
                 message=f"Command returned '{process.returncode}'.",
-                command=command, returncode=process.returncode,
-                stdout=stdout, stderr=stderr)
-        return stdout if join else (stdout, stderr)
+                command=command,
+                returncode=process.returncode,
+                stdout=stdout_thread.get_output(),
+                stderr=stderr_thread.get_output())
+        return stdout_thread.get_output() if join else (
+            stdout_thread.get_output(), stderr_thread.get_output())
 
     def run(
             self, command, message=None, cwd=None, dry=False, shell=True,
