@@ -28,6 +28,23 @@ rlJournalStart
         rlAssertNotGrep '/tests/discover3' output
     rlPhaseEnd
 
+    rlPhaseStartTest "Filter by link"
+        plan='plans --default'
+        for link_relation in "" "relates:" "rel.*:"; do
+            discover="discover -h fmf --link ${link_relation}/tmp/foo"
+            rlRun 'tmt run -dvr $discover $plan finish | tee output'
+            rlAssertGrep '1 test selected' output
+            rlAssertGrep '/tests/discover1' output
+        done
+        for link_relation in "verifies:https://github.com/psss/tmt/issues/870" \
+            "ver.*:.*/issues/870" ".*/issues/870"; do
+            discover="discover -h fmf --link $link_relation --link rubbish"
+            rlRun "tmt run -dvr $discover $plan finish | tee output"
+            rlAssertGrep '1 test selected' output
+            rlAssertGrep '/tests/discover2' output
+        done
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun 'rm -f output' 0 'Removing tmp file'
         rlRun 'popd'

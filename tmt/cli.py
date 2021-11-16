@@ -85,6 +85,10 @@ def name_filter_condition(function):
         click.option(
             '-c', '--condition', 'conditions', metavar="EXPR", multiple=True,
             help="Use arbitrary Python expression for filtering."),
+        click.option(
+            '--link', 'links', metavar="RELATION:TARGET", multiple=True,
+            help="Filter by linked objects (regular expressions are "
+                 "supported for both relation and target)."),
         ]
 
     for option in reversed(options):
@@ -103,6 +107,10 @@ def name_filter_condition_long(function):
         click.option(
             '--condition', 'conditions', metavar="EXPR", multiple=True,
             help="Use arbitrary Python expression for filtering."),
+        click.option(
+            '--link', 'links', metavar="RELATION:TARGET", multiple=True,
+            help="Filter by linked objects (regular expressions are "
+                 "supported for both relation and target)."),
         ]
 
     for option in reversed(options):
@@ -269,6 +277,10 @@ run.add_command(tmt.steps.Reboot.command())
     '-c', '--condition', 'conditions', metavar="EXPR", multiple=True,
     help="Use arbitrary Python expression for filtering.")
 @click.option(
+    '--link', 'links', metavar="RELATION:TARGET", multiple=True,
+    help="Filter by linked objects (regular expressions are "
+         "supported for both relation and target).")
+@click.option(
     '--default', is_flag=True,
     help="Use default plans even if others are available.")
 @verbose_debug_quiet
@@ -293,6 +305,10 @@ def plans(context, **kwargs):
 @click.option(
     '-c', '--condition', 'conditions', metavar="EXPR", multiple=True,
     help="Use arbitrary Python expression for filtering.")
+@click.option(
+    '--link', 'links', metavar="RELATION:TARGET", multiple=True,
+    help="Filter by linked objects (regular expressions are "
+         "supported for both relation and target).")
 @verbose_debug_quiet
 def tests(context, **kwargs):
     """

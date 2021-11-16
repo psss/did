@@ -136,8 +136,8 @@ Filter Tests
 ------------------------------------------------------------------
 
 Both ``tmt tests ls`` and ``tmt tests show`` can optionally filter
-tests with a regular expression, filter expression or a Python
-condition::
+tests with a regular expression, filter expression, a Python
+condition or link expression::
 
     $ tmt tests show docs
     /tests/docs
@@ -153,8 +153,11 @@ condition::
     $ tmt tests ls --filter 'tier: 0'
     /tests/docs
 
-    $ tmt tests ls --condition 'int(tier) > 0'
+    $ tmt tests ls --condition 'tier and int(tier) > 0'
     /tests/ls
+
+    $ tmt tests ls --link verifies:issues/423$
+    /tests/prepare/shell
 
 In order to select tests under the current working directory use
 the single dot notation::

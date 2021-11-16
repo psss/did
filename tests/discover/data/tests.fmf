@@ -3,10 +3,14 @@ test: true
 /discover1:
     summary: Discover one
     tier: 1
+    link: /tmp/foo
 
 /discover2:
     summary: Discover two
     tier: 2
+    link:
+    - note: Some text
+      verifies: https://github.com/psss/tmt/issues/870
 
 /discover3:
     summary: Discover three

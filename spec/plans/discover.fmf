@@ -84,13 +84,20 @@ description: |
 
         See also the `fmf identifier`_ documentation for details.
         Use the following keys to limit the test discovery by test
-        name or an advanced filter:
+        name, an advanced filter or link:
 
         test
             List of test names or regular expressions used to
             select tests by name. Duplicate test names are allowed
             to enable repetitive test execution, preserving the
             listed test order.
+        link
+            Select tests using the :ref:`/spec/core/link` keys.
+            Values should be in the form of ``RELATION:TARGET``,
+            tests containing at least one of them are selected.
+            Regular expressions are supported for both relation
+            and target. Relation part can be omitted to match all
+            relations.
         filter
             Apply advanced filter based on test metadata
             attributes. See ``pydoc fmf.filter`` for more info.
@@ -145,6 +152,11 @@ description: |
             path: /metadata/tree/path
             test: [regexp]
             filter: tier:1
+
+        # Choose tests verifying given issue
+        discover:
+            how: fmf
+            link: verifies:issues/123$
 
         # Select only tests which have been modified
         discover:

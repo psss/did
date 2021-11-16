@@ -40,6 +40,15 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             how: fmf
             dist-git-source: true
 
+    Selecting tests containting specified link is possible using 'link'
+    option accepting RELATION:TARGET format of values. Regular
+    expressions are supported for both relation and target part of the
+    value. Relation can be omitted to target match any relation.
+
+        discover:
+            how: fmf
+            link: verifies:.*issue/850$
+
     It is also possible to limit tests only to those that have changed
     in git since a given revision. This can be particularly useful when
     testing changes to tests themselves (e.g. in a pull request CI).
@@ -67,7 +76,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
 
     # Supported keys
     _keys = [
-        "url", "ref", "path", "test", "filter",
+        "url", "ref", "path", "test", "link", "filter",
         "modified-only", "modified-url", "modified-ref",
         "dist-git-source", "dist-git-type"]
 
@@ -98,6 +107,10 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             click.option(
                 '-t', '--test', metavar='NAMES', multiple=True,
                 help='Select tests by name.'),
+            click.option(
+                '--link', metavar="RELATION:TARGET", multiple=True,
+                help="Filter by linked objects (regular expressions are "
+                     "supported for both relation and target)."),
             click.option(
                 '-F', '--filter', metavar='FILTERS', multiple=True,
                 help='Include only tests matching the filter.'),
@@ -216,6 +229,10 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         names = self.get('test', [])
         if names:
             self.info('tests', fmf.utils.listed(names), 'green')
+        # Check the 'test --link' option first, then from discover
+        links = list(tmt.base.Test._opt('link') or self.get('link', []))
+        for link_ in links:
+            self.info('link', link_, 'green')
 
         # Filter only modified tests if requested
         modified_only = self.get('modified-only')
@@ -245,8 +262,12 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self._tests = []
             return
         tree = tmt.Tree(path=tree_path, context=self.step.plan._fmf_context())
-        self._tests = tree.tests(filters=filters, names=names,
-                                 conditions=["manual is False"], unique=False)
+        self._tests = tree.tests(
+            filters=filters,
+            names=names,
+            conditions=["manual is False"],
+            unique=False,
+            links=links)
 
         # Prefix tests and handle library requires
         for test in self._tests:
