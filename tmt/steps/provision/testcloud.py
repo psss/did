@@ -203,7 +203,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
             click.option(
                 '-c', '--connection',
                 type=click.Choice(['session', 'system']),
-                help='What session type to use, "session" by default'),
+                help="What session type to use, 'session' by default."),
             ] + super().options(how)
 
     def default(self, option, default=None):

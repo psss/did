@@ -56,7 +56,7 @@ example: |
         Apply ansible playbook to get the desired final state.
     description:
         One or more playbooks can be provided as a list under the
-        ``playbooks`` attribute.  Each of them will be applied
+        ``playbook`` attribute.  Each of them will be applied
         using ``ansible-playbook`` in the given order. The path
         should be relative to the metadata tree root.
     example: |
