@@ -14,10 +14,3 @@ execute:
         python3 -m sphinx -T -E -b html -d _build/doctrees \
             -D language=en . _build/html 2>&1 | tee output
         grep WARNING output && exit 1 || exit 0
-
-# FIXME temporarily skip on fresh Fedoras
-# https://github.com/sphinx-doc/sphinx/issues/9562
-adjust+:
-  - enabled: false
-    when: distro = fedora-rawhide, fedora-35
-    because: Sphinx is broken with Python 3.10
