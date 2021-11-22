@@ -1696,7 +1696,7 @@ class DistGitHandler(object):
 
     def url_and_name(self, cwd='.'):
         """
-        Return url and basename of the used source
+        Return list of urls and basenames of the used source
 
         The 'cwd' parameter has to be a DistGit directory.
         """
@@ -1705,20 +1705,26 @@ class DistGitHandler(object):
         if len(globbed) != 1:
             raise GeneralError(f"No .spec file is present in '{cwd}'.")
         package = os.path.basename(globbed[0])[:-len('.spec')]
+        ret_values = []
         try:
             with open(os.path.join(cwd, self.sources_file_name)) as f:
-                match = self.re_source.match(f.read())
+                for line in f.readlines():
+                    match = self.re_source.match(line)
+                    used_hash, source_name, hash_value = match.groups()
+                    ret_values.append((self.lookaside_server + self.uri.format(
+                        name=package,
+                        filename=source_name,
+                        hash=hash_value,
+                        hashtype=used_hash.lower()
+                        ), source_name))
         except Exception as error:
             raise GeneralError(
                 f"Couldn't read '{self.sources_file_name}' file.",
                 original=error)
-        used_hash, source_name, hash_value = match.groups()
-        return self.lookaside_server + self.uri.format(
-            name=package,
-            filename=source_name,
-            hash=hash_value,
-            hashtype=used_hash.lower()
-            ), source_name
+        if not ret_values:
+            raise GeneralError(
+                "No sources found in '{self.sources_file_name}' file.")
+        return ret_values
 
     def its_me(self, remotes):
         """ True if self can work with remotes """

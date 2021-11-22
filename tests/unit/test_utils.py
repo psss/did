@@ -436,5 +436,5 @@ def test_FedoraDistGit(tmpdir):
         'SHA512 (fn-1.tar.gz) = 09af\n')
     tmpdir.join('tmt.spec').write('')
     fedora_sources_obj = tmt.utils.FedoraDistGit()
-    assert ("https://src.fedoraproject.org/repo/pkgs/rpms/tmt/fn-1.tar.gz/sha512/09af/fn-1.tar.gz",
-            "fn-1.tar.gz") == fedora_sources_obj.url_and_name(cwd=tmpdir)
+    assert [("https://src.fedoraproject.org/repo/pkgs/rpms/tmt/fn-1.tar.gz/sha512/09af/fn-1.tar.gz",
+            "fn-1.tar.gz")] == fedora_sources_obj.url_and_name(cwd=tmpdir)

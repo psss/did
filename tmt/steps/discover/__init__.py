@@ -228,14 +228,16 @@ class DiscoverPlugin(tmt.steps.Plugin):
             handler = tmt.utils.get_distgit_handler(remotes=remotes)
         else:
             handler = tmt.utils.get_distgit_handler(usage_name=handler_name)
-        url, source_name = handler.url_and_name(distgit_dir)
-        self.debug(f"Download sources from '{url}'.")
-        session = tmt.utils.retry_session()
-        response = session.get(url)
-        response.raise_for_status()
-        os.makedirs(target_dir, exist_ok=True)
-        with open(os.path.join(target_dir, source_name), 'wb') as tarball:
-            tarball.write(response.content)
-        self.run(
-            f"tar --auto-compress --extract -f {source_name}",
-            cwd=target_dir)
+        for url, source_name in handler.url_and_name(distgit_dir):
+            if source_name.endswith('.sign'):
+                continue
+            self.debug(f"Download sources from '{url}'.")
+            session = tmt.utils.retry_session()
+            response = session.get(url)
+            response.raise_for_status()
+            os.makedirs(target_dir, exist_ok=True)
+            with open(os.path.join(target_dir, source_name), 'wb') as tarball:
+                tarball.write(response.content)
+            self.run(
+                f"tar --auto-compress --extract -f {source_name}",
+                cwd=target_dir)
