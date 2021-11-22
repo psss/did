@@ -213,10 +213,7 @@ class DiscoverPlugin(tmt.steps.Plugin):
         raise NotImplementedError
 
     def extract_distgit_source(
-            self,
-            distgit_dir,
-            target_dir,
-            handler_name=None):
+            self, distgit_dir, target_dir, handler_name=None):
         """
         Extract source tarball into target_dir
 
@@ -226,21 +223,19 @@ class DiscoverPlugin(tmt.steps.Plugin):
         if handler_name is None:
             stdout, _ = self.run(
                 ["git", "config", "--get-regexp", '^remote\\..*.url'],
-                shell=False,
-                cwd=distgit_dir
-                )
+                shell=False, cwd=distgit_dir)
             remotes = stdout.split('\n')
             handler = tmt.utils.get_distgit_handler(remotes=remotes)
         else:
             handler = tmt.utils.get_distgit_handler(usage_name=handler_name)
         url, source_name = handler.url_and_name(distgit_dir)
-        self.debug(f"Download {url}")
+        self.debug(f"Download sources from '{url}'.")
         session = tmt.utils.retry_session()
         response = session.get(url)
         response.raise_for_status()
         os.makedirs(target_dir, exist_ok=True)
-        with open(os.path.join(target_dir, source_name), 'wb') as fw:
-            fw.write(response.content)
+        with open(os.path.join(target_dir, source_name), 'wb') as tarball:
+            tarball.write(response.content)
         self.run(
             f"tar --auto-compress --extract -f {source_name}",
             cwd=target_dir)

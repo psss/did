@@ -81,6 +81,11 @@ description: |
             the git repository root if url provided, absolute
             local filesystem path otherwise. By default ``.`` is
             used.
+
+        See also the `fmf identifier`_ documentation for details.
+        Use the following keys to limit the test discovery by test
+        name or an advanced filter:
+
         test
             List of test names or regular expressions used to
             select tests by name.
@@ -88,26 +93,11 @@ description: |
             Apply advanced filter based on test metadata
             attributes. See ``pydoc fmf.filter`` for more info.
 
-        dist-git-source
-            Set to True if you want discover tests from extracted (rpm) sources.
-            Needs to run on top of the supported DistGit (Fedora, CentOS),
-            'url', can be used to point to such repository.
-            'path' denotes path to the metadata tree root within extracted sources.
-            At this moment no patches are applied, only tarball extraction happens
-
-        dist-git-type
-            Auto detection of DistGit is based on git remotes. Use this option to specify it directly.
-            At least ``FedoraDistGit`` and ``CentOSDistGit`` are supported as values, help will print
-            all possible values.
-
-        See also the `fmf identifier`_ documentation.
-
         It is also possible to limit tests only to those that have
         changed in git since a given revision. This can be
         particularly useful when testing changes to tests
-        themselves (e.g. in a pull request CI).
-
-        Related config options (all optional):
+        themselves (e.g. in a pull request CI). Related config
+        options (all optional) are:
 
         modified-only
             Set to True if you want to filter modified tests only.
@@ -123,12 +113,29 @@ description: |
             specify ``reference/<branch>`` to compare to a branch
             from the repository specified in ``modified-url``.
 
+        There is a support for discovering tests from extracted
+        (rpm) sources. Needs to run on top of the supported
+        DistGit (Fedora, CentOS), ``url`` can be used to point to
+        such repository, ``path`` denotes path to the metadata
+        tree root within extracted sources. At this moment no
+        patches are applied, only tarball extraction happens.
+
+        dist-git-source
+            Set to ``true`` to enable extracting sources.
+        dist-git-type
+            The DistGit auto detection is based on git remotes.
+            Use this option to specify it directly. At least
+            ``Fedora`` and ``CentOS`` are supported as values,
+            help will print all possible values.
+
         .. _fmf identifier: https://fmf.readthedocs.io/en/latest/concept.html#identifiers
         .. _Flexible Metadata Format: https://fmf.readthedocs.io/
     example: |
+        # Discover all fmf tests in the current repository
         discover:
             how: fmf
 
+        # Fetch tests from a remote repo, filter by name/tier
         discover:
             how: fmf
             url: https://github.com/psss/tmt
@@ -136,10 +143,15 @@ description: |
             path: /metadata/tree/path
             test: [regexp]
             filter: tier:1
+
+        # Select only tests which have been modified
+        discover:
+            how: fmf
             modified-only: true
             modified-url: https://github.com/psss/tmt-official
             modified-ref: reference/main
 
+        # Extract tests from the distgit sources
         discover:
             how: fmf
             dist-git-source: true

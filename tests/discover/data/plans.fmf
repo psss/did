@@ -75,3 +75,10 @@ execute:
         discover:
             how: fmf
             ref: 5788736
+
+    /distgit:
+        summary: Extract distgit sources
+        discover:
+            how: fmf
+            dist-git-source: true
+            test: tests/prepare/install$

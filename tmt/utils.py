@@ -1678,9 +1678,7 @@ class StructuredField(object):
 
 
 class DistGitHandler(object):
-    """
-    Common functionality for DistGit handlers
-    """
+    """ Common functionality for DistGit handlers """
     sources_file_name = 'sources'
     uri = "/rpms/{name}/{filename}/{hashtype}/{hash}/{filename}"
     remote_substring = None
@@ -1690,24 +1688,20 @@ class DistGitHandler(object):
         """
         Return url and basename of the used source
 
-        'cwd' has to be DistGit directory
+        The 'cwd' parameter has to be a DistGit directory.
         """
         # Assumes <package>.spec
-        globbed = glob.glob(
-            os.path.join(
-                cwd,
-                '*.spec'))
+        globbed = glob.glob(os.path.join(cwd, '*.spec'))
         if len(globbed) != 1:
-            raise GeneralError(f"No .spec file is present in '{cwd}'")
+            raise GeneralError(f"No .spec file is present in '{cwd}'.")
         package = os.path.basename(globbed[0])[:-len('.spec')]
         try:
             with open(os.path.join(cwd, self.sources_file_name)) as f:
                 match = self.re_source.match(f.read())
         except Exception as error:
             raise GeneralError(
-                f"Couldn't read '{self.sources_file_name}' file",
-                original=error
-                )
+                f"Couldn't read '{self.sources_file_name}' file.",
+                original=error)
         used_hash, source_name, hash_value = match.groups()
         return self.lookaside_server + self.uri.format(
             name=package,
@@ -1722,6 +1716,7 @@ class DistGitHandler(object):
 
 
 class FedoraDistGit(DistGitHandler):
+    """ Fedora Handler """
     usage_name = "Fedora"
     re_source = re.compile(r"^(\w+) \(([^)]+)\) = ([0-9a-fA-F]+)$")
     lookaside_server = "https://src.fedoraproject.org/repo/pkgs"
@@ -1729,6 +1724,7 @@ class FedoraDistGit(DistGitHandler):
 
 
 class CentOSDistGit(DistGitHandler):
+    """ CentOS Handler """
     usage_name = "CentOS"
     re_source = re.compile(r"^(\w+) \(([^)]+)\) = ([0-9a-fA-F]+)$")
     lookaside_server = "https://sources.stream.centos.org/sources"
@@ -1736,7 +1732,12 @@ class CentOSDistGit(DistGitHandler):
 
 
 def get_distgit_handler(remotes=None, usage_name=None):
-    """ Return DistGitHandler which understands specified remotes or by usage_name """
+    """
+    Return the right DistGitHandler
+
+    Pick the DistGitHandler class which understands specified
+    remotes or by usage_name.
+    """
     for candidate_class in DistGitHandler.__subclasses__():
         if usage_name is not None and usage_name == candidate_class.usage_name:
             return candidate_class()
@@ -1744,7 +1745,7 @@ def get_distgit_handler(remotes=None, usage_name=None):
             ret_val = candidate_class()
             if ret_val.its_me(remotes):
                 return ret_val
-    raise GeneralError(f"No known remote in {remotes}")
+    raise GeneralError(f"No known remote in '{remotes}'.")
 
 
 def get_distgit_handler_names():
