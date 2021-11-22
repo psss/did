@@ -14,3 +14,11 @@ execute:
     discover:
         how: fmf
         filter: tag:nonsense
+
+/duplicate:
+    discover:
+        how: fmf
+        test:
+        - /tier/two
+        - /tier/one
+        - /tier/two

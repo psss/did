@@ -88,7 +88,9 @@ description: |
 
         test
             List of test names or regular expressions used to
-            select tests by name.
+            select tests by name. Duplicate test names are allowed
+            to enable repetitive test execution, preserving the
+            listed test order.
         filter
             Apply advanced filter based on test metadata
             attributes. See ``pydoc fmf.filter`` for more info.

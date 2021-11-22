@@ -1153,7 +1153,13 @@ class Tree(tmt.utils.Common):
         """ Metadata root """
         return self.tree.root
 
-    def tests(self, keys=None, names=None, filters=None, conditions=None):
+    def tests(
+            self,
+            keys=None,
+            names=None,
+            filters=None,
+            conditions=None,
+            unique=True):
         """ Search available tests """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['test']
@@ -1162,9 +1168,20 @@ class Tree(tmt.utils.Common):
         conditions = (conditions or []) + list(Test._opt('conditions', []))
 
         # Build the list and convert to objects
-        return self._filters_conditions(
-            [Test(test) for test in self.tree.prune(keys=keys, names=names)],
-            filters, conditions)
+        # If duplicate test names are allowed, match test name/regexp one-by-one
+        # and preserve the order of tests within a plan
+        if not unique and names:
+            tests = []
+            for name in names:
+                tests.extend(
+                    self._filters_conditions(
+                        [Test(test) for test in self.tree.prune(keys=keys, names=[name])],
+                        filters, conditions))
+            return tests
+        else:
+            return self._filters_conditions(
+                [Test(test) for test in self.tree.prune(keys=keys, names=names)],
+                filters, conditions)
 
     def plans(self, keys=None, names=None, filters=None, conditions=None,
               run=None):

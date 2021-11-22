@@ -261,7 +261,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             return
         tree = tmt.Tree(path=tree_path, context=self.step.plan._fmf_context())
         self._tests = tree.tests(filters=filters, names=names,
-                                 conditions=["manual is False"])
+                                 conditions=["manual is False"], unique=False)
 
         # Prefix tests and handle library requires
         for test in self._tests:

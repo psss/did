@@ -130,6 +130,30 @@ rlJournalStart
         done
     rlPhaseEnd
 
+    rlPhaseStartTest "Select duplicate tests preserving tests ordering"
+        # 'tmt test ls' lists test name once
+        rlRun "tmt tests ls tier | tee $output"
+        rlAssertGrep '/tests/tier/two' $output
+        rlAssertEquals "/tests/tier/two is listed only once" 1 $( grep -c 'tier/two' $output )
+
+        rlRun "tmt tests ls tier/two tier/two | tee $output"
+        rlAssertGrep '/tests/tier/two' $output
+        rlAssertEquals "/tests/tier/two is listed only once" 1 $( grep -c 'tier/two' $output )
+
+        # 'tmt test show' lists test name once
+        rlRun "tmt tests show tier | tee $output"
+        rlAssertGrep '/tests/tier/two' $output
+        rlAssertEquals "/tests/tier/two is listed only once" 1 $( grep -c 'tier/two' $output )
+
+        # 'tmt run discover' lists duplicate test names preserving order
+        rlRun "tmt run discover -v plan --name duplicate | tee $output"
+        rlAssertGrep 'names: /tier/two, /tier/one and /tier/two' $output
+        rlAssertGrep 'summary: 3 tests selected' $output
+        rlRun "grep -A 1 summary $output | tail -1 | grep '/tests/tier/two'"
+        rlRun "grep -A 2 summary $output | tail -1 | grep '/tests/tier/one'"
+        rlRun "grep -A 3 summary $output | tail -1 | grep '/tests/tier/two'"
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
         rlRun "rm $output" 0 "Remove output file"
