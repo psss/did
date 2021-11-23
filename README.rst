@@ -380,7 +380,7 @@ Ruprich, Martin Kyral, Miloš Prchlík, Tomáš Navrátil, František
 Lachman, Patrik Kis, Ondrej Mosnáček, Andrea Ficková, Denis
 Karpelevich, Michal Srb, Jan Ščotka, Artem Zhukov, Vinzenz
 Feenstra, Inessa Vasilevskaya, Štěpán Němec, Robin Hack, Yulia
-Kopkova, Ondrej Moriš and Martin Zelený.
+Kopkova, Ondrej Moriš, Martin Zelený and Karel Šrot.
 
 
 Copyright
