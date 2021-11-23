@@ -2,9 +2,12 @@ summary: Check whether worktree is correctly set
 description:
     For the `prepare` and `finish` steps, the current working
     directory must be set to the metadata tree root for best user
-    experience. By default tested in a `container, for pull
-    requests also against `local` and during `full` testing using
-    `virtual` as well.
+    experience. Also tests defined directly in the plan (under the
+    `discover` or `execute` step) should be executed there.
+
+    By default tested in a `container`, for pull requests also
+    against `local` and during `full` testing using `virtual` as
+    well.
 require+: [tmt-provision-container]
 
 environment:

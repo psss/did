@@ -77,15 +77,10 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             # Create a simple fmf node, adjust its name
             tests.child(name, data)
 
-        # Copy directory tree (if defined) to the workdir
-        directory = self.step.plan.my_run.tree.root
-        testdir = os.path.join(self.workdir, 'tests')
-        if directory:
-            self.info('directory', directory, 'green')
-            self.debug("Copy '{}' to '{}'.".format(directory, testdir))
-            shutil.copytree(directory, testdir, symlinks=True)
-        else:
-            os.makedirs(testdir)
+        # Symlink tests directory to the plan work tree
+        testdir = os.path.join(self.workdir, "tests")
+        relative_path = os.path.relpath(self.step.plan.worktree, self.workdir)
+        os.symlink(relative_path, testdir)
 
         # Use a tmt.Tree to apply possible command line filters
         tests = tmt.Tree(tree=tests).tests(conditions=["manual is False"])

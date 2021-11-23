@@ -1,0 +1,6 @@
+provision:
+    how: container
+prepare:
+    script: echo content > file
+execute:
+    script: grep content file

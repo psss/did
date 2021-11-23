@@ -9,6 +9,12 @@ rlJournalStart
             rlRun "popd"
         rlPhaseEnd
 
+        rlPhaseStartTest "Prepare ($method)"
+            rlRun "pushd data/prepare"
+            rlRun "tmt run -ar provision -h $method report -vvv"
+            rlRun "popd"
+        rlPhaseEnd
+
         rlPhaseStartTest "Ansible ($method)"
             rlRun "pushd data/ansible"
             rlRun "tmt run -ar provision -h $method report -vvv"
