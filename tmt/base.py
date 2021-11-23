@@ -1153,35 +1153,37 @@ class Tree(tmt.utils.Common):
         """ Metadata root """
         return self.tree.root
 
-    def tests(
-            self,
-            keys=None,
-            names=None,
-            filters=None,
-            conditions=None,
-            unique=True):
+    def tests(self, keys=None, names=None, filters=None, conditions=None,
+              unique=True):
         """ Search available tests """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['test']
-        names = (names or []) + list(Test._opt('names', []))
+        names = names or []
         filters = (filters or []) + list(Test._opt('filters', []))
         conditions = (conditions or []) + list(Test._opt('conditions', []))
 
-        # Build the list and convert to objects
-        # If duplicate test names are allowed, match test name/regexp one-by-one
-        # and preserve the order of tests within a plan
+        # First let's build the list of fmf nodes based on keys & names.
+        # If duplicate test names are allowed, match test name/regexp
+        # one-by-one and preserve the order of tests within a plan.
         if not unique and names:
-            tests = []
+            nodes = []
             for name in names:
-                tests.extend(
-                    self._filters_conditions(
-                        [Test(test) for test in self.tree.prune(keys=keys, names=[name])],
-                        filters, conditions))
-            return tests
+                nodes.extend(self.tree.prune(keys=keys, names=[name]))
+        # Otherwise just perform a regular key/name filtering
         else:
-            return self._filters_conditions(
-                [Test(test) for test in self.tree.prune(keys=keys, names=names)],
-                filters, conditions)
+            nodes = self.tree.prune(keys=keys, names=names)
+
+        # Apply possible additional name filters from the command line
+        # (Used in: tmt run test --name NAME, tmt test ls NAME...)
+        cli_names = list(Test._opt('names', []))
+        if cli_names:
+            nodes = [
+                node for node in nodes
+                if any([re.search(name, node.name) for name in cli_names])]
+
+        # Convert into Test objects and apply filters & conditions
+        return self._filters_conditions(
+            [Test(node) for node in nodes], filters, conditions)
 
     def plans(self, keys=None, names=None, filters=None, conditions=None,
               run=None):

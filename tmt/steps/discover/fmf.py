@@ -227,10 +227,10 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         filters = list(tmt.base.Test._opt('filters') or self.get('filter', []))
         for filter_ in filters:
             self.info('filter', filter_, 'green')
-        # Check the 'test --name' option first, then 'test' from discover
-        names = list(tmt.base.Test._opt('names') or self.get('test', []))
+        # Names of tests selected by --test option
+        names = self.get('test', [])
         if names:
-            self.info('names', fmf.utils.listed(names), 'green')
+            self.info('tests', fmf.utils.listed(names), 'green')
 
         # Filter only modified tests if requested
         modified_only = self.get('modified-only')

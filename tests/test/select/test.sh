@@ -145,13 +145,48 @@ rlJournalStart
         rlAssertGrep '/tests/tier/two' $output
         rlAssertEquals "/tests/tier/two is listed only once" 1 $( grep -c 'tier/two' $output )
 
+        # Prepare run dir and common command line
+        run=$(mktemp -d)
+        tmt="tmt run --id $run --scratch plans --name duplicate discover -v"
+
         # 'tmt run discover' lists duplicate test names preserving order
-        rlRun "tmt run discover -v plan --name duplicate | tee $output"
-        rlAssertGrep 'names: /tier/two, /tier/one and /tier/two' $output
+        rlRun "$tmt | tee $output"
+        rlAssertGrep 'tests: /tier/two, /tier/one and /tier/two' $output
         rlAssertGrep 'summary: 3 tests selected' $output
         rlRun "grep -A 1 summary $output | tail -1 | grep '/tests/tier/two'"
         rlRun "grep -A 2 summary $output | tail -1 | grep '/tests/tier/one'"
         rlRun "grep -A 3 summary $output | tail -1 | grep '/tests/tier/two'"
+
+        # tests --name filters discovered test names (/two is discovered twice)
+        rlRun "$tmt -h fmf tests --name two | tee $output"
+        rlAssertGrep 'tests: /tier/two, /tier/one and /tier/two' $output
+        rlAssertGrep 'summary: 2 tests selected' $output
+        rlRun "grep -A 1 summary $output | tail -1 | grep '/tests/tier/two'"
+        rlRun "grep -A 2 summary $output | tail -1 | grep '/tests/tier/two'"
+
+        # tests --name doesn't effect order of discovered tests
+        rlRun "$tmt -h fmf tests --name one --name two | tee $output"
+        rlAssertGrep 'tests: /tier/two, /tier/one and /tier/two' $output
+        rlAssertGrep 'summary: 3 tests selected' $output
+        rlRun "grep -A 1 summary $output | tail -1 | grep '/tests/tier/two'"
+        rlRun "grep -A 2 summary $output | tail -1 | grep '/tests/tier/one'"
+        rlRun "grep -A 3 summary $output | tail -1 | grep '/tests/tier/two'"
+
+        # discover --test redefines duplicate plan so two is discovered just once
+        rlRun "$tmt -h fmf --test two | tee $output"
+        rlAssertGrep 'tests: two' $output
+        rlAssertGrep 'summary: 1 test selected' $output
+        rlRun "grep -A 1 summary $output | tail -1 | grep '/tests/tier/two'"
+
+        # redefine --test via command line same as was in the plan
+        rlRun "$tmt -h fmf --test two --test two | tee $output"
+        rlAssertGrep 'tests: two and two' $output
+        rlAssertGrep 'summary: 2 tests selected' $output
+        rlRun "grep -A 1 summary $output | tail -1 | grep '/tests/tier/two'"
+        rlRun "grep -A 2 summary $output | tail -1 | grep '/tests/tier/two'"
+
+        # Clean up the run
+        rlRun "rm -rf $run" 0 "Clean up run"
     rlPhaseEnd
 
     rlPhaseStartCleanup
