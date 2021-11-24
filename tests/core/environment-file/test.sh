@@ -31,6 +31,12 @@ rlJournalStart
         rlAssertGrep "Failed to extract variables.*data/bad" 'output'
     rlPhaseEnd
 
+    rlPhaseStartTest "Empty environment file"
+        rlRun "tmt run -rvvddd discover finish plan -n empty 2>&1 | tee output"
+        rlAssertGrep "environment: {}" "output"
+        rlAssertGrep "WARNING.*Empty environment file" "output"
+    rlPhaseEnd
+
     rlPhaseStartTest "Escape from the tree"
         rlRun "tmt run -rvvvddd plan -n escape 2>&1 | tee output" 2
         rlAssertGrep "path '/etc/secret' is outside" 'output'

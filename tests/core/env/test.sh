@@ -55,6 +55,11 @@ rlJournalStart
                 done
             done
         rlPhaseEnd
+
+        rlPhaseStartTest "Empty environment file ($execute)"
+            rlRun -s "tmt run -r -e @empty.yaml 2>&1"
+            rlAssertGrep "WARNING.*Empty environment file" $rlRun_LOG
+        rlPhaseEnd
     done
 
     rlPhaseStartCleanup

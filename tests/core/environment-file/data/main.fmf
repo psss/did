@@ -22,6 +22,9 @@
     /bad:
         environment-file:
           - bad
+    /empty:
+        environment-file:
+          - empty.yaml
     /escape:
         environment-file:
           - ../../../../../../../../../../../../../../etc/secret
