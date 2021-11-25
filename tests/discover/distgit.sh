@@ -31,7 +31,7 @@ rlJournalStart
 
     rlPhaseStartTest "URL is path to a local distgit repo"
         rlRun -s 'tmt run --remove plans --default \
-            discover --how fmf --dist-git-source --dist-git-type Fedora --url $tmp/tmt \
+            discover --how fmf --dist-git-source --dist-git-type fedora --url $tmp/tmt \
             tests --name tests/prepare/install$'
         rlAssertGrep "summary: 1 test selected" $rlRun_LOG -F
     rlPhaseEnd

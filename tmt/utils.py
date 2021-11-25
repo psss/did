@@ -1717,7 +1717,7 @@ class DistGitHandler(object):
 
 class FedoraDistGit(DistGitHandler):
     """ Fedora Handler """
-    usage_name = "Fedora"
+    usage_name = "fedora"
     re_source = re.compile(r"^(\w+) \(([^)]+)\) = ([0-9a-fA-F]+)$")
     lookaside_server = "https://src.fedoraproject.org/repo/pkgs"
     remote_substring = re.compile(r'fedoraproject\.org')
@@ -1725,7 +1725,7 @@ class FedoraDistGit(DistGitHandler):
 
 class CentOSDistGit(DistGitHandler):
     """ CentOS Handler """
-    usage_name = "CentOS"
+    usage_name = "centos"
     re_source = re.compile(r"^(\w+) \(([^)]+)\) = ([0-9a-fA-F]+)$")
     lookaside_server = "https://sources.stream.centos.org/sources"
     remote_substring = re.compile(r'redhat/centos')
