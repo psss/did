@@ -1288,7 +1288,8 @@ class Run(tmt.utils.Common):
         self._workdir_path = id_ or True
         self._tree = tree
         self._plans = None
-        self._environment = dict()
+        self._environment_from_workdir = dict()
+        self._environment_from_options = None
         self.remove = self.opt('remove')
 
     def _use_default_plan(self):
@@ -1322,14 +1323,21 @@ class Run(tmt.utils.Common):
     @property
     def environment(self):
         """ Return environment combined from wake up and command line """
-        combined = self._environment.copy()
-        # Merge variables gathered from 'environment-file' options
-        combined.update(tmt.utils.environment_file_to_dict(
-            (self.opt('environment-file') or []), root=self.tree.root))
-        # Merge variables from 'environment' options (highest priority)
-        combined.update(tmt.utils.environment_to_dict(
-            self.opt('environment')))
+        # Gather environment variables from options only once
+        if self._environment_from_options is None:
+            self._environment_from_options = dict()
+            # Variables gathered from 'environment-file' options
+            self._environment_from_options.update(
+                tmt.utils.environment_file_to_dict(
+                    (self.opt('environment-file') or []),
+                    root=self.tree.root))
+            # Variables from 'environment' options (highest priority)
+            self._environment_from_options.update(
+                tmt.utils.environment_to_dict(self.opt('environment')))
 
+        # Combine workdir and command line
+        combined = self._environment_from_workdir.copy()
+        combined.update(self._environment_from_options)
         return combined
 
     def save(self):
@@ -1359,7 +1367,7 @@ class Run(tmt.utils.Common):
         except tmt.utils.FileError:
             self.debug('Run data not found.')
             return
-        self._environment = data.get('environment')
+        self._environment_from_workdir = data.get('environment')
         self._context.obj.steps = set(data['steps'])
         plans = []
         # The root directory of the tree may not be available, create
@@ -1410,8 +1418,10 @@ class Run(tmt.utils.Common):
             self._context.obj.steps = set(data['steps'])
 
         # Store loaded environment
-        self._environment = data.get('environment')
-        self.debug(f"Loaded environment: '{self._environment}'.", level=3)
+        self._environment_from_workdir = data.get('environment')
+        self.debug(
+            f"Loaded environment: '{self._environment_from_workdir}'.",
+            level=3)
 
         # If the remove was enabled, restore it, option overrides
         self.remove = self.remove or data.get('remove', 'False')
