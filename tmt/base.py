@@ -311,7 +311,7 @@ class Test(Core):
         # able to detect if the test has explicitly set the framework.
         self._check('framework', expected=str, default=None)
         if self.framework == 'beakerlib':
-            self.require.append('beakerlib >= 1.28')
+            self.require.append('beakerlib')
 
         # Check that environment is a dictionary
         self._check('environment', expected=dict, default={})
