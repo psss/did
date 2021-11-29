@@ -51,17 +51,16 @@ runcmd:
   - sed -i -e '/^.*PermitRootLogin/s/^.*$/PermitRootLogin yes/'
     /etc/ssh/sshd_config
   - systemctl reload sshd
-  - [sh, -c, 'mkdir -p /etc/systemd/network/']
-  # echo multiple times, sh echo doesn't support newline
-  - [sh, -c, 'if [ ! -f /etc/systemd/network/20-tc-usernet.network ];
-  then echo "[Match]" >> /etc/systemd/network/20-tc-usernet.network &&
+  - [sh, -c, 'if [ ! -f /etc/systemd/network/20-tc-usernet.network ] &&
+  systemctl status systemd-networkd | grep -q "enabled;\\svendor\\spreset:\\senabled";
+  then mkdir -p /etc/systemd/network/ &&
+  echo "[Match]" >> /etc/systemd/network/20-tc-usernet.network &&
   echo "Name=en*" >> /etc/systemd/network/20-tc-usernet.network &&
   echo "[Network]" >> /etc/systemd/network/20-tc-usernet.network &&
   echo "DHCP=yes" >> /etc/systemd/network/20-tc-usernet.network; fi']
   - [sh, -c, 'if systemctl status systemd-networkd |
   grep -q "enabled;\\svendor\\spreset:\\senabled"; then
   systemctl restart systemd-networkd; fi']
-  # CentOS and RHEL 8 keeps waiting before restarting sshd causing delays
   - [sh, -c, 'if cat /etc/os-release |
   grep -q platform:el8; then systemctl restart sshd; fi']
 """
@@ -116,6 +115,7 @@ DOMAIN_TEMPLATE = """<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/d
       <mac address="{{ mac_address }}"/>
       {{ network_source }}
       {{ ip_setup }}
+      <model type='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x03' function='0x0'/>
     </interface>
     <serial type='pty'>
