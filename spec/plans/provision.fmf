@@ -18,11 +18,13 @@ example: |
     summary: Provision a virtual machine (default)
     description:
         Create a new virtual machine on the localhost using
-        libvirt or another provider which is enabled in vagrant.
+        testcloud (libvirt). Testcloud takes care of downloading
+        an image and making necessary changes to it for optimal
+        experience (such as disabling UseDNS and GSSAPI for SSH).
     example: |
         provision:
             how: virtual
-            image: fedora/31-cloud-base
+            image: fedora
     link:
       - implemented-by: /tmt/steps/provision/testcloud.py
 
