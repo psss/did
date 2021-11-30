@@ -49,6 +49,8 @@ ssh_pwauth: true
 disable_root: false
 runcmd:
   - sed -i -e '/^.*PermitRootLogin/s/^.*$/PermitRootLogin yes/'
+    -e '/^.*UseDNS/s/^.*$/UseDNS no/'
+    -e '/^.*GSSAPIAuthentication/s/^.*$/GSSAPIAuthentication no/'
     /etc/ssh/sshd_config
   - systemctl reload sshd
   - [sh, -c, 'if [ ! -f /etc/systemd/network/20-tc-usernet.network ] &&
