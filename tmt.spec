@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.8.0
+Version: 1.9.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -159,6 +159,45 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 
 
 %changelog
+* Tue Nov 30 2021 Petr Šplíchal <psplicha@redhat.com> - 1.9.0-1
+- Improve testcloud/virtual provider docs
+- Disable UseDNS, GSSAPI for faster SSH in testcloud
+- Use `extra-args` attr for ansible-playbook
+- Fix el7 provision in testcloud user session
+- Adjust the instructions for migrating from STI
+- Document how to migrate tests from STI to tmt
+- Allow to pick objects by --link
+- Generate ecdsa key in testcloud
+- Simplify plugin keys handling in wake() and show()
+- Add support for Beakerlib's rlFileSubmit
+- Revert requiring exact beakerlib version
+- Dist git source can contain multiple files
+- Symlink worktree for discovered shell tests
+- Read environment variables from options only once
+- Correctly handle empty environment files
+- Use distro values from context for dist-git type
+- Make tests --name to just prune discovered tests
+- Enable duplicate test names and preserve ordering
+- Require beakerlib-1.28 for beakerlib tests
+- Adjust the dist git source discover implementation
+- Discover tmt tests from sources
+- Reenable plans/install/docs
+- Correct the `playbook` attribute in the spec (#948)
+- Ansible plugin for Finish step
+- Thread processing of executed commands inside tmt
+- Adjust `tmt test lint` test for old yaml format
+- Canonical name for centos-stream in dimension
+- Remove obsoleted conditionals from the spec file
+- Use a fresh sphinx when building the readthedocs
+- Allow to specify session type (system/session)
+- Package tmt.plugins to store arbitrary plugins
+- Ignore ssh connection closed during reboot
+- Improve error message for the missing step name
+- Document how to integrate tests with other tools
+- Use the recommended format of the copyright notice
+- Update notes about the release process
+- Update the hardware specification with new keys
+
 * Thu Sep 30 2021 Lukáš Zachar <lzachar@redhat.com> - 1.8.0-1
 - Add support for reboot in a reused provision
 - Solve the reboot race condition
