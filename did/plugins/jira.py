@@ -9,6 +9,15 @@ Configuration example (GSS authentication)::
     url = https://issues.jboss.org/
     ssl_verify = true
 
+Configuration example (token)::
+
+    [redhat]
+    type = jira
+    url = https://issues.redhat.com/
+    auth_type = token
+    auth_token_file = ~/.did/jira_redhat_token
+    token_expiry_check = 7:first-did-token
+
 Configuration example (basic authentication) with alternative username
 and custom prefix::
 
@@ -41,11 +50,18 @@ Notes:
   SSL verification (default: true).
 * ``auth_url`` parameter is optional. If not provided,
   ``url + "/step-auth-gss"`` will be used for authentication.
+  Its value is ignored for 'token' auth_type.
 * ``auth_type`` parameter is optional, default value is 'gss'.
+  Other values are 'basic' and 'token'.
 * ``auth_username``, ``auth_password`` and ``auth_password_file`` are
-  only valid for basic authentication, ``auth_password`` or
+  only valid for 'basic' authentication, ``auth_password`` or
   ``auth_password_file`` must be provided, ``auth_password`` has a
   higher priority.
+* ``auth_token_file``,``auth_token`` and ``token_expiry_check`` are valid only
+  for the 'token' authentication.``auth_token`` has higher priority over
+  ``auth_token_file`` and one of them has to be present.
+  ``token_expiry_check`` is in the form of days:token-name and when present warning
+  is printed if token named token-name expires withing specified number of days.
 """
 
 import os
@@ -68,7 +84,7 @@ MAX_RESULTS = 1000
 MAX_BATCHES = 100
 
 # Supported authentication types
-AUTH_TYPES = ["gss", "basic"]
+AUTH_TYPES = ["gss", "basic", "token"]
 
 # Enable ssl verify
 SSL_VERIFY = True
@@ -265,6 +281,27 @@ class JiraStats(StatsGroup):
                 raise ReportError(
                     "`auth_password` or `auth_password_file` must be set "
                     "in the [{0}] section".format(option))
+        # Token
+        elif self.auth_type == "token":
+            if "auth_token" in config:
+                self.auth_token = config["auth_token"]
+            elif "auth_token_file" in config:
+                file_path = os.path.expanduser(config["auth_token_file"])
+                with open(file_path) as password_file:
+                    self.auth_token = password_file.read().strip()
+            else:
+                raise ReportError(
+                    "`auth_token` or `auth_token_file` must be set "
+                    "in the [{0}] section".format(option))
+            if "token_expiry_check" in config:
+                try:
+                    days, name = re.match(r"^(\d+):(.*)", config["token_expiry_check"]).groups()
+                    self.token_expiry_check = int(days), name
+                except AttributeError:
+                    raise ReportError("`token_expiry_check` must be in `days:token_name` format "
+                    "in the [{0}] section".format(option))
+            else:
+                self.token_expiry_check = None
         else:
             if "auth_username" in config:
                 raise ReportError(
@@ -328,6 +365,10 @@ class JiraStats(StatsGroup):
                 basic_auth = (self.auth_username, self.auth_password)
                 response = self._session.get(
                     self.auth_url, auth=basic_auth, verify=self.ssl_verify)
+            elif self.auth_type == "token":
+                self.session.headers["Authorization"] = f"Bearer {self.auth_token}"
+                response = self._session.get(
+                    "{0}/rest/api/2/myself".format(self.url), verify=self.ssl_verify)
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
                 response = self._session.get(
@@ -336,5 +377,26 @@ class JiraStats(StatsGroup):
                 response.raise_for_status()
             except requests.exceptions.HTTPError as error:
                 log.error(error)
-                raise ReportError('Jira authentication failed. Try kinit.')
+                raise ReportError('Jira authentication failed. Check credentials or kinit')
+            if self.token_expiry_check:
+                days, token_name = self.token_expiry_check
+                response = self._session.get(
+                    "{0}/rest/pat/latest/tokens".format(self.url), verify=self.ssl_verify
+                )
+                try:
+                    response.raise_for_status()
+                    token_found = None
+                    for token in response.json():
+                        if token["name"] == token_name:
+                            token_found = token
+                            break
+                    if token_found is None:
+                       raise ValueError(f"Can't check validity for '{token_name}' as it doesn't exist") 
+                    from datetime import datetime
+                    expiringAt = datetime.strptime(token_found["expiringAt"], r"%Y-%m-%dT%H:%M:%S.%f%z")
+                    delta = expiringAt.astimezone() - datetime.now().astimezone()
+                    if delta.days < days:
+                        log.warn(f"Jira token '{token_name}' expires in {delta.days} days")
+                except (requests.exceptions.HTTPError, KeyError, ValueError) as error:
+                    log.warn(error)
         return self._session
