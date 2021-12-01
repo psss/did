@@ -2,42 +2,60 @@
 """
 Jira stats such as created, updated or resolved issues
 
-Configuration example (GSS authentication)::
-
-    [jboss]
-    type = jira
-    url = https://issues.jboss.org/
-    ssl_verify = true
-
 Configuration example (token)::
 
-    [redhat]
+    [issues]
     type = jira
     url = https://issues.redhat.com/
     auth_type = token
-    auth_token_file = ~/.did/jira_redhat_token
-    token_expiry_check = 7:first-did-token
+    token_file = ~/.did/jira-token
+    token_expiration = 7:did-token
 
-Configuration example (basic authentication) with alternative username
-and custom prefix::
+Either ``token`` or ``token_file`` has to be defined.
 
-    [jboss]
+token
+    Token string directly included in the config.
+    Has a higher priority over ``token_file``.
+
+token_file
+    Path to the file where the token is stored.
+
+token_expiration
+    Print warning if token with provided ``name`` expires within
+    specified number of ``days``. The format is ``days:token-name``.
+
+Configuration example (GSS authentication)::
+
+    [issues]
     type = jira
-    prefix = JIRA
-    login = alt_username
-    url = https://issues.jboss.org/
-    auth_url = https://issues.jboss.org/rest/auth/latest/session
+    url = https://issues.redhat.org/
+    ssl_verify = true
+
+Configuration example (basic authentication)::
+
+    [issues]
+    type = jira
+    url = https://issues.redhat.org/
+    auth_url = https://issues.redhat.org/rest/auth/latest/session
     auth_type = basic
     auth_username = username
     auth_password = password
     auth_password_file = ~/.did/jira_password
 
-Configuration example limiting report only to a single project::
+Keys ``auth_username``, ``auth_password`` and ``auth_password_file`` are
+only valid for ``basic`` authentication. Either ``auth_password`` or
+``auth_password_file`` must be provided, ``auth_password`` has a higher
+priority.
 
-    [jboss]
+Configuration example limiting report only to a single project, using an
+alternative username and a custom identifier prefix::
+
+    [issues]
     type = jira
     project = ORG
-    url = https://issues.jboss.org/
+    prefix = JIRA
+    login = alt_username
+    url = https://issues.redhat.org/
     ssl_verify = true
 
 Notes:
@@ -48,20 +66,11 @@ Notes:
   doesn't match email/JIRA account.
 * Optional parameter ``ssl_verify`` can be used to enable/disable
   SSL verification (default: true).
-* ``auth_url`` parameter is optional. If not provided,
+* The ``auth_url`` parameter is optional. If not provided,
   ``url + "/step-auth-gss"`` will be used for authentication.
-  Its value is ignored for 'token' auth_type.
-* ``auth_type`` parameter is optional, default value is 'gss'.
-  Other values are 'basic' and 'token'.
-* ``auth_username``, ``auth_password`` and ``auth_password_file`` are
-  only valid for 'basic' authentication, ``auth_password`` or
-  ``auth_password_file`` must be provided, ``auth_password`` has a
-  higher priority.
-* ``auth_token_file``,``auth_token`` and ``token_expiry_check`` are valid only
-  for the 'token' authentication.``auth_token`` has higher priority over
-  ``auth_token_file`` and one of them has to be present.
-  ``token_expiry_check`` is in the form of days:token-name and when present warning
-  is printed if token named token-name expires withing specified number of days.
+  Its value is ignored for ``token`` auth_type.
+* The ``auth_type`` parameter is optional, default value is ``gss``.
+  Other values are ``basic`` and ``token``.
 """
 
 import os
@@ -280,28 +289,31 @@ class JiraStats(StatsGroup):
             else:
                 raise ReportError(
                     "`auth_password` or `auth_password_file` must be set "
-                    "in the [{0}] section".format(option))
+                    "in the [{0}] section.".format(option))
         # Token
         elif self.auth_type == "token":
-            if "auth_token" in config:
-                self.auth_token = config["auth_token"]
-            elif "auth_token_file" in config:
-                file_path = os.path.expanduser(config["auth_token_file"])
-                with open(file_path) as password_file:
-                    self.auth_token = password_file.read().strip()
+            if "token" in config:
+                self.token = config["token"]
+            elif "token_file" in config:
+                file_path = os.path.expanduser(config["token_file"])
+                with open(file_path) as token_file:
+                    self.token = token_file.read().strip()
             else:
                 raise ReportError(
-                    "`auth_token` or `auth_token_file` must be set "
-                    "in the [{0}] section".format(option))
-            if "token_expiry_check" in config:
+                    "The `token` or `token_file` key must be set "
+                    "in the [{0}] section.".format(option))
+            if "token_expiration" in config:
                 try:
-                    days, name = re.match(r"^(\d+):(.*)", config["token_expiry_check"]).groups()
-                    self.token_expiry_check = int(days), name
+                    days, name = re.match(
+                        r"^(\d+):(.*)", config["token_expiration"]).groups()
+                    self.token_expiration = int(days), name
                 except AttributeError:
-                    raise ReportError("`token_expiry_check` must be in `days:token_name` format "
-                    "in the [{0}] section".format(option))
+                    raise ReportError(
+                        "The `token_expiration` key must be in the "
+                        "`days:token_name` format in the "
+                        "[{0}] section.".format(option))
             else:
-                self.token_expiry_check = None
+                self.token_expiration = None
         else:
             if "auth_username" in config:
                 raise ReportError(
@@ -366,9 +378,10 @@ class JiraStats(StatsGroup):
                 response = self._session.get(
                     self.auth_url, auth=basic_auth, verify=self.ssl_verify)
             elif self.auth_type == "token":
-                self.session.headers["Authorization"] = f"Bearer {self.auth_token}"
+                self.session.headers["Authorization"] = f"Bearer {self.token}"
                 response = self._session.get(
-                    "{0}/rest/api/2/myself".format(self.url), verify=self.ssl_verify)
+                    "{0}/rest/api/2/myself".format(self.url),
+                    verify=self.ssl_verify)
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
                 response = self._session.get(
@@ -377,12 +390,13 @@ class JiraStats(StatsGroup):
                 response.raise_for_status()
             except requests.exceptions.HTTPError as error:
                 log.error(error)
-                raise ReportError('Jira authentication failed. Check credentials or kinit')
-            if self.token_expiry_check:
-                days, token_name = self.token_expiry_check
+                raise ReportError(
+                    "Jira authentication failed. Check credentials or kinit.")
+            if self.token_expiration:
+                days, token_name = self.token_expiration
                 response = self._session.get(
-                    "{0}/rest/pat/latest/tokens".format(self.url), verify=self.ssl_verify
-                )
+                    "{0}/rest/pat/latest/tokens".format(self.url),
+                    verify=self.ssl_verify)
                 try:
                     response.raise_for_status()
                     token_found = None
@@ -391,12 +405,19 @@ class JiraStats(StatsGroup):
                             token_found = token
                             break
                     if token_found is None:
-                       raise ValueError(f"Can't check validity for '{token_name}' as it doesn't exist") 
+                       raise ValueError(
+                            f"Can't check validity for the '{token_name}' "
+                            f"token as it doesn't exist.")
                     from datetime import datetime
-                    expiringAt = datetime.strptime(token_found["expiringAt"], r"%Y-%m-%dT%H:%M:%S.%f%z")
-                    delta = expiringAt.astimezone() - datetime.now().astimezone()
+                    expiring_at = datetime.strptime(
+                        token_found["expiringAt"], r"%Y-%m-%dT%H:%M:%S.%f%z")
+                    delta = (
+                        expiring_at.astimezone() - datetime.now().astimezone())
                     if delta.days < days:
-                        log.warn(f"Jira token '{token_name}' expires in {delta.days} days")
-                except (requests.exceptions.HTTPError, KeyError, ValueError) as error:
+                        log.warn(
+                            f"Jira token '{token_name}' "
+                            f"expires in {delta.days} days.")
+                except (requests.exceptions.HTTPError,
+                        KeyError, ValueError) as error:
                     log.warn(error)
         return self._session
