@@ -9,7 +9,8 @@ Configuration example (token)::
     url = https://issues.redhat.com/
     auth_type = token
     token_file = ~/.did/jira-token
-    token_expiration = 7:did-token
+    token_expiration = 7
+    token_name = did-token
 
 Either ``token`` or ``token_file`` has to be defined.
 
@@ -21,8 +22,11 @@ token_file
     Path to the file where the token is stored.
 
 token_expiration
-    Print warning if token with provided ``name`` expires within
-    specified number of ``days``. The format is ``days:token-name``.
+    Print warning if token with provided ``token_name`` expires within
+    specified number of ``days``.
+
+token_name
+    Name of the token to check for expiration in ``token_expiration`` days.
 
 Configuration example (GSS authentication)::
 
@@ -302,18 +306,21 @@ class JiraStats(StatsGroup):
                 raise ReportError(
                     "The `token` or `token_file` key must be set "
                     "in the [{0}] section.".format(option))
-            if "token_expiration" in config:
+            if "token_expiration" in config or "token_name" in config:
                 try:
-                    days, name = re.match(
-                        r"^(\d+):(.*)", config["token_expiration"]).groups()
-                    self.token_expiration = int(days), name
-                except AttributeError:
+                    self.token_expiration = int(config["token_expiration"])
+                    self.token_name = config["token_name"]
+                except KeyError:
                     raise ReportError(
-                        "The `token_expiration` key must be in the "
-                        "`days:token_name` format in the "
+                        "The ``token_name`` and ``token_expiration`` "
+                        "must be set at the same time in "
+                        "[{0}] section.".format(option))
+                except ValueError:
+                    raise ReportError(
+                        "The ``token_expiration`` must contain number, used in "
                         "[{0}] section.".format(option))
             else:
-                self.token_expiration = None
+                self.token_expiration = self.token_name = None
         else:
             if "auth_username" in config:
                 raise ReportError(
@@ -393,7 +400,6 @@ class JiraStats(StatsGroup):
                 raise ReportError(
                     "Jira authentication failed. Check credentials or kinit.")
             if self.token_expiration:
-                days, token_name = self.token_expiration
                 response = self._session.get(
                     "{0}/rest/pat/latest/tokens".format(self.url),
                     verify=self.ssl_verify)
@@ -401,21 +407,21 @@ class JiraStats(StatsGroup):
                     response.raise_for_status()
                     token_found = None
                     for token in response.json():
-                        if token["name"] == token_name:
+                        if token["name"] == self.token_name:
                             token_found = token
                             break
                     if token_found is None:
                        raise ValueError(
-                            f"Can't check validity for the '{token_name}' "
+                            f"Can't check validity for the '{self.token_name}' "
                             f"token as it doesn't exist.")
                     from datetime import datetime
                     expiring_at = datetime.strptime(
                         token_found["expiringAt"], r"%Y-%m-%dT%H:%M:%S.%f%z")
                     delta = (
                         expiring_at.astimezone() - datetime.now().astimezone())
-                    if delta.days < days:
+                    if delta.days < self.token_expiration:
                         log.warn(
-                            f"Jira token '{token_name}' "
+                            f"Jira token '{self.token_name}' "
                             f"expires in {delta.days} days.")
                 except (requests.exceptions.HTTPError,
                         KeyError, ValueError) as error:
