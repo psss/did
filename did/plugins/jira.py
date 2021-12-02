@@ -26,7 +26,8 @@ token_expiration
     specified number of ``days``.
 
 token_name
-    Name of the token to check for expiration in ``token_expiration`` days.
+    Name of the token to check for expiration in ``token_expiration``
+    days. This has to match the name as seen in your Jira profile.
 
 Configuration example (GSS authentication)::
 
