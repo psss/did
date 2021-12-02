@@ -216,12 +216,13 @@ class Guest(tmt.utils.Common):
     class attribute '_keys' below).
     """
 
-    _ssh_multiplex_init_done = False
-    _ssh_socket_path = None
-
     # List of supported keys
     # (used for import/export to/from attributes during load and save)
     _keys = ['guest', 'port', 'user', 'key', 'password']
+
+    # Master ssh connection process and socket path
+    _ssh_master_process = None
+    _ssh_socket_path = None
 
     def __init__(self, data, name=None, parent=None):
         """ Initialize guest data """
@@ -241,7 +242,15 @@ class Guest(tmt.utils.Common):
         """ Return user@guest """
         return f'{self.user}@{self.guest}'
 
-    def _ssh_options(self, join=False, force_init_ssh_plex=False):
+    def _ssh_socket(self):
+        """ Prepare path to the master connection socket """
+        if not self._ssh_socket_path:
+            socket_dir = f"/run/user/{os.getuid()}/tmt"
+            os.makedirs(socket_dir, exist_ok=True)
+            self._ssh_socket_path = tempfile.mktemp(dir=socket_dir)
+        return self._ssh_socket_path
+
+    def _ssh_options(self, join=False):
         """ Return common ssh options (list or joined) """
         options = [
             '-oStrictHostKeyChecking=no',
@@ -259,45 +268,38 @@ class Guest(tmt.utils.Common):
         if self.password:
             options.extend(['-oPasswordAuthentication=yes'])
 
-        if not self._ssh_socket_path:
-            self._ssh_socket_path = f"/run/user/{os.getuid()}/tmt/" + next(
-                tempfile._get_candidate_names())
-
-        if force_init_ssh_plex:
-            options.extend(['-S', self._ssh_socket_path, '-MNnT'])
-        else:
-            options.extend(['-S', self._ssh_socket_path])
+        # Use the shared master connection
+        options.extend(["-S", self._ssh_socket()])
 
         return ' '.join(options) if join else options
 
-    def _ssh_establish_master_connection(self):
-        """ Establish master ssh connection """
-        self._ssh_multiplex_init_done = True
-        if not self.reconnect():
-            self.warn(
-                "We are unable to establish master connection. Continue without it.")
+    def _ssh_master_connection(self, command):
+        """ Check/create the master ssh connection """
+        if self._ssh_master_process:
             return
-        os.makedirs(f"/run/user/{os.getuid()}/tmt", exist_ok=True)
-        command = self._ssh_command(
-            join=True, force_init_ssh_plex=True) + ' ' + self._ssh_guest()
-        subprocess.Popen(command, cwd=None, shell=True, env=None)
+        command = command + self._ssh_options() + ["-MNnT", self._ssh_guest()]
+        self.debug(f"Create the master ssh connection: {' '.join(command)}")
+        self._ssh_master_process = subprocess.Popen(
+            command,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL)
 
-    def _ssh_command(self, join=False, force_init_ssh_plex=False):
+    def _ssh_command(self, join=False):
         """ Prepare an ssh command line for execution (list or joined) """
-        if not self._ssh_multiplex_init_done:
-            self._ssh_establish_master_connection()
-
         command = []
         if self.password:
             password = shlex.quote(self.password) if join else self.password
             command.extend(["sshpass", "-p", password])
         command.append("ssh")
+
+        # Check the master connection
+        self._ssh_master_connection(command)
+
         if join:
-            return " ".join(command) + " " + self._ssh_options(join=True,
-                                                               force_init_ssh_plex=force_init_ssh_plex)
+            return " ".join(command) + " " + self._ssh_options(join=True)
         else:
-            return command + \
-                self._ssh_options(force_init_ssh_plex=force_init_ssh_plex)
+            return command + self._ssh_options()
 
     def load(self, data):
         """
@@ -546,7 +548,24 @@ class Guest(tmt.utils.Common):
         any memory or cpu resources. If needed, perform any actions
         necessary to store the instance status to disk.
         """
-        self.debug(f"Doing nothing to stop guest '{self.guest}'.")
+
+        # Close the master ssh connection
+        if self._ssh_master_process:
+            self.debug("Close the master ssh connection.", level=3)
+            try:
+                self._ssh_master_process.terminate()
+                self._ssh_master_process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                pass
+
+        # Remove the ssh socket
+        if self._ssh_socket_path and os.path.exists(self._ssh_socket_path):
+            self.debug(
+                f"Remove ssh socket '{self._ssh_socket_path}'.", level=3)
+            try:
+                os.unlink(self._ssh_socket_path)
+            except OSError as error:
+                self.debug(f"Failed to remove the socket: {error}", level=3)
 
     def reboot(self, hard=False):
         """

@@ -539,6 +539,7 @@ class GuestTestcloud(tmt.Guest):
 
     def stop(self):
         """ Stop provisioned guest """
+        super().stop()
         if self.instance:
             self.debug(f"Stopping testcloud instance '{self.instance_name}'.")
             try:
