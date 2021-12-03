@@ -195,7 +195,7 @@ class JiraCreated(Stats):
         query = (
             "creator = '{0}' AND "
             "created >= {1} AND created <= {2}".format(
-                self.user.email,
+                self.user.login or self.user.email,
                 self.options.since, self.options.until))
         if self.parent.project:
             query = query + " AND project = '{0}'".format(self.parent.project)
@@ -211,7 +211,7 @@ class JiraUpdated(Stats):
             query = (
                 "issueFunction in commented"
                 "('by {0} after {1} before {2}')".format(
-                    self.parent.login or self.user.email,
+                    self.user.login or self.user.email,
                     self.options.since, self.options.until))
             if self.parent.project:
                 query = query + " AND project = '{0}'".format(
@@ -237,7 +237,7 @@ class JiraResolved(Stats):
         query = (
             "assignee = '{0}' AND "
             "resolved >= {1} AND resolved <= {2}".format(
-                self.user.email,
+                self.user.login or self.user.email,
                 self.options.since, self.options.until))
         if self.parent.project:
             query = query + " AND project = '{0}'".format(
