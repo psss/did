@@ -192,6 +192,13 @@ example: |
             is-supported: false
             hypervisor: kvm
 
+        # Features related to machine boot modes
+        boot:
+            method: bios
+
+        boot:
+            method: uefi
+
         # Using advanced logic operators
         and:
           - cpu:
