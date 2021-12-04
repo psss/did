@@ -67,6 +67,13 @@ class GitHub(object):
                 log.debug(error)
                 raise ReportError(f"GitHub search on {self.url} failed.")
 
+            # Check if credentials are valid
+            log.debug(f"GitHub status code: {response.status_code}")
+            if response.status_code == 401:
+                raise ReportError(
+                    "Defined token is not valid. "
+                    "Either update it or remove it.")
+
             # Parse fetched json data
             try:
                 data = json.loads(response.text)["items"]
