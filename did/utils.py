@@ -11,7 +11,6 @@ import sys
 import unicodedata
 from pprint import pformat as pretty
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,7 +68,7 @@ def _import(path, continue_on_error):
 
 
 def _load_components(
-    path, include=".*", exclude="test", continue_on_error=True):
+        path, include=".*", exclude="test", continue_on_error=True):
     """ Import modules, handle include/exclude filtering """
     num_loaded = 0
     if path.endswith(".py"):
@@ -295,7 +294,7 @@ class Logging(object):
         LOG_DEBUG: "green",
         LOG_DETAILS: "cyan",
         LOG_DATA: "magenta",
-    }
+        }
     # Environment variable mapping
     MAPPING = {
         0: LOG_WARN,
@@ -304,7 +303,7 @@ class Logging(object):
         3: LOG_DETAILS,
         4: LOG_DATA,
         5: LOG_ALL,
-    }
+        }
     # All levels
     LEVELS = "CRITICAL DEBUG ERROR FATAL INFO NOTSET WARN WARNING".split()
 
@@ -326,6 +325,7 @@ class Logging(object):
 
     class ColoredFormatter(logging.Formatter):
         """ Custom color formatter for logging """
+
         def format(self, record):
             # Handle custom log level names
             if record.levelno == LOG_ALL:
@@ -364,11 +364,11 @@ class Logging(object):
         logger.DETAILS = LOG_DETAILS
         logger.ALL = LOG_ALL
         logger.details = lambda message: logger.log(
-            LOG_DETAILS, message) # NOQA
+            LOG_DETAILS, message)  # NOQA
         logger.data = lambda message: logger.log(
-            LOG_DATA, message) # NOQA
+            LOG_DATA, message)  # NOQA
         logger.all = lambda message: logger.log(
-            LOG_ALL, message) # NOQA
+            LOG_ALL, message)  # NOQA
         return logger
 
     def set(self, level=None):

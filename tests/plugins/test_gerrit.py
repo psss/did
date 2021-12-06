@@ -1,9 +1,8 @@
 # coding: utf-8
 """ Tests for the Gerrit plugin """
 
-import did.cli
 import did.base
-
+import did.cli
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -18,6 +17,7 @@ type = gerrit
 url = https://go-review.googlesource.com/#/
 prefix = GR
 """
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests

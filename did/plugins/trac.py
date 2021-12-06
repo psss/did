@@ -13,12 +13,13 @@ Config example::
 import re
 import xmlrpc.client
 
-from did.utils import log, pretty
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
+from did.utils import log, pretty
 
 INTERESTING_RESOLUTIONS = ["canceled"]
 MAX_TICKETS = 1000000
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Trac Investigator
@@ -26,6 +27,7 @@ MAX_TICKETS = 1000000
 
 class Trac(object):
     """ Trac investigator """
+
     def __init__(
             self, ticket=None, changelog=None, parent=None, options=None):
         """ Initialize ticket info and history """
@@ -123,12 +125,14 @@ class Trac(object):
                 return True
         return False
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Trac Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class TracCommon(Stats):
     """ Common Trac Stats object for saving prefix & proxy """
+
     def __init__(self, option, name=None, parent=None):
         self.parent = parent
         Stats.__init__(self, option, name, parent)
@@ -136,6 +140,7 @@ class TracCommon(Stats):
 
 class TracCreated(TracCommon):
     """ Created tickets """
+
     def fetch(self):
         log.info("Searching for tickets created by {0}".format(self.user))
         query = "reporter=~{0}&time={1}..{2}".format(
@@ -145,6 +150,7 @@ class TracCreated(TracCommon):
 
 class TracAccepted(TracCommon):
     """ Accepted tickets """
+
     def fetch(self):
         log.info("Searching for tickets accepted by {0}".format(self.user))
         query = "time=..{2}&modified={1}..&owner=~{0}".format(
@@ -156,6 +162,7 @@ class TracAccepted(TracCommon):
 
 class TracUpdated(TracCommon):
     """ Updated tickets """
+
     def fetch(self):
         log.info("Searching for tickets updated by {0}".format(self.user))
         query = "time=..{2}&modified={1}..".format(
@@ -167,6 +174,7 @@ class TracUpdated(TracCommon):
 
 class TracClosed(TracCommon):
     """ Closed tickets """
+
     def fetch(self):
         log.info("Searching for tickets closed by {0}".format(self.user))
         query = "owner=~{0}&time=..{2}&modified={1}..".format(

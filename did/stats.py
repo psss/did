@@ -8,10 +8,10 @@ import did.base
 from did import utils
 from did.utils import log
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Stats(object):
     """ General statistics """
@@ -115,10 +115,10 @@ class Stats(object):
 class StatsGroupPlugin(type):
     registry = {}
     ignore = set([
-            "StatsGroupPlugin",
-            "StatsGroup",
-            "EmptyStatsGroup",
-            "UserStats",
+        "StatsGroupPlugin",
+        "StatsGroup",
+        "EmptyStatsGroup",
+        "UserStats",
         ])
 
     def __init__(cls, name, bases, attrs):
@@ -247,6 +247,7 @@ class UserStats(StatsGroup):
 
 class EmptyStats(Stats):
     """ Custom stats group for header & footer """
+
     def __init__(self, option, name=None, parent=None, user=None):
         Stats.__init__(self, option, name, parent, user)
 
@@ -261,6 +262,7 @@ class EmptyStats(Stats):
 
 class EmptyStatsGroup(StatsGroup):
     """ Header & Footer stats group """
+
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
         for opt, name in sorted(did.base.Config().section(option)):

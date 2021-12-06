@@ -2,13 +2,14 @@
 # coding: utf-8
 
 import re
+
 from setuptools import setup
 
 # Parse version and release from the spec file
 with open('did.spec') as specfile:
     lines = "\n".join(line.rstrip() for line in specfile)
     version = re.search('Version: (.+)', lines).group(1).rstrip()
-    release = re.search('Release: (\d+)', lines).group(1).rstrip()
+    release = re.search('Release: (\\d+)', lines).group(1).rstrip()
 version = '.'.join([version, release])
 
 # Prepare install requires and extra requires
@@ -24,9 +25,10 @@ extras_require = {
     'jira': ['requests_gssapi'],
     'redmine': ['feedparser'],
     'rt': ['gssapi'],
-    'tests': ['pytest', 'python-coveralls'],
+    'tests': ['pytest', 'python-coveralls', 'pre-commit'],
     }
-extras_require['all'] = [dependency
+extras_require['all'] = [
+    dependency
     for extra in extras_require.values()
     for dependency in extra]
 
@@ -64,7 +66,7 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Topic :: Office/Business',
         'Topic :: Utilities',
-    ],
+        ],
 
     data_files=[],
     dependency_links=[],

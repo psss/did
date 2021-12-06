@@ -7,9 +7,10 @@ This module takes care of processing command line options and
 running the main loop which gathers all individual stats.
 """
 
+import argparse
 import re
 import sys
-import argparse
+
 from dateutil.relativedelta import relativedelta as delta
 
 import did.base

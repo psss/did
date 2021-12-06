@@ -12,14 +12,14 @@ Config example::
     item3 = Project Three
 """
 
-from did.utils import item
 from did.base import Config
 from did.stats import Stats, StatsGroup
-
+from did.utils import item
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Custom Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class ItemStats(Stats):
     """ Custom section with given items """

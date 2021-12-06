@@ -42,13 +42,13 @@ Available options:
 .. _Preferences: https://bugzilla.redhat.com/userprefs.cgi?tab=apikey
 """
 
-import bugzilla
 import xmlrpc.client
+
+import bugzilla
 
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
 from did.utils import log, pretty, split
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -274,6 +274,7 @@ class Bug(object):
 #  Bugzilla Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class VerifiedBugs(Stats):
     """
     Bugs verified
@@ -281,6 +282,7 @@ class VerifiedBugs(Stats):
     Bugs with ``QA Contact`` field set to given user or changed by the
     given user and having their status changed to ``VERIFIED``.
     """
+
     def fetch(self):
         log.info("Searching for bugs verified by {0}".format(self.user))
         # Common query options
@@ -328,6 +330,7 @@ class ReturnedBugs(Stats):
     the ``ASSIGNED`` status, meaning the fix for the issue is not
     correct or complete.
     """
+
     def fetch(self):
         log.info("Searching for bugs returned by {0}".format(self.user))
         query = {
@@ -364,6 +367,7 @@ class FiledBugs(Stats):
 
     Newly created bugs by given user, marked as the ``Reporter``.
     """
+
     def fetch(self):
         log.info("Searching for bugs filed by {0}".format(self.user))
         query = {
@@ -465,6 +469,7 @@ class PostedBugs(Stats):
     Bugs with patches posted for review, detected by their status
     change to ``POST`` and given user set as ``Assignee``.
     """
+
     def fetch(self):
         log.info("Searching for bugs posted by {0}".format(self.user))
         query = {
@@ -499,6 +504,7 @@ class PatchedBugs(Stats):
     denoting the patch for the issue is available (e.g. attached
     to the bug or pushed to a feature git branch).
     """
+
     def fetch(self):
         log.info("Searching for bugs patched by {0}".format(self.user))
         query = {
@@ -563,6 +569,7 @@ class CommentedBugs(Stats):
 
     All bugs commented by given user in requested time frame.
     """
+
     def fetch(self):
         log.info("Searching for bugs commented by {0}".format(self.user))
         query = {
@@ -591,6 +598,7 @@ class SubscribedBugs(Stats):
 
     All bugs subscribed by given user in requested time frame.
     """
+
     def fetch(self):
         log.info("Searching for bugs subscribed by {0}".format(self.user))
         query = {

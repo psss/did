@@ -45,16 +45,16 @@ by configuring the ``storage`` option.
 """
 
 import os
-import httplib2
 
+import httplib2
 from googleapiclient import discovery
 from oauth2client import tools
-from oauth2client.file import Storage
 from oauth2client.client import OAuth2WebServerFlow
+from oauth2client.file import Storage
 
-from did.base import Config, ReportError, CONFIG
-from did.utils import log, pretty, listed, split
+from did.base import CONFIG, Config, ReportError
 from did.stats import Stats, StatsGroup
+from did.utils import log, split
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -69,6 +69,7 @@ CREDENTIAL_FILE = "google-api-credentials.json"
 CREDENTIAL_PATH = os.path.join(CREDENTIAL_DIR, CREDENTIAL_FILE)
 
 USER_AGENT = "did"
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Authorized HTTP session
@@ -109,12 +110,14 @@ def authorized_http(client_id, client_secret, apps, file=None):
 
     return credentials.authorize(httplib2.Http())
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Google Calendar
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class GoogleCalendar(object):
     """ Google Calendar functions """
+
     def __init__(self, http):
         self.service = discovery.build("calendar", "v3", http=http)
 
@@ -123,12 +126,14 @@ class GoogleCalendar(object):
         events_result = self.service.events().list(**kwargs).execute()
         return [Event(event) for event in events_result.get("items", [])]
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Event
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Event(object):
     """ Googe Calendar Event """
+
     def __init__(self, dict):
         """ Create Event object from dictionary returned by Google API """
         self.__dict__ = dict
@@ -156,12 +161,14 @@ class Event(object):
                 return True
         return False
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Google Tasks
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class GoogleTasks(object):
     """ Google Tasks functions """
+
     def __init__(self, http):
         self.service = discovery.build("tasks", "v1", http=http)
 
@@ -170,12 +177,14 @@ class GoogleTasks(object):
         tasks_result = self.service.tasks().list(**kwargs).execute()
         return [Task(task) for task in tasks_result.get("items", [])]
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Task
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Task(object):
     """ Google Tasks task """
+
     def __init__(self, dict):
         """ Create Task object from dictionary returned by Google API """
         self.__dict__ = dict
@@ -187,12 +196,14 @@ class Task(object):
     def __getitem__(self, name):
         return self.__dict__.get(name, None)
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class GoogleStatsBase(Stats):
     """ Base class containing common code """
+
     def __init__(self, option, name=None, parent=None):
         super(GoogleStatsBase, self).__init__(
             option=option, name=name, parent=parent)
@@ -223,8 +234,10 @@ class GoogleStatsBase(Stats):
         log.info("NB TASKS {0}".format(len(self._tasks)))
         return self._tasks
 
+
 class GoogleEventsOrganized(GoogleStatsBase):
     """ Events organized """
+
     def fetch(self):
         log.info("Searching for events organized by {0}".format(self.user))
         self.stats = [
@@ -232,8 +245,10 @@ class GoogleEventsOrganized(GoogleStatsBase):
             if event.organized_by(self.user.email)
             ]
 
+
 class GoogleEventsAttended(GoogleStatsBase):
     """ Events attended """
+
     def fetch(self):
         log.info("Searching for events attended by {0}".format(self.user))
         self.stats = [
@@ -241,11 +256,14 @@ class GoogleEventsAttended(GoogleStatsBase):
             if event.attended_by(self.user.email)
             ]
 
+
 class GoogleTasksCompleted(GoogleStatsBase):
     """ Tasks completed """
+
     def fetch(self):
         log.info("Searching for completed tasks by {0}".format(self.user))
         self.stats = self.tasks
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Google Stats Group

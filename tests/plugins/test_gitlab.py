@@ -1,11 +1,12 @@
 # coding: utf-8
 """ Tests for the GitLab plugin """
 
-import pytest
-import did.cli
-import did.base
 import time
 
+import pytest
+
+import did.base
+import did.cli
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -28,6 +29,7 @@ CONFIG = CONFIG_NOTOKEN + """
 token = vh1tNyke5KzWCynzyAKt
 """
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,6 +43,7 @@ def test_gitlab_issues_created():
         "did.tester/test-project#001 - the readme is almost empty"
         in str(stat) for stat in stats])
 
+
 def test_gitlab_issues_commented():
     """ Commented issues """
     did.base.Config(CONFIG)
@@ -49,6 +52,7 @@ def test_gitlab_issues_commented():
     assert any([
         "did.tester/test-project#001 - the readme is almost empty"
         in str(stat) for stat in stats])
+
 
 def test_gitlab_issues_closed():
     """ Closed issues """
@@ -59,6 +63,7 @@ def test_gitlab_issues_closed():
         "did.tester/test-project#001 - the readme is almost empty"
         in str(stat) for stat in stats])
 
+
 def test_gitlab_merge_requests_created():
     """ Created merge requests """
     did.base.Config(CONFIG)
@@ -67,6 +72,7 @@ def test_gitlab_merge_requests_created():
     assert any([
         "did.tester/test-project#001 - Update README.md" in str(stat)
         for stat in stats])
+
 
 def test_gitlab_merge_requests_commented():
     """ Commented merge requests """
@@ -77,6 +83,7 @@ def test_gitlab_merge_requests_commented():
         "did.tester/test-project#001 - Update README.md" in str(stat)
         for stat in stats])
 
+
 def test_gitlab_merge_requests_closed():
     """ Closed merge requests """
     did.base.Config(CONFIG)
@@ -85,6 +92,7 @@ def test_gitlab_merge_requests_closed():
     assert any([
         "did.tester/test-project#001 - Update README.md" in str(stat)
         for stat in stats])
+
 
 def test_gitlab_merge_requests_approved():
     """ Approved merge requests """
@@ -95,6 +103,7 @@ def test_gitlab_merge_requests_approved():
     assert any([
         "did.tester/test-project#003 - Use a nice complete" in str(stat)
         for stat in stats])
+
 
 def test_github_invalid_token():
     """ Invalid token """

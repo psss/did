@@ -15,14 +15,16 @@ The only scope you need to enable is `org:read`.
 """
 
 import re
-import requests
+
 import dateutil
+import requests
 
 from did.base import Config, ConfigError, ReportError
 from did.stats import Stats, StatsGroup
-from did.utils import log, pretty, listed
+from did.utils import listed, log, pretty
 
 NEXT_PAGE = re.compile('<([^>]+)>; rel="next"; results="true"')
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue & Activity
@@ -40,6 +42,7 @@ class Issue(object):
         """ Unicode representation """
         return "{0} - {1}".format(self.identifier, self.title)
 
+
 class Activity(object):
     """ Sentry Activity """
 
@@ -54,6 +57,7 @@ class Activity(object):
     def __str__(self):
         """ Unicode representation """
         return "{0} [{1}] {2}".format(self.created, self.kind, self.issue)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Sentry Investigator
@@ -78,7 +82,8 @@ class Sentry(object):
 
     def issues(self, kind, email):
         """ Filter unique issues for given activity type and email """
-        return list(set([str(activity.issue)
+        return list(set([
+            str(activity.issue)
             for activity in self.activities()
             if kind == activity.kind and activity.user['email'] == email]))
 
@@ -124,15 +129,19 @@ class Sentry(object):
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class ResolvedIssues(Stats):
     """ Issues resolved """
+
     def fetch(self):
         log.info("Searching for issues resolved by {0}".format(self.user))
         self.stats = self.parent.sentry.issues(
             kind='set_resolved', email=self.user.email)
 
+
 class CommentedIssues(Stats):
     """ Issues commented """
+
     def fetch(self):
         log.info("Searching issues commented by {0}".format(self.user))
         self.stats = self.parent.sentry.issues(
@@ -141,6 +150,7 @@ class CommentedIssues(Stats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class SentryStats(StatsGroup):
     """ Sentry stats """

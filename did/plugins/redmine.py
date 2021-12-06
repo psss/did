@@ -18,19 +18,22 @@ server side setting, otherwise the plugin will miss entries.
 """
 
 import datetime
+
 import dateutil
 import feedparser
 
-from did.utils import log
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
+from did.utils import log
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Activity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class Activity(object):
     """ Redmine Activity """
+
     def __init__(self, data):
         self.data = data
         self.title = data.title
@@ -46,6 +49,7 @@ class Activity(object):
 
 class RedmineActivity(Stats):
     """ Redmine Activity Stats """
+
     def fetch(self):
         log.info("Searching for activity by {0}".format(self.user))
         results = []
@@ -69,7 +73,6 @@ class RedmineActivity(Stats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 class RedmineStats(StatsGroup):
     """ Redmine Stats """

@@ -24,16 +24,17 @@ import re
 import subprocess
 
 import did.base
-from did.utils import item, log, pretty
 from did.stats import Stats, StatsGroup
-
+from did.utils import item, log, pretty
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Git Repository
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class GitRepo(object):
     """ Git repository investigator """
+
     def __init__(self, path):
         """ Initialize the path. """
         self.path = path
@@ -87,6 +88,7 @@ class GitRepo(object):
 
 class GitCommits(Stats):
     """ Git commits """
+
     def __init__(self, option, name=None, parent=None, path=None):
         super(GitCommits, self).__init__(
             option=option, name=name, parent=parent)

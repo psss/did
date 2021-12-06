@@ -3,12 +3,12 @@
 
 import os
 import re
+
 import pytest
 
-import did.cli
 import did.base
+import did.cli
 import did.utils
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -21,6 +21,7 @@ EXAMPLE = "".join(open(PATH + "/../examples/config").readlines())
 # Substitute example git paths for real life directories
 EXAMPLE = re.sub(r"\S+/git/[a-z]+", PATH, EXAMPLE)
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,11 +32,13 @@ def test_help_minimal():
     with pytest.raises(SystemExit):
         did.cli.main(["--help"])
 
+
 def test_help_example():
     """ Help message with example config """
     did.base.Config(config=EXAMPLE)
     with pytest.raises(SystemExit):
         did.cli.main(["--help"])
+
 
 def test_debug():
     """ Check the debug mode """
@@ -43,9 +46,11 @@ def test_debug():
     with pytest.raises(SystemExit):
         did.cli.main("--help --debug")
 
+
 def test_smoke():
     """ Run the smoke test """
     did.cli.main("--test")
+
 
 def test_invalid_arguments():
     """ Complain about invalid arguments """
@@ -53,6 +58,7 @@ def test_invalid_arguments():
     for argument in ["a", "b", "c", "something"]:
         with pytest.raises(did.base.OptionError):
             did.cli.main(argument)
+
 
 def test_invalid_date():
     """ Complain about invalid arguments """

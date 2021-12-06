@@ -19,14 +19,14 @@ __ https://docs.github.com/en/authentication/keeping-your-account-and-data-secur
 
 """
 
-import re
 import json
+import re
 
 import requests
 
-from did.utils import log, pretty, listed
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
+from did.utils import listed, log, pretty
 
 # Identifier padding
 PADDING = 3
@@ -99,6 +99,7 @@ class GitHub(object):
 
 class Issue(object):
     """ GitHub Issue """
+
     def __init__(self, data):
         self.data = data
         self.title = data["title"]
@@ -121,28 +122,31 @@ class Issue(object):
 
 class IssuesCreated(Stats):
     """ Issues created """
+
     def fetch(self):
         log.info("Searching for issues created by {0}".format(self.user))
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:issue"
         self.stats = [
-                Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue) for issue in self.parent.github.search(query)]
 
 
 class IssuesClosed(Stats):
     """ Issues closed """
+
     def fetch(self):
         log.info("Searching for issues closed by {0}".format(self.user))
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:issue"
         self.stats = [
-                Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue) for issue in self.parent.github.search(query)]
 
 
 class PullRequestsCreated(Stats):
     """ Pull requests created """
+
     def fetch(self):
         log.info("Searching for pull requests created by {0}".format(
             self.user))
@@ -150,11 +154,12 @@ class PullRequestsCreated(Stats):
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
         self.stats = [
-                Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue) for issue in self.parent.github.search(query)]
 
 
 class PullRequestsClosed(Stats):
     """ Pull requests closed """
+
     def fetch(self):
         log.info("Searching for pull requests closed by {0}".format(
             self.user))
@@ -162,11 +167,12 @@ class PullRequestsClosed(Stats):
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
         self.stats = [
-                Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue) for issue in self.parent.github.search(query)]
 
 
 class PullRequestsReviewed(Stats):
     """ Pull requests reviewed """
+
     def fetch(self):
         log.info("Searching for pull requests reviewed by {0}".format(
             self.user))
@@ -174,7 +180,7 @@ class PullRequestsReviewed(Stats):
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
         self.stats = [
-                Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue) for issue in self.parent.github.search(query)]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

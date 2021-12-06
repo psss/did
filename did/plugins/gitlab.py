@@ -24,13 +24,14 @@ __ https://docs.gitlab.com/ce/api/
 """
 
 import distutils.util
-import requests
-import dateutil
 
-from did.utils import log, pretty, listed
+import dateutil
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from did.utils import listed, log, pretty
 
 GITLAB_SSL_VERIFY = True
 GITLAB_API = 4
@@ -160,6 +161,7 @@ class GitLab(object):
 
 class Issue(object):
     """ GitLab Issue """
+
     def __init__(self, data, gitlabapi):
         self.data = data
         self.gitlabapi = gitlabapi
@@ -206,6 +208,7 @@ class Note(Issue):
 
 class IssuesCreated(Stats):
     """ Issue created """
+
     def fetch(self):
         log.info("Searching for Issues created by {0}".format(
             self.user))
@@ -219,6 +222,7 @@ class IssuesCreated(Stats):
 
 class IssuesCommented(Stats):
     """ Issue commented """
+
     def fetch(self):
         log.info("Searching for Issues commented by {0}".format(
             self.user))
@@ -233,6 +237,7 @@ class IssuesCommented(Stats):
 
 class IssuesClosed(Stats):
     """ Issue closed """
+
     def fetch(self):
         log.info("Searching for Issues closed by {0}".format(
             self.user))
@@ -246,6 +251,7 @@ class IssuesClosed(Stats):
 
 class MergeRequestsCreated(Stats):
     """ Merge requests created """
+
     def fetch(self):
         log.info("Searching for Merge requests created by {0}".format(
             self.user))
@@ -259,6 +265,7 @@ class MergeRequestsCreated(Stats):
 
 class MergeRequestsCommented(Stats):
     """ MergeRequests commented """
+
     def fetch(self):
         log.info("Searching for MergeRequests commented by {0}".format(
             self.user))
@@ -273,6 +280,7 @@ class MergeRequestsCommented(Stats):
 
 class MergeRequestsClosed(Stats):
     """ Merge requests closed """
+
     def fetch(self):
         log.info("Searching for Merge requests closed by {0}".format(
             self.user))
@@ -286,6 +294,7 @@ class MergeRequestsClosed(Stats):
 
 class MergeRequestsApproved(Stats):
     """ Merge requests approved """
+
     def fetch(self):
         log.info("Searching for Merge requests approved by {0}".format(
             self.user))

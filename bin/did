@@ -34,8 +34,8 @@ range. By default all available stats for this week are reported.
 
 import sys
 
-import did.cli
 import did.base
+import did.cli
 import did.utils
 
 try:

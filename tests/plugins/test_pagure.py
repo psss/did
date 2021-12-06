@@ -6,8 +6,9 @@ Test project: https://pagure.io/did
 """
 
 import pytest
-import did.cli
+
 import did.base
+import did.cli
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -27,6 +28,7 @@ url = https://pagure.io/api/0/
 login = psss
 """
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,6 +44,7 @@ def test_pagure_issues_created():
     stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[0].stats
     assert not stats
 
+
 def test_pagure_issues_closed():
     """ Closed issues """
     did.base.Config(CONFIG)
@@ -52,6 +55,7 @@ def test_pagure_issues_closed():
     assert not stats
     stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[1].stats
     assert not stats
+
 
 def test_pagure_pull_requests_created():
     """ Created pull requests """
@@ -64,6 +68,7 @@ def test_pagure_pull_requests_created():
     assert not stats
     stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[2].stats
     assert not stats
+
 
 def test_pagure_missing_url():
     """ Missing url """

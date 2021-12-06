@@ -2,10 +2,11 @@
 """ Tests for the git plugin """
 
 import os
+
 import pytest
+
 import did.cli
 import did.utils
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -24,6 +25,7 @@ type = git
 did = {0}
 """
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Smoke
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -33,17 +35,20 @@ def test_git_smoke():
     did.base.Config(CONFIG.format(GIT_PATH))
     did.cli.main(INTERVAL)
 
+
 def test_git_verbosity():
     """ Brief git stats """
     did.base.Config(CONFIG.format(GIT_PATH))
     did.cli.main(INTERVAL + " --brief")
     did.cli.main(INTERVAL + " --verbose")
 
+
 def test_git_format():
     """ Wiki format """
     did.base.Config(CONFIG.format(GIT_PATH))
     did.cli.main(INTERVAL + " --format text")
     did.cli.main(INTERVAL + " --format wiki")
+
 
 def test_git_team():
     """ Team report """
@@ -52,6 +57,7 @@ def test_git_team():
     did.cli.main(INTERVAL + emails)
     did.cli.main(INTERVAL + emails + "--total")
     did.cli.main(INTERVAL + emails + "--merge")
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Content
@@ -65,17 +71,20 @@ def test_git_regular():
         "8a725af - Simplify git plugin tests" in stat
         for stat in stats])
 
+
 def test_git_verbose():
     """ Verbose git stats """
     did.base.Config(CONFIG.format(GIT_PATH))
     stats = did.cli.main(INTERVAL + " --verbose")[0][0].stats[0].stats[0].stats
     assert any(["tests/plugins" in stat for stat in stats])
 
+
 def test_git_nothing():
     """ No stats found """
     did.base.Config(CONFIG.format(GIT_PATH))
     stats = did.cli.main("--until 2015-01-01")[0][0].stats[0].stats[0].stats
     assert stats == []
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Errors
@@ -88,6 +97,7 @@ def test_git_invalid():
         did.cli.main(INTERVAL)
     except SystemExit:
         raise RuntimeError("Expected warning only")
+
 
 def test_git_non_existent():
     """ Non-existent git repo """

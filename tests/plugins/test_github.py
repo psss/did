@@ -1,11 +1,12 @@
 # coding: utf-8
 """ Tests for the GitHub plugin """
 
-import pytest
-import did.cli
-import did.base
 import time
 
+import pytest
+
+import did.base
+import did.cli
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -26,8 +27,11 @@ login = psss
 # GitHub has quite strict limits for unauthenticated searches
 # https://developer.github.com/v3/search/#rate-limit
 # Let's have a short nap after each test
+
+
 def teardown_function(function):
     time.sleep(7)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests
@@ -41,6 +45,7 @@ def test_github_issues_created():
     assert any([
         "psss/did#017 - What did you do" in str(stat) for stat in stats])
 
+
 def test_github_issues_closed():
     """ Closed issues """
     did.base.Config(CONFIG)
@@ -48,6 +53,7 @@ def test_github_issues_closed():
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[1].stats
     assert any([
         "psss/did#017 - What did you do" in str(stat) for stat in stats])
+
 
 def test_github_pull_requests_created():
     """ Created pull requests """
@@ -61,6 +67,7 @@ def test_github_pull_requests_created():
         "psss/did#112 - Fixed test for Trac plugin" in str(stat)
         for stat in stats])
 
+
 def test_github_pull_requests_closed():
     """ Closed pull requests """
     did.base.Config(CONFIG)
@@ -70,6 +77,7 @@ def test_github_pull_requests_closed():
     assert any([
         "psss/did#037 - Skip CI users" in str(stat) for stat in stats])
 
+
 def test_github_pull_requests_reviewed():
     """ Reviewed pull requests """
     did.base.Config(CONFIG.replace('psss', 'evgeni'))
@@ -77,7 +85,8 @@ def test_github_pull_requests_reviewed():
     INTERVAL = "--since 2017-02-22 --until 2017-02-23"
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[4].stats
     assert any(["Katello/katello-client-bootstrap#164" in str(stat)
-        for stat in stats])
+                for stat in stats])
+
 
 def test_github_invalid_token():
     """ Invalid token """
@@ -85,11 +94,13 @@ def test_github_invalid_token():
     with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)
 
+
 def test_github_missing_url():
     """ Missing url """
     did.base.Config("[gh]\ntype = github")
     with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)
+
 
 def test_github_unicode():
     """ Created issues with Unicode characters """

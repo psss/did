@@ -16,15 +16,17 @@ The authentication token is optional.
 """
 
 import datetime
+
 import requests
 
-from did.utils import log, pretty, listed
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
+from did.utils import listed, log, pretty
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Pagure(object):
     """ Pagure Investigator """
@@ -66,8 +68,10 @@ class Pagure(object):
 #  Issue
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class Issue(object):
     """ Pagure Issue or Pull Request """
+
     def __init__(self, data):
         self.data = data
         self.title = data['title']
@@ -91,8 +95,10 @@ class Issue(object):
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class IssuesCreated(Stats):
     """ Issues created """
+
     def fetch(self):
         log.info('Searching for issues created by {0}'.format(self.user))
         issues = [Issue(issue) for issue in self.parent.pagure.search(
@@ -102,8 +108,10 @@ class IssuesCreated(Stats):
             result_field='issues_created')]
         self.stats = sorted(issues, key=lambda i: str(i))
 
+
 class IssuesClosed(Stats):
     """ Issues closed """
+
     def fetch(self):
         log.info('Searching for issues closed by {0}'.format(self.user))
         issues = [Issue(issue) for issue in self.parent.pagure.search(
@@ -118,8 +126,10 @@ class IssuesClosed(Stats):
             and issue.closed >= self.options.since.date],
             key=lambda i: str(i))
 
+
 class PullRequestsCreated(Stats):
     """ Pull requests created """
+
     def fetch(self):
         log.info('Searching for pull requests created by {0}'.format(
             self.user))
@@ -131,7 +141,7 @@ class PullRequestsCreated(Stats):
         self.stats = sorted(issues, key=lambda i: str(i))
 
 # FIXME: Blocked by https://pagure.io/pagure/issue/4329
-#class PullRequestsClosed(Stats):
+# class PullRequestsClosed(Stats):
 #    """ Pull requests closed """
 #    def fetch(self):
 #        log.info(u'Searching for pull requests closed by {0}'.format(
@@ -147,6 +157,7 @@ class PullRequestsCreated(Stats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class PagureStats(StatsGroup):
     """ Pagure work """
@@ -180,8 +191,8 @@ class PagureStats(StatsGroup):
             PullRequestsCreated(
                 option=option + '-pull-requests-created', parent=self,
                 name='Pull requests created on {0}'.format(option)),
-# FIXME: Blocked by https://pagure.io/pagure/issue/4329
-#            PullRequestsClosed(
-#                option=option + '-pull-requests-closed', parent=self,
-#                name='Pull requests closed on {0}'.format(option)),
+            # FIXME: Blocked by https://pagure.io/pagure/issue/4329
+            # PullRequestsClosed(
+            #     option=option + '-pull-requests-closed', parent=self,
+            #     name='Pull requests closed on {0}'.format(option)),
             ]

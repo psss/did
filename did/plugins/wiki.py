@@ -19,9 +19,9 @@ xmlrpc api endpoint::
 
 import xmlrpc.client
 
-from did.utils import item
 from did.base import Config, ConfigError
 from did.stats import Stats, StatsGroup
+from did.utils import item
 
 DEFAULT_API = '?action=xmlrpc2'
 
@@ -32,6 +32,7 @@ DEFAULT_API = '?action=xmlrpc2'
 
 class WikiChanges(Stats):
     """ Wiki changes """
+
     def __init__(self, option, name=None, parent=None, url=None, api=None):
         self.url = url
         self.api = api or DEFAULT_API

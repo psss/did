@@ -40,7 +40,7 @@ provide paths to be searched in the ``plugins`` option::
     plugins = ~/.did/plugins
 
 Each path should be a package or module. This method works whether
-the package or module is on the filesystem or in an ``.egg``. 
+the package or module is on the filesystem or in an ``.egg``.
 
 
 Email

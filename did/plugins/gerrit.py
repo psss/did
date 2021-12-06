@@ -14,18 +14,18 @@ Config example::
 """
 
 import json
-import urllib.request
 import urllib.parse
+import urllib.request
 from datetime import datetime
 
-from did.utils import log, pretty
+from did.base import TODAY, Config, ReportError
 from did.stats import Stats, StatsGroup
-from did.base import Config, ReportError, TODAY
-
+from did.utils import log, pretty
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Change
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Change(object):
     """ Request gerrit change """
@@ -57,10 +57,12 @@ class Change(object):
 #  Gerrit Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 class Gerrit(object):
     """
      curl -s 'https://REPOURL/gerrit/changes/?q=is:abandoned+age:7d'
     """
+
     def __init__(self, baseurl, prefix):
         self.opener = urllib.request.FancyURLopener()
         self.baseurl = baseurl
@@ -122,6 +124,7 @@ class GerritUnit(Stats):
         General mother class offering general services for querying
         Gerrit repo.
     """
+
     def __init__(
             self, option, name=None, parent=None, base_url=None, prefix=None):
         self.base_url = base_url if base_url is not None else parent.repo_url
@@ -209,6 +212,7 @@ class AbandonedChanges(GerritUnit):
     """
     Changes abandoned
     """
+
     def fetch(self):
         log.info("Searching for changes abandoned by {0}".format(self.user))
         self.stats = GerritUnit.fetch(self, 'status:abandoned')
@@ -220,6 +224,7 @@ class MergedChanges(GerritUnit):
     """
     Changes successfully merged
     """
+
     def fetch(self):
         log.info("Searching for changes merged by {0}".format(self.user))
         self.stats = GerritUnit.fetch(self, 'status:merged')
@@ -238,6 +243,7 @@ class SubmitedChanges(GerritUnit):
     """
     Changes submitted for review
     """
+
     def fetch(self):
         log.info("Searching for changes opened by {0}".format(self.user))
         if 'wip' in self.server_features:
@@ -245,21 +251,24 @@ class SubmitedChanges(GerritUnit):
         else:
             query_string = 'status:open'
         self.stats = GerritUnit.fetch(self, query_string,
-            limit_since=True)
+                                      limit_since=True)
         log.debug("self.stats = {0}".format(self.stats))
+
 
 class WIPChanges(GerritUnit):
     """
     Work in progress changes
     """
+
     def fetch(self):
         log.info("Searching for WIP changes opened by {0}".format(self.user))
         if 'wip' not in self.server_features:
             log.debug("WIP reviews are not supported by this server")
             return []
         self.stats = GerritUnit.fetch(self, 'status:open is:wip',
-            limit_since=True)
+                                      limit_since=True)
         log.debug("self.stats = {0}".format(self.stats))
+
 
 class AddedPatches(GerritUnit):
     # curl -s 'https://REPOURL\
@@ -267,6 +276,7 @@ class AddedPatches(GerritUnit):
     """
     Additional patches added to existing changes
     """
+
     def fetch(self):
         log.info("Searching for patches added to changes by {0}".format(
             self.user))
@@ -320,6 +330,7 @@ class ReviewedChanges(GerritUnit):
     """
     Review of a change (for reviewers)
     """
+
     def fetch(self):
         log.info("Searching for changes reviewed by {0}".format(self.user))
         # Collect ALL changes opened (and perhaps now closed) after
@@ -402,7 +413,7 @@ class GerritStats(StatsGroup):
                 "No prefix set in the [{0}] section".format(option))
 
         self.server_features = []
-        if self.config.get('wip', True) == True:
+        if self.config.get('wip', True):
             self.server_features.append('wip')
 
         self.stats = [

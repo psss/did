@@ -11,16 +11,16 @@ Config example::
 
 """
 
-from did.utils import log, pretty, listed
-from did.base import Config, ReportError
-from did.stats import Stats, StatsGroup
-
 from bodhi.client.bindings import BodhiClient
 
+from did.base import Config, ReportError
+from did.stats import Stats, StatsGroup
+from did.utils import listed, log, pretty
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Bodhi(object):
     """ Bodhi """
@@ -57,6 +57,7 @@ class Bodhi(object):
 
 class Update(object):
     """ Bodhi update """
+
     def __init__(self, data):
         self.data = data
         self.title = data['title']
@@ -76,12 +77,13 @@ class Update(object):
 
 class UpdatesCreated(Stats):
     """ Updates created """
+
     def fetch(self):
         log.info('Searching for updates created by {0}'.format(self.user))
         self.stats = [
             Update(update) for update in self.parent.bodhi.search(
-            query='updates/?user={0}&submitted_before={1}'
-                  '&submitted_since={2}'.format(
+                query='updates/?user={0}&submitted_before={1}'
+                '&submitted_since={2}'.format(
                       self.user.login, self.options.until.date,
                       self.options.since.date))]
 

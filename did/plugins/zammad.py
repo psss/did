@@ -12,11 +12,13 @@ Config example::
 """
 
 import json
-import urllib.request, urllib.error, urllib.parse
+import urllib.error
+import urllib.parse
+import urllib.request
 
-from did.utils import log, pretty, listed
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
+from did.utils import listed, log, pretty
 
 # Identifier padding
 PADDING = 3
@@ -24,6 +26,7 @@ PADDING = 3
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Zammad(object):
     """ Zammad Investigator """
@@ -55,7 +58,7 @@ class Zammad(object):
         try:
             result = result["Ticket"]
         except KeyError:
-            result =  dict()
+            result = dict()
         log.debug("Result: {0} fetched".format(listed(len(result), "item")))
         log.data(pretty(result))
         return result
@@ -67,6 +70,7 @@ class Zammad(object):
 
 class Ticket(object):
     """ Zammad Ticket """
+
     def __init__(self, data):
         self.data = data
         self.title = data["title"]
@@ -84,12 +88,15 @@ class Ticket(object):
 
 class TicketsUpdated(Stats):
     """ Tickets updated """
+
     def fetch(self):
         log.info("Searching for tickets updated by {0}".format(self.user))
         search = "article.from:\"{0}\" and article.created_at:[{1} TO {2}]".format(
             self.user.name, self.options.since, self.options.until)
         query = "tickets/search?query={0}".format(urllib.parse.quote(search))
-        self.stats = [Ticket(ticket) for id,ticket in self.parent.zammad.search(query).items()]
+        self.stats = [
+            Ticket(ticket) for id,
+            ticket in self.parent.zammad.search(query).items()]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

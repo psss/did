@@ -39,13 +39,12 @@ filters
 # http://developers.trello.com/advanced-reference/member
 
 import json
-import collections
 import urllib.parse
 import urllib.request
 
 from did.base import Config, ReportError
-from did.utils import log, pretty, listed, split
 from did.stats import Stats, StatsGroup
+from did.utils import listed, log, pretty, split
 
 DEFAULT_FILTERS = [
     "commentCard", "createCard", "updateCard",
@@ -278,7 +277,7 @@ class TrelloStatsGroup(StatsGroup):
                 'createCard': TrelloCardsCreated},
             'Checklists': {
                 'updateCheckItemStateOnCard': TrelloCheckItem}
-        }
+            }
         self._session = None
         self.url = "https://trello.com/1"
         config = dict(Config().section(option))

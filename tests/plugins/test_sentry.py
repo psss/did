@@ -3,8 +3,8 @@
 
 import pytest
 
-import did.cli
 import did.base
+import did.cli
 
 BASIC_CONFIG = """
 [general]
@@ -45,6 +45,7 @@ def test_invalid_token():
     with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Acceptance tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,7 +55,7 @@ def test_sentry_resolved():
     did.base.Config(OK_CONFIG)
     stats = did.cli.main("""
         --sentry-resolved {0}""".format(
-            INTERVAL))[0][0].stats[0].stats[0].stats
+        INTERVAL))[0][0].stats[0].stats[0].stats
     assert len(stats) == 1
     assert "PYTHON-C - AttributeError" in stats[0]
 
@@ -64,7 +65,7 @@ def test_sentry_commented():
     did.base.Config(OK_CONFIG)
     stats = did.cli.main("""
         --sentry-commented {0}""".format(
-            INTERVAL))[0][0].stats[0].stats[1].stats
+        INTERVAL))[0][0].stats[0].stats[1].stats
     assert len(stats) == 1
     assert "PYTHON-D - IndexError" in stats[0]
 

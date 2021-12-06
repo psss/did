@@ -1,13 +1,15 @@
 # coding: utf-8
 """ Tests for the Jira plugin """
 
-import sys, os
-sys.path.insert(1, os.path.join(os.path.dirname(__file__), "..", ".."))
+import os
+import sys
 
-import did.cli
 import did.base
+import did.cli
 from did.base import ReportError
 from did.plugins.jira import JiraStats
+
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 CONFIG = """
@@ -29,6 +31,7 @@ def test_config_gss_auth():
     did.base.Config(CONFIG)
     stats = JiraStats("jira")
 
+
 def test_config_basic_auth():
     """  Test basic authentication configuration """
     did.base.Config(CONFIG +
@@ -39,10 +42,12 @@ def test_config_basic_auth():
                     """)
     stats = JiraStats("jira")
 
+
 def test_config_missing_username():
     """  Test basic auth with missing username """
     assert_conf_error(CONFIG + "\n"
-                    + "auth_type = basic")
+                      + "auth_type = basic")
+
 
 def test_config_missing_password():
     """  Test basic auth with missing username """
@@ -50,11 +55,13 @@ def test_config_missing_password():
                       + "auth_type = basic\n"
                       + "auth_username = tom\n")
 
+
 def test_config_gss_and_username():
     """  Test gss auth with username set """
     assert_conf_error(CONFIG + "\n"
-                    + "auth_type = gss\n"
-                    + "auth_username = tom\n")
+                      + "auth_type = gss\n"
+                      + "auth_username = tom\n")
+
 
 def test_config_gss_and_password():
     """  Test gss auth with password set """
@@ -62,16 +69,19 @@ def test_config_gss_and_password():
                       + "auth_type = gss\n"
                       + "auth_password = tom\n")
 
+
 def test_config_gss_and_password_file():
     """  Test gss auth with password set """
     assert_conf_error(CONFIG + "\n"
                       + "auth_type = gss\n"
                       + "auth_password_file = ~/.did/config\n")
 
+
 def test_config_invaliad_ssl_verify():
     """  Test ssl_verify with wrong bool value """
     assert_conf_error(CONFIG + "\n"
                       + "ssl_verify = ss\n")
+
 
 def assert_conf_error(config, expected_error=ReportError):
     """  Test given configuration and check that given error type is raised """
@@ -81,4 +91,4 @@ def assert_conf_error(config, expected_error=ReportError):
         stats = JiraStats("jira")
     except ReportError as e:
         error = e
-    assert type(error) == expected_error
+    assert isinstance(error, expected_error)

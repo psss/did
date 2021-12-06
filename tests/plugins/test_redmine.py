@@ -1,11 +1,12 @@
 # coding: utf-8
 """ Tests for the Redmine plugin """
 
-import pytest
-import did.cli
-import did.base
 import time
 
+import pytest
+
+import did.base
+import did.cli
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -27,7 +28,7 @@ login = 4731
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#def test_redmine_activity():
+# def test_redmine_activity():
 #    """ Redmine activity """
 #    did.base.Config(CONFIG)
 #    option = "--redmine-activity "

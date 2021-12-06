@@ -1,9 +1,8 @@
 # coding: utf-8
 """ Tests for the trac plugin """
 
-import did.cli
 import did.base
-
+import did.cli
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -15,6 +14,7 @@ type = trac
 url = https://fedorahosted.org/design-team/rpc
 prefix = DT
 """
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests

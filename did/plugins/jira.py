@@ -78,18 +78,19 @@ Notes:
   Other values are ``basic`` and ``token``.
 """
 
+import distutils.util
 import os
 import re
-import requests
 import urllib.parse
-import dateutil.parser
-import distutils.util
-from requests_gssapi import HTTPSPNEGOAuth, DISABLED
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-from did.utils import log, pretty, listed
+import dateutil.parser
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests_gssapi import DISABLED, HTTPSPNEGOAuth
+
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
+from did.utils import listed, log, pretty
 
 # Maximum number of results fetched at once
 MAX_RESULTS = 1000
@@ -189,6 +190,7 @@ class Issue(object):
 
 class JiraCreated(Stats):
     """ Created issues """
+
     def fetch(self):
         log.info("Searching for issues created in {0} by {1}".format(
             self.parent.project, self.user))
@@ -204,6 +206,7 @@ class JiraCreated(Stats):
 
 class JiraUpdated(Stats):
     """ Updated issues """
+
     def fetch(self):
         log.info("Searching for issues updated in {0} by {1}".format(
             self.parent.project, self.user))
@@ -215,7 +218,7 @@ class JiraUpdated(Stats):
                     self.options.since, self.options.until))
             if self.parent.project:
                 query = query + " AND project = '{0}'".format(
-                        self.parent.project)
+                    self.parent.project)
             self.stats = Issue.search(query, stats=self)
         else:
             query = (
@@ -231,6 +234,7 @@ class JiraUpdated(Stats):
 
 class JiraResolved(Stats):
     """ Resolved issues """
+
     def fetch(self):
         log.info("Searching for issues resolved in {0} by {1}".format(
             self.parent.project, self.user))
@@ -241,7 +245,7 @@ class JiraResolved(Stats):
                 self.options.since, self.options.until))
         if self.parent.project:
             query = query + " AND project = '{0}'".format(
-                    self.parent.project)
+                self.parent.project)
         self.stats = Issue.search(query, stats=self)
 
 
@@ -346,7 +350,7 @@ class JiraStats(StatsGroup):
         self.project = config.get("project", None)
         if "use_scriptrunner" in config:
             self.use_scriptrunner = distutils.util.strtobool(
-                    config["use_scriptrunner"])
+                config["use_scriptrunner"])
         else:
             self.use_scriptrunner = True
 
@@ -412,7 +416,7 @@ class JiraStats(StatsGroup):
                             token_found = token
                             break
                     if token_found is None:
-                       raise ValueError(
+                        raise ValueError(
                             f"Can't check validity for the '{self.token_name}' "
                             f"token as it doesn't exist.")
                     from datetime import datetime

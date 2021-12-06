@@ -4,8 +4,9 @@
 """ Tests for the Trello plugin """
 
 import pytest
-import did.cli
+
 import did.base
+import did.cli
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -20,6 +21,7 @@ email = "Did Tester" <the.did.tester@gmail.com>
 type = trello
 user = didtester
 """
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests

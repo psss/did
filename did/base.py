@@ -2,22 +2,22 @@
 
 """ Config, Date, User and Exceptions """
 
+import codecs
+import configparser
+import datetime
 import io
 import os
 import re
 import sys
-import codecs
-import datetime
-import optparse
-import configparser
-from dateutil.relativedelta import MO as MONDAY, FR as FRIDAY
-from datetime import timedelta
 from configparser import NoOptionError, NoSectionError
+from datetime import timedelta
+
+from dateutil.relativedelta import FR as FRIDAY
+from dateutil.relativedelta import MO as MONDAY
 from dateutil.relativedelta import relativedelta as delta
 
 from did import utils
 from did.utils import log
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -51,14 +51,18 @@ login = psss
 class GeneralError(Exception):
     """ General stats error """
 
+
 class ConfigError(GeneralError):
     """ Stats configuration problem """
+
 
 class ConfigFileError(ConfigError):
     """ Problem with the config file """
 
+
 class OptionError(GeneralError):
     """ Invalid command line """
+
 
 class ReportError(GeneralError):
     """ Report generation error """
@@ -110,7 +114,7 @@ class Config(object):
         """ Custom plugins """
         try:
             return self.parser.get("general", "plugins")
-        except:
+        except BaseException:
             return None
 
     @property

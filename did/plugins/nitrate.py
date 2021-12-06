@@ -20,6 +20,7 @@ TEST_CASE_COPY_TAG = "TestCaseCopy"
 
 class TestPlans(Stats):
     """ Test plans created """
+
     def fetch(self):
         import nitrate
         log.info("Searching for test plans created by {0}".format(self.user))
@@ -32,6 +33,7 @@ class TestPlans(Stats):
 
 class TestRuns(Stats):
     """ Test runs finished """
+
     def fetch(self):
         import nitrate
         log.info("Searching for test runs finished by {0}".format(self.user))
@@ -43,6 +45,7 @@ class TestRuns(Stats):
 
 class AutomatedCases(Stats):
     """ Automated cases created """
+
     def fetch(self):
         self.stats = [
             case for case in self.parent.cases
@@ -51,15 +54,17 @@ class AutomatedCases(Stats):
 
 class AutoproposedCases(Stats):
     """ Cases proposed for automation """
+
     def fetch(self):
         self.stats = [
             case for case in self.parent.cases
             if case.autoproposed and not case.automated and
-                case not in self.parent.copies]
+            case not in self.parent.copies]
 
 
 class ManualCases(Stats):
     """ Manual cases created """
+
     def fetch(self):
         self.stats = [
             case for case in self.parent.cases
@@ -68,6 +73,7 @@ class ManualCases(Stats):
 
 class CopiedCases(Stats):
     """ Test cases copied """
+
     def fetch(self):
         self.stats = self.parent.copies[:]
 

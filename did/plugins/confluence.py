@@ -32,17 +32,18 @@ Notes:
   higher priority.
 """
 
+import distutils.util
 import os
 import re
-import requests
 import urllib.parse
-import distutils.util
-from requests_gssapi import HTTPSPNEGOAuth, DISABLED
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-from did.utils import log, pretty, listed
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from requests_gssapi import DISABLED, HTTPSPNEGOAuth
+
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
+from did.utils import listed, log, pretty
 
 # Maximum number of results fetched at once
 MAX_RESULTS = 100
@@ -234,7 +235,7 @@ class ConfluenceStats(StatsGroup):
                 option=option + "-comments",
                 parent=self,
                 name="Comments added in {}".format(option)),
-        ]
+            ]
 
     @property
     def session(self):

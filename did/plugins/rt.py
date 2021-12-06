@@ -12,18 +12,18 @@ Config example::
 
 import http.client
 import urllib.parse
+from base64 import b64encode
+
 import gssapi
 
-from base64 import b64encode, b64decode
-
-from did.utils import log, pretty
-from did.base import ReportError, Config
+from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
-
+from did.utils import log, pretty
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  RequestTracker
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class RequestTracker(object):
     """ Request Tracker Investigator """
@@ -97,6 +97,7 @@ class Ticket(object):
 
 class ReportedTickets(Stats):
     """ Tickets reported """
+
     def fetch(self):
         log.info("Searching for tickets reported by {0}".format(self.user))
         query = "Requestor.EmailAddress = '{0}'".format(self.user.email)
@@ -107,6 +108,7 @@ class ReportedTickets(Stats):
 
 class ResolvedTickets(Stats):
     """ Tickets resolved """
+
     def fetch(self):
         log.info("Searching for tickets resolved by {0}".format(self.user))
         query = "Owner.EmailAddress = '{0}'".format(self.user.email)

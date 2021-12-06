@@ -1,7 +1,9 @@
 # coding: utf-8
 
-import pytest
 import datetime
+
+import pytest
+
 import did.base
 from did.base import Config, ConfigError
 
@@ -9,13 +11,16 @@ from did.base import Config, ConfigError
 #  Config
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 def test_Config():
     from did.base import Config
     assert Config
 
+
 def test_Config_email():
     config = Config("[general]\nemail = email@example.com\n")
     assert config.email == "email@example.com"
+
 
 def test_Config_email_missing():
     config = Config("[general]\n")
@@ -25,11 +30,13 @@ def test_Config_email_missing():
     with pytest.raises(did.base.ConfigError):
         config.email == "email@example.com"
 
+
 def test_Config_width():
     config = Config("[general]\n")
     assert config.width == did.base.MAX_WIDTH
     config = Config("[general]\nwidth = 123\n")
     assert config.width == 123
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Date
@@ -140,7 +147,7 @@ def test_User():
     user = User("some@email.org")
     assert user.email == "some@email.org"
     assert user.login == "some"
-    assert user.name == None
+    assert user.name is None
     assert str(user) == "some@email.org"
 
     # Full email format
@@ -182,6 +189,7 @@ def test_User():
     user = User("some@email.org; bz: bzlogin")
     clone = user.clone("bz")
     assert clone.login == "bzlogin"
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Exceptions

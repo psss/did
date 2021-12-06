@@ -5,8 +5,9 @@ Tests for the Bodhi plugin
 """
 
 import pytest
-import did.cli
+
 import did.base
+import did.cli
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -30,16 +31,19 @@ login = mikelo2
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 def test_pagure_issues_created():
     """ Created issues """
     did.base.Config(CONFIG)
     option = "--bodhi-updates-created "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
-    assert any(["FEDORA-2021-7b8832fad4 - doctl" in str(stat) for stat in stats])
+    assert any(["FEDORA-2021-7b8832fad4 - doctl" in str(stat)
+               for stat in stats])
     stats = did.cli.main(option + BEFORE)[0][0].stats[0].stats[0].stats
     assert not stats
     stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[0].stats
     assert not stats
+
 
 def test_pagure_missing_url():
     """ Missing url """
