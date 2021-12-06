@@ -9,40 +9,93 @@ Introduction
 
 Feel free and welcome to contribute to this project. You can start
 with filing issues and ideas for improvement in GitHub tracker__.
-My favorite thoughts from The Zen of Python:
+Our favorite thoughts from The Zen of Python:
 
 * Beautiful is better than ugly.
 * Simple is better than complex.
 * Readability counts.
 
-A couple of recommendations from `PEP8`__ and myself:
+We respect the `PEP8`__ Style Guide for Python Code. Here's a
+couple of recommendations to keep on mind when writing code:
 
 * Comments should be complete sentences.
 * The first word should be capitalized (unless identifier).
 * When using hanging indent, the first line should be empty.
+* The closing brace/bracket/parenthesis on multiline constructs
+  is under the first non-whitespace character of the last line
 
 __ https://github.com/psss/did/issues
 __ https://www.python.org/dev/peps/pep-0008/
 
 
-Start
+Commits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Clone the git repository, create a virtual environment and use
-``pip`` to install ``did`` with all necessary dependencies. This
-will also link python modules from the repo so that you can test
-directly the modified code::
+It is challenging to be both concise and descriptive, but that is
+what a well-written summary should do. Consider the commit message
+as something that will be pasted into release notes:
 
+* The first line should have up to 50 characters.
+* Complete sentence with the first word capitalized.
+* Should concisely describe the purpose of the patch.
+* Do not prefix the message with file or module names.
+* Other details should be separated by a blank line.
+
+Why should I care?
+
+* It helps others (and yourself) find relevant commits quickly.
+* The summary line will be re-used later (e.g. for rpm changelog).
+* Some tools do not handle wrapping, so it is then hard to read.
+* You will make the maintainers happy to read beautiful commits :)
+
+You can get some more context in the `stackoverflow`__ article.
+
+__ http://stackoverflow.com/questions/2290016/
+
+
+Develop
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In order to experiment, play with the latest bits and develop
+improvements it is best to use a virtual environment. First make
+sure that you have python3 installed on your box::
+
+    sudo dnf install python3
+
+Install ``python3-virtualenvwrapper`` to easily create and enable
+virtual environments using ``mkvirtualenv`` and ``workon``. Note
+that if you have freshly installed the package you need to open a
+new shell session to enable the wrapper functions::
+
+    sudo dnf install python3-virtualenvwrapper
+
+Now let's create a new virtual environment and install ``did`` in
+editable mode there::
+
+    mkvirtualenv did
     git clone https://github.com/psss/did
     cd did
-    mkvirtualenv did
-    pip install --editable .[all]
+    pip install -e .
 
-Install `virtualenvwrapper`__ if you do not have it already on
-your system. It makes working with virtual environments much
-easier.
+The main ``did`` package contains only the core dependencies. For
+building documentation, testing changes or using individual
+plugins install the extra deps::
 
-__ https://virtualenvwrapper.readthedocs.io/
+    pip install '.[docs]'
+    pip install '.[tests]'
+    pip install '.[bugzilla]'
+    pip install '.[jira]'
+    ...
+
+Or simply install all extra dependencies to make sure you have
+everything needed for the did development ready on your system::
+
+    pip install '.[all]'
+
+Install the ``pre-commit`` hooks to run all available checks
+for your commits to the project::
+
+    pre-commit install
 
 
 Makefile
@@ -78,31 +131,6 @@ make clean
     Cleanup all temporary files.
 
 
-Commits
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-It is challenging to be both concise and descriptive, but that is
-what a well-written summary should do. Consider the commit message
-as something that could/will be pasted into release notes:
-
-* The first line should have up to 50 characters.
-* Complete sentence with the first word capitalized.
-* No prefixes such as "doc:" or "<filename>:".
-* Should concisely describe the purpose of the patch.
-* Other details should be separated by a blank line.
-
-Why should I care?
-
-* It helps others (and yourself) find relevant commits quickly.
-* The summary line can be re-used later (e.g. for rpm changelog).
-* Some tools do not handle wrapping, so it is then hard to read.
-* You will make the maintainer happy to read beautiful commits :)
-
-You can get some more context in the `stackoverflow`__ article.
-
-__ http://stackoverflow.com/questions/2290016/
-
-
 Hooks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -132,11 +160,6 @@ Install pytest and coverage using yum::
 or pip::
 
     pip install .[tests]
-
-See Travis CI and Coveralls for the latest test/coverage results:
-
-* https://travis-ci.org/psss/did/builds
-* https://coveralls.io/github/psss/did
 
 
 Docs

@@ -1,0 +1,25 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  - repo: https://github.com/pre-commit/mirrors-autopep8
+    rev: 'v1.5.7'
+    hooks:
+      - id: autopep8
+        args:
+          - --recursive
+          - --in-place
+          - --aggressive
+          - --aggressive
+          - --hang-closing
+
+  - repo: https://github.com/PyCQA/isort
+    rev: "5.8.0"
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v3.4.0"
+    hooks:
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: trailing-whitespace
