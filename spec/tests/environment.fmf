@@ -10,7 +10,8 @@ description:
     part of the ``test`` attribute it makes sense to have a
     dedicated field for this, especially when the number of
     parameters grows. This might be useful for virtual test cases
-    as well. Should be a ``dictionary``.
+    as well. Plan :ref:`/spec/plans/environment` overrides test
+    environment. Should be a ``dictionary``.
 
 example: |
     environment:
