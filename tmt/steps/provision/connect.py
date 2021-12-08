@@ -1,7 +1,6 @@
 import click
 
 import tmt
-from tmt.steps.provision import ProvisionPlugin
 
 
 class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):

@@ -42,15 +42,19 @@ class Step(tmt.utils.Common):
             self.data = [{'name': tmt.utils.DEFAULT_NAME}]
         # Convert to list if only a single config provided
         elif isinstance(self.data, dict):
+            # Give it a name unless defined
+            if not self.data.get('name'):
+                self.data['name'] = tmt.utils.DEFAULT_NAME
             self.data = [self.data]
         # Shout about invalid configuration
         elif not isinstance(self.data, list):
             raise GeneralError(f"Invalid '{self}' config in '{self.plan}'.")
 
-        # Assign default names unless specified
-        for data in self.data:
+        # Add default unique names even to multiple configs so that the users
+        # don't need to specify it if they don't care about the name
+        for i, data in enumerate(self.data):
             if 'name' not in data:
-                data['name'] = tmt.utils.DEFAULT_NAME
+                data['name'] = f'{tmt.utils.DEFAULT_NAME}-{i}'
 
         # Final sanity checks
         for data in self.data:
