@@ -30,19 +30,6 @@ except ImportError:
         # and fall back to 'default' if neither of those are available
         HTML_THEME = 'default'
 
-# Mock C modules (needed for jira and rt plugins)
-from mock import Mock as MagicMock
-
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return Mock()
-
-
-MOCK_MODULES = ['gssapi', 'requests_gssapi', 'bugzilla']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
