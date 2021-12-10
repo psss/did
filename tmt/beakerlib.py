@@ -165,7 +165,7 @@ class Library(object):
                 if self.url:
                     self.parent.run(
                         ['git', 'clone', self.url, directory],
-                        shell=False, env={"GIT_ASKPASS": "echo"})
+                        env={"GIT_ASKPASS": "echo"})
                 else:
                     self.parent.debug(
                         f"Copy local library '{self.path}' to '{directory}'.",
@@ -192,7 +192,7 @@ class Library(object):
             # Check out the requested branch
             try:
                 self.parent.run(
-                    ['git', 'checkout', self.ref], shell=False, cwd=directory)
+                    ['git', 'checkout', self.ref], cwd=directory)
             except tmt.utils.RunError as error:
                 # Fallback to install during the prepare step if in rpm format
                 if self.format == 'rpm':

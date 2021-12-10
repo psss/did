@@ -199,7 +199,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.debug(f"Clone '{url}' to '{testdir}'.")
             self.run(
                 ['git', 'clone', url, testdir],
-                shell=False, env={"GIT_ASKPASS": "echo"})
+                env={"GIT_ASKPASS": "echo"})
         # Copy git repository root to workdir
         else:
             # Path for distgit sources cannot be checked until the
@@ -217,7 +217,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 # Check git repository root (use fmf root if not found)
                 try:
                     output = self.run(
-                        'git rev-parse --show-toplevel',
+                        ["git", "rev-parse", "--show-toplevel"],
                         cwd=fmf_root, dry=True)
                     git_root = output[0].strip('\n')
                 except tmt.utils.RunError:
@@ -237,11 +237,12 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.debug(f"Checkout ref '{ref}'.")
             self.run(
                 ['git', 'checkout', '-f', str(ref)],
-                cwd=testdir, shell=False)
+                cwd=testdir)
 
         # Show current commit hash if inside a git repository
         try:
-            hash_, _ = self.run('git rev-parse --short HEAD', cwd=testdir)
+            hash_, _ = self.run(["git", "rev-parse", "--short", "HEAD"],
+                                cwd=testdir)
             self.verbose('hash', hash_.strip(), 'green')
         except (tmt.utils.RunError, AttributeError):
             pass
@@ -292,15 +293,15 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.info('modified-url', modified_url, 'green')
             self.debug(f"Fetch also '{modified_url}' as 'reference'.")
             self.run(['git', 'remote', 'add', 'reference', modified_url],
-                     cwd=testdir, shell=False)
-            self.run(['git', 'fetch', 'reference'], cwd=testdir, shell=False)
+                     cwd=testdir)
+            self.run(['git', 'fetch', 'reference'], cwd=testdir)
         if modified_only:
             modified_ref = self.get(
                 'modified-ref', tmt.utils.default_branch(testdir))
             self.info('modified-ref', modified_ref, 'green')
             output = self.run(
                 ['git', 'log', '--format=', '--stat', '--name-only',
-                 f"{modified_ref}..HEAD"], cwd=testdir, shell=False)[0]
+                 f"{modified_ref}..HEAD"], cwd=testdir)[0]
             modified = set(
                 f"^/{re.escape(name)}"
                 for name in map(os.path.dirname, output.split('\n')) if name)

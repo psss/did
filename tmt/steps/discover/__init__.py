@@ -236,7 +236,7 @@ class DiscoverPlugin(tmt.steps.Plugin):
         if handler_name is None:
             stdout, _ = self.run(
                 ["git", "config", "--get-regexp", '^remote\\..*.url'],
-                shell=False, cwd=distgit_dir)
+                cwd=distgit_dir)
             remotes = stdout.split('\n')
             handler = tmt.utils.get_distgit_handler(remotes=remotes)
         else:
@@ -252,5 +252,5 @@ class DiscoverPlugin(tmt.steps.Plugin):
             with open(os.path.join(target_dir, source_name), 'wb') as tarball:
                 tarball.write(response.content)
             self.run(
-                f"tar --auto-compress --extract -f {source_name}",
+                ["tar", "--auto-compress", "--extract", "-f", source_name],
                 cwd=target_dir)

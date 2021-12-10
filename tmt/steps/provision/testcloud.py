@@ -420,7 +420,7 @@ class GuestTestcloud(tmt.Guest):
         command = ["ssh-keygen", "-f", self.key, "-N", ""]
         if key_type is not None:
             command.extend(["-t", key_type])
-        self.run(command, shell=False)
+        self.run(command)
         with open(self.pubkey, 'r') as pubkey:
             self.config.USER_DATA = USER_DATA.format(
                 user_name=self.user, public_key=pubkey.read())

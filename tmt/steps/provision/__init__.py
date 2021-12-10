@@ -288,18 +288,18 @@ class Guest(tmt.utils.Common):
             ]
         if self.key or self.password:
             # Skip ssh-agent (it adds additional identities)
-            options.extend(['-oIdentitiesOnly=yes'])
+            options.append('-oIdentitiesOnly=yes')
         if self.port:
-            options.extend(['-p', str(self.port)])
+            options.append(f'-p{self.port}')
         if self.key:
             keys = self.key if isinstance(self.key, list) else [self.key]
             for key in keys:
-                options.extend(['-i', shlex.quote(key) if join else key])
+                options.append(f'-i{shlex.quote(key) if join else key}')
         if self.password:
             options.extend(['-oPasswordAuthentication=yes'])
 
         # Use the shared master connection
-        options.extend(["-S", self._ssh_socket()])
+        options.append(f'-S{self._ssh_socket()}')
 
         return ' '.join(options) if join else options
 
@@ -423,7 +423,7 @@ class Guest(tmt.utils.Common):
         if self.opt('debug') < 3:
             return ''
         else:
-            return ' -' + (self.opt('debug') - 2) * 'v'
+            return '-' + (self.opt('debug') - 2) * 'v'
 
     @staticmethod
     def _ansible_extra_args(extra_args):
@@ -449,8 +449,8 @@ class Guest(tmt.utils.Common):
         self.debug(f"Playbook full path: '{playbook}'", level=2)
         return playbook
 
-    def _export_environment(self, execute_environment=None):
-        """ Prepare shell export of environment variables """
+    def _prepare_environment(self, execute_environment=None):
+        """ Prepare dict of environment variables """
         # Prepare environment variables so they can be correctly passed
         # to ssh's shell. Create a copy to prevent modifying source.
         environment = dict()
@@ -458,23 +458,28 @@ class Guest(tmt.utils.Common):
         # Plan environment and variables provided on the command line
         # override environment provided to execute().
         environment.update(self.parent.plan.environment)
-        # Prepend with export and run as a separate command.
-        if not environment:
-            return ''
-        return 'export {}; '.format(
-            ' '.join(tmt.utils.shell_variables(environment)))
+        return {} if not environment else environment
+
+    @staticmethod
+    def _export_environment(environment):
+        """ Prepare shell export of environment variables """
+        return f'export {" ".join(tmt.utils.shell_variables(environment))}; ' \
+            if environment \
+            else ''
 
     def ansible(self, playbook, extra_args=None):
         """ Prepare guest using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
+        verbosity = [self._ansible_verbosity()] \
+            if self._ansible_verbosity() else []
         stdout, stderr = self.run(
-            f'{self._export_environment()}'
-            f'stty cols {tmt.utils.OUTPUT_WIDTH}; ansible-playbook '
-            f'--ssh-common-args="{self._ssh_options(join=True)}" '
-            f'{self._ansible_verbosity()} '
-            f'{self._ansible_extra_args(extra_args)} -i {self._ssh_guest()},'
-            f' {playbook}',
-            cwd=self.parent.plan.worktree)
+            ['ansible-playbook'] +
+            verbosity +
+            shlex.split(self._ansible_extra_args(extra_args)) +
+            [f'--ssh-common-args="{i}"' for i in self._ssh_options()] +
+            ['-i', f'{self._ssh_guest()},', playbook],
+            cwd=self.parent.plan.worktree,
+            env=self._prepare_environment())
         self._ansible_summary(stdout)
 
     def execute(self, command, **kwargs):
@@ -490,7 +495,8 @@ class Guest(tmt.utils.Common):
         """
 
         # Prepare the export of environment variables
-        environment = self._export_environment(kwargs.get('env', dict()))
+        environment = self._export_environment(
+            self._prepare_environment(kwargs.get('env', dict())))
 
         # Change to given directory on guest if cwd provided
         directory = kwargs.get('cwd') or ''
@@ -507,7 +513,7 @@ class Guest(tmt.utils.Common):
         command = (
             self._ssh_command() + interactive + [self._ssh_guest()] +
             [f'{environment}{directory}{command}'])
-        return self.run(command, shell=False, **kwargs)
+        return self.run(command, **kwargs)
 
     def push(self, source=None, destination=None, options=None):
         """
@@ -534,8 +540,7 @@ class Guest(tmt.utils.Common):
             self.run(
                 ["rsync"] + options
                 + ["-e", self._ssh_command(join=True)]
-                + [source, f"{self._ssh_guest()}:{destination}"],
-                shell=False)
+                + [source, f"{self._ssh_guest()}:{destination}"])
 
         # Try to push twice, check for rsync after the first failure
         try:
@@ -577,8 +582,7 @@ class Guest(tmt.utils.Common):
             self.run(
                 ["rsync"] + options
                 + ["-e", self._ssh_command(join=True)]
-                + [f"{self._ssh_guest()}:{source}", destination],
-                shell=False)
+                + [f"{self._ssh_guest()}:{source}", destination])
 
         # Try to pull twice, check for rsync after the first failure
         try:

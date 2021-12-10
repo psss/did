@@ -668,7 +668,7 @@ class Plan(Core):
         self.debug(f"Sync the worktree to '{self.worktree}'.", level=2)
         self.run([
             "rsync", "-ar", "--exclude", ".git",
-            f"{tree_root}/", self.worktree], shell=False)
+            f"{tree_root}/", self.worktree])
 
     def _initialize_data_directory(self):
         """

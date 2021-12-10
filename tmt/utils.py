@@ -386,7 +386,7 @@ class Common(object):
             stdout_thread.get_output(), stderr_thread.get_output())
 
     def run(
-            self, command, message=None, cwd=None, dry=False, shell=True,
+            self, command, message=None, cwd=None, dry=False, shell=False,
             env=None, interactive=False, join=False, log=None, timeout=None):
         """
         Run command, give message, handle errors
@@ -1264,6 +1264,7 @@ def load_run(run):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  StructuredField
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class StructuredField(object):
     """

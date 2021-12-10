@@ -1,4 +1,5 @@
 import os
+import shlex
 
 import click
 
@@ -157,19 +158,20 @@ class GuestContainer(tmt.Guest):
         playbook = self._ansible_playbook_path(playbook)
         # As non-root we must run with podman unshare
         podman_unshare = 'podman unshare ' if os.geteuid() != 0 else ''
+        verbosity = [self._ansible_verbosity()] \
+            if self._ansible_verbosity() else []
         stdout, stderr = self.run(
-            f'stty cols {tmt.utils.OUTPUT_WIDTH}; '
-            f'{self._export_environment()}'
-            f'{podman_unshare}ansible-playbook '
-            f'{self._ansible_verbosity()} '
-            f'{self._ansible_extra_args(extra_args)} '
-            f'-c podman -i {self.container}, {playbook}',
-            cwd=self.parent.plan.worktree)
+            f'{podman_unshare}ansible-playbook'.split() +
+            verbosity +
+            shlex.split(self._ansible_extra_args(extra_args)) +
+            ['-c', 'podman', '-i', f'{self.container},', playbook],
+            cwd=self.parent.plan.worktree,
+            env=self._prepare_environment())
         self._ansible_summary(stdout)
 
     def podman(self, command, **kwargs):
         """ Run given command via podman """
-        return self.run(['podman'] + command, shell=False, **kwargs)
+        return self.run(['podman'] + command, **kwargs)
 
     def execute(self, command, **kwargs):
         """ Execute given commands in podman via shell """
@@ -183,7 +185,8 @@ class GuestContainer(tmt.Guest):
             directory = f"cd '{directory}'; "
 
         # Prepare the environment variables export
-        environment = self._export_environment(kwargs.get('env', dict()))
+        environment = self._export_environment(
+            self._prepare_environment(kwargs.get('env', dict())))
 
         # Run in interactive mode if requested
         interactive = ['-it'] if kwargs.get('interactive') else []

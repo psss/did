@@ -1,3 +1,5 @@
+import shlex
+
 import tmt
 
 
@@ -54,12 +56,14 @@ class GuestLocal(tmt.Guest):
     def ansible(self, playbook, extra_args=None):
         """ Prepare localhost using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
+        verbosity = [self._ansible_verbosity()] \
+            if self._ansible_verbosity() else []
         stdout, stderr = self.run(
-            f'sudo sh -c "stty cols {tmt.utils.OUTPUT_WIDTH}; '
-            f'{self._export_environment()}ansible-playbook '
-            f'{self._ansible_verbosity()} '
-            f'{self._ansible_extra_args(extra_args)} -c local -i localhost,'
-            f' {playbook}"')
+            ['sudo', '-E', 'ansible-playbook'] +
+            verbosity +
+            shlex.split(self._ansible_extra_args(extra_args)) +
+            ['-c', 'local', '-i', 'localhost,', playbook],
+            env=self._prepare_environment())
         self._ansible_summary(stdout)
 
     def execute(self, command, **kwargs):
@@ -69,7 +73,7 @@ class GuestLocal(tmt.Guest):
         environment.update(kwargs.pop('env', dict()))
         environment.update(self.parent.plan.environment)
         # Run the command under the prepared environment
-        return self.run(command, env=environment, **kwargs)
+        return self.run(command, env=environment, shell=True, **kwargs)
 
     def push(self, source=None, destination=None, options=None):
         """ Nothing to be done to push workdir """
