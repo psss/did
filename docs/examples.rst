@@ -989,23 +989,31 @@ loss, use ``--hard`` to force a hard reboot::
 Debug Tests
 ------------------------------------------------------------------
 
-For debugging tests, the execution is anticipated to be split into
-separate invocations for provisioning, repeatedly (re)executing
-the test and cleaning up::
+Sometimes the environment preparation can take a long time. Thus,
+especially for debugging tests, it usually makes sense to run the
+``provision`` and ``prepare`` step only once, then ``execute``
+tests as many times as necessary to debug the test code and
+finally clean up when debugging is done::
 
-    tmt run --id <ID> --until provision  # prepare the testing environment
+    tmt run --id <ID> --until execute    # prepare, run test once
 
-    tmt run -i <ID> execute              # ... and update the test
-    tmt run -i <ID> execute              # ... and update the test again
-    tmt run -i <ID> execute              # ... until you're done
+    tmt run -i <ID> execute -f           # run test again
+    tmt run -i <ID> execute -f           # run it again
+    tmt run -i <ID> execute -f           # and again
 
     tmt run -i <ID> report finish
 
 Instead of always specifying the whole run id you can also use
 ``--last`` or ``-l`` as an abbreviation for the last run id::
 
-    tmt run -l execute
-    tmt run --last execute
+    tmt run --last execute --force
+    tmt run -l execute -f
+
+The ``--force`` option instructs ``tmt`` to run given step even if
+it has been already completed before. Use ``discover --force`` to
+synchronize test code changes to the run workdir::
+
+    tmt run -l discover -f execute -f
 
 In order to interactively debug tests use the ``--interactive``
 option which disables output capturing so that you can see what
