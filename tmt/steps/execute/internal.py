@@ -226,13 +226,21 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                     else:
                         # Unrelated error, re-raise
                         raise error
-                guest.execute(f'cp "{reboot_script_path}" "{reboot_file}" && '
-                              f'chmod +x "{reboot_file}"')
+                try:
+                    guest.execute(
+                        f'cp "{reboot_script_path}" "{reboot_file}" && '
+                        f'chmod +x "{reboot_file}"')
+                except tmt.utils.RunError as error:
+                    if "Read-only file system" not in error.stderr:
+                        raise error
             yield
         finally:
             self.debug("Remove our reboot script implementations.", level=2)
             for reboot_file in REBOOT_SCRIPT_PATHS:
-                guest.execute(f'rm "{reboot_file}"')
+                try:
+                    guest.execute(f'rm "{reboot_file}"')
+                except tmt.utils.RunError as error:
+                    self.debug(f"Error reported is: {error}")
             # FIXME: This part may not be executed if connection to the guest
             #        drops in the middle and the guest may be left in an
             #        inconsistent state.
