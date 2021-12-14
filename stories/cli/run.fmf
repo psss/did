@@ -71,12 +71,12 @@ story: 'As a user I want to execute tests easily'
             - tmt run provision prepare
             - tmt run discover provision prepare
     /until:
-        story: 'Run all steps until the given one'
+        story: 'Run given step and all preceding steps.'
         example:
             - tmt run --until prepare
             - tmt run --until execute
     /since:
-        story: 'Run all steps since the given one'
+        story: 'Run given step and all following steps.'
         example:
             - tmt run --since prepare
             - tmt run --since execute
