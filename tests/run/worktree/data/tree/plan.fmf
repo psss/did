@@ -1,0 +1,7 @@
+summary: Verify that TMT_TREE is correctly set
+provision:
+    how: container
+discover:
+    how: fmf
+execute:
+    how: tmt

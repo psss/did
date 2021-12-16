@@ -329,6 +329,14 @@ NO_COLOR
     non-colored text. See https://no-color.org/ for more
     information.
 
+The following environment variables are provided to the test
+during the execution:
+
+TMT_TREE
+    The full path of the working directory where the metadata tree
+    is copied. This usually contains the whole git repository from
+    which tests have been executed.
+
 
 Links
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -20,5 +20,11 @@ rlJournalStart
             rlRun "tmt run -ar provision -h $method report -vvv"
             rlRun "popd"
         rlPhaseEnd
+
+        rlPhaseStartTest "Verify the TMT_TREE variable ($method)"
+            rlRun "pushd data/tree"
+            rlRun "tmt run -ar provision -h $method report -vvv"
+            rlRun "popd"
+        rlPhaseEnd
     done
 rlJournalEnd

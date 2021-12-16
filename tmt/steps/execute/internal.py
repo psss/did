@@ -142,9 +142,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
         # Create data directory, prepare environment
         data_directory = self.data_path(test, full=True, create=True)
-        environment = test.environment
+        environment = test.environment.copy()
+        environment["TMT_TREE"] = self.parent.plan.worktree
         if test.framework == 'beakerlib':
-            environment = environment.copy()
             environment['BEAKERLIB_DIR'] = data_directory
             environment['BEAKERLIB_COMMAND_SUBMIT_LOG'] = (
                 f"bash {self.step.workdir}/{FILE_SUBMIT_NAME}")
