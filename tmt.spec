@@ -48,7 +48,8 @@ This package contains the Python 3 module.
 Summary: Container provisioner for the Test Management Tool
 Obsoletes: tmt-container < 0.17
 Requires: tmt == %{version}-%{release}
-Requires: ansible podman
+Requires: podman
+Requires: (ansible or ansible-core)
 
 %description provision-container
 Dependencies required to run tests in a container environment.
@@ -58,7 +59,8 @@ Summary: Virtual machine provisioner for the Test Management Tool
 Obsoletes: tmt-testcloud < 0.17
 Requires: tmt == %{version}-%{release}
 Requires: python%{python3_pkgversion}-testcloud >= 0.6.1
-Requires: ansible openssh-clients
+Requires: openssh-clients
+Requires: (ansible or ansible-core)
 
 %description provision-virtual
 Dependencies required to run tests in a local virtual machine.
