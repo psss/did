@@ -15,9 +15,9 @@ from tmt.steps.provision.local import GuestLocal
 REBOOT_VARIABLE = "REBOOT_COUNT"
 REBOOT_TYPE = "reboot"
 REBOOT_SCRIPT_PATHS = (
-    "/usr/bin/rstrnt-reboot",
-    "/usr/bin/rhts-reboot",
-    "/usr/bin/tmt-reboot")
+    "/usr/local/bin/rstrnt-reboot",
+    "/usr/local/bin/rhts-reboot",
+    "/usr/local/bin/tmt-reboot")
 REBOOT_BACKUP_EXT = ".backup"
 REBOOT_SCRIPT = f"""\
 #!/bin/sh
