@@ -119,26 +119,26 @@ example: |
       - implemented-by: /tmt/steps/provision
       - verified-by: /tests/prepare/install
 
-/on:
+/where:
     summary: Apply preparation on selected guests
     description: |
         In the :ref:`/spec/plans/provision/multihost` scenarios it
         is often necessary to perform different preparation tasks on
-        individual guests. The ``on`` key allows to select guests
+        individual guests. The ``where`` key allows to select guests
         where the preparation should be applied by providing their
         ``name`` or the ``role`` they play in the scenario. Use a
         list to specify multiple names or roles. By default, when
-        the ``on`` key is not defined, preparation is done on all
+        the ``where`` key is not defined, preparation is done on all
         provisioned guests.
     example: |
         # Start Apache on the server
         prepare:
           - how: shell
             script: systemctl start httpd
-            on: server
+            where: server
 
         # Apply common setup on the primary server and all replicas
         prepare:
           - how: ansible
             playbook: common.yaml
-            on: [primary, replica]
+            where: [primary, replica]
