@@ -12,7 +12,11 @@ import tmt.utils
 from tmt.steps.execute import TEST_OUTPUT_FILENAME
 from tmt.steps.provision.local import GuestLocal
 
-REBOOT_VARIABLE = "REBOOT_COUNT"
+REBOOT_VARIABLES = [
+    "TMT_REBOOT_COUNT",
+    "REBOOTCOUNT",
+    "RSTRNT_REBOOTCOUNT",
+    ]
 REBOOT_TYPE = "reboot"
 REBOOT_SCRIPT_PATHS = (
     "/usr/local/bin/rstrnt-reboot",
@@ -21,13 +25,9 @@ REBOOT_SCRIPT_PATHS = (
 REBOOT_BACKUP_EXT = ".backup"
 REBOOT_SCRIPT = f"""\
 #!/bin/sh
-if [ -z "${REBOOT_VARIABLE}" ]; then
-    export {REBOOT_VARIABLE}=0
-fi
 echo "{{token}}:{{{{\
     \\"type\\": \\"{REBOOT_TYPE}\\",\
-    \\"version\\": \\"0.1\\",\
-    \\"{REBOOT_VARIABLE}\\": ${REBOOT_VARIABLE}\
+    \\"version\\": \\"0.2\\"\
 }}}}"
 """
 REBOOT_TEMPLATE_NAME = "reboot_template"
@@ -145,6 +145,10 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         environment["TMT_TREE"] = self.parent.plan.worktree
         environment["TMT_TEST_DATA"] = os.path.join(
             data_directory, tmt.steps.execute.TEST_DATA)
+        # Set all supported reboot variables
+        for reboot_variable in REBOOT_VARIABLES:
+            environment[reboot_variable] = str(test._reboot_count)
+        # Variables related to beakerlib tests
         if test.framework == 'beakerlib':
             environment['BEAKERLIB_DIR'] = data_directory
             environment['BEAKERLIB_COMMAND_SUBMIT_LOG'] = (
@@ -257,7 +261,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
         Check the previously fetched test log for signs of reboot request
         and orchestrate the reboot if it was requested. Also increment
-        REBOOT_COUNT variable, reset it to 0 if no reboot was requested
+        REBOOTCOUNT variable, reset it to 0 if no reboot was requested
         (going forward to the next test). Return whether reboot was done.
         """
         output = self.read(
@@ -274,9 +278,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         if match:
             data = json.loads(match.group("data"))
             if data.get("type") == REBOOT_TYPE:
-                current_count = data.get(REBOOT_VARIABLE, 0)
-                self.debug(f"Rebooting during test {test}, "
-                           f"reboot count: {current_count}")
+                test._reboot_count += 1
+                self.debug(f"Reboot during test '{test}' "
+                           f"with reboot count {test._reboot_count}.")
                 try:
                     guest.reboot()
                 except tmt.utils.ProvisionError:
@@ -284,9 +288,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                         "Guest does not support soft reboot, "
                         "trying hard reboot.")
                     guest.reboot(hard=True)
-                test.environment[REBOOT_VARIABLE] = str(current_count + 1)
                 return True
-        test.environment[REBOOT_VARIABLE] = "0"
         return False
 
     def go(self):
@@ -313,6 +315,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 index = 0
                 while index < len(tests):
                     test = tests[index]
+                    if not hasattr(test, "_reboot_count"):
+                        test._reboot_count = 0
                     self.execute(
                         test, guest, progress=f"{index + 1}/{len(tests)}")
                     guest.pull(source=self.data_path(test, full=True))

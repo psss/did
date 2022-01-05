@@ -10,11 +10,11 @@ rlJournalStart
 
     rlPhaseStartTest "Simple reboot test"
         rlRun -s "tmt run -i $run -dddvvv"
-        rlAssertGrep "Rebooting during test /test, reboot count: 0" $rlRun_LOG
+        rlAssertGrep "Reboot during test '/test' with reboot count 1" $rlRun_LOG
         rlAssertGrep "After first reboot" $rlRun_LOG
-        rlAssertGrep "Rebooting during test /test, reboot count: 1" $rlRun_LOG
+        rlAssertGrep "Reboot during test '/test' with reboot count 2" $rlRun_LOG
         rlAssertGrep "After second reboot" $rlRun_LOG
-        rlAssertGrep "Rebooting during test /test, reboot count: 2" $rlRun_LOG
+        rlAssertGrep "Reboot during test '/test' with reboot count 3" $rlRun_LOG
         rlAssertGrep "After third reboot" $rlRun_LOG
         rlRun "rm $rlRun_LOG"
 

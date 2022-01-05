@@ -2,34 +2,47 @@
 # vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
 . /usr/share/beakerlib/beakerlib.sh || exit 1
 
-REBOOT_COUNT=${REBOOT_COUNT:-0}
-
 rlJournalStart
     rlPhaseStartSetup
         rlRun "set -o pipefail"
     rlPhaseEnd
 
-    rlPhaseStartTest "Reboot using rhts-reboot"
-        if [ "$REBOOT_COUNT" -eq 0 ]; then
-            rlRun "rhts-reboot" 0 "Reboot the machine"
-        elif [ "$REBOOT_COUNT" -eq 1 ]; then
-            rlLog "After first reboot"
-        fi
+    rlPhaseStartTest "Check reboot variables"
+        for variable in TMT_REBOOT_COUNT RSTRNT_REBOOTCOUNT REBOOTCOUNT; do
+            rlLog "$variable=${!variable}"
+            rlRun "[[ -n '${!variable}' ]]" 0 \
+                "Reboot count variable '$variable' must be defined."
+        done
     rlPhaseEnd
 
-    rlPhaseStartTest "Reboot using rstrnt-reboot"
-        if [ "$REBOOT_COUNT" -eq 1 ]; then
-            rlRun "rstrnt-reboot" 0 "Reboot the machine"
-        elif [ "$REBOOT_COUNT" -eq 2 ]; then
-            rlLog "After second reboot"
-        fi
-    rlPhaseEnd
+    # Before
+    if [ "$TMT_REBOOT_COUNT" == "0" ]; then
+        rlPhaseStartTest "Before reboot"
+            rlRun "tmt-reboot" 0 "Reboot using 'tmt-reboot'."
+        rlPhaseEnd
 
-    rlPhaseStartTest "Reboot using tmt-reboot"
-        if [ "$REBOOT_COUNT" -eq 2 ]; then
-            rlRun "tmt-reboot" 0 "Reboot the machine"
-        elif [ "$REBOOT_COUNT" -eq 3 ]; then
-            rlLog "After third reboot"
-        fi
-    rlPhaseEnd
+    # First
+    elif [ "$TMT_REBOOT_COUNT" == "1" ]; then
+        rlPhaseStartTest "After first reboot"
+            rlRun "rstrnt-reboot" 0 "Reboot using 'rstrnt-reboot'."
+        rlPhaseEnd
+
+    # Second
+    elif [ "$TMT_REBOOT_COUNT" == "2" ]; then
+        rlPhaseStartTest "After second reboot"
+            rlRun "rhts-reboot" 0 "Reboot using 'rhts-reboot'."
+        rlPhaseEnd
+
+    # Third
+    elif [ "$TMT_REBOOT_COUNT" == "3" ]; then
+        rlPhaseStartTest "After third reboot"
+            rlLog "We're done!"
+        rlPhaseEnd
+
+    # Weird
+    else
+        rlPhaseStartTest "Weird"
+            rlFail "Unexpected reboot count '$TMT_REBOOT_COUNT'."
+        rlPhaseEnd
+    fi
 rlJournalEnd

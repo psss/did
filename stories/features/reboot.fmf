@@ -5,12 +5,9 @@ story:
 description: |
     Some tests may require a reboot as a part of them, e.g.
     upgrading the system, rebooting and then running some checks.
-
-    The functionality is compatible with how restraint
-    works, hence ``rhts-reboot``, ``rstrnt-reboot`` or ``tmt-reboot``
-    can be used to start the reboot. The ``REBOOT_COUNT`` environment
-    variable is used to pass the test information about the number
-    of reboots done.
+    The ``tmt-reboot`` command can be used to request the guest
+    reboot from the test and the ``TMT_REBOOT_COUNT`` environment
+    variable provides number of successfully completed reboots.
 
     Note that this only works with the internal tmt executor and
     works with guests provisioned by tmt (e.g. container or
@@ -19,11 +16,16 @@ description: |
     will not work on machines where ``reboot`` command is not
     available.
 
+    For backward-compatibility reasons the ``rstrnt-reboot`` and
+    ``rhts-reboot`` commands are provided as well together with
+    the ``RSTRNT_REBOOTCOUNT`` and ``REBOOTCOUNT`` environment
+    variables.
+
 example: |
-    if [ -z "$REBOOT_COUNT" ] || [ "$REBOOT_COUNT" -eq 0 ]; then
+    if [ "$TMT_REBOOT_COUNT" -eq 0 ]; then
         rlRun "echo 'Before the reboot'"
-        rlRun "rhts-reboot" 0 "Reboot the machine"
-    elif [ "$REBOOT_COUNT" -eq 1 ]; then
+        rlRun "tmt-reboot" 0 "Reboot the machine"
+    elif [ "$TMT_REBOOT_COUNT" -eq 1 ]; then
         rlRun "echo 'After the reboot'"
     fi
 link:

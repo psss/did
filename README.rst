@@ -349,6 +349,17 @@ TMT_PLAN_DATA
     back from the guest and available for inspection after the
     plan is completed.
 
+TMT_REBOOT_COUNT
+    During the test execution the ``tmt-reboot`` command can be
+    used to request reboot of the guest. This variable contains
+    number of reboots which already happened during the test.
+    Value is set to ``0`` if no reboot occurred.
+
+    In order to keep backward-compatibility with older tests,
+    ``rhts-reboot`` and ``rstrnt-reboot`` commands are supported
+    for requesting the reboot, variables ``REBOOTCOUNT`` and
+    ``RSTRNT_REBOOTCOUNT`` contain number of reboots as well.
+
 
 Links
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

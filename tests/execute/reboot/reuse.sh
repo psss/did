@@ -28,11 +28,11 @@ rlJournalStart
         provision="provision -h connect -g $guest -P $port -u $user -k $key"
         for _ in $(seq 0 1); do
             rlRun -s "tmt run --scratch -ai $run -dddvvv $provision"
-            rlAssertGrep "Rebooting during test /test, reboot count: 0" $rlRun_LOG
+            rlAssertGrep "Reboot during test '/test' with reboot count 1" $rlRun_LOG
             rlAssertGrep "After first reboot" $rlRun_LOG
-            rlAssertGrep "Rebooting during test /test, reboot count: 1" $rlRun_LOG
+            rlAssertGrep "Reboot during test '/test' with reboot count 2" $rlRun_LOG
             rlAssertGrep "After second reboot" $rlRun_LOG
-            rlAssertGrep "Rebooting during test /test, reboot count: 2" $rlRun_LOG
+            rlAssertGrep "Reboot during test '/test' with reboot count 3" $rlRun_LOG
             rlAssertGrep "After third reboot" $rlRun_LOG
             rlRun "rm $rlRun_LOG"
 
