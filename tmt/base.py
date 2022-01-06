@@ -312,6 +312,8 @@ class Test(Core):
             node = data
         super().__init__(node)
 
+        self._check('test', expected=str)
+
         # Path defaults to the directory where metadata are stored or to
         # the root '/' if fmf metadata were not stored on the filesystem
         try:
@@ -420,6 +422,26 @@ class Test(Core):
                 if value not in [None, list(), dict()]:
                     echo(tmt.utils.format(key, value, key_color='blue'))
 
+    def _lint_manual(self, test_path):
+        valid = True
+        try:
+            md_path = os.path.join(test_path, self.test)
+        except TypeError:
+            md_path = ''
+        if os.path.exists(md_path):
+            invalid_md_file = tmt.export.check_md_file_respects_spec(md_path)
+            if invalid_md_file:
+                valid = False
+                for i in invalid_md_file:
+                    verdict(False, i)
+            else:
+                verdict(True, "correct headings are used in the Markdown file")
+        else:
+            if self.test:
+                valid = False
+                verdict(False, f'Markdown file "{self.test}" doesn\'t exist')
+        return valid
+
     def lint(self):
         """
         Check test against the L1 metadata specification.
@@ -475,14 +497,8 @@ class Test(Core):
 
         # Check if the format of Markdown file respects the specification
         # https://tmt.readthedocs.io/en/latest/spec/tests.html#manual
-        md_path = tmt.export.return_markdown_file()
-        if os.path.exists(md_path):
-            invalid_md_file = tmt.export.check_md_file_respects_spec(md_path)
-            if invalid_md_file:
-                for i in invalid_md_file:
-                    verdict(False, i)
-            else:
-                verdict(True, "correct headings are used in the Markdown file")
+        if self.manual:
+            valid &= self._lint_manual(test_path)
 
         return valid
 

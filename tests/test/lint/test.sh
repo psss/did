@@ -23,9 +23,6 @@ rlJournalStart
         rlAssertGrep 'pass' output
         rlAssertGrep 'warn' output
         rlAssertNotGrep 'fail' output
-        rlAssertGrep "Markdown file doesn't exist in the current working
-directory." output
-        rlAssertGrep "Manual steps couldn't be exported" output
     rlPhaseEnd
 
     rlPhaseStartTest "Old yaml"
@@ -72,23 +69,37 @@ directory." output
     rlPhaseEnd
 
     rlPhaseStartTest "Manual test"
-        # Single Markdown file and it's good
-        rlRun "cd manual_test_passed"
-        rlRun "tmt test lint good | tee output"
+        # If manual=true and correct test path
+        rlRun "tmt test lint /manual/manual_true/one_test/correct_path/pass \
+            | tee output"
         rlAssertGrep 'pass correct headings are used in the Markdown file' \
           output
 
-        # Many Markdown files
-        rlRun "pushd $tmp/data"
-        rlRun "cd two_or_more_manual_test"
-        rlRun "tmt test lint good | tee output"
-        rlAssertGrep "2 Markdown files found in the current working
-directory." output
+        # If manual=true and wrong test path
+        rlRun "tmt test lint /manual/manual_true/one_test/wrong_path \
+            | tee output" 1
+        rlAssertGrep "fail Markdown file \"wrong_path.md\" doesn't exist" \
+          output
+
+        # If manual=true and test doesn't exist
+        rlRun "tmt test lint /manual/manual_true/no_tests | tee output" 1
+        rlAssertGrep "fail test script must be defined" output
+
+        # If manual=true and 2 tests exist
+        rlRun "tmt test lint /manual/manual_true/two_tests | tee output" 1
+        rlAssertGrep "fail Markdown file \"test.md wrong_path.md\" doesn't
+exist" output
+
+        # If manual=false - don't check test attribute
+        rlRun "tmt test lint /manual/manual_false/one_test | tee output"
+        rlAssertNotGrep 'pass correct headings are used in the Markdown file' \
+          output
+        rlAssertNotGrep "fail Markdown file \"test.md\" doesn't exist" output
 
         # Unknown headings
         rlRun "pushd $tmp/data"
-        rlRun "cd manual_test_failed"
-        rlRun "tmt test lint good | tee output"
+        rlRun "tmt test lint /manual/manual_true/one_test/correct_path/fail1 \
+            | tee output" 1
         rlAssertGrep "fail unknown html heading \"<h2>Test</h2>\" is
 used" output
         rlAssertGrep "fail unknown html heading \"<h3>Unknown heading
@@ -117,8 +128,8 @@ test section \"<h1>Test two</h1>\"" output
 
         # Required section doesn't exist
         rlRun "pushd $tmp/data"
-        rlRun "cd manual_test_failed_2"
-        rlRun "tmt test lint good | tee output"
+        rlRun "tmt test lint /manual/manual_true/one_test/correct_path/fail2 \
+            | tee output" 1
         rlAssertGrep "fail \"Test\" section doesn't exist in the Markdown
 file" output
     rlPhaseEnd

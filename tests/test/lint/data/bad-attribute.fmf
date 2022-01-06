@@ -1,2 +1,2 @@
-test: true
+test: /bin/true
 requires: "typo, should be require"

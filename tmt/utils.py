@@ -901,7 +901,10 @@ def markdown_to_html(filename):
 
     try:
         with open(filename, 'r') as file:
-            text = file.read()
+            try:
+                text = file.read()
+            except UnicodeError:
+                raise MetadataError(f"Unable to read '{filename}'.")
             return markdown.markdown(text)
     except IOError:
         raise ConvertError(f"Unable to open '{filename}'.")

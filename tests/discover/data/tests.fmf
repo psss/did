@@ -1,4 +1,4 @@
-test: true
+test: /bin/true
 
 /discover1:
     summary: Discover one
