@@ -97,6 +97,8 @@ a ``yaml`` format extended with a couple of nice features like
 `inheritance`__ or virtual `hierarchy`__ which help to maintain
 even large data efficiently without unnecessary duplication.
 
+.. _tree:
+
 The data are organized into `trees`__. Similarly as with ``git``,
 there is a special ``.fmf`` directory which marks the root of the
 fmf metadata tree. Use the ``init`` command to initialize it::

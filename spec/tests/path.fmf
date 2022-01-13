@@ -1,19 +1,19 @@
-summary: Filesystem directory to be entered before executing the test
+summary: Directory to be entered before executing the test
 
 story:
-    As a test writer I want to define two virtual test cases, both
-    using the same script for executing.
+    As a test writer I want to define the directory from which the
+    test script should be executed.
 
-description:
-    As the object hierarchy does not need to copy the filesystem
-    structure (e.g. when using virtual test cases) we need a way
-    how to define where the test is located.
+description: |
+    In order to have all files which are needed for testing
+    prepared for execution and available on locations expected by
+    the test script, automation changes the current working
+    directory to the provided ``path`` before running the test.
 
-    Automation is expected to change directory to provided path
-    starting from the fmf tree root directory before executing the
-    test. Use a ``string`` containing an absolute path starting
-    with slash. If path is not defined, the directory where the
-    test metadata are stored is used by default.
+    It should be a ``string`` containing path from the metadata
+    :ref:`tree root<tree>` to the desired directory and should
+    start with a slash. If path is not defined, the directory
+    where the test metadata are stored is used as a default.
 
 example: |
     path: /protocols/https
