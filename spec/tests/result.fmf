@@ -14,10 +14,11 @@ description: |
 
     respect
         test result is respected (fails when test failed)
-    ignore
-        ignore the test result (test always passes)
     xfail
         expected fail (pass when test fails, fail when test passes)
+    pass, info, warn, error, fail
+        ignore the actual test result and always report provided
+        value instead
 
     The default value is ``respect``.
 
