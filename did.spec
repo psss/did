@@ -1,5 +1,5 @@
 Name: did
-Version: 0.18
+Version: 0.19
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -54,6 +54,30 @@ export LANG=en_US.utf-8
 %license LICENSE
 
 %changelog
+* Tue Jan 18 2022 Lukáš Zachar <lzachar@redhat.com> - 0.19-1
+- Install all required packages during docs building
+- Adjust code style to be pep8 compatible
+- Update docs for contributors, enable pre-commit
+- Add basic support for Zammad
+- Check if the GitHub credential token is valid
+- Fix jira issues search when user `login` provided
+- Add minor clarification note about token name
+- Split jira token expiration into two options
+- Adjust the support for Jira Personal Access Tokens
+- Support Personal Access Token in the Jira plugin
+- Return all the bugzilla results from a search
+- Install fresh sphinx when building readthedocs
+- Adjust the paging support for the GitHub plugin
+- Add pagination support for GitHub, fixes #247
+- Adjust the new plugin for reporting bodhi updates
+- Add a new plugin with support for Bodhi updates
+- Use user email for searching updated jira issues
+- Adjust the switch from fiscal to calendar year
+- Switch from fiscal year to natural year
+- Update docs for gitlab, github and confluence
+- Give a better message upon jira search failure
+- Raise the number of github issues fetched per page
+
 * Mon Apr 19 2021 Petr Šplíchal <psplicha@redhat.com> - 0.18-1
 - Support custom xmlrpc endpoint for MoinMoin wiki
 - Adjust the approved merge requests for gitlab
