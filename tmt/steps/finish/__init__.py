@@ -71,6 +71,8 @@ class Finish(tmt.steps.Step):
             guest_copy.parent = self
             for plugin in self.plugins():
                 plugin.go(guest_copy)
+            # Pull logs from guest
+            guest.pull()
 
         # Stop and remove provisioned guests
         for guest in self.plan.provision.guests():

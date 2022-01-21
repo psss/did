@@ -15,6 +15,10 @@ finish:
       order: 70
       how: shell
       script: bash -xc "[ -f /tmp/finished ]"
+    - name: Create a file that is pulled during the finish stage
+      order: 80
+      how: shell
+      script: touch my_file.txt
 execute:
     how: tmt
     script: echo fake
