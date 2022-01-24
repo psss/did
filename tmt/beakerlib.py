@@ -172,7 +172,12 @@ class Library(object):
                         level=3)
                     shutil.copytree(self.path, directory, symlinks=True)
                 # Detect the default branch from the origin
-                self.default_branch = tmt.utils.default_branch(directory)
+                try:
+                    self.default_branch = tmt.utils.default_branch(directory)
+                except OSError as error:
+                    raise tmt.utils.GeneralError(
+                        f"Unable to detect default branch for '{directory}'. "
+                        f"Is the git repository '{self.url}' empty?")
                 # Use the default branch if no ref provided
                 if self.ref is None:
                     self.ref = self.default_branch
