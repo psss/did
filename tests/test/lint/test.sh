@@ -36,8 +36,8 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Bad"
-        rlRun "tmt test lint bad | tee output" 1
-        rlAssertGrep 'fail test script must be defined' output
+        rlRun "tmt test lint empty 2>&1 | tee output" 2
+        rlAssertGrep "must be defined" output
         rlRun "tmt test lint bad-path | tee output" 1
         rlAssertGrep 'fail directory path must exist' output
         rlRun "tmt test lint bad-not-absolute | tee output" 1
@@ -69,69 +69,41 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Manual test"
-        # If manual=true and correct test path
-        rlRun "tmt test lint /manual/manual_true/one_test/correct_path/pass \
-            | tee output"
-        rlAssertGrep 'pass correct headings are used in the Markdown file' \
-          output
+        # Correct syntax
+        rlRun "tmt test lint /manual_true/correct_path/pass | tee output"
+        rlAssertGrep 'pass correct manual test syntax' output
 
-        # If manual=true and wrong test path
-        rlRun "tmt test lint /manual/manual_true/one_test/wrong_path \
-            | tee output" 1
-        rlAssertGrep "fail Markdown file \"wrong_path.md\" doesn't exist" \
-          output
-
-        # If manual=true and test doesn't exist
-        rlRun "tmt test lint /manual/manual_true/no_tests | tee output" 1
-        rlAssertGrep "fail test script must be defined" output
-
-        # If manual=true and 2 tests exist
-        rlRun "tmt test lint /manual/manual_true/two_tests | tee output" 1
-        rlAssertGrep "fail Markdown file \"test.md wrong_path.md\" doesn't
-exist" output
+        # Wrong test path
+        rlRun "tmt test lint /manual/manual_true/wrong_path | tee output" 1
+        rlAssertGrep "fail file 'wrong_path.md' does not exist" output
 
         # If manual=false - don't check test attribute
-        rlRun "tmt test lint /manual/manual_false/one_test | tee output"
-        rlAssertNotGrep 'pass correct headings are used in the Markdown file' \
-          output
-        rlAssertNotGrep "fail Markdown file \"test.md\" doesn't exist" output
+        rlRun "tmt test lint /manual/manual_false | tee output"
+        rlAssertNotGrep 'pass correct manual test syntax' output
 
         # Unknown headings
-        rlRun "pushd $tmp/data"
-        rlRun "tmt test lint /manual/manual_true/one_test/correct_path/fail1 \
-            | tee output" 1
-        rlAssertGrep "fail unknown html heading \"<h2>Test</h2>\" is
-used" output
-        rlAssertGrep "fail unknown html heading \"<h3>Unknown heading
-begin</h3>\" is used" output
-        rlAssertGrep "fail unknown html heading \"<h2>Unknown heading
-end</h2>\" is used" output
+        rlRun "tmt test lint /manual_true/correct_path/fail1 | tee output" 1
+        fail="fail unknown html heading"
+        rlAssertGrep "$fail \"<h2>Test</h2>\" is used" output
+        rlAssertGrep "$fail \"<h3>Unknown heading begin</h3>\" is used" output
+        rlAssertGrep "$fail \"<h2>Unknown heading end</h2>\" is used" output
 
         # Warn if 2 or more # Setup or # Cleanup are used
         rlAssertGrep 'fail 2 headings "<h1>Setup</h1>" are used' output
         rlAssertGrep 'fail 3 headings "<h1>Cleanup</h1>" are used' output
 
         # Step is used outside of test sections.
-        rlAssertGrep "Heading \"<h2>Step</h2>\" from the section \"Step\" is
-used outside of Test sections." output
+        rlAssertGrep "outside of Test sections" output
 
         # Unexpected headings
-        rlAssertGrep "fail Headings \"<h1>Cleanup</h1>, <h1>Setup</h1>\"
-aren't expected in the section \"<h1>Test</h1>" output
-        rlAssertGrep "fail Headings \"<h1>Cleanup</h1>\" aren't expected in
-the section \"<h1>Test two</h1>\"" output
+        rlAssertGrep "fail Headings .* aren't expected in the section" output
 
         # Step isn't in pair with Expect
-        rlAssertGrep "fail The number of headings from the section \"Step\" - 2
-doesn't equal to the number of headings from the section \"Expect\" - 1 in the
-test section \"<h1>Test two</h1>\"" output
+        rlAssertGrep "doesn't equal to the number of headings" output
 
         # Required section doesn't exist
-        rlRun "pushd $tmp/data"
-        rlRun "tmt test lint /manual/manual_true/one_test/correct_path/fail2 \
-            | tee output" 1
-        rlAssertGrep "fail \"Test\" section doesn't exist in the Markdown
-file" output
+        rlRun "tmt test lint /manual_true/correct_path/fail2 | tee output" 1
+        rlAssertGrep "fail \"Test\" section doesn't exist" output
     rlPhaseEnd
 
     rlPhaseStartCleanup

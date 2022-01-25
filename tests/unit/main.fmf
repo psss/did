@@ -5,4 +5,6 @@ test: python3 -m pytest
 framework: shell
 require:
   - python3-pytest
+environment:
+    LANG: en_US.UTF-8
 tier: 0

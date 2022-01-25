@@ -1,39 +1,21 @@
+manual: true
+test: test.md
+path: /manual_test_passed
+
 /manual_true:
-    /no_tests:
-        path: /manual_test_passed
-        summary: manual attr true, no tests
-        test:
-        manual: true
-    /one_test:
-        /correct_path:
-            /pass:
-                path: /manual_test_passed
-                summary: manual attr true, 1 test, correct path
-                test: test.md
-                manual: true
-            /fail1:
-                path: /manual_test_failed
-                summary: manual attr true, 1 test, correct path, fail 1
-                test: test.md
-                manual: true
-            /fail2:
-                path: /manual_test_failed_2
-                summary: manual attr true, 1 test, correct path, fail 2
-                test: test.md
-                manual: true
-        /wrong_path:
-            path: /manual_test_passed
-            summary: manual attr true, 1 test, wrong path
-            test: wrong_path.md
-            manual: true
-    /two_tests:
-        path: /manual_test_passed
-        summary: manual attr true, 2 tests
-        test: test.md wrong_path.md
-        manual: true
+    /correct_path:
+        /pass:
+            summary: Correct syntax
+        /fail1:
+            summary: Unknown headings
+            path: /manual_test_failed
+        /fail2:
+            summary: Missing test section
+            path: /manual_test_failed_2
+    /wrong_path:
+        summary: Wrong test path
+        test: wrong_path.md
+
 /manual_false:
-    /one_test:
-        path: /manual_test_passed
-        summary: manual attr false, 1 test
-        test: test.md
-        manual: false
+    summary: Automated test
+    manual: false

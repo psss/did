@@ -60,8 +60,10 @@ def test_test_invalid():
     with pytest.raises(SpecificationError):
         test = tmt.Test({'environment': 'string'}, name='/smoke')
     # Listify attributes
-    assert tmt.Test({'tag': 'a'}, name='/smoke').tag == ['a']
-    assert tmt.Test({'tag': ['a', 'b']}, name='/smoke').tag == ['a', 'b']
+    assert tmt.Test(
+        {'test': 'test', 'tag': 'a'}, name='/smoke').tag == ['a']
+    assert tmt.Test(
+        {'test': 'test', 'tag': ['a', 'b']}, name='/smoke').tag == ['a', 'b']
 
 
 def test_link():

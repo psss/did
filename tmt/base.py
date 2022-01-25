@@ -312,7 +312,11 @@ class Test(Core):
             node = data
         super().__init__(node)
 
+        # Test script or path to the manual test must be defined
         self._check('test', expected=str)
+        if self.test is None:
+            raise tmt.utils.SpecificationError(
+                f"The 'test' attribute in '{self.name}' must be defined.")
 
         # Path defaults to the directory where metadata are stored or to
         # the root '/' if fmf metadata were not stored on the filesystem
@@ -423,24 +427,22 @@ class Test(Core):
                     echo(tmt.utils.format(key, value, key_color='blue'))
 
     def _lint_manual(self, test_path):
-        valid = True
-        try:
-            md_path = os.path.join(test_path, self.test)
-        except TypeError:
-            md_path = ''
-        if os.path.exists(md_path):
-            invalid_md_file = tmt.export.check_md_file_respects_spec(md_path)
-            if invalid_md_file:
-                valid = False
-                for i in invalid_md_file:
-                    verdict(False, i)
-            else:
-                verdict(True, "correct headings are used in the Markdown file")
-        else:
-            if self.test:
-                valid = False
-                verdict(False, f'Markdown file "{self.test}" doesn\'t exist')
-        return valid
+        """ Check that the manual instructions respect the specification """
+        manual_test = os.path.join(test_path, self.test)
+
+        # File does not exist
+        if not os.path.exists(manual_test):
+            return verdict(False, f"file '{self.test}' does not exist")
+
+        # Check syntax for warnings
+        warnings = tmt.export.check_md_file_respects_spec(manual_test)
+        if warnings:
+            for warning in warnings:
+                verdict(False, warning)
+            return False
+
+        # Everything looks ok
+        return verdict(True, f"correct manual test syntax in '{self.test}'")
 
     def lint(self):
         """

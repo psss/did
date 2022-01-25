@@ -458,6 +458,11 @@ def export_to_nitrate(test):
 
 
 def check_md_file_respects_spec(md_path):
+    """
+    Check that the file respects manual test specification
+
+    Return list of warnings, empty list if no problems found.
+    """
     warnings_list = []
     sections_headings = tmt.base.SECTIONS_HEADINGS
     required_headings = set(sections_headings['Step'] +

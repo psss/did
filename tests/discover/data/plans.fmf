@@ -74,7 +74,7 @@ execute:
         summary: Integer reference
         discover:
             how: fmf
-            ref: 5788736
+            ref: 21962777
 
     /distgit:
         summary: Extract distgit sources
