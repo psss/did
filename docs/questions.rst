@@ -33,9 +33,16 @@ __ https://tmt.readthedocs.io/en/latest/
 Virtualization Tips
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here's just a couple of hints how to get the virtualization
-quickly working on your laptop. See the `Getting started with
-virtualization`__ docs to learn more.
+In order to safely run tests under a virtual machine started on
+your laptop you only need to install the ``tmt-provision-virtual``
+package. By default the ``session`` connection is used so no other
+steps should be needed, just execute tests using the ``tmt run``
+command.
+
+If you want to use the ``system`` connection you might need to do
+a few steps to set up your box. Here's just a couple of hints how
+to get the virtualization quickly working on your laptop. See the
+`Getting started with virtualization`__ docs to learn more.
 
 Make sure the ``libvirtd`` is running on your box::
 
@@ -117,7 +124,7 @@ to keep backward compatibility.
 
 
 How can I integrate tmt tests with other tools?
-------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each tmt test has a unique `fmf identifier`__ which can look like
 this::
