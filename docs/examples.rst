@@ -533,9 +533,7 @@ package then could be done in the following way::
     prepare+:
       - name: pytest
         how: install
-        package:
-            - python3-pytest
-            - python3-mock
+        package: python3-pytest
 
 
 Parametrize Plans

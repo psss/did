@@ -29,7 +29,6 @@ BuildRequires: python%{python3_pkgversion}-setuptools
 BuildRequires: python%{python3_pkgversion}-pytest
 BuildRequires: python%{python3_pkgversion}-click
 BuildRequires: python%{python3_pkgversion}-fmf
-BuildRequires: python%{python3_pkgversion}-mock
 BuildRequires: python%{python3_pkgversion}-requests
 BuildRequires: python%{python3_pkgversion}-testcloud
 BuildRequires: python%{python3_pkgversion}-markdown

@@ -9,7 +9,7 @@ RUN set -x && \
 RUN set -x && \
     dnf install -y dnf-plugins-core && \
     dnf copr enable -y psss/tmt && \
-    dnf install -y tmt-all beakerlib python3-{mock,test} && \
+    dnf install -y tmt-all beakerlib && \
     dnf autoremove -y && \
     dnf clean all
 
