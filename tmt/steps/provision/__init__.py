@@ -623,13 +623,16 @@ class Guest(tmt.utils.Common):
         Make sure that rsync is installed on the guest
 
         For now works only with RHEL based distributions.
+        On read-only distros install under the '/root/pkg' directory.
         """
         self.debug("Ensure that rsync is installed on the guest.", level=3)
-        self.execute("rsync --version --quiet "
-                     "|| if [[ ! -f /usr/bin/ostree ]]; then "
-                     "yum install rsync -y;"
-                     "else yum install --installroot=/root/pkg -y rsync "
-                     "&& ln -sf /root/pkg/bin/rsync /usr/local/bin/rsync;  fi")
+        self.execute(
+            "rsync --version --quiet || "
+            # Regular yum install on read-write distros
+            "if [[ ! -f /usr/bin/rpm-ostree ]]; then yum install -y rsync; "
+            # Install under /root/pkg for read-only distros
+            "else yum install -y --installroot=/root/pkg --releasever / rsync "
+            "&& ln -sf /root/pkg/bin/rsync /usr/local/bin/rsync; fi")
 
     @classmethod
     def requires(cls):
