@@ -1,0 +1,11 @@
+/good:
+    test: |
+        echo everything ok
+        echo extra good > $TMT_TEST_DATA/extra.log
+        echo common good >> $TMT_PLAN_DATA/log.txt
+/bad:
+    test: |
+        echo everything ko
+        echo extra bad > $TMT_TEST_DATA/extra.log
+        echo common bad >> $TMT_PLAN_DATA/log.txt
+        /bin/false

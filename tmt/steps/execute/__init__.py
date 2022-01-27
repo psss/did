@@ -240,7 +240,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         directory = os.path.join(
             self.step.workdir, TEST_DATA, test.name.lstrip('/'))
         if create and not os.path.isdir(directory):
-            os.makedirs(directory)
+            os.makedirs(os.path.join(directory, TEST_DATA))
         if not filename:
             return directory
         path = os.path.join(directory, filename)

@@ -144,6 +144,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         data_directory = self.data_path(test, full=True, create=True)
         environment = test.environment.copy()
         environment["TMT_TREE"] = self.parent.plan.worktree
+        environment["TMT_TEST_DATA"] = os.path.join(
+            data_directory, tmt.steps.execute.TEST_DATA)
         if test.framework == 'beakerlib':
             environment['BEAKERLIB_DIR'] = data_directory
             environment['BEAKERLIB_COMMAND_SUBMIT_LOG'] = (
@@ -328,6 +330,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                     index += 1
                 # Overwrite the progress bar, the test data is irrelevant
                 self._show_progress('', '', True)
+            # Pull artifacts created in the plan data directory
+            self.debug("Pull the plan data directory.", level=2)
+            guest.pull(source=self.step.plan.data_directory)
 
     def results(self):
         """ Return test results """

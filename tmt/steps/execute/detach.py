@@ -135,7 +135,8 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
                 raise
             end = time.time()
             # Pull logs from guest, show logs and check results
-            guest.pull()
+            guest.pull(source=self.step.plan.execute.workdir)
+            guest.pull(source=self.step.plan.data_directory)
             self.show_logs()
             # If --exit-first is used, not all tests may have been executed.
             # run.sh writes a letter F/. (Fail/pass) to stdout for each test.

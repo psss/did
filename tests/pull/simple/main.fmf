@@ -1,0 +1,14 @@
+summary: Simple provision & finish works fine
+description:
+    Make sure that provisioning a guest and clean it up works as
+    expected even if no preparation, test execution or finish step
+    scripts are performed.
+link:
+  - verifies: https://github.com/psss/tmt/issues/1011
+
+environment:
+    METHODS: container local
+adjust:
+  - when: how == full
+    environment:
+        METHODS: container virtual local

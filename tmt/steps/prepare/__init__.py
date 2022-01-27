@@ -102,6 +102,10 @@ class Prepare(tmt.steps.Step):
             # Execute each prepare plugin
             for plugin in self.plugins():
                 plugin.go(guest_copy)
+            # Pull artifacts created in the plan data directory
+            # if there was at least one plugin executed
+            if self.plugins():
+                guest_copy.pull(self.plan.data_directory)
 
         # Give a summary, update status and save
         self.summary()

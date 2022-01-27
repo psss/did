@@ -1,0 +1,12 @@
+summary: Test results and logs are pulled from guest
+description:
+    Check that test logs are correctly fetched from the guest,
+    test results are stored into `results.yaml` and plan data
+    directory content is synced back.
+
+environment:
+    METHODS: container local
+adjust:
+  - when: how == full
+    environment:
+        METHODS: container virtual local

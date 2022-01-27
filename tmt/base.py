@@ -555,12 +555,19 @@ class Plan(Core):
 
     def __init__(self, node, run=None):
         """ Initialize the plan """
+        super().__init__(node, parent=run)
+
+        # Save the run, prepare worktree and plan data directory
         self.my_run = run
+        if self.my_run:
+            self._initialize_worktree()
+            self._initialize_data_directory()
+
+        # Store 'environment' and 'environment-file' keys content
         self._environment = self._get_environment_vars(node)
         # Expand all environment variables in the node
         with tmt.utils.modify_environ(self.environment):
             self._expand_node_data(node.data)
-        super().__init__(node, parent=run)
 
         # Initialize test steps
         self.discover = tmt.steps.discover.Discover(
@@ -575,9 +582,6 @@ class Plan(Core):
             self.node.get('report'), self)
         self.finish = tmt.steps.finish.Finish(
             self.node.get('finish'), self)
-
-        # Initialize workdir tree
-        self._initialize_worktree()
 
         # Relevant gates (convert to list if needed)
         self.gate = node.get('gate')
@@ -605,10 +609,12 @@ class Plan(Core):
     @property
     def environment(self):
         """ Return combined environment from plan data and command line """
-        if self.my_run and self.my_run.environment:
+        if self.my_run:
             combined = self._environment.copy()
             # Command line variables take precedence
             combined.update(self.my_run.environment)
+            # Include path to the plan data directory
+            combined["TMT_PLAN_DATA"] = self.data_directory
             return combined
         else:
             return self._environment
@@ -639,24 +645,33 @@ class Plan(Core):
 
         Used as cwd in prepare, execute and finish steps.
         """
-        # Bail out if workdir does not exist (not running the plan)
-        if not self.workdir:
-            return
-
         self.worktree = os.path.join(self.workdir, 'tree')
         tree_root = self.my_run.tree.root
 
         # Create an empty directory if there's no metadata tree
         if not tree_root:
-            self.debug('Create an empty worktree (no metadata tree).')
+            self.debug('Create an empty worktree (no metadata tree).', level=2)
             os.makedirs(self.worktree, exist_ok=True)
             return
 
         # Sync metadata root to the worktree
-        self.debug(f"Sync the worktree to '{self.worktree}'.")
+        self.debug(f"Sync the worktree to '{self.worktree}'.", level=2)
         self.run([
             "rsync", "-ar", "--exclude", ".git",
             f"{tree_root}/", self.worktree], shell=False)
+
+    def _initialize_data_directory(self):
+        """
+        Create the plan data directory
+
+        This is used for storing logs and other artifacts created during
+        prepare step, test execution or finish step and which are pulled
+        from the guest for possible future inspection.
+        """
+        self.data_directory = os.path.join(self.workdir, "data")
+        self.debug(
+            f"Create the data directory '{self.data_directory}'.", level=2)
+        os.makedirs(self.data_directory, exist_ok=True)
 
     def _fmf_context(self):
         """ Return combined context from plan data and command line """

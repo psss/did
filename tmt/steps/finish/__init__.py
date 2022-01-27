@@ -71,8 +71,10 @@ class Finish(tmt.steps.Step):
             guest_copy.parent = self
             for plugin in self.plugins():
                 plugin.go(guest_copy)
-            # Pull logs from guest
-            guest.pull()
+            # Pull artifacts created in the plan data directory
+            # if there was at least one plugin executed
+            if self.plugins():
+                guest_copy.pull(self.plan.data_directory)
 
         # Stop and remove provisioned guests
         for guest in self.plan.provision.guests():
