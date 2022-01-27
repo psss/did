@@ -51,6 +51,8 @@ rlJournalStart
     rlPhaseStartTest 'Relevant bugs'
         rlRun 'tmt test show | tee output'
         rlAssertGrep 'relates.*1234567' 'output'
+        rlAssertGrep 'relates.*2222222' 'output'
+        rlAssertGrep 'relates.*9876543' 'output'
     rlPhaseEnd
 
     rlPhaseStartTest 'Multihost'

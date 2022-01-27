@@ -327,8 +327,9 @@ def read(path, makefile, nitrate, purpose, disabled, types):
         except AttributeError:
             pass
         # Add relevant bugs to the 'link' attribute
-        for bug in re.findall(r'^Bug:\s*([0-9]+)', testinfo, re.M):
-            add_bug(bug, data)
+        for bug_line in re.findall(r'^Bug:\s*([0-9\s]+)', testinfo, re.M):
+            for bug in re.findall(r'(\d+)', bug_line):
+                add_bug(bug, data)
 
         # Warn if makefile has extra lines in run and build targets
         def target_content(target):
