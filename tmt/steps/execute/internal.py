@@ -35,10 +35,9 @@ REBOOT_TEMPLATE_NAME = "reboot_template"
 FILE_SUBMIT_SCRIPT = """\
 #!/bin/sh
 FILENAME="$2"
-STORE_NAME="$BEAKERLIB_DIR/submitted/"
-[ -d $STORE_NAME ] || mkdir -p $STORE_NAME
-cp $FILENAME $STORE_NAME
-echo "File $FILENAME stored to $STORE_NAME"
+[ -d "$TMT_TEST_DATA" ] || mkdir -p "$TMT_TEST_DATA"
+cp "$FILENAME" "$TMT_TEST_DATA"
+echo "File $FILENAME stored to $TMT_TEST_DATA"
 """
 FILE_SUBMIT_NAME = "tmt-file-submit"
 

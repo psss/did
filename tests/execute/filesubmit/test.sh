@@ -8,10 +8,13 @@ rlJournalStart
         rlRun "set -o pipefail"
     rlPhaseEnd
 
+    # would be set by TMT_TEST_DATA
+    tmt_test_data="plans/default/execute/data/data"
+
     rlPhaseStartTest
         rlRun "tmt run -vfi $tmp -a provision -h container"
-        FILE_PATH=$tmp/plans/default/execute/data/submitted/this_file.txt
-        BUNDLE_PATH=$tmp/plans/default/execute/data/submitted/tmp-bundle_name.tar.gz
+        FILE_PATH=$tmp/$tmt_test_data/this_file.txt
+        BUNDLE_PATH=$tmp/$tmt_test_data/tmp-bundle_name.tar.gz
 
         # File was submitted and has correct content
         rlAssertExists $FILE_PATH
