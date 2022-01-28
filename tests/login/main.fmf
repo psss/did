@@ -9,3 +9,7 @@
 /reserve:
     summary: Reserve a guest for experimenting
     test: ./reserve.sh
+
+/debug:
+    summary: Log into the guest after report
+    test: ./debug.sh

@@ -435,12 +435,14 @@ class Action(tmt.utils.Common):
 
         # Use the end of the last enabled step if no --step given
         if not options:
+            login_during = None
+            # The last run may have failed before all enabled steps were
+            # completed, select the last step done
             if step.plan.my_run.opt('last'):
-                # The last run may have failed before all enabled steps were
-                # completed, select the last step done
                 steps = [s for s in step.plan.steps() if s.status() == 'done']
                 login_during = steps[-1] if steps else None
-            else:
+            # Default to the last enabled step if no completed step found
+            if login_during is None:
                 login_during = list(step.plan.steps())[-1]
             # Only login if the error occurred after provision
             if login_during != step.plan.discover:
