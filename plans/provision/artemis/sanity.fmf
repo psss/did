@@ -1,0 +1,29 @@
+#
+# Thanks to no "standard" public Artemis instance being available, Artemis
+# tests must be fed with credentials and setup to match the Artemis instance
+# one wishes to use for testing. To run this plan, perform the following steps:
+#
+# $ export ARTEMIS_API_URL="..."
+# $ export ARTEMIS_COMPOSE="..."
+# $ export ARTEMIS_KEYNAME="..."
+#
+# $ tmt -c how=artemis run -vv plan --name artemis \
+#       provision --how artemis --api-url "$ARTEMIS_API_URL" \
+#       --image "$ARTEMIS_COMPOSE" --keyname "$ARTEMIS_KEYNAME"
+
+summary: Sanity tests of Artemis provision plugin
+
+discover:
+    how: fmf
+    filter: 'tag: artemis & tier: 1'
+
+provision:
+    how: artemis
+
+    # NOTE: the required keys are missing *on purpose* - they must be given
+    # on command-line.
+
+enabled: false
+adjust:
+  when: how == artemis
+  enabled: true

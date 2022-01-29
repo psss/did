@@ -1,0 +1,5 @@
+framework: shell
+enabled: false
+adjust:
+  - when: how == artemis
+    enabled: true
