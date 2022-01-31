@@ -1,0 +1,11 @@
+summary: Verify that test debugging works fine
+description:
+    Prepare the environment for testing using provision & prepare,
+    then debug test code using repeated discover & execute.
+
+environment:
+    METHODS: local container
+adjust:
+    environment:
+        METHODS: local container virtual
+    when: how == full

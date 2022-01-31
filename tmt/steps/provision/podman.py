@@ -202,7 +202,11 @@ class GuestContainer(tmt.Guest):
             [self.container or 'dry', 'sh', '-c', command], **kwargs)
 
     def push(self, source=None, destination=None, options=None):
-        """ Nothing to be done to push workdir """
+        """ Make sure that the workdir has a correct selinux context """
+        self.debug("Update selinux context of the run workdir.", level=3)
+        self.run(
+            ["chcon", "--recursive", "--type=container_file_t",
+             self.parent.plan.workdir], shell=False)
 
     def pull(self, source=None, destination=None, options=None):
         """ Nothing to be done to pull workdir """
