@@ -253,6 +253,7 @@ class Guest(tmt.utils.Common):
     def _ssh_options(self, join=False):
         """ Return common ssh options (list or joined) """
         options = [
+            '-oForwardX11=no',
             '-oStrictHostKeyChecking=no',
             '-oUserKnownHostsFile=/dev/null',
             ]
