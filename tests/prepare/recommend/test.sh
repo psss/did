@@ -6,7 +6,7 @@ rlJournalStart
         rlRun "pushd data"
     rlPhaseEnd
 
-    for image in centos:7 centos:8 fedora; do
+    for image in centos:7 centos:stream8 fedora; do
         rlPhaseStartTest "Test $image"
             rlRun "tmt run -ar provision -h container -i $image"
         rlPhaseEnd

@@ -12,15 +12,15 @@ rlJournalStart
         for test in without defined; do
             # Skip when both/none define required packages
             [[ $plan == $test ]] && continue
-            for distro in 7 8; do
+            for distro in 7 stream8; do
                 rlPhaseStartTest "Test: Plan $plan, test $test, CentOS $distro"
-                    cmd="tmt -c distro=centos-$distro run -arvvv "
+                    cmd="tmt -c distro=centos-${distro/stream} run -arvvv "
                     cmd+="provision -h container -i centos:$distro "
                     cmd+="plan --name $plan test --name $test "
                     cmd+="2>&1 | tee $output"
                     rlRun "$cmd"
                     rlAssertGrep 'out: Smoke test for yaml' $output
-                    if [[ $distro == 8 ]]; then
+                    if [[ $distro == "stream8" ]]; then
                         rlAssertGrep 'python3-yaml' $output
                         rlAssertNotGrep 'PyYAML' $output
                     else

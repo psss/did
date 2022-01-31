@@ -19,7 +19,7 @@ execute:
 /centos-8:
     summary+: " on CentOS 8"
     provision+:
-        image: centos:8
+        image: centos:stream8
 
     # FIXME This is needed for CentOS 8, but why? Filed:
     # https://bugzilla.redhat.com/show_bug.cgi?id=1964505
