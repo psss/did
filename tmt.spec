@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.9.0
+Version: 1.10.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -160,6 +160,40 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 
 
 %changelog
+* Tue Feb 01 2022 Lukáš Zachar <lzachar@redhat.com> - 1.10.0-1
+- Make reboot support a bit more backward compatible
+- Ensure that workdir has a correct selinux context
+- Use `centos:stream8` image instead of `centos:8`
+- Disable X11 forwarding in ssh connections
+- Fix traceback for login after last report
+- Use `TMT_TEST_DATA` as location for `rlFileSubmit`
+- Implement variables for storing logs and artifacts
+- Adjust rsync installation on read-only distros
+- Handle rsync installation on read-only distros
+- Add hardware specification for hostname
+- Correctly import multiple bugs from Makefile
+- Remove dependency on the `python3-mock` package
+- Adjust linting of manual test files
+- Check Markdown files in tmt lint if `manual=True`
+- Adjust pulling logs from the guest during finish
+- Add guest.pull() to the finish step
+- Update virtualization hints for session connection
+- Improve error message for empty git repositories
+- Minor modification of test result specification
+- Use `where` instead of `on` in the multihost spec
+- Clarify that `path` is defined from the tree root
+- Adjust ansible requires for containers preparation
+- Move the reboot scripts to a read/write directory
+- Ignore read/only file systems reboot script errors
+- Require either ansible or ansible-core
+- Set the `TMT_TREE` variable during test execution
+- Clarify that 'until' means until and including
+- Update test debugging examples with --force option
+- Add `bios.method` to hardware spec
+- Improve environment variables specification a bit
+- Adjust the ssh connection multiplexing
+- Add support for ssh multiplexing
+
 * Tue Nov 30 2021 Petr Šplíchal <psplicha@redhat.com> - 1.9.0-1
 - Improve testcloud/virtual provider docs
 - Disable UseDNS, GSSAPI for faster SSH in testcloud
