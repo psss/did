@@ -1,5 +1,5 @@
 summary: Beakerlib's rlFileSubmit is functional
 description:
     Using rlFileSubmit to copy file to the host system
-duration: 3m
+duration: 10m
 tier: 3

@@ -18,4 +18,6 @@ adjust:
     when: trigger == commit
   - environment:
         METHODS: 'container local virtual'
+    result: xfail # issue 964
+    duration: 10m
     when: how == full

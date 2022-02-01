@@ -13,7 +13,7 @@ rlJournalStart
             # For container provision try centos images as well
             if [[ $method == container ]]; then
                 rlRun "tmt run -arv provision -h $method -i centos:7"
-                rlRun "tmt run -arv provision -h $method -i centos:8"
+                rlRun "tmt run -arv provision -h $method -i centos:stream8"
             fi
 
             # After the local provision remove the test file

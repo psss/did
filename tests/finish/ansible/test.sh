@@ -14,13 +14,13 @@ rlJournalStart
             rlRun "$tmt -av provision -h $method"
 
             # Check that created file is synced back
-            rlRun "ls -l $run/plan/tree"
-            rlAssertExists "$run/plan/tree/my_file.txt"
+            rlRun "ls -l $run/plan/data"
+            rlAssertExists "$run/plan/data/my_file.txt"
 
             # For container provision try centos images as well
             if [[ $method == container ]]; then
                 rlRun "$tmt -av finish provision -h $method -i centos:7"
-                rlRun "$tmt -av finish provision -h $method -i centos:8"
+                rlRun "$tmt -av finish provision -h $method -i centos:stream8"
             fi
 
             # After the local provision remove the test file

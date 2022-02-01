@@ -3,5 +3,6 @@ enabled: false
 
 adjust:
   enabled: true
+  duration: 10m
   when: how == full
   because: this can be run only with a full virtualization

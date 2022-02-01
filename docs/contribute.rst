@@ -257,7 +257,7 @@ Release a new package to Fedora and EPEL repositories:
 * Ensure the proposed changes are ok and commit them
 * Create a pull request against rawhide from your fork
 * After tests pass, merge the pull request to rawhide
-* Build the package for rawhide ``fedkpkg build --nowait``
+* Build the package for rawhide ``fedpkg build --nowait``
 * Build package for all `active releases`__
   ``git checkout f33 && git merge rawhide && git push && fedpkg build --nowait``
 * Create a bodhi update for each release

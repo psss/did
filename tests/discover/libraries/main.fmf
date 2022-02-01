@@ -6,7 +6,7 @@ description:
     are fetched into the discover step workdir. Make sure that the
     test successfully passed. Needs a full virtualization.
 tier: 3
-duration: 15m
+duration: 25m
 tag-: [virtual, container]
 enabled: False
 require+:
