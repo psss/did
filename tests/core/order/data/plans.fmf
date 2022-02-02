@@ -1,0 +1,34 @@
+execute:
+    how: tmt
+
+discover:
+    how: fmf
+
+/none:
+    summary: plan with order None
+    order:
+
+/no_order:
+    summary: plan without order attribute
+
+/negative_1:
+    summary: plan with order -1
+    order: -1
+
+/zero:
+    summary: plan with order 0
+    order: 0
+
+/third:
+    summary: plan with order 3
+    order: 3
+    discover:
+        how: fmf
+        test:
+        - third
+        - fourth
+        - third
+
+/fourth:
+    summary: plan with order 4
+    order: 4

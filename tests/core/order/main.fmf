@@ -1,0 +1,6 @@
+summary: Show tests/plans/stories in the defined order
+description:
+    Verify that ordering objects with `order` attribite works
+    fine for 'tmt tests/plans/stories ls',
+             'tmt tests/plans/stories show' and
+             'tmt run tests/plans discover'.
