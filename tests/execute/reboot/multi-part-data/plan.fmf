@@ -1,0 +1,13 @@
+discover:
+  how: shell
+  tests:
+    - name: Reboot1
+      test: bash reboot.sh
+    - name: Looong output
+      test: seq 1 10000
+    - name: Reboot2
+      test: bash reboot.sh
+provision:
+  how: container
+execute:
+  how: tmt

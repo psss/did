@@ -3,6 +3,11 @@
     test: ./basic.sh
 
 
+/multi-part:
+    summary: Verify reboot during multiple consecutive tests
+    test: ./multi-part.sh
+
+
 /reuse_provision:
     summary: Verify that provision can be reused for reboot
     test: ./reuse.sh

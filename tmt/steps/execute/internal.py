@@ -267,8 +267,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         output = self.read(
             self.data_path(test, TEST_OUTPUT_FILENAME, full=True))
         # Search only in the newly added output to avoid infinite looping
-        new_output = output[self._previous_output_length:]
-        self._previous_output_length = len(output)
+        new_output = output[test._previous_output_length:]
+        test._previous_output_length = len(output)
         token = self.parent.reboot_token
         # Use the last occurrence in the output log
         match = None
@@ -295,7 +295,6 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         """ Execute available tests """
         super().go()
         self._results = []
-        self._previous_output_length = 0
 
         # Nothing to do in dry mode
         if self.opt('dry'):
@@ -315,6 +314,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 index = 0
                 while index < len(tests):
                     test = tests[index]
+                    if not hasattr(test, "_previous_output_length"):
+                        test._previous_output_length = 0
                     if not hasattr(test, "_reboot_count"):
                         test._reboot_count = 0
                     self.execute(
