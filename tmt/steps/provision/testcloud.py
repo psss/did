@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import os
+import platform
 import re
 import time
 
@@ -71,23 +72,19 @@ runcmd:
 # Libvirt domain XML template related variables
 DOMAIN_TEMPLATE_NAME = 'domain-template.jinja'
 DOMAIN_TEMPLATE_FILE = os.path.join(TESTCLOUD_DATA, DOMAIN_TEMPLATE_NAME)
-DOMAIN_TEMPLATE = """<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+DOMAIN_TEMPLATE = """<domain type='{{ virt_type }}' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
   <name>{{ domain_name }}</name>
   <uuid>{{ uuid }}</uuid>
   <memory unit='KiB'>{{ memory }}</memory>
   <currentMemory unit='KiB'>{{ memory }}</currentMemory>
-  <vcpu placement='static'>1</vcpu>
+  <vcpu placement='static'>2</vcpu>
   <os>
-    <type arch='x86_64' machine='pc'>hvm</type>
+    <type arch='{{ arch }}' machine='{{ model }}'>hvm</type>
     {{ uefi_loader }}
     <boot dev='hd'/>
   </os>
-  <features>
-    <acpi/>
-    <apic/>
-    <vmport state='off'/>
-  </features>
-  <cpu mode='host-passthrough'/>
+  {{ cpu }}
+  {{ extra_specs }}
   <clock offset='utc'>
     <timer name='rtc' tickpolicy='catchup'/>
     <timer name='pit' tickpolicy='delay'/>
@@ -96,20 +93,16 @@ DOMAIN_TEMPLATE = """<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/d
   <on_poweroff>destroy</on_poweroff>
   <on_reboot>restart</on_reboot>
   <on_crash>restart</on_crash>
-  <pm>
-    <suspend-to-mem enabled='no'/>
-    <suspend-to-disk enabled='no'/>
-  </pm>
   <devices>
     <emulator>{{ emulator_path }}</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' cache='unsafe'/>
       <source file="{{ disk }}"/>
       <target dev='vda' bus='virtio'/>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x07' function='0x0'/>
+      {{ boot_drive_address }}
     </disk>
     <disk type='file' device='disk'>
-      <driver name='qemu' type='raw' cache='unsafe'/>
+      <driver name='qemu' type='raw'/>
       <source file="{{ seed }}"/>
       <target dev='vdb' bus='virtio'/>
       <address type='pci' domain='0x0000' bus='0x00' slot='0x08' function='0x0'/>
@@ -127,10 +120,7 @@ DOMAIN_TEMPLATE = """<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/d
     <console type='pty'>
       <target type='serial' port='0'/>
     </console>
-    <input type='keyboard' bus='ps2'/>
-    <memballoon model='virtio'>
-      <address type='pci' domain='0x0000' bus='0x00' slot='0x09' function='0x0'/>
-    </memballoon>
+    <input type="keyboard" bus="virtio"/>
     <rng model='virtio'>
       <backend model='random'>/dev/urandom</backend>
     </rng>
@@ -142,6 +132,8 @@ DOMAIN_TEMPLATE = """<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/d
 # VM defaults
 DEFAULT_BOOT_TIMEOUT = 60      # seconds
 DEFAULT_CONNECT_TIMEOUT = 60   # seconds
+NON_KVM_ADDITIONAL_WAIT = 10       # seconds
+NON_KVM_TIMEOUT_COEF = 10          # times
 
 # SSH key type, set None for ssh-keygen default one
 SSH_KEYGEN_TYPE = "ecdsa"
@@ -191,7 +183,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
         ]
 
     # Supported keys
-    _keys = ["image", "user", "memory", "disk", "connection"]
+    _keys = ["image", "user", "memory", "disk", "connection", "arch"]
 
     @classmethod
     def options(cls, how=None):
@@ -214,6 +206,10 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 '-c', '--connection',
                 type=click.Choice(['session', 'system']),
                 help="What session type to use, 'session' by default."),
+            click.option(
+                '-a', '--arch',
+                type=click.Choice(['x86_64', 'aarch64', 's390x', 'ppc64le']),
+                help="What architecture to virtualize, host arch by default."),
             ] + super().options(how)
 
     def default(self, option, default=None):
@@ -224,6 +220,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
             'disk': 10,
             'image': 'fedora',
             'connection': 'session',
+            'arch': platform.machine()
             }
         if option in defaults:
             return defaults[option]
@@ -298,6 +295,7 @@ class GuestTestcloud(tmt.Guest):
         memory ..... memory size for vm
         disk ....... disk size for vm
         connection . either session (default) or system, to be passed to qemu
+        arch ....... architecture for the VM, host arch is the default
     """
 
     def _get_url(self, url, message):
@@ -341,31 +339,34 @@ class GuestTestcloud(tmt.Guest):
 
         # Plain name match means we want the latest release
         if name == 'fedora':
-            url = testcloud.util.get_fedora_image_url("latest")
+            url = testcloud.util.get_fedora_image_url("latest", self.arch)
         elif name == 'centos':
-            url = testcloud.util.get_centos_image_url("latest")
+            url = testcloud.util.get_centos_image_url("latest", self.arch)
         elif name == 'centos-stream':
             url = testcloud.util.get_centos_image_url(
-                "latest", stream=True)
+                "latest", stream=True, arch=self.arch)
         elif name == 'ubuntu':
-            url = testcloud.util.get_ubuntu_image_url("latest")
+            url = testcloud.util.get_ubuntu_image_url("latest", self.arch)
         elif name == 'debian':
-            url = testcloud.util.get_debian_image_url("latest")
+            url = testcloud.util.get_debian_image_url("latest", self.arch)
 
         elif matched_fedora:
-            url = testcloud.util.get_fedora_image_url(matched_fedora.group(2))
+            url = testcloud.util.get_fedora_image_url(
+                matched_fedora.group(2), self.arch)
         elif matched_centos[0]:
             url = testcloud.util.get_centos_image_url(
-                matched_centos[0].group(2))
+                matched_centos[0].group(2), self.arch)
         elif matched_centos[1]:
             url = testcloud.util.get_centos_image_url(
-                matched_centos[1].group(2), stream=True)
+                matched_centos[1].group(2), stream=True, arch=self.arch)
         elif matched_ubuntu:
-            url = testcloud.util.get_ubuntu_image_url(matched_ubuntu.group(2))
+            url = testcloud.util.get_ubuntu_image_url(
+                matched_ubuntu.group(2), self.arch)
         elif matched_debian:
-            url = testcloud.util.get_debian_image_url(matched_debian.group(2))
+            url = testcloud.util.get_debian_image_url(
+                matched_debian.group(2), self.arch)
         elif 'rawhide' in name:
-            url = testcloud.util.get_fedora_image_url("rawhide")
+            url = testcloud.util.get_fedora_image_url("rawhide", self.arch)
 
         if not url:
             raise ProvisionError(f"Could not map '{name}' to compose.")
@@ -388,6 +389,7 @@ class GuestTestcloud(tmt.Guest):
         self.memory = data.get('memory')
         self.disk = data.get('disk')
         self.connection = data.get('connection')
+        self.arch = data.get('arch')
 
     def save(self):
         """ Save guest data for future wake up """
@@ -395,6 +397,7 @@ class GuestTestcloud(tmt.Guest):
         data['instance'] = self.instance_name
         data['image'] = self.image_url
         data['connection'] = self.connection
+        data['arch'] = self.arch
         return data
 
     def wake(self):
@@ -406,7 +409,7 @@ class GuestTestcloud(tmt.Guest):
         self.image = testcloud.image.Image(self.image_url)
         self.instance = testcloud.instance.Instance(
             self.instance_name, image=self.image,
-            connection=f"qemu:///{self.connection}")
+            connection=f"qemu:///{self.connection}", desired_arch=self.arch)
 
     def prepare_ssh_key(self, key_type=None):
         """ Prepare ssh key for authentication """
@@ -480,8 +483,11 @@ class GuestTestcloud(tmt.Guest):
         self.instance_name = self._tmt_name()
         self.instance = testcloud.instance.Instance(
             name=self.instance_name, image=self.image,
-            connection=f"qemu:///{self.connection}")
+            connection=f"qemu:///{self.connection}", desired_arch=self.arch)
         self.verbose('name', self.instance_name, 'green')
+
+        # Decide if we want to multiply timeouts when emulating an architecture
+        time_coeff = NON_KVM_TIMEOUT_COEF if not self.instance.kvm else 1
 
         # Decide which networking setup to use
         # Autodetect works with libguestfs python bindings
@@ -508,7 +514,7 @@ class GuestTestcloud(tmt.Guest):
         try:
             self.instance.prepare()
             self.instance.spawn_vm()
-            self.instance.start(DEFAULT_BOOT_TIMEOUT)
+            self.instance.start(DEFAULT_BOOT_TIMEOUT * time_coeff)
         except (testcloud.exceptions.TestcloudInstanceError,
                 libvirt.libvirtError) as error:
             raise ProvisionError(
@@ -520,7 +526,7 @@ class GuestTestcloud(tmt.Guest):
         self.instance.create_ip_file(self.guest)
 
         # Wait a bit until the box is up
-        timeout = DEFAULT_CONNECT_TIMEOUT
+        timeout = DEFAULT_CONNECT_TIMEOUT * time_coeff
         wait = 1
         while True:
             start_time = time.time()
@@ -530,7 +536,8 @@ class GuestTestcloud(tmt.Guest):
             except tmt.utils.RunError:
                 if timeout < 0:
                     raise ProvisionError(
-                        f'Failed to connect in {DEFAULT_CONNECT_TIMEOUT}s.')
+                        f"Failed to connect in "
+                        f"{DEFAULT_CONNECT_TIMEOUT * time_coeff}s.")
                 self.debug(
                     f'Failed to connect to machine, retrying, '
                     f'{fmf.utils.listed(timeout, "second")} left.')
@@ -538,6 +545,12 @@ class GuestTestcloud(tmt.Guest):
             time.sleep(wait)
             wait += 1
             timeout -= wait + attempt_duration
+
+        if not self.instance.kvm:
+            self.debug(
+                f"Waiting {NON_KVM_ADDITIONAL_WAIT} seconds "
+                f"for non-kvm instance...")
+            time.sleep(NON_KVM_ADDITIONAL_WAIT)
 
     def stop(self):
         """ Stop provisioned guest """
