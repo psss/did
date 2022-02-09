@@ -17,6 +17,16 @@ description: |
 
     Should be a ``string``, by default ``shell`` is used.
 
+    shell
+        Only the exit code determines the test result. Exit code
+        ``0`` is handled as a test ``pass``, exit code ``1`` is
+        considered to be a test ``fail`` and any other exit code
+        is interpreted as an ``error``.
+
+    beakerlib
+        Exit code and BeakerLib's ``TestResults`` file determine
+        the test result.
+
 example: |
     framework: shell
 
