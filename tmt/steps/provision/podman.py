@@ -195,7 +195,7 @@ class GuestContainer(tmt.Guest):
         command = directory + environment + command
         return self.podman(
             ['exec'] + interactive +
-            [self.container or 'dry', 'sh', '-c', command], **kwargs)
+            [self.container or 'dry', 'bash', '-c', command], **kwargs)
 
     def push(self, source=None, destination=None, options=None):
         """ Make sure that the workdir has a correct selinux context """
