@@ -189,6 +189,26 @@ rlJournalStart
         rlRun "rm -rf $run" 0 "Clean up run"
     rlPhaseEnd
 
+    rlPhaseStartTest "Select by test --name . "
+        rlRun "pushd subdir"
+        run=$(mktemp -d)
+
+        rlRun "tmt -c subdir=1 run --id $run discover tests --name ."
+        # only /subdir test is selected by /plans/all and /plans/filtered
+        for plan in all filtered; do
+            rlAssertEquals "just /subdir in $plan" \
+                "$(grep '^/' $run/plans/$plan/discover/tests.yaml)" "/subdir:"
+        done
+        # other two plans don't select any test
+        for plan in duplicate selected; do
+            rlAssertEquals "no test selected in $plan" \
+                "$(cat $run/plans/$plan/discover/tests.yaml)" "{}"
+        done
+
+        rlRun "rm -rf $run" 0 "Clean up run"
+        rlRun "popd"
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
         rlRun "rm $output" 0 "Remove output file"

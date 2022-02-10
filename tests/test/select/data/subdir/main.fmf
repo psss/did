@@ -1,0 +1,7 @@
+enabled: false
+test: 'true'
+adjust:
+    -   when: subdir is defined
+        enabled: true
+        tag:
+        - nonsense

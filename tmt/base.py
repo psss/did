@@ -186,8 +186,8 @@ class Core(tmt.utils.Common):
             # Prepare path from the tree root to the current directory
             else:
                 path = os.path.join('/', os.path.relpath(current, root))
-            cls._context.params['names'] = (
-                path if name == '.' else name for name in names)
+            cls._context.params['names'] = tuple([
+                path if name == '.' else name for name in names])
 
     def name_and_summary(self):
         """ Node name and optional summary """
