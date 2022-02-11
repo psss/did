@@ -500,7 +500,6 @@ class Guest(tmt.utils.Common):
         else:
             self.debug(f"Copy '{source}' to '{destination}' on the guest.")
         # Make sure rsync is present (tests can remove it) and sync
-        self._check_rsync()
         try:
             self.run(
                 ["rsync"] + options
@@ -508,11 +507,19 @@ class Guest(tmt.utils.Common):
                 + [source, f"{self._ssh_guest()}:{destination}"],
                 shell=False)
         except tmt.utils.RunError:
-            # Provide a reasonable error to the user
-            self.fail(
-                f"Failed to push workdir to the guest. This usually means "
-                f"login as '{self.user}' to the test machine does not work.")
-            raise
+            try:
+                self._check_rsync()
+                self.run(
+                    ["rsync"] + options
+                    + ["-e", self._ssh_command(join=True)]
+                    + [source, f"{self._ssh_guest()}:{destination}"],
+                    shell=False)
+            except tmt.utils.RunError:
+                # Provide a reasonable error to the user
+                self.fail(
+                    f"Failed to push workdir to the guest. This usually means "
+                    f"login as '{self.user}' to the test machine does not work.")
+                raise
 
     def pull(self, source=None, destination=None, options=None):
         """
@@ -534,12 +541,26 @@ class Guest(tmt.utils.Common):
         else:
             self.debug(f"Copy '{source}' from the guest to '{destination}'.")
         # Make sure rsync is present (tests can remove it) and sync
-        self._check_rsync()
-        self.run(
-            ["rsync"] + options
-            + ["-e", self._ssh_command(join=True)]
-            + [f"{self._ssh_guest()}:{source}", destination],
-            shell=False)
+        try:
+            self.run(
+                ["rsync"] + options
+                + ["-e", self._ssh_command(join=True)]
+                + [f"{self._ssh_guest()}:{source}", destination],
+                shell=False)
+        except tmt.utils.RunError:
+            try:
+                self._check_rsync()
+                self.run(
+                    ["rsync"] + options
+                    + ["-e", self._ssh_command(join=True)]
+                    + [f"{self._ssh_guest()}:{source}", destination],
+                    shell=False)
+            except tmt.utils.RunError:
+                # Provide a reasonable error to the user
+                self.fail(
+                    f"Failed to pull workdir from the guest. This usually means "
+                    f"login as '{self.user}' to the test machine does not work.")
+                raise
 
     def stop(self):
         """
@@ -623,16 +644,16 @@ class Guest(tmt.utils.Common):
         """
         Make sure that rsync is installed on the guest
 
-        For now works only with RHEL based distributions.
         On read-only distros install under the '/root/pkg' directory.
         """
         self.debug("Ensure that rsync is installed on the guest.", level=3)
+        pkg_mgr = self.execute("[[ -x /usr/bin/dnf ]] && echo dnf || echo yum")[0].strip()
         self.execute(
             "rsync --version --quiet || "
-            # Regular yum install on read-write distros
-            "if [[ ! -f /usr/bin/rpm-ostree ]]; then yum install -y rsync; "
+            # Regular pkg_mgr install on read-write distros
+            f"if [[ ! -f /usr/bin/rpm-ostree ]]; then {pkg_mgr} install -y rsync; "
             # Install under /root/pkg for read-only distros
-            "else yum install -y --installroot=/root/pkg --releasever / rsync "
+            f"else {pkg_mgr} install -y --installroot=/root/pkg --releasever / rsync "
             "&& ln -sf /root/pkg/bin/rsync /usr/local/bin/rsync; fi")
 
     @classmethod
