@@ -86,6 +86,19 @@ class Finish(tmt.steps.Step):
         self.status('done')
         self.save()
 
+    def requires(self):
+        """
+        Packages required by all enabled finish plugins
+
+        Return a list of packages which need to be installed on the
+        provisioned guest so that the finishing tasks work well.
+        Used by the prepare step.
+        """
+        requires = set()
+        for plugin in self.plugins(classes=FinishPlugin):
+            requires.update(plugin.requires())
+        return list(requires)
+
 
 class FinishPlugin(tmt.steps.Plugin):
     """ Common parent of finish plugins """

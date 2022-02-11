@@ -60,6 +60,19 @@ class Report(tmt.steps.Step):
         self.status('done')
         self.save()
 
+    def requires(self):
+        """
+        Packages required by all enabled report plugins
+
+        Return a list of packages which need to be installed on the
+        provisioned guest so that the full report can be successfully
+        generated. Used by the prepare step.
+        """
+        requires = set()
+        for plugin in self.plugins(classes=ReportPlugin):
+            requires.update(plugin.requires())
+        return list(requires)
+
 
 class ReportPlugin(tmt.steps.Plugin):
     """ Common parent of report plugins """

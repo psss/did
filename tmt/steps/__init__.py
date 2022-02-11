@@ -421,6 +421,10 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         # Include order in verbose mode
         self.verbose('order', self.order, 'magenta', level=3)
 
+    def requires(self):
+        """ List of packages required by the plugin on the guest """
+        return []
+
 
 class Action(tmt.utils.Common):
     """ A special action performed during a normal step. """

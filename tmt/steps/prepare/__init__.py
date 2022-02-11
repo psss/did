@@ -87,7 +87,10 @@ class Prepare(tmt.steps.Step):
         requires = set(
             self.plan.discover.requires() +
             self.plan.provision.requires() +
-            self.plan.execute.requires()
+            self.plan.prepare.requires() +
+            self.plan.execute.requires() +
+            self.plan.report.requires() +
+            self.plan.finish.requires()
             )
 
         if requires:
@@ -146,6 +149,19 @@ class Prepare(tmt.steps.Step):
         self.summary()
         self.status('done')
         self.save()
+
+    def requires(self):
+        """
+        Packages required by all enabled prepare plugins
+
+        Return a list of packages which need to be installed on the
+        provisioned guest so that the preparation tasks work well.
+        Used by the prepare step.
+        """
+        requires = set()
+        for plugin in self.plugins(classes=PreparePlugin):
+            requires.update(plugin.requires())
+        return list(requires)
 
 
 class PreparePlugin(tmt.steps.Plugin):

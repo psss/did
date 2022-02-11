@@ -76,8 +76,3 @@ class GuestLocal(tmt.Guest):
 
     def pull(self, source=None, destination=None, options=None):
         """ Nothing to be done to pull workdir """
-
-    @classmethod
-    def requires(cls):
-        """ No packages needed to sync workdir """
-        return []
