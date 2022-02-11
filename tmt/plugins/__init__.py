@@ -30,7 +30,7 @@ def explore():
     try:
         paths = [
             os.path.realpath(os.path.expandvars(os.path.expanduser(path)))
-            for path in os.environ['TMT_PLUGINS'].split(' ')]
+            for path in os.environ["TMT_PLUGINS"].split(os.pathsep)]
     except KeyError:
         log.debug('No custom plugin locations detected in TMT_PLUGINS.')
         paths = []

@@ -324,6 +324,10 @@ TMT_DEBUG
     levels from 1 to 3. However, some of the plugins go even
     deeper when needed.
 
+TMT_PLUGINS
+    Path to a directory with additional plugins. Multiple paths
+    separated with the ``:`` character can be provided as well.
+
 NO_COLOR
     Disable colors in the terminal output. Output only plain,
     non-colored text. See https://no-color.org/ for more
