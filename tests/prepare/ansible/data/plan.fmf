@@ -5,9 +5,18 @@ environment:
     SPACES: several words with spaces
 provision:
     how: container
-prepare:
-    how: ansible
-    playbook: playbook.yml
-    extra-args: '-vvv'
 execute:
     how: tmt
+
+/local:
+    prepare:
+        how: ansible
+        playbook: playbook.yml
+        extra-args: '-vvv'
+
+/remote:
+    prepare:
+        how: ansible
+        # This is the very same playbook as the local one, just living in tmt's repository.
+        playbook: https://raw.githubusercontent.com/teemtee/tmt/main/tests/prepare/ansible/data/playbook.yml
+        extra-args: '-vvv'

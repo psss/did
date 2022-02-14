@@ -63,15 +63,20 @@ example: |
         Use ``extra-args`` attribute to enable optional arguments for
         ``ansible-playbook``.
 
+        Remote playbooks can be referenced as well as the local ones,
+        and both kinds can be used at the same time.
+
     example: |
         prepare:
             how: ansible
             playbook:
                 - playbooks/common.yml
                 - playbooks/os/rhel7.yml
+                - https://foo.bar/rhel7-final-touches.yml
             extra-args: '-vvv'
     link:
       - implemented-by: /tmt/steps/provision
+      - verified-by: /tests/prepare/ansible
 
 /install:
     summary:
