@@ -141,7 +141,7 @@ class GuestContainer(tmt.Guest):
         self.debug(f"Start container '{self.image}'.")
         self.container_id = self.podman(
             ['run'] + workaround +
-            ['--name', self.container, '-v', f'{workdir}:{workdir}:Z',
+            ['--name', self.container, '-v', f'{workdir}:{workdir}:z',
              '-itd', self.image])[0].strip()
 
     def reboot(self, hard=False):
