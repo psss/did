@@ -60,7 +60,7 @@ rlJournalStart
     rlPhaseStartTest $plan
         rlRun 'tmt run -dddvr discover plan --name $plan finish | tee output'
         rlAssertGrep 'Cloning into' output
-        rlAssertNotGrep 'Checkout ref.*master' output
+        rlAssertNotGrep 'Checkout ref.*main' output
         rlAssertGrep /tests/core/docs output
         rlAssertGrep /tests/core/env output
         rlAssertGrep /tests/core/ls output
@@ -70,7 +70,7 @@ rlJournalStart
     rlPhaseStartTest $plan
         rlRun 'tmt run -dddvr discover plan --name $plan finish | tee output'
         rlAssertGrep 'Cloning into' output
-        rlAssertNotGrep 'Checkout ref.*master' output
+        rlAssertNotGrep 'Checkout ref.*main' output
         rlAssertGrep '2 tests selected' output
         rlAssertGrep /tests/full output
         rlAssertGrep /tests/smoke output

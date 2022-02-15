@@ -57,7 +57,7 @@ rlJournalStart
         rlAssertGrep "summary: 3 tests selected" "$tmp/output"
         rlAssertGrep "/strip_git_suffix/test2" "$tmp/output"
         rlAssertGrep \
-            "Detected library '{'url': 'https://github.com/psss/fmf.git'}'." \
+            "Detected library '{'url': 'https://github.com/teemtee/fmf.git'}'." \
             "$tmp/output"
         rlAssertNotGrep 'Library.*conflicts with already fetched library' \
             "$tmp/output"

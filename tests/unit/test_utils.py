@@ -14,8 +14,8 @@ def test_public_git_url():
     """ Verify url conversion """
     examples = [
         {
-            'original': 'git@github.com:psss/tmt.git',
-            'expected': 'https://github.com/psss/tmt.git',
+            'original': 'git@github.com:teemtee/tmt.git',
+            'expected': 'https://github.com/teemtee/tmt.git',
             }, {
             'original': 'ssh://psplicha@pkgs.devel.redhat.com/tests/bash',
             'expected': 'git://pkgs.devel.redhat.com/tests/bash',

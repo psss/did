@@ -130,7 +130,7 @@ Each tmt test has a unique `fmf identifier`__ which can look like
 this::
 
     name: /tests/core/docs
-    url: https://github.com/psss/tmt.git
+    url: https://github.com/teemtee/tmt.git
     ref: main
 
 These identifiers can be used for integration with other tools,

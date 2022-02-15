@@ -158,6 +158,7 @@ class Core(tmt.utils.Common):
 
         # Get the ref (skip for master as it is the default)
         ref = run('git rev-parse --abbrev-ref HEAD')
+        # FIXME: We need to detect the default branch instead
         if ref != 'master':
             fmf_id['ref'] = ref
 

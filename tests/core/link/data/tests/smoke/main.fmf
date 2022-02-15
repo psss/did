@@ -3,4 +3,4 @@ test: tmt --version
 link:
   - verifies: /stories/covered
   - verifies: /stories/verified
-  - https://github.com/psss/tmt/pull/215
+  - https://github.com/teemtee/tmt/pull/215

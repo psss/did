@@ -23,7 +23,7 @@ test: ./file.sh
     - url: https://github.com/beakerlib/database
       name: /postgresql
     - library(database/postgresql)
-    - url: https://github.com/psss/fmf.git
+    - url: https://github.com/teemtee/fmf.git
 /test3:
   recommend:
     - url: https://github.com/beakerlib/database.git

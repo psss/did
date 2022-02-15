@@ -36,7 +36,7 @@ rlJournalStart
             rlAssertGrep '1 test selected' output
             rlAssertGrep '/tests/discover1' output
         done
-        for link_relation in "verifies:https://github.com/psss/tmt/issues/870" \
+        for link_relation in "verifies:https://github.com/teemtee/tmt/issues/870" \
             "ver.*:.*/issues/870" ".*/issues/870"; do
             discover="discover -h fmf --link $link_relation --link rubbish"
             rlRun "tmt run -dvr $discover $plan finish | tee output"

@@ -129,7 +129,7 @@ the list of source files where metadata are defined and its full id::
          sources /home/psss/git/tmt/tests/main.fmf
                  /home/psss/git/tmt/tests/docs/main.fmf
           fmf-id name: /tests/docs
-                 url: https://github.com/psss/tmt.git
+                 url: https://github.com/teemtee/tmt.git
 
 
 Filter Tests
@@ -328,7 +328,7 @@ directory::
     fmf id:
     name: /
     path: /examples/convert
-    url: https://github.com/psss/tmt.git
+    url: https://github.com/teemtee/tmt.git
     Test case 'TC#0603489' successfully exported to nitrate.
 
 Use the ``--bugzilla`` option together with ``--nitrate`` to link
@@ -392,7 +392,7 @@ and detailed plan information, respectively::
          summary Essential command line features
         discover
              how fmf
-      repository https://github.com/psss/tmt
+      repository https://github.com/teemtee/tmt
         revision devel
           filter tier: 0,1
          prepare
@@ -461,7 +461,7 @@ inheritance to prevent unnecessary duplication of the data::
 
     discover:
         how: fmf
-        url: https://github.com/psss/tmt
+        url: https://github.com/teemtee/tmt
     prepare:
         how: ansible
         playbook: ansible/packages.yml
@@ -509,7 +509,7 @@ the :ref:`/spec/plans/discover` step::
     discover:
       - name: upstream
         how: fmf
-        url: https://github.com/psss/tmt
+        url: https://github.com/teemtee/tmt
       - name: fedora
         how: fmf
         url: https://src.fedoraproject.org/rpms/tmt/
@@ -549,7 +549,7 @@ set in the environment have the highest priority)::
 
     discover:
         how: fmf
-        url: https://github.com/psss/${REPO}
+        url: https://github.com/teemtee/${REPO}
 
     $ REPO=tmt tmt run
     $ tmt run -e REPO=tmt
@@ -770,7 +770,7 @@ Choose which plans should be executed::
     /plans/basic
         discover
             how: fmf
-            url: https://github.com/psss/tmt
+            url: https://github.com/teemtee/tmt
             ref: devel
             filter: tier: 0,1
             tests: 2 tests selected
@@ -792,7 +792,7 @@ Run only a subset of available tests across all plans::
     /plans/basic
         discover
             how: fmf
-            url: https://github.com/psss/tmt
+            url: https://github.com/teemtee/tmt
             ref: devel
             filter: tier: 0,1
             tests: 1 test selected
@@ -833,7 +833,7 @@ running them choose the ``discover`` step::
     /plans/basic
         discover
             how: fmf
-            url: https://github.com/psss/tmt
+            url: https://github.com/teemtee/tmt
             ref: devel
             filter: tier: 0,1
             tests: 2 tests selected
@@ -854,7 +854,7 @@ test environment provisioning::
     /plans/basic
         discover
             how: fmf
-            url: https://github.com/psss/tmt
+            url: https://github.com/teemtee/tmt
             ref: devel
             filter: tier: 0,1
             tests: 2 tests selected

@@ -369,19 +369,19 @@ Links
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Git:
-https://github.com/psss/tmt
+https://github.com/teemtee/tmt
 
 Docs:
 http://tmt.readthedocs.io/
 
 Stories:
-https://tmt.readthedocs.io/en/latest/stories.html
+https://tmt.readthedocs.io/en/stable/stories.html
 
 Issues:
-https://github.com/psss/tmt/issues
+https://github.com/teemtee/tmt/issues
 
 Releases:
-https://github.com/psss/tmt/releases
+https://github.com/teemtee/tmt/releases
 
 Copr:
 http://copr.fedoraproject.org/coprs/psss/tmt
@@ -389,14 +389,8 @@ http://copr.fedoraproject.org/coprs/psss/tmt
 PIP:
 https://pypi.org/project/tmt/
 
-Travis:
-https://travis-ci.org/psss/tmt
-
-Coveralls:
-https://coveralls.io/github/psss/tmt
-
 Metadata Specification:
-https://tmt.readthedocs.io/en/latest/spec.html
+https://tmt.readthedocs.io/en/stable/spec.html
 
 Flexible Metadata Format:
 http://fmf.readthedocs.io/

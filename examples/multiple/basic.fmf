@@ -8,14 +8,14 @@ discover:
   - name: tier0
     how: fmf
     filter: 'tier: 0'
-    url: https://github.com/psss/tmt
+    url: https://github.com/teemtee/tmt
   - name: tier1
     how: fmf
     filter: 'tier: 1'
-    url: https://github.com/psss/tmt
+    url: https://github.com/teemtee/tmt
   - name: all
     how: fmf
-    url: https://github.com/psss/tmt
+    url: https://github.com/teemtee/tmt
 prepare:
   - how: ansible
     name: packages

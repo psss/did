@@ -7,8 +7,8 @@ License: MIT
 BuildArch: noarch
 %{?kernel_arches:ExclusiveArch: %{kernel_arches} noarch}
 
-URL: https://github.com/psss/tmt
-Source0: https://github.com/psss/tmt/releases/download/%{version}/tmt-%{version}.tar.gz
+URL: https://github.com/teemtee/tmt
+Source0: https://github.com/teemtee/tmt/releases/download/%{version}/tmt-%{version}.tar.gz
 
 # Main tmt package requires the Python module
 Requires: python%{python3_pkgversion}-%{name} == %{version}-%{release}

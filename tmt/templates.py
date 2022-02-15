@@ -90,7 +90,7 @@ summary:
     Essential command line features
 discover:
     how: fmf
-    url: https://github.com/psss/tmt
+    url: https://github.com/teemtee/tmt
 prepare:
     how: ansible
     playbook: plans/packages.yml

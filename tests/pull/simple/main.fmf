@@ -4,7 +4,7 @@ description:
     expected even if no preparation, test execution or finish step
     scripts are performed.
 link:
-  - verifies: https://github.com/psss/tmt/issues/1011
+  - verifies: https://github.com/teemtee/tmt/issues/1011
 
 environment:
     METHODS: container local

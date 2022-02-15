@@ -12,7 +12,7 @@ rlJournalStart
         # Install tmt, start libvirtd, clone report and look around
         rlRun "dnf install -y tmt-all" 0 "Install the full tmt package"
         rlRun "systemctl start libvirtd" 0 "Start libvirtd"
-        rlRun "git clone https://github.com/psss/tmt"
+        rlRun "git clone https://github.com/teemtee/tmt"
         rlRun "pushd tmt"
         rlRun "tmt" 0 "Explore the repo"
 

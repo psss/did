@@ -98,7 +98,7 @@ def test_link():
     # Full fmf id
     fmf_id = tmt.utils.yaml_to_dict("""
         blocked-by:
-            url: https://github.com/psss/fmf
+            url: https://github.com/teemtee/fmf
             name: /stories/select/filter/regexp
         note: Need to get the regexp filter working first.
         """)

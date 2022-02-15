@@ -3,7 +3,7 @@
     /pull-request:
         /pep:
             summary: All code must comply with the PEP8 style guide
-            # Do not allow ugly code to be merged into master
+            # Do not allow ugly code to be merged into the main branch
             gate:
                 - merge-pull-request
         /lint:

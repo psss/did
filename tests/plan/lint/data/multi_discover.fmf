@@ -2,7 +2,7 @@ summary: Multi-discover plan
 discover:
   - name: a
     how: fmf
-    url: https://github.com/psss/tmt
+    url: https://github.com/teemtee/tmt
   - name: b
     how: fmf
     url: http://invalid-url

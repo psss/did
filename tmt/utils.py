@@ -1088,8 +1088,8 @@ def public_git_url(url):
     """
 
     # GitHub, GitLab
-    # old: git@github.com:psss/tmt.git
-    # new: https://github.com/psss/tmt.git
+    # old: git@github.com:teemtee/tmt.git
+    # new: https://github.com/teemtee/tmt.git
     matched = re.match('git@(.*):(.*)', url)
     if matched:
         host, project = matched.groups()

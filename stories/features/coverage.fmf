@@ -36,8 +36,8 @@ story:
         :ref:`/spec/core/link` attribute.
     example: |
         verified-by:
-            url: https://github.com/psss/fmf
-            ref: master
+            url: https://github.com/teemtee/fmf
+            ref: main
             name: /tests/basic/repo
     priority: should
 
@@ -54,7 +54,7 @@ story:
             identifiers.
         example: |
             tmt story ls --filter "url:https://gitlab/project"
-            tmt story ls --filter "url:https://gitlab/project & ref:master name:/tests/smoke"
+            tmt story ls --filter "url:https://gitlab/project & ref:main name:/tests/smoke"
         priority: should
 
     /tags:

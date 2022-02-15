@@ -55,4 +55,4 @@ implements the ``GuestExample`` class which inherits from
 features which cannot be covered by generic ssh implementation of
 the ``Guest`` class.
 
-__ https://github.com/psss/tmt/tree/master/examples/plugins
+__ https://github.com/teemtee/tmt/tree/main/examples/plugins

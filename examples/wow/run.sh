@@ -2,8 +2,8 @@
 # Example workflow-tomorrow command lines
 
 # Git url, git ref and root path
-url='https://github.com/psss/tmt'
-ref='master'
+url='https://github.com/teemtee/tmt'
+ref='main'
 path='/examples/wow'
 
 # The mini test

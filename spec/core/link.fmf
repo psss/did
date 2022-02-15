@@ -82,7 +82,7 @@ description: |
 
 example: |
     # A related issue
-    link: https://github.com/psss/tmt/issues/461
+    link: https://github.com/teemtee/tmt/issues/461
 
     # A test verifying a story
     link:
@@ -102,7 +102,7 @@ example: |
     # A story blocked by a remote story with optional note
     link:
         blocked-by:
-            url: https://github.com/psss/fmf
+            url: https://github.com/teemtee/fmf
             name: /stories/select/filter/regexp
         note: Need to get the regexp filter working first.
 link:

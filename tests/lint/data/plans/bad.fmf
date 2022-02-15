@@ -1,7 +1,7 @@
 summary: This is just a plan
 discovery:
     how: fmf
-    url: https://github.com/psss/tmt
+    url: https://github.com/teemtee/tmt
 prepareahoj:
     how: ansible
     playbook: plans/packages.yml

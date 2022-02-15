@@ -68,7 +68,7 @@ description: |
 
     See the `manual test examples`__ to get a better idea.
 
-    __ https://github.com/psss/tmt/tree/master/examples/manual/
+    __ https://github.com/teemtee/tmt/tree/main/examples/manual/
 
 example: |
   manual: true

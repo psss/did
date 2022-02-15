@@ -25,7 +25,7 @@ couple of recommendations to keep on mind when writing code:
 * The closing brace/bracket/parenthesis on multiline constructs
   is under the first non-whitespace character of the last line
 
-__ https://github.com/psss/tmt
+__ https://github.com/teemtee/tmt
 __ https://www.python.org/dev/peps/pep-0008/
 
 
@@ -74,7 +74,7 @@ Now let's create a new virtual environment and install ``tmt`` in
 editable mode there::
 
     mkvirtualenv tmt
-    git clone https://github.com/psss/tmt
+    git clone https://github.com/teemtee/tmt
     cd tmt
     pip install -e .
 
@@ -178,9 +178,10 @@ amending the original commit and doing a force push. This will
 make it easier for the reviewers to see what has recently changed.
 
 Once the pull request has been successfully reviewed and all tests
-passed, please rebase on the latest master and squash the changes
-into a single commit. Use multiple commits to group relevant code
-changes if the pull request is too large for a single commit.
+passed, please rebase on the latest ``main`` branch content and
+squash the changes into a single commit. Use multiple commits to
+group relevant code changes if the pull request is too large for a
+single commit.
 
 
 Merging
@@ -194,7 +195,7 @@ good to check the following:
 * Documentation has been added or updated where appropriate
 * Commit messages are sane, commits are reasonably squashed
 * At least one positive review provided by the maintainers
-* Merge commits are not used, rebase on the master instead
+* Merge commits are not used, rebase on the ``main`` instead
 
 Pull requests which should not or cannot be merged are marked with
 the ``blocked`` label. For complex topics which need more eyes to
@@ -266,7 +267,7 @@ Release a new package to Fedora and EPEL repositories:
 Finally, if everything went well:
 
 * **Manually** merge the original release pull request on github (to avoid rebase)
-  ``git checkout master && git merge --ff-only <release_branch> && git push origin master``
+  ``git checkout main && git merge --ff-only <release_branch> && git push origin main``
 * Tag the commit with ``x.y.0``, push tags ``git push --tags``
 * Create a new `github release`__ based on the tag above
 * If the automation triggered by publishing the new github release
@@ -278,6 +279,6 @@ Finally, if everything went well:
 * Close the corresponding release milestone
 
 __ https://bodhi.fedoraproject.org/releases/
-__ https://github.com/psss/tmt/releases/
+__ https://github.com/teemtee/tmt/releases/
 __ https://pypi.org/project/tmt/
 __ https://copr.fedorainfracloud.org/coprs/psss/tmt/builds/

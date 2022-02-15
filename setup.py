@@ -58,8 +58,8 @@ readme = 'README.rst'
 with open(readme, encoding='utf-8') as _file:
     readme = _file.read()
 
-github = 'https://github.com/psss/tmt'
-download_url = '{0}/archive/master.zip'.format(github)
+github = 'https://github.com/teemtee/tmt'
+download_url = '{0}/archive/main.zip'.format(github)
 
 default_setup = dict(
     url=github,

@@ -23,11 +23,11 @@ provision:
             summary: Minimal from repository
             discover:
                 how: fmf
-                url: https://github.com/psss/tmt
+                url: https://github.com/teemtee/tmt
         /full:
             summary: Full from repository
             discover:
                 how: fmf
-                url: https://github.com/psss/tmt
+                url: https://github.com/teemtee/tmt
                 ref: devel
                 filter: 'tier: 1'

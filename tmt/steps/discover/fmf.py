@@ -24,7 +24,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
 
         discover:
             how: fmf
-            url: https://github.com/psss/tmt
+            url: https://github.com/teemtee/tmt
             ref: main
             path: /fmf/root
             test: /tests/basic
@@ -63,7 +63,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         discover:
             how: fmf
             modified-only: True
-            modified-url: https://github.com/psss/tmt
+            modified-url: https://github.com/teemtee/tmt
             modified-ref: reference/main
 
     Note that internally the modified tests are appended to the list

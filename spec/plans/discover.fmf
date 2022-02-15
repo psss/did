@@ -147,8 +147,8 @@ description: |
         # Fetch tests from a remote repo, filter by name/tier
         discover:
             how: fmf
-            url: https://github.com/psss/tmt
-            ref: master
+            url: https://github.com/teemtee/tmt
+            ref: main
             path: /metadata/tree/path
             test: [regexp]
             filter: tier:1
@@ -162,7 +162,7 @@ description: |
         discover:
             how: fmf
             modified-only: true
-            modified-url: https://github.com/psss/tmt-official
+            modified-url: https://github.com/teemtee/tmt-official
             modified-ref: reference/main
 
         # Extract tests from the distgit sources

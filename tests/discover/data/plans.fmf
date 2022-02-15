@@ -13,36 +13,36 @@ execute:
             /path:
                 discover:
                     how: fmf
-                    url: https://github.com/psss/tmt
+                    url: https://github.com/teemtee/tmt
                     ref: eae4d52
                     path: /examples/together
             /nopath:
                 discover:
                     how: fmf
-                    url: https://github.com/psss/tmt
+                    url: https://github.com/teemtee/tmt
                     ref: 5407fe5
         /noref:
             /path:
                 discover:
                     how: fmf
-                    url: https://github.com/psss/tmt
+                    url: https://github.com/teemtee/tmt
                     path: /examples/together
 
             /nopath:
                 discover:
                     how: fmf
-                    url: https://github.com/psss/tmt
+                    url: https://github.com/teemtee/tmt
         /parametrize:
             /environment:
                 environment:
                     REPO: tmt
                 discover:
                     how: fmf
-                    url: https://github.com/psss/$REPO
+                    url: https://github.com/teemtee/$REPO
             /noenvironment:
                 discover:
                     how: fmf
-                    url: https://github.com/psss/${REPO}
+                    url: https://github.com/teemtee/${REPO}
     /nourl:
         /ref:
             /path:
