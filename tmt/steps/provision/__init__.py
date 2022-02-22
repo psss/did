@@ -489,7 +489,7 @@ class Guest(tmt.utils.Common):
         location and the 'options' parametr to modify default options
         which are '-Rrz --links --safe-links --delete'.
         """
-        # Prepare options
+        # Prepare options and the push command
         if options is None:
             options = "-Rrz --links --safe-links --delete".split()
         if destination is None:
@@ -499,26 +499,28 @@ class Guest(tmt.utils.Common):
             self.debug(f"Push workdir to guest '{self.guest}'.")
         else:
             self.debug(f"Copy '{source}' to '{destination}' on the guest.")
-        # Make sure rsync is present (tests can remove it) and sync
-        try:
+
+        def rsync():
+            """ Run the rsync command """
             self.run(
                 ["rsync"] + options
                 + ["-e", self._ssh_command(join=True)]
                 + [source, f"{self._ssh_guest()}:{destination}"],
                 shell=False)
+
+        # Try to push twice, check for rsync after the first failure
+        try:
+            rsync()
         except tmt.utils.RunError:
             try:
-                self._check_rsync()
-                self.run(
-                    ["rsync"] + options
-                    + ["-e", self._ssh_command(join=True)]
-                    + [source, f"{self._ssh_guest()}:{destination}"],
-                    shell=False)
+                if self._check_rsync() == "already installed":
+                    raise
+                rsync()
             except tmt.utils.RunError:
                 # Provide a reasonable error to the user
                 self.fail(
                     f"Failed to push workdir to the guest. This usually means "
-                    f"login as '{self.user}' to the test machine does not work.")
+                    f"that login as '{self.user}' to the guest does not work.")
                 raise
 
     def pull(self, source=None, destination=None, options=None):
@@ -530,7 +532,7 @@ class Guest(tmt.utils.Common):
         sync custom location and the 'options' parametr to modify
         default options '-Rrz --links --safe-links --protect-args'.
         """
-        # Prepare options
+        # Prepare options and the pull command
         if options is None:
             options = "-Rrz --links --safe-links --protect-args".split()
         if destination is None:
@@ -540,26 +542,29 @@ class Guest(tmt.utils.Common):
             self.debug(f"Pull workdir from guest '{self.guest}'.")
         else:
             self.debug(f"Copy '{source}' from the guest to '{destination}'.")
-        # Make sure rsync is present (tests can remove it) and sync
-        try:
+
+        def rsync():
+            """ Run the rsync command """
             self.run(
                 ["rsync"] + options
                 + ["-e", self._ssh_command(join=True)]
                 + [f"{self._ssh_guest()}:{source}", destination],
                 shell=False)
+
+        # Try to pull twice, check for rsync after the first failure
+        try:
+            rsync()
         except tmt.utils.RunError:
             try:
-                self._check_rsync()
-                self.run(
-                    ["rsync"] + options
-                    + ["-e", self._ssh_command(join=True)]
-                    + [f"{self._ssh_guest()}:{source}", destination],
-                    shell=False)
+                if self._check_rsync() == "already installed":
+                    raise
+                rsync()
             except tmt.utils.RunError:
                 # Provide a reasonable error to the user
                 self.fail(
-                    f"Failed to pull workdir from the guest. This usually means "
-                    f"login as '{self.user}' to the test machine does not work.")
+                    f"Failed to pull workdir from the guest. "
+                    f"This usually means that login as '{self.user}' "
+                    f"to the guest does not work.")
                 raise
 
     def stop(self):
@@ -644,17 +649,40 @@ class Guest(tmt.utils.Common):
         """
         Make sure that rsync is installed on the guest
 
-        On read-only distros install under the '/root/pkg' directory.
+        On read-only distros install it under the '/root/pkg' directory.
+        Returns 'already installed' when rsync is already present.
         """
-        self.debug("Ensure that rsync is installed on the guest.", level=3)
-        pkg_mgr = self.execute("[[ -x /usr/bin/dnf ]] && echo dnf || echo yum")[0].strip()
-        self.execute(
-            "rsync --version --quiet || "
-            # Regular pkg_mgr install on read-write distros
-            f"if [[ ! -f /usr/bin/rpm-ostree ]]; then {pkg_mgr} install -y rsync; "
-            # Install under /root/pkg for read-only distros
-            f"else {pkg_mgr} install -y --installroot=/root/pkg --releasever / rsync "
-            "&& ln -sf /root/pkg/bin/rsync /usr/local/bin/rsync; fi")
+
+        # Check for rsync (nothing to do if already installed)
+        self.debug("Ensure that rsync is installed on the guest.")
+        try:
+            self.execute("rsync --version")
+            return "already installed"
+        except tmt.utils.RunError:
+            pass
+
+        # Check the package manager
+        self.debug("Check the package manager.")
+        try:
+            self.execute("dnf --version")
+            package_manager = "dnf"
+        except tmt.utils.RunError:
+            package_manager = "yum"
+
+        # Install under '/root/pkg' for read-only distros
+        # (for now the check is based on 'rpm-ostree' presence)
+        # FIXME: Find a better way how to detect read-only distros
+        self.debug("Check for a read-only distro.")
+        try:
+            self.execute("rpm-ostree --version")
+            readonly = (
+                " --installroot=/root/pkg --releasever / "
+                "&& ln -sf /root/pkg/bin/rsync /usr/local/bin/rsync")
+        except tmt.utils.RunError:
+            readonly = ""
+
+        # Install the rsync
+        self.execute(f"{package_manager} install -y rsync" + readonly)
 
     @classmethod
     def requires(cls):
