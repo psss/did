@@ -1,0 +1,35 @@
+summary: Testing plans to export
+description: Testing data for test the feature to export plans to yaml or dict
+enabled: true
+
+/plan_no_L2_key:
+    discover:
+        how: fmf
+    execute:
+        how: tmt
+
+/plan_L2_context:
+    discover:
+        how: fmf
+    execute:
+        how: tmt
+    context:
+        component: dash
+
+/plan_L2_environment:
+    discover:
+        how: fmf
+    execute:
+        how: tmt
+    environment:
+        RELEASE: f35
+
+/plan_L2_gate:
+    discover:
+        how: fmf
+    execute:
+        how: tmt
+    gate:
+      - merge-pull-request
+      - add-build-to-update
+      - add-build-to-compose

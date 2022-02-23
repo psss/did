@@ -687,6 +687,35 @@ def create(context, name, template, force, **kwargs):
     tmt.Plan.create(name, template, context.obj.tree.root, force)
 
 
+@plans.command()
+@click.pass_context
+@name_filter_condition_long
+@click.option(
+    '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
+    help='Output format.')
+@click.option(
+    '-d', '--debug', is_flag=True,
+    help='Provide as much debugging details as possible.')
+def export(context, format_, **kwargs):
+    """
+    Export plans into desired format.
+
+    Regular expression can be used to filter plans by name.
+    Use '.' to select plans under the current working directory.
+    """
+    tmt.Plan._save_context(context)
+    plans = [plan.export(format_='dict') for plan in context.obj.tree.plans()]
+
+    # Choose proper format
+    if format_ == 'dict':
+        echo(plans)
+    elif format_ == 'yaml':
+        echo(tmt.utils.dict_to_yaml(plans))
+    else:
+        raise tmt.utils.GeneralError(
+            f"Invalid test export format '{format_}'.")
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Story
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

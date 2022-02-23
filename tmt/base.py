@@ -946,6 +946,36 @@ class Plan(Core):
             if not abort and self.finish.enabled:
                 self.finish.go()
 
+    def export(self, format_='yaml'):
+        """
+        Export plan data into requested format
+
+        Supported formats are 'yaml' and 'dict'.
+        """
+        data = {}
+        data['name'] = self.name
+        data.update(super().export(format_='dict'))
+        data.pop('adjust', None)
+
+        for key in self.extra_L2_keys:
+            value = self.node.data.get(key)
+            if value:
+                data[key] = value
+
+        for step in tmt.steps.STEPS:
+            value = self.node.data.get(step)
+            if value:
+                data[step] = value
+
+        # Choose proper format
+        if format_ == 'dict':
+            return data
+        elif format_ == 'yaml':
+            return tmt.utils.dict_to_yaml(data)
+        else:
+            raise tmt.utils.GeneralError(
+                f"Invalid test export format '{format_}'.")
+
 
 class Story(Core):
     """ User story object """
