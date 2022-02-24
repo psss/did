@@ -8,7 +8,8 @@ from tmt.steps.report.junit import ReportJUnit
 
 @pytest.fixture
 def report_fix(tmpdir):
-    step_mock = MagicMock()
+    # need to provide genuine workdir paths - mock would break os.path.* calls
+    step_mock = MagicMock(workdir=str(tmpdir))
     plan_mock = MagicMock()
     name_property = PropertyMock(return_value='name')
 
@@ -24,7 +25,10 @@ def report_fix(tmpdir):
             return out_file_path
         return default
 
-    report = ReportJUnit(step=step_mock, data={'name': 'x'})
+    report = ReportJUnit(
+        step=step_mock, data={
+            'name': 'x'}, workdir=str(
+            tmpdir.join('junit')))
     report.opt = opt
     report.info = MagicMock()
 

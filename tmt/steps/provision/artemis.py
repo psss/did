@@ -1,4 +1,5 @@
 import datetime
+import sys
 import time
 from typing import Any, Dict, Optional, cast
 
@@ -8,12 +9,10 @@ import requests
 import tmt
 from tmt.utils import ProvisionError, updatable_message
 
-# TODO: find out how to get this one into RPM builds.
-try:
+if sys.version_info >= (3, 8):
+    from typing import TypedDict
+else:
     from typing_extensions import TypedDict
-
-except ImportError:
-    TypedDict = None
 
 
 # List of Artemis API versions supported and understood by this plugin.

@@ -17,8 +17,11 @@ from collections import OrderedDict
 from functools import lru_cache
 from pathlib import Path
 from threading import Thread
-from typing import Dict, Iterable, Optional
+from typing import (IO, TYPE_CHECKING, Any, BinaryIO, Dict, Generator,
+                    Iterable, List, NamedTuple, Optional, Pattern, Tuple,
+                    TypeVar, Union, cast, overload)
 
+import click
 import fmf
 import requests
 from click import echo, style, wrap_text
@@ -26,6 +29,16 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from ruamel.yaml import YAML, scalarstring
 from ruamel.yaml.comments import CommentedMap
+
+if sys.version_info >= (3, 8):
+    from typing import Literal, Protocol
+else:
+    from typing_extensions import Literal, Protocol
+
+
+if TYPE_CHECKING:
+    import tmt.base
+
 
 log = fmf.utils.Logging('tmt').logger
 
@@ -62,6 +75,49 @@ DEFAULT_SELECT_TIMEOUT = 5
 
 # Shell options to be set for all run shell scripts
 SHELL_OPTIONS = 'set -eo pipefail'
+
+# A stand-in variable for generic use.
+T = TypeVar('T')
+
+# A FMF context type, representing name/values context.
+FmfContextType = Dict[str, List[str]]
+
+# A "environment" type, representing name/value environment variables.
+EnvironmentType = Dict[str, str]
+
+
+class BaseLoggerFnType(Protocol):
+    def __call__(
+            self,
+            key: str,
+            value: Optional[str] = None,
+            color: Optional[str] = None,
+            shift: int = 0,
+            level: int = 1,
+            err: bool = False) -> None:
+        pass
+
+
+class LevelessLoggerFnType(Protocol):
+    def __call__(
+            self,
+            key: str,
+            value: Optional[str] = None,
+            color: Optional[str] = None,
+            shift: int = 0,
+            err: bool = False) -> None:
+        pass
+
+
+class SemanticLoggerFnType(Protocol):
+    def __call__(self, message: str, shift: int = 0) -> None:
+        pass
+
+
+LoggerFnType = Union[
+    BaseLoggerFnType,
+    LevelessLoggerFnType,
+    SemanticLoggerFnType]
 
 
 def indent(
@@ -110,7 +166,7 @@ def indent(
 class Config(object):
     """ User configuration """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """ Initialize config directory path """
         self.path = os.path.expanduser(CONFIG_PATH)
         if not os.path.exists(self.path):
@@ -120,7 +176,7 @@ class Config(object):
                 raise GeneralError(
                     f"Failed to create config '{self.path}'.\n{error}")
 
-    def last_run(self, run_id=None):
+    def last_run(self, run_id: Optional[str] = None) -> Optional[str]:
         """ Get and set last run id """
         symlink = os.path.join(self.path, 'last-run')
         if run_id:
@@ -147,16 +203,22 @@ class StreamLogger(Thread):
     https://github.com/packit/packit/blob/main/packit/utils/logging.py#L10
     """
 
-    def __init__(self, stream, log_header, logger):
+    def __init__(self,
+                 stream: Optional[IO[bytes]],
+                 log_header: str,
+                 logger: BaseLoggerFnType) -> None:
         super().__init__(daemon=True)
         self.stream = stream
-        self.output = []
+        self.output: List[str] = []
         self.log_header = log_header
         self.logger = logger
 
-    def run(self):
-        for line in self.stream:
-            line = line.decode('utf-8', errors='replace')
+    def run(self) -> None:
+        if self.stream is None:
+            return
+
+        for _line in self.stream:
+            line = _line.decode('utf-8', errors='replace')
             if line != '':
                 self.logger(
                     self.log_header,
@@ -165,13 +227,21 @@ class StreamLogger(Thread):
                     level=3)
             self.output.append(line)
 
-    def get_output(self):
+    def get_output(self) -> str:
         return "".join(self.output)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Common
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CommonDerivedType = TypeVar('CommonDerivedType', bound='Common')
+
+
+class CommandOutput(NamedTuple):
+    stdout: Optional[str]
+    stderr: Optional[str]
+
 
 class Common(object):
     """
@@ -184,10 +254,15 @@ class Common(object):
     """
 
     # Command line context and workdir
-    _context = None
-    _workdir = None
+    _context: Optional[click.Context] = None
+    _workdir: Optional[str] = None
 
-    def __init__(self, parent=None, name=None, workdir=None, context=None):
+    def __init__(
+            self,
+            parent: Optional[CommonDerivedType] = None,
+            name: Optional[str] = None,
+            workdir: Optional[str] = None,
+            context: Optional[click.Context] = None):
         """
         Initialize name and relation with the parent object
 
@@ -206,30 +281,43 @@ class Common(object):
         # Initialize the workdir if requested
         self._workdir_load(workdir)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Name is the default string representation """
         return self.name
 
     @classmethod
-    def _save_context(cls, context):
+    def _save_context(cls, context: click.Context) -> None:
         """ Save provided command line context for future use """
         cls._context = context
 
+    @overload
     @classmethod
-    def _opt(cls, option, default=None):
+    def _opt(cls, option: str) -> Any:
+        pass
+
+    @overload
+    @classmethod
+    def _opt(cls, option: str, default: T) -> T:
+        pass
+
+    @classmethod
+    def _opt(cls, option: str, default: Any = None) -> Any:
         """ Get an option from the command line context (class version) """
         if cls._context is None:
             return default
         return cls._context.params.get(option, default)
 
-    def _fmf_context(self):
-        """ Return the current fmf contex """
+    def _fmf_context(self) -> FmfContextType:
+        """ Return the current fmf context """
+        if self._context is None:
+            return dict()
+
         try:
-            return self._context.obj.fmf_context
+            return cast(FmfContextType, self._context.obj.fmf_context)
         except AttributeError:
             return dict()
 
-    def opt(self, option, default=None):
+    def opt(self, option: str, default: Optional[Any] = None) -> Any:
         """
         Get an option from the command line context
 
@@ -278,14 +366,19 @@ class Common(object):
         else:
             return parent if parent is not None else local
 
-    def _level(self):
+    def _level(self) -> int:
         """ Hierarchy level """
         if self.parent is None:
             return -1
         else:
             return self.parent._level() + 1
 
-    def _indent(self, key, value=None, color=None, shift=0):
+    def _indent(
+            self,
+            key: str,
+            value: Optional[str] = None,
+            color: Optional[str] = None,
+            shift: int = 0) -> str:
         """ Indent message according to the object hierarchy """
 
         return indent(
@@ -294,7 +387,7 @@ class Common(object):
             color=color,
             level=self._level() + shift)
 
-    def _log(self, message):
+    def _log(self, message: str) -> None:
         """ Append provided message to the current log """
         # Nothing to do if there is no workdir
         if self.workdir is None:
@@ -308,41 +401,72 @@ class Common(object):
                 log.write(datetime.datetime.utcnow().strftime('%H:%M:%S') + ' '
                           + remove_color(message) + '\n')
 
-    def print(self, key, value=None, color=None, shift=0, err=False):
+    def print(
+            self,
+            key: str,
+            value: Optional[str] = None,
+            color: Optional[str] = None,
+            shift: int = 0,
+            err: bool = False) -> None:
         """ Print a message regardless the quiet mode """
         self._log(self._indent(key, value, color=None, shift=shift))
         echo(self._indent(key, value, color, shift), err=err)
 
-    def info(self, key, value=None, color=None, shift=0, err=False):
+    def info(
+            self,
+            key: str,
+            value: Optional[str] = None,
+            color: Optional[str] = None,
+            shift: int = 0,
+            err: bool = False) -> None:
         """ Show a message unless in quiet mode """
         self._log(self._indent(key, value, color=None, shift=shift))
         if not self.opt('quiet'):
             echo(self._indent(key, value, color, shift), err=err)
 
-    def warn(self, message, shift=0):
-        """ Show a yellow warning message on info level, send to stderr """
-        self.info('warn', message, color='yellow', shift=shift, err=True)
-
-    def fail(self, message, shift=0):
-        """ Show a red failure message on info level, send to stderr """
-        self.info('fail', message, color='red', shift=shift, err=True)
-
     def verbose(
-            self, key, value=None, color=None, shift=0, level=1, err=False):
+            self,
+            key: str,
+            value: Optional[str] = None,
+            color: Optional[str] = None,
+            shift: int = 0,
+            level: int = 1,
+            err: bool = False) -> None:
         """ Show message if in requested verbose mode level """
         self._log(self._indent(key, value, color=None, shift=shift))
         if self.opt('verbose') >= level:
             echo(self._indent(key, value, color, shift), err=err)
 
-    def debug(self, key, value=None, color=None, shift=1, level=1, err=False):
+    def debug(
+            self,
+            key: str,
+            value: Optional[str] = None,
+            color: Optional[str] = None,
+            shift: int = 0,
+            level: int = 1,
+            err: bool = False) -> None:
         """ Show message if in requested debug mode level """
         self._log(self._indent(key, value, color=None, shift=shift))
         if self.opt('debug') >= level:
             echo(self._indent(key, value, color, shift), err=err)
 
-    def _run(
-            self, command, cwd, shell, env, log, join=False, interactive=False,
-            timeout=None):
+    def warn(self, message: str, shift: int = 0) -> None:
+        """ Show a yellow warning message on info level, send to stderr """
+        self.info('warn', message, color='yellow', shift=shift, err=True)
+
+    def fail(self, message: str, shift: int = 0) -> None:
+        """ Show a red failure message on info level, send to stderr """
+        self.info('fail', message, color='red', shift=shift, err=True)
+
+    def _run(self,
+             command: Union[str, List[str]],
+             cwd: Optional[str],
+             shell: bool,
+             env: Optional[EnvironmentType],
+             log: Optional[BaseLoggerFnType],
+             join: bool = False,
+             interactive: bool = False,
+             timeout: Optional[int] = None) -> CommandOutput:
         """
         Run command, capture the output
 
@@ -374,7 +498,7 @@ class Common(object):
                 # failed, ignore errors here
                 pass
             finally:
-                return None if join else (None, None)
+                return CommandOutput(None, None)
 
         # Create the process
         try:
@@ -406,20 +530,30 @@ class Common(object):
 
         # Handle the exit code, return output
         if process.returncode != 0:
-            if isinstance(command, (list, tuple)):
-                command = ' '.join(command)
             raise RunError(
                 message=f"Command returned '{process.returncode}'.",
                 command=command,
                 returncode=process.returncode,
                 stdout=stdout_thread.get_output(),
                 stderr=stderr_thread.get_output())
-        return stdout_thread.get_output() if join else (
-            stdout_thread.get_output(), stderr_thread.get_output())
+        if join:
+            return CommandOutput(
+                stdout_thread.get_output(), None)
+        else:
+            return CommandOutput(
+                stdout_thread.get_output(), stderr_thread.get_output())
 
-    def run(
-            self, command, message=None, cwd=None, dry=False, shell=False,
-            env=None, interactive=False, join=False, log=None, timeout=None):
+    def run(self,
+            command: Union[str, List[str]],
+            message: Optional[str] = None,
+            cwd: Optional[str] = None,
+            dry: bool = False,
+            shell: bool = False,
+            env: Optional[EnvironmentType] = None,
+            interactive: bool = False,
+            join: bool = False,
+            log: Optional[BaseLoggerFnType] = None,
+            timeout: Optional[int] = None) -> CommandOutput:
         """
         Run command, give message, handle errors
 
@@ -429,6 +563,7 @@ class Common(object):
         Output is logged using self.debug() or custom 'log' function.
         Returns stdout if join=True, (stdout, stderr) tuple otherwise.
         """
+
         # Use a generic message if none given, prepare error message
         if not message:
             if isinstance(command, (list, tuple)):
@@ -441,7 +576,7 @@ class Common(object):
 
         # Nothing more to do in dry mode (unless requested)
         if self.opt('dry') and not dry:
-            return None if join else (None, None)
+            return CommandOutput(None, None)
 
         # Run the command, handle the exit code
         cwd = cwd or self.workdir
@@ -461,7 +596,7 @@ class Common(object):
                 message, error.command, error.returncode,
                 error.stdout, error.stderr)
 
-    def read(self, path, level=2):
+    def read(self, path: str, level: int = 2) -> str:
         """ Read a file from the workdir """
         if self.workdir:
             path = os.path.join(self.workdir, path)
@@ -472,7 +607,12 @@ class Common(object):
         except OSError as error:
             raise FileError(f"Failed to read '{path}'.\n{error}")
 
-    def write(self, path, data, mode='w', level=2):
+    def write(
+            self,
+            path: str,
+            data: Any,
+            mode: str = 'w',
+            level: int = 2) -> None:
         """ Write a file to the workdir """
         if self.workdir:
             path = os.path.join(self.workdir, path)
@@ -483,11 +623,11 @@ class Common(object):
             return
         try:
             with open(path, mode, encoding='utf-8', errors='replace') as file:
-                return file.write(data)
+                file.write(data)
         except OSError as error:
             raise FileError(f"Failed to write '{path}'.\n{error}")
 
-    def _workdir_init(self, id_=None):
+    def _workdir_init(self, id_: Optional[str] = None) -> None:
         """
         Initialize the work directory
 
@@ -505,12 +645,12 @@ class Common(object):
                 workdir = os.path.join(WORKDIR_ROOT, id_)
         # Generate a unique workdir name
         elif id_ is None:
-            for id_ in range(1, WORKDIR_MAX + 1):
-                directory = 'run-{}'.format(str(id_).rjust(3, '0'))
+            for id_bit in range(1, WORKDIR_MAX + 1):
+                directory = 'run-{}'.format(str(id_bit).rjust(3, '0'))
                 workdir = os.path.join(WORKDIR_ROOT, directory)
                 if not os.path.exists(workdir):
                     break
-            if id_ == WORKDIR_MAX:
+            else:
                 raise GeneralError(
                     f"Workdir full. Cleanup the '{WORKDIR_ROOT}' directory.")
         # Weird workdir id
@@ -526,7 +666,7 @@ class Common(object):
         create_directory(workdir, 'workdir', quiet=True)
         self._workdir = workdir
 
-    def _workdir_name(self):
+    def _workdir_name(self) -> Optional[str]:
         """ Construct work directory name from parent workdir """
         # Need the parent workdir
         if self.parent is None or self.parent.workdir is None:
@@ -534,7 +674,7 @@ class Common(object):
         # Join parent name with self
         return os.path.join(self.parent.workdir, self.name.lstrip('/'))
 
-    def _workdir_load(self, workdir):
+    def _workdir_load(self, workdir: Union[Literal[True], str, None]) -> None:
         """
         Create the given workdir if it is not None
 
@@ -545,7 +685,7 @@ class Common(object):
         elif workdir is not None:
             self._workdir_init(workdir)
 
-    def _workdir_cleanup(self, path=None):
+    def _workdir_cleanup(self, path: Optional[str] = None) -> None:
         """ Clean up the work directory """
         directory = path or self._workdir_name()
         if directory is not None:
@@ -555,7 +695,7 @@ class Common(object):
         self._workdir = None
 
     @property
-    def workdir(self):
+    def workdir(self) -> Optional[str]:
         """ Get the workdir, create if does not exist """
         if self._workdir is None:
             self._workdir = self._workdir_name()
@@ -574,7 +714,7 @@ class Common(object):
 class GeneralError(Exception):
     """ General error """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # Store the original exception for future use
         self.original = kwargs.get('original')
 
@@ -591,8 +731,14 @@ class RunError(GeneralError):
     """ Command execution error """
 
     def __init__(
-            self, message, command, returncode,
-            stdout=None, stderr=None, *args, **kwargs):
+            self,
+            message: str,
+            command: Union[str, List[str]],
+            returncode: int,
+            stdout: Optional[str] = None,
+            stderr: Optional[str] = None,
+            *args: Any,
+            **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.message = message
         self.command = command
@@ -647,19 +793,22 @@ class FinishError(GeneralError):
 #  Utilities
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def quote(string):
+def quote(string: str) -> str:
     """ Surround a string with double quotes """
     return f'"{string}"'
 
 
-def ascii(text):
+def ascii(text: Any) -> bytes:
     """ Transliterate special unicode characters into pure ascii """
     if not isinstance(text, str):
         text = str(text)
     return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
 
 
-def listify(data, split=False, keys=None):
+def listify(
+        data: Union[Tuple[Any, ...], List[Any], str, Dict[Any, Any]],
+        split: bool = False,
+        keys: Optional[List[str]] = None) -> Union[List[Any], Dict[Any, Any]]:
     """
     Ensure that variable is a list, convert if necessary
 
@@ -683,7 +832,7 @@ def listify(data, split=False, keys=None):
 
 # These two are helpers for shell_to_dict and environment_to_dict -
 # there is some overlap of their functionality.
-def _add_simple_var(result, var):
+def _add_simple_var(result: EnvironmentType, var: str) -> None:
     """
     Add a single NAME=VALUE pair into result dictionary
 
@@ -698,7 +847,7 @@ def _add_simple_var(result, var):
     result[name] = value
 
 
-def _add_file_vars(result, filepath):
+def _add_file_vars(result: EnvironmentType, filepath: str) -> None:
     """
     Add variables loaded from file into the result dictionary
 
@@ -711,21 +860,22 @@ def _add_file_vars(result, filepath):
             f"Invalid variable file specification '{filepath}'.")
 
     try:
-        with open(filepath[1:], 'r') as content:
+        with open(filepath[1:], 'r') as file:
+            # Handle empty file as an empty environment
+            content = file.read()
+            if not content:
+                log.warn(f"Empty environment file '{filepath}'.")
+                return
             file_vars = yaml_to_dict(content)
     except Exception as exception:
         raise GeneralError(
             f"Failed to load variables from '{filepath}': {exception}")
 
-    # Handle empty file as an empty environment
-    if file_vars is None:
-        log.warn(f"Empty environment file '{filepath}'.")
-        return
     for name, value in file_vars.items():
         result[name] = str(value)
 
 
-def shell_to_dict(variables):
+def shell_to_dict(variables: Union[str, List[str]]) -> EnvironmentType:
     """
     Convert shell-like variables into a dictionary
 
@@ -738,7 +888,7 @@ def shell_to_dict(variables):
     """
     if not isinstance(variables, (list, tuple)):
         variables = [variables]
-    result = dict()
+    result: EnvironmentType = dict()
     for variable in variables:
         if variable is None:
             continue
@@ -748,7 +898,7 @@ def shell_to_dict(variables):
     return result
 
 
-def environment_to_dict(variables):
+def environment_to_dict(variables: Union[str, List[str]]) -> EnvironmentType:
     """
     Convert environment variables into a dictionary
 
@@ -774,7 +924,7 @@ def environment_to_dict(variables):
 
     if not isinstance(variables, (list, tuple)):
         variables = [variables]
-    result = dict()
+    result: EnvironmentType = dict()
 
     for variable in variables:
         if variable is None:
@@ -789,7 +939,7 @@ def environment_to_dict(variables):
 
 
 def environment_file_to_dict(
-        env_files: Iterable[str], root=".") -> Dict[str, str]:
+        env_files: Iterable[str], root: str = ".") -> Dict[str, str]:
     """
     Create dict from files.
 
@@ -825,9 +975,9 @@ def environment_file_to_dict(
         else:
             # Ensure we don't escape from the metadata tree root
             try:
-                root = Path(root).resolve()
-                full_path = (Path(root) / Path(env_file)).resolve()
-                full_path.relative_to(root)
+                root_path = Path(root).resolve()
+                full_path = (Path(root_path) / Path(env_file)).resolve()
+                full_path.relative_to(root_path)
             except ValueError:
                 raise GeneralError(
                     f"The 'environment-file' path '{full_path}' is outside "
@@ -854,7 +1004,8 @@ def environment_file_to_dict(
 
 
 @contextlib.contextmanager
-def modify_environ(new_elements):
+def modify_environ(
+        new_elements: EnvironmentType) -> Generator[None, None, None]:
     """ A context manager for os.environ that restores the initial state """
     environ_backup = os.environ.copy()
     os.environ.clear()
@@ -866,7 +1017,7 @@ def modify_environ(new_elements):
         os.environ.update(environ_backup)
 
 
-def context_to_dict(context):
+def context_to_dict(context: List[str]) -> FmfContextType:
     """
     Convert command line context definition into a dictionary
 
@@ -881,7 +1032,11 @@ def context_to_dict(context):
         for key, value in environment_to_dict(context).items()}
 
 
-def dict_to_yaml(data, width=None, sort=False, start=False):
+def dict_to_yaml(
+        data: Dict[str, Any],
+        width: Optional[int] = None,
+        sort: bool = False,
+        start: bool = False) -> str:
     """ Convert dictionary into yaml """
     output = io.StringIO()
     yaml = YAML()
@@ -903,26 +1058,22 @@ def dict_to_yaml(data, width=None, sort=False, start=False):
     return output.getvalue()
 
 
-def yaml_to_dict(data, check_version=False, yaml_type=None):
-    """
-    Convert yaml into dictionary
-
-    The check_version argument is used to load the YAML in both YAML
-    versions (1.1 and 1.2) and see if the results equal. This is useful
-    for smooth deprecation of YAML 1.1.
-    """
-    # FIXME: Deprecate the 1.1 loading in 2.0
-    old_yaml = YAML(typ=yaml_type)
-    old_yaml.version = (1, 1)
-    old_result = old_yaml.load(data)
-    if check_version:
-        yaml = YAML()
-        result = yaml.load(data)
-        return old_result == result, old_result
-    return old_result
+YamlTypType = Literal['rt', 'safe', 'unsafe', 'base']
 
 
-def markdown_to_html(filename):
+def yaml_to_dict(data: Any,
+                 yaml_type: Optional[YamlTypType] = None) -> Dict[Any, Any]:
+    """ Convert yaml into dictionary """
+    yaml = YAML(typ=yaml_type)
+    loaded_data = yaml.load(data)
+    if not isinstance(loaded_data, dict):
+        raise GeneralError(
+            f"Expected dictionary in yaml data, "
+            f"got '{type(loaded_data).__name__}'.")
+    return loaded_data
+
+
+def markdown_to_html(filename: str) -> str:
     """
     Convert markdown to html
 
@@ -945,7 +1096,8 @@ def markdown_to_html(filename):
         raise ConvertError(f"Unable to open '{filename}'.")
 
 
-def shell_variables(data):
+def shell_variables(
+        data: Union[List[str], Tuple[str, ...], Dict[str, Any]]) -> List[str]:
     """
     Prepare variables to be consumed by shell
 
@@ -967,7 +1119,7 @@ def shell_variables(data):
     return [f"{key}={shlex.quote(str(value))}" for key, value in data.items()]
 
 
-def duration_to_seconds(duration):
+def duration_to_seconds(duration: str) -> int:
     """ Convert sleep time format into seconds """
     units = {
         's': 1,
@@ -976,15 +1128,22 @@ def duration_to_seconds(duration):
         'd': 60 * 60 * 24,
         }
     try:
-        number, suffix = re.match(r'^(\d+)([smhd]?)$', str(duration)).groups()
+        match = re.match(r'^(\d+)([smhd]?)$', str(duration))
+        if match is None:
+            raise SpecificationError(f"Invalid duration '{duration}'.")
+        number, suffix = match.groups()
         return int(number) * units.get(suffix, 1)
     except (ValueError, AttributeError):
         raise SpecificationError(f"Invalid duration '{duration}'.")
 
 
 def verdict(
-        decision, comment=None, good='pass', bad='fail', problem='warn',
-        **kwargs):
+        decision: Optional[bool],
+        comment: Optional[str] = None,
+        good: str = 'pass',
+        bad: str = 'fail',
+        problem: str = 'warn',
+        **kwargs: Any) -> Optional[bool]:
     """
     Print verdict in green, red or yellow based on the decision
 
@@ -1014,9 +1173,13 @@ def verdict(
 
 
 def format(
-        key, value=None,
-        indent=12, width=72, wrap='auto',
-        key_color='green', value_color='black'):
+        key: str,
+        value: Union[None, str, List[Any], Dict[Any, Any]] = None,
+        indent: int = 12,
+        width: int = 72,
+        wrap: Literal[True, False, 'auto'] = 'auto',
+        key_color: str = 'green',
+        value_color: str = 'black') -> str:
     """
     Nicely format and indent a key-value pair
 
@@ -1072,7 +1235,11 @@ def format(
     return output
 
 
-def create_directory(path, name, dry=False, quiet=False):
+def create_directory(
+        path: str,
+        name: str,
+        dry: bool = False,
+        quiet: bool = False) -> None:
     """ Create a new directory, handle errors """
     say = log.debug if quiet else echo
     if os.path.isdir(path):
@@ -1090,7 +1257,13 @@ def create_directory(path, name, dry=False, quiet=False):
 
 
 def create_file(
-        path, content, name, dry=False, force=False, mode=0o664, quiet=False):
+        path: str,
+        content: str,
+        name: str,
+        dry: bool = False,
+        force: bool = False,
+        mode: int = 0o664,
+        quiet: bool = False) -> None:
     """ Create a new file, handle errors """
     say = log.debug if quiet else echo
     action = 'would be created' if dry else 'created'
@@ -1116,7 +1289,7 @@ def create_file(
 
 # Avoid multiple subprocess calls for the same url
 @lru_cache(maxsize=None)
-def check_git_url(url):
+def check_git_url(url: str) -> str:
     """ Check that a remote git url is accessible """
     try:
         log.debug(f"Check git url '{url}'.")
@@ -1129,7 +1302,7 @@ def check_git_url(url):
         raise GitUrlError(f"Unable to contact remote git via '{url}'.")
 
 
-def public_git_url(url):
+def public_git_url(url: str) -> str:
     """
     Convert a git url into a public format
 
@@ -1169,8 +1342,12 @@ def public_git_url(url):
     return url
 
 
-def retry_session(retries=3, backoff_factor=0.1, method_whitelist=False,
-                  status_forcelist=(429, 500, 502, 503, 504)):
+def retry_session(
+        retries: int = 3,
+        backoff_factor: float = 0.1,
+        method_whitelist: bool = False,
+        status_forcelist: Tuple[int, ...] = (429, 500, 502, 503, 504)
+        ) -> requests.Session:
     """
     Create a requests.Session() that retries on request failure.
 
@@ -1191,12 +1368,12 @@ def retry_session(retries=3, backoff_factor=0.1, method_whitelist=False,
     return session
 
 
-def remove_color(text):
+def remove_color(text: str) -> str:
     """ Remove ansi color sequences from the string """
     return re.sub(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])', '', text)
 
 
-def default_branch(repository, remote='origin'):
+def default_branch(repository: str, remote: str = 'origin') -> str:
     """ Detect default branch from given local git repository """
     head = os.path.join(repository, f'.git/refs/remotes/{remote}/HEAD')
     # Make sure the HEAD reference is available
@@ -1208,13 +1385,13 @@ def default_branch(repository, remote='origin'):
         return ref.read().strip().split('/')[-1]
 
 
-def parse_dotenv(content: str) -> Dict[str, str]:
+def parse_dotenv(content: str) -> EnvironmentType:
     """ Parse dotenv (shell) format of variables """
     return dict([line.split("=", maxsplit=1)
                 for line in shlex.split(content, comments=True)])
 
 
-def parse_yaml(content: str) -> Dict[str, str]:
+def parse_yaml(content: str) -> EnvironmentType:
     """ Parse variables from yaml, ensure flat dictionary format """
     yaml_as_dict = YAML(typ="safe").load(content)
     # Handle empty file as an empty environment
@@ -1227,7 +1404,7 @@ def parse_yaml(content: str) -> Dict[str, str]:
     return {key: str(value) for key, value in yaml_as_dict.items()}
 
 
-def validate_fmf_id(fmf_id):
+def validate_fmf_id(fmf_id: 'tmt.base.FmfIdType') -> Tuple[bool, str]:
     """
     Validate given fmf id and return a human readable error
 
@@ -1255,7 +1432,8 @@ def validate_fmf_id(fmf_id):
     return (True, '')
 
 
-def generate_runs(path, id_):
+def generate_runs(
+        path: str, id_: Optional[str] = None) -> Generator[str, None, None]:
     """ Generate absolute paths to runs from path """
     # Prepare absolute workdir path if --id was used
     if id_:
@@ -1281,7 +1459,7 @@ def generate_runs(path, id_):
         yield abs_path
 
 
-def load_run(run):
+def load_run(run: 'tmt.base.Run') -> Tuple[bool, Optional[Exception]]:
     """ Load a run and its steps from the workdir """
     try:
         run.load_from_workdir()
@@ -1296,6 +1474,9 @@ def load_run(run):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  StructuredField
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+SFSectionValueType = Union[str, List[str]]
+
 
 class StructuredField(object):
     """
@@ -1438,23 +1619,29 @@ class StructuredField(object):
     #  StructuredField Special
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def __init__(self, text=None, version=1, multi=False):
+    def __init__(
+            self,
+            text: Optional[str] = None,
+            version: int = 1,
+            multi: bool = False) -> None:
         """ Initialize the structured field """
         self.version(version)
-        self._header = ""
-        self._footer = ""
-        self._sections = {}
-        self._order = []
+        self._header: str = ""
+        self._footer: str = ""
+        # Sections are internally stored in their serialized form, i.e. as
+        # strings.
+        self._sections: Dict[str, str] = {}
+        self._order: List[str] = []
         self._multi = multi
         if text is not None:
             self.load(text)
 
-    def __iter__(self):
-        """ By default iterate through all available sections """
+    def __iter__(self) -> Generator[str, None, None]:
+        """ By default iterate through all available section names """
         for section in self._order:
             yield section
 
-    def __nonzero__(self):
+    def __nonzero__(self) -> bool:
         """ True when any section is defined """
         return len(self._order) > 0
 
@@ -1464,7 +1651,7 @@ class StructuredField(object):
     #  StructuredField Private
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def _load_version_zero(self, text):
+    def _load_version_zero(self, text: str) -> None:
         """ Load version 0 format """
         # Attempt to split the text according to the section tag
         section = re.compile(r"\n?^\[([^\]]+)\]\n", re.MULTILINE)
@@ -1484,7 +1671,7 @@ class StructuredField(object):
         for key, value in zip(keys, values):
             self.set(key, value)
 
-    def _load(self, text):
+    def _load(self, text: str) -> None:
         """ Load version 1+ format """
         # The text must exactly match the format
         format = re.compile(
@@ -1510,15 +1697,15 @@ class StructuredField(object):
         section = re.compile(r"\n\[([^\]]+)\][ \t]*\n", re.MULTILINE)
         parts = section.split(matched.groups()[1])
         # Detect the version
-        try:
-            self.version(int(re.search(
-                r"version (\d+)", parts[0]).groups()[0]))
-            log.debug(
-                "Detected StructuredField version {0}".format(self.version()))
-        except AttributeError:
+        version_match = re.search(r"version (\d+)", parts[0])
+        if not version_match:
             log.error(parts[0])
             raise StructuredFieldError(
                 "Unable to detect StructuredField version")
+        self.version(int(version_match.groups()[0]))
+        log.debug(
+            "Detected StructuredField version {0}".format(
+                self.version()))
         # Convert to dictionary, remove escapes and save the order
         keys = parts[1::2]
         escape = re.compile(r"^\[structured-field-escape\]", re.MULTILINE)
@@ -1528,7 +1715,7 @@ class StructuredField(object):
         log.debug(u"Parsed sections:\n{0}".format(
             pprint.pformat(self._sections)))
 
-    def _save_version_zero(self):
+    def _save_version_zero(self) -> str:
         """ Save version 0 format """
         result = []
         if self._header:
@@ -1541,7 +1728,7 @@ class StructuredField(object):
             result.append(self._footer)
         return "\n".join(result)
 
-    def _save(self):
+    def _save(self) -> str:
         """ Save version 1+ format """
         result = []
         # Regular expression for escaping section-like lines
@@ -1564,9 +1751,9 @@ class StructuredField(object):
             result.append(self._footer)
         return "\n".join(result)
 
-    def _read_section(self, content):
+    def _read_section(self, content: str) -> Dict[str, SFSectionValueType]:
         """ Parse config section and return ordered dictionary """
-        dictionary = OrderedDict()
+        dictionary: Dict[str, SFSectionValueType] = OrderedDict()
         for line in content.split("\n"):
             # Remove comments and skip empty lines
             line = re.sub("#.*", "", line)
@@ -1581,15 +1768,16 @@ class StructuredField(object):
             value = matched.groups()[1].strip()
             # Handle multiple values if enabled
             if key in dictionary and self._multi:
-                if isinstance(dictionary[key], list):
-                    dictionary[key].append(value)
+                stored_value = dictionary[key]
+                if isinstance(stored_value, list):
+                    stored_value.append(value)
                 else:
-                    dictionary[key] = [dictionary[key], value]
+                    dictionary[key] = [stored_value, value]
             else:
                 dictionary[key] = value
         return dictionary
 
-    def _write_section(self, dictionary):
+    def _write_section(self, dictionary: Dict[str, SFSectionValueType]) -> str:
         """ Convert dictionary into a config section format """
         section = ""
         for key in dictionary:
@@ -1604,12 +1792,12 @@ class StructuredField(object):
     #  StructuredField Methods
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def iterate(self):
+    def iterate(self) -> Generator[Tuple[str, str], None, None]:
         """ Return (section, content) tuples for all sections """
         for section in self:
             yield section, self._sections[section]
 
-    def version(self, version=None):
+    def version(self, version: Optional[int] = None) -> int:
         """ Get or set the StructuredField version """
         if version is not None:
             if version in [0, 1]:
@@ -1619,7 +1807,7 @@ class StructuredField(object):
                     "Bad StructuredField version: {0}".format(version))
         return self._version
 
-    def load(self, text, version=None):
+    def load(self, text: str, version: Optional[int] = None) -> None:
         """ Load the StructuredField from a string """
         if version is not None:
             self.version(version)
@@ -1641,36 +1829,39 @@ class StructuredField(object):
         else:
             self._load(text)
 
-    def save(self):
+    def save(self) -> str:
         """ Convert the StructuredField into a string """
         if self.version() == 0:
             return self._save_version_zero()
         else:
             return self._save()
 
-    def header(self, content=None):
+    def header(self, content: Optional[str] = None) -> str:
         """ Get or set the header content """
         if content is not None:
             self._header = content
         return self._header
 
-    def footer(self, content=None):
+    def footer(self, content: Optional[str] = None) -> str:
         """ Get or set the footer content """
         if content is not None:
             self._footer = content
         return self._footer
 
-    def sections(self):
+    def sections(self) -> List[str]:
         """ Get the list of available sections """
         return self._order
 
-    def get(self, section, item=None):
+    def get(
+            self,
+            section: str,
+            item: Optional[str] = None) -> SFSectionValueType:
         """ Return content of given section or section item """
         try:
             content = self._sections[section]
         except KeyError:
             raise StructuredFieldError(
-                "Section [{0}] not found".format(ascii(section)))
+                "Section [{0!r}] not found".format(ascii(section)))
         # Return the whole section content
         if item is None:
             return content
@@ -1679,10 +1870,11 @@ class StructuredField(object):
             return self._read_section(content)[item]
         except KeyError:
             raise StructuredFieldError(
-                "Unable to read '{0}' from section '{1}'".format(
+                "Unable to read '{0!r}' from section '{1!r}'".format(
                     ascii(item), ascii(section)))
 
-    def set(self, section, content, item=None):
+    def set(self, section: str, content: Any,
+            item: Optional[str] = None) -> None:
         """ Update content of given section or section item """
         # Convert to string if necessary, keep lists untouched
         if isinstance(content, list):
@@ -1710,7 +1902,7 @@ class StructuredField(object):
         if section not in self._order:
             self._order.append(section)
 
-    def remove(self, section, item=None):
+    def remove(self, section: str, item: Optional[str] = None) -> None:
         """ Remove given section or section item """
         # Remove the whole section
         if item is None:
@@ -1719,7 +1911,7 @@ class StructuredField(object):
                 del self._order[self._order.index(section)]
             except KeyError:
                 raise StructuredFieldError(
-                    "Section [{0}] not found".format(ascii(section)))
+                    "Section [{0!r}] not found".format(ascii(section)))
         # Remove only selected item from the section
         else:
             try:
@@ -1727,7 +1919,7 @@ class StructuredField(object):
                 del(dictionary[item])
             except KeyError:
                 raise StructuredFieldError(
-                    "Unable to remove '{0}' from section '{1}'".format(
+                    "Unable to remove '{0!r}' from section '{1!r}'".format(
                         ascii(item), ascii(section)))
             self._sections[section] = self._write_section(dictionary)
 
@@ -1736,11 +1928,14 @@ class DistGitHandler(object):
     """ Common functionality for DistGit handlers """
     sources_file_name = 'sources'
     uri = "/rpms/{name}/{filename}/{hashtype}/{hash}/{filename}"
-    remote_substring = None
-    usage_name = "Name to use for dist-git-type"
-    re_ignore_extensions = re.compile(r'\.(sign|asc|key)$')
 
-    def url_and_name(self, cwd='.'):
+    usage_name: str  # Name to use for dist-git-type
+    re_source: Pattern[str]
+    re_ignore_extensions: Pattern[str] = re.compile(r'\.(sign|asc|key)$')
+    lookaside_server: str
+    remote_substring: Pattern[str]
+
+    def url_and_name(self, cwd: str = '.') -> List[Tuple[str, str]]:
         """
         Return list of urls and basenames of the used source
 
@@ -1756,6 +1951,10 @@ class DistGitHandler(object):
             with open(os.path.join(cwd, self.sources_file_name)) as f:
                 for line in f.readlines():
                     match = self.re_source.match(line)
+                    if match is None:
+                        raise GeneralError(
+                            f"Couldn't match '{self.sources_file_name}' "
+                            f"content with '{self.re_source.pattern}'.")
                     used_hash, source_name, hash_value = match.groups()
                     ret_values.append((self.lookaside_server + self.uri.format(
                         name=package,
@@ -1772,7 +1971,7 @@ class DistGitHandler(object):
                 "No sources found in '{self.sources_file_name}' file.")
         return ret_values
 
-    def its_me(self, remotes):
+    def its_me(self, remotes: List[str]) -> bool:
         """ True if self can work with remotes """
         return any([self.remote_substring.search(item) for item in remotes])
 
@@ -1793,7 +1992,9 @@ class CentOSDistGit(DistGitHandler):
     remote_substring = re.compile(r'redhat/centos')
 
 
-def get_distgit_handler(remotes=None, usage_name=None):
+def get_distgit_handler(
+        remotes: Optional[List[str]] = None,
+        usage_name: Optional[str] = None) -> DistGitHandler:
     """
     Return the right DistGitHandler
 
@@ -1810,12 +2011,12 @@ def get_distgit_handler(remotes=None, usage_name=None):
     raise GeneralError(f"No known remote in '{remotes}'.")
 
 
-def get_distgit_handler_names():
+def get_distgit_handler_names() -> List[str]:
     """ All known distgit handlers """
     return [i.usage_name for i in DistGitHandler.__subclasses__()]
 
 
-class updatable_message(contextlib.AbstractContextManager):
+class updatable_message(contextlib.AbstractContextManager):  # type: ignore
     """ Updatable message suitable for progress-bar-like reporting """
 
     def __init__(
@@ -1857,16 +2058,16 @@ class updatable_message(contextlib.AbstractContextManager):
         if not sys.stdout.isatty():
             self.enabled = False
 
-        self._previous_line = None
+        self._previous_line: Optional[str] = None
 
     def __enter__(self) -> 'updatable_message':
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: Any) -> None:
         sys.stdout.write('\n')
         sys.stdout.flush()
 
-    def update(self, value, color=None) -> None:
+    def update(self, value: str, color: Optional[str] = None) -> None:
         if not self.enabled:
             return
 

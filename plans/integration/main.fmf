@@ -10,6 +10,6 @@ prepare:
     how: install
     package: python3-pip
   - name: Install Requre
-    script: pip3 install requre
+    script: pip3 install "typing-extensions>=3.7.4.3" requre
   - name: Create default nitrate config
     script: "test -e ~/.nitrate || echo -en '[nitrate]\nurl = https://nitrate.server/xmlrpc/\n' | tee ~/.nitrate"

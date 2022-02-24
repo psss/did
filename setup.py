@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import re
+import sys
 from io import open
 
 from setuptools import setup
@@ -31,20 +32,39 @@ __desc__ = 'Test Management Tool'
 __scripts__ = ['bin/tmt']
 
 # Prepare install requires and extra requires
+
+# typing_extensions is needed with Python 3.7 and older, types imported
+# from that package (Literal, Protocol, TypedDict, ...) become available
+# from typing since Python 3.8.
+typing_extensions_requirement = [
+    'typing-extensions>=3.7.4.3'] if sys.version_info.minor <= 7 else []
+
 install_requires = [
     'fmf>=1.0.0',
     'click',
     'requests',
-    'ruamel.yaml'
-]
+    'ruamel.yaml',
+] + typing_extensions_requirement
 extras_require = {
-    'docs': ['sphinx>=3', 'sphinx_rtd_theme'],
-    'tests': ['pytest', 'python-coveralls', 'requre', 'pre-commit'],
+    'docs': [
+        'sphinx>=3',
+        'sphinx_rtd_theme'],
+    'tests': [
+        'pytest',
+        'python-coveralls',
+        'requre',
+        'pre-commit',
+        'mypy'
+        ] + typing_extensions_requirement,
     'provision': ['testcloud>=0.7.0'],
-    'convert': ['nitrate', 'markdown', 'python-bugzilla', 'html2text'],
+    'convert': [
+        'nitrate',
+        'markdown',
+        'python-bugzilla',
+        'html2text'],
     'report-html': ['jinja2'],
     'report-junit': ['junit_xml'],
-}
+    }
 extras_require['all'] = [
     dependency
     for extra in extras_require.values()

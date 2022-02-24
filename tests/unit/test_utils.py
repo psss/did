@@ -365,13 +365,13 @@ class test_structured_field(unittest.TestCase):
 class Run(unittest.TestCase):
 
     def test_interactive_not_joined(self):
-        a, b = Common()._run("echo abc; echo def >2", shell=True,
-                             interactive=True, cwd=".", env={}, log=None)
-        self.assertEqual(a, None)
-        self.assertEqual(b, None)
+        stdout, stderr = Common()._run("echo abc; echo def >2", shell=True,
+                                       interactive=True, cwd=".", env={}, log=None)
+        self.assertEqual(stdout, None)
+        self.assertEqual(stderr, None)
 
     def test_interactive_joined(self):
-        a = Common()._run(
+        stdout, _ = Common()._run(
             "echo abc; echo def >2",
             shell=True,
             interactive=True,
@@ -379,38 +379,38 @@ class Run(unittest.TestCase):
             env={},
             join=True,
             log=None)
-        self.assertEqual(a, None)
+        self.assertEqual(stdout, None)
 
     def test_not_joined_stdout(self):
-        a, b = Common()._run("ls /", shell=True, cwd=".", env={}, log=None)
-        self.assertIn("sbin", a)
+        stdout, _ = Common()._run("ls /", shell=True, cwd=".", env={}, log=None)
+        self.assertIn("sbin", stdout)
 
     def test_not_joined_stderr(self):
-        a, b = Common()._run("ls non_existing || true", shell=True,
-                             cwd=".", env={}, log=None)
-        self.assertIn("ls: cannot access", b)
+        _, stderr = Common()._run("ls non_existing || true", shell=True,
+                                  cwd=".", env={}, log=None)
+        self.assertIn("ls: cannot access", stderr)
 
     def test_joined(self):
-        a = Common()._run(
+        stdout, _ = Common()._run(
             "ls non_existing / || true",
             shell=True,
             cwd=".",
             env={},
             log=None,
             join=True)
-        self.assertIn("ls: cannot access", a)
-        self.assertIn("sbin", a)
+        self.assertIn("ls: cannot access", stdout)
+        self.assertIn("sbin", stdout)
 
     def test_big(self):
-        a = Common()._run(
+        stdout, _ = Common()._run(
             """for NUM in {1..100}; do LINE="$LINE n"; done; for NUM in {1..1000}; do echo $LINE; done""",
             shell=True,
             cwd=".",
             env={},
             log=None,
             join=True)
-        self.assertIn("n n", a)
-        self.assertEqual(len(a), 200000)
+        self.assertIn("n n", stdout)
+        self.assertEqual(len(stdout), 200000)
 
 
 def test_get_distgit_handler():

@@ -28,9 +28,9 @@ class Step(tmt.utils.Common):
     # except for provision (virtual) and report (display)
     how = 'shell'
 
-    def __init__(self, data=None, plan=None, name=None):
+    def __init__(self, data=None, plan=None, name=None, workdir=None):
         """ Initialize and check the step data """
-        super().__init__(name=name, parent=plan)
+        super().__init__(name=name, parent=plan, workdir=workdir)
         # Initialize data
         self.plan = plan
         self.data = data or {}
@@ -262,7 +262,7 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
     # Keys specific for given plugin
     _keys = []
 
-    def __init__(self, step, data):
+    def __init__(self, step, data, workdir=None):
         """ Store plugin name, data and parent step """
 
         # Ensure that plugin data contains name
@@ -272,7 +272,7 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
                 f"of the '{step.plan}' plan.")
 
         # Store name, data and parent step
-        super().__init__(parent=step, name=data['name'])
+        super().__init__(parent=step, name=data['name'], workdir=workdir)
         self.data = data
         self.step = step
 

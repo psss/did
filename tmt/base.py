@@ -7,13 +7,20 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
+from typing import Optional
 
 import click
 import fmf
 from click import echo, style
 from fmf.utils import listed
 from ruamel.yaml.error import MarkedYAMLError
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
 
 import tmt.export
 import tmt.steps
@@ -55,6 +62,15 @@ SECTIONS_HEADINGS = {
                '<h2>Expected Result</h2>'],
     'Cleanup': ['<h1>Cleanup</h1>']
     }
+
+
+# See https://fmf.readthedocs.io/en/latest/concept.html#identifiers for
+# formal specification.
+class FmfIdType(TypedDict):
+    url: Optional[str]
+    ref: Optional[str]
+    path: Optional[str]
+    name: Optional[str]
 
 
 class Core(tmt.utils.Common):
@@ -481,10 +497,7 @@ class Test(Core):
 
         # Check for possible test case relevancy rules
         filename = self.node.sources[-1]
-        syntax_ok, metadata = tmt.utils.yaml_to_dict(self.read(filename), True)
-        if not syntax_ok:
-            verdict(None, 'seems to use YAML 1.1 syntax which will be '
-                          'deprecated in tmt 2.0')
+        metadata = tmt.utils.yaml_to_dict(self.read(filename))
         relevancy = metadata.pop('relevancy', None)
         if relevancy:
             # Convert into adjust rules if --fix enabled
@@ -718,10 +731,12 @@ class Plan(Core):
                     #        in inconsistent formatting. Using a safe loader in
                     #        this case is a hack to make it forget, though there
                     #        may be a better way to do this.
-                    data = tmt.utils.yaml_to_dict(option, yaml_type='safe')
-                    if not data:
+                    try:
+                        data = tmt.utils.yaml_to_dict(option, yaml_type='safe')
+                    except tmt.utils.GeneralError as error:
                         raise tmt.utils.GeneralError(
-                            f"Invalid step data for {step}: '{data}'.")
+                            f"Invalid step data for {step}: '{option}'"
+                            f"\n{error}")
                     step_data.append(data)
                 except MarkedYAMLError as error:
                     raise tmt.utils.GeneralError(
