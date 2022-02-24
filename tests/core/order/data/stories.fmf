@@ -1,28 +1,24 @@
+story: required attribute
+
 /none:
     summary: story with order None
-    story: required attribute
     order:
 
 /no_order:
     summary: story without order attribute
-    story: required attribute
 
 /negative_1:
     summary: story with order -1
-    story: required attribute
     order: -1
 
 /zero:
     summary: story with order 0
-    story: required attribute
     order: 0
 
 /third:
     summary: story with order 3
-    story: required attribute
     order: 3
 
 /fourth:
     summary: story with order 4
-    story: required attribute
     order: 4

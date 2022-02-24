@@ -67,7 +67,7 @@ class Core(tmt.utils.Common):
     """
 
     # Core attributes (supported across all levels)
-    _keys = ['summary', 'description', 'enabled', 'link', 'adjust', 'order']
+    _keys = ['summary', 'description', 'enabled', 'order', 'link', 'adjust']
 
     def __init__(self, node, parent=None):
         """ Initialize the node """
@@ -272,7 +272,6 @@ class Test(Core):
         'description',
         'contact',
         'component',
-        'order',
 
         # Test execution data
         'test',
@@ -284,6 +283,7 @@ class Test(Core):
         'environment',
         'duration',
         'enabled',
+        'order',
         'result',
 
         # Filtering attributes
@@ -412,14 +412,15 @@ class Test(Core):
         """ Show test details """
         self.ls()
         for key in self._keys:
+            value = getattr(self, key)
             # Special handling for the link attribute
             if key == 'link':
                 self._link.show()
                 continue
-            value = getattr(self, key)
+            # No need to show the default order
             if key == 'order' and value == DEFAULT_ORDER:
                 continue
-            elif value not in [None, list(), dict()]:
+            if value not in [None, list(), dict()]:
                 echo(tmt.utils.format(key, value))
         if self.opt('verbose'):
             self._sources()
@@ -957,8 +958,8 @@ class Story(Core):
         'description',
         'example',
         'enabled',
-        'link',
         'order',
+        'link',
         ]
 
     def __init__(self, node):
@@ -1046,13 +1047,13 @@ class Story(Core):
         """ Show story details """
         self.ls()
         for key in self._keys:
+            value = getattr(self, key)
             if key == 'link':
                 self._link.show()
                 continue
-            value = getattr(self, key)
             if key == 'order' and value == DEFAULT_ORDER:
                 continue
-            elif value is not None:
+            if value is not None:
                 wrap = False if key == 'example' else 'auto'
                 echo(tmt.utils.format(key, value, wrap=wrap))
         if self.opt('verbose'):
@@ -1241,45 +1242,36 @@ class Tree(tmt.utils.Common):
         conditions = (conditions or []) + list(Test._opt('conditions', []))
         links = (links or []) + list(Test._opt('links', []))
 
-        # Apply possible additional name filters from the command line
-        # (Used in: tmt run test --name NAME, tmt test ls NAME...)
-        cli_names = list(Test._opt('names', []))
-
-        def filter_names(nodes):
-            nodes = [
+        def name_filter(nodes):
+            """ Filter nodes based on names provided on the command line """
+            # Used in: tmt run test --name NAME, tmt test ls NAME...
+            names = list(Test._opt('names', []))
+            if not names:
+                return nodes
+            return [
                 node for node in nodes
-                if any([re.search(name, node.name) for name in cli_names])]
-            return nodes
+                if any([re.search(name, node.name) for name in names])]
 
-        # First let's build the list of fmf nodes based on keys & names.
+        # First let's build the list of test objects based on keys & names.
         # If duplicate test names are allowed, match test name/regexp
         # one-by-one and preserve the order of tests within a plan.
-        sorted_nodes = []
         if not unique and names:
-            nodes = []
-            i = 0
+            tests = []
             for name in names:
-                nodes.extend(self.tree.prune(keys=keys, names=[name]))
-                filtered_nodes = filter_names(nodes) if cli_names else nodes
-                tests_amount = len(filtered_nodes)
-                current_node = [Test(node)
-                                for node in filtered_nodes[i:tests_amount]]
-                current_node = sorted(current_node, key=lambda n: n.order)
-                sorted_nodes.extend(current_node)
-                i = tests_amount
+                selected_tests = [
+                    Test(test) for test
+                    in name_filter(self.tree.prune(keys=keys, names=[name]))]
+                tests.extend(
+                    sorted(selected_tests, key=lambda test: test.order))
         # Otherwise just perform a regular key/name filtering
         else:
-            nodes = self.tree.prune(keys=keys, names=names)
-            if cli_names:
-                nodes = filter_names(nodes)
-            sorted_nodes = sorted(
-                [Test(node) for node in nodes], key=lambda n: n.order)
+            selected_tests = [
+                Test(test) for test
+                in name_filter(self.tree.prune(keys=keys, names=names))]
+            tests = sorted(selected_tests, key=lambda test: test.order)
 
-        # Convert into Test objects and apply filters & conditions
-        return self._filters_conditions(sorted_nodes,
-                                        filters,
-                                        conditions,
-                                        links)
+        # Apply filters & conditions
+        return self._filters_conditions(tests, filters, conditions, links)
 
     def plans(self, keys=None, names=None, filters=None, conditions=None,
               run=None, links=None):
@@ -1291,14 +1283,13 @@ class Tree(tmt.utils.Common):
         conditions = (conditions or []) + list(Plan._opt('conditions', []))
         links = (links or []) + list(Plan._opt('links', []))
 
-        # Build the list and convert to objects
-        nodes = [Plan(plan, run=run)
-                 for plan in self.tree.prune(keys=keys, names=names)]
-        sorted_nodes = sorted(nodes, key=lambda n: n.order)
-        return self._filters_conditions(sorted_nodes,
-                                        filters,
-                                        conditions,
-                                        links)
+        # Build the list, convert to objects, sort and filter
+        plans = [
+            Plan(plan, run=run) for plan
+            in self.tree.prune(keys=keys, names=names)]
+        return self._filters_conditions(
+            sorted(plans, key=lambda plan: plan.order),
+            filters, conditions, links)
 
     def stories(self, keys=None, names=None, filters=None, conditions=None,
                 whole=False, links=None):
@@ -1310,14 +1301,13 @@ class Tree(tmt.utils.Common):
         conditions = (conditions or []) + list(Story._opt('conditions', []))
         links = (links or []) + list(Story._opt('links', []))
 
-        # Build the list and convert to objects
-        nodes = [Story(story) for story in self.tree.prune(
-            keys=keys, names=names, whole=whole)]
-        sorted_nodes = sorted(nodes, key=lambda n: n.order)
-        return self._filters_conditions(sorted_nodes,
-                                        filters,
-                                        conditions,
-                                        links)
+        # Build the list, convert to objects, sort and filter
+        stories = [
+            Story(story) for story
+            in self.tree.prune(keys=keys, names=names, whole=whole)]
+        return self._filters_conditions(
+            sorted(stories, key=lambda story: story.order),
+            filters, conditions, links)
 
     @staticmethod
     def init(path, template, force, **kwargs):
