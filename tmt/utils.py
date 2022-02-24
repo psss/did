@@ -516,9 +516,10 @@ class Common(object):
     def _workdir_cleanup(self, path=None):
         """ Clean up the work directory """
         directory = path or self._workdir_name()
-        if os.path.isdir(directory):
-            self.debug(f"Clean up workdir '{directory}'.", level=2)
-            shutil.rmtree(directory)
+        if directory is not None:
+            if os.path.isdir(directory):
+                self.debug(f"Clean up workdir '{directory}'.", level=2)
+                shutil.rmtree(directory)
         self._workdir = None
 
     @property
