@@ -116,7 +116,7 @@ HTML_TEMPLATE = """
         <td class="name"> {{ result.name|e }}</td>
         <td class="log">
         {% for log in result.log %}
-            <a href="{{ base_dir }}/{{ log }}">{{ log | basename }}</a>
+            <a href="{{ base_dir | urlencode }}/{{ log | urlencode }}">{{ log | basename }}</a>
         {% endfor %}
         </td>
         {% if result.note %}
@@ -129,7 +129,7 @@ HTML_TEMPLATE = """
 <b>No test results found.</b>
 {% endif %}
 <p class="footer">
-    Links: <a href="{{ plan.my_run.workdir }}/log.txt">full debug log</a>
+    Links: <a href="{{ plan.my_run.workdir | urlencode }}/log.txt">full debug log</a>
 </p>
 </div>
 </body>
