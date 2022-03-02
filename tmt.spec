@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.10.0
+Version: 1.11.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -163,6 +163,27 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 
 
 %changelog
+* Wed Mar 02 2022 Petr Šplíchal <psplicha@redhat.com> - 1.11.0-1
+- Prevent koji build failures on unsupported arches
+- Check remote git URL if it is accessible
+- Implement a generic `requires` for all plugins
+- Run commands in podman provision via bash
+- Adjust implementation of the new `order` attribute
+- Implement the Core attribute `order`
+- Fix link generation in report.html
+- Improve step name handling
+- Enable shared volume mounts in podman provision
+- Add support for multihost provision and prepare
+- Adjust the dnf support for rsync install
+- Add dnf support for rsync install
+- Update links and refs after migration to `teemtee`
+- Track output for reboot purposes on per-test basis
+- Fix test --name '.' used with multiple plans
+- Tweak test suite (duration, centos:8, datadir)
+- Use `os.pathsep` to separate `TMT_PLUGINS` paths (#1049)
+- Document framework:shell exit codes
+- Add `html2text` to the `convert` pip dependencies
+
 * Tue Feb 01 2022 Lukáš Zachar <lzachar@redhat.com> - 1.10.0-1
 - Make reboot support a bit more backward compatible
 - Ensure that workdir has a correct selinux context

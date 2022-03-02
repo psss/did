@@ -410,8 +410,8 @@ Lachman, Patrik Kis, Ondrej Mosnáček, Andrea Ficková, Denis
 Karpelevich, Michal Srb, Jan Ščotka, Artem Zhukov, Vinzenz
 Feenstra, Inessa Vasilevskaya, Štěpán Němec, Robin Hack, Yulia
 Kopkova, Ondrej Moriš, Martin Zelený, Karel Šrot, František
-Zatloukal, Simon Walter, Petr Matyáš, Yariv Rachmani, Pavel Cahyna
-and Martin Litwora.
+Zatloukal, Simon Walter, Petr Matyáš, Yariv Rachmani, Pavel
+Cahyna, Martin Litwora and Brian Grech.
 
 
 Copyright
