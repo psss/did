@@ -51,6 +51,21 @@ class NitrateExport(Base):
         fmf_node = Tree(self.tmpdir).find("/new_testcase")
         self.assertIn("extra-nitrate", fmf_node.data)
 
+    def test_create_dryrun(self):
+        fmf_node_before = Tree(self.tmpdir).find("/new_testcase")
+        self.assertNotIn("extra-nitrate", fmf_node_before.data)
+
+        os.chdir(self.tmpdir / "new_testcase")
+        runner = CliRunner()
+        self.runner_output = runner.invoke(tmt.cli.main, [
+            "test", "export", "--nitrate", "--create", "--dry", "--general", "."])
+        fmf_node = Tree(self.tmpdir).find("/new_testcase")
+        self.assertNotIn("extra-nitrate", fmf_node.data)
+        self.assertEqual(fmf_node_before.data, fmf_node.data)
+        self.assertIn(
+            "summary: tmt/new_testcase - This i",
+            self.runner_output.output)
+
     def test_existing(self):
         fmf_node = Tree(self.tmpdir).find("/existing_testcase")
         self.assertEqual(fmf_node.data["extra-nitrate"], "TC#0609686")
@@ -62,7 +77,16 @@ class NitrateExport(Base):
                                             "--create", "--general", "."])
         fmf_node = Tree(self.tmpdir).find("/existing_testcase")
 
+    def test_existing_dryrun(self):
+        fmf_node = Tree(self.tmpdir).find("/existing_dryrun_testcase")
         self.assertEqual(fmf_node.data["extra-nitrate"], "TC#0609686")
+
+        os.chdir(self.tmpdir / "existing_dryrun_testcase")
+        runner = CliRunner()
+        self.runner_output = runner.invoke(
+            tmt.cli.main, [
+                "test", "export", "--nitrate", "--dry", "--general", "--bugzilla", "."])
+        self.assertIn("summary: ABCDEF", self.runner_output.output)
 
     def test_coverage_bugzilla(self):
         fmf_node = Tree(self.tmpdir).find("/existing_testcase")

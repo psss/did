@@ -228,6 +228,7 @@ def export_to_nitrate(test):
     general = test.opt('general')
     duplicate = test.opt('duplicate')
     link_bugzilla = test.opt('bugzilla')
+    dry_mode = test.opt('dry')
 
     if link_bugzilla:
         import_bugzilla()
@@ -261,10 +262,14 @@ def export_to_nitrate(test):
                 except StopIteration:
                     pass
             if not nitrate_case:
-                nitrate_case = create_nitrate_case(test)
-            new_test_created = True
-            # Newly created tmt tests have special format summary
-            test._metadata['extra-summary'] = nitrate_case.summary
+                # Summary for TCMS case
+                extra_summary = prepare_extra_summary(test)
+                if not dry_mode:
+                    nitrate_case = create_nitrate_case(extra_summary)
+                else:
+                    echo(style(
+                        f"Test case '{extra_summary}' created.", fg='blue'))
+                test._metadata['extra-summary'] = extra_summary
         else:
             raise ConvertError(f"Nitrate test case id not found for {test}"
                                " (You can use --create option to enforce"
@@ -281,31 +286,39 @@ def export_to_nitrate(test):
                or test.summary
                or test.name)
     if summary:
-        nitrate_case.summary = summary
+        if not dry_mode:
+            nitrate_case.summary = summary
         echo(style('summary: ', fg='green') + summary)
     else:
         raise ConvertError("Nitrate case summary could not be determined.")
 
     # Script
     if test.node.get('extra-task'):
-        nitrate_case.script = test.node.get('extra-task')
+        if not dry_mode:
+            nitrate_case.script = test.node.get('extra-task')
         echo(style('script: ', fg='green') + test.node.get('extra-task'))
 
-    # Components
+    # Components and General plan
     # First remove any components that are already there
-    nitrate_case.components.clear()
-    if general:
+    if not dry_mode:
+        nitrate_case.components.clear()
+    if general and nitrate_case:
         # Remove also all general plans linked to testcase
         for nitrate_plan in [plan for plan in nitrate_case.testplans]:
             if nitrate_plan.type.name == "General":
-                nitrate_case.testplans.remove(nitrate_plan)
+                echo(style(
+                    f"Removed general plan '{nitrate_plan}'.", fg='red'))
+                if not dry_mode:
+                    nitrate_case.testplans.remove(nitrate_plan)
     # Then add fmf ones
     if test.component:
         echo(style('components: ', fg='green') + ' '.join(test.component))
         for component in test.component:
             try:
-                nitrate_case.components.add(nitrate.Component(
-                    name=component, product=DEFAULT_PRODUCT.id))
+                nitrate_component = nitrate.Component(
+                    name=component, product=DEFAULT_PRODUCT.id)
+                if not dry_mode:
+                    nitrate_case.components.add(nitrate_component)
             except nitrate.xmlrpc_driver.NitrateError as error:
                 log.debug(error)
                 echo(style(
@@ -313,7 +326,11 @@ def export_to_nitrate(test):
             if general:
                 try:
                     general_plan = find_general_plan(component)
-                    nitrate_case.testplans.add(general_plan)
+                    echo(style(
+                        f"Linked to general plan '{general_plan}'.",
+                        fg='magenta'))
+                    if not dry_mode:
+                        nitrate_case.testplans.add(general_plan)
                 except nitrate.NitrateError as error:
                     log.debug(error)
                     echo(style(
@@ -321,13 +338,14 @@ def export_to_nitrate(test):
                         fg='red'))
 
     # Tags
-    nitrate_case.tags.clear()
     # Convert 'tier' attribute into a Tier tag
     if test.tier is not None:
         test.tag.append(f"Tier{test.tier}")
     # Add special fmf-export tag
     test.tag.append('fmf-export')
-    nitrate_case.tags.add([nitrate.Tag(tag) for tag in test.tag])
+    if not dry_mode:
+        nitrate_case.tags.clear()
+        nitrate_case.tags.add([nitrate.Tag(tag) for tag in test.tag])
     echo(style('tags: ', fg='green') + ' '.join(set(test.tag)))
 
     # Default tester
@@ -335,26 +353,32 @@ def export_to_nitrate(test):
         # Need to pick one value, so picking the first contact
         email_address = email.utils.parseaddr(test.contact[0])[1]
         # TODO handle nitrate user not existing and other possible exceptions
-        nitrate_case.tester = nitrate.User(email_address)
+        if not dry_mode:
+            nitrate_case.tester = nitrate.User(email_address)
         echo(style('default tester: ', fg='green') + email_address)
 
     # Duration
-    nitrate_case.time = test.duration
+    if not dry_mode:
+        nitrate_case.time = test.duration
     echo(style('estimated time: ', fg='green') + test.duration)
 
     # Manual
-    nitrate_case.automated = not test.manual
+    if not dry_mode:
+        nitrate_case.automated = not test.manual
     echo(style('automated: ', fg='green') + ['auto', 'manual'][test.manual])
 
     # Status
-    current_status = nitrate_case.status
+    current_status = nitrate_case.status if nitrate_case else nitrate.CaseStatus(
+        'CONFIRMED')
     # Enable enabled tests
     if test.enabled:
-        nitrate_case.status = nitrate.CaseStatus('CONFIRMED')
+        if not dry_mode:
+            nitrate_case.status = nitrate.CaseStatus('CONFIRMED')
         echo(style('status: ', fg='green') + 'CONFIRMED')
     # Disable disabled tests which are CONFIRMED
     elif current_status == nitrate.CaseStatus('CONFIRMED'):
-        nitrate_case.status = nitrate.CaseStatus('DISABLED')
+        if not dry_mode:
+            nitrate_case.status = nitrate.CaseStatus('DISABLED')
         echo(style('status: ', fg='green') + 'DISABLED')
     # Keep disabled tests in their states
     else:
@@ -363,16 +387,19 @@ def export_to_nitrate(test):
     # Environment
     if test.environment:
         environment = ' '.join(tmt.utils.shell_variables(test.environment))
-        nitrate_case.arguments = environment
+        if not dry_mode:
+            nitrate_case.arguments = environment
         echo(style('arguments: ', fg='green') + environment)
     else:
         # FIXME unable clear to set empty arguments
         # (possibly error in xmlrpc, BZ#1805687)
-        nitrate_case.arguments = ' '
+        if not dry_mode:
+            nitrate_case.arguments = ' '
         echo(style('arguments: ', fg='green') + "' '")
 
     # Structured Field
-    struct_field = tmt.utils.StructuredField(nitrate_case.notes)
+    struct_field = tmt.utils.StructuredField(
+        nitrate_case.notes if nitrate_case else '')
     echo(style('Structured Field: ', fg='green'))
 
     # Mapping of structured field sections to fmf case attributes
@@ -404,31 +431,36 @@ def export_to_nitrate(test):
             'Add migration warning to the test case notes.', fg='green'))
 
     # Saving case.notes with edited StructField
-    nitrate_case.notes = struct_field.save()
+    if not dry_mode:
+        nitrate_case.notes = struct_field.save()
 
     # Export manual test instructions from *.md file to nitrate as html
     md_path = return_markdown_file()
     if os.path.exists(md_path):
         step, expect, setup, cleanup = convert_manual_to_nitrate(md_path)
-        nitrate.User()._server.TestCase.store_text(
-            nitrate_case.id, step, expect, setup, cleanup)
+        if not dry_mode:
+            nitrate.User()._server.TestCase.store_text(
+                nitrate_case.id, step, expect, setup, cleanup)
         echo(style(f"manual steps:", fg='green') + f" found in {md_path}")
 
     # Append id of newly created nitrate case to its file
-    if new_test_created:
+    if not test.node.get('extra-nitrate'):
         echo(style(f"Append the nitrate test case id.", fg='green'))
-        try:
-            with test.node as data:
-                data["extra-nitrate"] = nitrate_case.identifier
-        except AttributeError:
-            # FIXME: Remove this deprecated code after fmf support
-            # for storing modified data is released long enough
-            file_path = test.node.sources[-1]
+        if not dry_mode:
             try:
-                with open(file_path, encoding='utf-8', mode='a+') as file:
-                    file.write(f"extra-nitrate: {nitrate_case.identifier}\n")
-            except IOError:
-                raise ConvertError("Unable to open '{0}'.".format(file_path))
+                with test.node as data:
+                    data["extra-nitrate"] = nitrate_case.identifier
+            except AttributeError:
+                # FIXME: Remove this deprecated code after fmf support
+                # for storing modified data is released long enough
+                file_path = test.node.sources[-1]
+                try:
+                    with open(file_path, encoding='utf-8', mode='a+') as file:
+                        file.write(
+                            f"extra-nitrate: {nitrate_case.identifier}\n")
+                except IOError:
+                    raise ConvertError(
+                        "Unable to open '{0}'.".format(file_path))
 
     # List of bugs test verifies
     verifies_bug_ids = []
@@ -440,22 +472,28 @@ def export_to_nitrate(test):
             log.debug(err)
 
     # Add bugs to the Nitrate case
+    if verifies_bug_ids:
+        echo(style('Verifies bugs: ', fg='green') +
+             ', '.join([f"BZ#{b}" for b in verifies_bug_ids]))
     for bug_id in verifies_bug_ids:
-        nitrate_case.bugs.add(nitrate.Bug(bug=int(bug_id)))
+        if not dry_mode:
+            nitrate_case.bugs.add(nitrate.Bug(bug=int(bug_id)))
 
     # Update nitrate test case
-    nitrate_case.update()
-    echo(style("Test case '{0}' successfully exported to nitrate.".format(
-        nitrate_case.identifier), fg='magenta'))
+    if not dry_mode:
+        nitrate_case.update()
+        echo(style("Test case '{0}' successfully exported to nitrate.".format(
+            nitrate_case.identifier), fg='magenta'))
 
     # Optionally link Bugzilla to Nitrate case
     if link_bugzilla and verifies_bug_ids:
         try:
-            bz_set_coverage(
-                bz_instance, verifies_bug_ids, int(
-                    nitrate_case.id))
-            echo(style("Linked to Bugzilla: {}.".format(
-                " ".join([f"BZ#{bz_id}" for bz_id in verifies_bug_ids])), fg='magenta'))
+            if not dry_mode:
+                bz_set_coverage(
+                    bz_instance, verifies_bug_ids, int(
+                        nitrate_case.id))
+            echo(style("Linked to Bugzilla: {}.".format(", ".join(
+                [f"BZ#{bz_id}" for bz_id in verifies_bug_ids])), fg='magenta'))
         except Exception as err:
             raise ConvertError("Couldn't update bugs", original=err)
 
@@ -623,7 +661,7 @@ def return_markdown_file():
     return md_path
 
 
-def create_nitrate_case(test):
+def create_nitrate_case(summary):
     """ Create new nitrate case """
     import_nitrate()
 
@@ -638,18 +676,24 @@ def create_nitrate_case(test):
         category = 'Sanity'
 
     # Create the new test case
-    remote_dirname = re.sub('.git$', '', os.path.basename(test.fmf_id['url']))
-    if not remote_dirname:
-        raise ConvertError("Unable to find git remote url.")
-    summary = test.node.get('extra-summary', (remote_dirname or "")
-                            + (test.name or "") + ' - ' + (test.summary or ""))
     category = nitrate.Category(name=category, product=DEFAULT_PRODUCT)
     testcase = nitrate.TestCase(summary=summary, category=category)
     echo(style(f"Test case '{testcase.identifier}' created.", fg='blue'))
     return testcase
 
 
+def prepare_extra_summary(test):
+    """ extra-summary for export --create test """
+    remote_dirname = re.sub('.git$', '', os.path.basename(test.fmf_id['url']))
+    if not remote_dirname:
+        raise ConvertError("Unable to find git remote url.")
+    summary = test.node.get('extra-summary', (remote_dirname or "")
+                            + (test.name or "") + ' - ' + (test.summary or ""))
+    return summary
+
 # avoid multiple searching for general plans (it is expensive)
+
+
 @lru_cache(maxsize=None)
 def find_general_plan(component):
     """ Return single General Test Plan or raise an error """

@@ -564,6 +564,9 @@ def import_(
     help='Allow or prevent creating duplicates in Nitrate by searching for '
          'existing test cases with the same fmf identifier.')
 @click.option(
+    '-n', '--dry', is_flag=True,
+    help="Run in dry mode. No changes, please.")
+@click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
 def export(context, format_, nitrate, bugzilla, **kwargs):

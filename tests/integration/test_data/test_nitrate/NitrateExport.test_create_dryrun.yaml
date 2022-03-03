@@ -1,0 +1,24 @@
+_requre:
+  DataTypes: 1
+  key_strategy: StorageKeysInspectSimple
+  version_storage_file: 3
+tmt.utils:
+  check_git_url:
+  - metadata:
+      guess_type: Simple
+      latency: 0.4068875312805176
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - pysnooper.tracer
+      - tmt.export
+      - requre.objects
+      - requre.cassette
+      - tmt.utils
+      - check_git_url
+    output: https://github.com/psss/tmt.git
