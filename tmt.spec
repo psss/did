@@ -8,7 +8,9 @@ BuildArch: noarch
 
 # Build only on arches where libguestfs (needed by testcloud) is available
 %{?kernel_arches:ExclusiveArch: %{kernel_arches} noarch}
+%if 0%{?rhel} >= 9
 ExcludeArch: %{power64}
+%endif
 
 URL: https://github.com/teemtee/tmt
 Source0: https://github.com/teemtee/tmt/releases/download/%{version}/tmt-%{version}.tar.gz
