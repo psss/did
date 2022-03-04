@@ -622,12 +622,8 @@ def quote(string):
 
 def ascii(text):
     """ Transliterate special unicode characters into pure ascii """
-    try:
-        if not isinstance(text, unicode):
-            text = unicode(text)
-    except NameError:
-        if not isinstance(text, str):
-            text = str(text)
+    if not isinstance(text, str):
+        text = str(text)
     return unicodedata.normalize('NFKD', text).encode('ascii', 'ignore')
 
 
@@ -1595,17 +1591,12 @@ class StructuredField(object):
         """ Load the StructuredField from a string """
         if version is not None:
             self.version(version)
-        # Make sure we got a text, convert to unicode if necessary
-        try:
-            if not isinstance(text, basestring):
-                raise StructuredFieldError(
-                    "Invalid StructuredField, expecting string or unicode")
-            if not isinstance(text, unicode):
-                text = text.decode("utf8")
-        except NameError:
-            if not isinstance(text, str):
-                raise StructuredFieldError(
-                    "Invalid StructuredField, expecting string")
+        # Make sure we got a text, convert from bytes if necessary
+        if isinstance(text, bytes):
+            text = text.decode("utf8")
+        if not isinstance(text, str):
+            raise StructuredFieldError(
+                "Invalid StructuredField, expecting string")
         # Remove possible carriage returns
         text = re.sub("\r\n", "\n", text)
         # Make sure the text has a new line at the end
@@ -1662,15 +1653,12 @@ class StructuredField(object):
     def set(self, section, content, item=None):
         """ Update content of given section or section item """
         # Convert to string if necessary, keep lists untouched
-        if not isinstance(content, list):
-            try:
-                if not isinstance(content, basestring):
-                    content = unicode(content)
-                elif not isinstance(content, unicode):
-                    content = content.decode("utf8")
-            except BaseException:
-                if not isinstance(content, str):
-                    content = str(content)
+        if isinstance(content, list):
+            pass
+        elif isinstance(content, bytes):
+            content = content.decode("utf8")
+        elif not isinstance(content, str):
+            content = str(content)
         # Set the whole section content
         if item is None:
             # Add new line if missing
