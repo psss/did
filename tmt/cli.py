@@ -713,7 +713,7 @@ def export(context, format_, **kwargs):
         echo(tmt.utils.dict_to_yaml(plans))
     else:
         raise tmt.utils.GeneralError(
-            f"Invalid test export format '{format_}'.")
+            f"Invalid plan export format '{format_}'.")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

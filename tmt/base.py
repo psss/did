@@ -974,7 +974,7 @@ class Plan(Core):
             return tmt.utils.dict_to_yaml(data)
         else:
             raise tmt.utils.GeneralError(
-                f"Invalid test export format '{format_}'.")
+                f"Invalid plan export format '{format_}'.")
 
 
 class Story(Core):
