@@ -523,6 +523,7 @@ class GuestTestcloud(tmt.Guest):
         timeout = DEFAULT_CONNECT_TIMEOUT
         wait = 1
         while True:
+            start_time = time.time()
             try:
                 self.execute('whoami')
                 break
@@ -533,9 +534,10 @@ class GuestTestcloud(tmt.Guest):
                 self.debug(
                     f'Failed to connect to machine, retrying, '
                     f'{fmf.utils.listed(timeout, "second")} left.')
+            attempt_duration = round(time.time() - start_time)
             time.sleep(wait)
             wait += 1
-            timeout -= wait
+            timeout -= wait + attempt_duration
 
     def stop(self):
         """ Stop provisioned guest """
