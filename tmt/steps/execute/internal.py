@@ -1,7 +1,5 @@
 import contextlib
-import json
 import os
-import re
 import sys
 import time
 
@@ -17,18 +15,40 @@ REBOOT_VARIABLES = [
     "REBOOTCOUNT",
     "RSTRNT_REBOOTCOUNT",
     ]
-REBOOT_TYPE = "reboot"
 REBOOT_SCRIPT_PATHS = (
     "/usr/local/bin/rstrnt-reboot",
     "/usr/local/bin/rhts-reboot",
     "/usr/local/bin/tmt-reboot")
 REBOOT_BACKUP_EXT = ".backup"
+REBOOT_REQUEST_FILENAME = "reboot_request"
 REBOOT_SCRIPT = f"""\
 #!/bin/sh
-echo "{{token}}:{{{{\
-    \\"type\\": \\"{REBOOT_TYPE}\\",\
-    \\"version\\": \\"0.2\\"\
-}}}}"
+touch "$TMT_TEST_DATA/{REBOOT_REQUEST_FILENAME}"
+"""
+REBOOT_BACKUP_EXT = ".tmt.backup"
+REBOOT_SETUP_NAME = "reboot_setup"
+REBOOT_SETUP_SCRIPT = f"""\
+#!/bin/sh
+for file in {" ".join(REBOOT_SCRIPT_PATHS)}; do
+    # Backup existing file, keep track of what has been backed-up
+    if [ -e "$file" ]; then
+        mv "$file" "$file{REBOOT_BACKUP_EXT}"
+        echo "$file"
+    fi
+    cp "$1" "$file" && chmod +x "$file"
+done
+"""
+REBOOT_TEARDOWN_NAME = "reboot_teardown"
+REBOOT_TEARDOWN_SCRIPT = f"""\
+#!/bin/sh
+for file in {" ".join(REBOOT_SCRIPT_PATHS)}; do
+    rm "$file"
+done
+
+# We pass back the backed up files
+for file in "$@"; do
+    mv "$file{REBOOT_BACKUP_EXT}" "$file"
+done
 """
 REBOOT_TEMPLATE_NAME = "reboot_template"
 
@@ -199,10 +219,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
     def _setup_reboot_script(self, guest):
         """ Set up reboot script on the guest"""
-        script = REBOOT_SCRIPT.format(token=self.parent.reboot_token)
         reboot_script_path = os.path.join(self.workdir, REBOOT_TEMPLATE_NAME)
         with open(reboot_script_path, 'w') as template:
-            template.write(script)
+            template.write(REBOOT_SCRIPT)
         guest.push(reboot_script_path)
         return reboot_script_path
 
@@ -259,36 +278,29 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         """
         Reboot the guest if the test requested it.
 
-        Check the previously fetched test log for signs of reboot request
+        Check for presence of a file signalling reboot request
         and orchestrate the reboot if it was requested. Also increment
         REBOOTCOUNT variable, reset it to 0 if no reboot was requested
         (going forward to the next test). Return whether reboot was done.
         """
-        output = self.read(
-            self.data_path(test, TEST_OUTPUT_FILENAME, full=True))
-        # Search only in the newly added output to avoid infinite looping
-        new_output = output[test._previous_output_length:]
-        test._previous_output_length = len(output)
-        token = self.parent.reboot_token
-        # Use the last occurrence in the output log
-        match = None
-        for match in re.finditer(
-                r"{}:(?P<data>.+)".format(re.escape(token)), new_output):
-            continue
-        if match:
-            data = json.loads(match.group("data"))
-            if data.get("type") == REBOOT_TYPE:
-                test._reboot_count += 1
-                self.debug(f"Reboot during test '{test}' "
-                           f"with reboot count {test._reboot_count}.")
-                try:
-                    guest.reboot()
-                except tmt.utils.ProvisionError:
-                    self.warn(
-                        "Guest does not support soft reboot, "
-                        "trying hard reboot.")
-                    guest.reboot(hard=True)
-                return True
+        test_data = os.path.join(
+            self.data_path(test, full=True), tmt.steps.execute.TEST_DATA)
+        reboot_request_path = os.path.join(test_data, REBOOT_REQUEST_FILENAME)
+        if os.path.exists(reboot_request_path):
+            test._reboot_count += 1
+            self.debug(f"Reboot during test '{test}' "
+                       f"with reboot count {test._reboot_count}.")
+            # Reset the file
+            os.remove(reboot_request_path)
+            guest.push(test_data)
+            try:
+                guest.reboot()
+            except tmt.utils.ProvisionError:
+                self.warn(
+                    "Guest does not support soft reboot, "
+                    "trying hard reboot.")
+                guest.reboot(hard=True)
+            return True
         return False
 
     def go(self):
@@ -314,8 +326,6 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 index = 0
                 while index < len(tests):
                     test = tests[index]
-                    if not hasattr(test, "_previous_output_length"):
-                        test._previous_output_length = 0
                     if not hasattr(test, "_reboot_count"):
                         test._reboot_count = 0
                     self.execute(
