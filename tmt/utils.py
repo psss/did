@@ -415,7 +415,7 @@ class Common(object):
         cwd = cwd or self.workdir
 
         # Fail nicely if the working directory does not exist
-        if not os.path.exists(cwd):
+        if cwd and not os.path.exists(cwd):
             raise GeneralError(
                 f"The working directory '{cwd}' does not exist.")
 
