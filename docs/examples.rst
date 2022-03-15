@@ -540,18 +540,17 @@ Parametrize Plans
 ------------------------------------------------------------------
 
 It is possible to parametrize plans using environment variables.
-This may be useful to reduce duplication, for example in CI.
+This may be useful to reduce duplication, for example in CI systems.
 The syntax is standard, both ``$var`` and ``${var}`` may be used.
-The values of variables are taken from the existing environment,
-command line option ``--environment`` and the ``environment``
-plan attribute (with descending precedence, variables already
-set in the environment have the highest priority)::
+The values of variables are taken from the ``--environment``
+command line option and the ``environment`` plan attribute.
+If a variable is defined using both the attribute and the option,
+the value from the ``--environment`` option has priority::
 
     discover:
         how: fmf
         url: https://github.com/teemtee/${REPO}
 
-    $ REPO=tmt tmt run
     $ tmt run -e REPO=tmt
 
 
