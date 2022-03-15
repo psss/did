@@ -69,3 +69,6 @@ tags
 
 # Persistent undo
 [._]*.un~
+
+# Visual Studio Code
+.vscode
