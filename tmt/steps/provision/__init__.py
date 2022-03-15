@@ -18,6 +18,9 @@ import tmt.utils
 CONNECTION_TIMEOUT = 60 * 4
 # Wait time when reboot happens in seconds
 SSH_INITIAL_WAIT_TIME = 5
+# Default rsync options
+DEFAULT_RSYNC_OPTIONS = [
+    "-R", "-r", "-z", "--links", "--safe-links", "--delete"]
 
 
 class Provision(tmt.steps.Step):
@@ -533,7 +536,7 @@ class Guest(tmt.utils.Common):
         """
         # Prepare options and the push command
         if options is None:
-            options = "-Rrz --links --safe-links --delete".split()
+            options = DEFAULT_RSYNC_OPTIONS
         if destination is None:
             destination = "/"
         if source is None:

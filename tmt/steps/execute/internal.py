@@ -1,5 +1,6 @@
 import contextlib
 import os
+import stat
 import sys
 import time
 
@@ -8,18 +9,17 @@ import click
 import tmt
 import tmt.utils
 from tmt.steps.execute import TEST_OUTPUT_FILENAME
+from tmt.steps.provision import DEFAULT_RSYNC_OPTIONS
 from tmt.steps.provision.local import GuestLocal
 
-REBOOT_VARIABLES = [
+REBOOT_VARIABLES = (
     "TMT_REBOOT_COUNT",
     "REBOOTCOUNT",
-    "RSTRNT_REBOOTCOUNT",
-    ]
+    "RSTRNT_REBOOTCOUNT")
 REBOOT_SCRIPT_PATHS = (
     "/usr/local/bin/rstrnt-reboot",
     "/usr/local/bin/rhts-reboot",
     "/usr/local/bin/tmt-reboot")
-REBOOT_BACKUP_EXT = ".backup"
 REBOOT_REQUEST_FILENAME = "reboot_request"
 REBOOT_SCRIPT = f"""\
 #!/bin/sh
@@ -218,12 +218,21 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             return self.check_shell(test)
 
     def _setup_reboot_script(self, guest):
-        """ Set up reboot script on the guest"""
-        reboot_script_path = os.path.join(self.workdir, REBOOT_TEMPLATE_NAME)
-        with open(reboot_script_path, 'w') as template:
-            template.write(REBOOT_SCRIPT)
-        guest.push(reboot_script_path)
-        return reboot_script_path
+        """ Set up reboot script on the guest. """
+        def setup_file(filename, content):
+            file_path = os.path.join(self.workdir, filename)
+            with open(file_path, 'w') as template:
+                template.write(content)
+            # Make it executable, keep perms when pushing
+            perms = os.stat(file_path)
+            os.chmod(file_path, perms.st_mode | stat.S_IEXEC)
+            return file_path
+
+        template = setup_file(REBOOT_TEMPLATE_NAME, REBOOT_SCRIPT)
+        setup = setup_file(REBOOT_SETUP_NAME, REBOOT_SETUP_SCRIPT)
+        teardown = setup_file(REBOOT_TEARDOWN_NAME, REBOOT_TEARDOWN_SCRIPT)
+        guest.push(self.workdir, options=DEFAULT_RSYNC_OPTIONS + ["-p"])
+        return template, setup, teardown
 
     @contextlib.contextmanager
     def _setup_reboot(self, guest):
@@ -233,46 +242,25 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             yield
             return
         backed_up = []
+        template, setup, teardown = None, None, None
         try:
-            reboot_script_path = self._setup_reboot_script(guest)
-            for reboot_file in REBOOT_SCRIPT_PATHS:
-                self.debug(f"Back up '{reboot_file}' if present.", level=2)
-                try:
-                    guest.execute(f'[ ! -e "{reboot_file}" ]')
-                except tmt.utils.RunError as error:
-                    if error.returncode == 1:
-                        # File exists, back it up
-                        backup = reboot_file + REBOOT_BACKUP_EXT
-                        self.debug(
-                            f"Back up '{reboot_file}' as '{backup}'.", level=2)
-                        guest.execute(f'mv "{reboot_file}" "{backup}"')
-                        backed_up.append(reboot_file)
-                    else:
-                        # Unrelated error, re-raise
-                        raise error
-                try:
-                    guest.execute(
-                        f'cp "{reboot_script_path}" "{reboot_file}" && '
-                        f'chmod +x "{reboot_file}"')
-                except tmt.utils.RunError as error:
-                    if "Read-only file system" not in error.stderr:
-                        raise error
+            self.debug("Setup our reboot script implementations.", level=2)
+            template, setup, teardown = self._setup_reboot_script(guest)
+            try:
+                stdout = guest.execute(f"\"{setup}\" \"{template}\"")[0]
+                backed_up.extend(stdout.splitlines())
+            except tmt.utils.RunError as error:
+                if "Read-only file system" not in error.stderr:
+                    raise error
             yield
         finally:
             self.debug("Remove our reboot script implementations.", level=2)
-            for reboot_file in REBOOT_SCRIPT_PATHS:
-                try:
-                    guest.execute(f'rm "{reboot_file}"')
-                except tmt.utils.RunError as error:
-                    self.debug(f"Error reported is: {error}")
             # FIXME: This part may not be executed if connection to the guest
             #        drops in the middle and the guest may be left in an
             #        inconsistent state.
-            for reboot_file in backed_up:
-                backup = reboot_file + REBOOT_BACKUP_EXT
-                self.debug(
-                    f"Move backup '{backup}' to '{reboot_file}'.", level=2)
-                guest.execute(f'mv "{backup}" "{reboot_file}"')
+            if teardown:
+                backed_up_files = " ".join(backed_up)
+                guest.execute(f"\"{teardown}\" {backed_up_files}")
 
     def _handle_reboot(self, test, guest):
         """
