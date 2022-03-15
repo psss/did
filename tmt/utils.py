@@ -1265,7 +1265,6 @@ def load_run(run):
 #  StructuredField
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 class StructuredField(object):
     """
     Handling multiple text data in a single text field

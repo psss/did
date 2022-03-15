@@ -1,5 +1,4 @@
 import os
-import shlex
 
 import click
 
@@ -157,13 +156,11 @@ class GuestContainer(tmt.Guest):
         """ Prepare container using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
         # As non-root we must run with podman unshare
-        podman_unshare = 'podman unshare ' if os.geteuid() != 0 else ''
-        verbosity = [self._ansible_verbosity()] \
-            if self._ansible_verbosity() else []
+        podman_unshare = ['podman', 'unshare'] if os.geteuid() != 0 else []
         stdout, stderr = self.run(
-            f'{podman_unshare}ansible-playbook'.split() +
-            verbosity +
-            shlex.split(self._ansible_extra_args(extra_args)) +
+            podman_unshare + ['ansible-playbook'] +
+            self._ansible_verbosity() +
+            self._ansible_extra_args(extra_args) +
             ['-c', 'podman', '-i', f'{self.container},', playbook],
             cwd=self.parent.plan.worktree,
             env=self._prepare_environment())

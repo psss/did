@@ -421,14 +421,17 @@ class Guest(tmt.utils.Common):
     def _ansible_verbosity(self):
         """ Prepare verbose level based on the --debug option count """
         if self.opt('debug') < 3:
-            return ''
+            return []
         else:
-            return '-' + (self.opt('debug') - 2) * 'v'
+            return ['-' + (self.opt('debug') - 2) * 'v']
 
     @staticmethod
     def _ansible_extra_args(extra_args):
         """ Prepare extra arguments for ansible-playbook"""
-        return '' if extra_args is None else str(extra_args)
+        if extra_args is None:
+            return []
+        else:
+            return shlex.split(str(extra_args))
 
     def _ansible_summary(self, output):
         """ Check the output for ansible result summary numbers """
@@ -458,25 +461,23 @@ class Guest(tmt.utils.Common):
         # Plan environment and variables provided on the command line
         # override environment provided to execute().
         environment.update(self.parent.plan.environment)
-        return {} if not environment else environment
+        return environment
 
     @staticmethod
     def _export_environment(environment):
         """ Prepare shell export of environment variables """
-        return f'export {" ".join(tmt.utils.shell_variables(environment))}; ' \
-            if environment \
-            else ''
+        if not environment:
+            return ""
+        return f'export {" ".join(tmt.utils.shell_variables(environment))}; '
 
     def ansible(self, playbook, extra_args=None):
         """ Prepare guest using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
-        verbosity = [self._ansible_verbosity()] \
-            if self._ansible_verbosity() else []
         stdout, stderr = self.run(
             ['ansible-playbook'] +
-            verbosity +
-            shlex.split(self._ansible_extra_args(extra_args)) +
-            [f'--ssh-common-args="{i}"' for i in self._ssh_options()] +
+            self._ansible_verbosity() +
+            self._ansible_extra_args(extra_args) +
+            [f'--ssh-common-args={self._ssh_options(join=True)}'] +
             ['-i', f'{self._ssh_guest()},', playbook],
             cwd=self.parent.plan.worktree,
             env=self._prepare_environment())

@@ -1,5 +1,3 @@
-import shlex
-
 import tmt
 
 
@@ -56,12 +54,10 @@ class GuestLocal(tmt.Guest):
     def ansible(self, playbook, extra_args=None):
         """ Prepare localhost using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
-        verbosity = [self._ansible_verbosity()] \
-            if self._ansible_verbosity() else []
         stdout, stderr = self.run(
             ['sudo', '-E', 'ansible-playbook'] +
-            verbosity +
-            shlex.split(self._ansible_extra_args(extra_args)) +
+            self._ansible_verbosity() +
+            self._ansible_extra_args(extra_args) +
             ['-c', 'local', '-i', 'localhost,', playbook],
             env=self._prepare_environment())
         self._ansible_summary(stdout)
