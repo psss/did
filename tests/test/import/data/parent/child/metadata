@@ -1,0 +1,13 @@
+[General]
+name=/tmt/smoke
+owner=Philip Daly <pdaly@redhat.com>
+description=Simple smoke test using restraint.
+license=GPLv2
+confidential=no
+destructive=no
+
+[restraint]
+entry_point=bash -x ./runtest.sh
+repoRequires=fmf
+max_time=6m
+softDependencies=fmf

@@ -449,6 +449,9 @@ def create(context, name, template, force, **kwargs):
     '--makefile / --no-makefile', default=True,
     help='Convert Beaker Makefile metadata')
 @click.option(
+    '--restraint / --no-restraint', default=False,
+    help='Convert restraint metadata file')
+@click.option(
     '--type', 'types', metavar='TYPE', default=['multihost'], multiple=True,
     show_default=True,
     help="Convert selected types from Makefile into tags. "
@@ -471,8 +474,8 @@ def create(context, name, template, force, **kwargs):
 @verbose_debug_quiet
 @force_dry
 def import_(
-        context, paths, makefile, types, nitrate, purpose, disabled, manual,
-        plan, case, with_script, **kwargs):
+        context, paths, makefile, restraint, types, nitrate, purpose, disabled,
+        manual, plan, case, with_script, **kwargs):
     """
     Import old test metadata into the new fmf format.
 
@@ -482,6 +485,8 @@ def import_(
 
     \b
     makefile ..... summary, component, duration, require
+    restraint .... name, description, entry_point, owner,
+                   max_time, repoRequires
     purpose ...... description
     nitrate ...... contact, component, tag,
                    environment, relevancy, enabled
@@ -506,7 +511,7 @@ def import_(
                 "Path '{0}' is not a directory.".format(path))
         # Gather old metadata and store them as fmf
         common, individual = tmt.convert.read(
-            path, makefile, nitrate, purpose, disabled, types)
+            path, makefile, restraint, nitrate, purpose, disabled, types)
         # Add path to common metadata if there are virtual test cases
         if individual:
             root = fmf.Tree(path).root

@@ -161,118 +161,78 @@ def add_bug(bug, data):
     echo(style('relates: ', fg='green') + new_link['relates'])
 
 
-def read(path, makefile, nitrate, purpose, disabled, types):
+def read_datafile(path, filename, datafile, types, testinfo=None):
     """
-    Read old metadata from various sources
-
-    Returns tuple (common_data, individual_data) where 'common_data' are
-    metadata which belong to main.fmf and 'individual_data' contains
-    data for individual testcases (if multiple nitrate testcases found).
+    Read data values from supplied Makefile or metadata file.
+    Returns task name and a dictionary of the collected values.
     """
 
     data = dict()
-    echo("Checking the '{0}' directory.".format(path))
+    if filename == 'Makefile':
+        regex_task = r'Name:\s*(.*)\n'
+        regex_summary = r'^Description:\s*(.*)\n'
+        regex_test = r'^run:.*\n\t(.*)$'
+        regex_contact = r'^Owner:\s*(.*)'
+        regex_duration = r'^TestTime:\s*(.*)'
+        regex_recommend = r'^Requires:\s*(.*)'
+        regex_require = r'^RhtsRequires:\s*(.*)'
+        rec_separator = None
+    else:
+        regex_task = r'name=\s*(.*)\n'
+        regex_summary = r'description=\s*(.*)\n'
+        regex_test = r'entry_point=\s*(.*)$'
+        regex_contact = r'owner=\s*(.*)'
+        regex_duration = r'max_time=\s*(.*)'
+        regex_require = r'repoRequires=\s*(.*)'
+        regex_recommend = r'softDependencies=\s*(.*)'
+        rec_separator = ';'
 
-    # Make sure there is a metadata tree initialized
+    if testinfo is None:
+        testinfo = datafile
+    # Beaker task name
     try:
-        tree = fmf.Tree(path)
-    except fmf.utils.RootError:
-        raise ConvertError("Initialize metadata tree using 'tmt init'.")
+        beaker_task = re.search(regex_task, testinfo).group(1)
+        echo(style('task: ', fg='green') + beaker_task)
+        data['extra-task'] = beaker_task
+        data['extra-summary'] = beaker_task
+    except AttributeError:
+        raise ConvertError("Unable to parse 'Name' from testinfo.desc.")
+    # Summary
+    try:
+        data['summary'] = re.search(
+            regex_summary, testinfo, re.M).group(1)
+        echo(style('summary: ', fg='green') + data['summary'])
+    except AttributeError:
+        pass
+    # Test script
+    try:
+        data['test'] = re.search(
+            regex_test, datafile, re.M).group(1)
+        if filename == 'metadata':
+            data['test'] = data['test'].split()[-1]
+        echo(style('test: ', fg='green') + data['test'])
+    except AttributeError:
+        raise ConvertError("Makefile is missing the 'run' target.")
+    # Detect framework
+    try:
+        test_path = os.path.join(path, data["test"])
+        with open(test_path, encoding="utf-8") as test_file:
+            if re.search("beakerlib", test_file.read()):
+                data["framework"] = "beakerlib"
+            else:
+                data["framework"] = "shell"
+        echo(style("framework: ", fg="green") + data["framework"])
+    except IOError:
+        raise ConvertError("Unable to open '{0}'.".format(test_path))
+    # Contact
+    try:
+        data['contact'] = re.search(
+            regex_contact, testinfo, re.M).group(1)
+        echo(style('contact: ', fg='green') + data['contact'])
+    except AttributeError:
+        pass
 
-    # Makefile (extract summary, test, duration and requires)
-    if makefile:
-        echo(style('Makefile ', fg='blue'), nl=False)
-        makefile_path = os.path.join(path, 'Makefile')
-        try:
-            with open(makefile_path, encoding='utf-8') as makefile_file:
-                makefile = makefile_file.read()
-        except IOError:
-            raise ConvertError("Unable to open '{0}'.".format(makefile_path))
-        echo("found in '{0}'.".format(makefile_path))
-
-        # If testinfo.desc exists read it to preserve content and remove it
-        testinfo_path = os.path.join(path, 'testinfo.desc')
-        if os.path.isfile(testinfo_path):
-            try:
-                with open(testinfo_path, encoding='utf-8') as testinfo:
-                    old_testinfo = testinfo.read()
-                    os.remove(testinfo_path)
-            except IOError:
-                raise ConvertError(
-                    "Unable to open '{0}'.".format(testinfo_path))
-        else:
-            old_testinfo = None
-
-        # Make Makefile 'makeable' without extra dependecies
-        # (replace targets, make include optional and remove rhts-lint)
-        makefile = makefile.replace('$(METADATA)', 'testinfo.desc')
-        makefile = re.sub(
-            r'^include /usr/share/rhts/lib/rhts-make.include',
-            '-include /usr/share/rhts/lib/rhts-make.include',
-            makefile, flags=re.MULTILINE)
-        makefile = re.sub('.*rhts-lint.*', '', makefile)
-
-        # Create testinfo.desc file with resolved variables
-        try:
-            process = subprocess.run(
-                ["make", "testinfo.desc", "-C", path, "-f", "-"],
-                input=makefile, check=True, encoding='utf-8',
-                stdout=subprocess.DEVNULL)
-        except FileNotFoundError:
-            raise ConvertError(
-                "Install tmt-test-convert to convert metadata from Makefile.")
-        except subprocess.CalledProcessError:
-            raise ConvertError(
-                "Failed to convert metadata using 'make testinfo.desc'.")
-
-        # Read testinfo.desc
-        try:
-            with open(testinfo_path, encoding='utf-8') as testinfo_file:
-                testinfo = testinfo_file.read()
-        except IOError:
-            raise ConvertError("Unable to open '{0}'.".format(testinfo_path))
-
-        # Beaker task name
-        try:
-            beaker_task = re.search(r'Name:\s*(.*)\n', testinfo).group(1)
-            echo(style('task: ', fg='green') + beaker_task)
-            data['extra-task'] = beaker_task
-            data['extra-summary'] = beaker_task
-        except AttributeError:
-            raise ConvertError("Unable to parse 'Name' from testinfo.desc.")
-        # Summary
-        try:
-            data['summary'] = re.search(
-                r'^Description:\s*(.*)\n', testinfo, re.M).group(1)
-            echo(style('summary: ', fg='green') + data['summary'])
-        except AttributeError:
-            pass
-        # Test script
-        try:
-            data['test'] = re.search(
-                r'^run:.*\n\t(.*)$', makefile, re.M).group(1)
-            echo(style('test: ', fg='green') + data['test'])
-        except AttributeError:
-            raise ConvertError("Makefile is missing the 'run' target.")
-        # Detect framework
-        try:
-            test_path = os.path.join(path, data["test"])
-            with open(test_path, encoding="utf-8") as test_file:
-                if re.search("beakerlib", test_file.read()):
-                    data["framework"] = "beakerlib"
-                else:
-                    data["framework"] = "shell"
-            echo(style("framework: ", fg="green") + data["framework"])
-        except IOError:
-            raise ConvertError("Unable to open '{0}'.".format(test_path))
-
-        # Contact
-        try:
-            data['contact'] = re.search(
-                r'^Owner:\s*(.*)', testinfo, re.M).group(1)
-            echo(style('contact: ', fg='green') + data['contact'])
-        except AttributeError:
-            pass
+    if filename == 'Makefile':
         # Component
         try:
             data['component'] = re.search(
@@ -281,13 +241,16 @@ def read(path, makefile, nitrate, purpose, disabled, types):
                  ' '.join(data['component']))
         except AttributeError:
             pass
-        # Duration
-        try:
-            data['duration'] = re.search(
-                r'^TestTime:\s*(.*)', testinfo, re.M).group(1)
-            echo(style('duration: ', fg='green') + data['duration'])
-        except AttributeError:
-            pass
+
+    # Duration
+    try:
+        data['duration'] = re.search(
+            regex_duration, testinfo, re.M).group(1)
+        echo(style('duration: ', fg='green') + data['duration'])
+    except AttributeError:
+        pass
+
+    if filename == 'Makefile':
         # Environment
         variables = re.findall(r'^Environment:\s*(.*)', testinfo, re.M)
         if variables:
@@ -297,21 +260,24 @@ def read(path, makefile, nitrate, purpose, disabled, types):
                 data['environment'][key] = value
             echo(style('environment:', fg='green'))
             echo(pprint.pformat(data['environment']))
-        # RhtsRequires (optional) goes to require
-        requires = re.findall(r'^RhtsRequires:\s*(.*)', testinfo, re.M)
-        if requires:
-            data['require'] = [
-                require for line in requires for require in line.split()]
-            echo(style('require: ', fg='green') + ' '.join(data['require']))
 
-        # Requires (optional) goes to recommend
-        recommends = re.findall(r'^Requires:\s*(.*)', testinfo, re.M)
-        if recommends:
-            data['recommend'] = [
-                recommend for line in recommends for recommend in line.split()]
-            echo(
-                style('recommend: ', fg='green') + ' '.join(data['recommend']))
+    # RhtsRequires or repoRequires (optional) goes to require
+    requires = re.findall(regex_require, testinfo, re.M)
+    if requires:
+        data['require'] = [
+            require for line in requires for require in line.split()]
+        echo(style('require: ', fg='green') + ' '.join(data['require']))
 
+    # Requires or softDependencies (optional) goes to recommend
+    recommends = re.findall(regex_recommend, testinfo, re.M)
+    if recommends:
+        data['recommend'] = [
+            recommend for line in recommends
+            for recommend in line.split(rec_separator)]
+        echo(
+            style('recommend: ', fg='green') + ' '.join(data['recommend']))
+
+    if filename == 'Makefile':
         # Convert Type into tags
         try:
             makefile_type = re.search(
@@ -331,11 +297,139 @@ def read(path, makefile, nitrate, purpose, disabled, types):
             for bug in re.findall(r'(\d+)', bug_line):
                 add_bug(bug, data)
 
+    return beaker_task, data
+
+
+def read(path, makefile, restraint, nitrate, purpose, disabled, types):
+    """
+    Read old metadata from various sources
+
+    Returns tuple (common_data, individual_data) where 'common_data' are
+    metadata which belong to main.fmf and 'individual_data' contains
+    data for individual testcases (if multiple nitrate testcases found).
+    """
+
+    echo("Checking the '{0}' directory.".format(path))
+
+    # Make sure there is a metadata tree initialized
+    try:
+        tree = fmf.Tree(path)
+    except fmf.utils.RootError:
+        raise ConvertError("Initialize metadata tree using 'tmt init'.")
+
+    # Ascertain if datafile is of type Makefile or metadata
+    makefile_file = None
+    restraint_file = None
+    filename = None
+
+    files = \
+        [f for f in os.listdir(path)
+         if os.path.isfile(os.path.join(path, f))]
+
+    # Ascertain which file to use based on cmd arg.
+    # If both are false raise an assertion.
+    # If both are true then default to using
+    # the restraint metadata file.
+    # Raise an assertion if the file is not found.
+    if not makefile and not restraint:
+        raise ConvertError("Please specify either a "
+                           "Makefile or Restraint file.")
+    elif makefile and restraint:
+        if 'metadata' in files:
+            filename = 'metadata'
+            restraint_file = True
+            echo(style('Restraint file ', fg='blue'), nl=False)
+        elif 'Makefile' in files:
+            filename = 'Makefile'
+            makefile_file = True
+            echo(style('Makefile ', fg='blue'), nl=False)
+        else:
+            raise ConvertError("Unable to find any metadata file.")
+    elif makefile:
+        if 'Makefile' not in files:
+            raise ConvertError("Unable to find Makefile")
+        else:
+            filename = 'Makefile'
+            makefile_file = True
+            echo(style('Makefile ', fg='blue'), nl=False)
+    elif restraint:
+        if 'metadata' not in files:
+            raise ConvertError("Unable to find restraint metadata file")
+        else:
+            filename = 'metadata'
+            restraint_file = True
+            echo(style('Restraint ', fg='blue'), nl=False)
+
+    # Open the datafile
+    if restraint_file or makefile_file:
+        datafile_path = os.path.join(path, filename)
+        try:
+            with open(datafile_path, encoding='utf-8') as datafile_file:
+                datafile = datafile_file.read()
+        except IOError:
+            raise ConvertError("Unable to open '{0}'.".format(
+                datafile_path))
+        echo("found in '{0}'.".format(datafile_path))
+
+    # If testinfo.desc exists read it to preserve content and remove it
+    testinfo_path = os.path.join(path, 'testinfo.desc')
+    if os.path.isfile(testinfo_path):
+        try:
+            with open(testinfo_path, encoding='utf-8') as testinfo:
+                old_testinfo = testinfo.read()
+                os.remove(testinfo_path)
+        except IOError:
+            raise ConvertError(
+                "Unable to open '{0}'.".format(testinfo_path))
+    else:
+        old_testinfo = None
+
+    # Make Makefile 'makeable' without extra dependecies
+    # (replace targets, make include optional and remove rhts-lint)
+    if makefile_file:
+        datafile = datafile.replace('$(METADATA)', 'testinfo.desc')
+        datafile = re.sub(
+            r'^include /usr/share/rhts/lib/rhts-make.include',
+            '-include /usr/share/rhts/lib/rhts-make.include',
+            datafile, flags=re.MULTILINE)
+        datafile = re.sub('.*rhts-lint.*', '', datafile)
+        # Create testinfo.desc file with resolved variables
+        try:
+            subprocess.run(
+                ["make", "testinfo.desc", "-C", path, "-f", "-"],
+                input=datafile, check=True, encoding='utf-8',
+                stdout=subprocess.DEVNULL)
+        except FileNotFoundError:
+            raise ConvertError(
+                "Install tmt-test-convert to "
+                "convert metadata from {0}.".format(filename))
+        except subprocess.CalledProcessError:
+            raise ConvertError(
+                "Failed to convert metadata using 'make testinfo.desc'.")
+
+        # Read testinfo.desc
+        try:
+            with open(testinfo_path, encoding='utf-8') as testinfo_file:
+                testinfo = testinfo_file.read()
+        except IOError:
+            raise ConvertError("Unable to open '{0}'.".format(
+                testinfo_path))
+
+    # restraint
+    if restraint_file:
+        beaker_task, data = \
+            read_datafile(path, filename, datafile, types)
+
+    # Makefile (extract summary, test, duration and requires)
+    else:
+        beaker_task, data = \
+            read_datafile(path, filename, datafile, types, testinfo)
+
         # Warn if makefile has extra lines in run and build targets
         def target_content(target):
             """ Extract lines from the target content """
             regexp = rf"^{target}:.*\n((?:\t[^\n]*\n?)*)"
-            target = re.search(regexp, makefile, re.M).group(1)
+            target = re.search(regexp, datafile, re.M).group(1)
             return [line.strip('\t') for line in target.splitlines()]
 
         run_target_list = target_content("run")
