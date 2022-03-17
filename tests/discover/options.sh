@@ -11,7 +11,7 @@ rlJournalStart
     rlPhaseStartTest 'fmf help'
         rlRun 'tmt run discover --help --how fmf | tee output'
         rlAssertGrep 'Discover available tests from fmf metadata' 'output'
-        for option in url ref path test filter; do
+        for option in url ref path test filter fmf-id; do
             rlAssertGrep "--$option" output
         done
     rlPhaseEnd

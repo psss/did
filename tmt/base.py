@@ -143,14 +143,17 @@ class Core(tmt.utils.Common):
 
         def run(command):
             """ Run command, return output """
+            cwd = fmf_root
             result = subprocess.run(
                 command.split(),
                 stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL)
+                stderr=subprocess.DEVNULL,
+                cwd=cwd)
             return result.stdout.strip().decode("utf-8")
 
         fmf_id = {'name': self.name}
 
+        fmf_root = self.node.root
         # Prepare url (for now handle just the most common schemas)
         branch = run("git rev-parse --abbrev-ref --symbolic-full-name @{u}")
         try:
@@ -162,13 +165,11 @@ class Core(tmt.utils.Common):
 
         # Get the ref (skip for master as it is the default)
         ref = run('git rev-parse --abbrev-ref HEAD')
-        # FIXME: We need to detect the default branch instead
         if ref != 'master':
             fmf_id['ref'] = ref
 
         # Construct path (if different from git root)
         git_root = run('git rev-parse --show-toplevel')
-        fmf_root = self.node.root
         if git_root != fmf_root:
             fmf_id['path'] = os.path.join(
                 '/', os.path.relpath(fmf_root, git_root))

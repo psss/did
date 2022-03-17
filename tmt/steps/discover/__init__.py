@@ -4,6 +4,7 @@ import click
 from fmf.utils import listed
 
 import tmt
+import tmt.utils
 
 
 class Discover(tmt.steps.Step):
@@ -146,6 +147,17 @@ class Discover(tmt.steps.Step):
                 test.environment.update(self.plan.environment)
                 self._tests.append(test)
 
+        # Show fmf identifiers for tests discovered in plan
+        if self.opt('fmf_id'):
+            # don't run steps except discover
+            self._context.obj.steps = {'discover'}
+            if self.tests():
+                fmf_id_list = [tmt.utils.dict_to_yaml(test.fmf_id, start=True)
+                               for test in self.tests()
+                               if 'url' in test.fmf_id]
+                click.echo(''.join(fmf_id_list), nl=False)
+            return
+
         # Give a summary, update status and save
         self.summary()
         self.status('done')
@@ -193,6 +205,12 @@ class DiscoverPlugin(tmt.steps.Plugin):
             '-h', '--how', metavar='METHOD',
             help='Use specified method to discover tests.')
         def discover(context, **kwargs):
+            if kwargs.get('fmf_id'):
+                # Set quiet, disable debug and verbose to avoid logging
+                # to terminal with discover --fmf-id
+                context.parent.params['quiet'] = True
+                context.parent.params['debug'] = 0
+                context.parent.params['verbose'] = 0
             context.obj.steps.add('discover')
             Discover._save_context(context)
 

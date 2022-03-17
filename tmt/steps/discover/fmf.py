@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import subprocess
 
 import click
 import fmf
@@ -8,6 +9,7 @@ import fmf
 import tmt
 import tmt.beakerlib
 import tmt.steps.discover
+from tmt.utils import MetadataError
 
 
 class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
@@ -78,7 +80,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     _keys = [
         "url", "ref", "path", "test", "link", "filter",
         "modified-only", "modified-url", "modified-ref",
-        "dist-git-source", "dist-git-type"]
+        "dist-git-source", "dist-git-type", "fmf-id"]
 
     @classmethod
     def options(cls, how=None):
@@ -121,6 +123,9 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 '--dist-git-type',
                 type=click.Choice(tmt.utils.get_distgit_handler_names()),
                 help='Use the provided DistGit handler instead of detection.'),
+            click.option(
+                '--fmf-id', default=False, is_flag=True,
+                help='Show fmf identifiers for tests discovered in plan.')
             ] + super().options(how)
 
     def wake(self, keys=None):
@@ -147,6 +152,43 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         testdir = os.path.join(self.workdir, 'tests')
         dist_git_source = self.get('dist-git-source', False)
 
+        # Raise an exception if --fmf-id uses w/o url and git root
+        # doesn't exist for discovered plan
+        if self.opt('fmf_id'):
+            def assert_git_url(plan_name=None):
+                try:
+                    subprocess.run(
+                        'git rev-parse --show-toplevel'.split(),
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
+                        check=True)
+                except subprocess.CalledProcessError:
+                    raise tmt.utils.DiscoverError(
+                        f"`tmt run discover --fmf-id` without `url` option in "
+                        f"plan `{plan_name}` can be used only within"
+                        f" git repo.")
+            # It covers only one case, when there is:
+            # 1) no --url on CLI
+            # 2) plan w/o url exists in test run
+            if not self.opt('url'):
+                try:
+                    fmf_tree = fmf.Tree(os.getcwd())
+                except fmf.utils.RootError:
+                    raise tmt.utils.DiscoverError(
+                        f"No metadata found in the current directory. "
+                        f"Use 'tmt init' to get started.")
+                for i, attr in enumerate(fmf_tree.climb()):
+                    try:
+                        plan_url = attr.data.get('discover').get('url')
+                        plan_name = attr.name
+                        if not plan_url:
+                            assert_git_url(plan_name)
+                    except AttributeError:
+                        pass
+            # All other cases are covered by this condition
+            if not url:
+                assert_git_url(self.step.plan.name)
+
         # Clone provided git repository (if url given) with disabled
         # prompt to ignore possibly missing or private repositories
         if url:
@@ -166,6 +208,9 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 git_root = self.step.plan.my_run.tree.root
             else:
                 fmf_root = path or self.step.plan.my_run.tree.root
+                if fmf_root is None:
+                    raise tmt.utils.DiscoverError(
+                        f"No metadata found in the current directory.")
                 # Check git repository root (use fmf root if not found)
                 try:
                     output = self.run(
