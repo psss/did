@@ -64,12 +64,12 @@ sure that you have all required packages installed on your box::
     sudo dnf install gcc {python3,libvirt,krb5,libpq}-devel
 
 Install ``python3-virtualenvwrapper`` to easily create and enable
-virtual environments using ``mkvirtualenv`` and ``workon``. Note
-that if you have freshly installed the package you need to open a
-new shell session to enable the wrapper functions::
+virtual environments using ``mkvirtualenv`` and ``workon``::
 
     sudo dnf install python3-virtualenvwrapper
 
+Note that if you have freshly installed the package you need to
+open a new shell session to enable the wrapper functions.
 Now let's create a new virtual environment and install ``tmt`` in
 editable mode there::
 
