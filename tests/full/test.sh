@@ -24,20 +24,18 @@ rlJournalStart
         fi
 
         if ! rlIsFedora; then
-          rlRun "rlImport epel/epel"
-          rlRun "dnf config-manager --set-enabled epel"
+            rlRun "rlImport epel/epel"
+            rlRun "dnf config-manager --set-enabled epel"
 
-          for repo in powertools extras crb codeready-builder; do
-            real_repo_name="$(dnf repolist --all | grep -Eo "[-a-zA-Z0-9_]*$repo[-a-zA-Z0-9_]*" | head -n1)"
-            if [[ -n "$real_repo_name" ]]; then
-               rlRun "dnf config-manager --set-enabled $real_repo_name"
-            fi
-          done
-          # missing rst2man causes `make rpm` to fail before printing missing dependencies
-          rlRun "dnf install -y python3-docutils"
+            for repo in powertools extras crb codeready-builder; do
+                real_repo_name="$(dnf repolist --all | grep -Eio "[-a-zA-Z0-9_]*$repo[-a-zA-Z0-9_]*" | head -n1)"
+                if [[ -n "$real_repo_name" ]]; then
+                    rlRun "dnf config-manager --set-enabled $real_repo_name"
+                fi
+            done
 
-          #better to install SOME tmt than none (python3-html2text missing)
-          SKIP_BROKEN="--skip-broken"
+            #better to install SOME tmt than none (python3-html2text missing on rhel-9)
+            SKIP_BROKEN="--skip-broken"
         fi
 
         rlFileBackup /etc/sudoers
@@ -63,17 +61,14 @@ rlJournalStart
         # Do not "patch" version for pre-release...
         [[ $PRE_RELEASE -ne 1 ]] && rlRun "sed 's/^Version:.*/Version: 9.9.9/' -i tmt.spec"
 
-        # Install tmt
-        if make rpm 2> /tmp/stderr; then
-            rlPass "make rpm success"
-        else
-            rlLog "Missing dependencies, trying to install them and then try again"
-            rlRun "grep ' is needed by tmt' /tmp/stderr | sed 's/ .*//' | cut -f 2 | xargs dnf install -y"
-            rlRun "make rpm"
-        fi
+        # Build tmt packages
+        rlRun "dnf builddep -y tmt.spec" 0 "Install build dependencies"
+        rlRun "make rpm" || rlDie "Failed to build tmt rpms"
+
+        # From now one we can use tmt (freshly built)
         rlRun "find $USER_HOME/tmt/tmp/RPMS -type f -name '*rpm' | xargs dnf install -y $SKIP_BROKEN"
 
-        # libvirt might not be running
+        # Make sure that libvirt is running
         rlServiceStart "libvirtd"
         rlRun "su -l -c 'virsh -c qemu:///session list' $USER" || rlDie "qemu:///session not working, no point to continue"
 
@@ -109,16 +104,6 @@ rlJournalStart
         echo 'provision:' >> $CONNECT_FMF
         sed '/default:/d' $CONNECT_RUN/plans/default/provision/guests.yaml >> $CONNECT_FMF
         rlLog "$(cat $CONNECT_FMF)"
-
-
-        # Patch plans/main.fmf
-        PLANS_MAIN=plans/main.fmf
-        {
-            echo "prepare:"
-            echo "- name: tmt"
-            echo "  how: install"
-            echo "  directory: tmp/RPMS/noarch"
-        } >> $PLANS_MAIN
 
         # Delete the plan -> container vs host are not synced so rpms might not be installable
         rlRun 'rm -f plans/install/minimal.fmf'

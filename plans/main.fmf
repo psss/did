@@ -6,23 +6,10 @@ provision:
 execute:
     how: tmt
 
-# Install packages
-#prepare:
-#  - name: tmt
-#    how: install
-#    package: tmt
-#    copr: psss/tmt
-#    directory: tmp/RPMS/noarch
-
-# Ansible playbook
-#prepare:
-#    how: ansible
-#    playbook: ansible/packages.yml
-
-# Shell commands
-#prepare:
-#    how: shell
-#    script:
-#    - sudo dnf install -y 'dnf-command(copr)'
-#    - sudo dnf copr enable -y psss/tmt
-#    - sudo dnf install -y tmt
+# Install packages in full mode
+adjust:
+  - prepare:
+      - name: tmt
+        how: install
+        directory: tmp/RPMS/noarch
+    when: how == full

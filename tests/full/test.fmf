@@ -1,9 +1,7 @@
-summary: Wrapper to run whole tmt test suite in external system
+summary: Run the full tmt test suite in an external system
 test: ./test.sh
 framework: beakerlib
 adjust:
-- when: external is defined
-  enabled: true
 - when: distro != fedora
   require+:
   - library(epel/epel)
@@ -16,7 +14,7 @@ require:
 recommend:
 - guestfs-tools
 - python3-docutils
-duration: 3h
+duration: 4h
 extra-hardware: |
   keyvalue=HVM=1
   hostrequire=memory >= 6144

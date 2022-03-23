@@ -1,0 +1,7 @@
+discover:
+    how: fmf
+provision:
+    how: virtual
+    memory: 4000
+execute:
+    how: tmt

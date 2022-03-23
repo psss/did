@@ -120,10 +120,23 @@ Run selected tests or plans in verbose mode::
     tmt run --verbose plan --name basic
     tmt run -v test -n smoke
 
-Execute the whole test coverage, including tests which need the
-full virtualization support (this may take a while)::
+Build the rpms and execute the whole test coverage, including
+tests which need the full virtualization support::
 
+    make rpm
     tmt -c how=full run
+
+This would install the freshly built rpms on your laptop. In order
+to run the full test suite more safely under a virtual machine run
+the full test suite wrapper against the desired branch::
+
+    cd tests/full
+    tmt run --environment BRANCH=target
+
+Or schedule the full test suite under an external test system::
+
+    cd tests/full
+    tmt test export --fmf-id | wow fedora-35 x86_64 --fmf-id -
 
 To run unit tests using pytest and generate coverage report::
 
