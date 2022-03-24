@@ -183,7 +183,7 @@ def read_datafile(path, filename, datafile, types, testinfo=None):
         regex_test = r'entry_point=\s*(.*)$'
         regex_contact = r'owner=\s*(.*)'
         regex_duration = r'max_time=\s*(.*)'
-        regex_require = r'repoRequires=\s*(.*)'
+        regex_require = r'dependencies=\s*(.*)'
         regex_recommend = r'softDependencies=\s*(.*)'
         rec_separator = ';'
 
@@ -265,7 +265,8 @@ def read_datafile(path, filename, datafile, types, testinfo=None):
     requires = re.findall(regex_require, testinfo, re.M)
     if requires:
         data['require'] = [
-            require for line in requires for require in line.split()]
+            require for line in requires
+            for require in line.split(rec_separator)]
         echo(style('require: ', fg='green') + ' '.join(data['require']))
 
     # Requires or softDependencies (optional) goes to recommend

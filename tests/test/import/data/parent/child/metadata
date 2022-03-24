@@ -8,6 +8,6 @@ destructive=no
 
 [restraint]
 entry_point=bash -x ./runtest.sh
-repoRequires=fmf
+dependencies=fmf;tmt
 max_time=6m
 softDependencies=fmf
