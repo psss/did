@@ -44,6 +44,15 @@ rlJournalStart
         rlPhaseEnd
     done
 
+    for exclude in '-x' '--exclude'; do
+        rlPhaseStartTest "tmt plan ls $exclude <regex>"
+            rlRun "tmt plan ls | tee $output"
+            rlAssertGrep "/plans/features/core" $output
+            rlRun "tmt plan ls $exclude core | tee $output"
+            rlAssertNotGrep "/plans/features/core" $output
+        rlPhaseEnd
+    done
+
     rlPhaseStartCleanup
         rlRun "rm -r $tmp" 0 "Remove temporary run workdir"
         rlRun "rm $output" 0 "Remove output file"

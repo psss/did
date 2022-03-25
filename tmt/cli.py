@@ -89,6 +89,9 @@ def name_filter_condition(function):
             '--link', 'links', metavar="RELATION:TARGET", multiple=True,
             help="Filter by linked objects (regular expressions are "
                  "supported for both relation and target)."),
+        click.option(
+            '-x', '--exclude', 'exclude', metavar='[REGEXP]', multiple=True,
+            help="Exclude a regular expression from search result."),
         ]
 
     for option in reversed(options):
@@ -111,6 +114,9 @@ def name_filter_condition_long(function):
             '--link', 'links', metavar="RELATION:TARGET", multiple=True,
             help="Filter by linked objects (regular expressions are "
                  "supported for both relation and target)."),
+        click.option(
+            '--exclude', 'exclude', metavar='[REGEXP]', multiple=True,
+            help="Exclude a regular expression from search result."),
         ]
 
     for option in reversed(options):

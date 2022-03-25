@@ -101,6 +101,8 @@ description: |
         filter
             Apply advanced filter based on test metadata
             attributes. See ``pydoc fmf.filter`` for more info.
+        exclude
+            Exclude tests which match a regular expression.
 
         It is also possible to limit tests only to those that have
         changed in git since a given revision. This can be

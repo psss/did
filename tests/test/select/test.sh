@@ -209,6 +209,15 @@ rlJournalStart
         rlRun "popd"
     rlPhaseEnd
 
+    for exclude in '-x' '--exclude'; do
+        rlPhaseStartTest "tmt test ls $exclude <regex>"
+            rlRun "tmt test ls | tee $output"
+            rlAssertGrep "/tests/enabled/default" $output
+            rlRun "tmt test ls $exclude default | tee $output"
+            rlAssertNotGrep "/tests/enabled/default" $output
+        rlPhaseEnd
+    done
+
     rlPhaseStartCleanup
         rlRun "popd"
         rlRun "rm $output" 0 "Remove output file"

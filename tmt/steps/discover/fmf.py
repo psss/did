@@ -80,7 +80,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     _keys = [
         "url", "ref", "path", "test", "link", "filter",
         "modified-only", "modified-url", "modified-ref",
-        "dist-git-source", "dist-git-type", "fmf-id"]
+        "dist-git-source", "dist-git-type", "fmf-id", "exclude"]
 
     @classmethod
     def options(cls, how=None):
@@ -123,6 +123,9 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 '--dist-git-type',
                 type=click.Choice(tmt.utils.get_distgit_handler_names()),
                 help='Use the provided DistGit handler instead of detection.'),
+            click.option(
+                '-x', '--exclude', metavar='[REGEXP]', multiple=True,
+                help="Exclude a regular expression from search result."),
             click.option(
                 '--fmf-id', default=False, is_flag=True,
                 help='Show fmf identifiers for tests discovered in plan.')
@@ -279,6 +282,9 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         for link_ in links:
             self.info('link', link_, 'green')
 
+        excludes = list(tmt.base.Test._opt('exclude')
+                        or self.get('exclude', []))
+
         # Filter only modified tests if requested
         modified_only = self.get('modified-only')
         modified_url = self.get('modified-url')
@@ -312,7 +318,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             names=names,
             conditions=["manual is False"],
             unique=False,
-            links=links)
+            links=links,
+            excludes=excludes)
 
         # Prefix tests and handle library requires
         for test in self._tests:

@@ -159,6 +159,13 @@ condition or link expression::
     $ tmt tests ls --link verifies:issues/423$
     /tests/prepare/shell
 
+    $ tmt tests ls unit
+    /tests/report/junit
+    /tests/unit
+
+    $ tmt tests ls unit --exclude junit
+    /tests/unit
+
 In order to select tests under the current working directory use
 the single dot notation::
 

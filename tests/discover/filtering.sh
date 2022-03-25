@@ -28,6 +28,17 @@ rlJournalStart
         rlAssertNotGrep '/tests/discover3' output
     rlPhaseEnd
 
+    for exclude in '-x' '--exclude'; do
+        rlPhaseStartTest "Exclude tests using $exclude <regex>"
+            plan='plan --name fmf/nourl/noref/nopath'
+            discover='discover --how fmf'
+            rlRun 'tmt run -dvr $discover $plan | tee output'
+            rlAssertGrep '/tests/discover1' output
+            rlRun 'tmt run -dvr $discover --exclude discover1 $plan | tee output'
+            rlAssertNotGrep '/tests/discover1' output
+        rlPhaseEnd
+    done
+
     rlPhaseStartTest "Filter by link"
         plan='plans --default'
         for link_relation in "" "relates:" "rel.*:"; do

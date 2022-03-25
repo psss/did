@@ -1195,7 +1195,7 @@ class Tree(tmt.utils.Common):
             return self._custom_context
         return super()._fmf_context()
 
-    def _filters_conditions(self, nodes, filters, conditions, links):
+    def _filters_conditions(self, nodes, filters, conditions, links, excludes):
         """ Apply filters and conditions, return pruned nodes """
         result = []
         for node in nodes:
@@ -1235,6 +1235,9 @@ class Tree(tmt.utils.Common):
             except BaseException:
                 # Handle broken link as not matching
                 continue
+            # Exclude
+            if any([node for expr in excludes if re.search(expr, node.name)]):
+                continue
             result.append(node)
         return result
 
@@ -1264,7 +1267,7 @@ class Tree(tmt.utils.Common):
         return self.tree.root
 
     def tests(self, keys=None, names=None, filters=None, conditions=None,
-              unique=True, links=None):
+              unique=True, links=None, excludes=None):
         """ Search available tests """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['test']
@@ -1272,6 +1275,7 @@ class Tree(tmt.utils.Common):
         filters = (filters or []) + list(Test._opt('filters', []))
         conditions = (conditions or []) + list(Test._opt('conditions', []))
         links = (links or []) + list(Test._opt('links', []))
+        excludes = (excludes or []) + list(Test._opt('exclude', []))
 
         def name_filter(nodes):
             """ Filter nodes based on names provided on the command line """
@@ -1302,10 +1306,11 @@ class Tree(tmt.utils.Common):
             tests = sorted(selected_tests, key=lambda test: test.order)
 
         # Apply filters & conditions
-        return self._filters_conditions(tests, filters, conditions, links)
+        return self._filters_conditions(
+            tests, filters, conditions, links, excludes)
 
     def plans(self, keys=None, names=None, filters=None, conditions=None,
-              run=None, links=None):
+              run=None, links=None, excludes=None):
         """ Search available plans """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['execute']
@@ -1313,6 +1318,7 @@ class Tree(tmt.utils.Common):
         filters = (filters or []) + list(Plan._opt('filters', []))
         conditions = (conditions or []) + list(Plan._opt('conditions', []))
         links = (links or []) + list(Plan._opt('links', []))
+        excludes = (excludes or []) + list(Plan._opt('exclude', []))
 
         # Build the list, convert to objects, sort and filter
         plans = [
@@ -1320,10 +1326,10 @@ class Tree(tmt.utils.Common):
             in self.tree.prune(keys=keys, names=names)]
         return self._filters_conditions(
             sorted(plans, key=lambda plan: plan.order),
-            filters, conditions, links)
+            filters, conditions, links, excludes)
 
     def stories(self, keys=None, names=None, filters=None, conditions=None,
-                whole=False, links=None):
+                whole=False, links=None, excludes=None):
         """ Search available stories """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['story']
@@ -1331,6 +1337,7 @@ class Tree(tmt.utils.Common):
         filters = (filters or []) + list(Story._opt('filters', []))
         conditions = (conditions or []) + list(Story._opt('conditions', []))
         links = (links or []) + list(Story._opt('links', []))
+        excludes = (excludes or []) + list(Story._opt('exclude', []))
 
         # Build the list, convert to objects, sort and filter
         stories = [
@@ -1338,7 +1345,7 @@ class Tree(tmt.utils.Common):
             in self.tree.prune(keys=keys, names=names, whole=whole)]
         return self._filters_conditions(
             sorted(stories, key=lambda story: story.order),
-            filters, conditions, links)
+            filters, conditions, links, excludes)
 
     @staticmethod
     def init(path, template, force, **kwargs):
