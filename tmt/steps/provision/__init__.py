@@ -128,12 +128,13 @@ class Provision(tmt.steps.Step):
                         self.info('')
                 finally:
                     if isinstance(plugin, ProvisionPlugin):
-                        self._guests.append(plugin.guest())
+                        if plugin.guest():
+                            self._guests.append(plugin.guest())
 
             # Give a summary, update status and save
             self.summary()
             self.status('done')
-        except SystemExit as error:
+        except (SystemExit, tmt.utils.SpecificationError) as error:
             # A plugin will only raise SystemExit if the exit is really desired
             # and no other actions should be done. An example of this is
             # listing available images. In such case, the workdir is deleted
