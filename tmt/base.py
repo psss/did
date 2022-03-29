@@ -33,6 +33,7 @@ import tmt.steps.report
 import tmt.templates
 import tmt.utils
 from tmt.utils import verdict
+from tmt.uuid import get_id
 
 # Default test duration is 5m for individual tests discovered from L1
 # metadata and 1h for scripts defined directly in plans (L2 metadata).
@@ -191,6 +192,10 @@ class Core(tmt.utils.Common):
                 '/', os.path.relpath(fmf_root, git_root))
 
         return fmf_id
+
+    @property
+    def id(self):
+        return get_id(self.node)
 
     @classmethod
     def _save_context(cls, context):

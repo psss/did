@@ -1,0 +1,20 @@
+test: executor.sh
+duration: 10m
+summary: 'this is test '
+id: a38cdf1e-066a-4a03-8da8-65005138ad92
+/yes:
+    summary+: yes
+    id: a38cdf1e-066a-4a03-8da8-65005138ad93
+/no:
+    summary+: no
+/partial:
+    summary+: partial
+    id+: add
+/deep:
+    id: 68a81200-b23d-4647-b67e-134869cafbba
+    /structure:
+        /yes:
+            id: fa880160-0e1d-49c6-a906-34007828662e
+            summary+: inside
+        /no:
+            summary+: another

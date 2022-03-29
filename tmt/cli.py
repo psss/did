@@ -19,6 +19,7 @@ import tmt.plugins
 import tmt.steps
 import tmt.templates
 import tmt.utils
+import tmt.uuid
 
 # Explore available plugins (need to detect all supported methods first)
 tmt.plugins.explore()
@@ -609,6 +610,20 @@ def export(context, format_, nitrate, bugzilla, **kwargs):
             f"Invalid test export format '{format_}'.")
 
 
+@tests.command()
+@click.pass_context
+@name_filter_condition
+@verbose_debug_quiet
+@force_dry
+def uuid(context, **kwargs):
+    """
+    generate UUIDs to test leafs if not already defined.
+    """
+    tmt.Test._save_context(context)
+    for test in context.obj.tree.tests():
+        tmt.uuid.add_uuid_cmd(test.node, "test", dry=kwargs["dry"])
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Plan
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -751,9 +766,23 @@ def export(context, format_, **kwargs):
             f"Invalid plan export format '{format_}'.")
 
 
+@plans.command()
+@click.pass_context
+@name_filter_condition
+@verbose_debug_quiet
+@force_dry
+def uuid(context, **kwargs):
+    """
+    generate UUIDs to plan leafs if not already defined.
+    """
+    tmt.Plan._save_context(context)
+    for plan in context.obj.tree.plans():
+        tmt.uuid.add_uuid_cmd(plan.node, "plan", dry=kwargs["dry"])
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Story
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 @main.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
@@ -949,6 +978,24 @@ def lint_stories(context, **kwargs):
             exit_code = 1
         echo()
     raise SystemExit(exit_code)
+
+
+@stories.command()
+@click.pass_context
+@name_filter_condition_long
+@implemented_verified_documented
+@verbose_debug_quiet
+@force_dry
+def uuid(context, implemented, verified, documented, covered,
+         unimplemented, unverified, undocumented, uncovered, **kwargs):
+    """
+    generate UUIDs to story leafs if not already defined.
+    """
+    tmt.Story._save_context(context)
+    for story in context.obj.tree.stories():
+        if story._match(implemented, verified, documented, covered,
+                        unimplemented, unverified, undocumented, uncovered):
+            tmt.uuid.add_uuid_cmd(story.node, "story", dry=kwargs["dry"])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

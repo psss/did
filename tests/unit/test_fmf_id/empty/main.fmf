@@ -1,0 +1,5 @@
+summary: 'this is test '
+/some:
+    /structure:
+        test: executor.sh
+        duration: 10m
