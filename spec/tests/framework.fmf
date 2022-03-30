@@ -27,10 +27,9 @@ description: |
         Exit code and BeakerLib's ``TestResults`` file determine
         the test result.
 
-example: |
-    framework: shell
-
-    framework: beakerlib
+example:
+  - framework: shell
+  - framework: beakerlib
 
 link:
   - implemented-by: /tmt/base.py

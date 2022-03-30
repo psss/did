@@ -28,14 +28,20 @@ description: |
     specification supported by ``dnf`` which takes care of the
     installation.
 
-example: |
+example:
+  - |
+    # Single package
     recommend: mariadb
 
+  - |
+    # Multiple packages
     recommend: [mariadb, mysql]
 
+  - |
+    # Multiple packages on separate lines
     recommend:
-        - mariadb
-        - mysql
+      - mariadb
+      - mysql
 
 link:
   - implemented-by: /tmt/base.py

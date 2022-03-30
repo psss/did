@@ -13,13 +13,19 @@ description:
     ``string`` or a ``list of strings``. Component name usually
     corresponds to the source package name.
 
-example: |
+example:
+  - |
+    # Single component
     component: libselinux
 
+  - |
+    # Multiple components
     component: [libselinux, checkpolicy]
 
+  - |
+    # Multiple components on separate lines
     component:
-        - libselinux
-        - checkpolicy
+      - libselinux
+      - checkpolicy
 link:
   - implemented-by: /tmt/base.py

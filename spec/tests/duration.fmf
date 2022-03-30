@@ -11,9 +11,17 @@ description:
     format as the ``sleep`` command. Should be a ``string``. The
     default value is ``5m``.
 
-example: |
+example:
+  - |
+    # Three minutes
     duration: 3m
+
+  - |
+    # Two hours
     duration: 2h
+
+  - |
+    # One day
     duration: 1d
 
 link:

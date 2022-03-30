@@ -40,36 +40,44 @@ description: |
     __ https://github.com/beakerlib/
     __ https://fmf.readthedocs.io/en/latest/concept.html#identifiers
 
-example: |
+example:
+  - |
     # Require a single package
     require: make
 
+  - |
     # Multiple packages
     require: [gcc, make]
 
+  - |
+    # Multiple packages on separate lines
     require:
-        - gcc
-        - make
+      - gcc
+      - make
 
+  - |
     # Library from the default upstream location
     require: library(openssl/certgen)
 
+  - |
     # Library from a custom remote git repository
     require:
-        - url: https://github.com/beakerlib/openssl
-          name: /certgen
+      - url: https://github.com/beakerlib/openssl
+        name: /certgen
 
+  - |
     # Library from the local filesystem
     require:
-        - path: /tmp/library/openssl
-          name: /certgen
+      - path: /tmp/library/openssl
+        name: /certgen
 
+  - |
     # Use a custom git ref and nick for the library
     require:
-        - url: https://github.com/redhat-qe-security/certgen
-          ref: devel
-          nick: openssl
-          name: /certgen
+      - url: https://github.com/redhat-qe-security/certgen
+        ref: devel
+        nick: openssl
+        name: /certgen
 
 link:
   - implemented-by: /tmt/base.py

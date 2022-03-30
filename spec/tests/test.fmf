@@ -21,12 +21,25 @@ description: |
     using ``set +eo pipefail``. These options are not applied when
     ``beakerlib`` is used as the :ref:`/spec/tests/framework`.
 
-example: |
+example:
+  - |
+    # Run a script
     test: ./test.sh
+
+  - |
+    # Run a script with parameter
     test: ./test.sh --depth 1000
+
+  - |
+    # Execute selected tests using pytest
     test: pytest -k performance
+
+  - |
+    # Run test using a Makefile target
     test: make run
 
+  - |
+    # Define a manual test
     test: manual.md
     manual: true
 

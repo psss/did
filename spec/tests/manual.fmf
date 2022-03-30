@@ -72,6 +72,7 @@ description: |
 
 example: |
   manual: true
+  test: manual.md
 
 link:
   - implemented-by: /tmp/base.py

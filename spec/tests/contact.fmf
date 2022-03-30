@@ -11,12 +11,16 @@ description:
     Should be a ``string`` or a ``list of strings`` (email address
     format with name and surname).
 
-example: |
+example:
+  - |
+    # Single contact
     contact: Name Surname <email@address.org>
 
+  - |
+    # Multiple contacts
     contact:
-        - First Person <first@address.org>
-        - Second Person <second@address.org>
+      - First Person <first@address.org>
+      - Second Person <second@address.org>
 
 link:
   - implemented-by: /tmt/base.py

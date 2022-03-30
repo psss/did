@@ -10,14 +10,20 @@ description:
     lowercase is recommended. Should be a ``string`` or a ``list
     of strings``. Tag name must not contain spaces or commas.
 
-example: |
+example:
+  - |
+    # Single tag
     tag: security
 
+  - |
+    # Multiple tags
     tag: [security, fast]
 
+  - |
+    # Multiple tags on separate lines
     tag:
-        - security
-        - fast
+      - security
+      - fast
 
 link:
   - implemented-by: /tmt/base.py
