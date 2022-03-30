@@ -241,6 +241,10 @@ example: |
         :ref:`execution</spec/plans/execute/where>` should
         take place.
 
+        If guests need to be synchronized during the environment
+        preparation and test execution, group them under a common
+        dictionary which will ensure they are processed together.
+
     example: |
         # Request two guests
         provision:
@@ -261,3 +265,18 @@ example: |
             role: client
           - name: tester-two
             role: client
+
+        # Synchronize guests using groups
+        provision:
+          - group: across-arches
+            guests:
+              - name: client-one
+                arch: s390x
+              - name: server-one
+                arch: ppc64le
+          - group: across-distros
+            guests:
+              - name: client-two
+                distro: centos-stream-8
+              - name: server-two
+                distro: centos-stream-9
