@@ -275,7 +275,12 @@ class Guest(tmt.utils.Common):
     def _ssh_socket(self):
         """ Prepare path to the master connection socket """
         if not self._ssh_socket_path:
-            socket_dir = f"/run/user/{os.getuid()}/tmt"
+            # Use '/run/user/uid' if it exists, '/tmp' otherwise
+            run_dir = f"/run/user/{os.getuid()}"
+            if os.path.isdir(run_dir):
+                socket_dir = os.path.join(run_dir, "tmt")
+            else:
+                socket_dir = "/tmp"
             os.makedirs(socket_dir, exist_ok=True)
             self._ssh_socket_path = tempfile.mktemp(dir=socket_dir)
         return self._ssh_socket_path
