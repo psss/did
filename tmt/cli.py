@@ -577,14 +577,24 @@ def export(context, format_, nitrate, bugzilla, **kwargs):
     if bugzilla and not nitrate:
         raise tmt.utils.GeneralError(
             "The --bugzilla option is supported only with --nitrate for now.")
-    for test in context.obj.tree.tests():
-        if nitrate:
+
+    if nitrate:
+        for test in context.obj.tree.tests():
             test.export(format_='nitrate')
+    elif format_ in ['dict', 'yaml']:
+        keys = None
+        if kwargs.get('fmf_id'):
+            keys = 'fmf-id'
+
+        tests = [test.export(format_='dict', keys=keys) for test in
+                 context.obj.tree.tests()]
+        if format_ == 'dict':
+            echo(tests, nl=False)
         else:
-            if kwargs.get('fmf_id'):
-                echo(test.export(format_=format_, keys='fmf-id'), nl=False)
-            else:
-                echo(test.export(format_=format_), nl=False)
+            echo(tmt.utils.dict_to_yaml(tests), nl=False)
+    else:
+        raise tmt.utils.GeneralError(
+            f"Invalid test export format '{format_}'.")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -212,7 +212,10 @@ class Core(tmt.utils.Common):
         """ Export data into requested format (yaml or dict) """
         if keys is None:
             keys = self._keys
-        data = dict([(key, getattr(self, key)) for key in keys])
+        data = dict()
+        data['name'] = self.name
+        data.update(dict([(key, getattr(self, key)) for key in keys]))
+        data.pop('adjust', None)
         # Choose proper format
         if format_ == 'dict':
             return data
@@ -542,16 +545,18 @@ class Test(Core):
             tmt.export.export_to_nitrate(self)
 
         # Common node export otherwise
-        elif keys == 'fmf-id':
-            if format_ == 'dict':
+        elif format_ == 'dict' or format_ == "yaml":
+            if keys == 'fmf-id':
                 return self.fmf_id
-            elif format_ == "yaml":
-                return tmt.utils.dict_to_yaml(self.fmf_id, start=True)
             else:
-                raise tmt.utils.GeneralError(
-                    f"Invalid test export format '{format_}'.")
+                data = super().export(format_='dict')
+                if format_ == 'dict':
+                    return data
+                else:
+                    return tmt.utils.dict_to_yaml(data)
         else:
-            return super(Test, self).export(format_, keys)
+            raise tmt.utils.GeneralError(
+                f"Invalid test export format '{format_}'.")
 
 
 class Plan(Core):
@@ -953,10 +958,7 @@ class Plan(Core):
 
         Supported formats are 'yaml' and 'dict'.
         """
-        data = {}
-        data['name'] = self.name
-        data.update(super().export(format_='dict'))
-        data.pop('adjust', None)
+        data = super().export(format_='dict')
 
         for key in self.extra_L2_keys:
             value = self.node.data.get(key)

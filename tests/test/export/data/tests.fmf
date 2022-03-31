@@ -1,0 +1,8 @@
+test: 'true'
+
+/enabled:
+    /default:
+        summary: This test is enabled by default
+    /disabled:
+        summary: This test is disabled
+        enabled: false
