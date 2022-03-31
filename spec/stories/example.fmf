@@ -5,8 +5,18 @@ description:
     well selected, examples helps to understand quickly
     and get inspiration for initial experimenting.
 
-example: |
-    example: tmt run discover
+    Attribute can hold either single example or list of examples.
+
+example:
+    - |
+        example: |
+            tmt run discover
+    - |
+        example:
+            - |
+                # Check validity of the plans
+                tmt plan lint
+            - tmt run discover
 
 link:
   - implemented-by: /tmt/base.py
