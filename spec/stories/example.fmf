@@ -1,22 +1,38 @@
 summary: Instructive examples of real-life usage.
 
-description:
+description: |
     One example is worth thousand words. Providing a few,
     well selected, examples helps to understand quickly
     and get inspiration for initial experimenting.
 
-    Attribute can hold either single example or list of examples.
+    One or more examples can be defined, each of them is rendered
+    into a separate box during export. Should be a ``string`` or a
+    ``list of strings``.
 
 example:
     - |
-        example: |
-            tmt run discover
+        # Short one-line example
+        example: tmt run discover
     - |
+        # Preserve line breaks using the '|' modifier
+        example: |
+            tmt run --until execute
+            tmt run --last report
+    - |
+        # Use a list to define multiple examples
+        example:
+          - tmt run --until execute
+          - tmt run --last report
+
+    - |
+        # Several multiline examples
         example:
             - |
                 # Check validity of the plans
                 tmt plan lint
-            - tmt run discover
+            - |
+                # Check which tests would be run
+                tmt run discover
 
 link:
   - implemented-by: /tmt/base.py

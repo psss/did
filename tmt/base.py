@@ -1138,21 +1138,16 @@ class Story(Core):
 
         # Examples
         if self.example and self.example != self.node.parent.get('example'):
-            output += '\nExamples::\n\n'
-            if isinstance(self.example, list):
-                first = True
-                for example in self.example:
-                    if first:
-                        first = False
-                    else:
-                        output += '\n::\n\n'
-                    output += tmt.utils.format(
-                        '', example, wrap=False, indent=4,
-                        key_color=None, value_color=None) + '\n'
-                output += '\n\n'
-            else:
+            examples = tmt.utils.listify(self.example)
+            first = True
+            for example in examples:
+                if first:
+                    output += '\nExamples::\n\n'
+                    first = False
+                else:
+                    output += '\n::\n\n'
                 output += tmt.utils.format(
-                    '', self.example, wrap=False, indent=4,
+                    '', example, wrap=False, indent=4,
                     key_color=None, value_color=None) + '\n'
 
         # Status
