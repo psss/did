@@ -426,7 +426,8 @@ Karpelevich, Michal Srb, Jan Ščotka, Artem Zhukov, Vinzenz
 Feenstra, Inessa Vasilevskaya, Štěpán Němec, Robin Hack, Yulia
 Kopkova, Ondrej Moriš, Martin Zelený, Karel Šrot, František
 Zatloukal, Simon Walter, Petr Matyáš, Yariv Rachmani, Pavel
-Cahyna, Martin Litwora and Brian Grech.
+Cahyna, Martin Litwora, Brian Grech, Vojtěch Eichler, Philip Daly
+and Vector Li.
 
 
 Copyright

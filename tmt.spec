@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.11.0
+Version: 1.12.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -165,6 +165,33 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 
 
 %changelog
+* Mon Apr 04 2022 Petr Šplíchal <psplicha@redhat.com> - 1.12.0-1
+- Add a command to setup shell completions
+- Use /tmp instead of /run/user/ if not available
+- Use separate examples in the test specification
+- Add more story examples, simplify examples export
+- Story.example can hold list of strings
+- Fix traceback when connect plugin is used without hostname.
+- Adjust disabled shell expansion in Common.run()
+- Disable shell expansion in Common.run() by default
+- Build `epel9` packages, update install docs
+- Adjust the full test wrapper and document it
+- Test which compiles tmt and runs its testsuite
+- Add --exclude search option
+- Correct regex for require read from metadata file
+- Update document for creating virtual environment
+- Option to export fmf-id from run discover -h fmf
+- Allow import from restraint's metadata file (#1043)
+- Do not disable building for power arch on Fedora
+- Update documentation for plan parametrization
+- Make .vscode ignored by git
+- Drops basestring and unicode built-ins from utils
+- Fix timeout behaviour in testcloud plugin
+- Fixes possible test of None-ish CWD when running a command
+- Remove workdir only when its defined
+- Adjust the new `tmt plan export` feature
+- New feature: tmt plan export
+
 * Wed Mar 02 2022 Petr Šplíchal <psplicha@redhat.com> - 1.11.0-1
 - Prevent koji build failures on unsupported arches
 - Check remote git URL if it is accessible
