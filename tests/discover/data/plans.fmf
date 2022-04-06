@@ -82,3 +82,7 @@ execute:
             how: fmf
             dist-git-source: true
             test: tests/prepare/install$
+    /exclude:
+        discover:
+            how: fmf
+            exclude: /tests/discover1

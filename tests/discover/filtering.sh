@@ -39,6 +39,14 @@ rlJournalStart
         rlPhaseEnd
     done
 
+    rlPhaseStartTest "Exclude tests via exclude option within a plan metadata"
+        plan='plan --name fmf/exclude'
+        discover='discover --how fmf'
+        rlRun 'tmt run -dvr $discover $plan | tee output'
+        rlAssertNotGrep '/tests/discover1' output
+        rlAssertGrep '/tests/discover2' output
+    rlPhaseEnd
+
     rlPhaseStartTest "Filter by link"
         plan='plans --default'
         for link_relation in "" "relates:" "rel.*:"; do

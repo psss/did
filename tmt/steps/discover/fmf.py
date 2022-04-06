@@ -139,8 +139,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if 'revision' in self.data:
             self.data['ref'] = self.data.pop('revision')
 
-        # Make sure that 'filter' and 'test' keys are lists
-        tmt.utils.listify(self.data, keys=["filter", "test"])
+        # Make sure that 'exclude', 'filter' and 'test' keys are lists
+        tmt.utils.listify(self.data, keys=["exclude", "filter", "test"])
 
         # Process command line options, apply defaults
         super().wake(keys=keys)
