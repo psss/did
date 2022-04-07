@@ -1,0 +1,14 @@
+summary: Basic multihost test for the httpd web server
+description:
+    Demonstrate and verify basic multihost features on a simple
+    web server test. Provision a server and two clients. Install
+    httpd, start the daemon and create a minimal web page on the
+    server. Install curl package on both clients based on the
+    role. Check that the page is correctly served to both clients.
+framework: shell
+test: cd data && tmt run -vvv
+
+enabled: false
+adjust:
+  - enabled: true
+    when: how == full

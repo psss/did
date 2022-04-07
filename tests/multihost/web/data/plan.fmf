@@ -1,0 +1,34 @@
+provision:
+  - name: server
+    how: virtual
+    connection: system
+  - name: client-one
+    how: virtual
+    role: client
+    connection: system
+  - name: client-two
+    how: virtual
+    connection: system
+    role: client
+
+prepare:
+  - name: Install httpd
+    how: install
+    package: httpd
+    where: server
+  - name: Start the service
+    how: shell
+    script: systemctl start httpd
+    where: server
+  - name: Prepare page
+    how: shell
+    script: echo foo > /var/www/html/index.html
+    where: server
+
+  - name: Install curl
+    how: install
+    package: curl
+    where: client
+
+execute:
+    script: curl http://server/ | grep foo
