@@ -6,7 +6,7 @@ import click
 import requests
 
 import tmt
-from tmt.utils import ProvisionError
+from tmt.utils import ProvisionError, updatable_message
 
 # TODO: find out how to get this one into RPM builds.
 try:
@@ -90,6 +90,17 @@ DEFAULT_GUEST_DATA = cast(
         'api-retry-backoff-factor': DEFAULT_RETRY_BACKOFF_FACTOR
         }
     )
+
+GUEST_STATE_COLOR_DEFAULT = 'green'
+
+GUEST_STATE_COLORS = {
+    'routing': 'yellow',
+    'provisioning': 'magenta',
+    'promised': 'blue',
+    'preparing': 'cyan',
+    'cancelled': 'red',
+    'error': 'red'
+}
 
 
 # Type annotation for Artemis API `GET /guests/$guestname` response.
@@ -577,31 +588,39 @@ class GuestArtemis(tmt.Guest):
         deadline = datetime.datetime.utcnow(
             ) + datetime.timedelta(seconds=self.provision_timeout)
 
-        while deadline > datetime.datetime.utcnow():
-            response = self.api.inspect(f'/guests/{self.guestname}')
+        with updatable_message(
+                'state', indent_level=self._level()) as progress_message:
+            while deadline > datetime.datetime.utcnow():
+                response = self.api.inspect(f'/guests/{self.guestname}')
 
-            if response.status_code != 200:
+                if response.status_code != 200:
+                    raise ProvisionError(
+                        f"Failed to create, "
+                        f"unhandled API response '{response.status_code}'.")
+
+                current = cast(GuestInspectType, response.json())
+                state = current['state']
+                state_color = GUEST_STATE_COLORS.get(
+                    state, GUEST_STATE_COLOR_DEFAULT)
+
+                progress_message.update(state, color=state_color)
+
+                if state == 'error':
+                    raise ProvisionError(
+                        f'Failed to create, provisioning failed.')
+
+                if state == 'ready':
+                    break
+
+                time.sleep(self.provision_tick)
+
+            else:
                 raise ProvisionError(
-                    f"Failed to create, "
-                    f"unhandled API response '{response.status_code}'.")
+                    f'Failed to provision in the given amount '
+                    f'of time (--provision-timeout={self.provision_timeout}).')
 
-            current = cast(GuestInspectType, response.json())
-            state = current['state']
-
-            if state == 'error':
-                raise ProvisionError(f'Failed to create, provisioning failed.')
-
-            if state == 'ready':
-                self.guest = current['address']
-                self.info('address', self.guest, 'green')
-                break
-
-            time.sleep(self.provision_tick)
-
-        else:
-            raise ProvisionError(
-                f'Failed to provision in the given amount '
-                f'of time (--provision-timeout={self.provision_timeout}).')
+        self.guest = current['address']
+        self.info('address', self.guest, 'green')
 
     def start(self):
         """

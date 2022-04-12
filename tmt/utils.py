@@ -11,12 +11,13 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
 import unicodedata
 from collections import OrderedDict
 from functools import lru_cache
 from pathlib import Path
 from threading import Thread
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Optional
 
 import fmf
 import requests
@@ -61,6 +62,49 @@ DEFAULT_SELECT_TIMEOUT = 5
 
 # Shell options to be set for all run shell scripts
 SHELL_OPTIONS = 'set -eo pipefail'
+
+
+def indent(
+        key: str,
+        value: Optional[str] = None,
+        color: Optional[str] = None,
+        level: int = 0) -> str:
+    """
+    Indent a key/value message.
+
+    If both ``key`` and ``value`` are specified, ``{key}: {value}``
+    message is rendered. Otherwise, just ``key`` is used alone. If
+    ``value`` contains multiple lines, each but the very first line is
+    indented by one extra level.
+
+    :param value: optional value to print at right side of ``key``.
+    :param color: optional color to apply on ``key``.
+    :param level: number of indentation levels. Each level is indented
+                  by :py:data:`INDENT` spaces.
+    """
+
+    indent = ' ' * INDENT * level
+    deeper = ' ' * INDENT * (level + 1)
+
+    # Colorize
+    if color is not None:
+        key = style(key, fg=color)
+
+    # Handle key only
+    if value is None:
+        message = key
+
+    # Handle key + value
+    else:
+        # Multiline content indented deeper
+        if isinstance(value, str):
+            lines = value.splitlines()
+            if len(lines) > 1:
+                value = ''.join([f"\n{deeper}{line}" for line in lines])
+
+        message = f'{key}: {value}'
+
+    return indent + message
 
 
 class Config(object):
@@ -243,24 +287,12 @@ class Common(object):
 
     def _indent(self, key, value=None, color=None, shift=0):
         """ Indent message according to the object hierarchy """
-        level = self._level() + shift
-        indent = ' ' * INDENT * level
-        deeper = ' ' * INDENT * (level + 1)
-        # Colorize
-        if color is not None:
-            key = style(key, fg=color)
-        # Handle key only
-        if value is None:
-            message = key
-        # Handle key + value
-        else:
-            # Multiline content indented deeper
-            if isinstance(value, str):
-                lines = value.splitlines()
-                if len(lines) > 1:
-                    value = ''.join([f"\n{deeper}{line}" for line in lines])
-            message = f'{key}: {value}'
-        return indent + message
+
+        return indent(
+            key,
+            value=value,
+            color=color,
+            level=self._level() + shift)
 
     def _log(self, message):
         """ Append provided message to the current log """
@@ -1780,3 +1812,78 @@ def get_distgit_handler(remotes=None, usage_name=None):
 def get_distgit_handler_names():
     """ All known distgit handlers """
     return [i.usage_name for i in DistGitHandler.__subclasses__()]
+
+
+class updatable_message(contextlib.AbstractContextManager):
+    """ Updatable message suitable for progress-bar-like reporting """
+
+    def __init__(
+            self,
+            key: str,
+            enabled: bool = True,
+            indent_level: int = 0,
+            key_color: Optional[str] = None,
+            default_value_color: Optional[str] = None
+            ) -> None:
+        """
+        Updatable message suitable for progress-bar-like reporting.
+
+        .. code:block:: python3
+
+           with updatable_message('foo') as message:
+               while ...:
+                   ...
+
+                   # check state of remote request, and update message
+                   state = remote_api.check()
+                   message.update(state)
+
+        :param key: a string to use as the left-hand part of logged message.
+        :param enabled: if unset, no output would be performed.
+        :param indent_level: desired indentation level.
+        :param key_color: optional color to apply to ``key``.
+        :param default_color: optional color to apply to value when
+            :py:meth:`update` is called with ``color`` left out.
+        """
+
+        self.key = key
+        self.enabled = enabled
+        self.indent_level = indent_level
+        self.key_color = key_color
+        self.default_value_color = default_value_color
+
+        # No progress if terminal not attached
+        if not sys.stdout.isatty():
+            self.enabled = False
+
+        self._previous_line = None
+
+    def __enter__(self) -> 'updatable_message':
+        return self
+
+    def __exit__(self, *args):
+        sys.stdout.write('\n')
+        sys.stdout.flush()
+
+    def update(self, value, color=None) -> None:
+        if not self.enabled:
+            return
+
+        if self._previous_line is not None:
+            message = value.ljust(len(self._previous_line))
+
+        else:
+            message = value
+
+        self._previous_line = value
+
+        message = indent(
+            self.key,
+            value=style(
+                message,
+                fg=color or self.default_value_color),
+            color=self.key_color,
+            level=self.indent_level)
+
+        sys.stdout.write(f"\r{message}")
+        sys.stdout.flush()

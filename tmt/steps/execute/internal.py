@@ -106,6 +106,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         # Make sure that script is a list
         tmt.utils.listify(self.data, keys=['script'])
 
+    # TODO: consider switching to utils.updatable_message() - might need more
+    # work, since use of _show_progress is split over several methods.
     def _show_progress(self, progress, test_name, finish=False):
         """
         Show an interactive progress bar in non-verbose mode.
