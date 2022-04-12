@@ -103,7 +103,7 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
         # There is letter 'D' at the end marking done, subtract it
         return len(stdout.strip()) - 1
 
-    def go(self):
+    def go(self, guest):
         """ Execute available tests """
         super().go()
         self._results = []
@@ -119,35 +119,33 @@ class ExecuteDetach(tmt.steps.execute.ExecutePlugin):
 
         # For each guest execute all tests
         exit_first = ' -x' if self.get('exit-first', default=False) else ''
-        for guest in self.step.plan.provision.guests():
-
-            # Push workdir to guest and execute tests
-            guest.push()
-            start = time.time()
-            try:
-                guest.execute(
-                    f'./{RUNNER} -v{exit_first} .. stdout.log stderr.log',
-                    cwd=self.step.workdir)
-            except tmt.utils.RunError as error:
-                guest.pull()
-                self.info('error', 'Test execution failed.', color='red')
-                self.check_output(error)
-                raise
-            end = time.time()
-            # Pull logs from guest, show logs and check results
-            guest.pull(source=self.step.plan.execute.workdir)
-            guest.pull(source=self.step.plan.data_directory)
-            self.show_logs()
-            # If --exit-first is used, not all tests may have been executed.
-            # run.sh writes a letter F/. (Fail/pass) to stdout for each test.
-            # Check results only of the executed tests.
-            executed = self.executed_test_count()
-            for i, test in enumerate(self.step.plan.discover.tests()):
-                if i >= executed:
-                    self.warn('Not all tests have been executed.')
-                    break
-                test.real_duration = self.test_duration(start, end)
-                self._results.append(self.check(test))
+        # Push workdir to guest and execute tests
+        guest.push()
+        start = time.time()
+        try:
+            guest.execute(
+                f'./{RUNNER} -v{exit_first} .. stdout.log stderr.log',
+                cwd=self.step.workdir)
+        except tmt.utils.RunError as error:
+            guest.pull()
+            self.info('error', 'Test execution failed.', color='red')
+            self.check_output(error)
+            raise
+        end = time.time()
+        # Pull logs from guest, show logs and check results
+        guest.pull(source=self.step.plan.execute.workdir)
+        guest.pull(source=self.step.plan.data_directory)
+        self.show_logs()
+        # If --exit-first is used, not all tests may have been executed.
+        # run.sh writes a letter F/. (Fail/pass) to stdout for each test.
+        # Check results only of the executed tests.
+        executed = self.executed_test_count()
+        for i, test in enumerate(self.step.plan.discover.tests()):
+            if i >= executed:
+                self.warn('Not all tests have been executed.')
+                break
+            test.real_duration = self.test_duration(start, end)
+            self._results.append(self.check(test))
 
     def results(self):
         """ Return test results """

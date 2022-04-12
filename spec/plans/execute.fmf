@@ -141,12 +141,12 @@ description: |
         is not defined, tests are executed on all provisioned
         guests.
     example: |
-        # Execute discovered tests on the client
+        # Execute discovered tests on the client (already supported)
         execute:
           - how: tmt
             where: client
 
-        # Run different script for each role
+        # Run different script for each role (not supported yet)
         execute:
           - name: run-the-client-code
             script: client.py

@@ -32,3 +32,4 @@ prepare:
 
 execute:
     script: curl http://server/ | grep foo
+    where: client

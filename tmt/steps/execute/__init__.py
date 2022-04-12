@@ -136,10 +136,12 @@ class Execute(tmt.steps.Step):
             raise tmt.utils.ExecuteError("No guests available for execution.")
 
         # Execute the tests, store results
-        for plugin in self.plugins():
-            plugin.go()
-            if isinstance(plugin, ExecutePlugin):
-                self._results = plugin.results()
+        for guest in self.plan.provision.guests():
+            for plugin in self.plugins():
+                if plugin.enabled_on_guest(guest):
+                    plugin.go(guest)
+                    if isinstance(plugin, ExecutePlugin):
+                        self._results = plugin.results()
 
         # Give a summary, update status and save
         self.summary()

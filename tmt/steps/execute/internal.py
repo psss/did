@@ -291,7 +291,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             return True
         return False
 
-    def go(self):
+    def go(self, guest):
         """ Execute available tests """
         super().go()
         self._results = []
@@ -306,35 +306,33 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         exit_first = self.get('exit-first', default=False)
         self.step.write(FILE_SUBMIT_NAME, FILE_SUBMIT_SCRIPT)
 
-        # For each guest execute all tests
-        for guest in self.step.plan.provision.guests():
-            with self._setup_reboot(guest):
-                # Push workdir to guest and execute tests
-                guest.push()
-                index = 0
-                while index < len(tests):
-                    test = tests[index]
-                    if not hasattr(test, "_reboot_count"):
-                        test._reboot_count = 0
-                    self.execute(
-                        test, guest, progress=f"{index + 1}/{len(tests)}")
-                    guest.pull(source=self.data_path(test, full=True))
-                    if self._handle_reboot(test, guest):
-                        continue
-                    self._results.append(self.check(test))
-                    if (exit_first and
-                            self._results[-1].result not in ('pass', 'info')):
-                        # Clear the progress bar before outputting
-                        self._show_progress('', '', True)
-                        self.warn(
-                            f'Test {test.name} failed, stopping execution.')
-                        break
-                    index += 1
-                # Overwrite the progress bar, the test data is irrelevant
-                self._show_progress('', '', True)
-            # Pull artifacts created in the plan data directory
-            self.debug("Pull the plan data directory.", level=2)
-            guest.pull(source=self.step.plan.data_directory)
+        with self._setup_reboot(guest):
+            # Push workdir to guest and execute tests
+            guest.push()
+            index = 0
+            while index < len(tests):
+                test = tests[index]
+                if not hasattr(test, "_reboot_count"):
+                    test._reboot_count = 0
+                self.execute(
+                    test, guest, progress=f"{index + 1}/{len(tests)}")
+                guest.pull(source=self.data_path(test, full=True))
+                if self._handle_reboot(test, guest):
+                    continue
+                self._results.append(self.check(test))
+                if (exit_first and
+                        self._results[-1].result not in ('pass', 'info')):
+                    # Clear the progress bar before outputting
+                    self._show_progress('', '', True)
+                    self.warn(
+                        f'Test {test.name} failed, stopping execution.')
+                    break
+                index += 1
+            # Overwrite the progress bar, the test data is irrelevant
+            self._show_progress('', '', True)
+        # Pull artifacts created in the plan data directory
+        self.debug("Pull the plan data directory.", level=2)
+        guest.pull(source=self.step.plan.data_directory)
 
     def results(self):
         """ Return test results """
