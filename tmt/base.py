@@ -212,10 +212,12 @@ class Core(tmt.utils.Common):
         """ Export data into requested format (yaml or dict) """
         if keys is None:
             keys = self._keys
-        data = dict()
-        data['name'] = self.name
+
+        # Always include node name, add requested keys, ignore adjust
+        data = dict(name=self.name)
         data.update(dict([(key, getattr(self, key)) for key in keys]))
         data.pop('adjust', None)
+
         # Choose proper format
         if format_ == 'dict':
             return data
@@ -223,7 +225,7 @@ class Core(tmt.utils.Common):
             return tmt.utils.dict_to_yaml(data)
         else:
             raise tmt.utils.GeneralError(
-                f"Invalid test export format '{format_}'.")
+                f"Invalid export format '{format_}'.")
 
     def lint_keys(self, additional_keys):
         """ Return list of invalid keys used, empty when all good """
@@ -544,19 +546,19 @@ class Test(Core):
         elif format_ == 'nitrate':
             tmt.export.export_to_nitrate(self)
 
-        # Common node export otherwise
-        elif format_ == 'dict' or format_ == "yaml":
-            if keys == 'fmf-id':
+        # Export the fmf identifier
+        elif keys == 'fmf-id':
+            if format_ == 'dict':
                 return self.fmf_id
+            elif format_ == 'yaml':
+                return tmt.utils.dict_to_yaml(self.fmf_id)
             else:
-                data = super().export(format_='dict')
-                if format_ == 'dict':
-                    return data
-                else:
-                    return tmt.utils.dict_to_yaml(data)
+                raise tmt.utils.GeneralError(
+                    f"Invalid test export format '{format_}'.")
+
+        # Common node export otherwise
         else:
-            raise tmt.utils.GeneralError(
-                f"Invalid test export format '{format_}'.")
+            return super().export(format_, keys)
 
 
 class Plan(Core):
