@@ -91,6 +91,9 @@ WorkdirArgumentType = Union[Literal[True], str, None]
 # Workdir type, can be None or a string
 WorkdirType = Optional[str]
 
+# Option to skip to initialize work tree in plan
+PLAN_SKIP_WORKTREE_INIT = 'plan_skip_worktree_init'
+
 
 class BaseLoggerFnType(Protocol):
     def __call__(

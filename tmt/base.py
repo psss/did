@@ -603,7 +603,12 @@ class Plan(Core):
         # Save the run, prepare worktree and plan data directory
         self.my_run = run
         if self.my_run:
-            self._initialize_worktree()
+            # Skip to initialize the work tree if the corresponding option is
+            # true. Note that 'tmt clean' consumes the option because it
+            # should not initialize the work tree at all.
+            if not run.opt(tmt.utils.PLAN_SKIP_WORKTREE_INIT):
+                self._initialize_worktree()
+
             self._initialize_data_directory()
 
         # Store 'environment' and 'environment-file' keys content
@@ -1902,6 +1907,16 @@ class Status(tmt.utils.Common):
 
 class Clean(tmt.utils.Common):
     """ A class for cleaning up workdirs, guests or images """
+
+    def __init__(self, parent=None, name=None, workdir=None, context=None):
+        """
+        Initialize name and relation with the parent object
+
+        Always skip to initialize the work tree.
+        """
+        # Set the option to skip to initialize the work tree
+        context.params[tmt.utils.PLAN_SKIP_WORKTREE_INIT] = True
+        super().__init__(parent, name, workdir, context)
 
     def images(self):
         """ Clean images of provision plugins """
