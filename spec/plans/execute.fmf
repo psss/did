@@ -192,6 +192,15 @@ description: |
             number of reboots performed by the test. For more information
             see the :ref:`/stories/features/reboot` feature documentation.
 
+        ``tmt-report-result``
+            Generate a result report file from inside the test. Can be
+            called multiple times by the test. The generated report
+            file will be overwritten if a higher hierarchical result is
+            reported by the test. The hierarchy is as follows:
+            SKIP, PASS, WARN, FAIL.
+            For more information see the
+            :ref:`/stories/features/report_result` feature documentation.
+
     example: |
         execute:
             how: tmt

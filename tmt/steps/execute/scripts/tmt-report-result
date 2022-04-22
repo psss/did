@@ -1,0 +1,126 @@
+#!/bin/bash
+set -o errexit -o pipefail -o noclobber -o nounset
+
+server=
+outputFile=
+disablePlugin=
+port=
+message=
+help=False
+
+die() { echo "$*" >&2; exit 2; }  # complain to STDERR and exit with error
+needs_arg() { if [ -z "$OPTARG" ]; then die "No arg for --$OPT option"; fi; }
+
+position=
+check_opt_args () {
+    local OPTIND
+    while getopts s:o:p:t:port:message:outputfile:help-: OPT; do
+	# support long options: https://stackoverflow.com/a/28466267/519360
+        if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
+            OPT="${OPTARG%%=*}"       # extract long option name
+        fi
+        case "$OPT" in
+            server )         needs_arg; eval "server=\"\$$OPTIND\"" ; OPTIND=$((OPTIND+1)) ;;
+            s )              needs_arg; server=$OPTARG ;;
+            outputfile )     needs_arg; eval "outputFile=\"\$$OPTIND\"" ; OPTIND=$((OPTIND+1)) ;;
+            o )              needs_arg; outputFile="$OPTARG" ;;
+            p )              needs_arg; disablePlugin="$OPTARG" ;;
+            disable-plugin ) needs_arg; eval "disablePlugin=\"\$$OPTIND\"" ; OPTIND=$((OPTIND+1)) ;;
+            t )              needs_arg; message="$OPTARG" ;;
+            message )        needs_arg; eval "message=\"\$$OPTIND\"" ; OPTIND=$((OPTIND+1)) ;;
+            port )           needs_arg; eval "port=\"\$$OPTIND\"" ; OPTIND=$((OPTIND+1)) ;;
+            no-plugins )     disablePlugin=* ;;
+            help )           help=True ;;
+            ??* )            die "Illegal option --$OPT" ;;  # bad long option
+            ? )              exit 2 ;;  # bad short option (error reported via getopts)
+        esac
+    done
+    shift $((OPTIND-1)) # remove parsed options and args from $@ list
+    position=$((OPTIND-1))
+}
+# Options wrapped in quotes to ensure -t/--message argument is parsed as a string phrase
+# rather than just the first string until a whitespace is encountered.
+check_opt_args "$@"
+shift $position # remove parsed options and args from $@ list
+# Return help options when command issued with no options or arguments.
+if [ $# -lt 2 ] || [ $help == True ]; then
+    echo "Usage:"
+    echo "  rstrnt-report-result [OPTION?] TASK_PATH RESULT [SCORE]"
+    echo ""
+    echo "Report results to lab controller. if you don't specify --port or"
+    echo "the server url you must have RECIPE_URL and TASKID defined."
+    echo "If HARNESS_PREFIX is defined then the value of that must be"
+    echo "prefixed to RECIPE_URL and TASKID"
+    echo ""
+    echo "Help Options:"
+    echo "  -h, --help                      Show help options"
+    echo ""
+    echo "Application Options:"
+    echo "  --port=PORT                     restraintd port number (Service default: 8081)"
+    echo "  -s, --server=URL                Server to connect to"
+    echo "  -t, --message=TEXT              Short 100 characters or less message"
+    echo "  -o, --outputfile=FILE           Log to upload with result, \$OUTPUTFILE is used by default"
+    echo "  -p, --disable-plugin=PLUGIN     don't run plugin on server side"
+    echo "  --no-plugins                    don't run any plugins on server side"
+    echo ""
+    exit 1
+fi
+TESTNAME=$1
+TESTRESULT=$2
+shift 2 #$((OPTIND-1)) # remove parsed options and args from $@ list
+METRIC=
+if [ $# -gt 0 ];then
+    value1=$1
+    firstChar=${value1:0:1}
+    if [ $firstChar != '-' ]; then
+        METRIC=$1
+        shift 1
+    fi
+    check_opt_args "$@"
+fi
+
+write_report_file () {
+    rm -f $REPORT_RESULT_OUTPUTFILE
+    echo "SERVER=$server" >> $REPORT_RESULT_OUTPUTFILE
+    echo "PORT=$port" >> $REPORT_RESULT_OUTPUTFILE
+    echo "MESSAGE=$message" >> $REPORT_RESULT_OUTPUTFILE
+    echo "OUTPUTFILE=$outputFile" >> $REPORT_RESULT_OUTPUTFILE
+    echo "DISABLEPLUGIN=$disablePlugin" >> $REPORT_RESULT_OUTPUTFILE
+    echo "TESTNAME=$TESTNAME" >> $REPORT_RESULT_OUTPUTFILE
+    echo "TESTRESULT=$TESTRESULT" >> $REPORT_RESULT_OUTPUTFILE
+    echo "METRIC=$METRIC" >> $REPORT_RESULT_OUTPUTFILE
+}
+
+
+declare -A RESULTS_HIERARCHY=( ["FAIL"]=4 ["WARN"]=3 ["PASS"]=2 ["SKIP"]=1 )
+# Create the output file in which to store the results.
+REPORT_RESULT_OUTPUTFILE="$TMT_TEST_DATA/reportResult"
+if [ -e "$REPORT_RESULT_OUTPUTFILE" ]; then
+    # Check the existing output file.
+    # If new result is higher on the hierarchy
+    # or no result is contained in the file
+    # then overwrite the file with the new
+    # report contents.
+    fileResult=$(/usr/bin/grep "TESTRESULT" $REPORT_RESULT_OUTPUTFILE |
+    cut -d = -f 2)
+    if [ ! $fileResult ]; then
+        write_report_file;
+        exit 0
+    elif [ ! $TESTRESULT ]; then
+        exit 0
+    fi
+    fileHierarchy="${RESULTS_HIERARCHY[$fileResult]}"
+    # Compare the current result hierarchy against
+    # the hierarchy result retrieved from the file.
+    # Overwrite the file if the current hierachy is higher.
+    thisResultHierarchy="${RESULTS_HIERARCHY[$TESTRESULT]}"
+    if [ $thisResultHierarchy -gt $fileHierarchy ]; then
+        write_report_file
+        exit 0
+    fi
+
+else
+    # Create the output file with the report contents.
+    write_report_file
+    exit 0
+fi

@@ -20,14 +20,25 @@ TMT_REBOOT_SCRIPT = Script("/usr/local/bin/tmt-reboot",
                                "RSTRNT_REBOOTCOUNT"]
                            )
 
+# Script handling result reporting, in restraint compatible fashion
+TMT_REPORT_RESULT_SCRIPT = Script("/usr/local/bin/tmt-report-result",
+                                  aliases=[
+                                      "/usr/local/bin/rstrnt-report-result",
+                                      "/usr/local/bin/rhts-report-result"],
+                                  related_variables=[]
+                                  )
+
 # Script for archiving a file, usable for BEAKERLIB_COMMAND_SUBMIT_LOG
 TMT_FILE_SUBMIT_SCRIPT = Script("/usr/local/bin/tmt-file-submit")
 
 # File for requesting reboot
 REBOOT_REQUEST_FILENAME = "reboot_request"
 
+# File in which report-result output is stored.
+RSTRNT_REPORT_RESULT_OUTPUT = "reportResult"
+
 # List of all available scripts
-SCRIPTS = (TMT_FILE_SUBMIT_SCRIPT, TMT_REBOOT_SCRIPT)
+SCRIPTS = (TMT_FILE_SUBMIT_SCRIPT, TMT_REBOOT_SCRIPT, TMT_REPORT_RESULT_SCRIPT)
 
 
 class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
@@ -286,6 +297,44 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             # Handle reboot, check results
             if self._handle_reboot(test, guest):
                 continue
+            # Check to see if the rstrnt-report-result script was used
+            # and has generated a report. If yes then check the result
+            # and update the test result, otherwise use the original
+            # result returned from the execute function.
+            test_data = os.path.join(
+                self.data_path(
+                    test,
+                    full=True),
+                tmt.steps.execute.TEST_DATA)
+            report_result_path = os.path.join(
+                test_data, RSTRNT_REPORT_RESULT_OUTPUT)
+            if os.path.exists(report_result_path):
+                self.debug("Rstrnt-report-result output file detected. "
+                           "Retrieving test result from output file.")
+                with open(report_result_path) as f:
+                    ret = f.read()
+                    f.close()
+                result = None
+                ret_ls = ret.split('\n')
+                for line in ret_ls:
+                    if 'TESTRESULT' in line:
+                        result = line.split('=')[1].strip()
+                        break
+                if result == '\n' or result == 'SKIP' or result == 'PASS':
+                    test.returncode = 0
+                    if result == 'SKIP':
+                        test.result = "info"
+                elif result == 'WARN' or result == 'FAIL':
+                    test.returncode = 1
+                    if result == 'WARN':
+                        test.result = "warn"
+                else:
+                    self.debug("Rstrnt-report-result "
+                               "output file is corrupt.")
+                    test.returncode = 1
+                # Remove the rstrnt-report-result script
+                os.remove(report_result_path)
+                guest.push(test_data)
             self._results.append(self.check(test))
             if (exit_first and
                     self._results[-1].result not in ('pass', 'info')):

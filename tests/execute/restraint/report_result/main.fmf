@@ -1,0 +1,9 @@
+summary: Verify mocked Restraint rstrnt-report-result functionality.
+test: ./test.sh
+description:
+    Verify that the mocked rstrnt-report-result Restraint functionality
+    can be executed successfully.
+contact: Philip Daly <pdaly@redhat.com>
+tier: 2
+tag: [container, virtual]
+component: [tmt, restraint]

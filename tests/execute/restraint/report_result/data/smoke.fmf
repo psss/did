@@ -1,0 +1,17 @@
+summary: Generate a report result file to ensure TMT can read the result.
+description:
+    Test to generate a rstrnt-report-result file to check
+    whether tmt can read the result.
+
+/good:
+    test: rstrnt-report-result --server http://test-example.com report PASS
+
+/bad:
+    test: rstrnt-report-result --server http://test-example.com report FAIL
+    result: xfail
+
+/skip:
+    test: rstrnt-report-result --server http://test-example.com report SKIP
+
+/warn:
+    test: rstrnt-report-result --server http://test-example.com report WARN
