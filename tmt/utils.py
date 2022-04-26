@@ -247,14 +247,15 @@ class Common(object):
     """
     Common shared stuff
 
-    Takes care of command line context and workdir handling.
+    Takes care of command line context, options and workdir handling.
     Provides logging functions info(), verbose() and debug().
     Implements read() and write() for comfortable file access.
     Provides the run() method for easy command execution.
     """
 
-    # Command line context and workdir
+    # Command line context, options and workdir
     _context: Optional[click.Context] = None
+    _options: Dict[str, Any] = dict()
     _workdir: Optional[str] = None
 
     def __init__(
@@ -268,7 +269,8 @@ class Common(object):
 
         Prepare the workdir for provided id / directory path
         or generate a new workdir name if workdir=True given.
-        Store command line context for future use if provided.
+        Store command line context and options for future use
+        if context is provided.
         """
         # Use lowercase class name as the default name
         self.name = name or self.__class__.__name__.lower()
@@ -276,7 +278,7 @@ class Common(object):
 
         # Store command line context
         if context:
-            self._context = context
+            self._save_context(context)
 
         # Initialize the workdir if requested
         self._workdir_load(workdir)
@@ -287,8 +289,9 @@ class Common(object):
 
     @classmethod
     def _save_context(cls, context: click.Context) -> None:
-        """ Save provided command line context for future use """
+        """ Save provided command line context and options for future use """
         cls._context = context
+        cls._options = context.params
 
     @overload
     @classmethod
@@ -303,9 +306,7 @@ class Common(object):
     @classmethod
     def _opt(cls, option: str, default: Any = None) -> Any:
         """ Get an option from the command line context (class version) """
-        if cls._context is None:
-            return default
-        return cls._context.params.get(option, default)
+        return cls._options.get(option, default)
 
     def _fmf_context(self) -> FmfContextType:
         """ Return the current fmf context """
@@ -319,7 +320,7 @@ class Common(object):
 
     def opt(self, option: str, default: Optional[Any] = None) -> Any:
         """
-        Get an option from the command line context
+        Get an option from the command line options
 
         Checks also parent options. For flags (boolean values) parent's
         True wins over child's False (e.g. run --quiet enables quiet
@@ -345,10 +346,8 @@ class Common(object):
             except KeyError:
                 pass
 
-        # Check local option
-        local = default
-        if self._context is not None:
-            local = self._context.params.get(option, default)
+        # Get local option
+        local = self._options.get(option, default)
         # Check parent option
         parent = None
         if self.parent:
