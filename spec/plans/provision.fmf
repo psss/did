@@ -145,16 +145,32 @@ example: |
             yet we do not expect any significant changes to the
             currently proposed format.
 
-    example: |
+    example:
+      - |
+        # Here's a full provision step example
+        provision:
+            how: virtual
+            image: fedora-35
+            hardware:
+                arch: x86_64
+                memory: 8 GB
+      - |
         # Basic key-value format used to specify the memory size
         memory: 8 GB
 
+      - |
+        # Architecture (any of well-known short architecture names,
+        # for example aarch64, i386, ppc64, ppc64le, s390x, x86_64)
+        arch: x86_64
+
+      - |
         # Processor-related stuff grouped together
         cpu:
             processors: 2
             cores: 16
             model: 37
 
+      - |
         # Disk group used to allow possible future extensions
         disk:
           - size: 500 GB
@@ -164,34 +180,40 @@ example: |
           - size: '>= 2 GB'
           - size: '>= 20 GB'
 
+      - |
         # Optional operators at the start of the value
         memory: '> 8 GB'
         memory: '>= 8 GB'
         memory: '< 8 GB'
         memory: '<= 8 GB'
 
+      - |
         # By default exact value expected, these are equivalent:
         cpu:
             model: 37
         cpu:
             model: '= 37'
 
+      - |
         # Enable regular expression search
         cpu:
             model-name: =~ .*AMD.*
 
+      - |
         # Network interface
         network:
           - type: eth
             vendor-name: =~ Broadcom.*
             device-name: =~ NetXtreme II BCM.*
 
+      - |
         # Features related to virtualization
         virtualization:
             is-virtualized: true
             is-supported: false
             hypervisor: kvm
 
+      - |
         # Features related to machine boot modes
         boot:
             method: bios
@@ -199,6 +221,7 @@ example: |
         boot:
             method: uefi
 
+      - |
         # Choose machine with given hostname
         hostname: kvm-01.lab.us-east-2.company.com
 
@@ -208,6 +231,7 @@ example: |
         # Hostname not matching a regular expression
         hostname: "!~ kvm-01.*"
 
+      - |
         # Using advanced logic operators
         and:
           - cpu:
