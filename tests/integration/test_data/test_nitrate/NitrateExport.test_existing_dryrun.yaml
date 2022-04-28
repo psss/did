@@ -78,7 +78,7 @@ nitrate.xmlrpc_driver:
       reviewer: null
       reviewer_id: null
       script: null
-      summary: This is case what already exists inside nitrate
+      summary: tmt /existing_testcase - This is case what already exists inside nitrate
       tag:
       - fmf-export
       text:
@@ -88,7 +88,7 @@ nitrate.xmlrpc_driver:
         author_id: 2150
         breakdown: ''
         breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
-        case: This is case what already exists inside nitrate
+        case: tmt /existing_testcase - This is case what already exists inside nitrate
         case_id: 609686
         case_text_version: 1
         create_date: '2021-02-24 01:07:39'
@@ -97,12 +97,32 @@ nitrate.xmlrpc_driver:
         id: 878121
         setup: ''
         setup_checksum: d41d8cd98f00b204e9800998ecf8427e
+  - metadata:
+      guess_type: Tuple
+      latency: 0.9894566535949707
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - []
 requests.sessions:
   send:
     POST:
       https://bugzilla.redhat.com/xmlrpc.cgi:
       - metadata:
-          latency: 0.3739025592803955
+          latency: 0.47921037673950195
           module_call_list:
           - unittest.case
           - integration.test_nitrate
@@ -126,9 +146,9 @@ requests.sessions:
           - send
         output:
           __store_indicator: 1
-          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>version</name><value><string>5.0.4.rh68</string></value></member></struct></value></param></params></methodResponse>
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>version</name><value><string>5.0.4.rh69</string></value></member></struct></value></param></params></methodResponse>
           _next: null
-          elapsed: 0.37323
+          elapsed: 0.47804
           encoding: ISO-8859-1
           headers:
             Cache-Control: private, must-revalidate
@@ -178,8 +198,8 @@ requests.sessions:
           - send
         output:
           __store_indicator: 1
-          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>users</name><value><array><data><value><struct><member><name>can_login</name><value><boolean>1</boolean></value></member><member><name>email</name><value><string>aander07@packetmaster.com</string></value></member><member><name>name</name><value><string>aander07@packetmaster.com</string></value></member><member><name>real_name</name><value><string>Need
-            Real Name</string></value></member><member><name>id</name><value><int>1</int></value></member></struct></value></data></array></value></member></struct></value></param></params></methodResponse>
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>users</name><value><array><data><value><struct><member><name>name</name><value><string>aander07@packetmaster.com</string></value></member><member><name>real_name</name><value><string>Need
+            Real Name</string></value></member><member><name>email</name><value><string>aander07@packetmaster.com</string></value></member><member><name>id</name><value><int>1</int></value></member><member><name>can_login</name><value><boolean>1</boolean></value></member></struct></value></data></array></value></member></struct></value></param></params></methodResponse>
           _next: null
           elapsed: 0.547447
           encoding: ISO-8859-1
@@ -187,7 +207,7 @@ requests.sessions:
             Cache-Control: private, must-revalidate
             Connection: keep-alive
             Content-Encoding: gzip
-            Content-Length: '253'
+            Content-Length: '252'
             Content-Security-Policy: frame-ancestors 'self' bugzilla.redhat.com
             Content-Type: text/xml
             Date: Thu, 03 Mar 2022 17:35:24 GMT

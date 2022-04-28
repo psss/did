@@ -27,7 +27,7 @@ nitrate.xmlrpc_driver:
       - nitrate.xmlrpc_driver
       - single_request_with_cookies
     output:
-    - z5dcrtsa1hxotxtnnfz1a634ehry18gb
+    - d3wl1o0ewocvjmoo49pyfypgmlmu5cku
   - metadata:
       guess_type: Tuple
       latency: 0.0
@@ -134,7 +134,7 @@ nitrate.xmlrpc_driver:
       reviewer: null
       reviewer_id: null
       script: null
-      summary: tmt/new_testcase - This is new testcase inside nitrate
+      summary: tmt /new_testcase - This is new testcase inside nitrate
       tag: []
       text:
         action: ''
@@ -143,8 +143,8 @@ nitrate.xmlrpc_driver:
         author_id: 2150
         breakdown: ''
         breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
-        case: tmt/new_testcase - This is new testcase inside nitrate
-        case_id: 612631
+        case: tmt /new_testcase - This is new testcase inside nitrate
+        case_id: 613228
         case_text_version: 1
         create_date: '2021-12-01 15:53:08'
         effect: ''
@@ -285,7 +285,7 @@ nitrate.xmlrpc_driver:
         reviewer: null
         reviewer_id: null
         script: null
-        summary: tmt/new_testcase - This is new testcase inside nitrate
+        summary: tmt /new_testcase - This is new testcase inside nitrate
         tag:
         - 10700
   - metadata:
@@ -334,7 +334,7 @@ nitrate.xmlrpc_driver:
         reviewer: null
         reviewer_id: null
         script: null
-        summary: tmt/new_testcase - This is new testcase inside nitrate
+        summary: tmt /new_testcase - This is new testcase inside nitrate
         tag:
         - 10700
   - metadata:
@@ -383,7 +383,7 @@ nitrate.xmlrpc_driver:
         reviewer: null
         reviewer_id: null
         script: null
-        summary: tmt/new_testcase - This is new testcase inside nitrate
+        summary: tmt /new_testcase - This is new testcase inside nitrate
         tag:
         - 10700
   - metadata:
@@ -466,7 +466,7 @@ nitrate.xmlrpc_driver:
         reviewer: null
         reviewer_id: null
         script: null
-        summary: tmt/new_testcase - This is new testcase inside nitrate
+        summary: tmt /new_testcase - This is new testcase inside nitrate
         tag:
         - 10700
 tmt.utils:

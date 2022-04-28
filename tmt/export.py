@@ -281,16 +281,15 @@ def export_to_nitrate(test):
     check_git_url(test.fmf_id['url'])
 
     # Summary
-    summary = (test._metadata.get('extra-summary')
-               or test._metadata.get('extra-task')
-               or test.summary
-               or test.name)
-    if summary:
-        if not dry_mode:
-            nitrate_case.summary = summary
-        echo(style('summary: ', fg='green') + summary)
-    else:
-        raise ConvertError("Nitrate case summary could not be determined.")
+    try:
+        summary = (test._metadata.get('extra-summary')
+                   or test._metadata.get('extra-task')
+                   or prepare_extra_summary(test))
+    except ConvertError:
+        summary = test.name
+    if not dry_mode:
+        nitrate_case.summary = summary
+    echo(style('summary: ', fg='green') + summary)
 
     # Script
     if test.node.get('extra-task'):
@@ -687,13 +686,13 @@ def prepare_extra_summary(test):
     remote_dirname = re.sub('.git$', '', os.path.basename(test.fmf_id['url']))
     if not remote_dirname:
         raise ConvertError("Unable to find git remote url.")
-    summary = test.node.get('extra-summary', (remote_dirname or "")
-                            + (test.name or "") + ' - ' + (test.summary or ""))
-    return summary
+    generated = f"{remote_dirname} {test.name}"
+    if test.summary:
+        generated += f" - {test.summary}"
+    return test.node.get('extra-summary', generated)
+
 
 # avoid multiple searching for general plans (it is expensive)
-
-
 @lru_cache(maxsize=None)
 def find_general_plan(component):
     """ Return single General Test Plan or raise an error """

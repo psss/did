@@ -3,6 +3,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+import nitrate
 from click.testing import CliRunner
 from fmf import Tree
 from requre import RequreTestCase
@@ -23,6 +24,9 @@ class Base(RequreTestCase):
         shutil.copytree(NITRATE_EXAMPLE, self.tmpdir)
         self.cwd = os.getcwd()
         self.runner_output = None
+
+        # Disable nitrate cache
+        nitrate.set_cache_level(0)
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
@@ -45,8 +49,10 @@ class NitrateExport(Base):
 
         os.chdir(self.tmpdir / "new_testcase")
         runner = CliRunner()
-        self.runner_output = runner.invoke(tmt.cli.main, [
-            "test", "export", "--nitrate", "--create", "--general", "."])
+        self.runner_output = runner.invoke(
+            tmt.cli.main,
+            ["test", "export", "--nitrate", "--create", "--general", "."],
+            catch_exceptions=False)
         # Reload the node data to see if it appears there
         fmf_node = Tree(self.tmpdir).find("/new_testcase")
         self.assertIn("extra-nitrate", fmf_node.data)
@@ -57,13 +63,16 @@ class NitrateExport(Base):
 
         os.chdir(self.tmpdir / "new_testcase")
         runner = CliRunner()
-        self.runner_output = runner.invoke(tmt.cli.main, [
-            "test", "export", "--nitrate", "--create", "--dry", "--general", "."])
+        self.runner_output = runner.invoke(
+            tmt.cli.main,
+            ["test", "export", "--nitrate", "--create", "--dry",
+             "--general", "."],
+            catch_exceptions=False)
         fmf_node = Tree(self.tmpdir).find("/new_testcase")
         self.assertNotIn("extra-nitrate", fmf_node.data)
         self.assertEqual(fmf_node_before.data, fmf_node.data)
         self.assertIn(
-            "summary: tmt/new_testcase - This i",
+            "summary: tmt /new_testcase - This i",
             self.runner_output.output)
 
     def test_existing(self):
@@ -72,9 +81,10 @@ class NitrateExport(Base):
 
         os.chdir(self.tmpdir / "existing_testcase")
         runner = CliRunner()
-        self.runner_output = runner.invoke(tmt.cli.main,
-                                           ["test", "export", "--nitrate",
-                                            "--create", "--general", "."])
+        self.runner_output = runner.invoke(
+            tmt.cli.main,
+            ["test", "export", "--nitrate", "--create", "--general", "."],
+            catch_exceptions=False)
         fmf_node = Tree(self.tmpdir).find("/existing_testcase")
 
     def test_existing_dryrun(self):
@@ -84,9 +94,13 @@ class NitrateExport(Base):
         os.chdir(self.tmpdir / "existing_dryrun_testcase")
         runner = CliRunner()
         self.runner_output = runner.invoke(
-            tmt.cli.main, [
-                "test", "export", "--nitrate", "--dry", "--general", "--bugzilla", "."])
-        self.assertIn("summary: ABCDEF", self.runner_output.output)
+            tmt.cli.main,
+            ["test", "export", "--nitrate", "--debug", "--dry", "--general",
+             "--bugzilla", "."],
+            catch_exceptions=False)
+        self.assertIn(
+            "summary: tmt /existing_dryrun_testcase - ABCDEF",
+            self.runner_output.output)
 
     def test_coverage_bugzilla(self):
         fmf_node = Tree(self.tmpdir).find("/existing_testcase")
@@ -94,9 +108,10 @@ class NitrateExport(Base):
 
         os.chdir(self.tmpdir / "existing_testcase")
         runner = CliRunner()
-        self.runner_output = runner.invoke(tmt.cli.main,
-                                           ["test", "export", "--nitrate",
-                                            "--bugzilla", "."])
+        self.runner_output = runner.invoke(
+            tmt.cli.main,
+            ["test", "export", "--nitrate", "--bugzilla", "."],
+            catch_exceptions=False)
         assert self.runner_output.exit_code == 0
 
 
@@ -108,7 +123,8 @@ class NitrateImport(Base):
         self.runner_output = runner.invoke(
             tmt.cli.main,
             ['-vvvvdddd', '--root', self.tmpdir / "import_case",
-             "test", "import", "--nitrate", "--manual", "--case=609704"])
+             "test", "import", "--nitrate", "--manual", "--case=609704"],
+            catch_exceptions=False)
         self.assertEqual(self.runner_output.exit_code, 0)
         self.assertIn(
             "Importing the 'Imported_Test_Case'",
@@ -138,7 +154,8 @@ class NitrateImport(Base):
         runner = CliRunner()
         self.runner_output = runner.invoke(
             tmt.cli.main, ['--root', self.tmpdir / "import_case", "test",
-                           "import", "--nitrate", "--manual", "--case=609705"])
+                           "import", "--nitrate", "--manual", "--case=609705"],
+            catch_exceptions=False)
         self.assertEqual(self.runner_output.exit_code, 0)
         # TODO: This is strange, expect at least some output in
         # case there is proper case, just case is not CONFIRMED
@@ -213,7 +230,8 @@ extra-task: /tmt/integration
         self.assertNotIn("test.md", files)
         runner = CliRunner()
         self.runner_output = runner.invoke(
-            tmt.cli.main, ["test", "import", "--nitrate"])
+            tmt.cli.main, [
+                "test", "import", "--nitrate"], catch_exceptions=False)
         self.assertEqual(self.runner_output.exit_code, 0)
         files = os.listdir()
         self.assertIn("Makefile", files)

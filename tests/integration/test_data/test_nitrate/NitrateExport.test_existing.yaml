@@ -78,7 +78,7 @@ nitrate.xmlrpc_driver:
       reviewer: null
       reviewer_id: null
       script: null
-      summary: This is case what already exists inside nitrate
+      summary: tmt /existing_testcase - This is case what already exists inside nitrate
       tag:
       - fmf-export
       text:
@@ -88,7 +88,7 @@ nitrate.xmlrpc_driver:
         author_id: 2150
         breakdown: ''
         breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
-        case: This is case what already exists inside nitrate
+        case: tmt /existing_testcase - This is case what already exists inside nitrate
         case_id: 609686
         case_text_version: 1
         create_date: '2021-02-24 01:07:39'
@@ -300,7 +300,8 @@ nitrate.xmlrpc_driver:
         reviewer: null
         reviewer_id: null
         script: null
-        summary: This is case what already exists inside nitrate
+        summary: tmt /existing_testcase - This is case what already exists inside
+          nitrate
         tag:
         - 10700
   - metadata:
@@ -378,7 +379,8 @@ nitrate.xmlrpc_driver:
         reviewer: null
         reviewer_id: null
         script: null
-        summary: This is case what already exists inside nitrate
+        summary: tmt /existing_testcase - This is case what already exists inside
+          nitrate
         tag:
         - 10700
   - metadata:
@@ -403,10 +405,29 @@ nitrate.xmlrpc_driver:
     - - bug_id: '1925518'
         bug_system: Bugzilla
         bug_system_id: 1
-        case: This is case what already exists inside nitrate
+        case: tmt /existing_testcase - This is case what already exists inside nitrate
         case_id: 609686
         case_run: null
         case_run_id: null
         description: ''
         id: 250305
         summary: ''
+tmt.utils:
+  check_git_url:
+  - metadata:
+      guess_type: Simple
+      latency: 0.38634347915649414
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - requre.objects
+      - requre.cassette
+      - tmt.utils
+      - check_git_url
+    output: https://github.com/psss/tmt.git
