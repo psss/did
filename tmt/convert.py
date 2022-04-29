@@ -430,7 +430,11 @@ def read(path, makefile, restraint, nitrate, purpose, disabled, types):
         def target_content(target):
             """ Extract lines from the target content """
             regexp = rf"^{target}:.*\n((?:\t[^\n]*\n?)*)"
-            target = re.search(regexp, datafile, re.M).group(1)
+            try:
+                target = re.search(regexp, datafile, re.M).group(1)
+            except AttributeError:
+                # Target not found in the Makefile
+                return []
             return [line.strip('\t') for line in target.splitlines()]
 
         run_target_list = target_content("run")
