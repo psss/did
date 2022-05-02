@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.12.0
+Version: 1.13.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -165,6 +165,21 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 
 
 %changelog
+* Mon May 02 2022 Petr Šplíchal <psplicha@redhat.com> - 1.13.0-1
+- Add multiarch support to testcloud provision
+- Consistent summary for test export --nitrate
+- Allow dry mode for tests export --nitrate
+- Add a nice provisioning progress to Artemis plugin
+- Add support for the `where` keyword to `execute`
+- Adjust support for export of multiple tests
+- Add support for exporting multiple tests
+- Basic multihost test for the httpd web server
+- Update multihost specification with guest groups
+- Add a provision plugin for Artemis
+- Fix exclude option in fmf discover
+- Reduce the number of execute calls for reboot
+- Add support for reboot in interactive mode
+
 * Mon Apr 04 2022 Petr Šplíchal <psplicha@redhat.com> - 1.12.0-1
 - Add a command to setup shell completions
 - Use /tmp instead of /run/user/ if not available
