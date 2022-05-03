@@ -95,6 +95,14 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         '-x', '--exclude', metavar='[REGEXP]', multiple=True,
         help="Exclude a regular expression from search result.")
 
+    # Options which require .git to be present for their functionality
+    _REQUIRES_GIT = (
+        "ref",
+        "modified-url",
+        "modified-only",
+        "fmf-id",
+        )
+
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for given method """
@@ -133,7 +141,11 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             cls.EXCLUDE_OPTION,
             click.option(
                 '--fmf-id', default=False, is_flag=True,
-                help='Show fmf identifiers for tests discovered in plan.')
+                help='Show fmf identifiers for tests discovered in plan.'),
+            click.option(
+                '--sync-repo', default=False, is_flag=True,
+                help='Force the sync of the whole git repo. By default, the '
+                     'repo is copied only if the used options require it.'),
             ] + super().options(how)
 
     def wake(self, keys=None):
@@ -215,6 +227,9 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 env={"GIT_ASKPASS": "echo"})
         # Copy git repository root to workdir
         else:
+            fmf_root = path or self.step.plan.my_run.tree.root
+            requires_git = self.opt('sync-repo') or any(
+                self.get(opt) for opt in self._REQUIRES_GIT)
             # Path for distgit sources cannot be checked until the
             # tarball is extracted
             if path and not os.path.isdir(path) and not dist_git_source:
@@ -223,7 +238,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             if dist_git_source:
                 git_root = self.step.plan.my_run.tree.root
             else:
-                fmf_root = path or self.step.plan.my_run.tree.root
                 if fmf_root is None:
                     raise tmt.utils.DiscoverError(
                         f"No metadata found in the current directory.")
@@ -237,11 +251,13 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                     self.debug(f"Git root not found, using '{fmf_root}.'")
                     git_root = fmf_root
                 # Set path to relative path from the git root to fmf root
-                path = os.path.relpath(fmf_root, git_root)
-            self.info('directory', git_root, 'green')
-            self.debug(f"Copy '{git_root}' to '{self.testdir}'.")
+                path = os.path.relpath(
+                    fmf_root, git_root if requires_git else fmf_root)
+            directory = git_root if requires_git else fmf_root
+            self.info('directory', directory, 'green')
+            self.debug(f"Copy '{directory}' to '{self.testdir}'.")
             if not self.opt('dry'):
-                shutil.copytree(git_root, self.testdir, symlinks=True)
+                shutil.copytree(directory, self.testdir, symlinks=True)
 
         # Checkout revision if requested
         ref = self.get('ref')
