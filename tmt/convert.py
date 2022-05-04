@@ -23,6 +23,7 @@ RELEVANCY_COMMENT = r"^([^#]*?)\s*#\s*(.+)$"
 RELEVANCY_RULE = r"^([^:]+)\s*:\s*(.+)$"
 RELEVANCY_EXPRESSION = (
     r"^\s*(.*?)\s*(!?contains|!?defined|[=<>!]+)\s*(.*?)\s*$")
+GENERAL_PLAN = r"(\S+?)\s*/\s*General"
 
 # Bug url prefixes
 BUGZILLA_URL = 'https://bugzilla.redhat.com/show_bug.cgi?id='
@@ -310,7 +311,8 @@ def read_datafile(path, filename, datafile, types, testinfo=None):
     return beaker_task, data
 
 
-def read(path, makefile, restraint, nitrate, purpose, disabled, types):
+def read(
+        path, makefile, restraint, nitrate, purpose, disabled, types, general):
     """
     Read old metadata from various sources
 
@@ -494,7 +496,7 @@ def read(path, makefile, restraint, nitrate, purpose, disabled, types):
     # Nitrate (extract contact, environment and relevancy)
     if nitrate:
         common_data, individual_data = read_nitrate(
-            beaker_task, data, disabled)
+            beaker_task, data, disabled, general)
     else:
         common_data = data
         individual_data = []
@@ -514,7 +516,7 @@ def read(path, makefile, restraint, nitrate, purpose, disabled, types):
     return common_data, individual_data
 
 
-def read_nitrate(beaker_task, common_data, disabled):
+def read_nitrate(beaker_task, common_data, disabled, general):
     """ Read old metadata from nitrate test cases """
 
     # Need to import nitrate only when really needed. Otherwise we get
@@ -554,7 +556,7 @@ def read_nitrate(beaker_task, common_data, disabled):
         # Testcase data must be fetched due to
         # https://github.com/psss/python-nitrate/issues/24
         testcase._fetch()
-        data = read_nitrate_case(testcase, common_data)
+        data = read_nitrate_case(testcase, common_data, general)
         individual_data.append(data)
         # Check testcase for manual data
         md_content_tmp = read_manual_data(testcase)
@@ -631,7 +633,7 @@ def read_nitrate(beaker_task, common_data, disabled):
     return common_data, individual_data
 
 
-def read_nitrate_case(testcase, makefile_data=None):
+def read_nitrate_case(testcase, makefile_data=None, general=False):
     """ Read old metadata from nitrate test case """
     data = {'tag': []}
     echo("test case found '{0}'.".format(testcase.identifier))
@@ -696,8 +698,22 @@ def read_nitrate_case(testcase, makefile_data=None):
         echo(style('tier: ', fg='green') + data['tier'])
     except KeyError:
         pass
-    # Component
-    data['component'] = [comp.name for comp in testcase.components]
+    # Detect components either from general plans
+    if general:
+        data['component'] = []
+        for nitrate_plan in testcase.testplans:
+            if nitrate_plan.type.name == "General":
+                match = re.search(GENERAL_PLAN, nitrate_plan.name)
+                if match:
+                    component = match.group(1)
+                    if component not in data['component']:
+                        echo(
+                            f"Adding component '{component}' "
+                            f"from the linked general plan.")
+                        data['component'].append(component)
+    else:
+        # Or from test case components
+        data['component'] = [comp.name for comp in testcase.components]
     echo(style('component: ', fg='green') + ' '.join(data['component']))
     # Status
     data['enabled'] = testcase.status.name == "CONFIRMED"

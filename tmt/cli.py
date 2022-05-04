@@ -460,6 +460,10 @@ def create(context, name, template, force, **kwargs):
     '--restraint / --no-restraint', default=False,
     help='Convert restraint metadata file')
 @click.option(
+    '--general / --no-general', default=False,
+    help='Detect component from linked nitrate general plan '
+         '(overrides Makefile/restraint component).')
+@click.option(
     '--type', 'types', metavar='TYPE', default=['multihost'], multiple=True,
     show_default=True,
     help="Convert selected types from Makefile into tags. "
@@ -482,8 +486,8 @@ def create(context, name, template, force, **kwargs):
 @verbose_debug_quiet
 @force_dry
 def import_(
-        context, paths, makefile, restraint, types, nitrate, purpose, disabled,
-        manual, plan, case, with_script, **kwargs):
+        context, paths, makefile, restraint, general, types, nitrate, purpose,
+        disabled, manual, plan, case, with_script, **kwargs):
     """
     Import old test metadata into the new fmf format.
 
@@ -519,7 +523,8 @@ def import_(
                 "Path '{0}' is not a directory.".format(path))
         # Gather old metadata and store them as fmf
         common, individual = tmt.convert.read(
-            path, makefile, restraint, nitrate, purpose, disabled, types)
+            path, makefile, restraint, nitrate, purpose, disabled, types,
+            general)
         # Add path to common metadata if there are virtual test cases
         if individual:
             root = fmf.Tree(path).root
