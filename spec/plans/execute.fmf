@@ -82,16 +82,13 @@ description: |
     description:
         Optional boolean attribute `exit-first` can be used to
         make the executor stop executing tests once a test
-        failure is encountered. Currently, both
-        :ref:`/spec/plans/execute/tmt` and
-        :ref:`/spec/plans/execute/detach` executors support this.
+        failure is encountered.
     example: |
         execute:
             how: tmt
             exit-first: true
     link:
       - implemented-by: /tmt/steps/execute/internal.py
-      - implemented-by: /tmt/steps/execute/detach.py
       - verified-by: /tests/execute/exit-first
 
 /tmt:
@@ -109,23 +106,6 @@ description: |
             how: tmt
     link:
       - implemented-by: /tmt/steps/execute/internal.py
-      - verified-by: /tests/execute/framework
-
-/detach:
-    summary: Detached test executor
-    story: As a user I want to execute tests in a detached way.
-    description:
-        The ``detach`` executor runs tests in one batch using a
-        shell script directly executed on the provisioned guest.
-        This can be useful when the connection to the guest is
-        slow or the test execution takes a long time and you want
-        to disconnect your laptop while keeping tests running in
-        the background.
-    example: |
-        execute:
-            how: detach
-    link:
-      - implemented-by: /tmt/steps/execute/detach.py
       - verified-by: /tests/execute/framework
 
 /where:
@@ -179,7 +159,6 @@ description: |
             duration: 3h
     link:
       - implemented-by: /tmt/steps/execute/internal.py
-      - implemented-by: /tmt/steps/execute/detach.py
 
     /simple:
         summary: Simple use case should be super simple to write

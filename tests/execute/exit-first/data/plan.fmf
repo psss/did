@@ -9,9 +9,6 @@ execute:
     /tmt:
         execute+:
             how: tmt
-    /detach:
-        execute+:
-            how: detach
 
 /exit-first:
     execute+:

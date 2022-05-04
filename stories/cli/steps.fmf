@@ -85,7 +85,6 @@
     example:
         - tmt run execute
         - tmt run execute --how=tmt
-        - tmt run execute --how=detach
         - tmt run execute --how=restraint
 
     /progress:
@@ -134,16 +133,12 @@
             To interrupt test execution after a test fails use the
             ``--exit-first`` (or ``-x``) option. This option is
             accepted by both the execute step and the plugins implementing
-            the execute step. Currently, both
-            :ref:`/spec/plans/execute/tmt` and
-            :ref:`/spec/plans/execute/detach` executors support this.
+            the execute step.
         example:
           - tmt run -a execute --exit-first
           - tmt run -a execute -h tmt -x
-          - tmt run -a execute -h detach -x
         link:
           - implemented-by: /tmt/steps/execute/internal.py
-          - implemented-by: /tmt/steps/execute/detach.py
           - verified-by: /tests/execute/exit-first
 
 /report:

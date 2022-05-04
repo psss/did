@@ -26,7 +26,7 @@ rlJournalStart
         rlPhaseEnd
     done
 
-    for method in tmt detach; do
+    for method in tmt; do
         rlPhaseStartTest "Check shell.$method results"
             results="$run/plan/shell/$method/execute/results.yaml"
             rlRun "grep -A1 good:  $results | grep pass" 0 "Check pass"

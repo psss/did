@@ -6,9 +6,6 @@ provision:
         how: fmf
         test: shell
 
-    /detach:
-        execute:
-            how: shell.detach
     /tmt:
         execute:
             how: shell.tmt
@@ -18,9 +15,6 @@ provision:
         how: fmf
         test: beakerlib
 
-    /detach:
-        execute:
-            how: beakerlib.detach
     /tmt:
         execute:
             how: beakerlib.tmt

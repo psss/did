@@ -7,7 +7,7 @@ rlJournalStart
         rlRun "pushd data"
     rlPhaseEnd
 
-    for method in tmt detach; do
+    for method in tmt; do
         rlPhaseStartTest "Test $method"
             rlRun "tmt run -vfi $tmp -a execute -h $method test --name good" 0
             rlRun "tmt run -vfi $tmp -a execute -h $method test --name long" 2

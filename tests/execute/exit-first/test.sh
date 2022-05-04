@@ -9,7 +9,7 @@ rlJournalStart
         rlRun "set -o pipefail"
     rlPhaseEnd
 
-    for execute_method in tmt detach; do
+    for execute_method in tmt; do
         rlPhaseStartTest "Plan key - $execute_method"
             plan="--scratch -i $run plan -n exit-first"
             rlRun -s "tmt run -a $plan execute -h $execute_method" 1

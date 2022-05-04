@@ -8,7 +8,7 @@ rlJournalStart
         rlRun "set -o pipefail"
     rlPhaseEnd
 
-    for executor in shell.tmt shell.detach; do
+    for executor in tmt; do
         rlPhaseStartTest "Test with the $executor executor"
             rlRun "tmt run -i $tmp/$executor -avvvddd \
                 provision -h local \

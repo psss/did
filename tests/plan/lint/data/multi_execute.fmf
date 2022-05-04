@@ -3,4 +3,4 @@ execute:
   - name: a
     how: tmt
   - name: b
-    how: detach
+    how: tmt

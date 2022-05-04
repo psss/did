@@ -21,9 +21,9 @@ class Execute(tmt.steps.Step):
     """
     Run tests using the specified executor.
 
-    Note that the old execution methods 'shell.tmt', 'beakerlib.tmt',
-    'shell.detach' and 'beakerlib.detach' have been deprecated and the
-    backward-compatible support for them will be dropped in tmt-2.0.
+    Note that the old execution methods 'shell.tmt' and 'beakerlib.tmt'
+    have been deprecated and the backward-compatible support for them
+    will be dropped in tmt-2.0.
 
     Use the new L1 metadata attribute 'framework' instead to specify
     which test framework should be used for execution. This allows to
@@ -68,7 +68,7 @@ class Execute(tmt.steps.Step):
     def _map_old_methods(self):
         """ Map the old execute methods in a backward-compatible way """
         how = self.data[0]['how']
-        matched = re.search(r"^(shell|beakerlib)(\.(tmt|detach))?$", how)
+        matched = re.search(r"^(shell|beakerlib)(\.tmt)?$", how)
         if not matched:
             return
         # Show the old method deprecation warning to users
@@ -76,8 +76,7 @@ class Execute(tmt.steps.Step):
         # Map the old syntax to the appropriate executor
         # shell, beakerlib ---> tmt
         # shell.tmt, beakerlib.tmt ---> tmt
-        # shell.detach, beakerlib.detach ---> detach
-        how = matched.group(3) or 'tmt'
+        how = 'tmt'
         self.warn(f"Use 'how: {how}' in the execute step instead (L2).")
         self.data[0]['how'] = how
         # Store shell or beakerlib as the default test framework

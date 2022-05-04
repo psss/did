@@ -20,7 +20,7 @@ rlJournalStart
     tmt="tmt run -avvvdddr"
 
     # Old execute methods
-    for execute in tmt detach; do
+    for execute in tmt; do
         for framework in shell beakerlib; do
             rlPhaseStartTest "Old execute methods ($framework.$execute)"
                 rlRun "$tmt execute -h $framework.$execute \
@@ -42,7 +42,7 @@ rlJournalStart
     done
 
     # New execute methods
-    for execute in tmt detach; do
+    for execute in tmt; do
         rlPhaseStartTest "Combine shell and beakerlib ($execute)"
             rlRun "$tmt execute --how $execute 2>&1 | tee output"
             # The default test framework should be 'shell'

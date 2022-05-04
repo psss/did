@@ -15,7 +15,7 @@ rlJournalStart
         rlAssertGrep "Invalid debug level" 'output'
     rlPhaseEnd
 
-    for execute in 'shell.detach' 'shell.tmt'; do
+    for execute in 'tmt'; do
         tmt="tmt run -avvvr execute --how $execute"
 
         rlPhaseStartTest "Variable in L1 ($execute)"
