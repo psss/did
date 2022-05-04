@@ -21,11 +21,13 @@ rlJournalStart
         rlRun "grep '^    finish$' -A4 output | grep -i interactive"
     rlPhaseEnd
 
-    rlPhaseStartTest "Selected step"
-        rlRun "$tmt login -c true -s discover | tee output"
-        rlAssertGrep "interactive" "output"
-        rlRun "grep '^    discover$' -A4 output | grep -i interactive"
-    rlPhaseEnd
+    for step in discover provision prepare execute report finish; do
+        rlPhaseStartTest "Selected step ($step)"
+            rlRun "$tmt login -c true -s $step | tee output"
+            rlAssertGrep "interactive" "output"
+            rlRun "grep '^    $step$' -A4 output | grep -i interactive"
+        rlPhaseEnd
+    done
 
     rlPhaseStartTest "Failed command"
         rlRun "$tmt login -c false | tee output"

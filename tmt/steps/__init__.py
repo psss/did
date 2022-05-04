@@ -491,6 +491,10 @@ class Action(tmt.utils.Common):
                 phases[step_name] = [phase]
         return phases
 
+    def enabled_on_guest(self, guest):
+        """ Actions are enabled across all guests """
+        return True
+
 
 class Reboot(Action):
     """ Reboot guest """
