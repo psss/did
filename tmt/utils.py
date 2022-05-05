@@ -1738,6 +1738,7 @@ class DistGitHandler(object):
     uri = "/rpms/{name}/{filename}/{hashtype}/{hash}/{filename}"
     remote_substring = None
     usage_name = "Name to use for dist-git-type"
+    re_ignore_extensions = re.compile(r'\.(sign|asc|key)$')
 
     def url_and_name(self, cwd='.'):
         """

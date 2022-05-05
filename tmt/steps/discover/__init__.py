@@ -242,7 +242,7 @@ class DiscoverPlugin(tmt.steps.Plugin):
         else:
             handler = tmt.utils.get_distgit_handler(usage_name=handler_name)
         for url, source_name in handler.url_and_name(distgit_dir):
-            if source_name.endswith('.sign'):
+            if handler.re_ignore_extensions.search(source_name):
                 continue
             self.debug(f"Download sources from '{url}'.")
             session = tmt.utils.retry_session()
