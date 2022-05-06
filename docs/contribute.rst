@@ -82,15 +82,15 @@ The main ``tmt`` package contains only the core dependencies. For
 building documentation, testing changes, importing/exporting test
 cases or advanced provisioning options install the extra deps::
 
-    pip install '.[docs]'
-    pip install '.[tests]'
-    pip install '.[convert]'
-    pip install '.[provision]'
+    pip install -e '.[docs]'
+    pip install -e '.[tests]'
+    pip install -e '.[convert]'
+    pip install -e '.[provision]'
 
 Or simply install all extra dependencies to make sure you have
 everything needed for the tmt development ready on your system::
 
-    pip install '.[all]'
+    pip install -e '.[all]'
 
 Install the ``pre-commit`` hooks to run all available checks
 for your commits to the project::
