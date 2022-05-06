@@ -138,21 +138,27 @@ description: |
 /script:
     summary: Execute shell scripts
     story: As a user I want to easily run shell script as a test.
-    description:
+    description: |
         Execute arbitratry shell commands and check their exit
-        code which is used as a test result.
+        code which is used as a test result. The ``script`` field
+        is provided to cover simple test use cases only and should
+        not be combined with the :ref:`/spec/plans/discover` step
+        which is more suitable for more complex test scenarios.
 
         Default shell options are applied to the script, see
-        :ref:`/spec/tests/test` for more details.
+        :ref:`/spec/tests/test` for more details. The default
+        :ref:`/spec/tests/duration` for tests defined directly
+        under the execute step is ``1h``. Use the ``duration``
+        attribute to modify the default limit.
 
-        The default :ref:`/spec/tests/duration` for tests defined
-        directly under the execute step is ``1h``. Use the
-        ``duration`` attribute to modify the default limit.
-    example: |
+    example:
+      - |
+        # Run a simple smoke test
         execute:
             how: tmt
             script: tmt --help
-
+      - |
+        # Modify the default maximum duration
         execute:
             how: tmt
             script: a-long-test-suite
@@ -182,18 +188,20 @@ description: |
         example: |
             execute:
                 script:
-                    - dnf -y install httpd curl
-                    - systemctl start httpd
-                    - echo foo > /var/www/html/index.html
-                    - curl http://localhost/ | grep foo
+                  - dnf -y install httpd curl
+                  - systemctl start httpd
+                  - echo foo > /var/www/html/index.html
+                  - curl http://localhost/ | grep foo
 
     /multi:
         summary: Multi-line shell script
         title: Multi-line script
         description:
             Providing a multi-line shell script is also supported.
-            In that case executor will store given script into a
-            file and execute.
+            Note that the first command with non-zero exit code
+            will finish the execution. See the
+            :ref:`/spec/tests/test` key for details about default
+            shell options.
         example: |
             execute:
                 script: |

@@ -59,6 +59,13 @@ class Discover(tmt.steps.Step):
         if isinstance(scripts, str):
             scripts = [scripts]
 
+        # Give a warning when discover step defined as well
+        default_data = [{'name': 'default', 'how': 'shell'}]
+        if self.data and self.data != default_data:
+            raise tmt.utils.DiscoverError(
+                "Use either 'discover' or 'execute' step "
+                "to define tests, but not both.")
+
         # Check the execute step for possible custom duration limit
         duration = self.plan.execute.data[0].get(
             'duration', tmt.base.DEFAULT_TEST_DURATION_L2)

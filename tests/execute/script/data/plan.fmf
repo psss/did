@@ -1,0 +1,9 @@
+discover:
+    how: shell
+    tests:
+      - test: echo discover script
+provision:
+    how: local
+execute:
+    how: tmt
+    script: echo execute script
