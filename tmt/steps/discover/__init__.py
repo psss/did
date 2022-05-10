@@ -156,8 +156,6 @@ class Discover(tmt.steps.Step):
 
         # Show fmf identifiers for tests discovered in plan
         if self.opt('fmf_id'):
-            # don't run steps except discover
-            self._context.obj.steps = {'discover'}
             if self.tests():
                 fmf_id_list = [tmt.utils.dict_to_yaml(test.fmf_id, start=True)
                                for test in self.tests()

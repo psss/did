@@ -75,6 +75,19 @@ class Step(tmt.utils.Common):
         except AttributeError:
             return None
 
+    @property
+    def plugins_in_standalone_mode(self):
+        """
+        The number of plugins in standalone mode.
+
+        Stand-alone mode means that only this step should be run as a part
+        of the run (and not any other even if requested using --all).
+        This is useful as some step options may completely change its
+        behaviour from the regular behaviour based on options
+        (e.g. listing images inside provision).
+        """
+        return sum(phase.is_in_standalone_mode for phase in self.phases())
+
     @classmethod
     def usage(cls, method_overview):
         """ Prepare general usage message for the step """
@@ -387,6 +400,19 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         if not where:
             return True
         return where in (guest.name, guest.role)
+
+    @property
+    def is_in_standalone_mode(self):
+        """
+        True if the plugin is in stand-alone mode.
+
+        Stand-alone mode means that only this plugin should be run as a part
+        of the run (and not any other even if requested using --all).
+        This is useful as some plugin options may completely change its
+        behaviour from the regular behaviour based on options
+        (e.g. listing images inside a provision plugin).
+        """
+        return False
 
     def wake(self, keys=None):
         """

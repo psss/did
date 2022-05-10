@@ -145,6 +145,12 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         # Process command line options, apply defaults
         super().wake(keys=keys)
 
+    @property
+    def is_in_standalone_mode(self):
+        if self.opt('fmf_id'):
+            return True
+        return super().is_in_standalone_mode
+
     def go(self):
         """ Discover available tests """
         super(DiscoverFmf, self).go()

@@ -952,6 +952,27 @@ class Plan(Core):
         for step in self.steps(disabled=True):
             step.setup_actions()
 
+        # Check if steps are not in stand-alone mode
+        standalone = set()
+        for step in self.steps():
+            standalone_plugins = step.plugins_in_standalone_mode
+            if standalone_plugins == 1:
+                standalone.add(step.name)
+            elif standalone_plugins > 1:
+                raise tmt.utils.GeneralError(
+                    f"Step '{step.name}' has multiple plugin configs which "
+                    f"require running on their own. Combination of such "
+                    f"configs is not possible.")
+        if len(standalone) > 1:
+            raise tmt.utils.GeneralError(
+                f'These steps require running on their own, their combination '
+                f'with the given options is not compatible: '
+                f'{fmf.utils.listed(standalone)}.')
+        elif standalone:
+            self._context.obj.steps = standalone
+            self.debug(
+                f"Running the step '{list(standalone)[0]}' in standalone mode.")
+
         # Run enabled steps except 'finish'
         self.debug('go', color='cyan', shift=0, level=2)
         try:
