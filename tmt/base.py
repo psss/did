@@ -1661,6 +1661,9 @@ class Run(tmt.utils.Common):
         # Create the workdir and save last run
         self._save_tree(self._tree)
         self._workdir_load(self._workdir_path)
+        if self.tree.root and self._workdir.startswith(self.tree.root):
+            raise tmt.utils.GeneralError(
+                "Run workdir must not be inside fmf root.")
         self.config.last_run(self.workdir)
         # Show run id / workdir path
         self.info(self.workdir, color='magenta')

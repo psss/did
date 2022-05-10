@@ -1,0 +1,1 @@
+summary: Avoid recursion if workdir is under fmf tree
