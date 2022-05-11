@@ -303,7 +303,8 @@ nitrate.xmlrpc_driver:
         reviewer: null
         reviewer_id: null
         script: null
-        summary: tmt /existing_testcase - This is case what already exists inside nitrate
+        summary: tmt /existing_testcase - This is case what already exists inside
+          nitrate
         tag:
         - 10700
   - metadata:
@@ -381,7 +382,8 @@ nitrate.xmlrpc_driver:
         reviewer: null
         reviewer_id: null
         script: null
-        summary: tmt /existing_testcase - This is case what already exists inside nitrate
+        summary: tmt /existing_testcase - This is case what already exists inside
+          nitrate
         tag:
         - 10700
   - metadata:

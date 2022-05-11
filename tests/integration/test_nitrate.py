@@ -102,6 +102,30 @@ class NitrateExport(Base):
             "summary: tmt /existing_dryrun_testcase - ABCDEF",
             self.runner_output.output)
 
+    def test_existing_release_dryrun(self):
+        fmf_node = Tree(self.tmpdir).find("/existing_dryrun_release_testcase")
+        self.assertEqual(fmf_node.data["extra-nitrate"], "TC#0609686")
+
+        os.chdir(self.tmpdir / "existing_dryrun_release_testcase")
+        runner = CliRunner()
+        self.runner_output = runner.invoke(
+            tmt.cli.main,
+            ["test", "export", "--nitrate", "--debug", "--dry", "--general",
+             "--bugzilla", "--link-runs", "."],
+            catch_exceptions=False)
+        self.assertIn(
+            "summary: tmt /existing_dryrun_release_testcase - ABCDEF",
+            self.runner_output.output)
+        self.assertIn(
+            "Linked to general plan 'TP#28164 - tmt / General'",
+            self.runner_output.output)
+        self.assertIn(
+            "Link to plan 'TP#31698",
+            self.runner_output.output)
+        self.assertIn(
+            "Link to run 'TR#425023",
+            self.runner_output.output)
+
     def test_coverage_bugzilla(self):
         fmf_node = Tree(self.tmpdir).find("/existing_testcase")
         self.assertEqual(fmf_node.data["extra-nitrate"], "TC#0609686")
