@@ -1,7 +1,7 @@
 import datetime
 import sys
 import time
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import click
 import requests
@@ -29,39 +29,35 @@ DEFAULT_API_VERSION = SUPPORTED_API_VERSIONS[-1]
 
 # Type annotation for "data" package describing a guest instance. Passed
 # between load() and save() calls.
-if TypedDict is None:
-    GuestDataType = Dict[str, Any]
+StepStateType = TypedDict(
+    'StepStateType',
+    {
+        # API
+        'api-url': str,
+        'api-version': str,
 
-else:
-    GuestDataType = TypedDict(
-        'DataType',
-        {
-            # API
-            'api-url': str,
-            'api-version': str,
+        # Guest request properties
+        'arch': str,
+        'image': str,
+        'hardware': Any,
+        'pool': Optional[str],
+        'priority-group': str,
+        'keyname': str,
+        'user-data': Dict[str, str],
 
-            # Guest request properties
-            'arch': str,
-            'image': str,
-            'hardware': Any,
-            'pool': Optional[str],
-            'priority-group': str,
-            'keyname': str,
-            'user-data': Dict[str, str],
+        # Provided by Artemis response
+        'guestname': Optional[str],
+        'guest': Optional[str],
+        'user': str,
 
-            # Provided by Artemis response
-            'guestname': Optional[str],
-            'guest': Optional[str],
-            'user': str,
-
-            # Timeouts and deadlines
-            'provision-timeout': int,
-            'provision-tick': int,
-            'api-timeout': int,
-            'api-retries': int,
-            'api-retry-backoff-factor': int
-            }
-        )
+        # Timeouts and deadlines
+        'provision-timeout': int,
+        'provision-tick': int,
+        'api-timeout': int,
+        'api-retries': int,
+        'api-retry-backoff-factor': int
+        }
+    )
 
 DEFAULT_USER = 'root'
 DEFAULT_ARCH = 'x86_64'
@@ -75,7 +71,7 @@ DEFAULT_API_RETRIES = 10
 DEFAULT_RETRY_BACKOFF_FACTOR = 1
 
 DEFAULT_GUEST_DATA = cast(
-    GuestDataType, {
+    StepStateType, {
         'api-version': DEFAULT_API_VERSION,
         'arch': DEFAULT_ARCH,
         'priority-group': DEFAULT_PRIORITY_GROUP,
@@ -104,16 +100,12 @@ GUEST_STATE_COLORS = {
 
 # Type annotation for Artemis API `GET /guests/$guestname` response.
 # Partial, not all fields necessary since plugin ignores most of them.
-if TypedDict is None:
-    GuestInspectType = Dict[str, Any]
-
-else:
-    GuestInspectType = TypedDict(
-        'GuestInspectType', {
-            'state': str,
-            'address': Optional[str]
-            }
-        )
+GuestInspectType = TypedDict(
+    'GuestInspectType', {
+        'state': str,
+        'address': Optional[str]
+        }
+    )
 
 
 class TimeoutHTTPAdapter(requests.adapters.HTTPAdapter):
@@ -126,10 +118,10 @@ class TimeoutHTTPAdapter(requests.adapters.HTTPAdapter):
 
         super().__init__(*args, **kwargs)
 
-    def send(
+    def send(  # type: ignore # does not match superclass type on purpose
             self,
             request: requests.PreparedRequest,
-            **kwargs: Any) -> requests.Response:    # type: ignore
+            **kwargs: Any) -> requests.Response:
         kwargs.setdefault('timeout', self.timeout)
 
         return super().send(request, **kwargs)
@@ -149,7 +141,7 @@ class ArtemisAPI:
         specified by the strategy.
         """
 
-        retry_strategy = requests.packages.urllib3.util.retry.Retry(
+        retry_strategy = requests.packages.urllib3.util.retry.Retry(  # type: ignore[attr-defined]
             total=retries,
             status_forcelist=[
                 429,  # Too Many Requests
@@ -277,7 +269,9 @@ class ArtemisAPI:
         return self.query(path, method='delete', request_kwargs=request_kwargs)
 
 
-class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
+# TODO: get rid of `ignore` once superclass is no longer `Any`
+class ProvisionArtemis(
+        tmt.steps.provision.ProvisionPlugin):  # type: ignore[misc]
     """
     Provision guest using Artemis backend
 
@@ -350,8 +344,9 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
         'api-retries',
         'api-retry-backoff-factor']
 
+    # TODO: fix types once superclass gains its annotations
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Any = None) -> List[click.Option]:
         """ Prepare command line options for Artemis """
         return [
             click.option(
@@ -417,14 +412,16 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
                 help=f'A factor for exponential API retry backoff, '
                      f'{DEFAULT_RETRY_BACKOFF_FACTOR} by default.',
                 ),
-            ] + super().options(how)
+            ] + cast(List[click.Option], super().options(how))
 
-    def default(self, option, default=None):
+    def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """
 
         return DEFAULT_GUEST_DATA.get(option, default)
 
-    def wake(self, keys=None, data=None):
+    # TODO: use better types once superclass gains its annotations
+    def wake(self, keys: Optional[List[str]] = None,
+             data: Optional[StepStateType] = None) -> None:
         """ Wake up the plugin, process data, apply options """
 
         super().wake(keys=keys, data=data)
@@ -432,7 +429,7 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
         if data:
             self._guest = GuestArtemis(data, name=self.name, parent=self.step)
 
-    def go(self):
+    def go(self) -> None:
         """ Provision the guest """
         super().go()
 
@@ -453,7 +450,7 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
         except ValueError as exc:
             raise ProvisionError('Cannot parse user-data.')
 
-        data: GuestDataType = {
+        data: StepStateType = {
             'api-url': self.get('api-url'),
             'api-version': api_version,
             'arch': self.get('arch'),
@@ -476,12 +473,13 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
         self._guest = GuestArtemis(data, name=self.name, parent=self.step)
         self._guest.start()
 
-    def guest(self):
+    def guest(self) -> Optional['GuestArtemis']:
         """ Return the provisioned guest """
         return self._guest
 
 
-class GuestArtemis(tmt.Guest):
+# TODO: get rid of `ignore` once superclass is no longer `Any`
+class GuestArtemis(tmt.Guest):  # type: ignore[misc]
     """
     Artemis guest instance
 
@@ -497,7 +495,7 @@ class GuestArtemis(tmt.Guest):
 
         return self._api
 
-    def load(self, data: GuestDataType):
+    def load(self, data: StepStateType) -> None:
         super().load(data)
 
         self.api_url = data['api-url']
@@ -518,8 +516,8 @@ class GuestArtemis(tmt.Guest):
         self.api_retries = data['api-retries']
         self.api_retry_backoff_factor = data['api-retry-backoff-factor']
 
-    def save(self):
-        data = cast(GuestDataType, super().save())
+    def save(self) -> StepStateType:
+        data = cast(StepStateType, super().save())
 
         data['api-url'] = self.api_url
         data['api-version'] = self.api_version
@@ -621,7 +619,7 @@ class GuestArtemis(tmt.Guest):
         self.guest = current['address']
         self.info('address', self.guest, 'green')
 
-    def start(self):
+    def start(self) -> None:
         """
         Start the guest
 
@@ -633,7 +631,7 @@ class GuestArtemis(tmt.Guest):
         if self.guestname is None or self.guest is None:
             self._create()
 
-    def remove(self):
+    def remove(self) -> None:
         """ Remove the guest """
 
         if self.guestname is None:
