@@ -1617,6 +1617,9 @@ class Run(tmt.utils.Common):
         if self.opt('dry') or not interesting_results:
             return
 
+        # Return 0 if test execution has been intentionally skipped
+        if tmt.steps.execute.Execute._opt("dry"):
+            raise SystemExit(0)
         # Return appropriate exit code based on the total stats
         stats = Result.total(results)
         if sum(stats.values()) == 0:
@@ -1664,22 +1667,16 @@ class Run(tmt.utils.Common):
         self.debug(f"tmt version: {tmt.__version__}")
         # Attempt to load run data
         self.load()
-
-        # Attempt to propagate dry mode
-        for plan in self.plans:
-            # When provision is in dry mode, we should modify steps prepare,
-            # execute and finish options to have dry enabled as well
-            step_provision = plan.provision
-            step_prepare = plan.prepare
-            step_execute = plan.execute
-            step_finish = plan.finish
-            if step_provision.opt('dry'):
-                step_prepare._options['dry'] = True
-                step_execute._options['dry'] = True
-                step_finish._options['dry'] = True
-
+        # Follow log instead of executing the run
         if self.opt('follow'):
             self.follow()
+
+        # Propagate dry mode from provision to prepare, execute and finish
+        # (basically nothing can be done if there is no guest provisioned)
+        if tmt.steps.provision.Provision._opt("dry"):
+            tmt.steps.prepare.Prepare._options["dry"] = True
+            tmt.steps.execute.Execute._options["dry"] = True
+            tmt.steps.finish.Finish._options["dry"] = True
 
         # Enable selected steps
         enabled_steps = self._context.obj.steps
