@@ -2,14 +2,16 @@
 
 """ Default Templates """
 
+from typing import Dict
+
 INIT_TEMPLATES = ['mini', 'base', 'full']
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Test Templates
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-TEST = dict()
-TEST_METADATA = dict()
+TEST: Dict[str, str] = dict()
+TEST_METADATA: Dict[str, str] = dict()
 
 TEST_METADATA['shell'] = """
 summary: Concise summary describing what the test does
