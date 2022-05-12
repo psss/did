@@ -15,6 +15,8 @@ ExcludeArch: %{power64}
 URL: https://github.com/teemtee/tmt
 Source0: https://github.com/teemtee/tmt/releases/download/%{version}/tmt-%{version}.tar.gz
 
+%define workdir_root /var/tmp/tmt
+
 # Main tmt package requires the Python module
 Requires: python%{python3_pkgversion}-%{name} == %{version}-%{release}
 Requires: git-core rsync sshpass
@@ -137,7 +139,8 @@ mkdir -p %{buildroot}%{_mandir}/man1
 mkdir -p %{buildroot}/etc/bash_completion.d/
 install -pm 644 tmt.1* %{buildroot}%{_mandir}/man1
 install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
-
+mkdir -p %{buildroot}%{workdir_root}
+chmod 1777 %{buildroot}%{workdir_root}
 
 %check
 %{__python3} -m pytest -vv -m 'not web' --ignore=tests/integration
@@ -157,6 +160,7 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 %{python3_sitelib}/%{name}/
 %{python3_sitelib}/%{name}-*.egg-info/
 %license LICENSE
+%dir %{workdir_root}
 %exclude %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}{podman,testcloud}.*
 %exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}html*
 %exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}junit.*

@@ -694,6 +694,13 @@ class Common(object):
             self._workdir_cleanup(workdir)
 
         # Create the workdir
+        # Make sure WORKDIR_ROOT has 1777 permission if recreated
+        if workdir.startswith(WORKDIR_ROOT) and not os.path.isdir(WORKDIR_ROOT):
+            try:
+                os.makedirs(WORKDIR_ROOT, exist_ok=True)
+                os.chmod(WORKDIR_ROOT, 0o1777)
+            except OSError as error:
+                raise FileError(f"Failed to prepare workdir '{WORKDIR_ROOT}': {error}")
         create_directory(workdir, 'workdir', quiet=True)
         self._workdir = workdir
 
