@@ -29,7 +29,7 @@ rlJournalStart
     rlPhaseStartTest "Old yaml"
         if rlRun "tmt test lint old-yaml 2>&1 | tee output" 0,2; then
             # Before fmf-1.0 we give just a warning
-            rlAssertGrep 'warn seems to use YAML 1.1' output
+            rlAssertGrep "warn: /old-yaml:enabled - 'yes' is not of type 'boolean'" output
         else
             # Since fmf-1.0 old format is no more supported
             rlAssertGrep 'Invalid.*enabled.*in test' output

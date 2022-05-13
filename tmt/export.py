@@ -601,7 +601,7 @@ def export_to_nitrate(test: 'tmt.Test') -> None:
 
     # List of bugs test verifies
     verifies_bug_ids = []
-    for link in test.link:
+    for link in test.link.get():
         try:
             bug_id_search = re.search(RE_BUGZILLA_URL, link['verifies'])
             if not bug_id_search:

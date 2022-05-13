@@ -3,6 +3,7 @@
 
 import copy
 import dataclasses
+import enum
 import functools
 import os
 import re
@@ -10,7 +11,7 @@ import shutil
 import subprocess
 import sys
 import time
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
 
 import click
 import fmf
@@ -30,7 +31,7 @@ import tmt.steps.provision
 import tmt.steps.report
 import tmt.templates
 import tmt.utils
-from tmt.utils import verdict
+from tmt.utils import FmfContextType, verdict
 
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
@@ -226,7 +227,6 @@ class ValidateFmfMixin:
 
         if errors:
             if raise_on_validation_error:
-                # Raise the very first issue found - there may be more, of course...
                 raise tmt.utils.SpecificationError(
                     f'fmf node {node.name} failed validation',
                     validation_errors=errors)
@@ -237,16 +237,208 @@ class ValidateFmfMixin:
     def __init__(
             self,
             *,
-            node,
+            node: fmf.Tree,
             logger: tmt.utils.Common,
             skip_validation: bool = False,
             raise_on_validation_error: bool = False,
-            **kwargs) -> None:
+            **kwargs: Any) -> None:
         # Validate *before* letting next class in line touch the data.
         if not skip_validation:
             self._validate_fmf_node(node, logger, raise_on_validation_error)
 
-        kwargs.setdefault('logger', logger)
+        kwargs.setdefault('logger', self)
+        super().__init__(node=node, **kwargs)
+
+
+# A type representing compatible sources of keys and values.
+KeySource = Union[Dict[str, Any], fmf.Tree]
+
+
+class LoadFmfKeysMixin:
+    """
+    Mixin adding support for loading fmf keys into object attributes.
+
+    When invoked, annotated class-level variables are searched for in a given fmf node,
+    and if the key of the same name as the variable exists, its value is "promoted" to
+    instance variable.
+
+    If a method named ``_normalize_<variable name>`` exists, it is called with the fmf
+    key value as its single argument, and its return value is assigned to instance
+    variable. This gives class chance to modify or transform the original value when
+    needed, e.g. to convert the original value to a type more suitable for internal
+    processing.
+    """
+
+    # If specified, keys would be iterated over in the order as listed here.
+    KEYS_SHOW_ORDER: List[str] = []
+
+    # NOTE: these could be static methods, self is probably useless, but that would
+    # cause complications when classes assign these to their members. That makes them
+    # no longer static as far as class is concerned, which means they get called with
+    # `self` as the first argument. A workaround would be to assign staticmethod()-ized
+    # version of them, but that's too much repetition.
+    def _normalize_string_list(self, value: Union[None, str, List[str]]) -> List[str]:
+        if value is None:
+            return []
+
+        return [value] if isinstance(value, str) else value
+
+    def _normalize_environment(self, value: Optional[Dict[str, Any]]) -> tmt.utils.EnvironmentType:
+        if value is None:
+            return {}
+
+        return {
+            name: str(value) for name, value in value.items()
+            }
+
+    @classmethod
+    def _iter_key_annotations(cls) -> Generator[Tuple[str, Any], None, None]:
+        """
+        Iterate over keys' type annotations.
+
+        Keys are yielded in the order: keys declared by parent classes first, then
+        keys declared by the class itself, all following the order in which keys
+        were defined in their respective classes.
+
+        Yields:
+            pairs of key name and its annotations.
+        """
+
+        for base in cls.__bases__:
+            for name, value in base.__dict__.get('__annotations__', {}).items():
+                # Skip special fields that are not keys.
+                if name == 'KEYS_SHOW_ORDER':
+                    continue
+
+                yield (name, value)
+
+        yield from cls.__dict__.get('__annotations__', {}).items()
+
+    @classmethod
+    def keys(cls) -> Generator[str, None, None]:
+        """
+        Iterate over key names.
+
+        Keys are yielded in the order: keys declared by parent classes first, then
+        keys declared by the class itself, all following the order in which keys
+        were defined in their respective classes.
+
+        Yields:
+            key names.
+        """
+
+        for keyname, _ in cls._iter_key_annotations():
+            yield keyname
+
+    def items(self) -> Generator[Tuple[str, Any], None, None]:
+        """
+        Iterate over keys and their values.
+
+        Keys are yielded in the order: keys declared by parent classes first, then
+        keys declared by the class itself, all following the order in which keys
+        were defined in their respective classes.
+
+        Yields:
+            pairs of key name and its value.
+        """
+
+        for keyname in self.keys():
+            yield (keyname, getattr(self, keyname))
+
+    # TODO: exists for backward compatibility for the transition period. Once full
+    # type annotations land, there should be no need for extra _keys attribute.
+    @classmethod
+    def _keys(cls) -> List[str]:
+        """ Return a list of names of object's keys. """
+
+        return list(cls.keys())
+
+    def _load_keys(
+            self,
+            node: fmf.Tree,
+            logger: tmt.utils.Common) -> None:
+        """ Extract values for class-level attributes, and verify they match declared types. """
+
+        LOG_SHIFT, LOG_LEVEL = 2, 4
+
+        debug = functools.partial(self.debug, shift=LOG_SHIFT, level=LOG_LEVEL)
+
+        for keyname, keytype in self._iter_key_annotations():
+            key_address = f'{node.name}{keyname}'
+
+            # Do not indent this particular entry like the rest, so it could serve
+            # as a "header" for a single key processing.
+            logger.debug('key', key_address, shift=LOG_SHIFT - 1, level=LOG_LEVEL)
+
+            debug('desired type', str(keytype))
+
+            value: Any = None
+
+            debug('dict', self.__dict__)
+
+            if hasattr(self, keyname):
+                # If the key exists as instance's attribute already, it is because it's been
+                # declared with a default value, and the attribute now holds said default value.
+                default_value = getattr(self, keyname)
+
+                # If the default value is a mutable container, we cannot use it directly.
+                # Should we do so, the very same default value would be assigned to multiple
+                # instances/attributes instead of each instance having its own distinct container.
+                if isinstance(default_value, (list, dict)):
+                    debug('detected mutable default')
+                    default_value = copy.copy(default_value)
+
+                debug('default value', str(default_value))
+                debug('default value type', str(type(default_value)))
+
+                # try+except seems to work better than get(), especially when
+                # semantic of fmf.Tree.get() is slightly different than that
+                # of dict().get().
+                try:
+                    value = node[keyname]
+
+                except KeyError:
+                    value = default_value
+
+                debug('raw value', str(value))
+                debug('raw value type', str(type(value)))
+
+            else:
+                value = node.get(keyname)
+
+                debug('raw value', str(value))
+                debug('raw value type', str(type(value)))
+
+            debug('value', str(value))
+            debug('value type', str(type(value)))
+
+            normalize_callback = getattr(self, f'_normalize_{keyname}', None)
+
+            if normalize_callback:
+                value = normalize_callback(value)
+
+                debug('normalized value', str(value))
+                debug('normalized value type', str(type(value)))
+
+            debug('final value', str(value))
+            debug('final value type', str(type(value)))
+
+            setattr(self, keyname, value)
+
+            # Apparently pointless, but makes the debugging output more readable.
+            # There may be plenty of tests and plans and keys, a bit of spacing
+            # can't hurt.
+            debug('')
+
+    def __init__(
+            self,
+            *,
+            node: fmf.Tree,
+            logger: tmt.utils.Common,
+            **kwargs: Any) -> None:
+        self._load_keys(node, logger)
+
+        kwargs.setdefault('logger', self)
         super().__init__(node=node, **kwargs)
 
 
@@ -260,41 +452,60 @@ class Core(tmt.utils.Common):
     """
 
     # Core attributes (supported across all levels)
-    _keys = ['summary', 'description', 'enabled', 'order', 'link', 'id', 'adjust']
+    summary: Optional[str] = None
+    description: Optional[str] = None
+    enabled: bool = True
+    order: int = DEFAULT_ORDER
+    link: Optional['Link'] = None
+    id: Optional[str] = None
+    adjust: Optional[List[_RawAdjustRule]] = None
 
-    def __init__(self, *, node, parent=None, **kwargs):
+    KEYS_SHOW_ORDER = [
+        'summary',
+        'description',
+        'enabled',
+        'order',
+        'link',
+        'id',
+        'adjust']
+
+    # TODO: remove when schema becomes mandatory, `order` shall never be `null`
+    def _normalize_order(self, value: Optional[int]) -> int:
+        if value is None:
+            return DEFAULT_ORDER
+
+        return int(value)
+
+    def _normalize_link(self, value: _RawLink) -> 'Link':
+        return Link(data=value)
+
+    def _normalize_adjust(self,
+                          value: Union[_RawAdjustRule, List[_RawAdjustRule]]
+                          ) -> List[_RawAdjustRule]:
+        return [value] if not isinstance(value, list) else value
+
+    def __init__(self,
+                 *,
+                 node: fmf.Tree,
+                 parent: Optional[tmt.utils.Common] = None,
+                 **kwargs: Any) -> None:
         """ Initialize the node """
         kwargs.setdefault('logger', self)
-        super(Core, self).__init__(parent=parent, name=node.name, **kwargs)
+        super().__init__(node=node, parent=parent, name=node.name, **kwargs)
+
         self.node = node
+
+        # Verify id is not inherited from parent.
+        if self.id and not tmt.identifier.key_defined_in_leaf(node, 'id'):
+            raise tmt.utils.SpecificationError(
+                f"The 'id' key '{node.get('id')}' in '{self.name}' "
+                f"is inherited from parent, should be defined in a leaf.")
 
         # Store original metadata with applied defaults and including
         # keys which are not defined in the L1 metadata specification
         # Once the whole node has been initialized,
         # self._update_metadata() must be called to work correctly.
         self._metadata = self.node.data.copy()
-
-        # Set all core attributes
-        for key in self._keys:
-            setattr(self, key, self.node.get(key))
-
-        # Check whether the node is enabled, handle the default
-        self._check('enabled', expected=bool, default=True)
-
-        # Check whether the order is integer, handle the default
-        self._check('order', expected=int, default=DEFAULT_ORDER)
-
-        # Convert link into the canonical form, store the object
-        self._link = Link(self.link)
-        self.link = self._link.get()
-
-        # Store the unique id if provided
-        try:
-            self.id = tmt.identifier.get_id(self.node)
-        except tmt.identifier.IdLeafError:
-            raise tmt.utils.SpecificationError(
-                f"The 'id' key '{self.node.get('id')}' in '{self.name}' "
-                f"is inherited from parent, should be defined in a leaf.")
 
     def __str__(self):
         """ Node name """
@@ -311,30 +522,6 @@ class Core(tmt.utils.Common):
             echo(tmt.utils.format('id', self.id, key_color='magenta'))
         echo(tmt.utils.format(
             'sources', self.node.sources, key_color='magenta'))
-
-    def _check(self, key, expected, default=None, listify=False):
-        """
-        Check that the key is of expected type
-
-        Handle default and convert into a list if requested.
-        """
-        value = getattr(self, key)
-        # Handle default
-        if value is None:
-            setattr(self, key, default)
-            return
-        # Check for correct type
-        if not isinstance(value, expected):
-            expected = tmt.utils.listify(expected)
-            expected_names = fmf.utils.listed(
-                [type_.__name__ for type_ in expected], join='or')
-            class_name = self.__class__.__name__.lower()
-            raise tmt.utils.SpecificationError(
-                f"Invalid '{key}' in {class_name} '{self.name}' (should be "
-                f"a '{expected_names}', got a '{type(value).__name__}').")
-        # Convert into a list if requested
-        if listify:
-            setattr(self, key, tmt.utils.listify(value))
 
     def _fmf_id(self):
         """ Show fmf identifier """
@@ -417,12 +604,21 @@ class Core(tmt.utils.Common):
     def export(self, format_='yaml', keys=None):
         """ Export data into requested format (yaml or dict) """
         if keys is None:
-            keys = self._keys
+            keys = self._keys()
 
         # Always include node name, add requested keys, ignore adjust
         data = dict(name=self.name)
-        data.update(dict([(key, getattr(self, key)) for key in keys]))
-        data.pop('adjust', None)
+        for key in keys:
+            if key == 'adjust':
+                continue
+
+            value = getattr(self, key)
+
+            if key == 'link':
+                data[key] = value.links
+
+            else:
+                data[key] = value
 
         # Choose proper format
         if format_ == 'dict':
@@ -435,7 +631,7 @@ class Core(tmt.utils.Common):
 
     def lint_keys(self, additional_keys):
         """ Return list of invalid keys used, empty when all good """
-        known_keys = additional_keys + self._keys
+        known_keys = additional_keys + self._keys()
         return [key for key in self.node.get().keys() if key not in known_keys]
 
     def _lint_summary(self):
@@ -462,7 +658,7 @@ class Core(tmt.utils.Common):
                 relation, target = ".*", parts[0]
             else:
                 relation, target = parts
-        for candidate in self.link:
+        for candidate in self.link.get():
             candidate_relation = get_relation(candidate)
             candidate_target = candidate[candidate_relation]
             if (re.search(relation, candidate_relation)
@@ -474,16 +670,53 @@ class Core(tmt.utils.Common):
 Node = Core
 
 
-class Test(ValidateFmfMixin, Core):
+class Test(ValidateFmfMixin, LoadFmfKeysMixin, Core):
     """ Test object (L1 Metadata) """
 
-    # Supported attributes (listed in display order)
-    _keys = [
+    # Basic test information
+    contact: List[str] = []
+    component: List[str] = []
+
+    # Test execution data
+    test: str
+    path: Optional[str] = None
+    framework: Optional[str] = None
+    manual: bool = False
+    require: List[Union[str, FmfId]] = []
+    recommend: List[str] = []
+    environment: Optional[tmt.utils.EnvironmentType] = {}
+    duration: Optional[str] = DEFAULT_TEST_DURATION_L1
+    result: str = 'respect'
+
+    # Filtering attributes
+    tag: List[str] = []
+    tier: Optional[str] = None
+
+    _normalize_contact = LoadFmfKeysMixin._normalize_string_list
+    _normalize_component = LoadFmfKeysMixin._normalize_string_list
+    _normalize_recommend = LoadFmfKeysMixin._normalize_string_list
+    _normalize_tag = LoadFmfKeysMixin._normalize_string_list
+
+    def _normalize_require(self,
+                           value: Optional[_RawRequire]) -> List[Union[str, FmfId]]:
+        if value is None:
+            return []
+
+        return [value] if isinstance(value, str) else value
+
+    def _normalize_tier(self, value: Optional[Union[int, str]]) -> Optional[str]:
+        if value is None:
+            return None
+
+        return str(value)
+
+    KEYS_SHOW_ORDER = [
         # Basic test information
         'summary',
         'description',
         'contact',
         'component',
+        'id',
 
         # Test execution data
         'test',
@@ -504,79 +737,76 @@ class Test(ValidateFmfMixin, Core):
         'link',
         ]
 
+    @classmethod
+    def from_dict(cls, mapping: Dict[str, Any], name: str, skip_validation: bool = False,
+                  raise_on_validation_error: bool = False, **kwargs: Any) -> 'Test':
+        """
+        Initialize test data from a dictionary.
+
+        Useful when data describing a test are stored in a mapping instead of an fmf node.
+        """
+
+        if not name.startswith('/'):
+            raise tmt.utils.SpecificationError("Test name should start with a '/'.")
+
+        node = fmf.Tree(mapping)
+        node.name = name
+
+        return cls(
+            node=node,
+            skip_validation=skip_validation,
+            raise_on_validation_error=raise_on_validation_error,
+            **kwargs)
+
     def __init__(
             self,
             *,
-            node,
-            name=None,
+            node: fmf.Tree,
             skip_validation: bool = False,
             raise_on_validation_error: bool = False,
-            **kwargs):
+            **kwargs: Any) -> None:
         """
         Initialize test data from an fmf node or a dictionary
 
         The following two methods are supported:
 
             Test(node)
-            Test(dictionary, name)
-
-        Test name is required when initializing from a dictionary.
         """
-
-        # Create a simple test node if dictionary given
-        if isinstance(node, dict):
-            if name is None:
-                raise tmt.utils.GeneralError(
-                    'Name required to initialize test.')
-            elif not name.startswith('/'):
-                raise tmt.utils.SpecificationError(
-                    "Test name should start with a '/'.")
-            node = fmf.Tree(node)
-            node.name = name
-
-        kwargs.setdefault('logger', self)
-        super().__init__(node=node, skip_validation=skip_validation,
-                         raise_on_validation_error=raise_on_validation_error, **kwargs)
-
-        # Test script or path to the manual test must be defined
-        self._check('test', expected=str)
-        if self.test is None:
-            raise tmt.utils.SpecificationError(
-                f"The 'test' attribute in '{self.name}' must be defined.")
 
         # Path defaults to the directory where metadata are stored or to
         # the root '/' if fmf metadata were not stored on the filesystem
+        #
+        # NOTE: default value of `path` attribute is not known when attribute
+        # is declared, therefore we need to compute the default value and
+        # assign it to attribute *before* calling superclass and its handy
+        # node key extraction.
         try:
-            directory = os.path.dirname(self.node.sources[-1])
-            relative_path = os.path.relpath(directory, self.node.root)
+            directory = os.path.dirname(node.sources[-1])
+            relative_path = os.path.relpath(directory, node.root)
             if relative_path == '.':
                 default_path = '/'
             else:
                 default_path = os.path.join('/', relative_path)
         except (AttributeError, IndexError):
             default_path = '/'
-        self._check('path', expected=str, default=default_path)
 
-        # Check that lists are lists or strings, listify if needed
-        for key in ['component', 'contact', 'require', 'recommend', 'tag']:
-            self._check(key, expected=(list, str), default=[], listify=True)
+        self.path = default_path
 
-        # FIXME Framework should default to 'shell' in the future. For
-        # backward-compatibility with the old execute methods we need to be
-        # able to detect if the test has explicitly set the framework.
-        self._check('framework', expected=str, default=None)
+        kwargs.setdefault('logger', self)
+        super().__init__(
+            node=node,
+            skip_validation=skip_validation,
+            raise_on_validation_error=raise_on_validation_error,
+            **kwargs)
+
+        # TODO: As long as validation is optional, a missing `test` key would be reported
+        # as such but won't stop tmt from moving on.
+        if self.test is None:
+            raise tmt.utils.SpecificationError(
+                f"The 'test' attribute in '{self.name}' must be defined.")
+
         if self.framework == 'beakerlib':
             self.require.append('beakerlib')
-
-        # Check that environment is a dictionary
-        self._check('environment', expected=dict, default={})
-        self.environment = dict([
-            (key, str(value)) for key, value in self.environment.items()])
-
-        # Default duration, manual, enabled and result
-        self._check('duration', expected=str, default=DEFAULT_TEST_DURATION_L1)
-        self._check('manual', expected=bool, default=False)
-        self._check('result', expected=str, default='respect')
 
         self._update_metadata()
 
@@ -631,11 +861,10 @@ class Test(ValidateFmfMixin, Core):
     def show(self):
         """ Show test details """
         self.ls()
-        for key in self._keys:
+        for key in self.KEYS_SHOW_ORDER:
             value = getattr(self, key)
-            # Special handling for the link attribute
             if key == 'link':
-                self._link.show()
+                value.show()
                 continue
             # No need to show the default order
             if key == 'order' and value == DEFAULT_ORDER:
@@ -649,7 +878,7 @@ class Test(ValidateFmfMixin, Core):
             # Print non-empty unofficial attributes
             for key in sorted(self.node.get().keys()):
                 # Already asked to be printed
-                if key in self._keys:
+                if key in self._keys():
                     continue
                 value = self.node.get(key)
                 if value not in [None, list(), dict()]:
@@ -775,8 +1004,15 @@ class Test(ValidateFmfMixin, Core):
             return super().export(format_, keys)
 
 
-class Plan(ValidateFmfMixin, Core):
+class Plan(ValidateFmfMixin, LoadFmfKeysMixin, Core):
     """ Plan object (L2 Metadata) """
+
+    # `environment` and `environment-file` are NOT promoted to instance variables.
+    context: FmfContextType = {}
+    gate: List[str] = []
+
+    _normalize_context = LoadFmfKeysMixin._normalize_environment
+    _normalize_gate = LoadFmfKeysMixin._normalize_string_list
 
     extra_L2_keys = [
         'context',
@@ -788,15 +1024,19 @@ class Plan(ValidateFmfMixin, Core):
     def __init__(
             self,
             *,
-            node,
-            run=None,
+            node: fmf.Tree,
+            run: Optional['Run'] = None,
             skip_validation: bool = False,
             raise_on_validation_error: bool = False,
-            **kwargs):
+            **kwargs: Any) -> None:
         """ Initialize the plan """
         kwargs.setdefault('logger', self)
-        super().__init__(node=node, parent=run, skip_validation=skip_validation,
-                         raise_on_validation_error=raise_on_validation_error, **kwargs)
+        super().__init__(
+            node=node,
+            parent=run,
+            skip_validation=skip_validation,
+            raise_on_validation_error=raise_on_validation_error,
+            **kwargs)
 
         # Save the run, prepare worktree and plan data directory
         self.my_run = run
@@ -828,12 +1068,6 @@ class Plan(ValidateFmfMixin, Core):
             plan=self, data=self.node.get('report'))
         self.finish = tmt.steps.finish.Finish(
             plan=self, data=self.node.get('finish'))
-
-        # Relevant gates (convert to list if needed)
-        self.gate = node.get('gate')
-        if self.gate:
-            if not isinstance(self.gate, list):
-                self.gate = [self.gate]
 
         # Test execution context defined in the plan
         self._plan_context = self.node.get('context', dict())
@@ -1037,7 +1271,7 @@ class Plan(ValidateFmfMixin, Core):
         echo(tmt.utils.format('enabled', self.enabled, key_color='cyan'))
         if self.order != DEFAULT_ORDER:
             echo(tmt.utils.format('order', self.order, key_color='cyan'))
-        self._link.show()
+        self.link.show()
         if self._fmf_context():
             echo(tmt.utils.format(
                 'context', self._fmf_context(), key_color='blue'))
@@ -1240,29 +1474,53 @@ class Plan(ValidateFmfMixin, Core):
                 f"Invalid plan export format '{format_}'.")
 
 
-class Story(ValidateFmfMixin, Core):
+class StoryPriority(enum.Enum):
+    MUST_HAVE = 'must have'
+    SHOULD_HAVE = 'should have'
+    COULD_HAVE = 'could have'
+    WILL_NOT_HAVE = 'will not have'
+
+    # We need a custom "to string" conversion to support fmf's filter().
+    def __str__(self) -> str:
+        return self.value
+
+
+class Story(ValidateFmfMixin, LoadFmfKeysMixin, Core):
     """ User story object """
 
-    # Supported attributes (listed in display order)
-    _keys = [
+    example: List[str] = []
+    story: str
+    title: Optional[str] = None
+    priority: Optional[StoryPriority] = None
+
+    _normalize_example = LoadFmfKeysMixin._normalize_string_list
+
+    def _normalize_priority(self, value: Optional[str]) -> Optional[StoryPriority]:
+        if value is None:
+            return None
+
+        return StoryPriority(value)
+
+    KEYS_SHOW_ORDER = [
         'summary',
         'title',
         'story',
+        'id',
         'priority',
         'description',
         'example',
         'enabled',
         'order',
-        'link',
+        'link'
         ]
 
     def __init__(
             self,
             *,
-            node,
+            node: fmf.Tree,
             skip_validation: bool = False,
             raise_on_validation_error: bool = False,
-            **kwargs):
+            **kwargs: Any) -> None:
         """ Initialize the story """
         kwargs.setdefault('logger', self)
         super().__init__(node=node, skip_validation=skip_validation,
@@ -1272,17 +1530,17 @@ class Story(ValidateFmfMixin, Core):
     @property
     def documented(self):
         """ Return links to relevant documentation """
-        return self._link.get('documented-by')
+        return self.link.get('documented-by')
 
     @property
     def verified(self):
         """ Return links to relevant test coverage """
-        return self._link.get('verified-by')
+        return self.link.get('verified-by')
 
     @property
     def implemented(self):
         """ Return links to relevant source code """
-        return self._link.get('implemented-by')
+        return self.link.get('implemented-by')
 
     def _match(
             self, implemented, verified, documented, covered,
@@ -1348,11 +1606,13 @@ class Story(ValidateFmfMixin, Core):
     def show(self):
         """ Show story details """
         self.ls()
-        for key in self._keys:
+        for key in self.KEYS_SHOW_ORDER:
             value = getattr(self, key)
             if key == 'link':
-                self._link.show()
+                value.show()
                 continue
+            if key == 'priority' and value is not None:
+                value = cast(StoryPriority, value).value
             if key == 'order' and value == DEFAULT_ORDER:
                 continue
             if value is not None:
@@ -2402,7 +2662,7 @@ class Link:
     # The list of valid fmf id keys
     _fmf_id_keys = ['url', 'ref', 'path', 'name']
 
-    def __init__(self, data=None):
+    def __init__(self, data: Optional[_RawLink] = None):
         """ Convert link data into canonical form """
         # Nothing to do if no data provided
         self.links = []

@@ -5,6 +5,7 @@ import shutil
 import tempfile
 
 import click.testing
+import jsonschema
 import pytest
 
 import tmt
@@ -32,7 +33,7 @@ def test_invalid_yaml_syntax():
 
 def test_test_defaults():
     """ Test default test attributes """
-    test = tmt.Test(node=dict(test='./test.sh'), name='/smoke')
+    test = tmt.Test.from_dict(dict(test='./test.sh'), '/smoke')
     assert test.name == '/smoke'
     assert test.component == list()
     assert test.test == './test.sh'
@@ -49,21 +50,32 @@ def test_test_invalid():
     """ Test invalid test """
     # Missing name
     with pytest.raises(tmt.utils.GeneralError):
-        tmt.Test(node={})
+        tmt.Test.from_dict({}, '')
     # Invalid name
     with pytest.raises(SpecificationError):
-        tmt.Test(node={}, name='bad')
+        tmt.Test.from_dict({}, 'bad')
     # Invalid attributes
     for key in ['component', 'require', 'tag']:
-        with pytest.raises(SpecificationError):
-            tmt.Test(node={key: 1}, name='/smoke')
+        with pytest.raises(SpecificationError) as exc_context:
+            tmt.Test.from_dict({key: 1}, '/smoke', raise_on_validation_error=True)
+
+        exc = exc_context.value
+
+        assert isinstance(exc, SpecificationError)
+        assert exc.args[0] \
+            == 'fmf node /smoke failed validation'
+
+        validation_error, error_message = exc.validation_errors[0]
+
+        assert isinstance(validation_error, jsonschema.ValidationError)
+        assert error_message \
+            == f'/smoke:{key} - 1 is not valid under any of the given schemas'
+
     with pytest.raises(SpecificationError):
-        tmt.Test(node={'environment': 'string'}, name='/smoke')
+        tmt.Test.from_dict({'environment': 'string'}, '/smoke', raise_on_validation_error=True)
     # Listify attributes
-    assert tmt.Test(
-        node={'test': 'test', 'tag': 'a'}, name='/smoke').tag == ['a']
-    assert tmt.Test(
-        node={'test': 'test', 'tag': ['a', 'b']}, name='/smoke').tag == ['a', 'b']
+    assert tmt.Test.from_dict({'test': 'test', 'tag': 'a'}, '/smoke').tag == ['a']
+    assert tmt.Test.from_dict({'test': 'test', 'tag': ['a', 'b']}, '/smoke').tag == ['a', 'b']
 
 
 def test_link():

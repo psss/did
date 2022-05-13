@@ -917,7 +917,7 @@ def write(path: str, data: NitrateDataType) -> None:
         'extra-summary', 'extra-task',
         'extra-hardware', 'extra-pepa']
     sorted_data = dict()
-    for key in tmt.base.Test._keys + extra_keys:
+    for key in tmt.base.Test._keys() + extra_keys:
         try:
             sorted_data[key] = data[key]
         except KeyError:

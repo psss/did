@@ -309,7 +309,7 @@ class Common:
             workdir: WorkdirArgumentType = None,
             context: Optional[click.Context] = None,
             relative_indent: int = 1,
-            **kwargs: Any):
+            **kwargs: Any) -> None:
         """
         Initialize name and relation with the parent object
 
