@@ -85,6 +85,9 @@ FmfContextType = Dict[str, List[str]]
 # A "environment" type, representing name/value environment variables.
 EnvironmentType = Dict[str, str]
 
+# Workdir type, can be True, a string, a path or None
+WorkdirType = Union[Literal[True], str, None]
+
 
 class BaseLoggerFnType(Protocol):
     def __call__(
@@ -262,7 +265,7 @@ class Common(object):
             self,
             parent: Optional[CommonDerivedType] = None,
             name: Optional[str] = None,
-            workdir: Optional[str] = None,
+            workdir: WorkdirType = None,
             context: Optional[click.Context] = None):
         """
         Initialize name and relation with the parent object
@@ -626,7 +629,7 @@ class Common(object):
         except OSError as error:
             raise FileError(f"Failed to write '{path}'.\n{error}")
 
-    def _workdir_init(self, id_: Optional[str] = None) -> None:
+    def _workdir_init(self, id_: WorkdirType = None) -> None:
         """
         Initialize the work directory
 
@@ -673,7 +676,7 @@ class Common(object):
         # Join parent name with self
         return os.path.join(self.parent.workdir, self.name.lstrip('/'))
 
-    def _workdir_load(self, workdir: Union[Literal[True], str, None]) -> None:
+    def _workdir_load(self, workdir: WorkdirType) -> None:
         """
         Create the given workdir if it is not None
 
