@@ -24,8 +24,13 @@ RELEVANCY_RULE = r"^([^:]+)\s*:\s*(.+)$"
 RELEVANCY_EXPRESSION = (
     r"^\s*(.*?)\s*(!?contains|!?defined|[=<>!]+)\s*(.*?)\s*$")
 
-# Bug url prefix
+# Bug url prefixes
 BUGZILLA_URL = 'https://bugzilla.redhat.com/show_bug.cgi?id='
+JIRA_URL = 'https://issues.redhat.com/browse/'
+
+# Bug system constants
+SYSTEM_BUGZILLA = 1
+SYSTEM_JIRA = 2
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -148,9 +153,13 @@ def write_markdown(path, content):
         raise ConvertError(f"Unable to write '{path}'.")
 
 
-def add_bug(bug, data):
+def add_bug(bug, data, system=SYSTEM_BUGZILLA):
     """ Add relevant bug into data under the 'link' key """
-    new_link = dict(relates=f"{BUGZILLA_URL}{bug}")
+    if system == SYSTEM_BUGZILLA:
+        new_link = dict(relates=f"{BUGZILLA_URL}{bug}")
+    elif system == SYSTEM_JIRA:
+        new_link = dict(relates=f"{JIRA_URL}{bug}")
+
     try:
         # Make sure there are no duplicates
         if new_link in data['link']:
@@ -296,7 +305,7 @@ def read_datafile(path, filename, datafile, types, testinfo=None):
         # Add relevant bugs to the 'link' attribute
         for bug_line in re.findall(r'^Bug:\s*([0-9\s]+)', testinfo, re.M):
             for bug in re.findall(r'(\d+)', bug_line):
-                add_bug(bug, data)
+                add_bug(bug, data, SYSTEM_BUGZILLA)
 
     return beaker_task, data
 
@@ -713,7 +722,7 @@ def read_nitrate_case(testcase, makefile_data=None):
     except (KeyError, TypeError):
         pass
     for bug in testcase.bugs:
-        add_bug(bug.bug, data)
+        add_bug(bug.bug, data, bug.system)
 
     # Header and footer from notes (do not import the warning back)
     data['description'] = re.sub(
