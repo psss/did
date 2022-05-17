@@ -95,7 +95,7 @@ class Discover(tmt.steps.Step):
         # Choose the right plugin and wake it up
         for data in self.data:
             plugin = DiscoverPlugin.delegate(self, data)
-            self._plugins.append(plugin)
+            self._phases.append(plugin)
             plugin.wake()
 
         # Nothing more to do if already done
@@ -134,18 +134,18 @@ class Discover(tmt.steps.Step):
 
         # Perform test discovery, gather discovered tests
         self._tests = []
-        for plugin in self.plugins():
+        for phase in self.phases():
             # Go and discover tests
-            plugin.go()
+            phase.go()
             # Nothing more to be done for other plugins
-            if not isinstance(plugin, DiscoverPlugin):
+            if not isinstance(phase, DiscoverPlugin):
                 continue
             # Prefix test name only if multiple plugins configured
-            prefix = f'/{plugin.name}' if len(self.plugins()) > 1 else ''
+            prefix = f'/{phase.name}' if len(self.phases()) > 1 else ''
             # Check discovered tests, modify test name/path
-            for test in plugin.tests():
+            for test in phase.tests():
                 test.name = f"{prefix}{test.name}"
-                test.path = f"/{plugin.name}{test.path}"
+                test.path = f"/{phase.name}{test.path}"
                 # Use the default test framework if not defined in L1
                 # FIXME remove when we drop the old execution methods
                 if not test.framework:

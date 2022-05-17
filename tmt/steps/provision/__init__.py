@@ -75,7 +75,7 @@ class Provision(tmt.steps.Step):
         # Choose the right plugin and wake it up
         for data in self.data:
             plugin = ProvisionPlugin.delegate(self, data)
-            self._plugins.append(plugin)
+            self._phases.append(plugin)
             # If guest data loaded, perform a complete wake up
             plugin.wake(data=self._guest_data.get(plugin.name))
             if plugin.guest():
@@ -119,20 +119,20 @@ class Provision(tmt.steps.Step):
         # Provision guests
         self._guests = []
         save = True
-        self.is_multihost = sum([isinstance(plugin, ProvisionPlugin)
-                                for plugin in self.plugins()]) > 1
+        self.is_multihost = sum([isinstance(phase, ProvisionPlugin)
+                                for phase in self.phases()]) > 1
         try:
-            for plugin in self.plugins():
+            for phase in self.phases():
                 try:
-                    plugin.go()
-                    if isinstance(plugin, ProvisionPlugin):
-                        plugin.guest().details()
+                    phase.go()
+                    if isinstance(phase, ProvisionPlugin):
+                        phase.guest().details()
                     if self.is_multihost:
                         self.info('')
                 finally:
-                    if isinstance(plugin, ProvisionPlugin):
-                        if plugin.guest():
-                            self._guests.append(plugin.guest())
+                    if isinstance(phase, ProvisionPlugin):
+                        if phase.guest():
+                            self._guests.append(phase.guest())
 
             # Give a summary, update status and save
             self.summary()
@@ -161,7 +161,7 @@ class Provision(tmt.steps.Step):
         Used by the prepare step.
         """
         requires = set()
-        for plugin in self.plugins(classes=ProvisionPlugin):
+        for plugin in self.phases(classes=ProvisionPlugin):
             requires.update(plugin.requires())
         return list(requires)
 

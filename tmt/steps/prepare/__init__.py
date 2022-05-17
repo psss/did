@@ -32,7 +32,7 @@ class Prepare(tmt.steps.Step):
             plugin.wake()
             # Add plugin only if there are data
             if len(plugin.data.keys()) > 2:
-                self._plugins.append(plugin)
+                self._phases.append(plugin)
 
         # Nothing more to do if already done
         if self.status() == 'done':
@@ -100,7 +100,7 @@ class Prepare(tmt.steps.Step):
                 summary='Install required packages',
                 order=tmt.utils.DEFAULT_PLUGIN_ORDER_REQUIRES,
                 package=list(requires))
-            self._plugins.append(PreparePlugin.delegate(self, data))
+            self._phases.append(PreparePlugin.delegate(self, data))
 
         # Recommended packages
         recommends = self.plan.discover.recommends()
@@ -112,7 +112,7 @@ class Prepare(tmt.steps.Step):
                 order=tmt.utils.DEFAULT_PLUGIN_ORDER_RECOMMENDS,
                 package=recommends,
                 missing='skip')
-            self._plugins.append(PreparePlugin.delegate(self, data))
+            self._phases.append(PreparePlugin.delegate(self, data))
 
         # Implicit multihost setup
         if self.plan.provision.is_multihost:
@@ -124,7 +124,7 @@ class Prepare(tmt.steps.Step):
                 roles=self._prepare_roles(),
                 hosts=self._prepare_hosts(),
                 )
-            self._plugins.append(PreparePlugin.delegate(self, data))
+            self._phases.append(PreparePlugin.delegate(self, data))
 
         # Prepare guests (including workdir sync)
         for guest in self.plan.provision.guests():
@@ -135,14 +135,14 @@ class Prepare(tmt.steps.Step):
             guest_copy = copy.copy(guest)
             guest_copy.parent = self
             # Execute each prepare plugin
-            for plugin in self.plugins():
-                if plugin.enabled_on_guest(guest_copy):
+            for phase in self.phases():
+                if phase.enabled_on_guest(guest_copy):
                     self.preparations_applied += 1
-                    plugin.go(guest_copy)
+                    phase.go(guest_copy)
                     self.info('')
             # Pull artifacts created in the plan data directory
             # if there was at least one plugin executed
-            if self.plugins():
+            if self.phases():
                 guest_copy.pull(self.plan.data_directory)
 
         # Give a summary, update status and save
@@ -159,7 +159,7 @@ class Prepare(tmt.steps.Step):
         Used by the prepare step.
         """
         requires = set()
-        for plugin in self.plugins(classes=PreparePlugin):
+        for plugin in self.phases(classes=PreparePlugin):
             requires.update(plugin.requires())
         return list(requires)
 

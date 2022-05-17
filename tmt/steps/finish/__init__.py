@@ -30,7 +30,7 @@ class Finish(tmt.steps.Step):
             plugin.wake()
             # Add plugin only if there are data
             if len(plugin.data.keys()) > 2:
-                self._plugins.append(plugin)
+                self._phases.append(plugin)
 
         # Nothing more to do if already done
         if self.status() == 'done':
@@ -48,7 +48,7 @@ class Finish(tmt.steps.Step):
 
     def summary(self):
         """ Give a concise summary """
-        tasks = fmf.utils.listed(self.plugins(), 'task')
+        tasks = fmf.utils.listed(self.phases(), 'task')
         self.info('summary', f'{tasks} completed', 'green', shift=1)
 
     def go(self):
@@ -69,11 +69,11 @@ class Finish(tmt.steps.Step):
             # finish step config rather than provision step config.
             guest_copy = copy.copy(guest)
             guest_copy.parent = self
-            for plugin in self.plugins():
-                plugin.go(guest_copy)
+            for phase in self.phases():
+                phase.go(guest_copy)
             # Pull artifacts created in the plan data directory
             # if there was at least one plugin executed
-            if self.plugins():
+            if self.phases():
                 guest_copy.pull(self.plan.data_directory)
 
         # Stop and remove provisioned guests
@@ -95,7 +95,7 @@ class Finish(tmt.steps.Step):
         Used by the prepare step.
         """
         requires = set()
-        for plugin in self.plugins(classes=FinishPlugin):
+        for plugin in self.phases(classes=FinishPlugin):
             requires.update(plugin.requires())
         return list(requires)
 

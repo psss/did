@@ -99,7 +99,7 @@ class Execute(tmt.steps.Step):
         self._map_old_methods()
         executor = ExecutePlugin.delegate(self, self.data[0])
         executor.wake()
-        self._plugins.append(executor)
+        self._phases.append(executor)
 
         # Nothing more to do if already done
         if self.status() == 'done':
@@ -136,11 +136,11 @@ class Execute(tmt.steps.Step):
 
         # Execute the tests, store results
         for guest in self.plan.provision.guests():
-            for plugin in self.plugins():
-                if plugin.enabled_on_guest(guest):
-                    plugin.go(guest)
-                    if isinstance(plugin, ExecutePlugin):
-                        self._results = plugin.results()
+            for phase in self.phases():
+                if phase.enabled_on_guest(guest):
+                    phase.go(guest)
+                    if isinstance(phase, ExecutePlugin):
+                        self._results = phase.results()
 
         # Give a summary, update status and save
         self.summary()
@@ -155,7 +155,7 @@ class Execute(tmt.steps.Step):
         guest so that tests can be executed. Used by the prepare step.
         """
         requires = set()
-        for plugin in self.plugins(classes=ExecutePlugin):
+        for plugin in self.phases(classes=ExecutePlugin):
             requires.update(plugin.requires())
         return list(requires)
 

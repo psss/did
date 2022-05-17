@@ -21,6 +21,34 @@ PHASE_BASE = 50
 PHASE_END = 90
 
 
+class Phase(tmt.utils.Common):
+    """ A phase of a step """
+
+    def __init__(self, order=tmt.utils.DEFAULT_PLUGIN_ORDER, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.order = order
+
+    def enabled_on_guest(self, guest):
+        """ Phases are enabled across all guests by default """
+        return True
+
+    @property
+    def is_in_standalone_mode(self):
+        """
+        True if the phase is in stand-alone mode.
+
+        Stand-alone mode means that only this phase should be run as a part
+        of the run (and not any other even if requested using --all).
+        This is useful as some plugin options may completely change its
+        behaviour from the regular behaviour based on options
+        (e.g. listing images inside a provision plugin).
+        """
+        return False
+
+    def go(self, *args, **kwargs):
+        """ Execute the phase """
+
+
 class Step(tmt.utils.Common):
     """ Common parent of all test steps """
 
@@ -35,7 +63,7 @@ class Step(tmt.utils.Common):
         self.plan = plan
         self.data = data or {}
         self._status = None
-        self._plugins = []
+        self._phases = []
 
         # Create an empty step by default (can be updated from cli)
         if self.data is None:
@@ -184,32 +212,32 @@ class Step(tmt.utils.Common):
             self.debug(
                 f"Insert a login plugin into the '{self}' step "
                 f"with order '{plugin.order}'.", level=2)
-            self._plugins.append(plugin)
+            self._phases.append(plugin)
 
         for plugin in Reboot.plugins(step=self):
             self.debug(
                 f"Insert a reboot plugin into the '{self}' step "
                 f"with order '{plugin.order}'.", level=2)
-            self._plugins.append(plugin)
+            self._phases.append(plugin)
 
-    def plugins(self, classes=None):
+    def phases(self, classes=None):
         """
-        Iterate over plugins by their order
+        Iterate over phases by their order
 
-        By default iterates over all available plugins. Optional filter
+        By default iterates over all available phases. Optional filter
         'classes' can be used to iterate only over instances of given
         class (single class or tuple of classes).
         """
         return sorted(
-            [plugin for plugin in self._plugins
-                if classes is None or isinstance(plugin, classes)],
-            key=lambda plugin: plugin.order)
+            [phase for phase in self._phases
+                if classes is None or isinstance(phase, classes)],
+            key=lambda phase: phase.order)
 
     def actions(self):
-        """ Run all loaded Login or Reboot plugin instances of the step """
-        for plugin in self.plugins():
-            if isinstance(plugin, (Reboot, Login)):
-                plugin.go()
+        """ Run all loaded Login or Reboot action instances of the step """
+        for phase in self.phases():
+            if isinstance(phase, Action):
+                phase.go()
 
     def go(self):
         """ Execute the test step """
@@ -262,7 +290,7 @@ class PluginIndex(type):
             pass
 
 
-class Plugin(tmt.utils.Common, metaclass=PluginIndex):
+class Plugin(Phase, metaclass=PluginIndex):
     """ Common parent of all step plugins """
 
     # Default implementation for all steps is shell
@@ -284,16 +312,19 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
                 f"Missing 'name' in the {step} step config "
                 f"of the '{step.plan}' plan.")
 
+        try:
+            order = int(data['order'])
+        except (ValueError, KeyError):
+            order = tmt.utils.DEFAULT_PLUGIN_ORDER
+
         # Store name, data and parent step
-        super().__init__(parent=step, name=data['name'], workdir=workdir)
+        super().__init__(
+            parent=step,
+            name=data['name'],
+            workdir=workdir,
+            order=order)
         self.data = data
         self.step = step
-
-        # Initialize plugin order
-        try:
-            self.order = int(self.data['order'])
-        except (ValueError, KeyError):
-            self.order = tmt.utils.DEFAULT_PLUGIN_ORDER
 
     @classmethod
     def options(cls, how=None):
@@ -401,19 +432,6 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
             return True
         return where in (guest.name, guest.role)
 
-    @property
-    def is_in_standalone_mode(self):
-        """
-        True if the plugin is in stand-alone mode.
-
-        Stand-alone mode means that only this plugin should be run as a part
-        of the run (and not any other even if requested using --all).
-        This is useful as some plugin options may completely change its
-        behaviour from the regular behaviour based on options
-        (e.g. listing images inside a provision plugin).
-        """
-        return False
-
     def wake(self, keys=None):
         """
         Wake up the plugin, process data, apply options
@@ -452,7 +470,7 @@ class Plugin(tmt.utils.Common, metaclass=PluginIndex):
         return []
 
 
-class Action(tmt.utils.Common):
+class Action(Phase):
     """ A special action performed during a normal step. """
 
     # Dictionary containing list of requested phases for each enabled step
@@ -517,10 +535,6 @@ class Action(tmt.utils.Common):
                 phases[step_name] = [phase]
         return phases
 
-    def enabled_on_guest(self, guest):
-        """ Actions are enabled across all guests """
-        return True
-
 
 class Reboot(Action):
     """ Reboot guest """
@@ -530,8 +544,7 @@ class Reboot(Action):
 
     def __init__(self, step, order):
         """ Initialize relations, store the reboot order """
-        super().__init__(parent=step, name='reboot')
-        self.order = order
+        super().__init__(parent=step, name='reboot', order=order)
 
     @classmethod
     def command(cls, method_class=None, usage=None):

@@ -19,7 +19,7 @@ class Report(tmt.steps.Step):
         for data in self.data:
             plugin = ReportPlugin.delegate(self, data)
             plugin.wake()
-            self._plugins.append(plugin)
+            self._phases.append(plugin)
 
         # Nothing more to do if already done
         if self.status() == 'done':
@@ -52,8 +52,8 @@ class Report(tmt.steps.Step):
             return
 
         # Perform the reporting
-        for plugin in self.plugins():
-            plugin.go()
+        for phase in self.phases():
+            phase.go()
 
         # Give a summary, update status and save
         self.summary()
@@ -69,7 +69,7 @@ class Report(tmt.steps.Step):
         generated. Used by the prepare step.
         """
         requires = set()
-        for plugin in self.plugins(classes=ReportPlugin):
+        for plugin in self.phases(classes=ReportPlugin):
             requires.update(plugin.requires())
         return list(requires)
 
