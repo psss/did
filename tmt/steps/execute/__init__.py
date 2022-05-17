@@ -140,7 +140,7 @@ class Execute(tmt.steps.Step):
                 if phase.enabled_on_guest(guest):
                     phase.go(guest)
                     if isinstance(phase, ExecutePlugin):
-                        self._results = phase.results()
+                        self._results.extend(phase.results())
 
         # Give a summary, update status and save
         self.summary()
@@ -323,3 +323,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             f"Adjust the test 'duration' attribute if necessary.\n"
             f"https://tmt.readthedocs.io/en/stable/spec/tests.html#duration\n",
             mode='a', level=3)
+
+    def results(self):
+        """ Return test results """
+        raise NotImplementedError
