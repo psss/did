@@ -55,8 +55,8 @@ rlJournalStart
         rlRun "tmprun=\$(mktemp -d)" 0 "Create a temporary directory for runs"
         rlRun "tmt run -i $tmprun/run1 --until provision provision -h local | tee run-output"
         rlRun "tmt run -i $tmprun/run2 --until provision provision -h local | tee run-output"
-        rlRun "tmt clean guests $tmprun"
-        rlRun "tmt status $tmprun -vv | tee output"
+        rlRun "tmt clean guests --workdir-root $tmprun"
+        rlRun "tmt status --workdir-root $tmprun -vv | tee output"
         rlAssertGrep "(done\s+){2}(todo\s+){3}done\s+$tmprun/run1" "output" -E
         rlAssertGrep "(done\s+){2}(todo\s+){3}done\s+$tmprun/run2" "output" -E
     rlPhaseEnd

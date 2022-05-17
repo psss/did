@@ -2410,9 +2410,9 @@ class Status(tmt.utils.Common):
         """ Display the current status """
         # Prepare absolute workdir path if --id was used
         id_ = self.opt('id')
-        path = self.opt('path')
+        root_path = self.opt('workdir-root')
         self.print_header()
-        for abs_path in tmt.utils.generate_runs(path, id_):
+        for abs_path in tmt.utils.generate_runs(root_path, id_):
             run = Run(abs_path, self._context.obj.tree, self._context)
             self.process_run(run)
 
@@ -2483,14 +2483,14 @@ class Clean(tmt.utils.Common):
     def guests(self):
         """ Clean guests of runs """
         self.info('guests', color='blue')
-        path = self.opt('path')
+        root_path = self.opt('workdir-root')
         id_ = self.opt('id_')
         if self.opt('last'):
             # Pass the context containing --last to Run to choose
             # the correct one.
             return self._stop_running_guests(Run(context=self._context))
         successful = True
-        for abs_path in tmt.utils.generate_runs(path, id_):
+        for abs_path in tmt.utils.generate_runs(root_path, id_):
             run = Run(abs_path, self._context.obj.tree, self._context)
             if not self._stop_running_guests(run):
                 successful = False
@@ -2512,7 +2512,7 @@ class Clean(tmt.utils.Common):
     def runs(self):
         """ Clean workdirs of runs """
         self.info('runs', color='blue')
-        path = self.opt('path')
+        root_path = self.opt('workdir-root')
         id_ = self.opt('id_')
         if self.opt('last'):
             # Pass the context containing --last to Run to choose
@@ -2520,7 +2520,8 @@ class Clean(tmt.utils.Common):
             last_run = Run(context=self._context)
             last_run._workdir_load(last_run._workdir_path)
             return self._clean_workdir(last_run.workdir)
-        all_workdirs = [path for path in tmt.utils.generate_runs(path, id_)]
+        all_workdirs = [
+            path for path in tmt.utils.generate_runs(root_path, id_)]
         keep = self.opt('keep')
         if keep is not None:
             # Sort by modify time of the workdirs and keep the newest workdirs

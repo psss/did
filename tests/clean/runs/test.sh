@@ -19,10 +19,10 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Dry mode"
-        rlRun "tmt clean runs --dry -v $tmprun | tee output"
+        rlRun "tmt clean runs --dry -v --workdir-root $tmprun | tee output"
         rlAssertGrep "Would remove workdir '$run1'" "output"
         rlAssertGrep "Would remove workdir '$run2'" "output"
-        rlRun "tmt status $tmprun -vv | tee output"
+        rlRun "tmt status --workdir-root $tmprun -vv | tee output"
         rlAssertGrep "(done\s+){1}(todo\s+){5}$run1\s+/plan1" "output" -E
         rlAssertGrep "(done\s+){1}(todo\s+){5}$run2\s+/plan1" "output" -E
     rlPhaseEnd
@@ -30,13 +30,13 @@ rlJournalStart
     rlPhaseStartTest "Specify ID"
         rlRun "tmt clean runs -v -i $run1 | tee output"
         rlAssertGrep "Removing workdir '$run1'" "output"
-        rlRun "tmt status $tmprun -vv | tee output"
+        rlRun "tmt status --workdir-root $tmprun -vv | tee output"
         rlAssertNotGrep "(done\s+){1}(todo\s+){5}$run1\s+/plan1" "output" -E
         rlAssertGrep "(done\s+){1}(todo\s+){5}$run2\s+/plan1" "output" -E
 
         rlRun "tmt clean runs -v -l | tee output"
         rlAssertGrep "Removing workdir '$run2'" "output"
-        rlRun "tmt status $tmprun -vv | tee output"
+        rlRun "tmt status --workdir-root $tmprun -vv | tee output"
         rlAssertNotGrep "(done\s+){1}(todo\s+){5}$run2\s+/plan1" "output" -E
 
         rlRun "wc -l output | tee lines" 0 "Get the number of lines"
@@ -48,15 +48,15 @@ rlJournalStart
         for i in $(seq 1 10); do
             rlRun "tmt run -i $tmprun/$i discover"
         done
-        rlRun "tmt clean runs -v --keep 10 $tmprun"
-        rlRun "tmt status $tmprun -vv | tee output"
+        rlRun "tmt clean runs -v --keep 10 --workdir-root $tmprun"
+        rlRun "tmt status --workdir-root $tmprun -vv | tee output"
         rlLog "The runs should remain intact"
         for i in $(seq 1 10); do
             rlAssertGrep "$tmprun/$i\s+/plan1" "output" -E
         done
 
-        rlRun "tmt clean runs -v --keep 2 $tmprun"
-        rlRun "tmt status $tmprun -vv | tee output"
+        rlRun "tmt clean runs -v --keep 2 --workdir-root $tmprun"
+        rlRun "tmt status --workdir-root $tmprun -vv | tee output"
         rlAssertGrep "$tmprun/9" "output"
         rlAssertGrep "$tmprun/10" "output"
 
@@ -64,13 +64,13 @@ rlJournalStart
             rlAssertNotGrep "$tmprun/$i\s+/plan1" "output" -E
         done
 
-        rlRun "tmt clean runs -v --keep 1 $tmprun"
-        rlRun "tmt status $tmprun -vv | tee output"
+        rlRun "tmt clean runs -v --keep 1 --workdir-root $tmprun"
+        rlRun "tmt status --workdir-root $tmprun -vv | tee output"
         rlAssertNotGrep "$tmprun/9" "output"
         rlAssertGrep "$tmprun/10" "output"
 
-        rlRun "tmt clean runs -v --keep 0 $tmprun"
-        rlRun "tmt status $tmprun -vv | tee output"
+        rlRun "tmt clean runs -v --keep 0 --workdir-root $tmprun"
+        rlRun "tmt status --workdir-root $tmprun -vv | tee output"
         rlAssertNotGrep "$tmprun/10" "output"
     rlPhaseEnd
 
@@ -78,8 +78,8 @@ rlJournalStart
         for i in $(seq 1 10); do
             rlRun "tmt run -i $tmprun/$i discover"
         done
-        rlRun "tmt clean runs -v $tmprun"
-        rlRun "tmt status -vv $tmprun | tee output"
+        rlRun "tmt clean runs -v --workdir-root $tmprun"
+        rlRun "tmt status -vv --workdir-root $tmprun | tee output"
         rlRun "wc -l output | tee lines" 0 "Get the number of lines"
         rlLog "The status should only contain the heading"
         rlAssertGrep "1" "lines"

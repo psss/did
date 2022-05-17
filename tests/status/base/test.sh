@@ -47,7 +47,7 @@ rlJournalStart
     rlPhaseStartTest "Different root"
         rlRun "tmprun=\$(mktemp -d)" 0 "Create a temporary directory for runs"
         rlRun "tmt run -a -i $tmprun/run provision -h local"
-        rlRun "tmt status $tmprun | tee output"
+        rlRun "tmt status --workdir-root $tmprun | tee output"
         rlRun "wc -l output | tee lines" 0 "Get the number of lines"
         rlLog "The status should only show one run and its heading"
         rlAssertGrep "2" "lines"

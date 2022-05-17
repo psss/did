@@ -43,6 +43,11 @@ fix = click.option(
     '-F', '--fix', is_flag=True,
     help='Attempt to fix all discovered issues.')
 
+workdir_root = click.option(
+    '--workdir-root', metavar='PATH', default=tmt.utils.WORKDIR_ROOT,
+    help=f'Path to root directory containing run workdirs. '
+         f'Defaults to {tmt.utils.WORKDIR_ROOT}.')
+
 
 def show_step_method_hints(
         log_object: tmt.utils.Common,
