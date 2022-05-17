@@ -206,7 +206,28 @@ rlJournalStart
         done
 
         rlRun "rm -rf $run" 0 "Clean up run"
+
+        # Common prefix should not be selected
+        rlRun -s "tmt tests ls ."
+        rlAssertGrep "/subdir" "$rlRun_LOG"
+        rlAssertNotGrep "/subdir_other" "$rlRun_LOG"
+
+        # Now get out of "subdir"
         rlRun "popd"
+
+        # Virtual cases defined in /sub/ (no other tests should be selected)
+        rlRun "pushd sub"
+        rlRun -s "tmt tests ls ."
+        rlAssertGrep "/sub/first" "$rlRun_LOG"
+        rlAssertGrep "/sub/second" "$rlRun_LOG"
+        rlAssertNotGrep "/subdir" "$rlRun_LOG"
+        rlRun "popd"
+
+        # In top dir all tests should be selected
+        rlRun -s "tmt tests ls ."
+        rlAssertGrep "/sub/first" "$rlRun_LOG"
+        rlAssertGrep "/subdir" "$rlRun_LOG"
+        rlAssertGrep "/tests" "$rlRun_LOG"
     rlPhaseEnd
 
     for exclude in '-x' '--exclude'; do

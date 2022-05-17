@@ -1,0 +1,5 @@
+test: echo
+enable: false
+adjust:
+-   when: subdir is defined
+    enabled: true

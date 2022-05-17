@@ -204,12 +204,14 @@ class Core(tmt.utils.Common):
             current = os.getcwd()
             # Handle special case when directly in the metadata root
             if current == root:
-                path = '/'
+                pattern = '/'
             # Prepare path from the tree root to the current directory
             else:
-                path = os.path.join('/', os.path.relpath(current, root))
+                pattern = os.path.join('/', os.path.relpath(current, root))
+                # Prevent matching common prefix from other directories
+                pattern = f"{pattern}(/|$)"
             cls._context.params['names'] = tuple([
-                path if name == '.' else name for name in names])
+                pattern if name == '.' else name for name in names])
 
     def name_and_summary(self):
         """ Node name and optional summary """
