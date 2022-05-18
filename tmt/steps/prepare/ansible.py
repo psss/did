@@ -1,9 +1,28 @@
+import sys
+from typing import Any, List, Optional
+
 import click
 
 import tmt
+import tmt.utils
+from tmt.steps import Step
+from tmt.steps.provision import Guest
+
+if sys.version_info >= (3, 8):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
+
+StepDataType = TypedDict(
+    'StepDataType',
+    {
+        'playbook': List[str],
+        'playbooks': List[str]
+        }
+    )
 
 
-class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
+class PrepareAnsible(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     """
     Prepare guest using ansible
 
@@ -35,15 +54,16 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
     # Supported keys
     _keys = ["playbook", "extra-args"]
 
-    def __init__(self, step, data):
+    def __init__(self, step: Step, data: StepDataType) -> None:
         """ Store plugin name, data and parent step """
         super().__init__(step, data)
         # Rename plural playbooks to singular
         if 'playbooks' in self.data:
             self.data['playbook'] = self.data.pop('playbooks')
 
+    # TODO: fix types once superclass gains its annotations
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> Any:
         """ Prepare command line options """
         return [
             click.option(
@@ -54,20 +74,21 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
                 help='Optional arguments for ansible-playbook.')
             ] + super().options(how)
 
-    def default(self, option, default=None):
+    def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """
         if option == 'playbook':
             return []
         return default
 
-    def wake(self, keys=None):
+    # TODO: use better types once superclass gains its annotations
+    def wake(self, keys: Optional[List[str]] = None) -> None:
         """ Wake up the plugin, process data, apply options """
         super().wake(keys=keys)
 
         # Convert to list if necessary
         tmt.utils.listify(self.data, keys=['playbook'])
 
-    def go(self, guest):
+    def go(self, guest: Guest) -> None:
         """ Prepare the guests """
         super().go(guest)
 
