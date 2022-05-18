@@ -45,8 +45,8 @@ fix = click.option(
 
 workdir_root = click.option(
     '--workdir-root', metavar='PATH', default=tmt.utils.WORKDIR_ROOT,
-    help=f'Path to root directory containing run workdirs. '
-         f'Defaults to {tmt.utils.WORKDIR_ROOT}.')
+    help=f"Path to root directory containing run workdirs. "
+         f"Defaults to '{tmt.utils.WORKDIR_ROOT}'.")
 
 
 def show_step_method_hints(

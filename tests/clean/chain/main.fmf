@@ -1,0 +1,10 @@
+summary: Checks that tmt clean command chaining works
+description: |
+    Chaining of subcommands under tmt clean requires special order
+    of operations to be forced to remove potential user error,
+    such as removing runs and then trying to clean guests (when
+    no runs are present and hence no information about guests is
+    available). Checks that this order is applied.
+
+    Also verifies that options from the top-level tmt clean command
+    are correctly propagated to the chained subcommands.

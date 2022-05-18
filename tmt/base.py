@@ -2433,8 +2433,11 @@ class Clean(tmt.utils.Common):
     def images(self):
         """ Clean images of provision plugins """
         self.info('images', color='blue')
+        successful = True
         for method in tmt.steps.provision.ProvisionPlugin.methods():
-            method.class_.clean_images(self, self.opt('dry'))
+            if not method.class_.clean_images(self, self.opt('dry')):
+                successful = False
+        return successful
 
     def _matches_how(self, plan):
         """ Check if the given plan matches options """
@@ -2520,8 +2523,7 @@ class Clean(tmt.utils.Common):
             last_run = Run(context=self._context)
             last_run._workdir_load(last_run._workdir_path)
             return self._clean_workdir(last_run.workdir)
-        all_workdirs = [
-            path for path in tmt.utils.generate_runs(root_path, id_)]
+        all_workdirs = [path for path in tmt.utils.generate_runs(root_path, id_)]
         keep = self.opt('keep')
         if keep is not None:
             # Sort by modify time of the workdirs and keep the newest workdirs

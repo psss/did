@@ -260,8 +260,9 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
         return Guest.requires()
 
     @classmethod
-    def clean_images(cls, clean: 'tmt.base.Clean', dry: bool) -> None:
+    def clean_images(cls, clean: 'tmt.base.Clean', dry: bool) -> bool:
         """ Remove the images of one particular plugin """
+        return True
 
 
 @dataclasses.dataclass
