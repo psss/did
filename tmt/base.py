@@ -971,7 +971,7 @@ class Plan(Core):
         elif standalone:
             self._context.obj.steps = standalone
             self.debug(
-                f"Running the step '{list(standalone)[0]}' in standalone mode.")
+                f"Running the '{list(standalone)[0]}' step as standalone.")
 
         # Run enabled steps except 'finish'
         self.debug('go', color='cyan', shift=0, level=2)

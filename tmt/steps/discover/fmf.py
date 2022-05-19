@@ -147,6 +147,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
 
     @property
     def is_in_standalone_mode(self):
+        """ Enable standalone mode when listing fmf ids """
         if self.opt('fmf_id'):
             return True
         return super().is_in_standalone_mode

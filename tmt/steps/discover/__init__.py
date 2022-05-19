@@ -155,6 +155,7 @@ class Discover(tmt.steps.Step):
                 self._tests.append(test)
 
         # Show fmf identifiers for tests discovered in plan
+        # TODO: This part should go into the 'fmf.py' module
         if self.opt('fmf_id'):
             if self.tests():
                 fmf_id_list = [tmt.utils.dict_to_yaml(test.fmf_id, start=True)
@@ -210,6 +211,7 @@ class DiscoverPlugin(tmt.steps.Plugin):
             '-h', '--how', metavar='METHOD',
             help='Use specified method to discover tests.')
         def discover(context, **kwargs):
+            # TODO: This part should go into the 'fmf.py' module
             if kwargs.get('fmf_id'):
                 # Set quiet, disable debug and verbose to avoid logging
                 # to terminal with discover --fmf-id

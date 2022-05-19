@@ -312,6 +312,7 @@ class Plugin(Phase, metaclass=PluginIndex):
                 f"Missing 'name' in the {step} step config "
                 f"of the '{step.plan}' plan.")
 
+        # Initialize plugin order
         try:
             order = int(data['order'])
         except (ValueError, KeyError):
@@ -587,8 +588,7 @@ class Login(Action):
 
     def __init__(self, step, order):
         """ Initialize relations, store the login order """
-        super().__init__(parent=step, name='login')
-        self.order = order
+        super().__init__(parent=step, name='login', order=order)
 
     @classmethod
     def command(cls, method_class=None, usage=None):
