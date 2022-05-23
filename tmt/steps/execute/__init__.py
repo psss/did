@@ -215,6 +215,12 @@ class ExecutePlugin(tmt.steps.Plugin):
             'exit-first', self.get('exit-first', default=False),
             'green', level=2)
 
+    @property
+    def discover(self):
+        """ Return discover plugin instance """
+        # This is necessary so that upgrade plugin can inject a fake discover
+        return self.step.plan.discover
+
     def data_path(self, test, filename=None, full=False, create=False):
         """
         Prepare full/relative test data directory/file path
@@ -241,7 +247,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         the aggregated metadata in a 'metadata.yaml' file under the test
         data directory and finally return a list of discovered tests.
         """
-        tests = self.step.plan.discover.tests()
+        tests = self.discover.tests()
         for test in tests:
             metadata_filename = self.data_path(
                 test, filename='metadata.yaml', full=True, create=True)

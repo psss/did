@@ -82,6 +82,10 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     # Supported keys
     _keys = ["script", "interactive"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._previous_progress_message = ""
+
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for given method """
@@ -133,22 +137,19 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             return
 
         # Show progress bar in an interactive shell.
-        try:
-            # We need to completely override the previous message, add
-            # spaces if necessary.
-            message = message.ljust(len(self._previous_progress_message))
-        except AttributeError:
-            # First iteration, previous message not set
-            pass
+        # We need to completely override the previous message, add
+        # spaces if necessary.
+        message = message.ljust(len(self._previous_progress_message))
         self._previous_progress_message = message
         message = self._indent('progress', message, color='cyan')
         sys.stdout.write(f"\r{message}")
         if finish:
             # The progress has been overwritten, return back to the start
             sys.stdout.write(f"\r")
+            self._previous_progress_message = ""
         sys.stdout.flush()
 
-    def execute(self, test, guest, progress):
+    def execute(self, test, guest, progress, extra_env):
         """ Run test on the guest """
         # Provide info/debug message
         self._show_progress(progress, test.name)
@@ -158,12 +159,13 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
         # Test will be executed in the workdir
         workdir = os.path.join(
-            self.step.plan.discover.workdir, test.path.lstrip('/'))
+            self.discover.workdir, test.path.lstrip('/'))
         self.debug(f"Use workdir '{workdir}'.", level=3)
 
         # Create data directory, prepare environment
         data_directory = self.data_path(test, full=True, create=True)
         environment = test.environment.copy()
+        environment.update(extra_env)
         environment["TMT_TREE"] = self.parent.plan.worktree
         environment["TMT_TEST_DATA"] = os.path.join(
             data_directory, tmt.steps.execute.TEST_DATA)
@@ -303,6 +305,10 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             self._results = []
             return
 
+        self._run_tests(guest)
+
+    def _run_tests(self, guest, extra_env=None):
+        extra_env = extra_env or {}
         # Prepare tests and helper scripts, check options
         tests = self.prepare_tests()
         exit_first = self.get('exit-first', default=False)
@@ -317,7 +323,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 if not hasattr(test, "_reboot_count"):
                     test._reboot_count = 0
                 self.execute(
-                    test, guest, progress=f"{index + 1}/{len(tests)}")
+                    test, guest, progress=f"{index + 1}/{len(tests)}",
+                    extra_env=extra_env)
                 guest.pull(source=self.data_path(test, full=True))
                 if self._handle_reboot(test, guest):
                     continue

@@ -64,6 +64,68 @@ description: |
     The ``DURATION`` is an optional section stating how long did
     the test run. Its value is in the ``hh:mm:ss`` format.
 
+/upgrade:
+    summary: Perform system upgrades during testing
+    story:
+        As a tester I want to verify that a configured application
+        or service still correctly works after the system upgrade.
+    description: |
+        In order to enable developing tests for upgrade testing, we
+        need to provide a way how to execute these tests easily.
+        This does not cover unit tests for individual actors but
+        rather system tests which verify the whole upgrade story.
+
+        The ``upgrade`` executor runs the discovered tests (using
+        the internal executor, hence the same config options can
+        be used), then performs a set of upgrade tasks from
+        a remote repository, and finally, re-runs the tests on
+        the upgraded system.
+
+        The ``IN_PLACE_UPGRADE`` environment variable is set during
+        the test execution to differentiate between the stages of
+        the test. It is set to ``old`` during the first execution
+        and ``new`` during the second execution. Test names are
+        prefixed with this value to make the names unique.
+        Based on this variable, the test can perform appropriate
+        actions.
+
+        old
+            setup, test
+        new
+            test, cleanup
+        without
+            setup, test, cleanup
+
+        The upgrade tasks performing the actual system upgrade are
+        taken from a remote repository (specified by the ``url`` key)
+        based on an upgrade path (specified by the ``upgrade-path`` key).
+        The upgrade path must correspond to a plan name in the remote
+        repository whose discover selects tests (upgrade tasks).
+        The environment variables defined in the upgrade path are passed
+        to the upgrade tasks.
+    example: |
+        # Main testing plan
+        discover:
+            how: fmf
+        execute:
+            how: upgrade
+            url: https://github.com/teemtee/upgrade
+            upgrade-path: fedora35to36
+
+        # Upgrade path fedora35to36.fmf in the remote repository
+        discover: # Selects appropriate upgrade tasks (L1 tests)
+            how: fmf
+            filter: "tag:fedora"
+        environment: # This is passed to upgrade tasks
+            SOURCE: 35
+            TARGET: 36
+        execute:
+            how: tmt
+    link:
+      - implemented-by: /tmt/steps/execute/upgrade.py
+      - verified-by: /tests/execute/upgrade
+
+
 /isolate:
     summary: Run tests in an isolated environment
     description:

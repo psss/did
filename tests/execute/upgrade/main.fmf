@@ -1,0 +1,7 @@
+summary: Basic upgrade executor integration test
+# dnf update is run, this may take quite long
+duration: 15m
+enabled: false
+adjust:
+  - enabled: true
+    when: how == full

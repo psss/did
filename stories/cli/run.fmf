@@ -104,41 +104,6 @@ story: 'As a user I want to execute tests easily'
         - tmt run --continue
         - tmt run --abort
 
-/upgrade:
-    story:
-        As a tester I want to verify that a configured application
-        or service still correctly works after the system upgrade.
-    description: |
-        In order to enable developing tests for upgrade testing we
-        need to provide a way how to execute these tests easily.
-        This does not cover unit tests for individual actors but
-        rather system tests which verify the whole upgrade story.
-
-        The plan is to provide an environment variable available
-        to the test denoting current phase of the upgrade testing
-        (``before`` or ``after`` the upgrade). Based on this
-        variable test can perform appropriate actions.
-
-        before
-            setup, test
-        after
-            test, cleanup
-        without
-            setup, test, cleanup
-
-        Combining test step selection feature and defining extra
-        environment variables together with an external framework
-        to perform the actual system upgrade should give us a nice
-        way how to achieve the desired functionality. In addition,
-        we will also need to implement a way how to aggregate test
-        results from both runs (before and after the upgrade).
-    example:
-        - tmt run --id foo discover provision --image=rhel7 --output=box.json
-        - tmt run --id foo execute --environment='UPGRADE=before'
-        - upgrade-the-system box.json
-        - tmt run --id foo execute --environment='UPGRADE=after'
-        - tmt run --id foo report finish
-
 /shortcuts:
     story: 'Provide shortcuts for common scenarios'
     /container:
