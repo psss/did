@@ -73,7 +73,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         """ Wake up the plugin, process data, apply options """
         super().wake(keys=keys, data=data)
         if data:
-            self._guest = tmt.Guest(data, name=self.name, parent=self.step)
+            self._guest = tmt.GuestSsh(data, name=self.name, parent=self.step)
 
     def go(self):
         """ Prepare the connection """
@@ -109,7 +109,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
             data['key'] = key
 
         # And finally create the guest
-        self._guest = tmt.Guest(data, name=self.name, parent=self.step)
+        self._guest = tmt.GuestSsh(data, name=self.name, parent=self.step)
 
     def guest(self):
         """ Return the provisioned guest """

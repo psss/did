@@ -71,6 +71,18 @@ class GuestLocal(tmt.Guest):
         # Run the command under the prepared environment
         return self.run(command, env=environment, shell=True, **kwargs)
 
+    def stop(self):
+        """ Stop the guest """
+
+        self.debug(f"Doing nothing to stop guest '{self.guest}'.")
+
+    def reboot(self, hard=False):
+        """ Reboot the guest, return True if successful """
+
+        self.debug(f"Doing nothing to reboot guest '{self.guest}'.")
+
+        return False
+
     def push(self, source=None, destination=None, options=None):
         """ Nothing to be done to push workdir """
 

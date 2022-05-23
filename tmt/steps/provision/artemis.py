@@ -479,7 +479,7 @@ class ProvisionArtemis(
 
 
 # TODO: get rid of `ignore` once superclass is no longer `Any`
-class GuestArtemis(tmt.Guest):  # type: ignore[misc]
+class GuestArtemis(tmt.GuestSsh):  # type: ignore[misc]
     """
     Artemis guest instance
 

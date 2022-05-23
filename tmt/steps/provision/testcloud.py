@@ -284,7 +284,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 os.remove(image)
 
 
-class GuestTestcloud(tmt.Guest):
+class GuestTestcloud(tmt.GuestSsh):
     """
     Testcloud Instance
 

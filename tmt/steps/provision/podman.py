@@ -133,7 +133,7 @@ class GuestContainer(tmt.Guest):
         # Mount the whole plan directory in the container
         workdir = self.parent.plan.workdir
 
-        self.container = self._tmt_name()
+        self.container = self.guest = self._tmt_name()
         self.verbose('name', self.container, 'green')
 
         # FIXME: Workaround for BZ#1900021 (f34 container on centos-8)
