@@ -15,6 +15,9 @@ with open('tmt.spec', encoding='utf-8') as specfile:
 # acceptable version schema: major.minor[.patch][sub]
 __version__ = version
 __pkg__ = 'tmt'
+__pkgdata__ = {
+    'tmt': ['schemas/*.yaml']
+}
 __pkgdir__ = {}
 __pkgs__ = [
     'tmt',
@@ -110,6 +113,7 @@ default_setup = dict(
     install_requires=install_requires,
     extras_require=extras_require,
     name=__pkg__,
+    package_data=__pkgdata__,
     package_dir=__pkgdir__,
     packages=__pkgs__,
     provides=__provides__,

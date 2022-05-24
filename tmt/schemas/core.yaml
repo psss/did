@@ -1,0 +1,42 @@
+---
+
+#
+# JSON Schema for Core
+#
+# https://tmt.readthedocs.io/en/stable/spec/core.html
+#
+
+$id: /schemas/core
+$schema: https://json-schema.org/draft-07/schema
+
+definitions:
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#adjust
+  # TODO: this needs more work, it is too vague now
+  adjust:
+    oneOf:
+      - type: array
+      - type: object
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#description
+  description:
+    type: string
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#enabled
+  enabled:
+    type: boolean
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#link
+  link:
+    oneOf:
+      - $ref: "/schemas/common#/definitions/link"
+      - type: array
+        items:
+          $ref: "/schemas/common#/definitions/link"
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#order
+  order:
+    type: integer
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#summary
+  summary:
+    type: string

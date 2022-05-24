@@ -1,0 +1,160 @@
+---
+
+#
+# Common JSON Schema definitions
+#
+
+$id: /schemas/common
+$schema: https://json-schema.org/draft-07/schema
+
+definitions:
+  # https://tmt.readthedocs.io/en/stable/spec/tests.html#require
+  beakerlib_library:
+    allOf:
+      - $ref: "/schemas/common#/definitions/fmf_id_base"
+
+    additionalProperties: false
+
+    properties:
+      url: true
+      ref: true
+      path: true
+      name: true
+      nick:
+        type: string
+
+  # https://fmf.readthedocs.io/en/stable/concept.html#identifiers
+  fmf_id:
+    allOf:
+      - $ref: "/schemas/common#/definitions/fmf_id_base"
+
+    additionalProperties: false
+
+    properties:
+      url: true
+      ref: true
+      path: true
+      name: true
+
+  # helper used by beakerlib_library and fmf_id
+  fmf_id_base:
+    type: object
+    minProperties: 1
+    properties:
+      url:
+        # https://github.com/teemtee/tmt/issues/1258
+        type: string
+
+      ref:
+        type: string
+
+      path:
+        type: string
+
+      name:
+        type: string
+        pattern: "^/"
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#link
+  # helper for one link
+  link:
+    oneOf:
+      - $ref: "/schemas/common#/definitions/link_relation"
+      - $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+  # helper for specifying one link_relation with optional note
+  link_relation:
+    type: object
+
+    additionalProperties: false
+
+    properties:
+      verifies:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      verified-by:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      implements:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      implemented-by:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      documents:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      documented-by:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      blocks:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      blocked-by:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      duplicates:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      duplicated-by:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      parent:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      child:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      relates:
+        $ref: "/schemas/common#/definitions/url_path_or_fmf_id"
+
+      note:
+        type: string
+
+    oneOf:
+      - required:
+          - verifies
+      - required:
+          - verified-by
+      - required:
+          - implements
+      - required:
+          - implemented-by
+      - required:
+          - documents
+      - required:
+          - documented-by
+      - required:
+          - blocks
+      - required:
+          - blocked-by
+      - required:
+          - duplicates
+      - required:
+          - duplicated-by
+      - required:
+          - parent
+      - required:
+          - child
+      - required:
+          - relates
+
+  # helper for specifying a string or an array of strings
+  one_or_more_strings:
+    oneOf:
+      - type: string
+
+      - type: array
+        items:
+          type: string
+
+  # a url, path or fmf_id
+  url_path_or_fmf_id:
+    oneOf:
+      - type: string
+        pattern: "^https?://"
+
+      - type: string
+        pattern: "^/"
+
+      - $ref: "/schemas/common#/definitions/fmf_id"

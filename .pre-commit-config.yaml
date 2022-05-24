@@ -32,3 +32,16 @@ repos:
         args:
           - --config-file
           - mypy.ini
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.15.0
+    hooks:
+      - id: check-metaschema
+        name: "Check JSON schemas validity"
+        files: ^tmt/schemas/.*\.yaml
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.26.3
+    hooks:
+      - id: yamllint
+        files: ^tmt/schemas/.*\.yaml
