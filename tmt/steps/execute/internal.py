@@ -22,8 +22,13 @@ REBOOT_SCRIPT_PATHS = (
     "/usr/local/bin/tmt-reboot")
 REBOOT_REQUEST_FILENAME = "reboot_request"
 REBOOT_SCRIPT = f"""\
-#!/bin/sh
+#!/bin/bash
 touch "$TMT_TEST_DATA/{REBOOT_REQUEST_FILENAME}"
+while getopts "c:" flag; do
+    case "${{flag}}" in
+        c) echo "${{OPTARG}}" >> "$TMT_TEST_DATA/{REBOOT_REQUEST_FILENAME}";;
+    esac
+done
 """
 REBOOT_BACKUP_EXT = ".tmt.backup"
 REBOOT_SETUP_NAME = "reboot_setup"
@@ -282,16 +287,31 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             test._reboot_count += 1
             self.debug(f"Reboot during test '{test}' "
                        f"with reboot count {test._reboot_count}.")
+            with open(reboot_request_path, 'r') as reboot_file:
+                reboot_command = reboot_file.read()
             # Reset the file
             os.remove(reboot_request_path)
             guest.push(test_data)
-            try:
-                guest.reboot()
-            except tmt.utils.ProvisionError:
-                self.warn(
-                    "Guest does not support soft reboot, "
-                    "trying hard reboot.")
-                guest.reboot(hard=True)
+            if reboot_command:
+                self.debug(f"Rebooting with command {reboot_command}")
+                try:
+                    guest.execute(reboot_command)
+                except tmt.utils.RunError as error:
+                    if error.returncode == 255:
+                        self.debug(
+                            f"Seems the connection was closed too "
+                            f"fast, ignoring.")
+                    else:
+                        raise error
+                guest.reconnect()
+            else:
+                try:
+                    guest.reboot()
+                except tmt.utils.ProvisionError:
+                    self.warn(
+                        "Guest does not support soft reboot, "
+                        "trying hard reboot.")
+                    guest.reboot(hard=True)
             return True
         return False
 

@@ -16,6 +16,10 @@ description: |
     will not work on machines where ``reboot`` command is not
     available.
 
+    For such purposes, or when a custom command for rebooting
+    is required, the ``-c`` option of the reboot script can
+    be used, e.g. ``tmt-reboot -c "dnf system-upgrade reboot"``.
+
     For backward-compatibility reasons the ``rstrnt-reboot`` and
     ``rhts-reboot`` commands are provided as well together with
     the ``RSTRNT_REBOOTCOUNT`` and ``REBOOTCOUNT`` environment
