@@ -110,7 +110,7 @@ description: |
         execute:
             how: upgrade
             url: https://github.com/teemtee/upgrade
-            upgrade-path: fedora35to36
+            upgrade-path: /paths/fedora35to36
 
         # Upgrade path fedora35to36.fmf in the remote repository
         discover: # Selects appropriate upgrade tasks (L1 tests)

@@ -637,20 +637,25 @@ class Guest(tmt.utils.Common):
             except OSError as error:
                 self.debug(f"Failed to remove the socket: {error}", level=3)
 
-    def reboot(self, hard=False):
+    def reboot(self, hard=False, command=None):
         """
         Reboot the guest, return True if successful
 
         Parameter 'hard' set to True means that guest should be
         rebooted by way which is not clean in sense that data can be
         lost. When set to False reboot should be done gracefully.
+
+        Use the 'command' parameter to specify a custom reboot command
+        instead of the default 'reboot'.
         """
         if hard:
             raise tmt.utils.ProvisionError(
                 "Method does not support hard reboot.")
 
         try:
-            self.execute("reboot")
+            command = command or "reboot"
+            self.debug(f"Reboot using the command '{command}'.")
+            self.execute(command)
         except tmt.utils.RunError as error:
             # Connection can be closed by the remote host even before the
             # reboot command is completed. Let's ignore such errors.

@@ -9,16 +9,15 @@ description: |
     reboot from the test and the ``TMT_REBOOT_COUNT`` environment
     variable provides number of successfully completed reboots.
 
-    Note that this only works with the internal tmt executor and
-    works with guests provisioned by tmt (e.g. container or
-    virtual) and doesn't work with the local provision.
-    Support of connect provision is on a best effort basis and
-    will not work on machines where ``reboot`` command is not
-    available.
+    Note that this only works with guests provisioned by tmt, e.g.
+    ``container`` or ``virtual``, and doesn't work with the the
+    ``local`` provision method. Support of the ``connect``
+    provision is on a best effort basis and will not work on
+    machines where ``reboot`` command is not available.
 
-    For such purposes, or when a custom command for rebooting
-    is required, the ``-c`` option of the reboot script can
-    be used, e.g. ``tmt-reboot -c "dnf system-upgrade reboot"``.
+    When a custom command for rebooting is required, the ``-c``
+    option of the reboot script can be used, e.g. ``tmt-reboot -c
+    "dnf system-upgrade reboot"``.
 
     For backward-compatibility reasons the ``rstrnt-reboot`` and
     ``rhts-reboot`` commands are provided as well together with

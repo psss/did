@@ -7,4 +7,4 @@ provision:
 execute:
     how: upgrade
     url: https://github.com/teemtee/upgrade
-    upgrade-path: fedora35to36
+    upgrade-path: /paths/fedora35to36

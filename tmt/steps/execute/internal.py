@@ -154,7 +154,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             self._previous_progress_message = ""
         sys.stdout.flush()
 
-    def execute(self, test, guest, progress, extra_env):
+    def execute(self, test, guest, progress, extra_environment):
         """ Run test on the guest """
         # Provide info/debug message
         self._show_progress(progress, test.name)
@@ -163,14 +163,13 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         self.debug(f"Execute '{test.name}' as a '{test.framework}' test.")
 
         # Test will be executed in the workdir
-        workdir = os.path.join(
-            self.discover.workdir, test.path.lstrip('/'))
+        workdir = os.path.join(self.discover.workdir, test.path.lstrip('/'))
         self.debug(f"Use workdir '{workdir}'.", level=3)
 
         # Create data directory, prepare environment
         data_directory = self.data_path(test, full=True, create=True)
-        environment = test.environment.copy()
-        environment.update(extra_env)
+        environment = extra_environment.copy()
+        environment.update(test.environment)
         environment["TMT_TREE"] = self.parent.plan.worktree
         environment["TMT_TEST_DATA"] = os.path.join(
             data_directory, tmt.steps.execute.TEST_DATA)
@@ -288,30 +287,22 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             self.debug(f"Reboot during test '{test}' "
                        f"with reboot count {test._reboot_count}.")
             with open(reboot_request_path, 'r') as reboot_file:
-                reboot_command = reboot_file.read()
+                reboot_command = reboot_file.read().strip()
             # Reset the file
             os.remove(reboot_request_path)
             guest.push(test_data)
-            if reboot_command:
-                self.debug(f"Rebooting with command {reboot_command}")
-                try:
-                    guest.execute(reboot_command)
-                except tmt.utils.RunError as error:
-                    if error.returncode == 255:
-                        self.debug(
-                            f"Seems the connection was closed too "
-                            f"fast, ignoring.")
-                    else:
-                        raise error
-                guest.reconnect()
-            else:
-                try:
-                    guest.reboot()
-                except tmt.utils.ProvisionError:
-                    self.warn(
-                        "Guest does not support soft reboot, "
-                        "trying hard reboot.")
-                    guest.reboot(hard=True)
+            try:
+                guest.reboot(command=reboot_command)
+            except tmt.utils.RunError:
+                self.fail(
+                    f"Failed to reboot guest using the "
+                    f"custom command '{reboot_command}'.")
+                raise
+            except tmt.utils.ProvisionError:
+                self.warn(
+                    "Guest does not support soft reboot, "
+                    "trying hard reboot.")
+                guest.reboot(hard=True)
             return True
         return False
 
@@ -327,8 +318,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
         self._run_tests(guest)
 
-    def _run_tests(self, guest, extra_env=None):
-        extra_env = extra_env or {}
+    def _run_tests(self, guest, extra_environment=None):
+        """ Execute tests on provided guest """
+        extra_environment = extra_environment or {}
         # Prepare tests and helper scripts, check options
         tests = self.prepare_tests()
         exit_first = self.get('exit-first', default=False)
@@ -344,7 +336,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                     test._reboot_count = 0
                 self.execute(
                     test, guest, progress=f"{index + 1}/{len(tests)}",
-                    extra_env=extra_env)
+                    extra_environment=extra_environment)
                 guest.pull(source=self.data_path(test, full=True))
                 if self._handle_reboot(test, guest):
                     continue

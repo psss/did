@@ -143,8 +143,11 @@ class GuestContainer(tmt.Guest):
             ['--name', self.container, '-v', f'{workdir}:{workdir}:z',
              '-itd', self.image])[0].strip()
 
-    def reboot(self, hard=False):
+    def reboot(self, hard=False, command=None):
         """ Restart the container, return True if successful  """
+        if command:
+            raise tmt.utils.ProvisionError(
+                "Custom reboot command not supported in podman provision.")
         if not hard:
             raise tmt.utils.ProvisionError(
                 "Containers do not support soft reboot, they can only be "

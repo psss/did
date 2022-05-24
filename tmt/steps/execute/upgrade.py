@@ -10,50 +10,53 @@ from tmt.steps.execute import ExecutePlugin
 from tmt.steps.execute.internal import ExecuteInternal
 
 STATUS_VARIABLE = 'IN_PLACE_UPGRADE'
-BEFORE_UPGRADE_SUFFIX = 'old'
-DURING_UPGRADE_SUFFIX = 'upgrade'
-AFTER_UPGRADE_SUFFIX = 'new'
-UPGRADES_DIRECTORY = 'upgrades'
+BEFORE_UPGRADE_PREFIX = 'old'
+DURING_UPGRADE_PREFIX = 'upgrade'
+AFTER_UPGRADE_PREFIX = 'new'
+UPGRADE_DIRECTORY = 'upgrade'
 
 SUPPORTED_DISCOVER_KEYS = ['how', 'ref', 'filter', 'exclude', 'tests']
 
 
 class ExecuteUpgrade(ExecuteInternal):
     """
-    Perform upgrades during testing.
+    Perform system upgrade during testing.
 
     The upgrade executor runs the discovered tests (using the internal
-    executor), then performs a set of upgrade tasks from a remote repository,
-    and finally, re-runs the tests on the upgraded guest.
+    executor), then performs a set of upgrade tasks from a remote
+    repository, and finally, re-runs the tests on the upgraded guest.
 
-    The IN_PLACE_UPGRADE environment variable is set during the test execution
-    to differentiate between the stages of the test. It is set to "old"
-    during the first execution and "new" during the second execution.
-    Test names are prefixed with this value to make the names unique.
+    The IN_PLACE_UPGRADE environment variable is set during the test
+    execution to differentiate between the stages of the test. It is set
+    to "old" during the first execution and "new" during the second
+    execution. Test names are prefixed with this value to make the names
+    unique.
 
-    The upgrade tasks performing the actual system upgrade are taken from
-    a remote repository based on an upgrade path (e.g. fedora35to36).
-    The upgrade path must correspond to a plan name in the remote repository
-    whose discover selects tests (upgrade tasks) performing the upgrade.
-    Currently, selection of upgrade tasks in the remote repository can be done
-    using both fmf and shell discover. The supported keys in discover are:
-     - ref
-     - filter
-     - exclude
-     - tests
+    The upgrade tasks performing the actual system upgrade are taken
+    from a remote repository based on an upgrade path (e.g.
+    fedora35to36). The upgrade path must correspond to a plan name in
+    the remote repository whose discover selects tests (upgrade tasks)
+    performing the upgrade. Currently, selection of upgrade tasks in the
+    remote repository can be done using both fmf and shell discover.
+    The supported keys in discover are:
+
+      - ref
+      - filter
+      - exclude
+      - tests
 
     The environment variables defined in the remote upgrade path plan are
     passed to the upgrade tasks when they are executed. An example of an
-    upgrade path (in the remote repository):
+    upgrade path plan (in the remote repository):
 
-    discover: # Selects appropriate upgrade tasks (L1 tests)
-        how: fmf
-        filter: "tag:fedora"
-    environment: # This is passed to upgrade tasks
-        SOURCE: 35
-        TARGET: 36
-    execute:
-        how: tmt
+        discover: # Selects appropriate upgrade tasks (L1 tests)
+            how: fmf
+            filter: "tag:fedora"
+        environment: # This is passed to upgrade tasks
+            SOURCE: 35
+            TARGET: 36
+        execute:
+            how: tmt
 
     The same options and config keys and values can be used as in the
     internal executor.
@@ -63,7 +66,7 @@ class ExecuteUpgrade(ExecuteInternal):
         execute:
             how: upgrade
             url: https://github.com/teemtee/upgrade
-            upgrade-path: fedora35to36
+            upgrade-path: /paths/fedora35to36
 
     """
 
@@ -108,47 +111,53 @@ class ExecuteUpgrade(ExecuteInternal):
         # Inform about the how, skip the actual execution
         super(ExecutePlugin, self).go()
 
-        url = self.get('url')
-        if not url:
+        self.url = self.get('url')
+        if not self.url:
             raise tmt.utils.ExecuteError(
                 "URL to repository with upgrade tasks must be specified.")
-        upgrade_path = self.get('upgrade-path')
-        if not upgrade_path:
+        self.upgrade_path = self.get('upgrade-path')
+        if not self.upgrade_path:
             raise tmt.utils.ExecuteError(
                 "Upgrade path must be specified.")
-        self.info('url', url, 'green')
-        self.info('upgrade-path', upgrade_path, 'green')
+        self.info('url', self.url, 'green')
+        self.info('upgrade-path', self.upgrade_path, 'green')
 
         # Nothing to do in dry mode
         if self.opt('dry'):
             self._results = []
             return
 
-        self._run_test_phase(guest, BEFORE_UPGRADE_SUFFIX)
+        self.verbose(
+            'upgrade', 'run tests on the old system', color='blue', shift=1)
+        self._run_test_phase(guest, BEFORE_UPGRADE_PREFIX)
+        self.verbose(
+            'upgrade', 'perform the system upgrade', color='blue', shift=1)
         self._perform_upgrade(guest)
-        self._run_test_phase(guest, AFTER_UPGRADE_SUFFIX)
+        self.verbose(
+            'upgrade', 'run tests on the new system', color='blue', shift=1)
+        self._run_test_phase(guest, AFTER_UPGRADE_PREFIX)
 
     def _get_plan(self, upgrades_repo):
         """ Get plan based on upgrade path """
         tree = tmt.base.Tree(upgrades_repo)
-        plans = tree.plans(names=[self.get('upgrade-path')])
+        plans = tree.plans(names=[self.upgrade_path])
         if len(plans) == 0:
-            raise tmt.utils.ExecuteError("No matching upgrade path found.")
+            raise tmt.utils.ExecuteError(
+                f"No matching upgrade path found for '{self.upgrade_path}'.")
         elif len(plans) > 1:
             names = [plan.name for plan in plans]
             raise tmt.utils.ExecuteError(
                 f"Ambiguous upgrade path reference, found plans "
-                f"{fmf.utils.listed(names)}")
+                f"{fmf.utils.listed(names)}.")
         return plans[0]
 
     def _perform_upgrade(self, guest):
         """ Perform a system upgrade """
-        self.info('progress', 'performing upgrade', color='cyan')
         try:
             self._upgrade_underway = True
-            upgrades = os.path.join(self.workdir, UPGRADES_DIRECTORY)
+            upgrades = os.path.join(self.workdir, UPGRADE_DIRECTORY)
             self.run(
-                ['git', 'clone', self.get('url'), upgrades],
+                ['git', 'clone', self.url, upgrades],
                 env={'GIT_ASKPASS': 'echo'})
             # Create a fake discover from the data in the upgrade path
             plan = self._get_plan(upgrades)
@@ -158,10 +167,10 @@ class ExecuteUpgrade(ExecuteInternal):
                     raise tmt.utils.ExecuteError(
                         "Multiple discover configs are not supported.")
                 data = data[0]
-            data = {k: v for k, v in data.items()
-                    if k in SUPPORTED_DISCOVER_KEYS}
+            data = {key: value for key, value in data.items()
+                    if key in SUPPORTED_DISCOVER_KEYS}
             # Force name
-            data['name'] = 'upgrade_discover'
+            data['name'] = 'upgrade-discover'
             # Override the path so that the correct tree is copied
             data['path'] = upgrades
             self._discover_upgrade = DiscoverPlugin.delegate(self.step, data)
@@ -174,9 +183,9 @@ class ExecuteUpgrade(ExecuteInternal):
             finally:
                 self._discover_upgrade._context.params['quiet'] = quiet
             for test in self._discover_upgrade.tests():
-                test.name = f'/{DURING_UPGRADE_SUFFIX}/{test.name.lstrip("/")}'
+                test.name = f'/{DURING_UPGRADE_PREFIX}/{test.name.lstrip("/")}'
             # Pass in the path-specific env variables
-            self._run_tests(guest, extra_env=plan.environment)
+            self._run_tests(guest, extra_environment=plan.environment)
         finally:
             self._discover_upgrade = None
             self._upgrade_underway = False
@@ -194,7 +203,7 @@ class ExecuteUpgrade(ExecuteInternal):
             names_backup.append(test.name)
             test.name = f'/{prefix}/{test.name.lstrip("/")}'
 
-        self._run_tests(guest, extra_env={STATUS_VARIABLE: prefix})
+        self._run_tests(guest, extra_environment={STATUS_VARIABLE: prefix})
 
         tests = self.discover.tests()
         for i, test in enumerate(tests):
