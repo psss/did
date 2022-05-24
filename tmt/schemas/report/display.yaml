@@ -1,0 +1,23 @@
+---
+
+#
+# JSON Schema definition for `display` report plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#display
+#
+
+$id: /schemas/report/display
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - display
+
+required:
+  - how

@@ -1,0 +1,201 @@
+---
+
+#
+# JSON Schema definition for tmt `Plans`
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html
+#
+
+$id: /schemas/plan
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+definitions:
+  distro:
+    type: string
+    patterns:
+      - ^fedora(-[0-9]+)?$
+      - ^centos(-stream)?(-[0-9]+(.[0-9]+)?)?$
+      - ^rhel(-[0-9]+(.[0-9]+)?)?$
+
+  trigger:
+    type: string
+    enum:
+      - build
+      - commit
+      - compose
+      - update
+
+  variant:
+    type: string
+    enum:
+      - Client
+      - Desktop
+      - Server
+      - Workstation
+      - Silverblue
+      - CoreOS
+
+properties:
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#adjust
+  adjust:
+    $ref: "/schemas/core#/definitions/adjust"
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#context
+  # https://tmt.readthedocs.io/en/stable/spec/context.html#spec-context
+  context:
+    type: object
+    additionalProperties: false
+
+    properties:
+      arch:
+        oneOf:
+          - $ref: "/schemas/common#/definitions/arch"
+
+          - type: array
+            items:
+              $ref: "/schemas/common#/definitions/arch"
+
+      component:
+        $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+      collection:
+        $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+      distro:
+        oneOf:
+          - $ref: "#/definitions/distro"
+
+          - type: array
+            items:
+              $ref: "#/definitions/distro"
+
+      module:
+        $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+      trigger:
+        oneOf:
+          - $ref: "#/definitions/trigger"
+
+          - type: array
+            items:
+              $ref: "#/definitions/trigger"
+
+      variant:
+        oneOf:
+          - $ref: "#/definitions/variant"
+
+          - type: array
+            items:
+              $ref: "#/definitions/variant"
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#description
+  description:
+    $ref: "/schemas/core#/definitions/description"
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#spec-plans-discover
+  discover:
+    oneOf:
+      - $ref: "/schemas/discover/fmf#"
+      - $ref: "/schemas/discover/shell#"
+      - type: array
+        items:
+          anyOf:
+            - $ref: "/schemas/discover/fmf#"
+            - $ref: "/schemas/discover/shell#"
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#enabled
+  enabled:
+    $ref: "/schemas/core#/definitions/enabled"
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#environment
+  environment:
+    $ref: "/schemas/common#/definitions/environment"
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#environment-file
+  environment-file:
+    $ref: "/schemas/common#/definitions/array_of_strings"
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#execute
+  execute:
+    oneOf:
+      - $ref: "/schemas/execute/tmt#"
+      - $ref: "/schemas/execute/upgrade#"
+      - type: array
+        items:
+          $ref: "/schemas/execute/tmt#"
+      - type: array
+        items:
+          $ref: "/schemas/execute/upgrade#"
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#finish
+  finish:
+    oneOf:
+      - $ref: "/schemas/finish/ansible#"
+      - $ref: "/schemas/finish/shell#"
+      - type: array
+        items:
+          anyOf:
+            - $ref: "/schemas/prepare/ansible#"
+            - $ref: "/schemas/prepare/shell#"
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#link
+  link:
+    $ref: "/schemas/core#/definitions/link"
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#order
+  order:
+    $ref: "/schemas/core#/definitions/order"
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#prepare
+  prepare:
+    oneOf:
+      - $ref: "/schemas/prepare/ansible#"
+      - $ref: "/schemas/prepare/install#"
+      - $ref: "/schemas/prepare/shell#"
+      - type: array
+        items:
+          anyOf:
+            - $ref: "/schemas/prepare/ansible#"
+            - $ref: "/schemas/prepare/install#"
+            - $ref: "/schemas/prepare/shell#"
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#provision
+  provision:
+    oneOf:
+      - $ref: "/schemas/provision/artemis#"
+      - $ref: "/schemas/provision/connect#"
+      - $ref: "/schemas/provision/container#"
+      - $ref: "/schemas/provision/local#"
+      - $ref: "/schemas/provision/virtual#"
+      - type: array
+        items:
+          anyOf:
+            - $ref: "/schemas/provision/artemis#"
+            - $ref: "/schemas/provision/connect#"
+            - $ref: "/schemas/provision/container#"
+            - $ref: "/schemas/provision/local#"
+            - $ref: "/schemas/provision/virtual#"
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#report
+  report:
+    oneOf:
+      - $ref: "/schemas/report/display#"
+      - $ref: "/schemas/report/html#"
+      - $ref: "/schemas/report/junit#"
+      - type: array
+        items:
+          anyOf:
+            - $ref: "/schemas/report/display#"
+            - $ref: "/schemas/report/html#"
+            - $ref: "/schemas/report/junit#"
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#summary
+  summary:
+    $ref: "/schemas/core#/definitions/summary"
+
+required:
+  - execute

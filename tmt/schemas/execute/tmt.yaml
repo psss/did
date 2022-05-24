@@ -1,0 +1,39 @@
+---
+
+#
+# JSON Schema definition for `tmt` execute plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#tmt
+#
+
+$id: /schemas/execute/tmt
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - tmt
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#exit-first
+  exit-first:
+    type: boolean
+
+  # name attribute can exist if more methods
+  name:
+    type: string
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#script
+  script:
+    $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#where
+  where:
+    type: string
+
+required:
+  - how

@@ -8,6 +8,54 @@ $id: /schemas/common
 $schema: https://json-schema.org/draft-07/schema
 
 definitions:
+
+  # common definition of an ansible execution method
+  ansible:
+    type: object
+    additionalProperties: false
+
+    properties:
+      how:
+        type: string
+        enum:
+          - ansible
+
+      extra-args:
+        type: string
+
+      name:
+        type: string
+
+      order:
+        $ref: "/schemas/core#/definitions/order"
+
+      playbook:
+        $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+      summary:
+        $ref: "/schemas/core#/definitions/summary"
+
+    required:
+      - how
+
+  # list of all recognized architectures
+  arch:
+    type: string
+    enum:
+      - aarch64
+      - armhfp
+      - i386
+      - ppc64
+      - ppc64le
+      - s390x
+      - x86_64
+
+  # helper for specifying array of strings
+  array_of_strings:
+    type: array
+    items:
+      type: string
+
   # https://tmt.readthedocs.io/en/stable/spec/tests.html#require
   beakerlib_library:
     allOf:
@@ -22,6 +70,31 @@ definitions:
       name: true
       nick:
         type: string
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#fmf
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#shell
+  dist-git-source:
+    type: boolean
+
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#fmf
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#shell
+  dist-git-type:
+    type: string
+    enum:
+      - centos
+      - fedora
+      - rhel
+
+  # https://tmt.readthedocs.io/en/stable/spec/tests.html#duration
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#shell
+  duration:
+    type: string
+    pattern: "^[0-9]+[smhd]?$"
+
+  # https://tmt.readthedocs.io/en/stable/spec/tests.html#environment
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#environment
+  environment:
+    $ref: "/schemas/common#/definitions/object_with_string_properties"
 
   # https://fmf.readthedocs.io/en/stable/concept.html#identifiers
   fmf_id:
@@ -139,6 +212,13 @@ definitions:
       - required:
           - relates
 
+  # helper for specifying an object with string properties
+  object_with_string_properties:
+    type: object
+
+    additionalProperties:
+      type: string
+
   # helper for specifying a string or an array of strings
   one_or_more_strings:
     oneOf:
@@ -148,11 +228,41 @@ definitions:
         items:
           type: string
 
+  # common definition of a shell execution method
+  shell:
+    type: object
+    additionalProperties: false
+
+    properties:
+      how:
+        type: string
+        enum:
+          - shell
+
+      name:
+        type: string
+
+      order:
+        $ref: "/schemas/core#/definitions/order"
+
+      script:
+        $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+      summary:
+        $ref: "/schemas/core#/definitions/summary"
+
+    required:
+      - how
+
+  # helper
+  url:
+    type: string
+    pattern: "^https?://"
+
   # a url, path or fmf_id
   url_path_or_fmf_id:
     oneOf:
-      - type: string
-        pattern: "^https?://"
+      - $ref: "/schemas/common#/definitions/url"
 
       - type: string
         pattern: "^/"

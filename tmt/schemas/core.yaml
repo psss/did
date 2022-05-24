@@ -25,6 +25,10 @@ definitions:
   enabled:
     type: boolean
 
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#id
+  id:
+    type: string
+
   # https://tmt.readthedocs.io/en/stable/spec/core.html#link
   link:
     oneOf:

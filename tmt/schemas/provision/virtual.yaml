@@ -1,0 +1,47 @@
+---
+
+#
+# JSON Schema definition for `virtual` provision plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#virtual
+#
+
+$id: /schemas/provision/virtual
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - virtual
+
+  name:
+    type: string
+
+  image:
+    type: string
+
+  user:
+    type: string
+
+  memory:
+    type: integer
+
+  disk:
+    type: integer
+
+  connection:
+    type: string
+    enum:
+      - session
+      - system
+
+  arch:
+    $ref: "/schemas/common#/definitions/arch"
+
+required:
+  - how

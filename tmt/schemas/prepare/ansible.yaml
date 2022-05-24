@@ -1,0 +1,12 @@
+---
+
+#
+# JSON Schema definition for `ansible` prepare plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#spec-plans-prepare-ansible
+#
+
+$id: /schemas/prepare/ansible
+$schema: https://json-schema.org/draft-07/schema
+
+$ref: "/schemas/common#/definitions/ansible"

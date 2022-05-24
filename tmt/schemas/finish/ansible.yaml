@@ -1,0 +1,12 @@
+---
+
+#
+# JSON Schema definition for `ansible` finish plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#spec-plans-finish-ansible
+#
+
+$id: /schemas/finish/ansible
+$schema: https://json-schema.org/draft-07/schema
+
+$ref: "/schemas/common#/definitions/ansible"

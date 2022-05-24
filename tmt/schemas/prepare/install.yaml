@@ -1,0 +1,57 @@
+---
+
+#
+# JSON Schema definition for `install` prepare plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#spec-plans-prepare-install
+#
+
+$id: /schemas/prepare/install
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - install
+
+  copr:
+    oneOf:
+      - type: string
+        pattern: "^(@)?([^/]+)/([^/]+)$"
+
+      - type: array
+        items:
+          type: string
+          pattern: "^(@)?([^/]+)/([^/]+)$"
+
+  directory:
+    $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+  exclude:
+    $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+  missing:
+    type: string
+    enum:
+      - fail
+      - skip
+
+  name:
+    type: string
+
+  order:
+    $ref: "/schemas/core#/definitions/order"
+
+  summary:
+    $ref: "/schemas/core#/definitions/summary"
+
+  package:
+    $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+required:
+  - how

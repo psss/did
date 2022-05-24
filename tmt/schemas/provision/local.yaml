@@ -1,0 +1,26 @@
+---
+
+#
+# JSON Schema definition for `local` provision plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#local
+#
+
+$id: /schemas/provision/local
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - local
+
+  name:
+    type: string
+
+required:
+  - how

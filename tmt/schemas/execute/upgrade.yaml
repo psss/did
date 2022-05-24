@@ -1,0 +1,51 @@
+---
+
+#
+# JSON Schema definition for `upgrade` execute plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#upgrade
+#
+
+$id: /schemas/execute/upgrade
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - upgrade
+
+  exclude:
+    $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+  exit-first:
+    type: boolean
+
+  filter:
+    $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+  ref:
+    $ref: "/schemas/common#/definitions/fmf_id/properties/ref"
+
+  script:
+    $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+  test:
+    $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+  tests:
+    $ref: "/schemas/common#/definitions/one_or_more_strings"
+
+  upgrade-path:
+    type: string
+
+  url:
+    type: string
+    format: uri
+
+required:
+  - how

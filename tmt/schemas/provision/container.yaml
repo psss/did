@@ -1,0 +1,35 @@
+---
+
+#
+# JSON Schema definition for `container` provision plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#container
+#
+
+$id: /schemas/provision/container
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - container
+
+  name:
+    type: string
+
+  image:
+    type: string
+
+  pull:
+    type: boolean
+
+  user:
+    type: string
+
+required:
+  - how

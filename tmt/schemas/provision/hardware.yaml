@@ -1,0 +1,221 @@
+---
+
+#
+# JSON Schema definition for hardware specification
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#hardware
+#
+
+$id: /schemas/provision/hardware
+$schema: http://json-schema.org/draft-07/schema
+
+definitions:
+
+  # HW requirements: `boot` block
+  boot:
+    type: object
+
+    properties:
+      method:
+        type: string
+        enum:
+          - bios
+          - uefi
+
+    additionalProperties: false
+
+    # enforce at least one property - we don't care which one, but we don't want
+    # empty `boot`.
+    minProperties: 1
+
+  # HW requirements: `cpu` block
+  cpu:
+    type: object
+
+    properties:
+      processors:
+        anyOf:
+          - type: string
+          - type: integer
+      cores:
+        anyOf:
+          - type: string
+          - type: integer
+      family:
+        anyOf:
+          - type: string
+          - type: integer
+      model:
+        anyOf:
+          - type: string
+          - type: integer
+      model-name:
+        type: string
+
+    additionalProperties: false
+
+    # enforce at least one property - we don't care which one, but we don't want
+    # empty `cpu`.
+    minProperties: 1
+
+  # HW requirements: single `disk` item
+  disk:
+    type: object
+
+    properties:
+      size:
+        anyOf:
+          - type: string
+          - type: integer
+
+    additionalProperties: false
+
+    # enforce at least one property - we don't care which one, but we don't want
+    # empty `disk`.
+    minProperties: 1
+
+  # HW requirements: `disk` block
+  disks:
+    type: array
+    items:
+      "$ref": "#/definitions/disk"
+
+  hostname:
+    type: string
+
+  memory:
+    anyOf:
+      - type: string
+      - type: integer
+
+  # HW requirements: single `network` item
+  network:
+    type: object
+
+    properties:
+      device-name:
+        type: string
+
+      type:
+        type: string
+
+      vendor-name:
+        type: string
+
+    additionalProperties: false
+
+    # enforce at least one property - we don't care which one, but we don't want
+    # empty `network`.
+    minProperties: 1
+
+  # HW requirements: `network` block
+  networks:
+    type: array
+    items:
+      "$ref": "#/definitions/network"
+
+  # HW requirements: `virtualization` block
+  virtualization:
+    type: object
+
+    properties:
+      is-virtualized:
+        type: boolean
+
+      is-supported:
+        type: boolean
+
+      hypervisor:
+        type: string
+        enum:
+          - nitro
+          - kvm
+          - xen
+
+    additionalProperties: false
+
+    # enforce at least one property - we don't care which one, but we don't want
+    # empty `boot`.
+    minProperties: 1
+
+  # HW requirements: basic block
+  block:
+    type: object
+
+    properties:
+      boot:
+        "$ref": "#/definitions/boot"
+
+      cpu:
+        "$ref": "#/definitions/cpu"
+
+      disk:
+        "$ref": "#/definitions/disks"
+
+      hostname:
+        "$ref": "#/definitions/hostname"
+
+      memory:
+        "$ref": "#/definitions/memory"
+
+      network:
+        "$ref": "#/definitions/networks"
+
+      virtualization:
+        "$ref": "#/definitions/virtualization"
+
+    additionalProperties: false
+
+    # enforce at least one property - we don't care which one, but we don't want
+    # empty `block`.
+    minProperties: 1
+
+  # HW requirements: conditions
+  and:
+    type: object
+    properties:
+      "and":
+        type: array
+        items:
+          anyOf:
+            - "$ref": "#/definitions/boot"
+            - "$ref": "#/definitions/cpu"
+            - "$ref": "#/definitions/disks"
+            - "$ref": "#/definitions/networks"
+            - "$ref": "#/definitions/virtualization"
+            - "$ref": "#/definitions/block"
+            - "$ref": "#/definitions/and"
+            - "$ref": "#/definitions/or"
+
+    required:
+      - "and"
+
+  or:
+    type: object
+    properties:
+      "or":
+        type: array
+        items:
+          anyOf:
+            - "$ref": "#/definitions/boot"
+            - "$ref": "#/definitions/cpu"
+            - "$ref": "#/definitions/disks"
+            - "$ref": "#/definitions/networks"
+            - "$ref": "#/definitions/virtualization"
+            - "$ref": "#/definitions/block"
+            - "$ref": "#/definitions/and"
+            - "$ref": "#/definitions/or"
+
+    required:
+      - "or"
+
+  hardware:
+    anyOf:
+      - "$ref": "#/definitions/boot"
+      - "$ref": "#/definitions/cpu"
+      - "$ref": "#/definitions/disks"
+      - "$ref": "#/definitions/networks"
+      - "$ref": "#/definitions/virtualization"
+      - "$ref": "#/definitions/block"
+      - "$ref": "#/definitions/and"
+      - "$ref": "#/definitions/or"

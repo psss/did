@@ -1,0 +1,77 @@
+---
+
+#
+# JSON Schema definition for `artemis` provision plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#artemis
+#
+
+$id: /schemas/provision/artemis
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - artemis
+
+  name:
+    type: string
+
+  api-retries:
+    type: integer
+    minimum: 1
+
+  api-retry-backoff-factor:
+    type: integer
+    minimum: 1
+
+  api-timeout:
+    type: integer
+    minimum: 1
+
+  api-url:
+    $ref: "/schemas/common#/definitions/url"
+
+  api-version:
+    type: string
+    pattern: ^[0-9]\.[0-9]\.[0-9]$
+
+  arch:
+    $ref: "/schemas/common#/definitions/arch"
+
+  image:
+    type: string
+
+  hardware:
+    $ref: "/schemas/provision/hardware#/definitions/hardware"
+
+  pool:
+    type: string
+
+  priority-group:
+    type: string
+
+  provision-timeout:
+    type: integer
+    minimum: 1
+
+  provision-tick:
+    type: integer
+    minimum: 1
+
+  keyname:
+    type: string
+
+  user-data:
+    $ref: "/schemas/common#/definitions/object_with_string_properties"
+
+  user:
+    type: string
+
+required:
+  - how

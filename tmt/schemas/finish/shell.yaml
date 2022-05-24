@@ -1,0 +1,12 @@
+---
+
+#
+# JSON Schema definition for `shell` finish plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#spec-plans-finish-shell
+#
+
+$id: /schemas/finish/shell
+$schema: https://json-schema.org/draft-07/schema
+
+$ref: "/schemas/common#/definitions/shell"
