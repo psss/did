@@ -12,8 +12,6 @@ description:
 example: |
     summary: Test wget recursive download options
 
-links:
-    - https://stackoverflow.com/questions/2290016/git-commit-messages-50-72-formatting
-
 link:
+  - https://stackoverflow.com/questions/2290016/git-commit-messages-50-72-formatting
   - implemented-by: /tmt/base.py

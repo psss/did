@@ -30,7 +30,7 @@ story:
         - man tmt
     link:
       - verified-by: /tests/core/docs
-      - implemented-by: README.rst
+      - implemented-by: /README.rst
 
 /examples:
     story:

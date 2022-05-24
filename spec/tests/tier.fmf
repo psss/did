@@ -1,6 +1,6 @@
 summary: Name of the tier set this test belongs to
 
-stories:
+story:
     As a tester testing a security advisory I want to run the
     stable set of important tests which cover the most essential
     functionality and can provide test results in a short time.

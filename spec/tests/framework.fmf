@@ -28,8 +28,12 @@ description: |
         the test result.
 
 example:
-  - framework: shell
-  - framework: beakerlib
+  - |
+    # Test written in shell
+    framework: shell
+  - |
+    # A beakerlib test
+    framework: beakerlib
 
 link:
   - implemented-by: /tmt/base.py

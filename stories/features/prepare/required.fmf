@@ -12,5 +12,5 @@ description:
     functionality without hidden requires.
 example: |
     tmt run plan --name install/dependencies
-links:
-  - implemented-by: tmt/steps/prepare/install.py
+link:
+  - implemented-by: /tmt/steps/prepare/install.py

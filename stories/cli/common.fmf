@@ -36,11 +36,10 @@ story:
     example:
         - tmt test create -f
         - tmt test create --force
-    related:
-        - /stories/cli/test/create
     link:
       - implemented-by: /tmt/cli.py
       - documented-by: /tmt/cli.py
+      - relates: /stories/cli/test/create
 
 /format:
     summary: Provide machine readable output in given format

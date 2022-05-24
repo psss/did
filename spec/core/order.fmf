@@ -8,7 +8,7 @@ description:
     meaningful documentation. Should be an ``integer``, negative
     values are allowed as well. The default value is ``50``.
 
-example:
+example: |
     order: 30
 
 link:

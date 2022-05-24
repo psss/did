@@ -12,35 +12,61 @@ ROOTDIR = os.path.join(PATH, "../..")
 
 
 @pytest.fixture
-def schema_and_store():
+def tests_schema():
     # TODO: tmt package shall provide a helper function
     # for "load schemas for test/plan/story"
     schema_file = os.path.join(SCHEMADIR, 'test.yaml')
-    schema = YAML(typ="safe").load(open(schema_file, encoding="utf-8"))
+    return YAML(typ="safe").load(open(schema_file, encoding="utf-8"))
 
-    schema_store = {}
+
+@pytest.fixture
+def stories_schema():
+    # TODO: tmt package shall provide a helper function
+    # for "load schemas for test/plan/story"
+    schema_file = os.path.join(SCHEMADIR, 'story.yaml')
+    return YAML(typ="safe").load(open(schema_file, encoding="utf-8"))
+
+
+@pytest.fixture
+def schema_store():
+    # TODO: tmt package shall provide a helper function
+    # for "load schemas for test/plan/story"
+    store = {}
 
     for schema_name in ('common', 'core'):
         schema_file = os.path.join(SCHEMADIR, f'{schema_name}.yaml')
-        store_schema = YAML(
-            typ="safe").load(
-            open(
-                schema_file,
-                encoding="utf-8"))
-        schema_store[store_schema['$id']] = store_schema
+        schema = YAML(typ="safe").load(
+            open(schema_file, encoding="utf-8"))
+        store[schema['$id']] = schema
 
-    return schema, schema_store
+    return store
 
 
 @pytest.fixture(params=tmt.Tree(ROOTDIR).tests())
-def test_result(request, schema_and_store):
-    schema, store = schema_and_store
-    return request.param.node.validate(schema, store)
+def test_validation_result(request, schema_store, tests_schema):
+    node = request.param.node
+    return node.name, node.validate(tests_schema, schema_store)
 
 
-def test_test_schema(test_result):
-    if not test_result.result:
-        for error in test_result.errors:
+@pytest.fixture(params=tmt.Tree(ROOTDIR).stories())
+def story_validation_result(request, schema_store, stories_schema):
+    node = request.param.node
+    return node.name, node.validate(stories_schema, schema_store)
+
+
+def test_tests_schema(test_validation_result):
+    name, result = test_validation_result
+    if not result.result:
+        for error in result.errors:
             print(error)
 
-    assert test_result.result
+    assert result.result, f'Test {name} fails validation'
+
+
+def test_stories_schema(story_validation_result):
+    name, result = story_validation_result
+    if not result.result:
+        for error in result.errors:
+            print(error)
+
+    assert result.result, f'Story {name} fails validation'
