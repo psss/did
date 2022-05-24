@@ -32,19 +32,23 @@ __desc__ = 'Test Management Tool'
 __scripts__ = ['bin/tmt']
 
 # Prepare install requires and extra requires
-
-# typing_extensions is needed with Python 3.7 and older, types imported
-# from that package (Literal, Protocol, TypedDict, ...) become available
-# from typing since Python 3.8.
-typing_extensions_requirement = [
-    'typing-extensions>=3.7.4.3'] if sys.version_info.minor <= 7 else []
-
 install_requires = [
     'fmf>=1.0.0',
     'click',
     'requests',
     'ruamel.yaml',
-] + typing_extensions_requirement
+]
+
+# typing_extensions is needed with Python 3.7 and older, types imported
+# from that package (Literal, Protocol, TypedDict, ...) become available
+# from typing since Python 3.8.
+if sys.version_info.minor <= 7:
+    install_requires.append('typing-extensions>=3.7.4.3')
+
+# dataclasses is needed with Python 3.6
+if sys.version_info.minor <= 6:
+    install_requires.append('dataclasses')
+
 extras_require = {
     'docs': [
         'sphinx>=3',
@@ -55,7 +59,7 @@ extras_require = {
         'requre',
         'pre-commit',
         'mypy'
-        ] + typing_extensions_requirement,
+        ],
     'provision': ['testcloud>=0.7.0'],
     'convert': [
         'nitrate',
