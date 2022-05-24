@@ -4,6 +4,7 @@ import os
 import platform
 import re
 import time
+from typing import Optional
 
 import click
 import fmf
@@ -298,6 +299,11 @@ class GuestTestcloud(tmt.GuestSsh):
         arch ....... architecture for the VM, host arch is the default
     """
 
+    # Not to be saved, recreated from image_url/instance_name/... every
+    # time guest is instantiated.
+    _image: Optional['testcloud.image.Image'] = None
+    _instance: Optional['testcloud.instance.Instance'] = None
+
     def _get_url(self, url, message):
         """ Get url, retry when fails, return response """
         timeout = DEFAULT_CONNECT_TIMEOUT
@@ -382,10 +388,9 @@ class GuestTestcloud(tmt.GuestSsh):
     def load(self, data):
         """ Load guest data and initialize attributes """
         super().load(data)
-        self.image = None
-        self.image_url = data.get('image')
-        self.instance = None
-        self.instance_name = data.get('instance')
+        self.image = data.get('image')
+        self.image_url = data.get('image_url')
+        self.instance_name = data.get('instance_name')
         self.memory = data.get('memory')
         self.disk = data.get('disk')
         self.connection = data.get('connection')
@@ -394,8 +399,9 @@ class GuestTestcloud(tmt.GuestSsh):
     def save(self):
         """ Save guest data for future wake up """
         data = super().save()
-        data['instance'] = self.instance_name
-        data['image'] = self.image_url
+        data['instance_name'] = self.instance_name
+        data['image'] = self.image
+        data['image_url'] = self.image_url
         data['connection'] = self.connection
         data['arch'] = self.arch
         return data
@@ -406,9 +412,9 @@ class GuestTestcloud(tmt.GuestSsh):
             f"Waking up testcloud instance '{self.instance_name}'.",
             level=2, shift=0)
         self.prepare_config()
-        self.image = testcloud.image.Image(self.image_url)
-        self.instance = testcloud.instance.Instance(
-            self.instance_name, image=self.image,
+        self._image = testcloud.image.Image(self.image_url)
+        self._instance = testcloud.instance.Instance(
+            self.instance_name, image=self._image,
             connection=f"qemu:///{self.connection}", desired_arch=self.arch)
 
     def prepare_ssh_key(self, key_type=None):
@@ -457,6 +463,9 @@ class GuestTestcloud(tmt.GuestSsh):
         # Prepare config
         self.prepare_config()
 
+        # Kick off image URL with the given image
+        self.image_url = self.image
+
         # If image does not start with http/https/file, consider it a
         # mapping value and try to guess the URL
         if not re.match(r'^(?:https?|file)://.*', self.image_url):
@@ -464,15 +473,15 @@ class GuestTestcloud(tmt.GuestSsh):
             self.debug(f"Guessed image url: '{self.image_url}'", level=3)
 
         # Initialize and prepare testcloud image
-        self.image = testcloud.image.Image(self.image_url)
-        self.verbose('qcow', self.image.name, 'green')
-        if not os.path.exists(self.image.local_path):
+        self._image = testcloud.image.Image(self.image_url)
+        self.verbose('qcow', self._image.name, 'green')
+        if not os.path.exists(self._image.local_path):
             self.info('progress', 'downloading...', 'cyan')
         try:
-            self.image.prepare()
+            self._image.prepare()
         except FileNotFoundError as error:
             raise ProvisionError(
-                f"Image '{self.image.local_path}' not found.", original=error)
+                f"Image '{self._image.local_path}' not found.", original=error)
         except (testcloud.exceptions.TestcloudPermissionsError,
                 PermissionError) as error:
             raise ProvisionError(
@@ -481,13 +490,13 @@ class GuestTestcloud(tmt.GuestSsh):
 
         # Create instance
         self.instance_name = self._tmt_name()
-        self.instance = testcloud.instance.Instance(
-            name=self.instance_name, image=self.image,
+        self._instance = testcloud.instance.Instance(
+            name=self.instance_name, image=self._image,
             connection=f"qemu:///{self.connection}", desired_arch=self.arch)
         self.verbose('name', self.instance_name, 'green')
 
         # Decide if we want to multiply timeouts when emulating an architecture
-        time_coeff = NON_KVM_TIMEOUT_COEF if not self.instance.kvm else 1
+        time_coeff = NON_KVM_TIMEOUT_COEF if not self._instance.kvm else 1
 
         # Decide which networking setup to use
         # Autodetect works with libguestfs python bindings
@@ -500,30 +509,30 @@ class GuestTestcloud(tmt.GuestSsh):
             match_legacy = re.search(
                 r'(rhel|centos).*-7', self.image_url.lower())
             if match_legacy:
-                self.instance.pci_net = "e1000"
+                self._instance.pci_net = "e1000"
             else:
-                self.instance.pci_net = "virtio-net-pci"
+                self._instance.pci_net = "virtio-net-pci"
 
         # Prepare ssh key
         self.prepare_ssh_key(SSH_KEYGEN_TYPE)
 
         # Boot the virtual machine
         self.info('progress', 'booting...', 'cyan')
-        self.instance.ram = self.memory
-        self.instance.disk_size = self.disk
+        self._instance.ram = self.memory
+        self._instance.disk_size = self.disk
         try:
-            self.instance.prepare()
-            self.instance.spawn_vm()
-            self.instance.start(DEFAULT_BOOT_TIMEOUT * time_coeff)
+            self._instance.prepare()
+            self._instance.spawn_vm()
+            self._instance.start(DEFAULT_BOOT_TIMEOUT * time_coeff)
         except (testcloud.exceptions.TestcloudInstanceError,
                 libvirt.libvirtError) as error:
             raise ProvisionError(
                 f'Failed to boot testcloud instance ({error}).')
-        self.guest = self.instance.get_ip()
-        self.port = self.instance.get_instance_port()
+        self.guest = self._instance.get_ip()
+        self.port = self._instance.get_instance_port()
         self.verbose('ip', self.guest, 'green')
         self.verbose('port', self.port, 'green')
-        self.instance.create_ip_file(self.guest)
+        self._instance.create_ip_file(self.guest)
 
         # Wait a bit until the box is up
         timeout = DEFAULT_CONNECT_TIMEOUT * time_coeff
@@ -546,7 +555,7 @@ class GuestTestcloud(tmt.GuestSsh):
             wait += 1
             timeout -= wait + attempt_duration
 
-        if not self.instance.kvm:
+        if not self._instance.kvm:
             self.debug(
                 f"Waiting {NON_KVM_ADDITIONAL_WAIT} seconds "
                 f"for non-kvm instance...")
@@ -556,10 +565,10 @@ class GuestTestcloud(tmt.GuestSsh):
         """ Stop provisioned guest """
         super().stop()
         # Stop only if the instance successfully booted
-        if self.instance and self.guest:
+        if self._instance and self.guest:
             self.debug(f"Stopping testcloud instance '{self.instance_name}'.")
             try:
-                self.instance.stop()
+                self._instance.stop()
             except testcloud.exceptions.TestcloudInstanceError as error:
                 raise tmt.utils.ProvisionError(
                     f"Failed to stop testcloud instance: {error}")
@@ -567,10 +576,10 @@ class GuestTestcloud(tmt.GuestSsh):
 
     def remove(self):
         """ Remove the guest (disk cleanup) """
-        if self.instance:
+        if self._instance:
             self.debug(f"Removing testcloud instance '{self.instance_name}'.")
             try:
-                self.instance.remove(autostop=True)
+                self._instance.remove(autostop=True)
             except FileNotFoundError as error:
                 raise tmt.utils.ProvisionError(
                     f"Failed to remove testcloud instance: {error}")
@@ -581,7 +590,7 @@ class GuestTestcloud(tmt.GuestSsh):
         # Use custom reboot command if provided
         if command:
             return super().reboot(hard=hard, command=command)
-        if not self.instance:
+        if not self._instance:
             raise tmt.utils.ProvisionError("No instance initialized.")
-        self.instance.reboot(soft=not hard)
+        self._instance.reboot(soft=not hard)
         return self.reconnect()
