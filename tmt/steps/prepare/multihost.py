@@ -1,7 +1,10 @@
-import tmt.utils
+from typing import Any, Optional
+
+import tmt
+from tmt.steps.provision import Guest
 
 
-class PrepareMultihost(tmt.steps.prepare.PreparePlugin):
+class PrepareMultihost(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     """
     Prepare the guest for running a multihost test.
 
@@ -30,13 +33,13 @@ class PrepareMultihost(tmt.steps.prepare.PreparePlugin):
     # Supported keys
     _keys = ['roles', 'hosts']
 
-    def default(self, option, default=None):
+    def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """
         if option in ('roles', 'hosts'):
             return {}
         return default
 
-    def go(self, guest):
+    def go(self, guest: 'Guest') -> None:
         """ Prepare the guests """
         super().go(guest)
 
