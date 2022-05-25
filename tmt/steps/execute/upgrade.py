@@ -6,6 +6,7 @@ import fmf.utils
 import tmt.base
 import tmt.utils
 from tmt.steps.discover import DiscoverPlugin
+from tmt.steps.discover.fmf import DiscoverFmf
 from tmt.steps.execute import ExecutePlugin
 from tmt.steps.execute.internal import ExecuteInternal
 
@@ -15,7 +16,8 @@ DURING_UPGRADE_PREFIX = 'upgrade'
 AFTER_UPGRADE_PREFIX = 'new'
 UPGRADE_DIRECTORY = 'upgrade'
 
-SUPPORTED_DISCOVER_KEYS = ['how', 'ref', 'filter', 'exclude', 'tests']
+SUPPORTED_REMOTE_DISCOVER_KEYS = ['how', 'filter', 'test', 'exclude', 'tests']
+INHERIT_FROM_DISCOVER = ['ref', 'test', 'filter', 'exclude']
 
 
 class ExecuteUpgrade(ExecuteInternal):
@@ -33,17 +35,18 @@ class ExecuteUpgrade(ExecuteInternal):
     unique.
 
     The upgrade tasks performing the actual system upgrade are taken
-    from a remote repository based on an upgrade path (e.g.
-    fedora35to36). The upgrade path must correspond to a plan name in
-    the remote repository whose discover selects tests (upgrade tasks)
-    performing the upgrade. Currently, selection of upgrade tasks in the
-    remote repository can be done using both fmf and shell discover.
-    The supported keys in discover are:
+    from a remote repository either based on an upgrade path
+    (e.g. fedora35to36) or filters. The upgrade path must correspond to
+    a plan name in the remote repository whose discover step selects
+    tests (upgrade tasks) performing the upgrade. Currently, selection
+    of upgrade tasks in the remote repository can be done using both fmf
+    and shell discover method. The supported keys in discover are:
 
       - ref
       - filter
       - exclude
       - tests
+      - test
 
     The environment variables defined in the remote upgrade path plan are
     passed to the upgrade tasks when they are executed. An example of an
@@ -58,16 +61,30 @@ class ExecuteUpgrade(ExecuteInternal):
         execute:
             how: tmt
 
+    If no upgrade path is specified in the plan, the tests (upgrade tasks)
+    are selected based on the configuration of the upgrade plugin
+    (e.g. based on the filter in its configuration).
+
+    If these two possible ways of specifying upgrade tasks are combined,
+    the remote discover plan is used but its options are overridden
+    with the values specified locally.
+
     The same options and config keys and values can be used as in the
     internal executor.
 
-    Minimal execute config example:
+    Minimal execute config example with an upgrade path:
 
         execute:
             how: upgrade
             url: https://github.com/teemtee/upgrade
             upgrade-path: /paths/fedora35to36
 
+    Execute config example without an upgrade path:
+
+        execute:
+            how: upgrade
+            url: https://github.com/teemtee/upgrade
+            filter: "tag:fedora"
     """
 
     # Supported methods
@@ -76,11 +93,10 @@ class ExecuteUpgrade(ExecuteInternal):
         ]
 
     # Supported keys
-    _keys = ['url', 'upgrade-path']
+    _keys = ['url', 'upgrade-path'] + INHERIT_FROM_DISCOVER
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._upgrade_underway = False
         self._discover_upgrade = None
 
     @classmethod
@@ -94,13 +110,16 @@ class ExecuteUpgrade(ExecuteInternal):
             '--upgrade-path', '-p', metavar='PLAN_NAME',
             help='Upgrade path corresponding to a plan name in the repository '
                  'with upgrade tasks.'))
+        options.extend([DiscoverFmf.REF_OPTION, DiscoverFmf.TEST_OPTION,
+                        DiscoverFmf.FILTER_OPTION, DiscoverFmf.EXCLUDE_OPTION])
         return options + super().options(how)
 
     @property
     def discover(self):
+        """ Return discover plugin instance """
         # If we are in the second phase (upgrade), take tests from our fake
         # discover plugin.
-        if self._upgrade_underway:
+        if self._discover_upgrade:
             return self._discover_upgrade
         else:
             return self.step.plan.discover
@@ -112,15 +131,17 @@ class ExecuteUpgrade(ExecuteInternal):
         super(ExecutePlugin, self).go()
 
         self.url = self.get('url')
+        self.upgrade_path = self.get('upgrade-path')
         if not self.url:
             raise tmt.utils.ExecuteError(
                 "URL to repository with upgrade tasks must be specified.")
-        self.upgrade_path = self.get('upgrade-path')
-        if not self.upgrade_path:
-            raise tmt.utils.ExecuteError(
-                "Upgrade path must be specified.")
-        self.info('url', self.url, 'green')
-        self.info('upgrade-path', self.upgrade_path, 'green')
+        for key in self._keys:
+            value = self.get(key)
+            if value:
+                if key == "test":
+                    self.info('test', fmf.utils.listed(value), 'green')
+                else:
+                    self.info(key, value, color='green')
 
         # Nothing to do in dry mode
         if self.opt('dry'):
@@ -151,44 +172,65 @@ class ExecuteUpgrade(ExecuteInternal):
                 f"{fmf.utils.listed(names)}.")
         return plans[0]
 
+    def _fetch_upgrade_tasks(self):
+        """ Fetch upgrade tasks using DiscoverFmf """
+        data = self.data.copy()
+        data['how'] = 'fmf'
+        data['name'] = 'upgrade-discover'
+        self._discover_upgrade = DiscoverFmf(self.step, data)
+        self._run_discover_upgrade()
+
+    def _run_discover_upgrade(self):
+        """ Silently run discover upgrade """
+        # Make it quiet, we do not want any output from discover
+        quiet = self._discover_upgrade._context.params['quiet']
+        try:
+            self._discover_upgrade._context.params['quiet'] = True
+            self._discover_upgrade.wake()
+            self._discover_upgrade.go()
+        finally:
+            self._discover_upgrade._context.params['quiet'] = quiet
+
+    def _prepare_remote_discover_data(self, plan):
+        """ Merge remote discover data with the local filters """
+        data = plan.discover.data
+        if isinstance(data, list):
+            if len(data) > 1:
+                raise tmt.utils.ExecuteError(
+                    "Multiple discover configs are not supported.")
+            data = data[0]
+        result = {key: value for key, value in data.items()
+                  if key in SUPPORTED_REMOTE_DISCOVER_KEYS}
+        # Local values have priority, override
+        for key in self._keys:
+            value = self.get(key)
+            if key in SUPPORTED_REMOTE_DISCOVER_KEYS and value:
+                result[key] = value
+        return result
+
     def _perform_upgrade(self, guest):
         """ Perform a system upgrade """
         try:
-            self._upgrade_underway = True
-            upgrades = os.path.join(self.workdir, UPGRADE_DIRECTORY)
-            self.run(
-                ['git', 'clone', self.url, upgrades],
-                env={'GIT_ASKPASS': 'echo'})
-            # Create a fake discover from the data in the upgrade path
-            plan = self._get_plan(upgrades)
-            data = plan.discover.data
-            if isinstance(data, list):
-                if len(data) > 1:
-                    raise tmt.utils.ExecuteError(
-                        "Multiple discover configs are not supported.")
-                data = data[0]
-            data = {key: value for key, value in data.items()
-                    if key in SUPPORTED_DISCOVER_KEYS}
-            # Force name
-            data['name'] = 'upgrade-discover'
-            # Override the path so that the correct tree is copied
-            data['path'] = upgrades
-            self._discover_upgrade = DiscoverPlugin.delegate(self.step, data)
-            # Make it quiet
-            quiet = self._discover_upgrade._context.params['quiet']
-            try:
-                self._discover_upgrade._context.params['quiet'] = True
-                self._discover_upgrade.wake()
-                self._discover_upgrade.go()
-            finally:
-                self._discover_upgrade._context.params['quiet'] = quiet
+            self._fetch_upgrade_tasks()
+            extra_environment = None
+            if self.upgrade_path:
+                # Create a fake discover from the data in the upgrade path
+                plan = self._get_plan(self._discover_upgrade.testdir)
+                data = self._prepare_remote_discover_data(plan)
+                # Force name
+                data['name'] = 'upgrade-discover-remote'
+                # Override the path so that the correct tree is copied
+                data['path'] = self._discover_upgrade.testdir
+                self._discover_upgrade = DiscoverPlugin.delegate(
+                    self.step, data)
+                self._run_discover_upgrade()
+                # Pass in the path-specific env variables
+                extra_environment = plan.environment
             for test in self._discover_upgrade.tests():
                 test.name = f'/{DURING_UPGRADE_PREFIX}/{test.name.lstrip("/")}'
-            # Pass in the path-specific env variables
-            self._run_tests(guest, extra_environment=plan.environment)
+            self._run_tests(guest, extra_environment=extra_environment)
         finally:
             self._discover_upgrade = None
-            self._upgrade_underway = False
 
     def _run_test_phase(self, guest, prefix):
         """

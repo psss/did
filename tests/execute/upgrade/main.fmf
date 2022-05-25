@@ -1,7 +1,18 @@
-summary: Basic upgrade executor integration test
-# dnf update is run, this may take quite long
-duration: 15m
-enabled: false
-adjust:
-  - enabled: true
-    when: how == full
+/full:
+    summary: Perform a full upgrade from F35 to F36
+    test: ./full.sh
+    # dnf upgrade is run, this may take quite long
+    duration: 30m
+    # requires nested virtualization (runs in VM)
+    enabled: false
+    adjust:
+    - enabled: true
+      when: how == full
+
+/simple:
+    summary: Run a single task from upgrades repo
+    test: ./simple.sh
+
+/override:
+    summary: Override the filter in remote upgrade path
+    test: ./override.sh

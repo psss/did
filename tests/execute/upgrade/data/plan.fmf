@@ -1,4 +1,3 @@
-summary: Basic upgrade test
 discover:
     how: fmf
 provision:
@@ -7,4 +6,10 @@ provision:
 execute:
     how: upgrade
     url: https://github.com/teemtee/upgrade
-    upgrade-path: /paths/fedora35to36
+
+/no-path:
+    summary: Basic upgrade test with no upgrade path
+/path:
+    summary: Basic upgrade test with upgrade path
+    execute+:
+        upgrade-path: /paths/fedora35to36

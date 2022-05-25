@@ -82,6 +82,19 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         "modified-only", "modified-url", "modified-ref",
         "dist-git-source", "dist-git-type", "fmf-id", "exclude"]
 
+    REF_OPTION = click.option(
+        '-r', '--ref', metavar='REVISION',
+        help='Branch, tag or commit specifying the git revision.')
+    TEST_OPTION = click.option(
+        '-t', '--test', metavar='NAMES', multiple=True,
+        help='Select tests by name.')
+    FILTER_OPTION = click.option(
+        '-F', '--filter', metavar='FILTERS', multiple=True,
+        help='Include only tests matching the filter.')
+    EXCLUDE_OPTION = click.option(
+        '-x', '--exclude', metavar='[REGEXP]', multiple=True,
+        help="Exclude a regular expression from search result.")
+
     @classmethod
     def options(cls, how=None):
         """ Prepare command line options for given method """
@@ -89,9 +102,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             click.option(
                 '-u', '--url', metavar='REPOSITORY',
                 help='URL of the git repository with fmf metadata.'),
-            click.option(
-                '-r', '--ref', metavar='REVISION',
-                help='Branch, tag or commit specifying the git revision.'),
+            cls.REF_OPTION,
             click.option(
                 '--modified-url', metavar='REPOSITORY',
                 help='URL of the reference git repository with fmf metadata.'),
@@ -106,16 +117,12 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             click.option(
                 '-p', '--path', metavar='ROOT',
                 help='Path to the metadata tree root.'),
-            click.option(
-                '-t', '--test', metavar='NAMES', multiple=True,
-                help='Select tests by name.'),
+            cls.TEST_OPTION,
             click.option(
                 '--link', metavar="RELATION:TARGET", multiple=True,
                 help="Filter by linked objects (regular expressions are "
                      "supported for both relation and target)."),
-            click.option(
-                '-F', '--filter', metavar='FILTERS', multiple=True,
-                help='Include only tests matching the filter.'),
+            cls.FILTER_OPTION,
             click.option(
                 '--dist-git-source', is_flag=True,
                 help='Extract DistGit sources and run discover on top of it.'),
@@ -123,9 +130,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 '--dist-git-type',
                 type=click.Choice(tmt.utils.get_distgit_handler_names()),
                 help='Use the provided DistGit handler instead of detection.'),
-            click.option(
-                '-x', '--exclude', metavar='[REGEXP]', multiple=True,
-                help="Exclude a regular expression from search result."),
+            cls.EXCLUDE_OPTION,
             click.option(
                 '--fmf-id', default=False, is_flag=True,
                 help='Show fmf identifiers for tests discovered in plan.')
@@ -159,7 +164,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         # Check url and path, prepare test directory
         url = self.get('url')
         path = self.get('path')
-        testdir = os.path.join(self.workdir, 'tests')
+        # Save the test directory so that others can reference it
+        self.testdir = os.path.join(self.workdir, 'tests')
         dist_git_source = self.get('dist-git-source', False)
 
         # Raise an exception if --fmf-id uses w/o url and git root
@@ -203,9 +209,9 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         # prompt to ignore possibly missing or private repositories
         if url:
             self.info('url', url, 'green')
-            self.debug(f"Clone '{url}' to '{testdir}'.")
+            self.debug(f"Clone '{url}' to '{self.testdir}'.")
             self.run(
-                ['git', 'clone', url, testdir],
+                ['git', 'clone', url, self.testdir],
                 env={"GIT_ASKPASS": "echo"})
         # Copy git repository root to workdir
         else:
@@ -233,9 +239,9 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 # Set path to relative path from the git root to fmf root
                 path = os.path.relpath(fmf_root, git_root)
             self.info('directory', git_root, 'green')
-            self.debug(f"Copy '{git_root}' to '{testdir}'.")
+            self.debug(f"Copy '{git_root}' to '{self.testdir}'.")
             if not self.opt('dry'):
-                shutil.copytree(git_root, testdir, symlinks=True)
+                shutil.copytree(git_root, self.testdir, symlinks=True)
 
         # Checkout revision if requested
         ref = self.get('ref')
@@ -244,12 +250,12 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.debug(f"Checkout ref '{ref}'.")
             self.run(
                 ['git', 'checkout', '-f', str(ref)],
-                cwd=testdir)
+                cwd=self.testdir)
 
         # Show current commit hash if inside a git repository
         try:
             hash_, _ = self.run(["git", "rev-parse", "--short", "HEAD"],
-                                cwd=testdir)
+                                cwd=self.testdir)
             self.verbose('hash', hash_.strip(), 'green')
         except (tmt.utils.RunError, AttributeError):
             pass
@@ -258,7 +264,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if dist_git_source:
             try:
                 self.extract_distgit_source(
-                    testdir, testdir, self.get('dist-git-type'))
+                    self.testdir, self.testdir, self.get('dist-git-type'))
             except Exception as error:
                 raise tmt.utils.DiscoverError(
                     f"Failed to process 'dist-git-source'.", original=error)
@@ -270,7 +276,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.info('path', path, 'green')
 
         # Prepare the whole tree path and test path prefix
-        tree_path = os.path.join(testdir, path.lstrip('/'))
+        tree_path = os.path.join(self.testdir, path.lstrip('/'))
         if not os.path.isdir(tree_path) and not self.opt('dry'):
             raise tmt.utils.DiscoverError(
                 f"Metadata tree path '{path}' not found.")
@@ -300,15 +306,15 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.info('modified-url', modified_url, 'green')
             self.debug(f"Fetch also '{modified_url}' as 'reference'.")
             self.run(['git', 'remote', 'add', 'reference', modified_url],
-                     cwd=testdir)
-            self.run(['git', 'fetch', 'reference'], cwd=testdir)
+                     cwd=self.testdir)
+            self.run(['git', 'fetch', 'reference'], cwd=self.testdir)
         if modified_only:
             modified_ref = self.get(
-                'modified-ref', tmt.utils.default_branch(testdir))
+                'modified-ref', tmt.utils.default_branch(self.testdir))
             self.info('modified-ref', modified_ref, 'green')
             output = self.run(
                 ['git', 'log', '--format=', '--stat', '--name-only',
-                 f"{modified_ref}..HEAD"], cwd=testdir)[0]
+                 f"{modified_ref}..HEAD"], cwd=self.testdir)[0]
             modified = set(
                 f"^/{re.escape(name)}"
                 for name in map(os.path.dirname, output.split('\n')) if name)

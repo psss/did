@@ -437,9 +437,13 @@ class Common(object):
             shift: int = 0,
             level: int = 1,
             err: bool = False) -> None:
-        """ Show message if in requested verbose mode level """
+        """
+        Show message if in requested verbose mode level
+
+        In quiet mode verbose messages are not displayed.
+        """
         self._log(self._indent(key, value, color=None, shift=shift))
-        if self.opt('verbose') >= level:
+        if not self.opt('quiet') and self.opt('verbose') >= level:
             echo(self._indent(key, value, color, shift), err=err)
 
     def debug(
@@ -450,9 +454,13 @@ class Common(object):
             shift: int = 0,
             level: int = 1,
             err: bool = False) -> None:
-        """ Show message if in requested debug mode level """
+        """
+        Show message if in requested debug mode level
+
+        In quiet mode debug messages are not displayed.
+        """
         self._log(self._indent(key, value, color=None, shift=shift))
-        if self.opt('debug') >= level:
+        if not self.opt('quiet') and self.opt('debug') >= level:
             echo(self._indent(key, value, color, shift), err=err)
 
     def warn(self, message: str, shift: int = 0) -> None:

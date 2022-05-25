@@ -98,12 +98,18 @@ description: |
 
         The upgrade tasks performing the actual system upgrade are
         taken from a remote repository (specified by the ``url`` key)
-        based on an upgrade path (specified by the ``upgrade-path`` key).
+        based on an upgrade path (specified by the ``upgrade-path`` key)
+        or other filters (e.g. specified by the ``filter`` key).
+        If both ``upgrade-path`` and extra filters are specified,
+        the discover keys in the remote upgrade path plan are overridden
+        by the filters specified in the local plan.
+
         The upgrade path must correspond to a plan name in the remote
         repository whose discover selects tests (upgrade tasks).
         The environment variables defined in the upgrade path are passed
         to the upgrade tasks.
-    example: |
+    example:
+      - |
         # Main testing plan
         discover:
             how: fmf
@@ -112,7 +118,8 @@ description: |
             url: https://github.com/teemtee/upgrade
             upgrade-path: /paths/fedora35to36
 
-        # Upgrade path fedora35to36.fmf in the remote repository
+      - |
+        # Upgrade path /paths/fedora35to36.fmf in the remote repository
         discover: # Selects appropriate upgrade tasks (L1 tests)
             how: fmf
             filter: "tag:fedora"
@@ -121,6 +128,13 @@ description: |
             TARGET: 36
         execute:
             how: tmt
+
+      - |
+        # Alternative main testing plan, without upgrade path
+        execute:
+            how: upgrade
+            url: https://github.com/teemtee/upgrade
+            filter: "tag:fedora"
     link:
       - implemented-by: /tmt/steps/execute/upgrade.py
       - verified-by: /tests/execute/upgrade
