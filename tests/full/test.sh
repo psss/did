@@ -45,6 +45,7 @@ rlJournalStart
             rlRun "userdel -r $USER" 0 "Removing existing user"
         }
         rlRun "useradd $USER"
+        rlRun "usermod --append --groups libvirt $USER"
         rlRun "echo '$USER ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers" 0 "password-less sudo for test user"
         rlRun "chmod 400 /etc/sudoers"
         rlRun "loginctl enable-linger $USER" # start session so /run/ directory is initialized

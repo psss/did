@@ -8,7 +8,7 @@ execute:
 
 # Install packages in full mode
 adjust:
-  - prepare:
+  - prepare+:
       - name: tmt
         how: install
         directory: tmp/RPMS/noarch

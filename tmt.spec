@@ -30,6 +30,7 @@ This package contains the command line tool.
 %package -n     python%{python3_pkgversion}-%{name}
 Summary:        Python library for the %{summary}
 BuildRequires: python%{python3_pkgversion}-devel
+BuildRequires: python%{python3_pkgversion}-docutils
 BuildRequires: python%{python3_pkgversion}-setuptools
 BuildRequires: python%{python3_pkgversion}-pytest
 BuildRequires: python%{python3_pkgversion}-click
