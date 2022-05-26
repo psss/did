@@ -14,10 +14,14 @@ import fmf
 import tmt
 import tmt.utils
 
-# Timeout in seconds of waiting for a connection
-CONNECTION_TIMEOUT = 60 * 4
+# Timeout in seconds of waiting for a connection after reboot
+# (long enough to allow operations such as system upgrade)
+# FIXME: Shorten once "tmt-reboot -t <timeout>" is implemented
+CONNECTION_TIMEOUT = 60 * 60
+
 # Wait time when reboot happens in seconds
 SSH_INITIAL_WAIT_TIME = 5
+
 # Default rsync options
 DEFAULT_RSYNC_OPTIONS = [
     "-R", "-r", "-z", "--links", "--safe-links", "--delete"]
@@ -666,12 +670,18 @@ class Guest(tmt.utils.Common):
                 raise
         return self.reconnect()
 
-    def reconnect(self):
-        """ Ensure the connection to the guest is working after reboot """
+    def reconnect(self, timeout=CONNECTION_TIMEOUT):
+        """
+        Ensure the connection to the guest is working after reboot
+
+        The default timeout is 1h to allow long operations such as
+        system upgrade. Custom number of seconds can be provided in the
+        `timeout` parameter.
+        """
         # Try to wait for machine to really shutdown sshd
         time.sleep(SSH_INITIAL_WAIT_TIME)
         self.debug("Wait for a connection to the guest.")
-        for attempt in range(1, CONNECTION_TIMEOUT):
+        for attempt in range(1, timeout):
             try:
                 self.execute('whoami')
                 break
@@ -679,7 +689,7 @@ class Guest(tmt.utils.Common):
                 self.debug('Failed to connect to the guest, retrying.')
                 time.sleep(1)
 
-        if attempt == CONNECTION_TIMEOUT:
+        if attempt == timeout:
             self.debug("Connection to guest failed after reboot.")
             return False
         return True

@@ -4,6 +4,9 @@ import click
 
 import tmt
 
+# Timeout in seconds of waiting for a connection
+CONNECTION_TIMEOUT = 60
+
 
 class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
     """
@@ -153,7 +156,7 @@ class GuestContainer(tmt.Guest):
                 "Containers do not support soft reboot, they can only be "
                 "stopped and started again (hard reboot).")
         self.podman(['container', 'restart', self.container])
-        return self.reconnect()
+        return self.reconnect(timeout=CONNECTION_TIMEOUT)
 
     def ansible(self, playbook, extra_args=None):
         """ Prepare container using ansible playbook """
