@@ -275,6 +275,8 @@ class Common(object):
 
     # Command line context, options and workdir
     _context: Optional[click.Context] = None
+    # When set to true, _opt will be ignored (default will be returned)
+    ignore_class_options: bool = False
     _options: Dict[str, Any] = dict()
     _workdir: WorkdirType = None
 
@@ -330,6 +332,8 @@ class Common(object):
     @classmethod
     def _opt(cls, option: str, default: Any = None) -> Any:
         """ Get an option from the command line context (class version) """
+        if cls.ignore_class_options:
+            return default
         return cls._options.get(option, default)
 
     def _fmf_context(self) -> FmfContextType:
