@@ -19,6 +19,8 @@ rlJournalStart
     if [ "$TMT_REBOOT_COUNT" == "0" ]; then
         rlPhaseStartTest "Before reboot"
             rlRun "tmt-reboot" 0 "Reboot using 'tmt-reboot'."
+            # Add sleep to check that the test is killed by tmt-reboot
+            rlRun "sleep 3600"
         rlPhaseEnd
 
     # First

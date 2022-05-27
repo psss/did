@@ -22,7 +22,8 @@ description: |
     For backward-compatibility reasons the ``rstrnt-reboot`` and
     ``rhts-reboot`` commands are provided as well together with
     the ``RSTRNT_REBOOTCOUNT`` and ``REBOOTCOUNT`` environment
-    variables.
+    variables. Calling the script kills the parent process
+    (the running test).
 
 example: |
     if [ "$TMT_REBOOT_COUNT" -eq 0 ]; then

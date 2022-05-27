@@ -29,6 +29,7 @@ while getopts "c:" flag; do
         c) echo "${{OPTARG}}" >> "$TMT_TEST_DATA/{REBOOT_REQUEST_FILENAME}";;
     esac
 done
+kill $PPID
 """
 REBOOT_BACKUP_EXT = ".tmt.backup"
 REBOOT_SETUP_NAME = "reboot_setup"
