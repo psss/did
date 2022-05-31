@@ -1,4 +1,5 @@
 import collections
+import datetime
 import os
 import random
 import re
@@ -478,15 +479,20 @@ class Guest(tmt.utils.Common):
         # Try to wait for machine to really shutdown
         time.sleep(RECONNECT_INITIAL_WAIT_TIME)
         self.debug("Wait for a connection to the guest.")
-        for attempt in range(1, timeout):
+
+        # A small shortcut... `now` or `utcnow`, should not matter, becase we
+        # need a difference between two values. As long as we use the same
+        # function for both sides of the equation, we should be fine.
+        now = datetime.datetime.utcnow
+        deadline = now() + datetime.timedelta(seconds=timeout)
+        while now() < deadline:
             try:
                 self.execute('whoami')
                 break
             except tmt.utils.RunError:
                 self.debug('Failed to connect to the guest, retrying.')
                 time.sleep(1)
-
-        if attempt == timeout:
+        else:
             self.debug("Connection to guest failed after reboot.")
             return False
         return True
