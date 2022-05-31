@@ -555,7 +555,8 @@ class GuestTestcloud(tmt.GuestSsh):
     def stop(self):
         """ Stop provisioned guest """
         super().stop()
-        if self.instance:
+        # Stop only if the instance successfully booted
+        if self.instance and self.guest:
             self.debug(f"Stopping testcloud instance '{self.instance_name}'.")
             try:
                 self.instance.stop()
