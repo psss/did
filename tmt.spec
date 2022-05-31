@@ -70,6 +70,13 @@ Requires: tmt == %{version}-%{release}
 Requires: python%{python3_pkgversion}-testcloud >= 0.7.0
 Requires: openssh-clients
 Requires: (ansible or ansible-core)
+# Recommend qemu system emulators for supported arches
+%if 0%{?fedora}
+Recommends: qemu-system-aarch64-core
+Recommends: qemu-system-ppc-core
+Recommends: qemu-system-s390x-core
+Recommends: qemu-system-x86-core
+%endif
 
 %description provision-virtual
 Dependencies required to run tests in a local virtual machine.
