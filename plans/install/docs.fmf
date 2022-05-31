@@ -12,5 +12,5 @@ execute:
         pip3 install .[docs]
         cd docs
         python3 -m sphinx -T -E -b html -d _build/doctrees \
-            -D language=en . _build/html 2>&1 | tee output
+            . _build/html 2>&1 | tee output
         grep WARNING output && exit 1 || exit 0
