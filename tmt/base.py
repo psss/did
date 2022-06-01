@@ -32,8 +32,8 @@ import tmt.steps.provision
 import tmt.steps.report
 import tmt.templates
 import tmt.utils
+import tmt.uuid
 from tmt.utils import verdict
-from tmt.uuid import get_id
 
 # Default test duration is 5m for individual tests discovered from L1
 # metadata and 1h for scripts defined directly in plans (L2 metadata).
@@ -111,6 +111,14 @@ class Core(tmt.utils.Common):
         self._link = Link(self.link)
         self.link = self._link.get()
 
+        # Store the unique id if provided
+        try:
+            self.id = tmt.uuid.get_id(self.node)
+        except tmt.uuid.IdLeafError:
+            raise tmt.utils.SpecificationError(
+                f"The 'id' key '{self.node.get('id')}' in '{self.name}' "
+                f"is inherited from parent, should be defined in a leaf.")
+
     def __str__(self):
         """ Node name """
         return self.name
@@ -120,8 +128,10 @@ class Core(tmt.utils.Common):
         self._metadata.update(self.export(format_='dict'))
         self._metadata['name'] = self.name
 
-    def _sources(self):
+    def _show_additional_keys(self):
         """ Show source files """
+        if self.id is not None:
+            echo(tmt.utils.format('id', self.id, key_color='magenta'))
         echo(tmt.utils.format(
             'sources', self.node.sources, key_color='magenta'))
 
@@ -192,10 +202,6 @@ class Core(tmt.utils.Common):
                 '/', os.path.relpath(fmf_root, git_root))
 
         return fmf_id
-
-    @property
-    def id(self):
-        return get_id(self.node)
 
     @classmethod
     def _save_context(cls, context):
@@ -452,7 +458,7 @@ class Test(Core):
             if value not in [None, list(), dict()]:
                 echo(tmt.utils.format(key, value))
         if self.opt('verbose'):
-            self._sources()
+            self._show_additional_keys()
             self._fmf_id()
         if self.opt('verbose', 0) >= 2:
             # Print non-empty unofficial attributes
@@ -831,7 +837,7 @@ class Plan(Core):
             echo(tmt.utils.format(
                 'context', self._fmf_context(), key_color='blue'))
         if self.opt('verbose'):
-            self._sources()
+            self._show_additional_keys()
 
     def _lint_execute(self):
         """ Lint execute step """
@@ -1135,7 +1141,7 @@ class Story(Core):
                 wrap = False if key == 'example' else 'auto'
                 echo(tmt.utils.format(key, value, wrap=wrap))
         if self.opt('verbose'):
-            self._sources()
+            self._show_additional_keys()
 
     def coverage(self, code, test, docs):
         """ Show story coverage """

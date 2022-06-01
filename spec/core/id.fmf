@@ -17,7 +17,7 @@ description: |
     __ https://fmf.readthedocs.io/en/latest/concept.html#identifiers
     __ https://en.wikipedia.org/wiki/Universally_unique_identifier
 
-example:
+example: |
     id: af994876-1c68-49a7-90e8-c8d2b189189d
 
 link:

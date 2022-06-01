@@ -3,106 +3,89 @@ from uuid import uuid4
 
 import fmf
 
-from .utils import log
+import tmt.base
+from tmt.utils import log
 
-ID_FMF_ITEM = "id"
-
-
-class IDError(Exception):
-    pass
+# Name of the key holding the unique identifier
+ID_KEY = "id"
 
 
-class IDLeafError(IDError):
-    pass
+class IdError(Exception):
+    """ General Identifier Error """
+
+
+class IdLeafError(IdError):
+    """ Identifier not stored in a leaf """
 
 
 def locate_key(node: fmf.Tree, key: str) -> Optional[fmf.Tree]:
-    """
-    Return fmf location of key attribute inside tree or None if not defined anywhere
-    """
-    identifier = node.data.get(key)
-    if identifier is None:
+    """ Return fmf node where the 'key' is defined, None if not found """
+
+    # Find the closest parent with different key content
+    while node.parent:
+        if node.get(key) != node.parent.get(key):
+            break
+        node = node.parent
+
+    # Return node only if the key is defined
+    if node.get(key) is None:
         return None
-    current_node = node
-    while True:
-        parent = current_node.parent
-        if parent:
-            if current_node.get(key) == parent.get(key):
-                current_node = parent
-                continue
-            else:
-                return current_node
-        else:
-            if current_node.get(key):
-                return current_node
-            else:
-                break
-    return None
+    else:
+        return node
 
 
-def is_key_defined_in_leaf(node: fmf.Tree, key: str) -> bool:
-    """
-    Is key defined inside this node
-    """
-    node_location = locate_key(node, key=key)
-    if not node_location:
-        return False
-    location = node_location.name
-    if node and node.name == location:
-        return True
-    return False
+def key_defined_in_leaf(node: fmf.Tree, key: str) -> bool:
+    """ Is the key defined inside this node """
+    location = locate_key(node, key=key)
+    return location is not None and node.name == location.name
 
 
-def get_id(node: fmf.Tree, is_leaf: bool = True) -> Any:
+def get_id(node: fmf.Tree, leaf_only: bool = True) -> Any:
     """
-    Get identifier if defined.
+    Get identifier if defined, optionally ensure leaf node
+
+    Return identifier for provided node. If 'leaf_only' is True,
+    an additional check is performed to ensure that the identifier
+    is defined in the node itself. The 'IdLeafError' exception is
+    raised when the key is inherited from parent.
     """
-    if is_leaf and not is_key_defined_in_leaf(node, ID_FMF_ITEM):
-        raise IDLeafError(
-            f"{ID_FMF_ITEM} not defined in leaf in {node.name}")
-    return node.data[ID_FMF_ITEM]
+    if node.get(ID_KEY) is None:
+        return None
+    if leaf_only and not key_defined_in_leaf(node, ID_KEY):
+        raise IdLeafError(
+            f"Key '{ID_KEY}' not defined in leaf '{node.name}'.")
+    return node.get(ID_KEY)
 
 
 def add_uuid_if_not_defined(node: fmf.Tree, dry: bool) -> Optional[str]:
-    """
-    Add UUID into node if not defined
-    """
-    if is_key_defined_in_leaf(node, key=ID_FMF_ITEM):
+    """ Add UUID into node and return it unless already defined """
+
+    # Already defined
+    if key_defined_in_leaf(node, key=ID_KEY):
         log.debug(
-            f"UUID already defined for {node.name} = {node.data[ID_FMF_ITEM]}")
+            f"Id '{node.data[ID_KEY]}' already defined for '{node.name}'.")
         return None
-    else:
-        gen_uuid = str(uuid4())
-        if not dry:
-            with node as data:
-                data[ID_FMF_ITEM] = gen_uuid
-                log.debug(f"Generating UUID for {node.name} = {gen_uuid}")
-        return gen_uuid
+
+    # Generate a new one
+    gen_uuid = str(uuid4())
+    if not dry:
+        with node as data:
+            data[ID_KEY] = gen_uuid
+            log.debug(f"Generating UUID '{gen_uuid}' for '{node.name}'.")
+    return gen_uuid
 
 
-def add_uuid_cmd(node: fmf.Tree, item_str: str, dry: bool) -> None:
+def id_command(node: fmf.Tree, node_type: str, dry: bool) -> None:
     """
-    command line interfacing with output to terminal, when doing adding of UUIDs to nodes
+    Command line interfacing with output to terminal
+
+    Show a brief summary when adding UUIDs to nodes.
     """
     generated = add_uuid_if_not_defined(node, dry=dry)
     if generated:
-        print(f"Add new ID to {item_str} node {node.name} = {generated}")
+        print(
+            f"New id '{generated}' added to {node_type} '{node.name}'.")
     else:
         print(
-            f"{node.name} {item_str} has ID already defined {node.data[ID_FMF_ITEM]}")
-
-
-def lint_key(node_list: list[fmf.Tree],
-             key: str = ID_FMF_ITEM) -> list[fmf.Tree]:
-    """
-    Check if all items contains key, return list of items missing key
-    """
-    missing_uuid_nodes = []
-    for node in node_list:
-        if is_key_defined_in_leaf(node, key=key):
-            log.debug(f"{node} has defined UUID item")
-        else:
-            missing_uuid_nodes.append(node)
-            log.error(
-                f"{node} does not contain {key}, add key {key}")
-    return missing_uuid_nodes
+            f"Existing id '{node.get(ID_KEY)}' "
+            f"found in {node_type} '{node.name}'.")

@@ -1,4 +1,3 @@
-# coding: utf-8
 import os
 import shutil
 import tempfile
@@ -10,58 +9,58 @@ from click.testing import CliRunner
 
 import tmt
 import tmt.cli
-from tmt.uuid import ID_FMF_ITEM, IDError, IDLeafError, locate_key
+from tmt.uuid import ID_KEY, IdError, IdLeafError, locate_key
 
 runner = CliRunner()
-test_path = Path(__file__).parent / "test_fmf_id"
+test_path = Path(__file__).parent / "id"
 
 
-class IDLocationDefined(TestCase):
+class IdLocationDefined(TestCase):
     def setUp(self) -> None:
         self.base_tree = fmf.Tree(test_path / "defined")
 
     def test_defined(self):
         node = self.base_tree.find("/yes")
         self.assertEqual(
-            locate_key(node, ID_FMF_ITEM), node)
+            locate_key(node, ID_KEY), node)
 
     def test_defined_partially(self):
         node = self.base_tree.find("/partial")
         test = tmt.Test(node)
-        self.assertEqual(locate_key(node, ID_FMF_ITEM), test.node)
+        self.assertEqual(locate_key(node, ID_KEY), test.node)
 
     def test_not_defined(self):
-        node = self.base_tree.find("/no")
-        self.assertEqual(locate_key(node, ID_FMF_ITEM).name, "/")
+        node = self.base_tree.find("/deep/structure/no")
+        self.assertEqual(locate_key(node, ID_KEY).name, "/deep")
 
     def test_deeper(self):
         node = self.base_tree.find("/deep/structure/yes")
-        self.assertEqual(node, locate_key(node, ID_FMF_ITEM))
+        self.assertEqual(node, locate_key(node, ID_KEY))
 
     def test_deeper_not_defined(self):
         node = self.base_tree.find("/deep/structure/no")
-        self.assertNotEqual(node, locate_key(node, ID_FMF_ITEM))
-        self.assertEqual(locate_key(node, ID_FMF_ITEM).name, "/deep")
+        self.assertNotEqual(node, locate_key(node, ID_KEY))
+        self.assertEqual(locate_key(node, ID_KEY).name, "/deep")
 
 
-class IDLocationEmpty(TestCase):
+class IdLocationEmpty(TestCase):
     def setUp(self) -> None:
         self.base_tree = fmf.Tree(test_path / "empty")
 
     def test_defined_root(self):
         node = self.base_tree.find("/")
-        self.assertEqual(locate_key(node, ID_FMF_ITEM), None)
+        self.assertEqual(locate_key(node, ID_KEY), None)
 
     def test_defined(self):
         node = self.base_tree.find("/some/structure")
-        self.assertEqual(locate_key(node, ID_FMF_ITEM), None)
+        self.assertEqual(locate_key(node, ID_KEY), None)
 
 
-class IDEmpty(TestCase):
+class IdEmpty(TestCase):
 
     def setUp(self):
-        self.path = tempfile.mkdtemp()
-        shutil.copytree(test_path / "empty", self.path, dirs_exist_ok=True)
+        self.path = Path(tempfile.mkdtemp()) / "empty"
+        shutil.copytree(test_path / "empty", self.path)
         self.original_directory = Path.cwd()
         os.chdir(self.path)
         self.base_tree = fmf.Tree(self.path)
@@ -73,35 +72,26 @@ class IDEmpty(TestCase):
     def test_base(self):
         node = self.base_tree.find("/some/structure")
         test = tmt.Test(node)
-        with self.assertRaises(IDLeafError):
-            print(test.id)
+        self.assertEqual(test.id, None)
 
     def test_manually_add_id(self):
         node = self.base_tree.find("/some/structure")
         test = tmt.Test(node)
-        try:
-            id = test.id
-            self.assertFalse(True, "This should not happen")
-        except IDError:
-            id = tmt.uuid.add_uuid_if_not_defined(node, dry=False)
-        self.assertGreater(len(id), 10)
+        self.assertEqual(test.id, None)
+        identifier = tmt.uuid.add_uuid_if_not_defined(node, dry=False)
+        self.assertGreater(len(identifier), 10)
 
         self.base_tree = fmf.Tree(self.path)
         node = self.base_tree.find("/some/structure")
         test = tmt.Test(node)
-        try:
-            id = test.id
-            self.assertTrue(True, "This has to happen")
-        except IDError:
-            self.assertFalse(True, "This should not happen")
-        self.assertGreater(len(id), 10)
+        self.assertEqual(test.id, identifier)
 
 
 class TestGeneratorDefined(TestCase):
 
     def setUp(self):
-        self.path = tempfile.mkdtemp()
-        shutil.copytree(test_path / "defined", self.path, dirs_exist_ok=True)
+        self.path = Path(tempfile.mkdtemp()) / "defined"
+        shutil.copytree(test_path / "defined", self.path)
         self.original_directory = Path.cwd()
         os.chdir(self.path)
 
@@ -111,50 +101,33 @@ class TestGeneratorDefined(TestCase):
 
     def test_test_dry(self):
         result = runner.invoke(
-            tmt.cli.main, ["test", "uuid", "--dry"])
-        self.assertIn(
-            'Add new ID to test node /deep/structure/no =',
-            result.output)
+            tmt.cli.main, ["test", "id", "--dry", "^/no"])
+        self.assertIn("added to test '/no", result.output)
         result = runner.invoke(
-            tmt.cli.main, ["test", "uuid", "--dry"])
-        self.assertIn(
-            'Add new ID to test node /deep/structure/no =',
-            result.output)
+            tmt.cli.main, ["test", "id", "--dry", "^/no"])
+        self.assertIn("added to test '/no", result.output)
 
     def test_test_real(self):
-        result = runner.invoke(tmt.cli.main, ["test", "uuid"])
-        self.assertIn(
-            'Add new ID to test node /deep/structure/no =',
-            result.output)
+        # Empty before
+        node = fmf.Tree(self.path).find("/no")
+        self.assertEqual(node.get(ID_KEY), None)
 
-        result = runner.invoke(tmt.cli.main, ["test", "uuid"])
-        self.assertNotIn(
-            'Add new ID to test node /deep/structure/no =',
-            result.output)
+        # Generate only when called for the first time
+        result = runner.invoke(tmt.cli.main, ["test", "id", "^/no"])
+        self.assertIn("added to test '/no", result.output)
+        result = runner.invoke(tmt.cli.main, ["test", "id", "^/no"])
+        self.assertNotIn("added to test '/no", result.output)
 
-        base_tree = fmf.Tree(test_path / "defined")
-        node = base_tree.find("/no")
-        print(node.data)
-        self.assertEqual(
-            node.data.get(ID_FMF_ITEM),
-            'a38cdf1e-066a-4a03-8da8-65005138ad92')
-        # Not defined in leaf
-        with node as data:
-            self.assertEqual(data.get(ID_FMF_ITEM), None)
-
-        base_tree = fmf.Tree(self.path)
-        node = base_tree.find("/no")
-        self.assertNotEqual(
-            node.data.get(ID_FMF_ITEM),
-            'a38cdf1e-066a-4a03-8da8-65005138ad92')
-        self.assertGreater(len(node.data[ID_FMF_ITEM]), 10)
+        # Defined after
+        node = fmf.Tree(self.path).find("/no")
+        self.assertGreater(len(node.data[ID_KEY]), 10)
 
 
 class TestGeneratorEmpty(TestCase):
 
     def setUp(self):
-        self.path = tempfile.mkdtemp()
-        shutil.copytree(test_path / "empty", self.path, dirs_exist_ok=True)
+        self.path = Path(tempfile.mkdtemp()) / "empty"
+        shutil.copytree(test_path / "empty", self.path)
         self.original_directory = Path.cwd()
         os.chdir(self.path)
 
@@ -164,27 +137,27 @@ class TestGeneratorEmpty(TestCase):
 
     def test_test_dry(self):
         result = runner.invoke(
-            tmt.cli.main, ["test", "uuid", "--dry"])
+            tmt.cli.main, ["test", "id", "--dry"])
         self.assertIn(
-            'Add new ID to test node /some/structure =',
+            "added to test '/some/structure'",
             result.output)
         result = runner.invoke(
-            tmt.cli.main, ["test", "uuid", "--dry"])
+            tmt.cli.main, ["test", "id", "--dry"])
         self.assertIn(
-            'Add new ID to test node /some/structure =',
+            "added to test '/some/structure'",
             result.output)
 
     def test_test_real(self):
-        result = runner.invoke(tmt.cli.main, ["test", "uuid"])
+        result = runner.invoke(tmt.cli.main, ["test", "id"])
         self.assertIn(
-            'Add new ID to test node /some/structure =',
+            "added to test '/some/structure'",
             result.output)
 
-        result = runner.invoke(tmt.cli.main, ["test", "uuid"])
+        result = runner.invoke(tmt.cli.main, ["test", "id"])
         self.assertNotIn(
-            'Add new ID to test node /some/structure =',
+            "added to test '/some/structure'",
             result.output)
 
         base_tree = fmf.Tree(self.path)
         node = base_tree.find("/some/structure")
-        self.assertGreater(len(node.data[ID_FMF_ITEM]), 10)
+        self.assertGreater(len(node.data[ID_KEY]), 10)

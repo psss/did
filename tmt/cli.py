@@ -610,18 +610,22 @@ def export(context, format_, nitrate, bugzilla, **kwargs):
             f"Invalid test export format '{format_}'.")
 
 
-@tests.command()
+@tests.command(name="id")
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
 @force_dry
-def uuid(context, **kwargs):
+def id_(context, **kwargs):
     """
-    generate UUIDs to test leafs if not already defined.
+    Generate a unique id for each selected test.
+
+    A new UUID is generated for each test matching the provided
+    filter and the value is stored to disk. Existing identifiers
+    are kept intact.
     """
     tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
-        tmt.uuid.add_uuid_cmd(test.node, "test", dry=kwargs["dry"])
+        tmt.uuid.id_command(test.node, "test", dry=kwargs["dry"])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -766,18 +770,22 @@ def export(context, format_, **kwargs):
             f"Invalid plan export format '{format_}'.")
 
 
-@plans.command()
+@plans.command(name="id")
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
 @force_dry
-def uuid(context, **kwargs):
+def id_(context, **kwargs):
     """
-    generate UUIDs to plan leafs if not already defined.
+    Generate a unique id for each selected plan.
+
+    A new UUID is generated for each plan matching the provided
+    filter and the value is stored to disk. Existing identifiers
+    are kept intact.
     """
     tmt.Plan._save_context(context)
     for plan in context.obj.tree.plans():
-        tmt.uuid.add_uuid_cmd(plan.node, "plan", dry=kwargs["dry"])
+        tmt.uuid.id_command(plan.node, "plan", dry=kwargs["dry"])
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Story
@@ -980,22 +988,26 @@ def lint_stories(context, **kwargs):
     raise SystemExit(exit_code)
 
 
-@stories.command()
+@stories.command(name="id")
 @click.pass_context
 @name_filter_condition_long
 @implemented_verified_documented
 @verbose_debug_quiet
 @force_dry
-def uuid(context, implemented, verified, documented, covered,
-         unimplemented, unverified, undocumented, uncovered, **kwargs):
+def id_(context, implemented, verified, documented, covered,
+        unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
-    generate UUIDs to story leafs if not already defined.
+    Generate a unique id for each selected story.
+
+    A new UUID is generated for each story matching the provided
+    filter and the value is stored to disk. Existing identifiers
+    are kept intact.
     """
     tmt.Story._save_context(context)
     for story in context.obj.tree.stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):
-            tmt.uuid.add_uuid_cmd(story.node, "story", dry=kwargs["dry"])
+            tmt.uuid.id_command(story.node, "story", dry=kwargs["dry"])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
