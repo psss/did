@@ -1,11 +1,15 @@
+from typing import Any, List, Optional
+
 import click
 import fmf
 
 import tmt
 import tmt.utils
+from tmt.steps.provision import Guest
 
 
-class PrepareShell(tmt.steps.prepare.PreparePlugin):
+# TODO: drop ignore once type annotations between modules enabled
+class PrepareShell(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     """
     Prepare guest using shell scripts
 
@@ -30,7 +34,7 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
     _keys = ["script"]
 
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> Any:
         """ Prepare command line options """
         return [
             click.option(
@@ -38,20 +42,20 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
                 help='Shell script to be executed.')
             ] + super().options(how)
 
-    def default(self, option, default=None):
+    def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """
         if option == 'script':
             return []
         return default
 
-    def wake(self, keys=None):
+    def wake(self, keys: Optional[List[str]] = None) -> None:
         """ Wake up the plugin, process data, apply options """
         super().wake(keys=keys)
 
         # Convert to list if single script provided
         tmt.utils.listify(self.data, keys=['script'])
 
-    def go(self, guest):
+    def go(self, guest: Guest) -> None:
         """ Prepare the guests """
         super().go(guest)
 
