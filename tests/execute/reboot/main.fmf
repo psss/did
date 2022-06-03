@@ -1,4 +1,4 @@
-duration: 10m
+duration: 20m
 
 /basic:
     summary: Verify that reboot during test works
