@@ -190,6 +190,36 @@ L1 Metadata Specification::
     pass directory path must be defined
 
 
+Share Common Attributes
+------------------------------------------------------------------
+
+Sometimes it might be useful to reuse test code by providing
+different parameter to the same test script. In such cases
+inheritance allows to easily share the common setup::
+
+    test: ./test.sh
+    require: curl
+
+    /fast:
+        summary: Quick smoke test
+        tier: 1
+        duration: 1m
+        environment:
+            MODE: fast
+
+    /full:
+        summary: Full test set
+        tier: 2
+        duration: 10m
+        environment:
+            MODE: full
+
+In the example above, two tests are defined, both executing the
+same ``test.sh`` script but providing a different environment
+variable which instructs the test to perform a different set of
+actions.
+
+
 Create Tests
 ------------------------------------------------------------------
 
