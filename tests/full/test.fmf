@@ -1,4 +1,11 @@
 summary: Run the full tmt test suite in an external system
+description: |
+    Run under a local virtual machine:
+    tmt run
+
+    Schedule a job using workflow-tomorrow:
+    tmt test export --fmf-id | wow fedora-35 x86_64 --fmf-id -
+
 test: ./test.sh
 framework: beakerlib
 adjust:

@@ -2,12 +2,13 @@
     summary: Perform a full upgrade from F35 to F36
     test: ./full.sh
     # dnf upgrade is run, this may take quite long
-    duration: 30m
+    duration: 1h
     # requires nested virtualization (runs in VM)
     enabled: false
     adjust:
     - enabled: true
       when: how == full
+    tier: 3
 
 /simple:
     summary: Run a single task from upgrades repo

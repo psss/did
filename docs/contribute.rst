@@ -279,9 +279,9 @@ Release a new package to Fedora and EPEL repositories:
 
 Finally, if everything went well:
 
+* Tag the commit with ``x.y.0``, push tags ``git push --tags``
 * **Manually** merge the original release pull request on github (to avoid rebase)
   ``git checkout main && git merge --ff-only <release_branch> && git push origin main``
-* Tag the commit with ``x.y.0``, push tags ``git push --tags``
 * Create a new `github release`__ based on the tag above
 * If the automation triggered by publishing the new github release
   was not successful, publish the fresh code to the `pypi`__
