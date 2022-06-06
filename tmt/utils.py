@@ -843,6 +843,44 @@ def listify(
     return [data]
 
 
+def copytree(
+        src: str,
+        dst: str,
+        symlinks: bool = False,
+        dirs_exist_ok: bool = False,
+        ) -> Any:
+    """ Similar to shutil.copytree but with dirs_exist_ok for Python < 3.8 """
+    # No need to reimplement for newer python or if argument is not requested
+    if not dirs_exist_ok or sys.version_info >= (3, 8):
+        return shutil.copytree(
+            src=src, dst=dst, symlinks=symlinks, dirs_exist_ok=dirs_exist_ok)
+    # Choice was to either copy python implementation and change ONE line
+    # or use rsync (or cp with shell)
+    # We need to copy CONTENT of src into dst
+    # so src has to end with / and dst cannot
+    if src[-1] != '/':
+        src += '/'
+    if dst[-1] == '/':
+        dst = dst[:-1]
+
+    command = ["rsync", "-r"]
+    if symlinks:
+        command.append('-l')
+    command.extend([src, dst])
+
+    log.debug(f"Calling command '{command}'.")
+    outcome = subprocess.run(
+        command,
+        stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT, universal_newlines=True)
+
+    if outcome.returncode != 0:
+        raise shutil.Error(
+            [f"Unable to copy '{src}' into '{dst}' using rsync.",
+             outcome.returncode, outcome.stdout])
+    return dst
+
+
 # These two are helpers for shell_to_dict and environment_to_dict -
 # there is some overlap of their functionality.
 def _add_simple_var(result: EnvironmentType, var: str) -> None:
@@ -2102,3 +2140,23 @@ class updatable_message(contextlib.AbstractContextManager):  # type: ignore
 
         sys.stdout.write(f"\r{message}")
         sys.stdout.flush()
+
+
+def find_fmf_root(path: str) -> List[str]:
+    """
+    Search trough path and return all fmf roots that exist there
+
+    Returned list is ordered by path length, shortest one first.
+
+    Raise `MetadataError` if no fmf root is found.
+    """
+    fmf_roots = []
+    for root, _, files in os.walk(path):
+        if not os.path.basename(root) == '.fmf':
+            continue
+        if 'version' in files:
+            fmf_roots.append(os.path.dirname(root))
+    if not fmf_roots:
+        raise MetadataError(f"No fmf root present inside '{path}'.")
+    fmf_roots.sort(key=lambda path: len(path))
+    return fmf_roots

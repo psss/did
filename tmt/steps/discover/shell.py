@@ -27,6 +27,17 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         - name: /help/smoke
           test: ./smoke.sh
           path: /tests/shell
+
+    For DistGit repo one can extract source tarball and use its code.
+    It is extracted to TMT_SOURCE_DIR however no patches are applied
+    (only source tarball is extracted).
+
+    discover:
+        how: shell
+        dist-git-source: true
+        tests:
+        - name: /upstream
+          test: cd $TMT_SOURCE_DIR/*/tests && make test
     """
 
     # Supported methods
@@ -53,6 +64,10 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         super(DiscoverShell, self).go()
         tests = fmf.Tree(dict(summary='tests'))
 
+        # dist-git related
+        sourcedir = os.path.join(self.workdir, 'source')
+        dist_git_source = self.get('dist-git-source', False)
+
         # Check and process each defined shell test
         for data in self.data['tests']:
             # Create data copy (we want to keep original data for save()
@@ -75,7 +90,10 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             # Apply default test duration unless provided
             if 'duration' not in data:
                 data['duration'] = tmt.base.DEFAULT_TEST_DURATION_L2
-
+            # Add source dir path variable
+            if dist_git_source:
+                data.setdefault('environment', {})[
+                    'TMT_SOURCE_DIR'] = sourcedir
             # Create a simple fmf node, adjust its name
             tests.child(name, data)
 
@@ -83,6 +101,23 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         testdir = os.path.join(self.workdir, "tests")
         relative_path = os.path.relpath(self.step.plan.worktree, self.workdir)
         os.symlink(relative_path, testdir)
+
+        if dist_git_source:
+            try:
+                git_root = self.run(
+                    ["git", "rev-parse", "--show-toplevel"],
+                    cwd=self.step.plan.my_run.tree.root,
+                    dry=True)[0].strip('\n')
+            except tmt.utils.RunError:
+                raise tmt.utils.DiscoverError(
+                    f"Directory '{self.step.plan.my_run.tree.root}' "
+                    f"is not a git repository.")
+            try:
+                self.extract_distgit_source(
+                    git_root, sourcedir, self.get('dist-git-type'))
+            except Exception as error:
+                raise tmt.utils.DiscoverError(
+                    f"Failed to process 'dist-git-source'.", original=error)
 
         # Use a tmt.Tree to apply possible command line filters
         tests = tmt.Tree(tree=tests).tests(conditions=["manual is False"])
