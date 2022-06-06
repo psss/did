@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.13.0
+Version: 1.14.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -177,6 +177,51 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 
 
 %changelog
+* Mon Jun 06 2022 Petr Šplíchal <psplicha@redhat.com> - 1.14.0-1
+- Command 'tmt clean' should not run rsync at all
+- Dist-git-source for Discover (fmf, shell)
+- Adjust the new `id` key implementation
+- Add a new core key `id` for unique identifiers
+- Recommend qemu emulators for other architectures
+- Copy the whole git repo only if necessary
+- Reveal hidden errors during `testcloud` booting
+- Use time for timeout handling in Guest.reconnect()
+- Split `Guest` class to separate SSH-capable guests
+- Explicitly set the docs language in the config
+- Kill the running test when rebooting
+- Extend the reboot timeout to allow system upgrades
+- Allow selecting tasks directly from upgrade config
+- Adjust the new `upgrade` execute plugin
+- Allow specifying command for reboot
+- Implement upgrade execute plugin
+- Buildrequire python3-docutils, append plan adjust
+- Implement `tmt tests export --nitrate --link-runs`
+- Detect component from general plan during import
+- Adjust the support for steps in standalone mode
+- Add results method to ExecutePlugin
+- Implement a common ancestor for Action and Plugin
+- Allow abstractly excluding steps from runs
+- Correctly handle tests --name '.' shortcut
+- Rename WorkdirType to WorkdirArgumentType
+- Fix workdir parameter type for tmt.utils.Common
+- Allows importing jira issues as link-relates
+- Enables mypy coverage for empty-ish Python files
+- Adds type annotations to tmt.templates
+- Prevent infinite recursion if --id is set
+- Enable mypy check for Artemis provision plugin
+- Adjust provision dry mode propagation, add a test
+- Introduce new _options attribute to Common class
+- Add specification for remote plans referencing
+- Bootstrap type annotations
+- Execute script should not be used with discover
+- Add the `arch` key to the hardware specification
+- Fix pip install instructions
+- Disable network access when building in copr
+- Ignore list for dist-git-source
+- Remove the obsoleted `detach` execute method
+- Fix login during `execute` and `prepare` step
+- Import from Makefile with missing build target
+
 * Mon May 02 2022 Petr Šplíchal <psplicha@redhat.com> - 1.13.0-1
 - Add multiarch support to testcloud provision
 - Consistent summary for test export --nitrate
