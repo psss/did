@@ -6,6 +6,7 @@ import importlib
 import os
 import pkgutil
 import sys
+from typing import Generator, Optional
 
 import fmf
 
@@ -14,7 +15,7 @@ import tmt
 log = fmf.utils.Logging('tmt').logger
 
 
-def explore():
+def explore() -> None:
     """ Explore all available plugins """
 
     # Check all tmt steps for native plugins
@@ -41,7 +42,7 @@ def explore():
             import_(module, path)
 
 
-def import_(module, path=None):
+def import_(module: str, path: Optional[str] = None) -> None:
     """ Attempt to import requested module """
     try:
         importlib.import_module(module)
@@ -52,7 +53,7 @@ def import_(module, path=None):
             (f" from '{path}'." if path else ".") + f"\n({error})")
 
 
-def discover(path):
+def discover(path: str) -> Generator[str, None, None]:
     """ Discover available plugins for given paths """
     for _, name, package in pkgutil.iter_modules([path]):
         if not package:
