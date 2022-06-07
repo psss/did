@@ -11,7 +11,7 @@ rlJournalStart
         rlPhaseStartTest "Test $method"
             # Run the plan, check for expected results
             rlRun -s "tmt run -av --scratch --id $run provision -h $method" 1
-            rlAssertGrep "1 test passed and 1 test failed" $rlRun_LOG
+            rlAssertGrep "2 tests passed and 1 test failed" $rlRun_LOG
 
             # Check output and extra logs in the test data directory
             data="$run/plan/execute/data"
@@ -26,7 +26,16 @@ rlJournalStart
 
             # Check report of the last run for correct results
             rlRun -s "tmt run --last report" 1
-            rlAssertGrep "1 test passed and 1 test failed" $rlRun_LOG
+            rlAssertGrep "2 tests passed and 1 test failed" $rlRun_LOG
+
+            # Check beakerlib's backup directory pull
+            if [[ "$method" =~ local|container ]]; then
+                # No pull happened so it shoud be present
+                rlAssertExists "$data/test/beakerlib/backup"
+            else
+                # Should be ignored
+                rlAssertNotExists "$data/test/beakerlib/backup"
+            fi
         rlPhaseEnd
     done
 

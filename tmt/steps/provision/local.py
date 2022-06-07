@@ -86,5 +86,10 @@ class GuestLocal(tmt.Guest):
     def push(self, source=None, destination=None, options=None):
         """ Nothing to be done to push workdir """
 
-    def pull(self, source=None, destination=None, options=None):
+    def pull(
+            self,
+            source=None,
+            destination=None,
+            options=None,
+            extend_options=None):
         """ Nothing to be done to pull workdir """

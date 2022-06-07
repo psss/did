@@ -439,7 +439,12 @@ class Guest(tmt.utils.Common):
 
         raise NotImplementedError()
 
-    def pull(self, source=None, destination=None, options=None):
+    def pull(
+            self,
+            source=None,
+            destination=None,
+            options=None,
+            extend_options=None):
         """
         Pull files from the guest
         """
@@ -733,18 +738,26 @@ class GuestSsh(Guest):
                     f"that login as '{self.user}' to the guest does not work.")
                 raise
 
-    def pull(self, source=None, destination=None, options=None):
+    def pull(
+            self,
+            source=None,
+            destination=None,
+            options=None,
+            extend_options=None):
         """
         Pull files from the guest
 
         By default the whole plan workdir is synced from the same
         location on the guest. Use the 'source' and 'destination' to
-        sync custom location and the 'options' parametr to modify
-        default options '-Rrz --links --safe-links --protect-args'.
+        sync custom location, the 'options' parameter to modify
+        default options '-Rrz --links --safe-links --protect-args'
+        and 'extend_options' to extend them (e.g. by exclude).
         """
         # Prepare options and the pull command
         if options is None:
             options = "-Rrz --links --safe-links --protect-args".split()
+        if extend_options is not None:
+            options.extend(extend_options)
         if destination is None:
             destination = "/"
         if source is None:

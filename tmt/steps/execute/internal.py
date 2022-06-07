@@ -338,7 +338,19 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 self.execute(
                     test, guest, progress=f"{index + 1}/{len(tests)}",
                     extra_environment=extra_environment)
-                guest.pull(source=self.data_path(test, full=True))
+
+                # Pull test logs from the guest, exclude beakerlib backups
+                if test.framework == "beakerlib":
+                    exclude = [
+                        "--exclude",
+                        self.data_path(test, "backup", full=True)]
+                else:
+                    exclude = None
+                guest.pull(
+                    source=self.data_path(test, full=True),
+                    extend_options=exclude)
+
+                # Handle reboot, check results
                 if self._handle_reboot(test, guest):
                     continue
                 self._results.append(self.check(test))

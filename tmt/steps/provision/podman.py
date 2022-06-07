@@ -210,7 +210,12 @@ class GuestContainer(tmt.Guest):
             ["chcon", "--recursive", "--type=container_file_t",
              self.parent.plan.workdir], shell=False)
 
-    def pull(self, source=None, destination=None, options=None):
+    def pull(
+            self,
+            source=None,
+            destination=None,
+            options=None,
+            extend_options=None):
         """ Nothing to be done to pull workdir """
 
     def stop(self):

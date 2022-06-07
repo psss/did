@@ -9,3 +9,12 @@
         echo extra bad > $TMT_TEST_DATA/extra.log
         echo common bad >> $TMT_PLAN_DATA/log.txt
         /bin/false
+/beakerlib:
+    framework: beakerlib
+    test: |
+        . /usr/share/beakerlib/beakerlib.sh || exit 1
+        rlJournalStart
+            rlPhaseStartSetup
+                rlFileBackup "test.fmf" # backup this file
+            rlPhaseEnd
+        rlJournalEnd
