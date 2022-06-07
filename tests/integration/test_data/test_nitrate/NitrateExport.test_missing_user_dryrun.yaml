@@ -1,0 +1,109 @@
+_requre:
+  DataTypes: 1
+  key_strategy: StorageKeysInspectSimple
+  version_storage_file: 3
+nitrate.xmlrpc_driver:
+  single_request_with_cookies:
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.base
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - alias: ''
+      arguments: ' '
+      attachment: []
+      author: lzachar
+      author_id: 3020
+      case_id: 608740
+      case_status: DISABLED
+      case_status_id: 3
+      category: Sanity
+      category_id: 518
+      component: []
+      create_date: '2020-10-20 23:04:21'
+      default_tester: lzachar
+      default_tester_id: 3020
+      estimated_time: 00:15:00
+      extra_link: http://localhost/
+      is_automated: 1
+      is_automated_proposed: false
+      notes: ' '
+      plan: []
+      priority: P2
+      priority_id: 2
+      requirement: ' '
+      reviewer: null
+      reviewer_id: null
+      script: ' '
+      summary: DELETE
+      tag: []
+      text:
+        action: ''
+        action_checksum: d41d8cd98f00b204e9800998ecf8427e
+        author: lzachar
+        author_id: 3020
+        breakdown: ''
+        breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
+        case: DELETE
+        case_id: 608740
+        case_text_version: 1
+        create_date: '2020-10-20 23:04:21'
+        effect: ''
+        effect_checksum: d41d8cd98f00b204e9800998ecf8427e
+        id: 876580
+        setup: ''
+        setup_checksum: d41d8cd98f00b204e9800998ecf8427e
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - nitrate.immutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - []
+tmt.utils:
+  check_git_url:
+  - metadata:
+      guess_type: Simple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.base
+      - tmt.export
+      - requre.objects
+      - requre.cassette
+      - tmt.utils
+      - check_git_url
+    output: https://github.com/teemtee/tmt.git

@@ -361,12 +361,17 @@ def export_to_nitrate(test):
 
     # Default tester
     if test.contact:
-        # Need to pick one value, so picking the first contact
-        email_address = email.utils.parseaddr(test.contact[0])[1]
-        # TODO handle nitrate user not existing and other possible exceptions
-        if not dry_mode:
-            nitrate_case.tester = nitrate.User(email_address)
-        echo(style('default tester: ', fg='green') + email_address)
+        try:
+            # Need to pick one value, so picking the first contact
+            email_address = email.utils.parseaddr(test.contact[0])[1]
+            nitrate_user = nitrate.User(email_address)
+            nitrate_user._fetch()  # To check that user exists
+            if not dry_mode:
+                nitrate_case.tester = nitrate_user
+            echo(style('default tester: ', fg='green') + email_address)
+        except nitrate.NitrateError as error:
+            log.debug(error)
+            raise ConvertError(f"Nitrate issue: {error}")
 
     # Duration
     if not dry_mode:

@@ -11,6 +11,7 @@ from ruamel.yaml import YAML
 
 import tmt.base
 import tmt.cli
+from tmt.utils import ConvertError
 
 # Prepare path to examples
 TEST_DIR = Path(__file__).parent
@@ -137,6 +138,15 @@ class NitrateExport(Base):
             ["test", "export", "--nitrate", "--bugzilla", "."],
             catch_exceptions=False)
         assert self.runner_output.exit_code == 0
+
+    def test_missing_user_dryrun(self):
+        os.chdir(self.tmpdir / "existing_testcase_missing_user")
+        runner = CliRunner()
+        with self.assertRaises(ConvertError):
+            self.runner_output = runner.invoke(
+                tmt.cli.main,
+                ["test", "export", "--nitrate", "--debug", "--dry", "."],
+                catch_exceptions=False)
 
 
 class NitrateImport(Base):
