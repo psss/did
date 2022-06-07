@@ -540,7 +540,9 @@ def read_nitrate(beaker_task, common_data, disabled, general):
         else:
             testcases = list(nitrate.TestCase.search(
                 script=beaker_task, case_status__in=[1, 2, 4]))
-    except (nitrate.NitrateError, gssapi.raw.misc.GSSError) as error:
+    except (nitrate.NitrateError,
+            nitrate.xmlrpc_driver.NitrateXmlrpcError,
+            gssapi.raw.misc.GSSError) as error:
         raise ConvertError(error)
     if not testcases:
         echo("No {0}testcase found for '{1}'.".format(
