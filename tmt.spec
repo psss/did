@@ -84,6 +84,7 @@ Dependencies required to run tests in a local virtual machine.
 
 %package test-convert
 Summary: Test import and export dependencies
+Requires: tmt == %{version}-%{release}
 Requires: make python3-nitrate python3-html2text python3-markdown
 Requires: python3-bugzilla
 
@@ -92,6 +93,7 @@ Additional dependencies needed for test metadata import and export.
 
 %package report-html
 Summary: Report plugin with support for generating web pages
+Requires: tmt == %{version}-%{release}
 Requires: python3-jinja2
 
 %description report-html
@@ -100,6 +102,7 @@ output thanks to direct links to output logs.
 
 %package report-junit
 Summary: Report plugin with support for generating JUnit output file
+Requires: tmt == %{version}-%{release}
 Requires: python3-junit_xml
 
 %description report-junit
