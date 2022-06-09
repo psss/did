@@ -200,9 +200,10 @@ single commit.
 Merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Pull request merging is done by maintainers who have a good
-overview of the whole code. Before merging a pull request it's
-good to check the following:
+Pull request merging is done by one of maintainers who have a good
+overview of the whole code. Maintainer who will take care of
+the process will assign themselves to the pull request.
+Before merging it's good to check the following:
 
 * New test coverage added if appropriate, all tests passed
 * Documentation has been added or updated where appropriate
