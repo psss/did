@@ -100,9 +100,6 @@ class GuestContainer(tmt.Guest):
         self.force_pull = data.get('pull')
         self.container = data.get('container')
 
-        # Instances variables initialized later
-        self.container_id = None
-
     def save(self):
         """ Save guest data for future wake up """
         data = super().save()
@@ -141,10 +138,10 @@ class GuestContainer(tmt.Guest):
 
         # Run the container
         self.debug(f"Start container '{self.image}'.")
-        self.container_id = self.podman(
+        self.podman(
             ['run'] + workaround +
             ['--name', self.container, '-v', f'{workdir}:{workdir}:z',
-             '-itd', self.image])[0].strip()
+             '-itd', self.image])
 
     def reboot(self, hard=False, command=None):
         """ Restart the container, return True if successful  """
