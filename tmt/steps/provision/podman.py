@@ -1,4 +1,6 @@
+import dataclasses
 import os
+from typing import Optional
 
 import click
 
@@ -11,6 +13,17 @@ CONNECTION_TIMEOUT = 60
 # Defaults
 DEFAULT_IMAGE = "fedora"
 DEFAULT_USER = "root"
+
+# TODO: get rid of `ignore` once superclass is no longer `Any`
+
+
+@dataclasses.dataclass
+class PodmanGuestData(tmt.steps.provision.GuestData):  # type: ignore[misc]
+    image: str = DEFAULT_IMAGE
+    user: str = DEFAULT_USER
+    force_pull: bool = False
+
+    container: Optional[str] = None
 
 
 class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
@@ -58,14 +71,10 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
 
     def default(self, option, default=None):
         """ Return default data for given option """
-        # Use 'fedora' as a default image
-        if option == 'image':
-            return DEFAULT_IMAGE
-        # Use 'root' as a default user
-        if option == 'user':
-            return DEFAULT_USER
-        # No other defaults available
-        return default
+        if option == 'pull':
+            return PodmanGuestData().force_pull
+
+        return getattr(PodmanGuestData(), option.replace('-', '_'), default)
 
     def wake(self, keys=None, data=None):
         """ Wake up the plugin, process data, apply options """
@@ -85,9 +94,15 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
         self.info('image', f"{self.get('image')}{pull}", 'green')
 
         # Prepare data for the guest instance
-        data = dict()
-        for key in self._keys + self._common_keys:
-            data[key] = self.get(key)
+        data_from_options = {
+            key: self.get(key)
+            for key in PodmanGuestData.keys()
+            if key != 'force_pull'
+            }
+
+        data_from_options['force_pull'] = self.get('pull')
+
+        data = PodmanGuestData(**data_from_options)
 
         # Create a new GuestTestcloud instance and start it
         self._guest = GuestContainer(data, name=self.name, parent=self.step)
@@ -105,23 +120,12 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
 class GuestContainer(tmt.Guest):
     """ Container Instance """
 
-    def load(self, data):
-        """ Load guest data and initialize attributes """
-        super().load(data)
+    _data_class = PodmanGuestData
 
-        # Load basic data
-        self.image = data.get('image')
-        self.force_pull = data.get('pull')
-        self.container = data.get('container')
-        self.user = data.get('user')
-
-    def save(self):
-        """ Save guest data for future wake up """
-        data = super().save()
-        data['container'] = self.container
-        data['image'] = self.image
-        data['user'] = self.user
-        return data
+    image: Optional[str]
+    container: Optional[str]
+    user: str
+    force_pull: bool
 
     def wake(self):
         """ Wake up the guest """

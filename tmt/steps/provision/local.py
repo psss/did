@@ -37,7 +37,10 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
         super().go()
 
         # Create a GuestLocal instance
-        data = {'guest': 'localhost', 'role': self.get('role')}
+        data = tmt.steps.provision.GuestSshData(
+            guest='localhost',
+            role=self.get('role')
+            )
         self._guest = GuestLocal(data, name=self.name, parent=self.step)
 
     def guest(self):
@@ -52,10 +55,7 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
 class GuestLocal(tmt.Guest):
     """ Local Host """
 
-    def __init__(self, data, name=None, parent=None):
-        """ Initialize guest data """
-        super().__init__(data, name, parent)
-        self.localhost = True
+    localhost = True
 
     def ansible(self, playbook, extra_args=None):
         """ Prepare localhost using ansible playbook """

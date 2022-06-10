@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import dataclasses
 import os
 import platform
 import re
@@ -148,6 +149,31 @@ NON_KVM_TIMEOUT_COEF = 10          # times
 # SSH key type, set None for ssh-keygen default one
 SSH_KEYGEN_TYPE = "ecdsa"
 
+DEFAULT_USER = 'root'
+DEFAULT_MEMORY = 2048
+DEFAULT_DISK = 10
+DEFAULT_IMAGE = 'fedora'
+DEFAULT_CONNECTION = 'session'
+DEFAULT_ARCH = platform.machine()
+
+# TODO: get rid of `ignore` once superclass is no longer `Any`
+
+
+@dataclasses.dataclass
+class TestcloudGuestData(
+        tmt.steps.provision.GuestSshData):  # type: ignore[misc]
+    # Override parent class with our defaults
+    user: str = DEFAULT_USER
+
+    image: str = DEFAULT_IMAGE
+    memory: int = DEFAULT_MEMORY
+    disk: int = DEFAULT_DISK
+    connection: str = DEFAULT_CONNECTION
+    arch: str = DEFAULT_ARCH
+
+    image_url: Optional[str] = None
+    instance_name: Optional[str] = None
+
 
 class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
     """
@@ -231,26 +257,17 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
 
     def default(self, option, default=None):
         """ Return default data for given option """
-        defaults = {
-            'user': 'root',
-            'memory': 2048,
-            'disk': 10,
-            'image': 'fedora',
-            'connection': 'session',
-            'arch': platform.machine()
-            }
-        if option in defaults:
-            return defaults[option]
-        return default
+        return getattr(TestcloudGuestData(), option, default)
 
     def wake(self, keys=None, data=None):
         """ Wake up the plugin, process data, apply options """
         super().wake(keys=keys, data=data)
 
         # Convert memory and disk to integers
-        for key in ['memory', 'disk']:
-            if isinstance(self.get(key), str):
-                self.data[key] = int(self.data[key])
+        # TODO: can they ever *not* be integers at this point?
+        # for key in ['memory', 'disk']:
+        #     if isinstance(self.get(key), str):
+        #         self.data[key] = int(self.data[key])
 
         # Wake up testcloud instance
         if data:
@@ -263,18 +280,19 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
         super().go()
 
         # Give info about provided data
-        data = dict()
-        for key in self._keys + self._common_keys:
-            data[key] = self.get(key)
+        data = TestcloudGuestData(**{
+            key: self.get(key)
+            for key in TestcloudGuestData.keys()
+            })
+        for key, value in data.to_dict().items():
             if key == 'memory':
-                self.info('memory', f"{self.get('memory')} MB", 'green')
+                self.info('memory', f"{value} MB", 'green')
             elif key == 'disk':
-                self.info('disk', f"{self.get('disk')} GB", 'green')
+                self.info('disk', f"{value} GB", 'green')
             elif key == 'connection':
-                self.verbose(key, data[key], 'green')
-            else:
-                if data[key] is not None:
-                    self.info(key, data[key], 'green')
+                self.verbose('connection', value, 'green')
+            elif value is not None:
+                self.info(key, value, 'green')
 
         # Create a new GuestTestcloud instance and start it
         self._guest = GuestTestcloud(data, name=self.name, parent=self.step)
@@ -314,6 +332,16 @@ class GuestTestcloud(tmt.GuestSsh):
         connection . either session (default) or system, to be passed to qemu
         arch ....... architecture for the VM, host arch is the default
     """
+
+    _data_class = TestcloudGuestData
+
+    image: str
+    image_url: Optional[str]
+    instance_name: Optional[str]
+    memory: int
+    disk: str
+    connection: str
+    arch: str
 
     # Not to be saved, recreated from image_url/instance_name/... every
     # time guest is instantiated.
@@ -408,27 +436,6 @@ class GuestTestcloud(tmt.GuestSsh):
         # Write always to ovewrite possible outdated version
         with open(DOMAIN_TEMPLATE_FILE, 'w') as template:
             template.write(DOMAIN_TEMPLATE)
-
-    def load(self, data):
-        """ Load guest data and initialize attributes """
-        super().load(data)
-        self.image = data.get('image')
-        self.image_url = data.get('image_url')
-        self.instance_name = data.get('instance_name')
-        self.memory = data.get('memory')
-        self.disk = data.get('disk')
-        self.connection = data.get('connection')
-        self.arch = data.get('arch')
-
-    def save(self):
-        """ Save guest data for future wake up """
-        data = super().save()
-        data['instance_name'] = self.instance_name
-        data['image'] = self.image
-        data['image_url'] = self.image_url
-        data['connection'] = self.connection
-        data['arch'] = self.arch
-        return data
 
     def wake(self):
         """ Wake up the guest """

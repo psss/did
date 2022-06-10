@@ -1,4 +1,5 @@
 import collections
+import dataclasses
 import datetime
 import os
 import random
@@ -8,12 +9,13 @@ import string
 import subprocess
 import tempfile
 import time
-from typing import Optional, Type
+from typing import Dict, List, Optional, Type
 
 import click
 import fmf
 
 import tmt
+import tmt.plugins
 import tmt.utils
 
 # Timeout in seconds of waiting for a connection after reboot
@@ -50,8 +52,8 @@ class Provision(tmt.steps.Step):
                 f"Provision step names must be unique for multihost testing. "
                 f"Duplicate names: {duplicate_string} in plan '{plan.name}'.")
         # List of provisioned guests and loaded guest data
-        self._guests = []
-        self._guest_data = {}
+        self._guests: List['Guest'] = []
+        self._guest_data: Dict[str, 'GuestData'] = {}
         self.is_multihost = False
 
     def load(self, extra_keys=None):
@@ -59,7 +61,13 @@ class Provision(tmt.steps.Step):
         extra_keys = extra_keys or []
         super().load(extra_keys)
         try:
-            self._guest_data = tmt.utils.yaml_to_dict(self.read('guests.yaml'))
+            raw_guest_data = tmt.utils.yaml_to_dict(self.read('guests.yaml'))
+
+            self._guest_data = {
+                name: tmt.utils.SerializableContainer.unserialize(guest_data)
+                for name, guest_data in raw_guest_data.items()
+                }
+
         except tmt.utils.FileError:
             self.debug('Provisioned guests not found.', level=2)
 
@@ -68,9 +76,10 @@ class Provision(tmt.steps.Step):
         data = data or {}
         super().save(data)
         try:
-            guests = dict(
-                [(guest.name, guest.save()) for guest in self.guests()])
-            self.write('guests.yaml', tmt.utils.dict_to_yaml(guests))
+            raw_guest_data = {guest.name: guest.save().to_serialized()
+                              for guest in self.guests()}
+
+            self.write('guests.yaml', tmt.utils.dict_to_yaml(raw_guest_data))
         except tmt.utils.FileError:
             self.debug('Failed to save provisioned guests.')
 
@@ -154,7 +163,7 @@ class Provision(tmt.steps.Step):
             if save:
                 self.save()
 
-    def guests(self):
+    def guests(self) -> List['Guest']:
         """ Return the list of all provisioned guests """
         return self._guests
 
@@ -234,6 +243,20 @@ class ProvisionPlugin(tmt.steps.Plugin):
         """ Remove the images of one particular plugin """
 
 
+@dataclasses.dataclass
+class GuestData(tmt.utils.SerializableContainer):
+    """
+    Keys necessary to describe, create, save and restore a guest.
+
+    Very basic set of keys shared across all known guest classes.
+    """
+
+    # guest role in the multihost scenario
+    role: Optional[str] = None
+    # hostname or ip address
+    guest: Optional[str] = None
+
+
 class Guest(tmt.utils.Common):
     """
     Guest provisioned for test execution
@@ -244,26 +267,34 @@ class Guest(tmt.utils.Common):
     to Guest subclasses to provide one working in their respective
     infrastructure.
 
-    The following keys are expected in the 'data' dictionary::
+    The following keys are expected in the 'data' container::
 
         role ....... guest role in the multihost scenario
         guest ...... name, hostname or ip address
 
-    These are by default imported into instance attributes (see the
-    class attribute '_keys' below).
+    These are by default imported into instance attributes.
     """
 
+    # Used by save() to construct the correct container for keys.
+    _data_class = GuestData
+
+    role: Optional[str]
+    guest: Optional[str]
+
+    # Flag to indicate localhost guest, requires special handling
+    localhost = False
+
+    # TODO: do we need this list? Can whatever code is using it use _data_class directly?
     # List of supported keys
     # (used for import/export to/from attributes during load and save)
-    _keys = ['role', 'guest']
+    @property
+    def _keys(self) -> List[str]:
+        return list(self._data_class.keys())
 
-    def __init__(self, data, name=None, parent=None):
+    def __init__(self, data: GuestData, name=None, parent=None):
         """ Initialize guest data """
         super().__init__(parent, name)
-        # Initialize role, it will be overridden by load() if specified
-        self.role = None
-        # Flag to indicate localhost guest, requires special handling
-        self.localhost = False
+
         self.load(data)
 
     def _random_name(self, prefix='', length=16):
@@ -280,7 +311,7 @@ class Guest(tmt.utils.Common):
         _, run_id = os.path.split(self.parent.plan.my_run.workdir)
         return self._random_name(prefix="tmt-{0}-".format(run_id[-3:]))
 
-    def load(self, data):
+    def load(self, data: GuestData) -> None:
         """
         Load guest data into object attributes for easy access
 
@@ -293,10 +324,9 @@ class Guest(tmt.utils.Common):
         line options / L2 metadata / user configuration and wake up data
         stored by the save() method below.
         """
-        for key in self._keys:
-            setattr(self, key, data.get(key))
+        data.inject_to(self)
 
-    def save(self):
+    def save(self) -> GuestData:
         """
         Save guest data for future wake up
 
@@ -305,12 +335,7 @@ class Guest(tmt.utils.Common):
         the guest. Everything needed to attach to a running instance
         should be added into the data dictionary by child classes.
         """
-        data = dict()
-        for key in self._keys:
-            value = getattr(self, key)
-            if value is not None:
-                data[key] = value
-        return data
+        return self._data_class.extract_from(self)
 
     def wake(self):
         """
@@ -562,6 +587,26 @@ class Guest(tmt.utils.Common):
         return []
 
 
+@dataclasses.dataclass
+class GuestSshData(GuestData):
+    """
+    Keys necessary to describe, create, save and restore a guest with SSH
+    capability.
+
+    Derived from GuestData, this class adds keys relevant for guests that can be
+    reached over SSH.
+    """
+
+    # port to connect to
+    port: Optional[int] = None
+    # user name to log in
+    user: Optional[str] = None
+    # path to the private key
+    key: List[str] = dataclasses.field(default_factory=list)
+    # password
+    password: Optional[str] = None
+
+
 class GuestSsh(Guest):
     """
     Guest provisioned for test execution, capable of accepting SSH connections
@@ -575,13 +620,15 @@ class GuestSsh(Guest):
         key ........ path to the private key (str or list)
         password ... password
 
-    These are by default imported into instance attributes (see the
-    class attribute '_keys' below).
+    These are by default imported into instance attributes.
     """
 
-    # List of supported keys
-    # (used for import/export to/from attributes during load and save)
-    _keys = Guest._keys + ['port', 'user', 'key', 'password']
+    _data_class = GuestSshData
+
+    port: Optional[int]
+    user: Optional[str]
+    key: List[str]
+    password: Optional[str]
 
     # Master ssh connection process and socket path
     _ssh_master_process = None

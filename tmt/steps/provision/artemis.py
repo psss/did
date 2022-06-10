@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import sys
 import time
@@ -36,38 +37,7 @@ SUPPORTED_API_VERSIONS = (
 # should be perfectly fine.
 DEFAULT_API_VERSION = SUPPORTED_API_VERSIONS[0]
 
-# Type annotation for "data" package describing a guest instance. Passed
-# between load() and save() calls.
-StepStateType = TypedDict(
-    'StepStateType',
-    {
-        # API
-        'api-url': str,
-        'api-version': str,
-
-        # Guest request properties
-        'arch': str,
-        'image': str,
-        'hardware': Any,
-        'pool': Optional[str],
-        'priority-group': str,
-        'keyname': str,
-        'user-data': Dict[str, str],
-
-        # Provided by Artemis response
-        'guestname': Optional[str],
-        'guest': Optional[str],
-        'user': str,
-
-        # Timeouts and deadlines
-        'provision-timeout': int,
-        'provision-tick': int,
-        'api-timeout': int,
-        'api-retries': int,
-        'api-retry-backoff-factor': int
-        }
-    )
-
+DEFAULT_API_URL = 'http://127.0.0.1:8001'
 DEFAULT_USER = 'root'
 DEFAULT_ARCH = 'x86_64'
 DEFAULT_PRIORITY_GROUP = 'default-priority'
@@ -79,21 +49,39 @@ DEFAULT_API_RETRIES = 10
 # Should lead to delays of 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256 seconds
 DEFAULT_RETRY_BACKOFF_FACTOR = 1
 
-DEFAULT_GUEST_DATA = cast(
-    StepStateType, {
-        'api-version': DEFAULT_API_VERSION,
-        'arch': DEFAULT_ARCH,
-        'priority-group': DEFAULT_PRIORITY_GROUP,
-        'keyname': DEFAULT_KEYNAME,
-        'user-data': {},
-        'user': DEFAULT_USER,
-        'provision-timeout': DEFAULT_PROVISION_TIMEOUT,
-        'provision-tick': DEFAULT_PROVISION_TICK,
-        'api-timeout': DEFAULT_API_TIMEOUT,
-        'api-retries': DEFAULT_API_RETRIES,
-        'api-retry-backoff-factor': DEFAULT_RETRY_BACKOFF_FACTOR
-        }
-    )
+# Type annotation for "data" package describing a guest instance. Passed
+# between load() and save() calls
+# TODO: get rid of `ignore` once superclass is no longer `Any`
+
+
+@dataclasses.dataclass
+class ArtemisGuestData(tmt.steps.provision.GuestSshData):  # type: ignore[misc]
+    # Override parent class with our defaults
+    user: str = DEFAULT_USER
+
+    # API
+    api_url: str = DEFAULT_API_URL
+    api_version: str = DEFAULT_API_VERSION
+
+    # Guest request properties
+    arch: str = DEFAULT_ARCH
+    image: Optional[str] = None
+    hardware: Optional[Any] = None
+    pool: Optional[str] = None
+    priority_group: str = DEFAULT_PRIORITY_GROUP
+    keyname: str = DEFAULT_KEYNAME
+    user_data: Dict[str, str] = dataclasses.field(default_factory=dict)
+
+    # Provided by Artemis response
+    guestname: Optional[str] = None
+
+    # Timeouts and deadlines
+    provision_timeout: int = DEFAULT_PROVISION_TIMEOUT
+    provision_tick: int = DEFAULT_PROVISION_TICK
+    api_timeout: int = DEFAULT_API_TIMEOUT
+    api_retries: int = DEFAULT_API_RETRIES
+    api_retry_backoff_factor: int = DEFAULT_RETRY_BACKOFF_FACTOR
+
 
 GUEST_STATE_COLOR_DEFAULT = 'green'
 
@@ -377,11 +365,11 @@ class ProvisionArtemis(
     def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """
 
-        return DEFAULT_GUEST_DATA.get(option, default)
+        return getattr(ArtemisGuestData(), option.replace('-', '_'), default)
 
     # TODO: use better types once superclass gains its annotations
     def wake(self, keys: Optional[List[str]] = None,
-             data: Optional[StepStateType] = None) -> None:
+             data: Optional[ArtemisGuestData] = None) -> None:
         """ Wake up the plugin, process data, apply options """
 
         super().wake(keys=keys, data=data)
@@ -410,25 +398,23 @@ class ProvisionArtemis(
         except ValueError:
             raise ProvisionError('Cannot parse user-data.')
 
-        data: StepStateType = {
-            'api-url': self.get('api-url'),
-            'api-version': api_version,
-            'arch': self.get('arch'),
-            'image': self.get('image'),
-            'hardware': self.get('hardware'),
-            'pool': self.get('pool'),
-            'priority-group': self.get('priority-group'),
-            'keyname': self.get('keyname'),
-            'user-data': user_data,
-            'guestname': None,
-            'guest': None,
-            'user': DEFAULT_USER,
-            'provision-timeout': self.get('provision-timeout'),
-            'provision-tick': self.get('provision-tick'),
-            'api-timeout': self.get('api-timeout'),
-            'api-retries': self.get('api-retries'),
-            'api-retry-backoff-factor': self.get('api-retry-backoff-factor')
-            }
+        data = ArtemisGuestData(
+            api_url=self.get('api-url'),
+            api_version=api_version,
+            arch=self.get('arch'),
+            image=self.get('image'),
+            hardware=self.get('hardware'),
+            pool=self.get('pool'),
+            priority_group=self.get('priority-group'),
+            keyname=self.get('keyname'),
+            user_data=user_data,
+            user=self.get('user'),
+            provision_timeout=self.get('provision-timeout'),
+            provision_tick=self.get('provision-tick'),
+            api_timeout=self.get('api-timeout'),
+            api_retries=self.get('api-retries'),
+            api_retry_backoff_factor=self.get('api-retry-backoff-factor')
+            )
 
         self._guest = GuestArtemis(data, name=self.name, parent=self.step)
         self._guest.start()
@@ -446,6 +432,29 @@ class GuestArtemis(tmt.GuestSsh):  # type: ignore[misc]
     The following keys are expected in the 'data' dictionary:
     """
 
+    # API
+    api_url: str
+    api_version: str
+
+    # Guest request properties
+    arch: str
+    image: str
+    hardware: Optional[Any]
+    pool: Optional[str]
+    priority_group: str
+    keyname: str
+    user_data: Dict[str, str]
+
+    # Provided by Artemis response
+    guestname: Optional[str]
+
+    # Timeouts and deadlines
+    provision_timeout: int
+    provision_tick: int
+    api_timeout: int
+    api_retries: int
+    api_retry_backoff_factor: int
+
     _api: Optional[ArtemisAPI] = None
 
     @property
@@ -454,50 +463,6 @@ class GuestArtemis(tmt.GuestSsh):  # type: ignore[misc]
             self._api = ArtemisAPI(self)
 
         return self._api
-
-    def load(self, data: StepStateType) -> None:
-        super().load(data)
-
-        self.api_url = data['api-url']
-        self.api_version = data['api-version']
-        self.arch = data['arch']
-        self.image = data['image']
-        self.hardware = data['hardware']
-        self.pool = data['pool']
-        self.priority_group = data['priority-group']
-        self.keyname = data['keyname']
-        self.user_data = data['user-data']
-        self.guestname = data['guestname']
-        self.guest = data['guest']
-        self.user = data['user']
-        self.provision_timeout = data['provision-timeout']
-        self.provision_tick = data['provision-tick']
-        self.api_timeout = data['api-timeout']
-        self.api_retries = data['api-retries']
-        self.api_retry_backoff_factor = data['api-retry-backoff-factor']
-
-    def save(self) -> StepStateType:
-        data = cast(StepStateType, super().save())
-
-        data['api-url'] = self.api_url
-        data['api-version'] = self.api_version
-        data['arch'] = self.arch
-        data['image'] = self.image
-        data['hardware'] = self.hardware
-        data['pool'] = self.pool
-        data['priority-group'] = self.priority_group
-        data['keyname'] = self.keyname
-        data['user-data'] = self.user_data
-        data['guestname'] = self.guestname
-        data['guest'] = self.guest
-        data['user'] = self.user
-        data['provision-timeout'] = self.provision_timeout
-        data['provision-tick'] = self.provision_tick
-        data['api-timeout'] = self.api_timeout
-        data['api-retries'] = self.api_retries
-        data['api-retry-backoff-factor'] = self.api_retry_backoff_factor
-
-        return data
 
     def _create(self) -> None:
         environment: Dict[str, Any] = {

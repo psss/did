@@ -25,7 +25,7 @@ rlJournalStart
 
         # 2 guests without role are saved
         guests="$run/noroles/provision/guests.yaml"
-        rlAssertNotGrep "role" $guests
+        rlAssertNotGrep "role: [a-z]" $guests "File '$guests' should leave role unspecified"
         rlAssertGrep "client" $guests
         rlAssertGrep "server" $guests
 

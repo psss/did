@@ -91,23 +91,27 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         if not guest:
             raise tmt.utils.SpecificationError(
                 'Provide a host name or an ip address to connect.')
-        data = dict(guest=guest, user=user, role=self.get('role'))
+        data = tmt.steps.provision.GuestSshData(
+            role=self.get('role'),
+            guest=guest,
+            user=user
+            )
         self.info('guest', guest, 'green')
         self.info('user', user, 'green')
         if port:
             self.info('port', port, 'green')
-            data['port'] = port
+            data.port = port
 
         # Use provided password for authentication
         if password:
             self.info('password', password, 'green')
             self.debug('Using password authentication.')
-            data['password'] = password
+            data.password = password
         # Default to using a private key (user can have configured one)
         else:
             self.info('key', key or 'not provided', 'green')
             self.debug('Using private key authentication.')
-            data['key'] = key
+            data.key = key
 
         # And finally create the guest
         self._guest = tmt.GuestSsh(data, name=self.name, parent=self.step)
