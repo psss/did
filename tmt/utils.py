@@ -2,6 +2,7 @@
 """ Test Metadata Utilities """
 
 import contextlib
+import dataclasses
 import datetime
 import glob
 import io
@@ -18,7 +19,7 @@ from functools import lru_cache
 from pathlib import Path
 from threading import Thread
 from typing import (IO, TYPE_CHECKING, Any, BinaryIO, Dict, Generator,
-                    Iterable, List, NamedTuple, Optional, Pattern, Tuple,
+                    Iterable, List, NamedTuple, Optional, Pattern, Tuple, Type,
                     TypeVar, Union, cast, overload)
 
 import click
@@ -1125,6 +1126,164 @@ def yaml_to_dict(data: Any,
             f"Expected dictionary in yaml data, "
             f"got '{type(loaded_data).__name__}'.")
     return loaded_data
+
+
+SerializableContainerDerivedType = TypeVar(
+    'SerializableContainerDerivedType',
+    bound='SerializableContainer')
+
+
+@dataclasses.dataclass
+class SerializableContainer:
+    """
+    A mixin class for objects that may be saved in files and restored later
+    """
+
+    def to_dict(self) -> Dict[str, Any]:
+        """ Return keys and values in the form of a dictionary """
+
+        return dataclasses.asdict(self)
+
+    # This method should remain a class-method: 1. list of keys is known
+    # already, therefore it's not necessary to create an instance, and
+    # 2. some functionality makes use of this knowledge.
+    @classmethod
+    def keys(cls) -> Generator[str, None, None]:
+        """ Iterate over key names """
+
+        for field in dataclasses.fields(cls):
+            yield field.name
+
+    def values(self) -> Generator[Any, None, None]:
+        """ Iterate over key values """
+
+        yield from self.to_dict().values()
+
+    def items(self) -> Generator[Tuple[str, Any], None, None]:
+        """ Iterate over key/value pairs """
+
+        yield from self.to_dict().items()
+
+    #
+    # Moving data between containers and objects owning them
+    #
+
+    def inject_to(self, obj: Any) -> None:
+        """
+        Inject keys from this container into attributes of a given object
+        """
+
+        for name, value in self.items():
+            setattr(obj, name, value)
+
+    @classmethod
+    def extract_from(cls: Type[SerializableContainerDerivedType],
+                     obj: Any) -> SerializableContainerDerivedType:
+        """ Extract keys from given object, and save them in a container """
+
+        data = cls()
+
+        for key in cls.keys():
+            value = getattr(obj, key)
+            if value is not None:
+                setattr(data, key, value)
+
+        return data
+
+    #
+    # Serialization - writing containers into YAML files, and restoring
+    # them later.
+    #
+
+    def to_serialized(self) -> Dict[str, Any]:
+        """
+        Return keys and values in the form allowing later reconstruction.
+
+        Used to transform container into a structure one can save in a
+        YAML file, and restore it later.
+
+        See :py:meth:`from_serialized` for its counterpart.
+        """
+
+        fields = self.to_dict()
+
+        # Add a special field tracking what class we just shattered to pieces.
+        fields.update({
+            '__class__': {
+                'module': self.__class__.__module__,
+                'name': self.__class__.__name__
+                }
+            })
+
+        return fields
+
+    @classmethod
+    def from_serialized(
+            cls: Type[SerializableContainerDerivedType],
+            serialized: Dict[str, Any]) -> SerializableContainerDerivedType:
+        """
+        Recreate container from its serialized form.
+
+        Used to transform data read from a YAML file into the original
+        container.
+
+        See :py:meth:`to_serialized` for its counterpart.
+        """
+
+        # Our special key may or may not be present, depending on who
+        # calls this method.  In any case, it is not needed, because we
+        # already know what class to restore: this one.
+        serialized.pop('__class__', None)
+
+        return cls(**serialized)
+
+    @staticmethod
+    def unserialize(serialized: Dict[str, Any]
+                    ) -> SerializableContainerDerivedType:
+        """
+        Recreate container from its serialized form.
+
+        Similar to :py:meth:`from_serialized`, but this method knows
+        nothing about container's class, and will locate the correct
+        module and class by inspecting serialized data. Discovered
+        class' :py:meth:`from_serialized` is then used to create the
+        container.
+
+        Used to transform data read from a YAML file into original
+        containers when their classes are not know to the code.
+        Restoring such containers requires inspection of serialized data
+        and dynamic imports of modules as needed.
+        """
+
+        from tmt.plugins import import_
+
+        # Unpack class info, to get nicer variable names
+        klass_info = serialized.pop('__class__')
+        klass_module_name = klass_info['module']
+        klass_name = klass_info['name']
+
+        # Make sure the module is imported. It probably is, but really,
+        # make sure of it.
+        import_(klass_module_name)
+
+        # Now the module should be available in `sys.modules` like any
+        # other, and we can go and grab the class we need from it.
+        klass_module = sys.modules[klass_module_name]
+        klass = getattr(klass_module, klass_name)
+
+        if klass is None:
+            raise SystemExit(
+                f"Failed to import '{klass_name}' "
+                f"from '{klass_module_name}' module.")
+
+        # Stay away from classes that are not derived from this one, to
+        # honor promise given by return value annotation.
+        assert issubclass(klass, SerializableContainer)
+
+        # Apparently, the issubclass() check above is not good enough for mypy.
+        return cast(
+            SerializableContainerDerivedType,
+            klass.from_serialized(serialized))
 
 
 def markdown_to_html(filename: str) -> str:
