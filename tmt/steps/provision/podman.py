@@ -207,6 +207,10 @@ class GuestContainer(tmt.Guest):
         self.run(
             ["chcon", "--recursive", "--type=container_file_t",
              self.parent.plan.workdir], shell=False)
+        # In case explicit destination is given, use `podman cp` to copy data
+        # to the container
+        if destination:
+            self.podman(["cp", source, f"{self.container}:{destination}"])
 
     def pull(
             self,

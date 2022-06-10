@@ -16,7 +16,10 @@ with open('tmt.spec', encoding='utf-8') as specfile:
 __version__ = version
 __pkg__ = 'tmt'
 __pkgdata__ = {
-    'tmt': ['schemas/*.yaml']
+    'tmt': [
+        'schemas/*.yaml',
+        'steps/execute/scripts/*'
+        ]
 }
 __pkgdir__ = {}
 __pkgs__ = [

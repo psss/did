@@ -258,6 +258,8 @@ class Guest(tmt.utils.Common):
         super().__init__(parent, name)
         # Initialize role, it will be overridden by load() if specified
         self.role = None
+        # Flag to indicate localhost guest, requires special handling
+        self.localhost = False
         self.load(data)
 
     def _random_name(self, prefix='', length=16):

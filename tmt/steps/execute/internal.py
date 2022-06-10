@@ -9,64 +9,28 @@ import click
 import tmt
 import tmt.steps.execute
 import tmt.utils
-from tmt.steps.execute import TEST_OUTPUT_FILENAME
+from tmt.steps.execute import TEST_OUTPUT_FILENAME, Script
 from tmt.steps.provision import DEFAULT_RSYNC_OPTIONS
-from tmt.steps.provision.local import GuestLocal
 
-REBOOT_VARIABLES = (
-    "TMT_REBOOT_COUNT",
-    "REBOOTCOUNT",
-    "RSTRNT_REBOOTCOUNT")
-REBOOT_SCRIPT_PATHS = (
-    "/usr/local/bin/rstrnt-reboot",
-    "/usr/local/bin/rhts-reboot",
-    "/usr/local/bin/tmt-reboot")
+# Script handling reboots, in restraint compatible fashion
+TMT_REBOOT_SCRIPT = Script("/usr/local/bin/tmt-reboot",
+                           aliases=[
+                               "/usr/local/bin/rstrnt-reboot",
+                               "/usr/local/bin/rhts-reboot"],
+                           related_variables=[
+                               "TMT_REBOOT_COUNT",
+                               "REBOOTCOUNT",
+                               "RSTRNT_REBOOTCOUNT"]
+                           )
+
+# Script for archiving a file, usable for BEAKERLIB_COMMAND_SUBMIT_LOG
+TMT_FILE_SUBMIT_SCRIPT = Script("/usr/local/bin/tmt-file-submit")
+
+# File for requesting reboot
 REBOOT_REQUEST_FILENAME = "reboot_request"
-REBOOT_SCRIPT = f"""\
-#!/bin/bash
-touch "$TMT_TEST_DATA/{REBOOT_REQUEST_FILENAME}"
-while getopts "c:" flag; do
-    case "${{flag}}" in
-        c) echo "${{OPTARG}}" >> "$TMT_TEST_DATA/{REBOOT_REQUEST_FILENAME}";;
-    esac
-done
-kill $PPID
-"""
-REBOOT_BACKUP_EXT = ".tmt.backup"
-REBOOT_SETUP_NAME = "reboot_setup"
-REBOOT_SETUP_SCRIPT = f"""\
-#!/bin/sh
-for file in {" ".join(REBOOT_SCRIPT_PATHS)}; do
-    # Backup existing file, keep track of what has been backed-up
-    if [ -e "$file" ]; then
-        mv "$file" "$file{REBOOT_BACKUP_EXT}"
-        echo "$file"
-    fi
-    cp "$1" "$file" && chmod +x "$file"
-done
-"""
-REBOOT_TEARDOWN_NAME = "reboot_teardown"
-REBOOT_TEARDOWN_SCRIPT = f"""\
-#!/bin/sh
-for file in {" ".join(REBOOT_SCRIPT_PATHS)}; do
-    rm "$file"
-done
 
-# We pass back the backed up files
-for file in "$@"; do
-    mv "$file{REBOOT_BACKUP_EXT}" "$file"
-done
-"""
-REBOOT_TEMPLATE_NAME = "reboot_template"
-
-FILE_SUBMIT_SCRIPT = """\
-#!/bin/sh
-FILENAME="$2"
-[ -d "$TMT_TEST_DATA" ] || mkdir -p "$TMT_TEST_DATA"
-cp "$FILENAME" "$TMT_TEST_DATA"
-echo "File $FILENAME stored to $TMT_TEST_DATA"
-"""
-FILE_SUBMIT_NAME = "tmt-file-submit"
+# List of all available scripts
+SCRIPTS = (TMT_FILE_SUBMIT_SCRIPT, TMT_REBOOT_SCRIPT)
 
 
 class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
@@ -92,6 +56,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._previous_progress_message = ""
+        self.scripts = SCRIPTS
 
     @classmethod
     def options(cls, how=None):
@@ -156,6 +121,30 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             self._previous_progress_message = ""
         sys.stdout.flush()
 
+    def _test_environment(self, test, extra_environment):
+        """ Return test environment """
+        data_directory = self.data_path(test, full=True, create=True)
+
+        environment = extra_environment.copy()
+        environment.update(test.environment)
+        environment["TMT_TREE"] = self.parent.plan.worktree
+        environment["TMT_TEST_DATA"] = os.path.join(
+            data_directory, tmt.steps.execute.TEST_DATA)
+        environment["TMT_REBOOT_REQUEST"] = os.path.join(
+            data_directory,
+            tmt.steps.execute.TEST_DATA,
+            REBOOT_REQUEST_FILENAME)
+        # Set all supported reboot variables
+        for reboot_variable in TMT_REBOOT_SCRIPT.related_variables:
+            environment[reboot_variable] = str(test._reboot_count)
+        # Variables related to beakerlib tests
+        if test.framework == 'beakerlib':
+            environment['BEAKERLIB_DIR'] = data_directory
+            environment['BEAKERLIB_COMMAND_SUBMIT_LOG'] = (
+                f"bash {TMT_FILE_SUBMIT_SCRIPT.path}")
+
+        return environment
+
     def execute(self, test, guest, progress, extra_environment):
         """ Run test on the guest """
         # Provide info/debug message
@@ -164,25 +153,12 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             'test', test.summary or test.name, color='cyan', shift=1, level=2)
         self.debug(f"Execute '{test.name}' as a '{test.framework}' test.")
 
-        # Test will be executed in the workdir
+        # Test will be executed in it's own directory, relative to the workdir
         workdir = os.path.join(self.discover.workdir, test.path.lstrip('/'))
         self.debug(f"Use workdir '{workdir}'.", level=3)
 
-        # Create data directory, prepare environment
-        data_directory = self.data_path(test, full=True, create=True)
-        environment = extra_environment.copy()
-        environment.update(test.environment)
-        environment["TMT_TREE"] = self.parent.plan.worktree
-        environment["TMT_TEST_DATA"] = os.path.join(
-            data_directory, tmt.steps.execute.TEST_DATA)
-        # Set all supported reboot variables
-        for reboot_variable in REBOOT_VARIABLES:
-            environment[reboot_variable] = str(test._reboot_count)
-        # Variables related to beakerlib tests
-        if test.framework == 'beakerlib':
-            environment['BEAKERLIB_DIR'] = data_directory
-            environment['BEAKERLIB_COMMAND_SUBMIT_LOG'] = (
-                f"bash {self.step.workdir}/{FILE_SUBMIT_NAME}")
+        # Create data directory, prepare test environment
+        environment = self._test_environment(test, extra_environment)
 
         # Prepare the test command (use default options for shell tests)
         if test.framework == "shell":
@@ -226,51 +202,6 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             return self.check_beakerlib(test)
         else:
             return self.check_shell(test)
-
-    def _setup_reboot_script(self, guest):
-        """ Set up reboot script on the guest. """
-        def setup_file(filename, content):
-            file_path = os.path.join(self.workdir, filename)
-            with open(file_path, 'w') as template:
-                template.write(content)
-            # Make it executable, keep perms when pushing
-            perms = os.stat(file_path)
-            os.chmod(file_path, perms.st_mode | stat.S_IEXEC)
-            return file_path
-
-        template = setup_file(REBOOT_TEMPLATE_NAME, REBOOT_SCRIPT)
-        setup = setup_file(REBOOT_SETUP_NAME, REBOOT_SETUP_SCRIPT)
-        teardown = setup_file(REBOOT_TEARDOWN_NAME, REBOOT_TEARDOWN_SCRIPT)
-        guest.push(self.workdir, options=DEFAULT_RSYNC_OPTIONS + ["-p"])
-        return template, setup, teardown
-
-    @contextlib.contextmanager
-    def _setup_reboot(self, guest):
-        """ Prepare the guest environment for potential reboot """
-        # Ignore local provision
-        if isinstance(guest, GuestLocal):
-            yield
-            return
-        backed_up = []
-        template, setup, teardown = None, None, None
-        try:
-            self.debug("Setup our reboot script implementations.", level=2)
-            template, setup, teardown = self._setup_reboot_script(guest)
-            try:
-                stdout = guest.execute(f"\"{setup}\" \"{template}\"")[0]
-                backed_up.extend(stdout.splitlines())
-            except tmt.utils.RunError as error:
-                if "Read-only file system" not in error.stderr:
-                    raise error
-            yield
-        finally:
-            self.debug("Remove our reboot script implementations.", level=2)
-            # FIXME: This part may not be executed if connection to the guest
-            #        drops in the middle and the guest may be left in an
-            #        inconsistent state.
-            if teardown:
-                backed_up_files = " ".join(backed_up)
-                guest.execute(f"\"{teardown}\" {backed_up_files}")
 
     def _handle_reboot(self, test, guest):
         """
@@ -323,48 +254,53 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     def _run_tests(self, guest, extra_environment=None):
         """ Execute tests on provided guest """
         extra_environment = extra_environment or {}
+
         # Prepare tests and helper scripts, check options
         tests = self.prepare_tests()
         exit_first = self.get('exit-first', default=False)
-        self.step.write(FILE_SUBMIT_NAME, FILE_SUBMIT_SCRIPT)
 
-        with self._setup_reboot(guest):
-            # Push workdir to guest and execute tests
-            guest.push()
-            index = 0
-            while index < len(tests):
-                test = tests[index]
-                if not hasattr(test, "_reboot_count"):
-                    test._reboot_count = 0
-                self.execute(
-                    test, guest, progress=f"{index + 1}/{len(tests)}",
-                    extra_environment=extra_environment)
+        # Prepare scripts, except localhost guest
+        if not guest.localhost:
+            self.prepare_scripts(guest)
 
-                # Pull test logs from the guest, exclude beakerlib backups
-                if test.framework == "beakerlib":
-                    exclude = [
-                        "--exclude",
-                        self.data_path(test, "backup*", full=True)]
-                else:
-                    exclude = None
-                guest.pull(
-                    source=self.data_path(test, full=True),
-                    extend_options=exclude)
+        # Push workdir to guest and execute tests
+        guest.push()
+        # We cannot use enumerate here due to continue in the code
+        index = 0
+        while index < len(tests):
+            test = tests[index]
+            if not hasattr(test, "_reboot_count"):
+                test._reboot_count = 0
+            self.execute(
+                test, guest, progress=f"{index + 1}/{len(tests)}",
+                extra_environment=extra_environment)
 
-                # Handle reboot, check results
-                if self._handle_reboot(test, guest):
-                    continue
-                self._results.append(self.check(test))
-                if (exit_first and
-                        self._results[-1].result not in ('pass', 'info')):
-                    # Clear the progress bar before outputting
-                    self._show_progress('', '', True)
-                    self.warn(
-                        f'Test {test.name} failed, stopping execution.')
-                    break
-                index += 1
-            # Overwrite the progress bar, the test data is irrelevant
-            self._show_progress('', '', True)
+            # Pull test logs from the guest, exclude beakerlib backups
+            if test.framework == "beakerlib":
+                exclude = [
+                    "--exclude",
+                    self.data_path(test, "backup*", full=True)]
+            else:
+                exclude = None
+            guest.pull(
+                source=self.data_path(test, full=True),
+                extend_options=exclude)
+
+            # Handle reboot, check results
+            if self._handle_reboot(test, guest):
+                continue
+            self._results.append(self.check(test))
+            if (exit_first and
+                    self._results[-1].result not in ('pass', 'info')):
+                # Clear the progress bar before outputting
+                self._show_progress('', '', True)
+                self.warn(
+                    f'Test {test.name} failed, stopping execution.')
+                break
+            index += 1
+        # Overwrite the progress bar, the test data is irrelevant
+        self._show_progress('', '', True)
+
         # Pull artifacts created in the plan data directory
         self.debug("Pull the plan data directory.", level=2)
         guest.pull(source=self.step.plan.data_directory)

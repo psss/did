@@ -1,9 +1,12 @@
 import os
 import re
 import time
+from dataclasses import dataclass, field
+from typing import List
 
 import click
 import fmf
+import pkg_resources
 
 import tmt
 
@@ -15,6 +18,10 @@ DEFAULT_FRAMEWORK = 'shell'
 
 # The main test output filename
 TEST_OUTPUT_FILENAME = 'output.txt'
+
+# Scripts source directory
+SCRIPTS_SRC_DIR = pkg_resources.resource_filename(
+    'tmt', 'steps/execute/scripts')
 
 
 class Execute(tmt.steps.Step):
@@ -38,6 +45,9 @@ class Execute(tmt.steps.Step):
         super().__init__(plan=plan, data=data)
         # List of Result() objects representing test results
         self._results = []
+
+        # List of scripts to install
+        self.scripts = []
 
         # Default test framework and mapping old methods
         # FIXME remove when we drop the old execution methods
@@ -255,6 +265,21 @@ class ExecutePlugin(tmt.steps.Plugin):
                 metadata_filename, tmt.utils.dict_to_yaml(test._metadata))
         return tests
 
+    def prepare_scripts(self, guest):
+        """
+        Prepare additional scripts for testing
+        """
+        # Install all scripts on guest
+        for script in self.scripts:
+            source = os.path.join(
+                SCRIPTS_SRC_DIR, os.path.basename(script.path))
+
+            for dest in [script.path] + script.aliases:
+                guest.push(
+                    source=source,
+                    destination=dest,
+                    options=["-p", "--chmod=755"])
+
     def check_shell(self, test):
         """ Check result of a shell test """
         # Prepare the log path
@@ -333,3 +358,11 @@ class ExecutePlugin(tmt.steps.Plugin):
     def results(self):
         """ Return test results """
         raise NotImplementedError
+
+
+@dataclass
+class Script:
+    """ Represents a script provided by the internal executor """
+    path: str
+    aliases: List[str] = field(default_factory=list)
+    related_variables: List[str] = field(default_factory=list)

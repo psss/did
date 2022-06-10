@@ -170,13 +170,28 @@ description: |
 /tmt:
     summary: Internal test executor
     story: As a user I want to execute tests directly from tmt.
-    description:
+    description: |
         The internal ``tmt`` executor runs tests in the
         provisioned environment one by one directly from the
         tmt code which allows features such as showing live
         :ref:`/stories/cli/steps/execute/progress` or the
         :ref:`/stories/cli/steps/execute/interactive` session .
         This is the default execute step implementation.
+
+        The executor provides following shell scripts which can
+        be used by the tests for certain operations.
+
+        ``tmt-file-submit``
+            Archive the given file in the tmt test data directory.
+
+        ``tmt-reboot``
+            Soft reboot the machine from inside the test. After reboot
+            the execution starts from the test which rebooted the machine.
+            An environment variable ``TMT_REBOOT_COUNT`` is provided which
+            the test can use to handle the reboot. The variable holds the
+            number of reboots performed by the test. For more information
+            see the :ref:`/stories/features/reboot` feature documentation.
+
     example: |
         execute:
             how: tmt

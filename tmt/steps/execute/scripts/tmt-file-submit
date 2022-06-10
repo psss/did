@@ -1,0 +1,5 @@
+#!/bin/sh
+FILENAME="$2"
+[ -d "$TMT_TEST_DATA" ] || mkdir -p "$TMT_TEST_DATA"
+cp "$FILENAME" "$TMT_TEST_DATA"
+echo "File $FILENAME stored to $TMT_TEST_DATA"

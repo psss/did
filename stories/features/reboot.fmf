@@ -10,7 +10,7 @@ description: |
     variable provides number of successfully completed reboots.
 
     Note that this only works with guests provisioned by tmt, e.g.
-    ``container`` or ``virtual``, and doesn't work with the the
+    ``container`` or ``virtual``, and doesn't work with the
     ``local`` provision method. Support of the ``connect``
     provision is on a best effort basis and will not work on
     machines where ``reboot`` command is not available.
@@ -19,11 +19,14 @@ description: |
     option of the reboot script can be used, e.g. ``tmt-reboot -c
     "dnf system-upgrade reboot"``.
 
-    For backward-compatibility reasons the ``rstrnt-reboot`` and
-    ``rhts-reboot`` commands are provided as well together with
-    the ``RSTRNT_REBOOTCOUNT`` and ``REBOOTCOUNT`` environment
-    variables. Calling the script kills the parent process
-    (the running test).
+    For backward-compatibility with the `restraint`__ framework
+    the ``rstrnt-reboot`` and ``rhts-reboot`` commands are provided
+    as well together with the ``RSTRNT_REBOOTCOUNT`` and ``REBOOTCOUNT``
+    environment variables. Calling the script kills the parent process
+    (the running test). Please note that the content of these
+    scripts is not preserved, ``tmt`` overwrites them.
+
+    __ https://restraint.readthedocs.io/en/latest/commands.html#rstrnt-reboot
 
 example: |
     if [ "$TMT_REBOOT_COUNT" -eq 0 ]; then

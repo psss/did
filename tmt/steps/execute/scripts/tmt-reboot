@@ -1,0 +1,8 @@
+#!/bin/bash
+touch "$TMT_REBOOT_REQUEST"
+while getopts "c:" flag; do
+    case "${{flag}}" in
+        c) echo "${{OPTARG}}" >> "$TMT_REBOOT_REQUEST";;
+    esac
+done
+kill $PPID
