@@ -21,15 +21,27 @@ try:
 
 # Show detailed output upon command execution errors
 except tmt.utils.RunError as error:
+    # Check verbosity level used during raising exception,
+    # Supported way to correctly get verbosity is
+    # tmt.util.Common.opt('verbose')
+    if isinstance(error.caller, tmt.utils.Common):
+        verbose = error.caller.opt('verbose')
+    else:
+        verbose = 0
     for name, output in (('stdout', error.stdout), ('stderr', error.stderr)):
         if not output:
             continue
         lines = output.strip().split('\n')
-        displayed = min(len(lines), tmt.utils.OUTPUT_LINES)
+        # Show all lines in verbose mode, limit to maximum otherwise
+        if verbose > 0:
+            line_summary = f"{len(lines)}"
+        else:
+            line_summary = f"{min(len(lines), tmt.utils.OUTPUT_LINES)}/{len(lines)}"
+            lines = lines[-tmt.utils.OUTPUT_LINES:]
         print(
-            f"\n{name} ({displayed}/{len(lines)} lines)"
+            f"\n{name} ({line_summary} lines)"
             f"\n{tmt.utils.OUTPUT_WIDTH * '~'}\n" +
-            '\n'.join(lines[-tmt.utils.OUTPUT_LINES:]))
+            '\n'.join(lines))
     print()
     show_exception(error)
     raise SystemExit(2)

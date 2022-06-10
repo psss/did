@@ -1,0 +1,3 @@
+summary: Check how errors are printed to the user
+description:
+    Verbose mode should print whole output of failed command.

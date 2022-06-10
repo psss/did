@@ -609,7 +609,10 @@ class Common:
                 executable=executable)
         except FileNotFoundError as error:
             raise RunError(
-                f"File '{error.filename}' not found.", command, 127)
+                f"File '{error.filename}' not found.",
+                command,
+                127,
+                caller=self)
 
         stdout_thread = StreamLogger(
             process.stdout,
@@ -642,7 +645,8 @@ class Common:
                 command=command,
                 returncode=process.returncode,
                 stdout=stdout_thread.get_output(),
-                stderr=stderr_thread.get_output())
+                stderr=stderr_thread.get_output(),
+                caller=self)
         if join:
             return CommandOutput(
                 stdout_thread.get_output(), None)
@@ -702,7 +706,7 @@ class Common:
             message = f"Failed to run command: {printable_command} Reason: {error.message}"
             raise RunError(
                 message, error.command, error.returncode,
-                error.stdout, error.stderr)
+                error.stdout, error.stderr, caller=self)
 
     def read(self, path: str, level: int = 2) -> str:
         """ Read a file from the workdir """
@@ -866,6 +870,7 @@ class RunError(GeneralError):
             returncode: int,
             stdout: Optional[str] = None,
             stderr: Optional[str] = None,
+            caller: Optional[Common] = None,
             *args: Any,
             **kwargs: Any) -> None:
         super().__init__(message, *args, **kwargs)
@@ -873,6 +878,9 @@ class RunError(GeneralError):
         self.returncode = returncode
         self.stdout = stdout
         self.stderr = stderr
+        # Store instance of caller to get additional details
+        # in post processing (e.g. verbose level)
+        self.caller = caller
 
 
 class MetadataError(GeneralError):
