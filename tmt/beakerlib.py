@@ -163,9 +163,13 @@ class Library(object):
             # Clone repo with disabled prompt to ignore missing/private repos
             try:
                 if self.url:
-                    self.parent.run(
-                        ['git', 'clone', self.url, directory],
-                        env={"GIT_ASKPASS": "echo"})
+                    # Use 'git clone --depth=1 <url>' to speed up testing and
+                    # minimize data transfers if ref is not provided
+                    command = ['git', 'clone', '--depth=1', self.url,
+                               directory]
+                    if self.ref is not None:
+                        command = ['git', 'clone', self.url, directory]
+                    self.parent.run(command, env={"GIT_ASKPASS": "echo"})
                 else:
                     self.parent.debug(
                         f"Copy local library '{self.path}' to '{directory}'.",
