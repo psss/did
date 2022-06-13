@@ -343,7 +343,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 if test.framework == "beakerlib":
                     exclude = [
                         "--exclude",
-                        self.data_path(test, "backup", full=True)]
+                        self.data_path(test, "backup*", full=True)]
                 else:
                     exclude = None
                 guest.pull(

@@ -32,9 +32,13 @@ rlJournalStart
             if [[ "$method" =~ local|container ]]; then
                 # No pull happened so it shoud be present
                 rlAssertExists "$data/test/beakerlib/backup"
+                rlAssertExists "$data/test/beakerlib/backup-NS1"
+                rlAssertNotEquals "any backup dir is present" "$(eval 'echo $data/test/beakerlib/backup*')" "$data/test/beakerlib/backup*"
             else
                 # Should be ignored
                 rlAssertNotExists "$data/test/beakerlib/backup"
+                rlAssertNotExists "$data/test/beakerlib/backup-NS1"
+                rlAssertEquals "no backup dir is present" "$(eval 'echo $data/test/beakerlib/backup*')" "$data/test/beakerlib/backup*"
             fi
         rlPhaseEnd
     done
