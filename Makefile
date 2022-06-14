@@ -6,7 +6,7 @@ REPLACE_VERSION = "s/running from the source/$(VERSION) ($(COMMIT))/"
 PACKAGE = tmt-$(VERSION)
 FILES = LICENSE README.rst \
 		Makefile tmt.spec setup.py \
-		examples tmt bin tests
+		examples tmt bin tests .fmf
 
 # Define special targets
 all: docs packages
@@ -81,10 +81,11 @@ upload:
 tags:
 	find tmt -name '*.py' | xargs ctags --python-kinds=-i
 clean:
-	rm -rf $(TMP) build dist .cache .pytest_cache
+	rm -rf $(TMP) build dist .cache
 	rm -rf docs/{_build,stories,spec}
 	find . -type f -name "*.py[co]" -delete
 	find . -type f -name "*,cover" -delete
 	find . -type d -name "__pycache__" -delete
+	find . -type d -name .pytest_cache -exec rm -rv {} +
 	rm -f .coverage tags
 	rm -rf examples/convert/{main.fmf,test.md,Manual}

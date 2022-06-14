@@ -10,9 +10,6 @@ PATH = os.path.dirname(os.path.realpath(__file__))
 SCHEMADIR = os.path.join(PATH, "../../tmt/schemas")
 ROOTDIR = os.path.join(PATH, "../..")
 
-# make sure tmt tree is initialized, required when tests run during rpmbuild
-tmt.base.Tree.init(ROOTDIR, 'empty', False)
-
 
 @pytest.fixture
 def schema_and_store():
