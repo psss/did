@@ -1,0 +1,199 @@
+_requre:
+  DataTypes: 1
+  key_strategy: StorageKeysInspectSimple
+  version_storage_file: 3
+nitrate.xmlrpc_driver:
+  single_request_with_cookies:
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - alias: ''
+        arguments: ' '
+        attachment: []
+        author: lzachar
+        author_id: 3020
+        case_id: 545993
+        case_status: CONFIRMED
+        case_status_id: 2
+        category: '      Regression    '
+        category_id: 702
+        component: []
+        create_date: '2017-01-12 23:13:32'
+        default_tester: lzachar
+        default_tester_id: 3020
+        estimated_time: 00:00:00
+        extra_link: ''
+        is_automated: 1
+        is_automated_proposed: false
+        notes: 'some text  before
+
+
+          relevancy:
+
+          distro != fedora-36: False
+
+          arch != aarch64: ARCH=''not arch'''
+        plan: []
+        priority: P2
+        priority_id: 2
+        requirement: ' '
+        reviewer: null
+        reviewer_id: null
+        script: /tmt/tests/integration/data/nitrate/import_old_relevancy
+        summary: ' /tmt/tests/integration/data/nitrate/import_old_relevancy '
+        tag: []
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.mutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - alias: ''
+      arguments: ' '
+      attachment: []
+      author: lzachar
+      author_id: 3020
+      case_id: 545993
+      case_status: CONFIRMED
+      case_status_id: 2
+      category: '      Regression    '
+      category_id: 702
+      component: []
+      create_date: '2017-01-12 23:13:32'
+      default_tester: lzachar
+      default_tester_id: 3020
+      estimated_time: 00:00:00
+      extra_link: ''
+      is_automated: 1
+      is_automated_proposed: false
+      notes: 'some text  before
+
+
+        relevancy:
+
+        distro != fedora-36: False
+
+        arch != aarch64: ARCH=''not arch'''
+      plan: []
+      priority: P2
+      priority_id: 2
+      requirement: ' '
+      reviewer: null
+      reviewer_id: null
+      script: /tmt/tests/integration/data/nitrate/import_old_relevancy
+      summary: ' /tmt/tests/integration/data/nitrate/import_old_relevancy '
+      tag: []
+      text:
+        action: ''
+        action_checksum: d41d8cd98f00b204e9800998ecf8427e
+        author: bnater
+        author_id: 2671
+        breakdown: ''
+        breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
+        case: ' /tmt/tests/integration/data/nitrate/import_old_relevancy '
+        case_id: 545993
+        case_text_version: 1
+        create_date: '2017-01-12 23:13:32'
+        effect: ''
+        effect_checksum: d41d8cd98f00b204e9800998ecf8427e
+        id: 787828
+        setup: ''
+        setup_checksum: d41d8cd98f00b204e9800998ecf8427e
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.base
+      - nitrate.immutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - - date_joined: '2011-07-11 20:58:14'
+        email: lzachar@redhat.com
+        first_name: Lukas
+        groups:
+        - 1
+        - 3
+        id: 3020
+        is_active: true
+        is_staff: true
+        is_superuser: false
+        last_login: '2022-06-16 18:06:45'
+        last_name: Zachar
+        user_permissions: []
+        username: lzachar
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - []
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.containers
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - []

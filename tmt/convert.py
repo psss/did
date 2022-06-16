@@ -19,6 +19,7 @@ log = fmf.utils.Logging('tmt').logger
 
 
 # Test case relevancy regular expressions
+RELEVANCY_LEGACY_HEADER = r"relevancy:\s*$(.*)"
 RELEVANCY_COMMENT = r"^([^#]*?)\s*#\s*(.+)$"
 RELEVANCY_RULE = r"^([^:]+)\s*:\s*(.+)$"
 RELEVANCY_EXPRESSION = (
@@ -635,6 +636,26 @@ def read_nitrate(beaker_task, common_data, disabled, general):
     return common_data, individual_data
 
 
+def extract_relevancy(notes, field):
+    """ Get relevancy from testcase, respecting sf priority """
+    try:
+        if "relevancy" in field:
+            return field.get("relevancy")
+    except tmt.utils.StructuredFieldError:
+        return None
+    # Fallback to the original relevancy syntax
+    # The relevancy definition begins with the header
+    matched = re.search(RELEVANCY_LEGACY_HEADER, notes, re.I + re.M + re.S)
+    if not matched:
+        return None
+    relevancy = matched.groups()[0]
+    # Remove possible additional text after an empty line
+    matched = re.search(r"(.*?)\n\s*\n.*", relevancy, re.S)
+    if matched:
+        relevancy = matched.groups()[0]
+    return relevancy.strip()
+
+
 def read_nitrate_case(testcase, makefile_data=None, general=False):
     """ Read old metadata from nitrate test case """
     data = {'tag': []}
@@ -725,14 +746,11 @@ def read_nitrate_case(testcase, makefile_data=None, general=False):
         data['manual'] = True
     # Relevancy
     field = tmt.utils.StructuredField(testcase.notes)
-    try:
-        relevancy = field.get('relevancy')
-        if relevancy:
-            data['adjust'] = relevancy_to_adjust(relevancy)
-            echo(style('adjust:', fg='green'))
-            echo(tmt.utils.dict_to_yaml(data['adjust']).strip())
-    except tmt.utils.StructuredFieldError:
-        pass
+    relevancy = extract_relevancy(testcase.notes, field)
+    if relevancy:
+        data['adjust'] = relevancy_to_adjust(relevancy)
+        echo(style('adjust:', fg='green'))
+        echo(tmt.utils.dict_to_yaml(data['adjust']).strip())
 
     # Extend bugs detected from Makefile with those linked in Nitrate
     try:
