@@ -3,7 +3,6 @@ from uuid import uuid4
 
 import fmf
 
-import tmt.base
 from tmt.utils import log
 
 # Name of the key holding the unique identifier

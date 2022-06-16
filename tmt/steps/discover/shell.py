@@ -1,6 +1,5 @@
 import copy
 import os
-import shutil
 
 import click
 import fmf
@@ -86,7 +85,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             try:
                 data['path'] = f"/tests{data['path']}"
             except KeyError:
-                data['path'] = f"/tests"
+                data['path'] = "/tests"
             # Apply default test duration unless provided
             if 'duration' not in data:
                 data['duration'] = tmt.base.DEFAULT_TEST_DURATION_L2
@@ -117,7 +116,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
                     git_root, sourcedir, self.get('dist-git-type'))
             except Exception as error:
                 raise tmt.utils.DiscoverError(
-                    f"Failed to process 'dist-git-source'.", original=error)
+                    "Failed to process 'dist-git-source'.", original=error)
 
         # Use a tmt.Tree to apply possible command line filters
         tests = tmt.Tree(tree=tests).tests(conditions=["manual is False"])

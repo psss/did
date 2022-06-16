@@ -274,7 +274,7 @@ run.add_command(tmt.steps.Login.command())
 run.add_command(tmt.steps.Reboot.command())
 
 
-@run.command()
+@run.command(name='plans')
 @click.pass_context
 @click.option(
     '-n', '--name', 'names', metavar='[REGEXP|.]', multiple=True,
@@ -293,7 +293,7 @@ run.add_command(tmt.steps.Reboot.command())
     '--default', is_flag=True,
     help="Use default plans even if others are available.")
 @verbose_debug_quiet
-def plans(context, **kwargs):
+def run_plans(context, **kwargs):
     """
     Select plans which should be executed.
 
@@ -303,7 +303,7 @@ def plans(context, **kwargs):
     tmt.base.Plan._save_context(context)
 
 
-@run.command()
+@run.command(name='tests')
 @click.pass_context
 @click.option(
     '-n', '--name', 'names', metavar='[REGEXP|.]', multiple=True,
@@ -319,7 +319,7 @@ def plans(context, **kwargs):
     help="Filter by linked objects (regular expressions are "
          "supported for both relation and target).")
 @verbose_debug_quiet
-def tests(context, **kwargs):
+def run_tests(context, **kwargs):
     """
     Select tests which should be executed.
 
@@ -366,11 +366,11 @@ def tests(context, **kwargs):
         tmt.Test.overview(context.obj.tree)
 
 
-@tests.command()
+@tests.command(name='ls')
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
-def ls(context, **kwargs):
+def tests_ls(context, **kwargs):
     """
     List available tests.
 
@@ -382,11 +382,11 @@ def ls(context, **kwargs):
         test.ls()
 
 
-@tests.command()
+@tests.command(name='show')
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
-def show(context, **kwargs):
+def tests_show(context, **kwargs):
     """
     Show test details.
 
@@ -399,12 +399,12 @@ def show(context, **kwargs):
         echo()
 
 
-@tests.command('lint')
+@tests.command(name='lint')
 @click.pass_context
 @name_filter_condition
 @fix
 @verbose_debug_quiet
-def lint_tests(context, **kwargs):
+def tests_lint(context, **kwargs):
     """
     Check tests against the L1 metadata specification.
 
@@ -425,7 +425,7 @@ def lint_tests(context, **kwargs):
 _test_templates = listed(tmt.templates.TEST, join='or')
 
 
-@tests.command()
+@tests.command(name='create')
 @click.pass_context
 @click.argument('name')
 @click.option(
@@ -434,7 +434,7 @@ _test_templates = listed(tmt.templates.TEST, join='or')
     prompt='Template ({})'.format(_test_templates))
 @verbose_debug_quiet
 @force_dry
-def create(context, name, template, force, **kwargs):
+def tests_create(context, name, template, force, **kwargs):
     """
     Create a new test based on given template.
 
@@ -486,7 +486,7 @@ def create(context, name, template, force, **kwargs):
     help='Import manual cases with non-empty script field in Nitrate.')
 @verbose_debug_quiet
 @force_dry
-def import_(
+def tests_import(
         context, paths, makefile, restraint, general, types, nitrate, purpose,
         disabled, manual, plan, case, with_script, **kwargs):
     """
@@ -542,7 +542,7 @@ def import_(
         tmt.convert.adjust_runtest(os.path.join(path, 'runtest.sh'))
 
 
-@tests.command()
+@tests.command(name='export')
 @click.pass_context
 @name_filter_condition_long
 @click.option(
@@ -579,7 +579,7 @@ def import_(
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-def export(context, format_, nitrate, bugzilla, **kwargs):
+def tests_export(context, format_, nitrate, bugzilla, **kwargs):
     """
     Export test data into the desired format.
 
@@ -615,7 +615,7 @@ def export(context, format_, nitrate, bugzilla, **kwargs):
 @name_filter_condition
 @verbose_debug_quiet
 @force_dry
-def id_(context, **kwargs):
+def tests_id(context, **kwargs):
     """
     Generate a unique id for each selected test.
 
@@ -650,11 +650,11 @@ def plans(context, **kwargs):
         tmt.Plan.overview(context.obj.tree)
 
 
-@plans.command()
+@plans.command(name='ls')
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
-def ls(context, **kwargs):
+def plans_ls(context, **kwargs):
     """
     List available plans.
 
@@ -666,11 +666,11 @@ def ls(context, **kwargs):
         plan.ls()
 
 
-@plans.command()
+@plans.command(name='show')
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
-def show(context, **kwargs):
+def plans_show(context, **kwargs):
     """
     Show plan details.
 
@@ -683,11 +683,11 @@ def show(context, **kwargs):
         echo()
 
 
-@plans.command('lint')
+@plans.command(name='lint')
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
-def lint_plans(context, **kwargs):
+def plans_lint(context, **kwargs):
     """
     Check plans against the L2 metadata specification.
 
@@ -708,7 +708,7 @@ def lint_plans(context, **kwargs):
 _plan_templates = listed(tmt.templates.PLAN, join='or')
 
 
-@plans.command()
+@plans.command(name='create')
 @click.pass_context
 @click.argument('name')
 @click.option(
@@ -735,13 +735,13 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
     help='Finish phase content in yaml format.')
 @verbose_debug_quiet
 @force_dry
-def create(context, name, template, force, **kwargs):
+def plans_create(context, name, template, force, **kwargs):
     """ Create a new plan based on given template. """
     tmt.Plan._save_context(context)
     tmt.Plan.create(name, template, context.obj.tree.root, force)
 
 
-@plans.command()
+@plans.command(name='export')
 @click.pass_context
 @name_filter_condition_long
 @click.option(
@@ -750,7 +750,7 @@ def create(context, name, template, force, **kwargs):
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-def export(context, format_, **kwargs):
+def plans_export(context, format_, **kwargs):
     """
     Export plans into desired format.
 
@@ -775,7 +775,7 @@ def export(context, format_, **kwargs):
 @name_filter_condition
 @verbose_debug_quiet
 @force_dry
-def id_(context, **kwargs):
+def plans_id(context, **kwargs):
     """
     Generate a unique id for each selected plan.
 
@@ -810,12 +810,12 @@ def stories(context, **kwargs):
         tmt.Story.overview(context.obj.tree)
 
 
-@stories.command()
+@stories.command(name='ls')
 @click.pass_context
 @name_filter_condition_long
 @implemented_verified_documented
 @verbose_debug_quiet
-def ls(
+def stories_ls(
         context, implemented, verified, documented, covered,
         unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
@@ -831,12 +831,12 @@ def ls(
             story.ls()
 
 
-@stories.command()
+@stories.command(name='show')
 @click.pass_context
 @name_filter_condition_long
 @implemented_verified_documented
 @verbose_debug_quiet
-def show(
+def stories_show(
         context, implemented, verified, documented, covered,
         unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
@@ -856,7 +856,7 @@ def show(
 _story_templates = listed(tmt.templates.STORY, join='or')
 
 
-@stories.command()
+@stories.command(name='create')
 @click.pass_context
 @click.argument('name')
 @click.option(
@@ -865,13 +865,13 @@ _story_templates = listed(tmt.templates.STORY, join='or')
     help='Story template ({}).'.format(_story_templates))
 @verbose_debug_quiet
 @force_dry
-def create(context, name, template, force, **kwargs):
+def stories_create(context, name, template, force, **kwargs):
     """ Create a new story based on given template. """
     tmt.Story._save_context(context)
     tmt.base.Story.create(name, template, context.obj.tree.root, force)
 
 
-@stories.command()
+@stories.command(name='coverage')
 @click.option(
     '--docs', is_flag=True, help='Show docs coverage.')
 @click.option(
@@ -882,7 +882,7 @@ def create(context, name, template, force, **kwargs):
 @name_filter_condition_long
 @implemented_verified_documented
 @verbose_debug_quiet
-def coverage(
+def stories_coverage(
         context, code, test, docs,
         implemented, verified, documented, covered,
         unimplemented, unverified, undocumented, uncovered, **kwargs):
@@ -938,7 +938,7 @@ def coverage(
     echo()
 
 
-@stories.command()
+@stories.command(name='export')
 @click.pass_context
 @name_filter_condition_long
 @implemented_verified_documented
@@ -948,7 +948,7 @@ def coverage(
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-def export(
+def stories_export(
         context, format_,
         implemented, verified, documented, covered,
         unimplemented, unverified, undocumented, uncovered, **kwargs):
@@ -966,11 +966,11 @@ def export(
             echo(story.export(format_))
 
 
-@stories.command('lint')
+@stories.command(name='lint')
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
-def lint_stories(context, **kwargs):
+def stories_lint(context, **kwargs):
     """
     Check stories against the L3 metadata specification.
 
@@ -994,8 +994,8 @@ def lint_stories(context, **kwargs):
 @implemented_verified_documented
 @verbose_debug_quiet
 @force_dry
-def id_(context, implemented, verified, documented, covered,
-        unimplemented, unverified, undocumented, uncovered, **kwargs):
+def stories_id(context, implemented, verified, documented, covered,
+               unimplemented, unverified, undocumented, uncovered, **kwargs):
     """
     Generate a unique id for each selected story.
 
@@ -1131,7 +1131,7 @@ def clean(context, **kwargs):
         raise SystemExit(exit_code)
 
 
-@clean.command()
+@clean.command(name='runs')
 @click.pass_context
 @click.argument('path', default=tmt.utils.WORKDIR_ROOT)
 @click.option(
@@ -1144,7 +1144,7 @@ def clean(context, **kwargs):
     help='The number of latest workdirs to keep, clean the rest.')
 @verbose_debug_quiet
 @dry
-def runs(context, path, last, id_, keep, **kwargs):
+def clean_runs(context, path, last, id_, keep, **kwargs):
     """
     Clean workdirs of past runs.
 
@@ -1166,7 +1166,7 @@ def runs(context, path, last, id_, keep, **kwargs):
     raise SystemExit(exit_code)
 
 
-@clean.command()
+@clean.command(name='guests')
 @click.pass_context
 @click.argument('path', default=tmt.utils.WORKDIR_ROOT)
 @click.option(
@@ -1179,7 +1179,7 @@ def runs(context, path, last, id_, keep, **kwargs):
     help='Stop guests of the specified provision method.')
 @verbose_debug_quiet
 @dry
-def guests(context, path, last, id_, **kwargs):
+def clean_guests(context, path, last, id_, **kwargs):
     """
     Stop running guests of runs.
 
@@ -1198,11 +1198,11 @@ def guests(context, path, last, id_, **kwargs):
     raise SystemExit(exit_code)
 
 
-@clean.command()
+@clean.command(name='images')
 @click.pass_context
 @verbose_debug_quiet
 @dry
-def images(context, **kwargs):
+def clean_images(context, **kwargs):
     """
     Remove images of supported provision methods.
 
@@ -1220,7 +1220,7 @@ def images(context, **kwargs):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-@main.command()
+@main.command(name='lint')
 @click.pass_context
 @name_filter_condition
 @fix
@@ -1237,7 +1237,7 @@ def lint(context, **kwargs):
     working directory.
     """
     exit_code = 0
-    for command in (lint_tests, lint_plans, lint_stories):
+    for command in (tests_lint, plans_lint, stories_lint):
         try:
             context.forward(command)
         except SystemExit as e:
@@ -1299,39 +1299,39 @@ def setup_completion(shell, install):
                 shell_config.write(f'source {script}')
 
 
-@completion.command()
+@completion.command(name='bash')
 @click.pass_context
 @click.option(
     '--install', '-i', 'install', is_flag=True,
     help="Persistently store the script to tmt's configuration directory "
          "and set it up by modifying '~/.bashrc'.")
-def bash(context, install, **kwargs):
+def completion_bash(context, install, **kwargs):
     """
     Setup shell completions for bash.
     """
     setup_completion('bash', install)
 
 
-@completion.command()
+@completion.command(name='zsh')
 @click.pass_context
 @click.option(
     '--install', '-i', 'install', is_flag=True,
     help="Persistently store the script to tmt's configuration directory "
          "and set it up by modifying '~/.zshrc'.")
-def zsh(context, install, **kwargs):
+def completion_zsh(context, install, **kwargs):
     """
     Setup shell completions for zsh.
     """
     setup_completion('zsh', install)
 
 
-@completion.command()
+@completion.command(name='fish')
 @click.pass_context
 @click.option(
     '--install', '-i', 'install', is_flag=True,
     help="Persistently store the script to "
          "'~/.config/fish/completions/tmt.fish'.")
-def fish(context, install, **kwargs):
+def completion_fish(context, install, **kwargs):
     """
     Setup shell completions for fish.
     """

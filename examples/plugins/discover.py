@@ -1,10 +1,3 @@
-import copy
-import os
-import shutil
-
-import click
-import fmf
-
 import tmt
 import tmt.steps.discover
 
@@ -55,9 +48,8 @@ class DiscoverExample(tmt.steps.discover.DiscoverPlugin):
         # Prepare test environment
         print("Code should prepare environment for tests.")
 
-        # Use a tmt.Tree to apply possible command line filters
-        tests = tmt.Tree(tree=tests).tests()
-        self._tests = tests
+        # Discover available tests
+        self._tests = tmt.Tree(path=".").tests()
 
     def tests(self):
         """

@@ -178,14 +178,14 @@ class Library(object):
                 # Detect the default branch from the origin
                 try:
                     self.default_branch = tmt.utils.default_branch(directory)
-                except OSError as error:
+                except OSError:
                     raise tmt.utils.GeneralError(
                         f"Unable to detect default branch for '{directory}'. "
                         f"Is the git repository '{self.url}' empty?")
                 # Use the default branch if no ref provided
                 if self.ref is None:
                     self.ref = self.default_branch
-            except tmt.utils.RunError as error:
+            except tmt.utils.RunError:
                 # Fallback to install during the prepare step if in rpm format
                 if self.format == 'rpm':
                     self.parent.debug(f"Repository '{self.url}' not found.")
@@ -197,7 +197,7 @@ class Library(object):
             try:
                 self.parent.run(
                     ['git', 'checkout', self.ref], cwd=directory)
-            except tmt.utils.RunError as error:
+            except tmt.utils.RunError:
                 # Fallback to install during the prepare step if in rpm format
                 if self.format == 'rpm':
                     self.parent.debug(f"Invalid reference '{self.ref}'.")

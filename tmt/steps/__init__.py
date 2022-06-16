@@ -1,11 +1,9 @@
 
 """ Step Classes """
 
-import os
 import re
 import sys
-from typing import (TYPE_CHECKING, Any, AnyStr, Dict, List, Optional, Type,
-                    TypeVar, Union, cast)
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union, cast
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict
@@ -150,7 +148,7 @@ class Step(tmt.utils.Common):
         """ Prepare general usage message for the step """
         # Main description comes from the class docstring
         if cls.__name__ is None:
-            raise tmt.utils.GeneralError(f"Missing name of the step.")
+            raise tmt.utils.GeneralError("Missing name of the step.")
 
         if cls.__doc__ is None:
             raise tmt.utils.GeneralError(

@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, cast
 
 import click
 import requests
+from requests.packages.urllib3.util.retry import Retry as RequestsRetry
 
 import tmt
 import tmt.steps.provision
@@ -142,7 +143,7 @@ class ArtemisAPI:
         specified by the strategy.
         """
 
-        retry_strategy = requests.packages.urllib3.util.retry.Retry(  # type: ignore[attr-defined]
+        retry_strategy = RequestsRetry(
             total=retries,
             status_forcelist=[
                 429,  # Too Many Requests
@@ -448,7 +449,7 @@ class ProvisionArtemis(
                     )
                 }
 
-        except ValueError as exc:
+        except ValueError:
             raise ProvisionError('Cannot parse user-data.')
 
         data: StepStateType = {
@@ -605,7 +606,7 @@ class GuestArtemis(tmt.GuestSsh):  # type: ignore[misc]
 
                 if state == 'error':
                     raise ProvisionError(
-                        f'Failed to create, provisioning failed.')
+                        'Failed to create, provisioning failed.')
 
                 if state == 'ready':
                     break

@@ -1,5 +1,3 @@
-import os
-
 import click
 import fmf.utils
 

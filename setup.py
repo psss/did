@@ -60,6 +60,7 @@ extras_require = {
         'sphinx>=3',
         'sphinx_rtd_theme'],
     'tests': [
+        'flake8',
         'pytest',
         'python-coveralls',
         'requre',

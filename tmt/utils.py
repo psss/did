@@ -18,9 +18,9 @@ from collections import OrderedDict
 from functools import lru_cache
 from pathlib import Path
 from threading import Thread
-from typing import (IO, TYPE_CHECKING, Any, BinaryIO, Dict, Generator,
-                    Iterable, List, NamedTuple, Optional, Pattern, Tuple, Type,
-                    TypeVar, Union, cast, overload)
+from typing import (IO, TYPE_CHECKING, Any, Dict, Generator, Iterable, List,
+                    NamedTuple, Optional, Pattern, Tuple, Type, TypeVar, Union,
+                    cast, overload)
 
 import click
 import fmf
@@ -510,7 +510,7 @@ class Common(object):
             try:
                 subprocess.run(
                     command, cwd=cwd, shell=shell, env=environment, check=True)
-            except subprocess.CalledProcessError as error:
+            except subprocess.CalledProcessError:
                 # Interactive mode can return non-zero if the last command
                 # failed, ignore errors here
                 pass

@@ -1,5 +1,3 @@
-import xmlrpc.client
-
 import nitrate
 from bugzilla._backendxmlrpc import _BugzillaXMLRPCTransport
 from requests import sessions

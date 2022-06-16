@@ -1,5 +1,4 @@
 import copy
-import re
 
 import click
 import fmf

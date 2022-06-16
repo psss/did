@@ -843,7 +843,7 @@ class GuestSsh(Guest):
             # reboot command is completed. Let's ignore such errors.
             if error.returncode == 255:
                 self.debug(
-                    f"Seems the connection was closed too fast, ignoring.")
+                    "Seems the connection was closed too fast, ignoring.")
             else:
                 raise
         return self.reconnect()

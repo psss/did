@@ -49,16 +49,16 @@ def test_test_invalid():
     """ Test invalid test """
     # Missing name
     with pytest.raises(tmt.utils.GeneralError):
-        test = tmt.Test({})
+        tmt.Test({})
     # Invalid name
     with pytest.raises(SpecificationError):
-        test = tmt.Test({}, name='bad')
+        tmt.Test({}, name='bad')
     # Invalid attributes
     for key in ['component', 'require', 'tag']:
         with pytest.raises(SpecificationError):
-            test = tmt.Test({key: 1}, name='/smoke')
+            tmt.Test({key: 1}, name='/smoke')
     with pytest.raises(SpecificationError):
-        test = tmt.Test({'environment': 'string'}, name='/smoke')
+        tmt.Test({'environment': 'string'}, name='/smoke')
     # Listify attributes
     assert tmt.Test(
         {'test': 'test', 'tag': 'a'}, name='/smoke').tag == ['a']

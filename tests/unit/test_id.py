@@ -9,7 +9,7 @@ from click.testing import CliRunner
 
 import tmt
 import tmt.cli
-from tmt.uuid import ID_KEY, IdError, IdLeafError, locate_key
+from tmt.uuid import ID_KEY, locate_key
 
 runner = CliRunner()
 test_path = Path(__file__).parent / "id"

@@ -128,7 +128,7 @@ DOMAIN_TEMPLATE = """<domain type='{{ virt_type }}' xmlns:qemu='http://libvirt.o
   </devices>
   {{ qemu_args }}
 </domain>
-"""
+"""  # noqa: E501
 
 # VM defaults
 DEFAULT_BOOT_TIMEOUT = 60      # seconds
@@ -505,7 +505,7 @@ class GuestTestcloud(tmt.GuestSsh):
         # without that installed (eg. from pypi).
         # https://bugzilla.redhat.com/show_bug.cgi?id=1075594
         try:
-            import guestfs
+            import guestfs  # noqa: F401
         except ImportError:
             match_legacy = re.search(
                 r'(rhel|centos).*-7', self.image_url.lower())

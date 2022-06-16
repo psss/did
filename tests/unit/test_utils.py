@@ -365,8 +365,8 @@ class test_structured_field(unittest.TestCase):
 class Run(unittest.TestCase):
 
     def test_interactive_not_joined(self):
-        stdout, stderr = Common()._run("echo abc; echo def >2", shell=True,
-                                       interactive=True, cwd=".", env={}, log=None)
+        stdout, stderr = Common()._run(
+            "echo abc; echo def >2", shell=True, interactive=True, cwd=".", env={}, log=None)
         self.assertEqual(stdout, None)
         self.assertEqual(stderr, None)
 
@@ -386,8 +386,7 @@ class Run(unittest.TestCase):
         self.assertIn("sbin", stdout)
 
     def test_not_joined_stderr(self):
-        _, stderr = Common()._run("ls non_existing || true", shell=True,
-                                  cwd=".", env={}, log=None)
+        _, stderr = Common()._run("ls non_existing || true", shell=True, cwd=".", env={}, log=None)
         self.assertIn("ls: cannot access", stderr)
 
     def test_joined(self):
@@ -403,7 +402,7 @@ class Run(unittest.TestCase):
 
     def test_big(self):
         stdout, _ = Common()._run(
-            """for NUM in {1..100}; do LINE="$LINE n"; done; for NUM in {1..1000}; do echo $LINE; done""",
+            """for NUM in {1..100}; do LINE="$LINE n"; done; for NUM in {1..1000}; do echo $LINE; done""",  # noqa: E501
             shell=True,
             cwd=".",
             env={},
@@ -436,5 +435,5 @@ def test_FedoraDistGit(tmpdir):
         'SHA512 (fn-1.tar.gz) = 09af\n')
     tmpdir.join('tmt.spec').write('')
     fedora_sources_obj = tmt.utils.FedoraDistGit()
-    assert [("https://src.fedoraproject.org/repo/pkgs/rpms/tmt/fn-1.tar.gz/sha512/09af/fn-1.tar.gz",
+    assert [("https://src.fedoraproject.org/repo/pkgs/rpms/tmt/fn-1.tar.gz/sha512/09af/fn-1.tar.gz",  # noqa: E501
             "fn-1.tar.gz")] == fedora_sources_obj.url_and_name(cwd=tmpdir)

@@ -1,6 +1,4 @@
-import contextlib
 import os
-import stat
 import sys
 import time
 
@@ -10,7 +8,6 @@ import tmt
 import tmt.steps.execute
 import tmt.utils
 from tmt.steps.execute import TEST_OUTPUT_FILENAME, Script
-from tmt.steps.provision import DEFAULT_RSYNC_OPTIONS
 
 # Script handling reboots, in restraint compatible fashion
 TMT_REBOOT_SCRIPT = Script("/usr/local/bin/tmt-reboot",
@@ -117,7 +114,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         sys.stdout.write(f"\r{message}")
         if finish:
             # The progress has been overwritten, return back to the start
-            sys.stdout.write(f"\r")
+            sys.stdout.write("\r")
             self._previous_progress_message = ""
         sys.stdout.flush()
 

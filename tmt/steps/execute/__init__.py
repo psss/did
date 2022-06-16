@@ -64,7 +64,7 @@ class Execute(tmt.steps.Step):
             results = tmt.utils.yaml_to_dict(self.read('results.yaml'))
             self._results = [
                 tmt.Result(data, test) for test, data in results.items()]
-        except tmt.utils.FileError as error:
+        except tmt.utils.FileError:
             self.debug('Test results not found.', level=2)
 
     def save(self, data=None):

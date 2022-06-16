@@ -49,9 +49,9 @@ def test_comments(full):
 
 def test_disable(mini, full):
     """ Disable test """
-    assert mini[0]['enabled'] == False
-    assert full[0]['enabled'] == False
-    assert full[1]['enabled'] == False
+    assert mini[0]['enabled'] is False
+    assert full[0]['enabled'] is False
+    assert full[1]['enabled'] is False
 
 
 def test_environment(full):
@@ -61,7 +61,7 @@ def test_environment(full):
 
 def test_continue(mini):
     """ Explicit continue """
-    assert mini[0]['continue'] == False
+    assert mini[0]['continue'] is False
 
 
 def test_condition(mini, full):

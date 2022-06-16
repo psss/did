@@ -215,7 +215,7 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
                     'open', 'Successfully opened in the web browser.',
                     color='green')
                 return
-            self.fail(f"Failed to open the web browser.")
+            self.fail("Failed to open the web browser.")
         except Exception as error:
             self.fail(f"Failed to open the web browser: {error}")
 

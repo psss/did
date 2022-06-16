@@ -384,8 +384,7 @@ def export_to_nitrate(test):
     echo(style('automated: ', fg='green') + ['auto', 'manual'][test.manual])
 
     # Status
-    current_status = nitrate_case.status if nitrate_case else nitrate.CaseStatus(
-        'CONFIRMED')
+    current_status = nitrate_case.status if nitrate_case else nitrate.CaseStatus('CONFIRMED')
     # Enable enabled tests
     if test.enabled:
         if not dry_mode:
@@ -457,11 +456,11 @@ def export_to_nitrate(test):
         if not dry_mode:
             nitrate.User()._server.TestCase.store_text(
                 nitrate_case.id, step, expect, setup, cleanup)
-        echo(style(f"manual steps:", fg='green') + f" found in {md_path}")
+        echo(style("manual steps:", fg='green') + f" found in {md_path}")
 
     # Append id of newly created nitrate case to its file
     if not test.node.get('extra-nitrate'):
-        echo(style(f"Append the nitrate test case id.", fg='green'))
+        echo(style("Append the nitrate test case id.", fg='green'))
         if not dry_mode:
             try:
                 with test.node as data:

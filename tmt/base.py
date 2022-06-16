@@ -556,7 +556,6 @@ class Test(Core):
 
         # Prepare special format for the executor
         if format_ == 'execute':
-            name = self.name
             data = dict()
             data['test'] = self.test
             data['path'] = self.path
@@ -747,8 +746,8 @@ class Plan(Core):
                     #        using round-trip mode and since it comes from the
                     #        command-line, no formatting is applied resulting
                     #        in inconsistent formatting. Using a safe loader in
-                    #        this case is a hack to make it forget, though there
-                    #        may be a better way to do this.
+                    #        this case is a hack to make it forget, though
+                    #        there may be a better way to do this.
                     try:
                         data = tmt.utils.yaml_to_dict(option, yaml_type='safe')
                     except tmt.utils.GeneralError as error:
@@ -1278,7 +1277,7 @@ class Tree(tmt.utils.Common):
                 if not all([fmf.utils.evaluate(condition, cond_vars, node)
                             for condition in conditions]):
                     continue
-            except fmf.utils.FilterError as error:
+            except fmf.utils.FilterError:
                 # Handle missing attributes as if condition failed
                 continue
             except Exception as error:
@@ -1289,7 +1288,7 @@ class Tree(tmt.utils.Common):
                 if not all([fmf.utils.filter(filter_, filter_vars, regexp=True)
                             for filter_ in filters]):
                     continue
-            except fmf.utils.FilterError as error:
+            except fmf.utils.FilterError:
                 # Handle missing attributes as if filter failed
                 continue
             # Links
@@ -1496,7 +1495,7 @@ class Run(tmt.utils.Common):
         # The default discover method for this case is 'shell'
         default_plan['/plans/default']['discover']['how'] = 'shell'
         self.tree = tmt.Tree(tree=fmf.Tree(default_plan))
-        self.debug(f"No metadata found, using the default plan.")
+        self.debug("No metadata found, using the default plan.")
 
     def _save_tree(self, tree):
         """ Save metadata tree, handle the default plan """
@@ -1509,11 +1508,11 @@ class Run(tmt.utils.Common):
                 new_tree = fmf.Tree(default_plan)
                 new_tree.root = self.tree.root
                 self.tree.tree = new_tree
-                self.debug(f"Enforcing use of default plan")
+                self.debug("Enforcing use of default plan")
             # Insert default plan if no plan detected
             if not list(self.tree.tree.prune(keys=['execute'])):
                 self.tree.tree.update(default_plan)
-                self.debug(f"No plan found, adding the default plan.")
+                self.debug("No plan found, adding the default plan.")
         # Create an empty default plan if no fmf metadata found
         except tmt.utils.MetadataError:
             self._use_default_plan()

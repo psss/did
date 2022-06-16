@@ -13,7 +13,7 @@ def verify(obj, obj_id, field, exp):
                      f"...\tgot: {got}\n"
                      f"...\tres: ")
     assert got == exp
-    sys.stdout.write(f"PASSED\n\n")
+    sys.stdout.write("PASSED\n\n")
 
 
 def main(argc, argv):

@@ -252,8 +252,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                     fmf_tree = fmf.Tree(os.getcwd())
                 except fmf.utils.RootError:
                     raise tmt.utils.DiscoverError(
-                        f"No metadata found in the current directory. "
-                        f"Use 'tmt init' to get started.")
+                        "No metadata found in the current directory. "
+                        "Use 'tmt init' to get started.")
                 for i, attr in enumerate(fmf_tree.climb()):
                     try:
                         plan_url = attr.data.get('discover').get('url')
@@ -298,7 +298,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             else:
                 if fmf_root is None:
                     raise tmt.utils.DiscoverError(
-                        f"No metadata found in the current directory.")
+                        "No metadata found in the current directory.")
                 # Check git repository root (use fmf root if not found)
                 try:
                     git_root = get_git_root(fmf_root)
@@ -342,7 +342,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                     git_root, sourcedir, self.get('dist-git-type'))
             except Exception as error:
                 raise tmt.utils.DiscoverError(
-                    f"Failed to process 'dist-git-source'.", original=error)
+                    "Failed to process 'dist-git-source'.", original=error)
 
             # Check what should be extracted from the sources
             if dist_git_extract:

@@ -453,7 +453,7 @@ def read(
         run_target_list.remove(data["test"])
         if run_target_list:
             echo(style(
-                f"warn: Extra lines detected in the 'run' target:",
+                "warn: Extra lines detected in the 'run' target:",
                 fg="yellow"))
             for line in run_target_list:
                 echo(f"    {line}")
@@ -461,7 +461,7 @@ def read(
         build_target_list = target_content("build")
         if len(build_target_list) > 1:
             echo(style(
-                f"warn: Multiple lines detected in the 'build' target:",
+                "warn: Multiple lines detected in the 'build' target:",
                 fg="yellow"))
             for line in build_target_list:
                 echo(f"    {line}")
