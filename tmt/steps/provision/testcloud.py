@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import dataclasses
+import datetime
 import os
 import platform
 import re
@@ -8,11 +9,11 @@ import time
 from typing import Optional
 
 import click
-import fmf
 import requests
 
 import tmt
 import tmt.steps.provision
+import tmt.utils
 from tmt.utils import WORKDIR_ROOT, ProvisionError, retry_session
 
 
@@ -350,25 +351,26 @@ class GuestTestcloud(tmt.GuestSsh):
 
     def _get_url(self, url, message):
         """ Get url, retry when fails, return response """
-        timeout = DEFAULT_CONNECT_TIMEOUT
-        wait = 1
-        while True:
+
+        def try_get_url() -> requests.Response:
             try:
                 with retry_session() as session:
                     response = session.get(url)
+
                 if response.ok:
                     return response
+
             except requests.RequestException:
-                pass
-            if timeout < 0:
-                raise ProvisionError(
-                    f'Failed to {message} in {DEFAULT_CONNECT_TIMEOUT}s.')
-            self.debug(
-                f'Unable to {message} ({url}), retrying, '
-                f'{fmf.utils.listed(timeout, "second")} left.')
-            time.sleep(wait)
-            wait += 1
-            timeout -= wait
+                raise tmt.utils.WaitingIncomplete()
+
+        try:
+            return tmt.utils.wait(
+                self, try_get_url, datetime.timedelta(
+                    seconds=DEFAULT_CONNECT_TIMEOUT), tick=1)
+
+        except tmt.utils.WaitingTimedOutError:
+            raise ProvisionError(
+                f'Failed to {message} in {DEFAULT_CONNECT_TIMEOUT}s.')
 
     def _guess_image_url(self, name):
         """ Guess image url for given name """
@@ -574,25 +576,12 @@ class GuestTestcloud(tmt.GuestSsh):
         self._instance.create_ip_file(self.guest)
 
         # Wait a bit until the box is up
-        timeout = DEFAULT_CONNECT_TIMEOUT * time_coeff
-        wait = 1
-        while True:
-            start_time = time.time()
-            try:
-                self.execute('whoami')
-                break
-            except tmt.utils.RunError:
-                if timeout < 0:
-                    raise ProvisionError(
-                        f"Failed to connect in "
-                        f"{DEFAULT_CONNECT_TIMEOUT * time_coeff}s.")
-                self.debug(
-                    f'Failed to connect to machine, retrying, '
-                    f'{fmf.utils.listed(timeout, "second")} left.')
-            attempt_duration = round(time.time() - start_time)
-            time.sleep(wait)
-            wait += 1
-            timeout -= wait + attempt_duration
+        if not self.reconnect(
+                timeout=DEFAULT_CONNECT_TIMEOUT *
+                time_coeff,
+                tick=1):
+            raise ProvisionError(
+                f"Failed to connect in {DEFAULT_CONNECT_TIMEOUT * time_coeff}s.")
 
         if not self._instance.kvm:
             self.debug(

@@ -1,7 +1,6 @@
 import dataclasses
 import datetime
 import sys
-import time
 from typing import Any, Dict, List, Optional, cast
 
 import click
@@ -9,6 +8,7 @@ import requests
 
 import tmt
 import tmt.steps.provision
+import tmt.utils
 from tmt.utils import ProvisionError, retry_session, updatable_message
 
 if sys.version_info >= (3, 8):
@@ -507,12 +507,10 @@ class GuestArtemis(tmt.GuestSsh):  # type: ignore[misc]
         self.guestname = response.json()['guestname']
         self.info('guestname', self.guestname, 'green')
 
-        deadline = datetime.datetime.utcnow(
-            ) + datetime.timedelta(seconds=self.provision_timeout)
-
         with updatable_message(
                 'state', indent_level=self._level()) as progress_message:
-            while deadline > datetime.datetime.utcnow():
+
+            def get_new_state() -> GuestInspectType:
                 response = self.api.inspect(f'/guests/{self.guestname}')
 
                 if response.status_code != 200:
@@ -532,16 +530,21 @@ class GuestArtemis(tmt.GuestSsh):  # type: ignore[misc]
                         'Failed to create, provisioning failed.')
 
                 if state == 'ready':
-                    break
+                    return current
 
-                time.sleep(self.provision_tick)
+                raise tmt.utils.WaitingIncomplete()
 
-            else:
+            try:
+                guest_info = tmt.utils.wait(
+                    self, get_new_state, datetime.timedelta(
+                        seconds=self.provision_timeout), tick=self.provision_tick)
+
+            except tmt.utils.WaitingTimedOutError:
                 raise ProvisionError(
                     f'Failed to provision in the given amount '
                     f'of time (--provision-timeout={self.provision_timeout}).')
 
-        self.guest = current['address']
+        self.guest = guest_info['address']
         self.info('address', self.guest, 'green')
 
     def start(self) -> None:

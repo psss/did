@@ -8,7 +8,6 @@ import shlex
 import string
 import subprocess
 import tempfile
-import time
 from shlex import quote
 from typing import Dict, List, Optional, Type
 
@@ -22,6 +21,11 @@ from tmt.steps import Action
 
 # Timeout in seconds of waiting for a connection after reboot
 CONNECTION_TIMEOUT = 5 * 60
+
+# When waiting for guest to recover from reboot, try re-connecting every
+# this many seconds.
+RECONNECT_WAIT_TICK = 5
+RECONNECT_WAIT_TICK_INCREASE = 1.0
 
 # Default rsync options
 DEFAULT_RSYNC_OPTIONS = [
@@ -507,7 +511,12 @@ class Guest(tmt.utils.Common):
 
         raise NotImplementedError()
 
-    def reconnect(self, timeout=None):
+    def reconnect(
+            self,
+            timeout: Optional[int] = None,
+            tick: float = RECONNECT_WAIT_TICK,
+            tick_increase: float = RECONNECT_WAIT_TICK_INCREASE
+            ):
         """
         Ensure the connection to the guest is working
 
@@ -520,21 +529,25 @@ class Guest(tmt.utils.Common):
         timeout = timeout or CONNECTION_TIMEOUT
         self.debug("Wait for a connection to the guest.")
 
-        # A small shortcut... `now` or `utcnow`, should not matter, becase we
-        # need a difference between two values. As long as we use the same
-        # function for both sides of the equation, we should be fine.
-        now = datetime.datetime.utcnow
-        deadline = now() + datetime.timedelta(seconds=timeout)
-        while now() < deadline:
+        def try_whoami() -> None:
             try:
                 self.execute('whoami')
-                break
+
             except tmt.utils.RunError:
-                self.debug('Failed to connect to the guest, retrying.')
-                time.sleep(1)
-        else:
-            self.debug("Connection to guest failed.")
+                raise tmt.utils.WaitingIncomplete()
+
+        try:
+            tmt.utils.wait(
+                self,
+                try_whoami,
+                datetime.timedelta(seconds=timeout),
+                tick=tick,
+                tick_increase=tick_increase)
+
+        except tmt.utils.WaitingTimedOutError:
+            self.debug("Connection to guest failed after reboot.")
             return False
+
         return True
 
     def remove(self):
@@ -887,7 +900,13 @@ class GuestSsh(Guest):
             except OSError as error:
                 self.debug(f"Failed to remove the socket: {error}", level=3)
 
-    def reboot(self, hard=False, command=None, timeout=None):
+    def reboot(
+            self,
+            hard=False,
+            command=None,
+            timeout: Optional[int] = None,
+            tick: float = tmt.utils.DEFAULT_WAIT_TICK,
+            tick_increase: float = tmt.utils.DEFAULT_WAIT_TICK_INCREASE):
         """
         Reboot the guest, return True if reconnect was successful
 
@@ -903,14 +922,12 @@ class GuestSsh(Guest):
             raise tmt.utils.ProvisionError(
                 "Method does not support hard reboot.")
 
-        timeout = timeout or tmt.steps.provision.CONNECTION_TIMEOUT
-
-        now = datetime.datetime.utcnow
-        deadline = now() + datetime.timedelta(seconds=timeout)
+        command = command or "reboot"
+        self.debug(f"Reboot using the command '{command}'.")
 
         re_boot_time = re.compile(r'btime\s+(\d+)')
 
-        def get_boot_time():
+        def get_boot_time() -> int:
             """ Reads btime from /proc/stat """
             stdout = self.execute(["cat", "/proc/stat"]).stdout
             assert stdout
@@ -919,8 +936,6 @@ class GuestSsh(Guest):
         current_boot_time = get_boot_time()
 
         try:
-            command = command or "reboot"
-            self.debug(f"Reboot using the command '{command}'.")
             self.execute(command)
         except tmt.utils.RunError as error:
             # Connection can be closed by the remote host even before the
@@ -930,21 +945,40 @@ class GuestSsh(Guest):
                     "Seems the connection was closed too fast, ignoring.")
             else:
                 raise
+
         # Wait until we get new boot time, connection will drop and will be
         # unreachable for some time
-        while now() < deadline:
+        def check_boot_time() -> None:
             try:
                 new_boot_time = get_boot_time()
+
                 if new_boot_time != current_boot_time:
                     # Different boot time and we are reconnected
-                    return True
-                self.debug("Same boot time, reboot didn't happen yet, retrying")
+                    return
+
+                # Same boot time, reboot didn't happen yet, retrying
+                raise tmt.utils.WaitingIncomplete()
+
             except tmt.utils.RunError:
-                self.debug('Failed to connect to the guest, retrying.')
-            # Either couldn't connect or boot time didn't change
-            time.sleep(1)
-        self.debug("Connection to guest failed - timeout exceeded.")
-        return False
+                self.debug('Failed to connect to the guest.')
+                raise tmt.utils.WaitingIncomplete()
+
+        timeout = timeout or CONNECTION_TIMEOUT
+
+        try:
+            tmt.utils.wait(
+                self,
+                check_boot_time,
+                datetime.timedelta(seconds=timeout),
+                tick=tick,
+                tick_increase=tick_increase)
+
+        except tmt.utils.WaitingTimedOutError:
+            self.debug("Connection to guest failed after reboot.")
+            return False
+
+        self.debug("Connection to guest succeeded after reboot.")
+        return True
 
     def remove(self):
         """

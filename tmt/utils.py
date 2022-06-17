@@ -14,14 +14,15 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 import unicodedata
 from collections import OrderedDict
 from functools import lru_cache
 from pathlib import Path
 from threading import Thread
-from typing import (IO, TYPE_CHECKING, Any, Dict, Generator, Iterable, List,
-                    NamedTuple, Optional, Pattern, Tuple, Type, TypeVar, Union,
-                    cast, overload)
+from typing import (IO, TYPE_CHECKING, Any, Callable, Dict, Generator,
+                    Iterable, List, NamedTuple, Optional, Pattern, Tuple, Type,
+                    TypeVar, Union, cast, overload)
 
 import click
 import fmf
@@ -88,6 +89,10 @@ DEFAULT_RETRY_SESSION_BACKOFF_FACTOR: float = 0.1
 # Retry with exponential backoff, maximum duration ~511 seconds
 ENVFILE_RETRY_SESSION_RETRIES: int = 10
 ENVFILE_RETRY_SESSION_BACKOFF_FACTOR: float = 1
+
+# Default for wait()-related options
+DEFAULT_WAIT_TICK: float = 30.0
+DEFAULT_WAIT_TICK_INCREASE: float = 1.0
 
 # A stand-in variable for generic use.
 T = TypeVar('T')
@@ -805,6 +810,14 @@ class ConvertError(MetadataError):
 
 class StructuredFieldError(GeneralError):
     """ StructuredField parsing error """
+
+
+class WaitingIncomplete(GeneralError):
+    """ Waiting incomplete """
+
+
+class WaitingTimedOutError(GeneralError):
+    """ Waiting ran out of time """
 
 
 # Step exceptions
@@ -2641,3 +2654,94 @@ def load_schema_store() -> SchemaStore:
         raise FileError(f"Failed to discover schema files\n{exc}")
 
     return store
+
+
+# A type for callbacks given to wait()
+WaitCheckType = Callable[[], T]
+
+
+def wait(
+    parent: Common,
+    check: WaitCheckType[T],
+    timeout: datetime.timedelta,
+    tick: float = DEFAULT_WAIT_TICK,
+    tick_increase: float = DEFAULT_WAIT_TICK_INCREASE
+) -> T:
+    """
+    Wait for a condition to become true.
+
+    To test the condition state, a ``check`` callback is called every ``tick``
+    seconds until ``check`` reports a success. The callback may:
+
+    * decide the condition has been fulfilled. This is a successfull outcome,
+      ``check`` shall then simply return, and waiting ends. Or,
+    * decide more time is needed. This is not a successfull outcome, ``check``
+      shall then raise :py:clas:`WaitingIncomplete` exception, and ``wait()``
+      will try again later.
+
+    :param parent: "owner" of the wait process. Used for its logging capability.
+    :param check: a callable responsible for testing the condition. Accepts no
+        arguments. To indicate more time and attempts are needed, the callable
+        shall raise :py:class:`WaitingIncomplete`, otherwise it shall return
+        without exception. Its return value will be propagated by ``wait()`` up
+        to ``wait()``'s. All other exceptions raised by ``check`` will propagate
+        to ``wait()``'s caller as well, terminating the wait.
+    :param timeout: amount of time ``wait()`` is alowed to spend waiting for
+        successfull outcome of ``check`` call.
+    :param tick: how many seconds to wait between two consecutive calls of
+        ``check``.
+    :param tick_increase: a multiplier applied to ``tick`` after every attempt.
+    :returns: value returned by ``check`` reporting success.
+    :raises GeneralError: when ``tick`` is not a positive integer.
+    :raises WaitingTimedOutError: when time quota has been consumed.
+    """
+
+    if tick <= 0:
+        raise GeneralError('Tick must be a positive integer')
+
+    NOW = time.monotonic
+
+    deadline = NOW() + timeout.total_seconds()
+
+    parent.debug(
+        'wait',
+        f"waiting for condition '{check.__name__}' with timeout {timeout},"
+        f"deadline in {timeout.total_seconds()}, checking every {tick} seconds")
+
+    while True:
+        now = NOW()
+
+        if now > deadline:
+            raise WaitingTimedOutError()
+
+        try:
+            ret = check()
+
+            # Perform one extra check: if `check()` succeeded, but took more time than
+            # allowed, it should be recognized as a failed waiting too.
+            now = NOW()
+
+            if now > deadline:
+                parent.debug(
+                    'wait',
+                    f"'{check.__name__}' finished successfully but took too much time,"
+                    f"{now - deadline} over quota")
+
+                raise WaitingTimedOutError()
+
+            parent.debug(
+                'wait',
+                f"'{check.__name__}' finished successfully, {deadline - now} seconds left")
+
+            return ret
+
+        except WaitingIncomplete:
+            parent.debug(
+                'wait',
+                f"'{check.__name__}' still pending, {deadline - now} seconds left")
+
+            time.sleep(tick)
+
+            tick *= tick_increase
+
+            continue

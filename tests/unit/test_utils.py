@@ -1,15 +1,19 @@
 # coding: utf-8
 
+import datetime
 import os
 import re
+import time
 import unittest
+import unittest.mock
 
 import pytest
 
 import tmt
-from tmt.utils import (Common, StructuredField, StructuredFieldError,
-                       duration_to_seconds, listify, public_git_url,
-                       validate_git_status)
+from tmt.utils import (Common, GeneralError, StructuredField,
+                       StructuredFieldError, WaitingIncomplete,
+                       WaitingTimedOutError, duration_to_seconds, listify,
+                       public_git_url, validate_git_status, wait)
 
 run = Common().run
 
@@ -614,3 +618,94 @@ class Test_validate_git_status:
 
         assert validation_result == (
             False, 'Not pushed changes in .fmf/version main.fmf')
+
+
+#
+# tmt.utils.wait() & waiting for things to happen
+#
+def test_wait_bad_tick():
+    """
+    :py:func:`wait` shall raise an exception when invalid ``tick`` is given.
+    """
+
+    with pytest.raises(GeneralError, match='Tick must be a positive integer'):
+        wait(Common(), lambda: False, datetime.timedelta(seconds=1), tick=-1)
+
+
+def test_wait_deadline_already_passed():
+    """
+    :py:func:`wait` shall not call ``check`` if the given timeout leads to
+    already expired deadline.
+    """
+
+    ticks = []
+
+    with pytest.raises(WaitingTimedOutError):
+        wait(Common(), lambda: ticks.append(1), datetime.timedelta(seconds=-86400))
+
+    # our callback should not have been called at all
+    assert not ticks
+
+
+def test_wait():
+    """
+    :py:func:`wait` shall call ``check`` multiple times until ``check`` returns
+    successfully.
+    """
+
+    # Every tick of wait()'s loop, pop one item. Once we get to the end,
+    # consider the condition to be fulfilled.
+    ticks = list(range(1, 10))
+
+    # Make sure check's return value is propagated correctly, make it unique.
+    return_value = unittest.mock.MagicMock()
+
+    def check():
+        if not ticks:
+            return return_value
+
+        ticks.pop()
+
+        raise WaitingIncomplete()
+
+    # We want to reach end of our list, give enough time budget.
+    r = wait(Common(), check, datetime.timedelta(seconds=3600), tick=0.01)
+
+    assert r is return_value
+    assert not ticks
+
+
+def test_wait_timeout():
+    """
+    :py:func:`wait` shall call ``check`` multiple times until ``check`` running
+    out of time.
+    """
+
+    check = unittest.mock.MagicMock(
+        __name__='mock_check',
+        side_effect=WaitingIncomplete)
+
+    # We want to reach end of time budget before reaching end of the list.
+    with pytest.raises(WaitingTimedOutError):
+        wait(Common(), check, datetime.timedelta(seconds=1), tick=0.1)
+
+    # Verify our callback has been called. It's hard to predict how often it
+    # should have been called, hopefully 10 times (1 / 0.1), but timing things
+    # in test is prone to errors, process may get suspended, delayed, whatever,
+    # and we'd end up with 9 calls and a failed test. In any case, it must be
+    # 10 or less, because it's not possible to fit 11 calls into 1 second.
+    check.assert_called()
+    assert len(check.mock_calls) <= 10
+
+
+def test_wait_success_but_too_late():
+    """
+    :py:func:`wait` shall report failure even when ``check`` succeeds but runs
+    out of time.
+    """
+
+    def check():
+        time.sleep(5)
+
+    with pytest.raises(WaitingTimedOutError):
+        wait(Common(), check, datetime.timedelta(seconds=1))
