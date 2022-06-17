@@ -454,7 +454,7 @@ class Guest(tmt.utils.Common):
             return ['-' + (self.opt('debug') - 2) * 'v']
 
     @staticmethod
-    def _ansible_extra_args(extra_args: str) -> List[str]:
+    def _ansible_extra_args(extra_args: Optional[str]) -> List[str]:
         """ Prepare extra arguments for ansible-playbook"""
         if extra_args is None:
             return []

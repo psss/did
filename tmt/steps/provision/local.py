@@ -1,3 +1,5 @@
+from typing import Any, List, Optional, Union
+
 import tmt
 import tmt.steps
 import tmt.steps.provision
@@ -25,13 +27,13 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
     # Guest instance
     _guest = None
 
-    def wake(self, data=None):
+    def wake(self, data: Optional[tmt.steps.provision.GuestData] = None) -> None:
         """ Wake up the plugin, process data, apply options """
         super().wake(data=data)
         if data:
             self._guest = GuestLocal(data, name=self.name, parent=self.step)
 
-    def go(self):
+    def go(self) -> None:
         """ Provision the container """
         super().go()
 
@@ -42,11 +44,11 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
             )
         self._guest = GuestLocal(data, name=self.name, parent=self.step)
 
-    def guest(self):
+    def guest(self) -> Optional['GuestLocal']:
         """ Return the provisioned guest """
         return self._guest
 
-    def requires(self):
+    def requires(self) -> List[str]:
         """ List of required packages needed for workdir sync """
         return GuestLocal.requires()
 
@@ -55,8 +57,9 @@ class GuestLocal(tmt.Guest):
     """ Local Host """
 
     localhost = True
+    parent: tmt.steps.Step
 
-    def ansible(self, playbook, extra_args=None):
+    def ansible(self, playbook: str, extra_args: Optional[str] = None) -> None:
         """ Prepare localhost using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
         stdout, stderr = self.run(
@@ -67,7 +70,7 @@ class GuestLocal(tmt.Guest):
             env=self._prepare_environment())
         self._ansible_summary(stdout)
 
-    def execute(self, command, **kwargs):
+    def execute(self, command: Union[List[str], str], **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Execute command on localhost """
         # Prepare the environment (plan/cli variables override)
         environment = dict()
@@ -76,25 +79,32 @@ class GuestLocal(tmt.Guest):
         # Run the command under the prepared environment
         return self.run(command, env=environment, shell=True, **kwargs)
 
-    def stop(self):
+    def stop(self) -> None:
         """ Stop the guest """
 
         self.debug(f"Doing nothing to stop guest '{self.guest}'.")
 
-    def reboot(self, hard=False, command=None, timeout=None):
+    def reboot(self,
+               hard: bool = False,
+               command: Optional[str] = None,
+               timeout: Optional[int] = None) -> bool:
         """ Reboot the guest, return True if successful """
 
         self.debug(f"Doing nothing to reboot guest '{self.guest}'.")
 
         return False
 
-    def push(self, source=None, destination=None, options=None):
+    def push(
+            self,
+            source: Optional[str] = None,
+            destination: Optional[str] = None,
+            options: Optional[List[str]] = None) -> None:
         """ Nothing to be done to push workdir """
 
     def pull(
             self,
-            source=None,
-            destination=None,
-            options=None,
-            extend_options=None):
+            source: Optional[str] = None,
+            destination: Optional[str] = None,
+            options: Optional[List[str]] = None,
+            extend_options: Optional[List[str]] = None) -> None:
         """ Nothing to be done to pull workdir """
