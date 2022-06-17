@@ -22,12 +22,20 @@ else:
 # know when particular feature became available, and avoid using it with
 # older APIs.
 SUPPORTED_API_VERSIONS = (
-    '0.0.28', '0.0.32'
+    # NEW: added hostname HW constraint
+    'v0.0.38',
+    # NEW: virtualization HW constraint
+    'v0.0.37',
+    # NEW: boot.method HW constraint
+    'v0.0.32',
+    # NEW: network HW constraint
+    'v0.0.28'
     )
+
 
 # The default Artemis API version - the most recent supported versions
 # should be perfectly fine.
-DEFAULT_API_VERSION = SUPPORTED_API_VERSIONS[-1]
+DEFAULT_API_VERSION = SUPPORTED_API_VERSIONS[0]
 
 # Type annotation for "data" package describing a guest instance. Passed
 # between load() and save() calls.
