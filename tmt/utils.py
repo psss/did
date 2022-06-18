@@ -81,6 +81,11 @@ SHELL_OPTIONS = 'set -eo pipefail'
 DEFAULT_RETRY_SESSION_RETRIES: int = 3
 DEFAULT_RETRY_SESSION_BACKOFF_FACTOR: float = 0.1
 
+# Defaults for HTTP/HTTPS retries for getting environment file
+# Retry with exponential backoff, maximum duration ~511 seconds
+ENVFILE_RETRY_SESSION_RETRIES: int = 10
+ENVFILE_RETRY_SESSION_BACKOFF_FACTOR: float = 1
+
 # A stand-in variable for generic use.
 T = TypeVar('T')
 
@@ -1026,8 +1031,21 @@ def environment_file_to_dict(
         env_file = str(env_file).strip()
         # Fetch a remote file
         if env_file.startswith("http"):
+            # Create retry session for longer retries, see #1229
+            session = retry_session.create(
+                retries=ENVFILE_RETRY_SESSION_RETRIES,
+                backoff_factor=ENVFILE_RETRY_SESSION_BACKOFF_FACTOR,
+                allowed_methods=('GET',),
+                status_forcelist=(
+                    429,  # Too Many Requests
+                    500,  # Internal Server Error
+                    502,  # Bad Gateway
+                    503,  # Service Unavailable
+                    504   # Gateway Timeout
+                    ),
+                )
             try:
-                response = requests.get(env_file)
+                response = session.get(env_file)
                 response.raise_for_status()
                 content = response.text
             except requests.RequestException as error:

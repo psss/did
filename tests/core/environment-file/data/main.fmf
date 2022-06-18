@@ -34,4 +34,4 @@
             - https://raw.githubusercontent.com/teemtee/tmt/22a46a4a6760517e3eadbbff0c9bebdb95442760/tests/core/env/data/vars.yaml
         /bad:
             environment-file:
-            - https://invalid.host.name/vars.yaml
+            - https://raw.githubusercontent.com/teemtee/tmt/22a46a4a6760517e3eadbbff0c9bebdb95442760/tests/core/env/data/wrong.yaml
