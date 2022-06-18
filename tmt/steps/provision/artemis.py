@@ -5,11 +5,10 @@ from typing import Any, Dict, List, Optional, cast
 
 import click
 import requests
-from requests.packages.urllib3.util.retry import Retry as RequestsRetry
 
 import tmt
 import tmt.steps.provision
-from tmt.utils import ProvisionError, updatable_message
+from tmt.utils import ProvisionError, retry_session, updatable_message
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict
@@ -118,71 +117,22 @@ GuestInspectType = TypedDict(
     )
 
 
-class TimeoutHTTPAdapter(requests.adapters.HTTPAdapter):
-    """
-    Spice up request's session with custom timeout.
-    """
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.timeout = kwargs.pop('timeout', DEFAULT_API_TIMEOUT)
-
-        super().__init__(*args, **kwargs)
-
-    def send(  # type: ignore # does not match superclass type on purpose
-            self,
-            request: requests.PreparedRequest,
-            **kwargs: Any) -> requests.Response:
-        kwargs.setdefault('timeout', self.timeout)
-
-        return super().send(request, **kwargs)
-
-
 class ArtemisAPI:
-    def install_http_retries(
-            self,
-            timeout: int,
-            retries: int,
-            retry_backoff_factor: int
-            ) -> None:
-        """
-        Install custom "retry strategy" and timeout to our HTTP session.
+    def __init__(self, guest: 'GuestArtemis') -> None:
+        self._guest = guest
 
-        Strategy and timeout work together, "consuming" the timeout as
-        specified by the strategy.
-        """
-
-        retry_strategy = RequestsRetry(
-            total=retries,
-            status_forcelist=[
+        self.http_session = retry_session.create(
+            retries=guest.api_retries,
+            backoff_factor=guest.api_retry_backoff_factor,
+            allowed_methods=('HEAD', 'GET', 'POST', 'DELETE', 'PUT'),
+            status_forcelist=(
                 429,  # Too Many Requests
                 500,  # Internal Server Error
                 502,  # Bad Gateway
                 503,  # Service Unavailable
                 504   # Gateway Timeout
-                ],
-            method_whitelist=[
-                'HEAD', 'GET', 'POST', 'DELETE', 'PUT'
-                ],
-            backoff_factor=retry_backoff_factor
-            )
-
-        timeout_adapter = TimeoutHTTPAdapter(
-            timeout=timeout,
-            max_retries=retry_strategy
-            )
-
-        self.http_session.mount('https://', timeout_adapter)
-        self.http_session.mount('http://', timeout_adapter)
-
-    def __init__(self, guest: 'GuestArtemis') -> None:
-        self._guest = guest
-
-        self.http_session = requests.Session()
-
-        self.install_http_retries(
-            timeout=guest.api_timeout,
-            retries=guest.api_retries,
-            retry_backoff_factor=guest.api_retry_backoff_factor
+                ),
+            timeout=guest.api_timeout
             )
 
     def query(

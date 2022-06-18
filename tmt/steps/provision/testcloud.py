@@ -310,7 +310,8 @@ class GuestTestcloud(tmt.GuestSsh):
         wait = 1
         while True:
             try:
-                response = retry_session().get(url)
+                with retry_session() as session:
+                    response = session.get(url)
                 if response.ok:
                     return response
             except requests.RequestException:

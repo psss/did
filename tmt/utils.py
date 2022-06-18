@@ -25,8 +25,8 @@ from typing import (IO, TYPE_CHECKING, Any, Dict, Generator, Iterable, List,
 import click
 import fmf
 import requests
+import requests.adapters
 from click import echo, style, wrap_text
-from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from ruamel.yaml import YAML, scalarstring
 from ruamel.yaml.comments import CommentedMap
@@ -76,6 +76,10 @@ DEFAULT_SELECT_TIMEOUT = 5
 
 # Shell options to be set for all run shell scripts
 SHELL_OPTIONS = 'set -eo pipefail'
+
+# Defaults for HTTP/HTTPS retries and timeouts (see `retry_session()`).
+DEFAULT_RETRY_SESSION_RETRIES: int = 3
+DEFAULT_RETRY_SESSION_BACKOFF_FACTOR: float = 0.1
 
 # A stand-in variable for generic use.
 T = TypeVar('T')
@@ -1559,30 +1563,86 @@ def public_git_url(url: str) -> str:
     return url
 
 
-def retry_session(
-        retries: int = 3,
-        backoff_factor: float = 0.1,
-        method_whitelist: bool = False,
-        status_forcelist: Tuple[int, ...] = (429, 500, 502, 503, 504)
-        ) -> requests.Session:
+class TimeoutHTTPAdapter(requests.adapters.HTTPAdapter):
     """
-    Create a requests.Session() that retries on request failure.
+    Spice up request's session with custom timeout.
+    """
 
-    'method_whitelist' is set to False to retry on all http request methods
-    by default.
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.timeout = kwargs.pop('timeout', None)
+
+        super().__init__(*args, **kwargs)
+
+    def send(  # type: ignore # does not match superclass type on purpose
+            self,
+            request: requests.PreparedRequest,
+            **kwargs: Any) -> requests.Response:
+        kwargs.setdefault('timeout', self.timeout)
+
+        return super().send(request, **kwargs)
+
+
+class retry_session(contextlib.AbstractContextManager):  # type: ignore
     """
-    session = requests.Session()
-    retry = Retry(
-        total=retries,
-        backoff_factor=backoff_factor,
-        status_forcelist=status_forcelist,
-        method_whitelist=method_whitelist,
-        raise_on_status=False,
-        )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session
+    Context manager for requests.Session() with retries and timeout
+    """
+    @staticmethod
+    def create(
+            retries: int = DEFAULT_RETRY_SESSION_RETRIES,
+            backoff_factor: float = DEFAULT_RETRY_SESSION_BACKOFF_FACTOR,
+            allowed_methods: Optional[Tuple[str, ...]] = None,
+            status_forcelist: Optional[Tuple[int, ...]] = None,
+            timeout: Optional[int] = None
+            ) -> requests.Session:
+        retry_strategy = Retry(
+            total=retries,
+            status_forcelist=status_forcelist,
+            # `method_whitelist`` has been renamed to `allowed_methods` since
+            # urllib3 1.26, and it will be removed in urllib3 2.0.
+            # `allowed_methods` is therefore the future-proof name, but for the
+            # sake of backward compatibility, internally we need to use the
+            # deprecated parameter for now. Or request newer urllib3, but that
+            # might a problem because of RPM availability.
+            method_whitelist=allowed_methods,
+            backoff_factor=backoff_factor)
+
+        if timeout is not None:
+            http_adapter: requests.adapters.HTTPAdapter = TimeoutHTTPAdapter(
+                timeout=timeout, max_retries=retry_strategy)
+        else:
+            http_adapter = requests.adapters.HTTPAdapter(
+                max_retries=retry_strategy)
+
+        session = requests.Session()
+        session.mount('http://', http_adapter)
+        session.mount('https://', http_adapter)
+
+        return session
+
+    def __init__(
+            self,
+            retries: int = DEFAULT_RETRY_SESSION_RETRIES,
+            backoff_factor: float = DEFAULT_RETRY_SESSION_BACKOFF_FACTOR,
+            allowed_methods: Optional[Tuple[str, ...]] = None,
+            status_forcelist: Optional[Tuple[int, ...]] = None,
+            timeout: Optional[int] = None
+            ) -> None:
+        self.retries = retries
+        self.backoff_factor = backoff_factor
+        self.allowed_methods = allowed_methods
+        self.status_forcelist = status_forcelist
+        self.timeout = timeout
+
+    def __enter__(self) -> requests.Session:
+        return self.create(
+            retries=self.retries,
+            backoff_factor=self.backoff_factor,
+            allowed_methods=self.allowed_methods,
+            status_forcelist=self.status_forcelist,
+            timeout=self.timeout)
+
+    def __exit__(self, *args: Any) -> None:
+        pass
 
 
 def remove_color(text: str) -> str:

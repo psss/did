@@ -273,8 +273,8 @@ class DiscoverPlugin(tmt.steps.Plugin):
             if handler.re_ignore_extensions.search(source_name):
                 continue
             self.debug(f"Download sources from '{url}'.")
-            session = tmt.utils.retry_session()
-            response = session.get(url)
+            with tmt.utils.retry_session() as session:
+                response = session.get(url)
             response.raise_for_status()
             os.makedirs(target_dir, exist_ok=True)
             with open(os.path.join(target_dir, source_name), 'wb') as tarball:
