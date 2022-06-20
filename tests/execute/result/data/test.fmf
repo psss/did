@@ -1,0 +1,43 @@
+/pass:
+    summary: Run command 'true'
+    test: 'true'
+/fail:
+    summary: Run command 'false'
+    test: 'false'
+/error:
+    summary: Run a non-existing command
+    test: a-weird-command
+
+/xfail-fail:
+    summary: Run command 'false' but report pass
+    test: 'false'
+    result: xfail
+/xfail-pass:
+    summary: Run command 'true' but report fail
+    test: 'true'
+    result: xfail
+/xfail-error:
+    summary: Run a non-existing command and keep error
+    test: a-weird-command
+    result: xfail
+
+/always-pass:
+    summary: Always report pass
+    test: 'false'
+    result: pass
+/always-info:
+    summary: Always report info
+    test: 'true'
+    result: info
+/always-warn:
+    summary: Always report warn
+    test: 'true'
+    result: warn
+/always-error:
+    summary: Always report error
+    test: 'true'
+    result: error
+/always-fail:
+    summary: Always report fail
+    test: 'true'
+    result: fail

@@ -269,7 +269,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             if test.returncode == tmt.utils.PROCESS_TIMEOUT:
                 data['note'] = 'timeout'
                 self.timeout_hint(test)
-        return tmt.Result(data, test.name)
+        return tmt.Result(data, test.name, test.result)
 
     def check_beakerlib(self, test):
         """ Check result of a beakerlib test """
@@ -288,7 +288,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         except tmt.utils.FileError:
             self.debug(f"Unable to read '{beakerlib_results_file}'.", level=3)
             data['note'] = 'beakerlib: TestResults FileError'
-            return tmt.Result(data, test.name)
+            return tmt.Result(data, test.name, test.result)
         try:
             result = re.search(
                 'TESTRESULT_RESULT_STRING=(.*)', results).group(1)
@@ -300,7 +300,7 @@ class ExecutePlugin(tmt.steps.Plugin):
                 f"No result or state found in '{beakerlib_results_file}'.",
                 level=3)
             data['note'] = 'beakerlib: Result/State missing'
-            return tmt.Result(data, test.name)
+            return tmt.Result(data, test.name, test.result)
         # Check if it was killed by timeout (set by tmt executor)
         if test.returncode == tmt.utils.PROCESS_TIMEOUT:
             data['result'] = 'error'
@@ -313,7 +313,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         # Finally we have a valid result
         else:
             data['result'] = result.lower()
-        return tmt.Result(data, test.name)
+        return tmt.Result(data, test.name, test.result)
 
     @staticmethod
     def test_duration(start, end):

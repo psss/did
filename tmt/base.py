@@ -2047,7 +2047,7 @@ class Result(object):
         'error': 'magenta',
         }
 
-    def __init__(self, data, name):
+    def __init__(self, data, name, interpret='respect'):
         """
         Initialize test result data """
 
@@ -2072,6 +2072,29 @@ class Result(object):
             self.log = tmt.utils.listify(data['log'])
         except KeyError:
             self.log = []
+
+        # Handle alternative result interpretation
+        if interpret != "respect":
+            # Extend existing note or set a new one
+            if self.note and isinstance(self.note, str):
+                self.note += f', original result: {self.result}'
+            elif self.note is None:
+                self.note = f'original result: {self.result}'
+            else:
+                raise tmt.utils.SpecificationError(
+                    f"Test result note '{self.note}' must be a string.")
+
+            if interpret == "xfail":
+                # Swap just fail<-->pass, keep the rest as is (info, warn,
+                # error)
+                self.result = {
+                    'fail': 'pass', 'pass': 'fail'}.get(
+                    self.result, self.result)
+            elif interpret in self._results:
+                self.result = interpret
+            else:
+                raise tmt.utils.SpecificationError(
+                    f"Invalid result '{interpret}' in test '{name}'.")
 
     @staticmethod
     def total(results):
