@@ -1,7 +1,7 @@
 summary: Python unit tests
 description:
     Run all available python unit tests using pytest.
-test: python3 -m pytest
+test: python3 -m pytest -vvv -ra --showlocals
 framework: shell
 require:
   - python3-pytest

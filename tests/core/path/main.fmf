@@ -1,4 +1,4 @@
 summary: Verify the default path handling
-test: python3 -m pytest test.py
+test: python3 -m pytest -vvv -ra --showlocals test.py
 framework: shell
 require: python3-pytest

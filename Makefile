@@ -19,17 +19,17 @@ tmp:
 
 # Run the test suite, optionally with coverage
 test: tmp
-	python3 -m pytest -c tests/unit/pytest.ini tests/unit
+	python3 -m pytest -vvv -ra --showlocals -c tests/unit/pytest.ini tests/unit
 smoke: tmp
-	python3 -m pytest -c tests/unit/pytest.ini tests/unit/test_cli.py
+	python3 -m pytest -vvv -ra --showlocals -c tests/unit/pytest.ini tests/unit/test_cli.py
 coverage: tmp
-	coverage run --source=tmt,bin -m py.test tests
+	coverage run --source=tmt,bin -m pytest -vvv -ra --showlocals tests
 	coverage report
 	coverage annotate
 # Regenerate test data for integration tests
 # remove selected/all response files in tests/integration/test_data directory
 requre:
-	cd tests/integration; python3 -m pytest -v
+	cd tests/integration; python3 -m pytest -vvv -ra --showlocals
 	# response files cleanup
 	requre-patch purge --replaces :milestone_url:str:SomeText --replaces :latency:float:0 tests/integration/test_data/test_nitrate/*
 

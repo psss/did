@@ -45,7 +45,7 @@ tier: null
 link: https://github.com/packit/requre
 
 /coverage_bugzilla:
-    test: "python3 -m pytest -v -k 'test_coverage_bugzilla'"
+    test: "python3 -m pytest -vvv -ra --showlocals -k 'test_coverage_bugzilla'"
 
 /the_rest:
-    test: "python3 -m pytest -v -k 'not test_coverage_bugzilla'"
+    test: "python3 -m pytest -vvv -ra --showlocals -k 'not test_coverage_bugzilla'"

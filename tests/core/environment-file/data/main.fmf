@@ -1,6 +1,6 @@
 /test:
     summary: This is a test with variables
-    test: python3 -m pytest -svv environment_file_data.py
+    test: python3 -m pytest -vvv -ra --showlocals -s environment_file_data.py
 
 /plan:
     summary: This is a plan with variables
