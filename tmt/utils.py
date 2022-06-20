@@ -1617,6 +1617,83 @@ def parse_yaml(content: str) -> EnvironmentType:
     return {key: str(value) for key, value in yaml_as_dict.items()}
 
 
+def validate_git_status(test: 'tmt.base.Test') -> Tuple[bool, str]:
+    """
+    Validate that test has current metadata on fmf_id
+
+    Return a tuple (boolean, message) as the result of validation.
+
+    Checks that sources:
+    - all local changes are committed
+    - up to date on remote repository
+    - .fmf/version marking fmf root is committed as well
+
+    When all checks pass returns (True, '').
+    """
+    sources = test.node.sources + \
+        [os.path.join(test.node.root, '.fmf', 'version')]
+
+    # Use tmt's run instead of subprocess.run
+    run = Common().run
+
+    # Check for not committed metadata changes
+    cmd = ['git', 'status', '--porcelain', '--'] + sources
+    try:
+        result = run(cmd, cwd=test.node.root, join=True)
+    except RunError as error:
+        return (
+            False,
+            f"Failed to run git status: {error.stdout}"
+            )
+
+    not_committed = []
+    assert result.stdout is not None
+    for line in result.stdout.split('\n'):
+        if line:
+            # XY PATH or XY ORIG -> PATH. XY and PATH are separated by space
+            not_committed.append(line[3:])
+
+    if not_committed:
+        return (False, "Uncommitted changes in " + " ".join(not_committed))
+
+    # Check for not pushed changes
+    cmd = ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"]
+    try:
+        result = run(cmd, cwd=test.node.root)
+    except RunError as error:
+        return (
+            False,
+            f'Failed to get remote branch, error raised: "{error.stderr}"'
+            )
+
+    assert result.stdout is not None
+    remote_ref = result.stdout.strip()
+
+    cmd = [
+        'git',
+        'diff',
+        f'HEAD..{remote_ref}',
+        '--name-status',
+        '--'] + sources
+    try:
+        result = run(cmd, cwd=test.node.root)
+    except RunError as error:
+        return (
+            False,
+            f'Failed to diff against remote branch, error raised: "{error.stderr}"')
+
+    not_pushed = []
+    assert result.stdout is not None
+    for line in result.stdout.split('\n'):
+        if line:
+            _, path = line.strip().split('\t', maxsplit=2)
+            not_pushed.append(path)
+    if not_pushed:
+        return (False, "Not pushed changes in " + " ".join(not_pushed))
+
+    return (True, '')
+
+
 def validate_fmf_id(fmf_id: 'tmt.base.FmfIdType') -> Tuple[bool, str]:
     """
     Validate given fmf id and return a human readable error

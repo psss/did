@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import os
 import re
 import unittest
 
@@ -7,7 +8,52 @@ import pytest
 
 import tmt
 from tmt.utils import (Common, StructuredField, StructuredFieldError,
-                       duration_to_seconds, listify, public_git_url)
+                       duration_to_seconds, listify, public_git_url,
+                       validate_git_status)
+
+run = Common().run
+
+
+@pytest.fixture
+def local_git_repo(tmpdir):
+    origin = tmpdir.join('origin')
+    os.makedirs(origin)
+
+    run('git init'.split(), cwd=origin)
+    run(
+        'git config --local user.email lzachar@redhat.com'.split(),
+        cwd=origin)
+    run(
+        'git config --local user.name LZachar'.split(),
+        cwd=origin)
+    # We need to be able to push, --bare repo is another option here however
+    # that would require to add separate fixture for bare repo (unusable for
+    # local changes)
+    run(
+        'git config --local receive.denyCurrentBranch ignore'.split(),
+        cwd=origin)
+    origin.join('README').write('something to have in the repo')
+    run('git add -A'.split(), cwd=origin)
+    run(
+        'git commit -m initial_commit'.split(),
+        cwd=origin)
+    return origin
+
+
+@pytest.fixture
+def origin_and_local_git_repo(local_git_repo):
+    top_dir = local_git_repo.dirpath()
+    fork_dir = top_dir.join('fork')
+    run(
+        f'git clone {local_git_repo} {fork_dir}'.split(),
+        cwd=top_dir)
+    run(
+        'git config --local user.email lzachar@redhat.com'.split(),
+        cwd=fork_dir)
+    run(
+        'git config --local user.name LZachar'.split(),
+        cwd=fork_dir)
+    return local_git_repo, fork_dir
 
 
 def test_public_git_url():
@@ -437,3 +483,134 @@ def test_FedoraDistGit(tmpdir):
     fedora_sources_obj = tmt.utils.FedoraDistGit()
     assert [("https://src.fedoraproject.org/repo/pkgs/rpms/tmt/fn-1.tar.gz/sha512/09af/fn-1.tar.gz",  # noqa: E501
             "fn-1.tar.gz")] == fedora_sources_obj.url_and_name(cwd=tmpdir)
+
+
+class Test_validate_git_status:
+    @pytest.mark.parametrize("use_path",
+                             [False, True], ids=["without path", "with path"])
+    def test_all_good(cls, origin_and_local_git_repo, use_path):
+        # No need to modify origin, ignoring it
+        mine = origin_and_local_git_repo[1]
+
+        # In local repo:
+        # Init tmt and add test
+        if use_path:
+            fmf_root = mine.join('fmf_root')
+        else:
+            fmf_root = mine
+        tmt.Tree.init(str(fmf_root), None, None)
+        fmf_root.join('main.fmf').write('test: echo')
+        run(
+            ['git', 'add', str(fmf_root), str(fmf_root.join('main.fmf'))],
+            cwd=mine)
+        run(
+            'git commit -m add_test'.split(),
+            cwd=mine)
+        run(
+            'git push'.split(),
+            cwd=mine)
+        test = tmt.Tree(str(fmf_root)).tests()[0]
+        validation = validate_git_status(test)
+        assert validation == (True, '')
+
+    def test_no_remote(cls, local_git_repo):
+        tmpdir = local_git_repo
+        tmt.Tree.init(str(tmpdir), None, None)
+        tmpdir.join('main.fmf').write('test: echo')
+        run(
+            'git add main.fmf .fmf/version'.split(),
+            cwd=tmpdir)
+        run(
+            'git commit -m initial_commit'.split(),
+            cwd=tmpdir)
+
+        test = tmt.Tree(str(tmpdir)).tests()[0]
+        val, msg = validate_git_status(test)
+        assert not val
+        assert "Failed to get remote branch" in msg
+
+    def test_untracked_fmf_root(cls, local_git_repo):
+        # local repo is enough since this can't get passed 'is pushed' check
+        tmt.Tree.init(str(local_git_repo), None, None)
+        local_git_repo.join('main.fmf').write('test: echo')
+        run(
+            'git add main.fmf'.split(),
+            cwd=local_git_repo)
+        run(
+            'git commit -m missing_fmf_root'.split(),
+            cwd=local_git_repo)
+
+        test = tmt.Tree(str(local_git_repo)).tests()[0]
+        validate = validate_git_status(test)
+        assert validate == (False, 'Uncommitted changes in .fmf/version')
+
+    def test_untracked_sources(cls, local_git_repo):
+        tmt.Tree.init(str(local_git_repo), None, None)
+        local_git_repo.join('main.fmf').write('test: echo')
+        local_git_repo.join('test.fmf').write('tag: []')
+        run(
+            'git add .fmf/version test.fmf'.split(),
+            cwd=local_git_repo)
+        run(
+            'git commit -m main.fmf'.split(),
+            cwd=local_git_repo)
+
+        test = tmt.Tree(str(local_git_repo)).tests()[0]
+        validate = validate_git_status(test)
+        assert validate == (False, 'Uncommitted changes in main.fmf')
+
+    @pytest.mark.parametrize("use_path",
+                             [False, True], ids=["without path", "with path"])
+    def test_local_changes(cls, origin_and_local_git_repo, use_path):
+        origin, mine = origin_and_local_git_repo
+
+        if use_path:
+            fmf_root = origin.join('fmf_root')
+        else:
+            fmf_root = origin
+        tmt.Tree.init(str(fmf_root), None, None)
+        fmf_root.join('main.fmf').write('test: echo')
+        run('git add -A'.split(), cwd=origin)
+        run(
+            'git commit -m added_test'.split(),
+            cwd=origin)
+
+        # Pull changes from previous line
+        run('git pull'.split(),
+            cwd=mine)
+
+        mine_fmf_root = mine
+        if use_path:
+            mine_fmf_root = mine.join('fmf_root')
+        mine_fmf_root.join('main.fmf').write('test: echo ahoy')
+
+        # Change README but since it is not part of metadata we do not check it
+        mine.join("README").write('changed')
+
+        test = tmt.Tree(str(mine_fmf_root)).tests()[0]
+        validation_result = validate_git_status(test)
+
+        assert validation_result == (
+            False, "Uncommitted changes in " + ('fmf_root/' if use_path else '') + "main.fmf")
+
+    def test_not_pushed(cls, origin_and_local_git_repo):
+        # No need for original repo (it is required just to have remote in
+        # local clone)
+        mine = origin_and_local_git_repo[1]
+        fmf_root = mine
+
+        tmt.Tree.init(str(fmf_root), None, None)
+
+        fmf_root.join('main.fmf').write('test: echo')
+        run(
+            'git add main.fmf .fmf/version'.split(),
+            cwd=fmf_root)
+        run(
+            'git commit -m changes'.split(),
+            cwd=mine)
+
+        test = tmt.Tree(str(fmf_root)).tests()[0]
+        validation_result = validate_git_status(test)
+
+        assert validation_result == (
+            False, 'Not pushed changes in .fmf/version main.fmf')

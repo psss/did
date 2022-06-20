@@ -11,7 +11,7 @@ import xmlrpc.client
 from functools import lru_cache
 
 import fmf
-from click import echo, style
+from click import echo, secho, style
 
 import tmt
 import tmt.utils
@@ -229,6 +229,7 @@ def export_to_nitrate(test):
     link_runs = test.opt('link_runs')
     duplicate = test.opt('duplicate')
     link_bugzilla = test.opt('bugzilla')
+    ignore_git_validation = test.opt('ignore_git_validation')
     dry_mode = test.opt('dry')
 
     if link_runs:
@@ -246,6 +247,16 @@ def export_to_nitrate(test):
             raise ConvertError(
                 "Not logged to Bugzilla, check `man bugzilla` section "
                 "'AUTHENTICATION CACHE AND API KEYS'.")
+
+    # Check git is already correct
+    valid, error_msg = tmt.utils.validate_git_status(test)
+    if not valid:
+        if ignore_git_validation:
+            secho(f"Exporting regardless '{error_msg}'.", fg='red')
+        else:
+            raise ConvertError(
+                f"Can't export due '{error_msg}'.\n"
+                "Use --ignore-git-validation on your own risk to export regardless.")
 
     # Check nitrate test case
     try:

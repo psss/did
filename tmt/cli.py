@@ -553,6 +553,10 @@ def tests_import(
     help="Link Nitrate case to Bugzilla specified in the 'link' attribute "
          "with the relation 'verifies'.")
 @click.option(
+    '--ignore-git-validation', is_flag=True,
+    help="Ignore unpublished git changes and export to Nitrate. "
+    "The case might not be able to be scheduled!")
+@click.option(
     '--create', is_flag=True,
     help="Create test cases in nitrate if they don't exist.")
 @click.option(
