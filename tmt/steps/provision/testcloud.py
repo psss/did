@@ -11,7 +11,7 @@ import fmf
 import requests
 
 import tmt
-from tmt.steps.provision import ProvisionPlugin
+import tmt.steps.provision
 from tmt.utils import WORKDIR_ROOT, ProvisionError, retry_session
 
 

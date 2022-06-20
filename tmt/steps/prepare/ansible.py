@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 import click
 
 import tmt
+import tmt.steps.prepare
 import tmt.utils
 from tmt.steps import Step
 from tmt.steps.provision import Guest

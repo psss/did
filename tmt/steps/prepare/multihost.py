@@ -1,6 +1,7 @@
 from typing import Any, Optional
 
 import tmt
+import tmt.steps.prepare
 from tmt.steps import Method
 from tmt.steps.provision import Guest
 

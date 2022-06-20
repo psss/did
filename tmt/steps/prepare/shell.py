@@ -4,6 +4,7 @@ import click
 import fmf
 
 import tmt
+import tmt.steps.prepare
 import tmt.utils
 from tmt.steps.provision import Guest
 

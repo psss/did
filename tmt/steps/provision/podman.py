@@ -3,6 +3,7 @@ import os
 import click
 
 import tmt
+import tmt.steps.provision
 
 # Timeout in seconds of waiting for a connection
 CONNECTION_TIMEOUT = 60

@@ -7,6 +7,7 @@ import time
 import click
 
 import tmt
+import tmt.steps.execute
 import tmt.utils
 from tmt.steps.execute import TEST_OUTPUT_FILENAME
 from tmt.steps.provision import DEFAULT_RSYNC_OPTIONS

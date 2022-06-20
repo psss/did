@@ -1,6 +1,7 @@
 import os
 
 import tmt
+import tmt.steps.report
 from tmt.steps.execute import TEST_OUTPUT_FILENAME
 
 

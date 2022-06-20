@@ -5,6 +5,7 @@ import webbrowser
 import click
 
 import tmt
+import tmt.steps.report
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>

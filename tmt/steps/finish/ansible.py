@@ -1,4 +1,5 @@
 import tmt
+import tmt.steps.finish
 from tmt.steps.prepare.ansible import PrepareAnsible
 
 

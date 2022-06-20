@@ -6,6 +6,7 @@ import click
 import fmf
 
 import tmt
+import tmt.steps.prepare
 
 COPR_URL = 'https://copr.fedorainfracloud.org/coprs'
 

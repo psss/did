@@ -7,6 +7,7 @@ import click
 import requests
 
 import tmt
+import tmt.steps.provision
 from tmt.utils import ProvisionError, updatable_message
 
 if sys.version_info >= (3, 8):

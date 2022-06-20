@@ -1,4 +1,5 @@
 import tmt
+import tmt.steps.provision
 
 
 class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):

@@ -3,6 +3,7 @@ import os
 import click
 
 import tmt
+import tmt.steps.report
 
 DEFAULT_NAME = "junit.xml"
 
