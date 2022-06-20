@@ -11,6 +11,7 @@ from typing import Generator, Optional
 import fmf
 
 import tmt
+from tmt.steps import STEPS
 
 log = fmf.utils.Logging('tmt').logger
 
@@ -20,7 +21,7 @@ def explore() -> None:
 
     # Check all tmt steps for native plugins
     root = os.path.dirname(os.path.realpath(tmt.__file__))
-    for step in tmt.steps.STEPS:
+    for step in STEPS:
         for module in discover(os.path.join(root, 'steps', step)):
             import_(f'tmt.steps.{step}.{module}')
     # Check for possible plugins in the 'plugins' directory

@@ -33,9 +33,9 @@ class Execute(tmt.steps.Step):
     # Internal executor is the default implementation
     how = 'tmt'
 
-    def __init__(self, data, plan):
+    def __init__(self, plan, data):
         """ Initialize execute step data """
-        super().__init__(data, plan)
+        super().__init__(plan=plan, data=data)
         # List of Result() objects representing test results
         self._results = []
 

@@ -34,9 +34,9 @@ class Provision(tmt.steps.Step):
     # Default implementation for provision is a virtual machine
     how = 'virtual'
 
-    def __init__(self, data, plan):
+    def __init__(self, plan, data):
         """ Initialize provision step data """
-        super().__init__(data, plan)
+        super().__init__(plan=plan, data=data)
         # Check that the names are unique
         names = [data.get('name') for data in self.data]
         names_count = collections.defaultdict(int)

@@ -619,17 +619,17 @@ class Plan(Core):
 
         # Initialize test steps
         self.discover = tmt.steps.discover.Discover(
-            self.node.get('discover'), self)
+            plan=self, data=self.node.get('discover'))
         self.provision = tmt.steps.provision.Provision(
-            self.node.get('provision'), self)
+            plan=self, data=self.node.get('provision'))
         self.prepare = tmt.steps.prepare.Prepare(
-            self.node.get('prepare'), self)
+            plan=self, data=self.node.get('prepare'))
         self.execute = tmt.steps.execute.Execute(
-            self.node.get('execute'), self)
+            plan=self, data=self.node.get('execute'))
         self.report = tmt.steps.report.Report(
-            self.node.get('report'), self)
+            plan=self, data=self.node.get('report'))
         self.finish = tmt.steps.finish.Finish(
-            self.node.get('finish'), self)
+            plan=self, data=self.node.get('finish'))
 
         # Relevant gates (convert to list if needed)
         self.gate = node.get('gate')

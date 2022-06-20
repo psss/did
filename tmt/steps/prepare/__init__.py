@@ -17,9 +17,9 @@ class Prepare(tmt.steps.Step):
     recommended packages it is '75'.
     """
 
-    def __init__(self, data, plan):
+    def __init__(self, plan, data):
         """ Initialize prepare step data """
-        super().__init__(data, plan)
+        super().__init__(plan=plan, data=data)
         self.preparations_applied = 0
 
     def wake(self):

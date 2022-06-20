@@ -348,7 +348,7 @@ class ProvisionArtemis(
     @classmethod
     def options(cls, how: Any = None) -> List[click.Option]:
         """ Prepare command line options for Artemis """
-        return [
+        return cast(List[click.Option], [
             click.option(
                 '--api-url', metavar='URL',
                 help="Artemis API URL.",
@@ -412,7 +412,7 @@ class ProvisionArtemis(
                 help=f'A factor for exponential API retry backoff, '
                      f'{DEFAULT_RETRY_BACKOFF_FACTOR} by default.',
                 ),
-            ] + cast(List[click.Option], super().options(how))
+            ]) + cast(List[click.Option], super().options(how))
 
     def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """

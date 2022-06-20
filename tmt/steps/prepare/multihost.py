@@ -1,6 +1,7 @@
 from typing import Any, Optional
 
 import tmt
+from tmt.steps import Method
 from tmt.steps.provision import Guest
 
 
@@ -28,7 +29,7 @@ class PrepareMultihost(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     """
 
     # Supported methods
-    _methods = [tmt.steps.Method(name='multihost', doc=__doc__, order=50)]
+    _methods = [Method(name='multihost', doc=__doc__, order=50)]
 
     # Supported keys
     _keys = ['roles', 'hosts']
