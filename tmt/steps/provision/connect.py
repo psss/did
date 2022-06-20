@@ -1,8 +1,12 @@
+from typing import Any, List, Optional
+
 import click
 
 import tmt
 import tmt.steps
 import tmt.steps.provision
+import tmt.utils
+from tmt.steps.provision import GuestSshData
 
 
 @tmt.steps.provides_method('connect')
@@ -41,9 +45,10 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
     _keys = ["guest", "key", "user", "password", "port"]
 
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for connect """
-        return [
+        options = super().options(how)
+        options[:0] = [
             click.option(
                 '-g', '--guest', metavar='GUEST',
                 help='Select remote host to connect to (hostname or ip).'),
@@ -59,9 +64,10 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
             click.option(
                 '-p', '--password', metavar='PASSWORD',
                 help='Password for login into the guest system.'),
-            ] + super().options(how)
+            ]
+        return options
 
-    def default(self, option, default=None):
+    def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """
         # User root as the default user
         if option == 'user':
@@ -69,13 +75,17 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         # No other defaults available
         return default
 
-    def wake(self, keys=None, data=None):
+    # More specific type is a violation of Liskov substitution principle, and mypy
+    # complains about it - rightfully so. Ignoring the issue which should be resolved
+    # with https://github.com/teemtee/tmt/pull/1439.
+    def wake(self, keys: Optional[List[str]] = None,  # type: ignore[override]
+             data: Optional[GuestSshData] = None) -> None:
         """ Wake up the plugin, process data, apply options """
         super().wake(keys=keys, data=data)
         if data:
             self._guest = tmt.GuestSsh(data, name=self.name, parent=self.step)
 
-    def go(self):
+    def go(self) -> None:
         """ Prepare the connection """
         super().go()
 
@@ -90,7 +100,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         if not guest:
             raise tmt.utils.SpecificationError(
                 'Provide a host name or an ip address to connect.')
-        data = tmt.steps.provision.GuestSshData(
+        data = GuestSshData(
             role=self.get('role'),
             guest=guest,
             user=user
@@ -115,6 +125,6 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         # And finally create the guest
         self._guest = tmt.GuestSsh(data, name=self.name, parent=self.step)
 
-    def guest(self):
+    def guest(self) -> Optional[tmt.GuestSsh]:
         """ Return the provisioned guest """
         return self._guest
