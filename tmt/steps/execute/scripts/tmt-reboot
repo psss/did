@@ -1,8 +1,12 @@
 #!/bin/bash
-touch "$TMT_REBOOT_REQUEST"
-while getopts "c:" flag; do
+command=""
+timeout=""
+while getopts "c:t:" flag; do
     case "${flag}" in
-        c) echo "${OPTARG}" >> "$TMT_REBOOT_REQUEST";;
+        c) command="${OPTARG}";;
+        t) timeout="${OPTARG}";;
     esac
 done
+json_fmt='{"command": "%s", "timeout": "%s"}'
+printf "$json_fmt" "$command" "$timeout" > "$TMT_REBOOT_REQUEST"
 kill $PPID

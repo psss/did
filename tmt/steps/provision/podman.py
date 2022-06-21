@@ -164,7 +164,7 @@ class GuestContainer(tmt.Guest):
             ['--name', self.container, '-v', f'{workdir}:{workdir}:z',
              '-itd', '--user', self.user, self.image])
 
-    def reboot(self, hard=False, command=None):
+    def reboot(self, hard=False, command=None, timeout=None):
         """ Restart the container, return True if successful  """
         if command:
             raise tmt.utils.ProvisionError(
@@ -174,7 +174,7 @@ class GuestContainer(tmt.Guest):
                 "Containers do not support soft reboot, they can only be "
                 "stopped and started again (hard reboot).")
         self.podman(['container', 'restart', self.container])
-        return self.reconnect(timeout=CONNECTION_TIMEOUT)
+        return self.reconnect(timeout=timeout or CONNECTION_TIMEOUT)
 
     def ansible(self, playbook, extra_args=None):
         """ Prepare container using ansible playbook """

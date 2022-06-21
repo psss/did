@@ -21,9 +21,7 @@ import tmt.utils
 from tmt.steps import Action
 
 # Timeout in seconds of waiting for a connection after reboot
-# (long enough to allow operations such as system upgrade)
-# FIXME: Shorten once "tmt-reboot -t <timeout>" is implemented
-CONNECTION_TIMEOUT = 60 * 60
+CONNECTION_TIMEOUT = 5 * 60
 
 # Wait time when reboot happens in seconds
 RECONNECT_INITIAL_WAIT_TIME = 5
@@ -495,25 +493,34 @@ class Guest(tmt.utils.Common):
 
         raise NotImplementedError()
 
-    def reboot(self, hard=False):
+    def reboot(self, hard=False, command=None, timeout=None):
         """
         Reboot the guest, return True if successful
 
         Parameter 'hard' set to True means that guest should be
         rebooted by way which is not clean in sense that data can be
         lost. When set to False reboot should be done gracefully.
+
+        Use the 'command' parameter to specify a custom reboot command
+        instead of the default 'reboot'.
+
+        Parameter 'timeout' can be used to specify time (in seconds) to
+        wait for the guest to come back up after rebooting.
         """
 
         raise NotImplementedError()
 
-    def reconnect(self, timeout=CONNECTION_TIMEOUT):
+    def reconnect(self, timeout=None):
         """
         Ensure the connection to the guest is working after reboot
 
-        The default timeout is 1h to allow long operations such as
-        system upgrade. Custom number of seconds can be provided in the
-        `timeout` parameter.
+        The default timeout is 5 minutes. Custom number of seconds can be
+        provided in the `timeout` parameter. This may be useful when long
+        operations (such as system upgrade) are performed.
         """
+        # The default is handled here rather than in the argument so that
+        # the caller can pass in None as an argument (i.e. don't care value)
+        timeout = timeout or CONNECTION_TIMEOUT
         # Try to wait for machine to really shutdown
         time.sleep(RECONNECT_INITIAL_WAIT_TIME)
         self.debug("Wait for a connection to the guest.")
@@ -871,7 +878,7 @@ class GuestSsh(Guest):
             except OSError as error:
                 self.debug(f"Failed to remove the socket: {error}", level=3)
 
-    def reboot(self, hard=False, command=None):
+    def reboot(self, hard=False, command=None, timeout=None):
         """
         Reboot the guest, return True if successful
 
@@ -899,7 +906,7 @@ class GuestSsh(Guest):
                     "Seems the connection was closed too fast, ignoring.")
             else:
                 raise
-        return self.reconnect()
+        return self.reconnect(timeout=timeout)
 
     def remove(self):
         """

@@ -19,6 +19,11 @@ description: |
     option of the reboot script can be used, e.g. ``tmt-reboot -c
     "dnf system-upgrade reboot"``.
 
+    In some scenarios, rebooting may take longer than usual. The
+    default timeout used in tmt can be overriden using the ``-t``
+    option of the reboot script, e.g. ``tmt-reboot -t 3600`` to
+    wait for up to an hour for the guest to come back up.
+
     For backward-compatibility with the `restraint`__ framework
     the ``rstrnt-reboot`` and ``rhts-reboot`` commands are provided
     as well together with the ``RSTRNT_REBOOTCOUNT`` and ``REBOOTCOUNT``

@@ -82,7 +82,7 @@ class GuestLocal(tmt.Guest):
 
         self.debug(f"Doing nothing to stop guest '{self.guest}'.")
 
-    def reboot(self, hard=False):
+    def reboot(self, hard=False, command=None, timeout=None):
         """ Reboot the guest, return True if successful """
 
         self.debug(f"Doing nothing to reboot guest '{self.guest}'.")
