@@ -11,6 +11,7 @@ repos:
           - --aggressive
           - --aggressive
           - --hang-closing
+          - --max-line-length=99
 
   - repo: https://github.com/PyCQA/isort
     rev: "5.8.0"
@@ -21,6 +22,8 @@ repos:
     rev: "4.0.1"
     hooks:
       - id: flake8
+        args:
+          - --max-line-length=99
         files: >
           (?x)^(
             examples/.*|

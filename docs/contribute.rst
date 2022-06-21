@@ -19,11 +19,12 @@ Our favorite thoughts from The Zen of Python:
 We respect the `PEP8`__ Style Guide for Python Code. Here's a
 couple of recommendations to keep on mind when writing code:
 
+* Maximum line length is 99 for code and 72 for documentation.
 * Comments should be complete sentences.
 * The first word should be capitalized (unless identifier).
 * When using hanging indent, the first line should be empty.
 * The closing brace/bracket/parenthesis on multiline constructs
-  is under the first non-whitespace character of the last line
+  is under the first non-whitespace character of the last line.
 
 __ https://github.com/teemtee/tmt
 __ https://www.python.org/dev/peps/pep-0008/
