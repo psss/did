@@ -18,7 +18,8 @@ __pkg__ = 'tmt'
 __pkgdata__ = {
     'tmt': [
         'schemas/*.yaml',
-        'steps/execute/scripts/*'
+        'steps/execute/scripts/*',
+        'steps/report/html/*'
         ]
 }
 __pkgdir__ = {}

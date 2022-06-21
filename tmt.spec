@@ -158,7 +158,7 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 %{python3_sitelib}/%{name}-*.egg-info/
 %license LICENSE
 %exclude %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}{podman,testcloud}.*
-%exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}html.*
+%exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}html*
 %exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}junit.*
 
 %files provision-container
@@ -168,7 +168,8 @@ install -pm 644 bin/complete %{buildroot}/etc/bash_completion.d/tmt
 %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}testcloud.*
 
 %files report-html
-%{python3_sitelib}/%{name}/steps/report/{,__pycache__/}html.*
+%{python3_sitelib}/%{name}/steps/report/{,__pycache__/}html*
+
 
 %files report-junit
 %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}junit.*

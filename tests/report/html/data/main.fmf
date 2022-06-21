@@ -1,0 +1,26 @@
+/plan:
+    discover:
+        how: fmf
+    provision:
+        how: local
+    execute:
+        how: tmt
+
+/test:
+    /pass:
+        summary: Run command 'true'
+        test: 'true'
+    /fail:
+        summary: Run command 'false'
+        test: 'false'
+    /error:
+        summary: Run a non-existing command
+        test: a-weird-command
+    /timeout:
+        summary: Timeout
+        duration: 2s
+        test: sleep 10
+    /xfail:
+        summary: Run command 'false' but report pass
+        test: 'false'
+        result: xfail
