@@ -129,6 +129,15 @@ rlJournalStart
         rlAssertGrep "tag: KernelTier1 SaNiTy" 'output'
     rlPhaseEnd
 
+    rlPhaseStartTest "Negative requires"
+        rlRun 'pushd $tmp/data/parent/negative-requires'
+        rlRun -s 'tmt test import --no-nitrate' '2'
+        rlAssertGrep 'Excluding packages is not supported' $rlRun_LOG
+        rlAssertNotExists "main.fmf"
+        rlRun 'popd'
+    rlPhaseEnd
+
+
     rlPhaseStartCleanup
         rlRun "rm -r $tmp" 0 "Removing tmp directory"
         rlRun 'popd'

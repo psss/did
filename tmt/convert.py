@@ -272,11 +272,23 @@ def read_datafile(path, filename, datafile, types, testinfo=None):
             echo(style('environment:', fg='green'))
             echo(pprint.pformat(data['environment']))
 
+    def sanitize_name(name):
+        """ Raise if package name starts with '-' (negative require) """
+        if name.startswith('-'):
+            # Beaker supports excluding packages but tmt does not
+            # https://github.com/teemtee/tmt/issues/1165#issuecomment-1122293224
+            raise ConvertError(
+                "Excluding packages is not supported by tmt require/recommend. "
+                "Plan can take care of such situation in Prepare step, "
+                "but cannot be created automatically. "
+                f"(Found '{name}' during conversion).")
+        return name
+
     # RhtsRequires or repoRequires (optional) goes to require
     requires = re.findall(regex_require, testinfo, re.M)
     if requires:
         data['require'] = [
-            require for line in requires
+            sanitize_name(require) for line in requires
             for require in line.split(rec_separator)]
         echo(style('require: ', fg='green') + ' '.join(data['require']))
 
@@ -284,7 +296,7 @@ def read_datafile(path, filename, datafile, types, testinfo=None):
     recommends = re.findall(regex_recommend, testinfo, re.M)
     if recommends:
         data['recommend'] = [
-            recommend for line in recommends
+            sanitize_name(recommend) for line in recommends
             for recommend in line.split(rec_separator)]
         echo(
             style('recommend: ', fg='green') + ' '.join(data['recommend']))
