@@ -35,7 +35,7 @@ description: |
         current schedule, might be dropped or reconsidered for
         inclusion in a later timebox
 
-    Should be a ``string`` with one of the above-mentioned values.
+    Must be a ``string`` with one of the above-mentioned values.
 
     __ https://en.wikipedia.org/wiki/MoSCoW_method
 

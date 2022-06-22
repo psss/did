@@ -13,7 +13,7 @@ description: |
     document describing the manual test case steps in Markdown
     format with defined structure.
 
-    Should be a ``string``. This is a **required** attribute.
+    Must be a ``string``. This is a **required** attribute.
 
     Shell options ``errexit`` and ``pipefail`` are applied by
     default using ``set -eo pipefail`` to avoid potential errors

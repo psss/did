@@ -6,7 +6,7 @@ description:
     Supported formats are dotenv/shell with ``KEY=VALUE`` pairs
     and ``yaml``. Full `url` can be used to fetch variables from a
     remote source. The ``environment`` key has a higher priority.
-    File path should be relative to the metadata tree root.
+    File path must be relative to the metadata tree root.
 example: |
     # Load from a dotenv/shell format
     /plan:

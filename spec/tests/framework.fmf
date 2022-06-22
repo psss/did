@@ -12,10 +12,10 @@ description: |
     installed on the test environment.
 
     Currently ``shell`` and ``beakerlib`` are supported. Each
-    `execute` step plugin should list which frameworks it supports
+    `execute` step plugin must list which frameworks it supports
     and raise an error when an unsupported framework is detected.
 
-    Should be a ``string``, by default ``shell`` is used.
+    Must be a ``string``, by default ``shell`` is used.
 
     shell
         Only the exit code determines the test result. Exit code

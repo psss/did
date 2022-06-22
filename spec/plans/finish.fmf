@@ -3,9 +3,10 @@ summary: Finishing tasks
 description:
     Additional actions to be performed after the test execution
     has been completed.  Counterpart of the ``prepare`` step
-    useful for various cleanup actions. Use the 'order' attribute
-    to select in which order finishing tasks  should happen if there
-    are multiple configs. Default order is '50'
+    useful for various cleanup actions. Use the
+    :ref:`/spec/core/order` attribute to select in which order
+    finishing tasks should happen if there are multiple configs.
+    Default order is ``50``.
 
 example: |
     finish:
@@ -32,7 +33,7 @@ example: |
         One or more playbooks can be provided as a list under the
         ``playbook`` attribute.  Each of them will be applied
         using ``ansible-playbook`` in the given order. The path
-        should be relative to the metadata tree root.
+        must be relative to the metadata tree root.
     example: |
         finish:
             how: ansible

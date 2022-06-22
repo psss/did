@@ -1,11 +1,10 @@
 summary: Concise summary describing the plan
 
 description:
-    Should shortly describe purpose of the test plan. One-line
-    ``string`` with up to 50 characters. It is challenging to be
-    both concise and descriptive, but that is what a well-written
-    summary should do.
-
+    Should shortly describe purpose of the test plan. Must be a
+    one-line ``string``, should be up to 50 characters long. It
+    is challenging to be both concise and descriptive, but that is
+    what a well-written summary should do.
 
 example: |
     /pull-request:

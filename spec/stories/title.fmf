@@ -10,7 +10,7 @@ description:
     in order to render content into online documentation it is
     sometimes useful to provide a custom user story title rather
     then using the story name which can be too short to describe
-    well the section content.
+    well the section content. Must be a ``string``.
 
 example: |
     title: Nice title

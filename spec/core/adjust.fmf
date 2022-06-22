@@ -34,11 +34,11 @@ description: |
     continue
         By default, all provided rules are evaluated. When set to
         ``false``, the first successful rule finishes the
-        evaluation and the rest is ignored.
+        evaluation and the rest is ignored. Must be a ``boolean``.
 
     because
         An optional comment with justification of the adjustment.
-        Should be a plain string.
+        Must be a ``string``.
 
     .. note::
         This covers and extends the original concept of `Test Case

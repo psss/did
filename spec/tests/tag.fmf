@@ -7,7 +7,7 @@ description:
     Throughout the years, free-form tags proved to be useful for
     many, many scenarios. Primarily to provide an easy way how to
     select a subset of objects. Tags are case-sensitive. Using
-    lowercase is recommended. Should be a ``string`` or a ``list
+    lowercase is recommended. Must be a ``string`` or a ``list
     of strings``. Tag name must not contain spaces or commas.
 
 example:

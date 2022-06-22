@@ -15,14 +15,14 @@ description: |
     the information. This can be useful for example when enabling
     integration testing between related components.
 
-    Remote plans are identified by the ``plan`` key which should
+    Remote plans are identified by the ``plan`` key which must
     contain an ``import`` dictionary with an `fmf identifier`__ of
     the remote plan. The ``url`` and ``name`` keys have to be
     defined, ``ref`` and ``path`` are optional. Only one remote
-    plan can be referenced and a full plan ``name`` should be used
+    plan can be referenced and a full plan ``name`` must be used
     (no string matching is applied).
 
-    No plan steps should be defined in the remote plan reference.
+    Plan steps must not be defined in the remote plan reference.
     Inheriting or overriding remote plan config with local plan
     steps might be possible in the future but currently is not
     supported in any way.

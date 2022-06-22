@@ -9,7 +9,7 @@ description:
     It's useful to be able to easily select all tests relevant for
     given component or package. As they do not always have to be
     stored in the same repository and because many tests cover
-    multiple components a dedicated field is needed. Should be a
+    multiple components a dedicated field is needed. Must be a
     ``string`` or a ``list of strings``. Component name usually
     corresponds to the source package name.
 

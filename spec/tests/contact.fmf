@@ -8,7 +8,7 @@ story:
 description:
     When there are several people collaborating on tests it's
     useful to have a way how find who is responsible for what.
-    Should be a ``string`` or a ``list of strings`` (email address
+    Must be a ``string`` or a ``list of strings`` (email address
     format with name and surname).
 
 example:

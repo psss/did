@@ -11,9 +11,9 @@ description: |
     executed in a semi-automated way, waiting on human
     interaction.
 
-    It's value should be a ``boolean``. The default value is
+    It's value must be a ``boolean``. The default value is
     ``false``. When set to ``true``, the :ref:`/spec/tests/test`
-    attribute should point to a Markdown document following the
+    attribute must point to a Markdown document following the
     `CommonMark`__ specification.
 
     __ https://spec.commonmark.org/0.29
@@ -46,7 +46,7 @@ description: |
 
     Step
         Required level 2 heading ``## Step`` or ``## Test Step``
-        marking a single step of the test, should be in pair with
+        marking a single step of the test, must be in pair with
         the Expect section which follows it. Cannot be used
         outside of test sections.
 

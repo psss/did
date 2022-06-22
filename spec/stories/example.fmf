@@ -6,7 +6,7 @@ description: |
     and get inspiration for initial experimenting.
 
     One or more examples can be defined, each of them is rendered
-    into a separate box during export. Should be a ``string`` or a
+    into a separate box during export. Must be a ``string`` or a
     ``list of strings``.
 
 example:

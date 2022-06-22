@@ -12,7 +12,7 @@ description: |
     to track the complete test execution history even if the test
     changed the location or name.
 
-    Should be a uniqe ``string``, using a `uuid`__ is recommended.
+    Must be a uniqe ``string``, using a `uuid`__ is recommended.
 
     __ https://fmf.readthedocs.io/en/latest/concept.html#identifiers
     __ https://en.wikipedia.org/wiki/Universally_unique_identifier

@@ -1,9 +1,9 @@
 summary: Concise summary describing purpose of the object
 
 description:
-    Should be a one-line ``string`` with up to 50 characters.
-    It is challenging to be both concise and descriptive, but
-    that is what a well-written summary should do.
+    Must be a one-line ``string``, should be up to 50 characters
+    long. It is challenging to be both concise and descriptive,
+    but that is what a well-written summary should do.
 
 link:
   - implemented-by: /tmt/base.py

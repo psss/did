@@ -58,7 +58,7 @@ example: |
         One or more playbooks can be provided as a list under the
         ``playbook`` attribute.  Each of them will be applied
         using ``ansible-playbook`` in the given order. The path
-        should be relative to the metadata tree root.
+        must be relative to the metadata tree root.
 
         Use ``extra-args`` attribute to enable optional arguments for
         ``ansible-playbook``.

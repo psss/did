@@ -9,7 +9,7 @@ description: |
     In order to execute the test, additional packages may need to
     be installed on the system. For example `gcc` and `make` are
     needed to compile tests written in C on the target machine. If
-    the package cannot be installed test execution should result
+    the package cannot be installed test execution must result
     in an ``error``.
 
     For tests shared across multiple components or product
@@ -32,7 +32,7 @@ description: |
     the development version directly from the local filesystem.
     Use the ``path`` key to specify a full path to the library.
 
-    Should be a ``string`` or a ``list of strings`` using package
+    Must be a ``string`` or a ``list of strings`` using package
     specification supported by ``dnf`` which takes care of the
     installation or a ``dictionary`` if using fmf identifier to
     fetch dependent repositories.

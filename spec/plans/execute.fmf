@@ -18,7 +18,7 @@ description: |
     :ref:`/spec/tests` attributes it also contains fmf ``name`` of
     the test.
 
-    For each ``plan`` the execute step should produce a
+    For each ``plan`` the execute step must produce a
     ``results.yaml`` file with the list of results for each test
     in the following format::
 
@@ -40,18 +40,18 @@ description: |
             Test finished but only produced an informational
             message. Represents a soft pass, used for skipped
             tests and for tests with the :ref:`/spec/tests/result`
-            attribute set to *ignore*. Automation should treat
+            attribute set to *ignore*. Automation must treat
             this as a passed test.
         warn
             A problem appeared during test execution which does
             not affect test results but might be worth checking
             and fixing. For example test cleanup phase failed.
-            Automation should treat this as a failed test.
+            Automation must treat this as a failed test.
         error
             Undefined problem encountered during test execution.
             Human inspection is needed to investigate whether it
             was a test bug, infrastructure error or a real test
-            failure. Automation should treat it as a failed test.
+            failure. Automation must treat it as a failed test.
         fail
             Test execution successfully finished and failed.
 
@@ -232,7 +232,7 @@ description: |
     description: |
         Execute arbitratry shell commands and check their exit
         code which is used as a test result. The ``script`` field
-        is provided to cover simple test use cases only and should
+        is provided to cover simple test use cases only and must
         not be combined with the :ref:`/spec/plans/discover` step
         which is more suitable for more complex test scenarios.
 

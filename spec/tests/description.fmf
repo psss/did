@@ -9,8 +9,8 @@ description:
     For complex tests it makes sense to provide more detailed
     description to better clarify what is covered by the test.
     This can be useful for test writer as well when reviewing a
-    test written long time ago. Should be a ``string`` (multi
-    line, plain text).
+    test written long time ago. Must be a ``string`` (multi line,
+    plain text).
 
 example: |
     description:

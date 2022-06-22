@@ -10,8 +10,8 @@ description: |
     the test script, automation changes the current working
     directory to the provided ``path`` before running the test.
 
-    It should be a ``string`` containing path from the metadata
-    :ref:`tree root<tree>` to the desired directory and should
+    It must be a ``string`` containing path from the metadata
+    :ref:`tree root<tree>` to the desired directory and must
     start with a slash. If path is not defined, the directory
     where the test metadata are stored is used as a default.
 

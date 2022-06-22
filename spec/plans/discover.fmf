@@ -10,7 +10,7 @@ description: |
     .. _require: https://tmt.readthedocs.io/en/latest/spec/tests.html#require
 
     Store the list of aggregated tests with their corresponding
-    metadata in the ``tests.yaml`` file. The format should be a
+    metadata in the ``tests.yaml`` file. The format must be a
     dictionary of dictionaries structured in the following way::
 
         /test/one:
@@ -77,7 +77,7 @@ description: |
             branch if url given or to the current ``HEAD`` if url
             not provided.
         path
-            Path to the metadata tree root. Should be relative to
+            Path to the metadata tree root. Must be relative to
             the git repository root if url provided, absolute
             local filesystem path otherwise. By default ``.`` is
             used.
@@ -93,7 +93,7 @@ description: |
             listed test order.
         link
             Select tests using the :ref:`/spec/core/link` keys.
-            Values should be in the form of ``RELATION:TARGET``,
+            Values must be in the form of ``RELATION:TARGET``,
             tests containing at least one of them are selected.
             Regular expressions are supported for both relation
             and target. Relation part can be omitted to match all

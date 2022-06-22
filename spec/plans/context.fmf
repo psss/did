@@ -6,13 +6,13 @@ story:
 
 description: |
     Define the default context values for all tests executed under
-    the given plan. This overrides context values auto-detected
-    from the environment, such as ``distro``, ``variant`` or
-    ``arch`` but can overriden by context provided directly on the
-    command line. See the :ref:`/spec/context` definition for the
-    full list of supported context dimensions.
+    the given plan. Can be overriden by context provided directly
+    on the command line. See the :ref:`/spec/context` definition
+    for the full list of supported context dimensions. Must be a
+    ``dictionary``.
 
-example: |
+example:
+  - |
     summary:
         Test basic functionality of the httpd24 collection
     discover:
@@ -22,6 +22,7 @@ example: |
     context:
         collection: httpd24
 
+  - |
     summary:
         Verify dash against the shared shell tests repository
     discover:

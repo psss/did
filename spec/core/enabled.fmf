@@ -11,7 +11,7 @@ description: |
     might be used to mark stories which should be skipped when
     generating the documentation.
 
-    Should be a ``boolean``. The default value is ``true``.
+    Must be a ``boolean``. The default value is ``true``.
 
 example: |
     # Mark as disabled

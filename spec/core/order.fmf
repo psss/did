@@ -5,7 +5,7 @@ description:
     processed. For example when running tests we need to
     execute some tests first or when exporting stories we need
     to arrange content in the right sequence to create a
-    meaningful documentation. Should be an ``integer``, negative
+    meaningful documentation. Must be an ``integer``, negative
     values are allowed as well. The default value is ``50``.
 
 example: |
