@@ -14,12 +14,12 @@ from fmf.utils import listed
 import tmt
 import tmt.convert
 import tmt.export
+import tmt.identifier
 import tmt.options
 import tmt.plugins
 import tmt.steps
 import tmt.templates
 import tmt.utils
-import tmt.uuid
 
 # Explore available plugins (need to detect all supported methods first)
 tmt.plugins.explore()
@@ -625,7 +625,7 @@ def tests_id(context, **kwargs):
     """
     tmt.Test._save_context(context)
     for test in context.obj.tree.tests():
-        tmt.uuid.id_command(test.node, "test", dry=kwargs["dry"])
+        tmt.identifier.id_command(test.node, "test", dry=kwargs["dry"])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -785,7 +785,7 @@ def plans_id(context, **kwargs):
     """
     tmt.Plan._save_context(context)
     for plan in context.obj.tree.plans():
-        tmt.uuid.id_command(plan.node, "plan", dry=kwargs["dry"])
+        tmt.identifier.id_command(plan.node, "plan", dry=kwargs["dry"])
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Story
@@ -1007,7 +1007,7 @@ def stories_id(context, implemented, verified, documented, covered,
     for story in context.obj.tree.stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):
-            tmt.uuid.id_command(story.node, "story", dry=kwargs["dry"])
+            tmt.identifier.id_command(story.node, "story", dry=kwargs["dry"])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

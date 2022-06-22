@@ -9,7 +9,7 @@ from click.testing import CliRunner
 
 import tmt
 import tmt.cli
-from tmt.uuid import ID_KEY, locate_key
+from tmt.identifier import ID_KEY, locate_key
 
 runner = CliRunner()
 test_path = Path(__file__).parent / "id"
@@ -78,7 +78,7 @@ class IdEmpty(TestCase):
         node = self.base_tree.find("/some/structure")
         test = tmt.Test(node)
         self.assertEqual(test.id, None)
-        identifier = tmt.uuid.add_uuid_if_not_defined(node, dry=False)
+        identifier = tmt.identifier.add_uuid_if_not_defined(node, dry=False)
         self.assertGreater(len(identifier), 10)
 
         self.base_tree = fmf.Tree(self.path)

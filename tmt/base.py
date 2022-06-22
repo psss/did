@@ -23,6 +23,7 @@ else:
     from typing_extensions import TypedDict
 
 import tmt.export
+import tmt.identifier
 import tmt.steps
 import tmt.steps.discover
 import tmt.steps.execute
@@ -32,7 +33,6 @@ import tmt.steps.provision
 import tmt.steps.report
 import tmt.templates
 import tmt.utils
-import tmt.uuid
 from tmt.utils import verdict
 
 # Default test duration is 5m for individual tests discovered from L1
@@ -113,8 +113,8 @@ class Core(tmt.utils.Common):
 
         # Store the unique id if provided
         try:
-            self.id = tmt.uuid.get_id(self.node)
-        except tmt.uuid.IdLeafError:
+            self.id = tmt.identifier.get_id(self.node)
+        except tmt.identifier.IdLeafError:
             raise tmt.utils.SpecificationError(
                 f"The 'id' key '{self.node.get('id')}' in '{self.name}' "
                 f"is inherited from parent, should be defined in a leaf.")
