@@ -1,7 +1,7 @@
 import dataclasses
 import os.path
 import tempfile
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional, Union, cast
 
 import click
 import requests
@@ -19,14 +19,19 @@ class _RawAnsibleStepData(tmt.steps._RawStepData, total=False):
     playbooks: List[str]
 
 
-# TODO: remove `ignore` with follow-imports enablement
 @dataclasses.dataclass
-class PrepareAnsibleData(tmt.steps.prepare.PrepareStepData):  # type: ignore[misc]
+class PrepareAnsibleData(tmt.steps.prepare.PrepareStepData):
     playbook: List[str] = dataclasses.field(default_factory=list)
     extra_args: Optional[str] = None
 
+    # The method violates a liskov substitution principle, but it's fine
+    # Thanks to how tmt initializes module, we can assume PrepareAnsibleData.pre_normalization()
+    # would be called with source data matching _RawAnsibleStepData
     @classmethod
-    def pre_normalization(cls, raw_data: _RawAnsibleStepData, logger: tmt.utils.Common) -> None:
+    def pre_normalization(  # type: ignore[override]
+            cls,
+            raw_data: _RawAnsibleStepData,
+            logger: tmt.utils.Common) -> None:
         super().pre_normalization(raw_data, logger)
 
         # Perform `playbook` normalization here, so we could merge `playbooks` to it.
@@ -38,7 +43,7 @@ class PrepareAnsibleData(tmt.steps.prepare.PrepareStepData):  # type: ignore[mis
 
 
 @tmt.steps.provides_method('ansible')
-class PrepareAnsible(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
+class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
     """
     Prepare guest using ansible
 
@@ -80,14 +85,14 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     @classmethod
     def options(cls, how: Optional[str] = None) -> Any:
         """ Prepare command line options """
-        return [
+        return cast(List[tmt.options.ClickOptionDecoratorType], [
             click.option(
                 '-p', '--playbook', metavar='PLAYBOOK', multiple=True,
                 help='Path or URL of an ansible playbook to run.'),
             click.option(
                 '--extra-args', metavar='EXTRA-ARGS',
                 help='Optional arguments for ansible-playbook.')
-            ] + super().options(how)
+            ]) + super().options(how)
 
     def go(self, guest: Guest) -> None:
         """ Prepare the guests """

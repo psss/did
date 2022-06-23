@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import click
 import fmf
@@ -13,7 +13,7 @@ from tmt.steps.provision import Guest
 
 # TODO: remove `ignore` with follow-imports enablement
 @dataclasses.dataclass
-class PrepareShellData(tmt.steps.prepare.PrepareStepData):  # type: ignore[misc]
+class PrepareShellData(tmt.steps.prepare.PrepareStepData):
     script: List[str] = dataclasses.field(default_factory=list)
 
     _normalize_script = tmt.utils.NormalizeKeysMixin._normalize_string_list
@@ -21,7 +21,7 @@ class PrepareShellData(tmt.steps.prepare.PrepareStepData):  # type: ignore[misc]
 
 # TODO: drop ignore once type annotations between modules enabled
 @tmt.steps.provides_method('shell')
-class PrepareShell(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
+class PrepareShell(tmt.steps.prepare.PreparePlugin):
     """
     Prepare guest using shell (bash) scripts
 
@@ -44,11 +44,11 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     @classmethod
     def options(cls, how: Optional[str] = None) -> Any:
         """ Prepare command line options """
-        return [
+        return cast(List[tmt.options.ClickOptionDecoratorType], [
             click.option(
                 '-s', '--script', metavar='SCRIPT',
                 help='Shell script to be executed.')
-            ] + super().options(how)
+            ]) + super().options(how)
 
     def go(self, guest: Guest) -> None:
         """ Prepare the guests """

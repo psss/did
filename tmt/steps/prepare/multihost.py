@@ -11,13 +11,13 @@ from tmt.steps.provision import Guest
 # per se, but rather a metadata structure. Other plugins may refer to data
 # defined by this "step" by using `where` key in their own data.
 @dataclasses.dataclass
-class PrepareMultihostData(tmt.steps.StepData):
+class PrepareMultihostData(tmt.steps.prepare.PrepareStepData):
     roles: Dict[str, List[str]] = dataclasses.field(default_factory=dict)
     hosts: Dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 @tmt.steps.provides_method('multihost')
-class PrepareMultihost(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
+class PrepareMultihost(tmt.steps.prepare.PreparePlugin):
     """
     Prepare the guest for running a multihost test.
 

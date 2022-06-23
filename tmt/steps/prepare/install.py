@@ -161,6 +161,8 @@ class InstallBase(tmt.utils.Common):
         """ Copy packages to the test system """
         assert self.parent is not None
         workdir = cast(tmt.steps.prepare.PreparePlugin, self.parent).step.workdir
+        if not workdir:
+            raise tmt.utils.GeneralError('workdir should not be empty')
         self.rpms_directory = os.path.join(workdir, 'rpms')
         os.makedirs(self.rpms_directory)
 
@@ -327,9 +329,8 @@ class InstallRpmOstree(InstallBase):
             self.guest.execute(f"{self.command} install {self.options} {packages}")
 
 
-# TODO: remove `ignore` with follow-imports enablement
 @dataclasses.dataclass
-class PrepareInstallData(tmt.steps.prepare.PrepareStepData):  # type: ignore[misc]
+class PrepareInstallData(tmt.steps.prepare.PrepareStepData):
     package: List[str] = dataclasses.field(default_factory=list)
     directory: List[str] = dataclasses.field(default_factory=list)
     copr: List[str] = dataclasses.field(default_factory=list)
@@ -344,7 +345,7 @@ class PrepareInstallData(tmt.steps.prepare.PrepareStepData):  # type: ignore[mis
 
 
 @tmt.steps.provides_method('install')
-class PrepareInstall(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
+class PrepareInstall(tmt.steps.prepare.PreparePlugin):
     """
     Install packages on the guest
 
@@ -395,7 +396,7 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     @classmethod
     def options(cls, how: Optional[str] = None) -> Any:
         """ Prepare command line options """
-        return [
+        return cast(List[tmt.options.ClickOptionDecoratorType], [
             click.option(
                 '-p', '--package', metavar='PACKAGE', multiple=True,
                 help='Package name or path to rpm to be installed.'),
@@ -412,7 +413,7 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
                 '-m', '--missing', metavar='ACTION',
                 type=click.Choice(['fail', 'skip']),
                 help='Action on missing packages, fail (default) or skip.'),
-            ] + super().options(how)
+            ]) + super().options(how)
 
     def go(self, guest: Guest) -> None:
         """ Perform preparation for the guests """

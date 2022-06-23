@@ -1,4 +1,3 @@
-import tmt
 import tmt.steps
 import tmt.steps.finish
 import tmt.steps.prepare.ansible
@@ -30,7 +29,9 @@ class FinishAnsible(tmt.steps.finish.FinishPlugin, PrepareAnsible):
     should happen if there are multiple configs. Default order is '50'.
     """
 
-    _data_class = tmt.steps.prepare.ansible.PrepareAnsibleData
+    # We are re-using "prepare" step for "finish",
+    # and they both have different expectations
+    _data_class = tmt.steps.prepare.ansible.PrepareAnsibleData  # type: ignore[assignment]
 
     # Assigning class methods seems to cause trouble to mypy
     # See also: https://github.com/python/mypy/issues/6700

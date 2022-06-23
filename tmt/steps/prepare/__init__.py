@@ -1,7 +1,8 @@
 import collections
 import copy
 import dataclasses
-from typing import List, Optional, Type, cast
+from typing import (TYPE_CHECKING, Any, DefaultDict, Dict, List, Optional,
+                    Type, cast)
 
 import click
 import fmf
@@ -11,10 +12,22 @@ import tmt.steps
 from tmt.steps import Action
 from tmt.utils import GeneralError
 
+if TYPE_CHECKING:
+    from tmt.base import Plan
+
 
 @dataclasses.dataclass
 class PrepareStepData(tmt.steps.WhereableStepData, tmt.steps.StepData):
     pass
+
+
+class _RawPrepareStepData(tmt.steps._RawStepData, total=False):
+    package: List[str]
+    missing: str
+    roles: DefaultDict[str, List[str]]
+    hosts: Dict[str, str]
+    order: int
+    summary: str
 
 
 class PreparePlugin(tmt.steps.Plugin):
@@ -42,13 +55,13 @@ class PreparePlugin(tmt.steps.Plugin):
         @click.option(
             '-h', '--how', metavar='METHOD',
             help='Use specified method for environment preparation.')
-        def prepare(context, **kwargs):
+        def prepare(context: click.core.Context, **kwargs: Any) -> None:
             context.obj.steps.add('prepare')
             Prepare._save_context(context)
 
         return prepare
 
-    def go(self, guest):
+    def go(self, guest: tmt.steps.provision.Guest) -> None:
         """ Prepare the guest (common actions) """
         super().go(guest)
 
@@ -74,12 +87,12 @@ class Prepare(tmt.steps.Step):
 
     _plugin_base_class = PreparePlugin
 
-    def __init__(self, plan, data):
+    def __init__(self, plan: 'Plan', data: tmt.steps.RawStepDataArgument) -> None:
         """ Initialize prepare step data """
         super().__init__(plan=plan, data=data)
         self.preparations_applied = 0
 
-    def wake(self):
+    def wake(self) -> None:
         """ Wake up the step (process workdir and command line) """
         super().wake()
 
@@ -102,18 +115,18 @@ class Prepare(tmt.steps.Step):
             self.status('todo')
             self.save()
 
-    def show(self):
+    def show(self) -> None:
         """ Show discover details """
         for data in self.data:
             PreparePlugin.delegate(self, data=data).show()
 
-    def summary(self):
+    def summary(self) -> None:
         """ Give a concise summary of the preparation """
         preparations = fmf.utils.listed(
             self.preparations_applied, 'preparation')
         self.info('summary', f'{preparations} applied', 'green', shift=1)
 
-    def _prepare_roles(self):
+    def _prepare_roles(self) -> DefaultDict[str, List[str]]:
         """ Create a mapping of roles to guest names """
         role_mapping = collections.defaultdict(list)
         for guest in self.plan.provision.guests():
@@ -121,7 +134,7 @@ class Prepare(tmt.steps.Step):
                 role_mapping[guest.role].append(guest.name)
         return role_mapping
 
-    def _prepare_hosts(self):
+    def _prepare_hosts(self) -> Dict[str, str]:
         """ Create a mapping of guest names to IP addresses """
         host_mapping = {}
         for guest in self.plan.provision.guests():
@@ -131,7 +144,7 @@ class Prepare(tmt.steps.Step):
                 host_mapping[guest.name] = guest.guest
         return host_mapping
 
-    def go(self):
+    def go(self) -> None:
         """ Prepare the guests """
         super().go()
 
@@ -153,7 +166,7 @@ class Prepare(tmt.steps.Step):
             )
 
         if requires:
-            data = dict(
+            data: _RawPrepareStepData = dict(
                 how='install',
                 name='requires',
                 summary='Install required packages',
@@ -221,7 +234,7 @@ class Prepare(tmt.steps.Step):
         self.status('done')
         self.save()
 
-    def requires(self):
+    def requires(self) -> List[str]:
         """
         Packages required by all enabled prepare plugins
 
