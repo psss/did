@@ -36,7 +36,7 @@ BuildRequires: python%{python3_pkgversion}-docutils
 BuildRequires: python%{python3_pkgversion}-setuptools
 BuildRequires: python%{python3_pkgversion}-pytest
 BuildRequires: python%{python3_pkgversion}-click
-BuildRequires: python%{python3_pkgversion}-fmf >= 1.1.0
+BuildRequires: python%{python3_pkgversion}-fmf >= 1.2.0
 BuildRequires: python%{python3_pkgversion}-requests
 BuildRequires: python%{python3_pkgversion}-testcloud >= 0.8.1
 BuildRequires: python%{python3_pkgversion}-markdown

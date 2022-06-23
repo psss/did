@@ -1,0 +1,11 @@
+summary: pre-commit hook tmt-test-lint is working
+require:
+- pre-commit
+- git-core
+- tmt
+tier: 3
+adjust:
+-   when: distro == centos-stream
+    require-:
+    -   pre-commit
+    because: pre-commit has to be installed from PyPI (is missing in EPEL)

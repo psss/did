@@ -6,6 +6,7 @@ rlJournalStart
     rlPhaseStartSetup
         rlRun "tmp=\$(mktemp -d)" 0 "Create tmp directory"
         rlRun "cp -a data $tmp"
+        rlRun "cp -a data_sources $tmp"
         rlRun "pushd $tmp/data"
         rlRun "set -o pipefail"
     rlPhaseEnd
@@ -106,8 +107,41 @@ rlJournalStart
         rlAssertGrep "fail \"Test\" section doesn't exist" output
     rlPhaseEnd
 
-    rlPhaseStartCleanup
+    rlPhaseStartTest "Lint by modified source files"
+        rlRun "pushd $tmp/data_sources"
+
+        lint_cmd="tmt test lint --source"
+
+        # main.fmf is used by all but '/foo/special'
+        rlRun -s "$lint_cmd main.fmf"
+        for t in /virtual /baz/bb /foo/inner /foobar; do
+            rlAssertGrep "$t" "$rlRun_LOG"
+        done
+        rlAssertNotGrep '/foo/special' "$rlRun_LOG"
+
+        # foo/main.fmf is used single test
+        rlRun -s "$lint_cmd $(realpath foo/main.fmf)"
+        rlAssertGrep "/foo/inner" "$rlRun_LOG"
+        for t in /virtual /baz/bb /foo/special /foobar; do
+            rlAssertNotGrep "$t" "$rlRun_LOG"
+        done
+
+        # '.' as local directory with single file and a explicit one
+        rlRun "pushd foobar"
+        rlRun -s "$lint_cmd *.fmf $(realpath ../baz/bb.fmf)"
+        rlAssertGrep "/foobar" "$rlRun_LOG"
+        rlAssertGrep "/baz/bb" "$rlRun_LOG"
+        for t in /virtual /foo/special /foo/special; do
+            rlAssertNotGrep "$t" "$rlRun_LOG"
+        done
+        # From data_sources/foobar
         rlRun "popd"
+        # From data_sources
+        rlRun "popd"
+    rlPhaseEnd
+
+    rlPhaseStartCleanup
+        rlRun "popd" # From data
         rlRun "rm -r $tmp" 0 "Remove tmp directory"
     rlPhaseEnd
 rlJournalEnd

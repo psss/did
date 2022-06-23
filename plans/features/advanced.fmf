@@ -6,3 +6,12 @@ description:
 discover:
     how: fmf
     filter: 'tier: 3'
+adjust:
+-   when: distro == centos-stream
+    because: pre-commit is not available from epel, use pip instead
+    prepare+:
+        -   how: install
+            package: python3-pip
+        -   how: shell
+            script:
+            -   pip3 install --user pre-commit

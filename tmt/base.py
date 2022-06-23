@@ -1385,34 +1385,37 @@ class Tree(tmt.utils.Common):
         conditions = (conditions or []) + list(Test._opt('conditions', []))
         links = (links or []) + list(Test._opt('links', []))
         excludes = (excludes or []) + list(Test._opt('exclude', []))
+        # Used in: tmt run test --name NAME, tmt test ls NAME...
+        cmd_line_names = list(Test._opt('names', []))
 
         def name_filter(nodes):
             """ Filter nodes based on names provided on the command line """
-            # Used in: tmt run test --name NAME, tmt test ls NAME...
-            names = list(Test._opt('names', []))
-            if not names:
+            if not cmd_line_names:
                 return nodes
             return [
                 node for node in nodes
-                if any([re.search(name, node.name) for name in names])]
+                if any([re.search(name, node.name) for name in cmd_line_names])]
 
-        # First let's build the list of test objects based on keys & names.
-        # If duplicate test names are allowed, match test name/regexp
-        # one-by-one and preserve the order of tests within a plan.
-        if not unique and names:
-            tests = []
-            for name in names:
+        if Test._opt('source'):
+            tests = [Test(test) for test in self.tree.prune(keys=keys, sources=cmd_line_names)]
+        else:
+            # First let's build the list of test objects based on keys & names.
+            # If duplicate test names are allowed, match test name/regexp
+            # one-by-one and preserve the order of tests within a plan.
+            if not unique and names:
+                tests = []
+                for name in names:
+                    selected_tests = [
+                        Test(test) for test
+                        in name_filter(self.tree.prune(keys=keys, names=[name]))]
+                    tests.extend(
+                        sorted(selected_tests, key=lambda test: test.order))
+            # Otherwise just perform a regular key/name filtering
+            else:
                 selected_tests = [
                     Test(test) for test
-                    in name_filter(self.tree.prune(keys=keys, names=[name]))]
-                tests.extend(
-                    sorted(selected_tests, key=lambda test: test.order))
-        # Otherwise just perform a regular key/name filtering
-        else:
-            selected_tests = [
-                Test(test) for test
-                in name_filter(self.tree.prune(keys=keys, names=names))]
-            tests = sorted(selected_tests, key=lambda test: test.order)
+                    in name_filter(self.tree.prune(keys=keys, names=names))]
+                tests = sorted(selected_tests, key=lambda test: test.order)
 
         # Apply filters & conditions
         return self._filters_conditions(
@@ -1429,10 +1432,17 @@ class Tree(tmt.utils.Common):
         links = (links or []) + list(Plan._opt('links', []))
         excludes = (excludes or []) + list(Plan._opt('exclude', []))
 
+        # For --source option use names as sources
+        if Plan._opt('source'):
+            sources = names
+            names = None
+        else:
+            sources = None
+
         # Build the list, convert to objects, sort and filter
         plans = [
             Plan(plan, run=run) for plan
-            in self.tree.prune(keys=keys, names=names)]
+            in self.tree.prune(keys=keys, names=names, sources=sources)]
         return self._filters_conditions(
             sorted(plans, key=lambda plan: plan.order),
             filters, conditions, links, excludes)
@@ -1448,10 +1458,17 @@ class Tree(tmt.utils.Common):
         links = (links or []) + list(Story._opt('links', []))
         excludes = (excludes or []) + list(Story._opt('exclude', []))
 
+        # For --source option use names as sources
+        if Story._opt('source'):
+            sources = names
+            names = None
+        else:
+            sources = None
+
         # Build the list, convert to objects, sort and filter
         stories = [
             Story(story) for story
-            in self.tree.prune(keys=keys, names=names, whole=whole)]
+            in self.tree.prune(keys=keys, names=names, whole=whole, sources=sources)]
         return self._filters_conditions(
             sorted(stories, key=lambda story: story.order),
             filters, conditions, links, excludes)
