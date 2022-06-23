@@ -3,6 +3,7 @@
 import os
 import re
 import shutil
+from tempfile import TemporaryDirectory
 from typing import Dict, List, Optional, Tuple, Union, cast
 
 import fmf
@@ -178,6 +179,16 @@ class Library(object):
             library = self._library_cache[self.repo]
             # The url must be identical
             if library.url != self.url:
+                # tmt guessed url so try if repo exists
+                if self.format == 'rpm':
+                    with TemporaryDirectory() as tmp:
+                        command = ['git', 'clone', '--depth=1', str(self.url), str(tmp)]
+                        try:
+                            self.parent.run(command, env={"GIT_ASKPASS": "echo"})
+                        except tmt.utils.RunError:
+                            self.parent.debug(f"Repository '{self.url}' not found.")
+                            raise LibraryError
+                # If repo does exist we really have unsolvable url conflict
                 raise tmt.utils.GeneralError(
                     f"Library '{self}' with url '{self.url}' conflicts "
                     f"with already fetched library from '{library.url}'.")

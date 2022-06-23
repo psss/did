@@ -43,6 +43,24 @@ def test_library_from_fmf(url, name, default_branch):
 
 
 @pytest.mark.web
+def test_invalid_url_conflict():
+    """ Saner check if url mismatched for translated library """
+    parent = tmt.utils.Common(workdir=True)
+    # Fetch to cache 'tmt' repo
+    tmt.beakerlib.Library(
+        dict(url='https://github.com/teemtee/tmt',
+             name='/',
+             path='/tests/libraries/local/data'),
+        parent=parent)
+    # Library 'tmt' repo is already fetched from different git,
+    # however upstream (gh.com/beakerlib/tmt) repo does not exist,
+    # so there can't be "already fetched" error
+    with pytest.raises(tmt.beakerlib.LibraryError):
+        tmt.beakerlib.Library('library(tmt/foo)', parent=parent)
+    shutil.rmtree(parent.workdir)
+
+
+@pytest.mark.web
 def test_dependencies():
     """ Check requires for possible libraries """
     parent = tmt.utils.Common(workdir=True)
