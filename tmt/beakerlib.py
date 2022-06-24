@@ -3,10 +3,20 @@
 import os
 import re
 import shutil
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import fmf
 
 import tmt
+import tmt.utils
+
+# A beakerlib indetified type, can be a string or a dictionary
+BeakerlibIdentifierType = Union[str, Dict[str, str]]
+
+# A type for Beakerlib dependencies
+LibraryDependenciesType = Tuple[
+    List[str], List[str], List['Library']
+    ]
 
 # Regular expressions for beakerlib libraries
 LIBRARY_REGEXP = re.compile(r'^library\(([^/]+)(/[^)]+)\)$')
@@ -21,6 +31,10 @@ STRIP_SUFFIX_FORGES = [
     'https://gitlab.com',
     'https://pagure.io',
     ]
+
+
+class CommonWithLibraryCache(tmt.utils.Common):
+    _library_cache: Dict[str, 'Library']
 
 
 class LibraryError(Exception):
@@ -55,13 +69,17 @@ class Library(object):
     workdir or into 'destination' if provided in the identifier.
     """
 
-    def __init__(self, identifier, parent=None):
+    def __init__(
+            self,
+            identifier: BeakerlibIdentifierType,
+            parent: Optional[tmt.utils.Common] = None
+            ) -> None:
         """ Process the library identifier and fetch the library """
         # Use an empty common class if parent not provided (for logging, cache)
         self.parent = parent or tmt.utils.Common(workdir=True)
 
         # Default branch is detected from the origin after cloning
-        self.default_branch = None
+        self.default_branch: Optional[str] = None
 
         # The 'library(repo/lib)' format
         if isinstance(identifier, str):
@@ -70,12 +88,14 @@ class Library(object):
             if not matched:
                 raise LibraryError
             self.parent.debug(f"Detected library '{identifier}'.", level=3)
-            self.format = 'rpm'
-            self.repo, self.name = matched.groups()
-            self.url = os.path.join(DEFAULT_REPOSITORY, self.repo)
-            self.path = None
-            self.ref = None
-            self.dest = DEFAULT_DESTINATION
+            self.format: str = 'rpm'
+            self.repo: str = matched.groups()[0]
+            self.name: str = matched.groups()[1]
+            self.url: Optional[str] = os.path.join(
+                DEFAULT_REPOSITORY, self.repo)
+            self.path: Optional[str] = None
+            self.ref: Optional[str] = None
+            self.dest: str = DEFAULT_DESTINATION
 
         # The fmf identifier
         elif isinstance(identifier, dict):
@@ -83,6 +103,9 @@ class Library(object):
             self.format = 'fmf'
             self.url = identifier.get('url')
             self.path = identifier.get('path')
+            # Strip possible trailing slash from path
+            if isinstance(self.path, str):
+                self.path = self.path.rstrip('/')
             if not self.url and not self.path:
                 raise tmt.utils.SpecificationError(
                     "Need 'url' or 'path' to fetch a beakerlib library.")
@@ -99,21 +122,32 @@ class Library(object):
             if not self.name.startswith('/'):
                 raise tmt.utils.SpecificationError(
                     f"Library name '{self.name}' does not start with a '/'.")
+
             # Use provided repository nick name or parse it from the url/path
-            self.repo = identifier.get('nick')
-            if not self.repo and self.url:
-                try:
-                    self.repo = re.search(
-                        r'/([^/]+?)(/|\.git)?$', self.url).group(1)
-                except AttributeError:
-                    raise tmt.utils.GeneralError(
-                        f"Unable to parse repository name from '{self.url}'.")
-            if not self.repo and self.path:
-                try:
-                    self.repo = os.path.basename(self.path)
-                except TypeError:
-                    raise tmt.utils.GeneralError(
-                        f"Unable to parse repository name from '{self.path}'.")
+            repo = identifier.get('nick')
+            if repo:
+                if not isinstance(repo, str):
+                    raise tmt.utils.SpecificationError(
+                        f"Invalid library nick '{repo}', should be a string.")
+            else:
+                if self.url:
+                    repo_search = re.search(r'/([^/]+?)(/|\.git)?$', self.url)
+                    if not repo_search:
+                        raise tmt.utils.GeneralError(
+                            f"Unable to parse repository name from '{self.url}'.")
+                    repo = repo_search.group(1)
+                else:
+                    # Either url or path must be defined
+                    assert self.path is not None
+                    try:
+                        repo = os.path.basename(self.path)
+                        if not repo:
+                            raise TypeError
+                    except TypeError:
+                        raise tmt.utils.GeneralError(
+                            f"Unable to parse repository name from '{self.path}'.")
+            self.repo = repo
+
         # Something weird
         else:
             raise LibraryError
@@ -125,19 +159,23 @@ class Library(object):
             raise tmt.utils.SpecificationError(
                 f"Repository '{self.url}' does not contain fmf metadata.")
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Use repo/name for string representation """
         return f"{self.repo}{self.name}"
 
-    def fetch(self):
-        """ Fetch the library (unless already fetched) """
+    @property
+    def _library_cache(self) -> Dict[str, 'Library']:
         # Initialize library cache (indexed by the repository name)
         if not hasattr(self.parent, '_library_cache'):
-            self.parent._library_cache = dict()
+            cast(CommonWithLibraryCache, self.parent)._library_cache = dict()
 
+        return cast(CommonWithLibraryCache, self.parent)._library_cache
+
+    def fetch(self) -> None:
+        """ Fetch the library (unless already fetched) """
         # Check if the library was already fetched
         try:
-            library = self.parent._library_cache[self.repo]
+            library = self._library_cache[self.repo]
             # The url must be identical
             if library.url != self.url:
                 raise tmt.utils.GeneralError(
@@ -154,11 +192,12 @@ class Library(object):
                     f"using ref '{library.ref}'.")
             self.parent.debug(f"Library '{self}' already fetched.", level=3)
             # Reuse the existing metadata tree
-            self.tree = library.tree
+            self.tree: fmf.Tree = library.tree
         # Fetch the library and add it to the index
         except KeyError:
             self.parent.debug(f"Fetch library '{self}'.", level=3)
             # Prepare path, clone the repository, checkout ref
+            assert self.parent.workdir
             directory = os.path.join(self.parent.workdir, self.dest, self.repo)
             # Clone repo with disabled prompt to ignore missing/private repos
             try:
@@ -171,6 +210,8 @@ class Library(object):
                         command = ['git', 'clone', self.url, directory]
                     self.parent.run(command, env={"GIT_ASKPASS": "echo"})
                 else:
+                    # Either url or path must be defined
+                    assert self.path is not None
                     self.parent.debug(
                         f"Copy local library '{self.path}' to '{directory}'.",
                         level=3)
@@ -207,11 +248,11 @@ class Library(object):
                 raise
             # Initialize metadata tree, add self into the library index
             self.tree = fmf.Tree(directory)
-            self.parent._library_cache[self.repo] = self
+            self._library_cache[self.repo] = self
 
         # Get the library node, check require and recommend
-        library = self.tree.find(self.name)
-        if not library:
+        library_node = self.tree.find(self.name)
+        if not library_node:
             # Fallback to install during the prepare step if in rpm format
             if self.format == 'rpm':
                 self.parent.debug(
@@ -220,8 +261,8 @@ class Library(object):
                 raise LibraryError
             raise tmt.utils.GeneralError(
                 f"Library '{self.name}' not found in '{self.repo}'.")
-        self.require = tmt.utils.listify(library.get('require', []))
-        self.recommend = tmt.utils.listify(library.get('recommend', []))
+        self.require = cast(List[str], tmt.utils.listify(library_node.get('require', [])))
+        self.recommend = cast(List[str], tmt.utils.listify(library_node.get('recommend', [])))
 
         # Create a symlink if the library is deep in the structure
         # FIXME: hot fix for https://github.com/beakerlib/beakerlib/pull/72
@@ -240,7 +281,11 @@ class Library(object):
                     f"for a deep library ({error}).")
 
 
-def dependencies(original_require, original_recommend=None, parent=None):
+def dependencies(
+    original_require: List[str],
+    original_recommend: Optional[List[str]] = None,
+    parent: Optional[tmt.utils.Common] = None
+        ) -> LibraryDependenciesType:
     """
     Check dependencies for possible beakerlib libraries
 
@@ -254,10 +299,8 @@ def dependencies(original_require, original_recommend=None, parent=None):
     processed_require = set()
     processed_recommend = set()
     gathered_libraries = []
-    if not original_require:
-        original_require = []
-    if not original_recommend:
-        original_recommend = []
+    original_require = original_require or []
+    original_recommend = original_recommend or []
 
     for dependency in original_require + original_recommend:
         # Library require/recommend
@@ -278,6 +321,4 @@ def dependencies(original_require, original_recommend=None, parent=None):
                 processed_recommend.add(dependency)
 
     # Convert to list and return the results
-    processed_require = list(processed_require)
-    processed_recommend = list(processed_recommend)
-    return processed_require, processed_recommend, gathered_libraries
+    return list(processed_require), list(processed_recommend), gathered_libraries
