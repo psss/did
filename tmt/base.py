@@ -2,25 +2,21 @@
 """ Base Metadata Classes """
 
 import copy
+import dataclasses
 import functools
 import os
 import re
 import shutil
 import subprocess
-import sys
 import time
-from typing import Optional
+from typing import List, Optional, Tuple
 
 import click
 import fmf
+import fmf.base
 from click import echo, style
 from fmf.utils import listed
 from ruamel.yaml.error import MarkedYAMLError
-
-if sys.version_info >= (3, 8):
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
 
 import tmt.export
 import tmt.identifier
@@ -67,11 +63,45 @@ SECTIONS_HEADINGS = {
 
 # See https://fmf.readthedocs.io/en/latest/concept.html#identifiers for
 # formal specification.
-class FmfIdType(TypedDict):
-    url: Optional[str]
-    ref: Optional[str]
-    path: Optional[str]
-    name: Optional[str]
+@dataclasses.dataclass
+class FmfId:
+    url: Optional[str] = None
+    ref: Optional[str] = None
+    path: Optional[str] = None
+    name: Optional[str] = None
+
+    def validate(self) -> Tuple[bool, str]:
+        """
+        Validate fmf id and return a human readable error
+
+        Return a tuple (boolean, message) as the result of validation.
+        The boolean specifies the validation result and the message
+        the validation error. In case the FMF id is valid, return an empty
+        string as the message.
+        """
+        # Validate remote id and translate to human readable errors
+        try:
+            # Simple asdict() is not good enough, fmf does not like keys that exist but are `None`.
+            # Don't include those.
+            fmf.base.Tree.node({
+                key: value for key, value in dataclasses.asdict(self).items()
+                if value is not None
+                })
+        except fmf.utils.GeneralError as error:
+            # Map fmf errors to more user friendly alternatives
+            error_map: List[Tuple[str, str]] = [
+                ('git clone', f"repo '{self.url}' cannot be cloned"),
+                ('git checkout', f"git ref '{self.ref}' is invalid"),
+                ('directory path', f"path '{self.path}' is invalid"),
+                ('tree root', f"No tree found in repo '{self.url}', missing an '.fmf' directory?")
+                ]
+
+            stringified_error = str(error)
+
+            errors = [message for needle, message in error_map if needle in stringified_error]
+            return (False, errors[0] if errors else stringified_error)
+
+        return (True, '')
 
 
 class Core(tmt.utils.Common):
@@ -899,9 +929,11 @@ class Plan(Core):
     def _lint_discover_fmf(discover):
         """ Lint fmf discover method """
         # Validate remote id and translate to human readable errors
-        valid, error = tmt.utils.validate_fmf_id(
-            {key: value for key, value in discover.items()
-                if key in ['url', 'ref', 'path']})
+        valid, error = FmfId(**{
+            key: value
+            for key, value in discover.items()
+            if key in ['url', 'ref', 'path']
+            }).validate()
 
         if valid:
             name = discover.get('name')

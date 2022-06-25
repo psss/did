@@ -1776,34 +1776,6 @@ def validate_git_status(test: 'tmt.base.Test') -> Tuple[bool, str]:
     return (True, '')
 
 
-def validate_fmf_id(fmf_id: 'tmt.base.FmfIdType') -> Tuple[bool, str]:
-    """
-    Validate given fmf id and return a human readable error
-
-    Return a tuple (boolean, message) as the result of validation.
-    The boolean specifies the validation result and the message
-    the validation error. In case the FMF id is valid, return an empty
-    string as the message.
-    """
-    # Validate remote id and translate to human readable errors
-    try:
-        fmf.base.Tree.node(fmf_id)
-    except fmf.utils.GeneralError as error:
-        # Map fmf errors to more user friendly alternatives
-        error_map = [
-            ('git clone', f"repo '{fmf_id.get('url')}' cannot be cloned"),
-            ('git checkout', f"git ref '{fmf_id.get('ref')}' is invalid"),
-            ('directory path', f"path '{fmf_id.get('path')}' is invalid"),
-            ('tree root',
-             f"No tree found in repo '{fmf_id.get('url')}', "
-             f"missing an '.fmf' directory?")
-            ]
-        errors = [err[1] for err in error_map if err[0] in str(error)]
-        return (False, errors[0] if errors else str(error))
-
-    return (True, '')
-
-
 def generate_runs(
         path: str, id_: Optional[str] = None) -> Generator[str, None, None]:
     """ Generate absolute paths to runs from path """
