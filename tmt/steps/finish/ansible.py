@@ -32,4 +32,6 @@ class FinishAnsible(tmt.steps.finish.FinishPlugin, PrepareAnsible):
 
     # Explicitly use these from FinishPlugin class
     _supported_methods = tmt.steps.finish.FinishPlugin._supported_methods
-    base_command = tmt.steps.finish.FinishPlugin.base_command
+    # Assigning class methods seems to cause trouble to mypy
+    # See also: https://github.com/python/mypy/issues/6700
+    base_command = tmt.steps.finish.FinishPlugin.base_command  # type: ignore
