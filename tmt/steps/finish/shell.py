@@ -1,11 +1,14 @@
+from typing import Any, List, Optional
+
 import click
 import fmf
 
 import tmt
 import tmt.steps.finish
+from tmt.steps.provision import Guest
 
 
-class FinishShell(tmt.steps.finish.FinishPlugin):
+class FinishShell(tmt.steps.finish.FinishPlugin):  # type: ignore[misc]
     """
     Perform finishing tasks using shell scripts
 
@@ -28,7 +31,7 @@ class FinishShell(tmt.steps.finish.FinishPlugin):
     _keys = ["script"]
 
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> Any:
         """ Finish command line options """
         return [
             click.option(
@@ -36,20 +39,21 @@ class FinishShell(tmt.steps.finish.FinishPlugin):
                 help='Shell script to be executed.')
             ] + super().options(how)
 
-    def default(self, option, default=None):
+    def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """
         if option == 'script':
             return []
         return default
 
-    def wake(self, keys=None):
+    # TODO: use better types once superclass gains its annotations
+    def wake(self, keys: Optional[List[str]] = None) -> None:
         """ Wake up the plugin, process data, apply options """
         super().wake(keys=keys)
 
         # Convert to list if single script provided
         tmt.utils.listify(self.data, keys=['script'])
 
-    def go(self, guest):
+    def go(self, guest: Guest) -> None:
         """ Perform finishing tasks on given guest """
         super().go()
 
