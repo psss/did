@@ -1,12 +1,11 @@
 import copy
-from typing import Optional, Type
+from typing import Any, List, Optional, Type
 
 import click
 import fmf
 
 import tmt
-import tmt.steps
-from tmt.steps import Action
+from tmt.steps import Action, Method, StepData
 from tmt.utils import GeneralError
 
 
@@ -22,8 +21,9 @@ class Finish(tmt.steps.Step):
     steps failed (for example when the environment preparation was not
     successful) so that provisioned systems are not kept running.
     """
+    data: List[StepData]
 
-    def wake(self):
+    def wake(self) -> None:
         """ Wake up the step (process workdir and command line) """
         super().wake()
 
@@ -44,17 +44,17 @@ class Finish(tmt.steps.Step):
             self.status('todo')
             self.save()
 
-    def show(self):
+    def show(self) -> None:
         """ Show finish details """
         for data in self.data:
             FinishPlugin.delegate(self, data).show()
 
-    def summary(self):
+    def summary(self) -> None:
         """ Give a concise summary """
         tasks = fmf.utils.listed(self.phases(), 'task')
         self.info('summary', f'{tasks} completed', 'green', shift=1)
 
-    def go(self):
+    def go(self) -> None:
         """ Execute finishing tasks """
         super().go()
 
@@ -97,7 +97,7 @@ class Finish(tmt.steps.Step):
         self.status('done')
         self.save()
 
-    def requires(self):
+    def requires(self) -> List[str]:
         """
         Packages required by all enabled finish plugins
 
@@ -115,7 +115,7 @@ class FinishPlugin(tmt.steps.Plugin):
     """ Common parent of finish plugins """
 
     # List of all supported methods aggregated from all plugins
-    _supported_methods = []
+    _supported_methods: List[Method] = []
 
     @classmethod
     def base_command(
@@ -134,7 +134,7 @@ class FinishPlugin(tmt.steps.Plugin):
         @click.option(
             '-h', '--how', metavar='METHOD',
             help='Use specified method for finishing tasks.')
-        def finish(context, **kwargs):
+        def finish(context: click.Context, **kwargs: Any) -> None:
             context.obj.steps.add('finish')
             Finish._save_context(context)
 

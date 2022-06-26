@@ -44,7 +44,7 @@ else:
 
 if TYPE_CHECKING:
     import tmt.base
-
+    import tmt.steps
 
 log = fmf.utils.Logging('tmt').logger
 
@@ -879,12 +879,12 @@ def ascii(text: Any) -> bytes:
 
 
 def listify(
-        data: Union[Tuple[Any, ...], List[Any], str, Dict[Any, Any]],
+        data: Union[Tuple[Any, ...], List[Any], str, Dict[Any, Any], 'tmt.steps.StepData'],
         split: bool = False,
-        keys: Optional[List[str]] = None) -> Union[List[Any], Dict[Any, Any]]:
+        keys: Optional[List[str]] = None) -> Union[List[Any], Dict[Any, Any],
+                                                   'tmt.steps.StepData']:
     """
     Ensure that variable is a list, convert if necessary
-
     For dictionaries check all items or only those with provided keys.
     Also split strings on white-space/comma if split=True.
     """
@@ -898,7 +898,8 @@ def listify(
     if isinstance(data, dict):
         for key in keys or data:
             if key in data:
-                data[key] = listify(data[key], split=split)
+                # TODO: this "type: ignore" should go away once StepData becomes a dataclass
+                data[key] = listify(data[key], split=split)  # type: ignore
         return data
     return [data]
 

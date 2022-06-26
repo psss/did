@@ -8,7 +8,7 @@ import tmt.steps.finish
 from tmt.steps.provision import Guest
 
 
-class FinishShell(tmt.steps.finish.FinishPlugin):  # type: ignore[misc]
+class FinishShell(tmt.steps.finish.FinishPlugin):
     """
     Perform finishing tasks using shell scripts
 
@@ -31,13 +31,15 @@ class FinishShell(tmt.steps.finish.FinishPlugin):  # type: ignore[misc]
     _keys = ["script"]
 
     @classmethod
-    def options(cls, how: Optional[str] = None) -> Any:
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Finish command line options """
-        return [
+        options = super().options(how)
+        options[:0] = [
             click.option(
                 '-s', '--script', metavar='SCRIPT',
                 help='Shell script to be executed.')
-            ] + super().options(how)
+            ]
+        return options
 
     def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """
