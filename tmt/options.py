@@ -3,13 +3,20 @@
 """ Common options and the MethodCommand class """
 
 import re
+from typing import Any, Callable, Dict, List, Optional, Type
 
 import click
 
 import tmt.utils
 
+MethodDictType = Dict[str, click.core.Command]
+# Originating in click.decorators, an opaque type describing "decorator" functions
+# produced by click.option() calls: not options, but rather functions that attach
+# options to a given command.
+ClickOptionDecoratorType = Callable[[click.Command], click.Command]
+
 # Verbose, debug and quiet output
-verbose_debug_quiet = [
+verbose_debug_quiet: List[ClickOptionDecoratorType] = [
     click.option(
         '-v', '--verbose', count=True, default=0,
         help='Show more details. Use multiple times to raise verbosity.'),
@@ -22,7 +29,7 @@ verbose_debug_quiet = [
     ]
 
 # Force and dry actions
-force_dry = [
+force_dry: List[ClickOptionDecoratorType] = [
     click.option(
         '-f', '--force', is_flag=True,
         help='Overwrite existing files and step data.'),
@@ -36,7 +43,10 @@ fix = click.option(
     help='Attempt to fix all discovered issues.')
 
 
-def show_step_method_hints(log_object, step_name, how):
+def show_step_method_hints(
+        log_object: tmt.utils.Common,
+        step_name: str,
+        how: str) -> None:
     """
     Show hints about available step methods' installation
 
@@ -82,7 +92,7 @@ def show_step_method_hints(log_object, step_name, how):
                     "available report options.", color='blue')
 
 
-def create_method_class(methods):
+def create_method_class(methods: MethodDictType) -> Type[click.Command]:
     """
     Create special class to handle different options for each method
 
@@ -92,9 +102,9 @@ def create_method_class(methods):
     """
 
     class MethodCommand(click.Command):
-        _method = None
+        _method: Optional[click.Command] = None
 
-        def _check_method(self, context, args):
+        def _check_method(self, context: click.Context, args: List[str]) -> None:
             """ Manually parse the --how option """
             how = None
             subcommands = (
@@ -133,18 +143,18 @@ def create_method_class(methods):
                 raise tmt.utils.SpecificationError(
                     f"Unsupported {self.name} method '{how}'.")
 
-        def parse_args(self, context, args):
+        def parse_args(self, context: click.Context, args: List[str]) -> List[str]:
             self._check_method(context, args)
             if self._method is not None:
                 return self._method.parse_args(context, args)
             return super().parse_args(context, args)
 
-        def get_help(self, context):
+        def get_help(self, context: click.Context) -> str:
             if self._method is not None:
                 return self._method.get_help(context)
             return super().get_help(context)
 
-        def invoke(self, context):
+        def invoke(self, context: click.Context) -> Any:
             if self._method:
                 return self._method.invoke(context)
             return super().invoke(context)

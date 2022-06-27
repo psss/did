@@ -13,6 +13,7 @@ else:
 import click
 from click import echo
 
+import tmt.options
 import tmt.utils
 from tmt.options import show_step_method_hints
 
@@ -402,19 +403,15 @@ class Plugin(Phase, metaclass=PluginIndex):
         self.step = step
 
     @classmethod
-    def base_command(cls, method_class: Optional[Method] = None,
+    def base_command(cls, method_class: Optional[Type[click.Command]] = None,
                      usage: Optional[str] = None) -> click.Command:
         """ Create base click command (common for all step plugins) """
         raise NotImplementedError
 
     @classmethod
-    def options(cls, how: Optional[str] = None) -> List[click.Option]:
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for given method """
         # Include common options supported across all plugins
-        # TODO: These should not be needed once mypy
-        # is allowed to peek into other modules.
-        assert isinstance(tmt.options.verbose_debug_quiet, list)
-        assert isinstance(tmt.options.force_dry, list)
         return tmt.options.verbose_debug_quiet + tmt.options.force_dry
 
     @classmethod
@@ -428,16 +425,16 @@ class Plugin(Phase, metaclass=PluginIndex):
             command: click.Command = cls.base_command(usage=method.usage())
             # Apply plugin specific options
             for option in method.class_.options(method.name):
-                command = option(command)  # type: ignore
+                command = option(command)
             commands[method.name] = command
 
         # Create base command with common options using method class
-        method_class: Method = tmt.options.create_method_class(commands)
+        method_class = tmt.options.create_method_class(commands)
         command = cls.base_command(
             method_class, usage=method_overview)
         # Apply common options
         for option in cls.options():
-            command = option(command)  # type: ignore
+            command = option(command)
         return command
 
     @classmethod
