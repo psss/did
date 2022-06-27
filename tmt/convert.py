@@ -67,10 +67,10 @@ def read_manual(
 
     try:
         if plan_id:
-            all_cases = nitrate.TestPlan(int(plan_id)).testcases
+            all_cases = nitrate.TestPlan(plan_id).testcases
             case_ids = [case.id for case in all_cases if not case.automated]
         else:
-            case_ids = [int(case_id)]
+            case_ids = [case_id]
     except ValueError:
         raise ConvertError('Test plan/case identifier must be an integer.')
 

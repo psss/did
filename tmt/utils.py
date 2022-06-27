@@ -1171,7 +1171,7 @@ def context_to_dict(context: List[str]) -> FmfContextType:
 
 
 def dict_to_yaml(
-        data: Dict[str, Any],
+        data: Union[Dict[str, Any], List[Any]],
         width: Optional[int] = None,
         sort: bool = False,
         start: bool = False) -> str:

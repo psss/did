@@ -38,6 +38,7 @@ force_dry: List[ClickOptionDecoratorType] = [
         help='Run in dry mode. No changes, please.'),
     ]
 
+# Fix action
 fix = click.option(
     '-F', '--fix', is_flag=True,
     help='Attempt to fix all discovered issues.')
