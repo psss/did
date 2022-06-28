@@ -273,7 +273,8 @@ class Common(object):
             parent: Optional[CommonDerivedType] = None,
             name: Optional[str] = None,
             workdir: WorkdirArgumentType = None,
-            context: Optional[click.Context] = None):
+            context: Optional[click.Context] = None,
+            relative_indent: int = 1):
         """
         Initialize name and relation with the parent object
 
@@ -285,6 +286,9 @@ class Common(object):
         # Use lowercase class name as the default name
         self.name = name or self.__class__.__name__.lower()
         self.parent = parent
+
+        # Relative log indent level shift against the parent
+        self._relative_indent = relative_indent
 
         # Store command line context
         if context:
@@ -380,7 +384,7 @@ class Common(object):
         if self.parent is None:
             return -1
         else:
-            return self.parent._level() + 1
+            return self.parent._level() + self._relative_indent
 
     def _indent(
             self,
