@@ -592,6 +592,7 @@ class Plan(Core):
     extra_L2_keys = [
         'context',
         'environment',
+        'environment-file',
         'gate',
         ]
 
