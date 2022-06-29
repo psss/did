@@ -342,6 +342,26 @@ Use the ``--bugzilla`` option together with ``--nitrate`` to link
 bugs marked as ``verifies`` in the :ref:`/spec/core/link`
 attribute with the corresponding Nitrate test case.
 
+Before export to ``--nitrate`` tmt checks that used test
+metadata are committed to git and present on ``origin`` remote.
+On own risk the failure can be ignored with ``--ignore-git-validation``.
+
+Nitrate test case can be created from test metadata with ``--create``.
+By default existing cases are detected each time, if you need to
+create additional nitrate test case use ``--duplicate``.
+Export will append ``extra-nitrate`` to the test metadata.
+Those changes have to be committed and pushed manually.
+
+To include nitrate test case in general plans use ``--general``.
+Set of general plans to which the test case will be linked is
+detected from the :ref:`/spec/tests/component`. Any additional
+general plan will be removed.
+
+For newly created nitrate test case it can be useful to add it
+to all open nitrate test runs under its general plans. This can be
+done using the ``--link-runs`` option.
+
+
 
 Test Libraries
 ------------------------------------------------------------------

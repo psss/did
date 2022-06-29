@@ -461,8 +461,8 @@ def tests_create(context, name, template, force, **kwargs):
     '--restraint / --no-restraint', default=False,
     help='Convert restraint metadata file')
 @click.option(
-    '--general / --no-general', default=False,
-    help='Detect component from linked nitrate general plan '
+    '--general / --no-general', default=True,
+    help='Detect components from linked nitrate general plans '
          '(overrides Makefile/restraint component).')
 @click.option(
     '--type', 'types', metavar='TYPE', default=['multihost'], multiple=True,

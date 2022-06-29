@@ -218,7 +218,7 @@ nitrate.xmlrpc_driver:
         is_active: true
         is_staff: true
         is_superuser: false
-        last_login: '2021-11-08 20:34:17'
+        last_login: '2022-06-27 17:32:11'
         last_name: "\u0160pl\xEDchal"
         user_permissions: []
         username: psplicha
@@ -260,15 +260,67 @@ nitrate.xmlrpc_driver:
       - nitrate.xmlrpc_driver
       - single_request_with_cookies
     output:
-    - - description: Test Management Tool
-        id: 59878
-        initial_owner: psplicha
-        initial_owner_id: 2117
-        initial_qa_contact: psplicha
-        initial_qa_contact_id: 2117
-        name: tmt
+    - - attachment: []
+        author: psplicha
+        author_id: 2117
+        case:
+        - 603489
+        - 608444
+        - 608445
+        - 609376
+        - 609377
+        - 609378
+        - 609379
+        - 609380
+        - 609899
+        - 609924
+        - 609925
+        - 609926
+        - 609927
+        - 609928
+        - 610020
+        component:
+        - 59878
+        create_date: '2020-05-15 02:40:40'
+        default_product_version: RHEL3
+        env_group: []
+        extra_link: ''
+        is_active: true
+        name: tmt / General
+        owner: psplicha
+        owner_id: 2117
+        parent: null
+        parent_id: null
+        plan_id: 28164
         product: RHEL Tests
         product_id: 182
+        product_version: RHEL3
+        product_version_id: 386
+        tag: []
+        type: General
+        type_id: 26
+  - metadata:
+      guess_type: Tuple
+      latency: 0.0
+      module_call_list:
+      - unittest.case
+      - integration.test_nitrate
+      - click.testing
+      - click.core
+      - click.decorators
+      - tmt.cli
+      - tmt.convert
+      - nitrate.base
+      - nitrate.immutable
+      - xmlrpc.client
+      - requre.objects
+      - requre.cassette
+      - nitrate.xmlrpc_driver
+      - single_request_with_cookies
+    output:
+    - description: General test plan of product
+      id: 26
+      name: General
   - metadata:
       guess_type: Tuple
       latency: 0.0

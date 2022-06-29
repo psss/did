@@ -202,7 +202,7 @@ class NitrateImport(Base):
         self.runner_output = runner.invoke(
             tmt.cli.main,
             ['-vvvvdddd', '--root', self.tmpdir / "import_case",
-             "test", "import", "--nitrate", "--manual", "--case=609704"],
+             "test", "import", "--no-general", "--nitrate", "--manual", "--case=609704"],
             catch_exceptions=False)
         self.assertEqual(self.runner_output.exit_code, 0)
         self.assertIn(
@@ -233,7 +233,7 @@ class NitrateImport(Base):
         runner = CliRunner()
         self.runner_output = runner.invoke(
             tmt.cli.main, ['--root', self.tmpdir / "import_case", "test",
-                           "import", "--nitrate", "--manual", "--case=609705"],
+                           "import", "--no-general", "--nitrate", "--manual", "--case=609705"],
             catch_exceptions=False)
         self.assertEqual(self.runner_output.exit_code, 0)
         # TODO: This is strange, expect at least some output in
@@ -331,7 +331,7 @@ extra-task: /tmt/integration
         runner = CliRunner()
         self.runner_output = runner.invoke(
             tmt.cli.main, [
-                "test", "import", "--nitrate"], catch_exceptions=False)
+                "test", "import", "--nitrate", "--no-general"], catch_exceptions=False)
         self.assertEqual(self.runner_output.exit_code, 0)
 
         tree_f36_intel = tmt.Tree(
