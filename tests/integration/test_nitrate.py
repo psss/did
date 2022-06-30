@@ -15,14 +15,15 @@ from tmt.utils import ConvertError
 
 # Prepare path to examples
 TEST_DIR = Path(__file__).parent
-NITRATE_EXAMPLE = TEST_DIR / "data" / "nitrate"
 
 
 class Base(RequreTestCase):
+    EXAMPLES = TEST_DIR / "data" / "nitrate"
+
     def setUp(self):
         super().setUp()
         self.tmpdir = Path(tempfile.mktemp(prefix=str(TEST_DIR)))
-        shutil.copytree(NITRATE_EXAMPLE, self.tmpdir)
+        shutil.copytree(self.EXAMPLES, self.tmpdir)
         self.cwd = os.getcwd()
         self.runner_output = None
 
@@ -52,7 +53,7 @@ class NitrateExport(Base):
         runner = CliRunner()
         self.runner_output = runner.invoke(
             tmt.cli.main,
-            ["test", "export", "--nitrate", "--ignore-git-validation",
+            ["test", "export", "--how", "nitrate", "--ignore-git-validation",
              "--create", "--general", "."],
             catch_exceptions=False)
         # Reload the node data to see if it appears there
@@ -67,7 +68,7 @@ class NitrateExport(Base):
         runner = CliRunner()
         self.runner_output = runner.invoke(
             tmt.cli.main,
-            ["test", "export", "--nitrate", "--ignore-git-validation",
+            ["test", "export", "--how", "nitrate", "--ignore-git-validation",
              "--create", "--dry", "--general", "."],
             catch_exceptions=False)
         fmf_node = Tree(self.tmpdir).find("/new_testcase")
@@ -85,7 +86,7 @@ class NitrateExport(Base):
         runner = CliRunner()
         self.runner_output = runner.invoke(
             tmt.cli.main,
-            ["test", "export", "--nitrate", "--ignore-git-validation",
+            ["test", "export", "--how", "nitrate", "--ignore-git-validation",
              "--create", "--general", "."],
             catch_exceptions=False)
         fmf_node = Tree(self.tmpdir).find("/existing_testcase")
@@ -96,17 +97,11 @@ class NitrateExport(Base):
 
         os.chdir(self.tmpdir / "existing_dryrun_testcase")
         runner = CliRunner()
-        self.runner_output = runner.invoke(tmt.cli.main,
-                                           ["test",
-                                            "export",
-                                            "--nitrate",
-                                            "--ignore-git-validation",
-                                            "--debug",
-                                            "--dry",
-                                            "--general",
-                                            "--bugzilla",
-                                            "."],
-                                           catch_exceptions=False)
+        self.runner_output = runner.invoke(
+            tmt.cli.main,
+            ["test", "export", "--how", "nitrate", "--ignore-git-validation",
+             "--debug", "--dry", "--general", "--bugzilla", "."],
+            catch_exceptions=False)
         self.assertIn(
             "summary: tmt /existing_dryrun_testcase - ABCDEF",
             self.runner_output.output)
@@ -117,18 +112,11 @@ class NitrateExport(Base):
 
         os.chdir(self.tmpdir / "existing_dryrun_release_testcase")
         runner = CliRunner()
-        self.runner_output = runner.invoke(tmt.cli.main,
-                                           ["test",
-                                            "export",
-                                            "--nitrate",
-                                            "--ignore-git-validation",
-                                            "--debug",
-                                            "--dry",
-                                            "--general",
-                                            "--bugzilla",
-                                            "--link-runs",
-                                            "."],
-                                           catch_exceptions=False)
+        self.runner_output = runner.invoke(
+            tmt.cli.main,
+            ["test", "export", "--how", "nitrate", "--debug", "--dry",
+             "--ignore-git-validation", "--general", "--bugzilla", "--link-runs", "."],
+            catch_exceptions=False)
         self.assertIn(
             "summary: tmt /existing_dryrun_release_testcase - ABCDEF",
             self.runner_output.output)
@@ -150,7 +138,7 @@ class NitrateExport(Base):
         runner = CliRunner()
         self.runner_output = runner.invoke(
             tmt.cli.main,
-            ["test", "export", "--nitrate", "--ignore-git-validation", "--bugzilla", "."],
+            ["test", "export", "--how", "nitrate", "--ignore-git-validation", "--bugzilla", "."],
             catch_exceptions=False)
         assert self.runner_output.exit_code == 0
 
@@ -160,7 +148,8 @@ class NitrateExport(Base):
         with self.assertRaises(ConvertError):
             self.runner_output = runner.invoke(
                 tmt.cli.main,
-                ["test", "export", "--nitrate", "--debug", "--dry", "."],
+                ["test", "export", "--how", "nitrate",
+                 "--debug", "--dry", "."],
                 catch_exceptions=False)
 
     def test_export_blocked_by_validation(self):
@@ -216,7 +205,8 @@ class NitrateImport(Base):
             self.runner_output.output)
         filename = next(
             filter(
-                lambda x: "Metadata successfully stored into" in x and "main.fmf" in x,
+                lambda x: "Metadata successfully stored into" in x
+                          and "main.fmf" in x,
                 self.runner_output.output.splitlines())).split("'")[1]
         # /home/jscotka/git/tmt/Manual/Imported_Test_Case/main.fmf
         # TODO: not possible to specify, where to store data,

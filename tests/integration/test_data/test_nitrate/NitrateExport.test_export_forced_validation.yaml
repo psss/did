@@ -45,8 +45,9 @@ nitrate.xmlrpc_driver:
       notes: "Test case has been migrated to git. Any changes made here might be overwritten.\n\
         See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration\n\
         \ \n\n[structured-field-start]\nThis is StructuredField version 1. Please,\
-        \ edit with care.\n\n[fmf]\nname: /validation\nurl: https://github.com/psss/tmt.git\n\
-        ref: lzachar-export-remote\npath: /tests/integration/data/nitrate\n\n[structured-field-end]\n"
+        \ edit with care.\n\n[fmf]\nname: /validation\nurl: https://github.com/KwisatzHaderach/tmt.git\n\
+        path: /tests/integrationz4zuh6rt\n\n[uuid]\n600ef11c-8dc6-4c56-8482-8c39a7d244bc\n\
+        \n[id]\n1e951412-e510-4946-b79c-24cbd1de7613\n\n[structured-field-end]\n"
       plan: []
       priority: P2
       priority_id: 2
@@ -213,7 +214,7 @@ nitrate.xmlrpc_driver:
         is_active: true
         is_staff: true
         is_superuser: false
-        last_login: '2022-06-16 22:55:34'
+        last_login: '2022-07-01 18:38:55'
         last_name: Zachar
         user_permissions: []
         username: lzachar
@@ -258,8 +259,9 @@ nitrate.xmlrpc_driver:
         notes: "Test case has been migrated to git. Any changes made here might be\
           \ overwritten.\nSee: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration\n\
           \ \n\n[structured-field-start]\nThis is StructuredField version 1. Please,\
-          \ edit with care.\n\n[fmf]\nname: /validation\nurl: https://github.com/psss/tmt.git\n\
-          ref: lzachar-export-remote\npath: /tests/integration/data/nitrate\n\n[structured-field-end]\n"
+          \ edit with care.\n\n[fmf]\nname: /validation\nurl: https://github.com/KwisatzHaderach/tmt.git\n\
+          path: /tests/integrationz4zuh6rt\n\n[uuid]\n600ef11c-8dc6-4c56-8482-8c39a7d244bc\n\
+          \n[id]\n1e951412-e510-4946-b79c-24cbd1de7613\n\n[structured-field-end]\n"
         plan: []
         priority: P2
         priority_id: 2
@@ -311,8 +313,9 @@ nitrate.xmlrpc_driver:
         notes: "Test case has been migrated to git. Any changes made here might be\
           \ overwritten.\nSee: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration\n\
           \ \n\n[structured-field-start]\nThis is StructuredField version 1. Please,\
-          \ edit with care.\n\n[fmf]\nname: /validation\nurl: https://github.com/psss/tmt.git\n\
-          ref: MINE\npath: /tests/integrationpvhcp37x\n\n[structured-field-end]\n"
+          \ edit with care.\n\n[fmf]\nname: /validation\nurl: https://github.com/teemtee/tmt.git\n\
+          ref: pr1118\npath: /tests/integrationlc05g7fz\n\n[uuid]\n600ef11c-8dc6-4c56-8482-8c39a7d244bc\n\
+          \n[id]\n4a0bb131-24c3-4126-a209-f90284d372d1\n\n[structured-field-end]\n"
         plan: []
         priority: P2
         priority_id: 2
@@ -341,4 +344,4 @@ tmt.utils:
       - requre.cassette
       - tmt.utils
       - check_git_url
-    output: https://github.com/psss/tmt.git
+    output: https://github.com/teemtee/tmt.git

@@ -601,6 +601,10 @@ class Test(Core):
         elif format_ == 'nitrate':
             tmt.export.export_to_nitrate(self)
 
+        # Export to Polarion test case management system
+        elif format_ == 'polarion':
+            tmt.export.export_to_polarion(self)
+
         # Export the fmf identifier
         elif keys == 'fmf-id':
             if format_ == 'dict':

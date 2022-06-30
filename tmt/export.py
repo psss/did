@@ -15,6 +15,8 @@ from click import echo, secho, style
 
 import tmt
 import tmt.utils
+from tmt.convert import SYSTEM_OTHER, add_link
+from tmt.identifier import ID_KEY, add_uuid_if_not_defined
 from tmt.utils import ConvertError, check_git_url, markdown_to_html
 
 log = fmf.utils.Logging('tmt').logger
@@ -26,8 +28,11 @@ See: https://tmt.readthedocs.io/en/latest/questions.html#nitrate-migration
 
 # For linking bugs
 BUGZILLA_XMLRPC_URL = "https://bugzilla.redhat.com/xmlrpc.cgi"
-EXTERNAL_TRACKER_ID = 69  # ID of nitrate in RH's bugzilla
+NITRATE_TRACKER_ID = 69  # ID of nitrate in RH's bugzilla
+POLARION_TRACKER_ID = 117  # ID of polarion in RH's bugzilla
 RE_BUGZILLA_URL = r'bugzilla.redhat.com/show_bug.cgi\?id=(\d+)'
+RE_POLARION_URL = r'.*/polarion/#/project/.*/workitem\?id=(.*)'
+LEGACY_POLARION_PROJECTS = set(['RedHatEnterpriseLinux7'])
 
 
 def import_nitrate():
@@ -48,14 +53,38 @@ def import_nitrate():
         raise ConvertError(error)
 
 
-def import_bugzilla():
-    """ Conditionally import the bugzilla module """
+def import_polarion():
+    """ Import polarion python api - pylero """
     try:
-        global bugzilla
+        global PolarionException, PolarionTestCase, PolarionWorkItem
+        from pylero.exceptions import PyleroLibException as PolarionException
+        from pylero.work_item import TestCase as PolarionTestCase
+        from pylero.work_item import _WorkItem as PolarionWorkItem
+    except ImportError:
+        raise ConvertError(
+            "Run 'pip install tmt[export-polarion]' so pylero is installed.")
+
+
+def get_bz_instance():
+    """ Import the bugzilla module and return BZ instance """
+    try:
         import bugzilla
     except ImportError:
         raise ConvertError(
             "Install 'tmt-test-convert' to link test to the bugzilla.")
+
+    try:
+        bz_instance = bugzilla.Bugzilla(url=BUGZILLA_XMLRPC_URL)
+    except Exception as exc:
+        log.debug(traceback.format_exc())
+        raise ConvertError(
+            "Couldn't initialize the Bugzilla client.", original=exc)
+
+    if not bz_instance.logged_in:
+        raise ConvertError(
+            "Not logged to Bugzilla, check 'man bugzilla' section "
+            "'AUTHENTICATION CACHE AND API KEYS'.")
+    return bz_instance
 
 
 def _nitrate_find_fmf_testcases(test):
@@ -169,8 +198,10 @@ def convert_manual_to_nitrate(test_md):
     return step, expect, setup, cleanup
 
 
-def bz_set_coverage(bz_instance, bug_ids, case_id):
+def bz_set_coverage(bug_ids, case_id, tracker_id):
     """ Set coverage in Bugzilla """
+    bz_instance = get_bz_instance()
+
     overall_pass = True
     no_email = 1  # Do not send emails about the change
     get_bz_dict = {
@@ -192,19 +223,23 @@ def bz_set_coverage(bz_instance, bug_ids, case_id):
                         }]
                     })
             except xmlrpc.client.Fault as err:
+                # TODO: Fix missing overall_result = False, breaks tests
+                # if bug used for testing is not changed
+                # BZ#1925518 can't have qe_test_coverage flag
                 log.debug(f"Update flag failed: {err}")
                 echo(style(
                     f"Failed to set qe_test_coverage+ flag for BZ#{bug_id}",
                     fg='red'))
         # Process external tracker - should succeed
-        current = set([int(b['ext_bz_bug_id']) for b in bug['external_bugs']
-                       if b['ext_bz_id'] == EXTERNAL_TRACKER_ID])
+        current = set(
+            [b['ext_bz_bug_id'] for b in bug['external_bugs']
+             if b['ext_bz_id'] == tracker_id])
         if case_id not in current:
             query = {
                 'bug_ids': [bug_id],
                 'nomail': no_email,
                 'external_bugs': [{
-                    'ext_type_id': EXTERNAL_TRACKER_ID,
+                    'ext_type_id': tracker_id,
                     'ext_bz_bug_id': case_id,
                     'ext_description': '',
                     }]
@@ -217,6 +252,68 @@ def bz_set_coverage(bz_instance, bug_ids, case_id):
                 overall_pass = False
     if not overall_pass:
         raise ConvertError("Failed to link the case to bugs.")
+
+    echo(style("Linked to Bugzilla: {}.".format(
+        " ".join([f"BZ#{bz_id}" for bz_id in bug_ids])), fg='magenta'))
+
+
+def _get_polarion_ids(query_result, preferred_project=None):
+    """ Return case and project ids from query results """
+    if not query_result:
+        return 'None', None
+    if len(query_result) == 1:
+        return query_result[0].work_item_id, query_result[0].project_id
+
+    if preferred_project:
+        try:
+            return next(
+                item.work_item_id for item in query_result
+                if item.project_id == preferred_project), preferred_project
+        except StopIteration:
+            pass
+
+    for result in query_result:
+        # If multiple cases are found prefer cases from other projects
+        # than these legacy ones
+        if str(result.project_id) not in LEGACY_POLARION_PROJECTS:
+            return result.work_item_id, result.project_id
+
+    return query_result[0].work_item_id, query_result[0].project_id
+
+
+def get_polarion_case(data, preferred_project=None):
+    """ Get Polarion case through couple different methods """
+    import_polarion()
+    polarion_id = 'None'
+    project_id = None
+
+    # Search by UUID
+    if data.get(ID_KEY):
+        query_result = PolarionWorkItem.query(
+            data.get(ID_KEY), fields=['work_item_id', 'project_id'])
+        polarion_id, project_id = _get_polarion_ids(query_result, preferred_project)
+    # Search by TCMS Case ID
+    if not project_id and data.get('extra-nitrate'):
+        nitrate_case_id = str(int(
+            re.search(r'\d+', data.get("extra-nitrate")).group()))
+        query_result = PolarionWorkItem.query(
+            nitrate_case_id, fields=['work_item_id', 'project_id'])
+        polarion_id, project_id = _get_polarion_ids(query_result, preferred_project)
+    # Search by extra task
+    if not project_id and data.get('extra-task'):
+        query_result = PolarionWorkItem.query(
+            data.get('extra-task'), fields=['work_item_id', 'project_id'])
+        polarion_id, project_id = _get_polarion_ids(query_result, preferred_project)
+
+    try:
+        polarion_case = PolarionTestCase(
+            project_id=project_id, work_item_id=polarion_id)
+        echo(style(
+            f"Test case '{str(polarion_case.work_item_id)}' found.",
+            fg='blue'))
+        return polarion_case
+    except PolarionException:
+        return None
 
 
 def export_to_nitrate(test):
@@ -234,19 +331,6 @@ def export_to_nitrate(test):
 
     if link_runs:
         general = True
-
-    if link_bugzilla:
-        import_bugzilla()
-        try:
-            bz_instance = bugzilla.Bugzilla(url=BUGZILLA_XMLRPC_URL)
-        except Exception as exc:
-            log.debug(traceback.format_exc())
-            raise ConvertError(
-                "Couldn't initialize the Bugzilla client.", original=exc)
-        if not bz_instance.logged_in:
-            raise ConvertError(
-                "Not logged to Bugzilla, check `man bugzilla` section "
-                "'AUTHENTICATION CACHE AND API KEYS'.")
 
     # Check git is already correct
     valid, error_msg = tmt.utils.validate_git_status(test)
@@ -456,6 +540,13 @@ def export_to_nitrate(test):
         echo(style(
             'Add migration warning to the test case notes.', fg='green'))
 
+    # ID
+    uuid = add_uuid_if_not_defined(test.node, dry=dry_mode)
+    if not uuid:
+        uuid = test.node.get(ID_KEY)
+    struct_field.set(ID_KEY, uuid)
+    echo(style(f"Append the ID {uuid}.", fg='green'))
+
     # Saving case.notes with edited StructField
     if not dry_mode:
         nitrate_case.notes = struct_field.save()
@@ -513,15 +604,173 @@ def export_to_nitrate(test):
 
     # Optionally link Bugzilla to Nitrate case
     if link_bugzilla and verifies_bug_ids:
+        if not dry_mode:
+            bz_set_coverage(verifies_bug_ids, int(nitrate_case.id), NITRATE_TRACKER_ID)
+
+
+def export_to_polarion(test):
+    """ Export fmf metadata to a Polarion test case """
+    import_polarion()
+
+    # Check command line options
+    create = test.opt('create')
+    link_bugzilla = test.opt('bugzilla')
+    project_id = test.opt('project_id')
+    dry_mode = test.opt('dry')
+    duplicate = test.opt('duplicate')
+
+    polarion_case = None
+    if not duplicate:
+        polarion_case = get_polarion_case(test.node, project_id)
+    summary = prepare_extra_summary(test)
+
+    if not polarion_case:
+        if create:
+            if not project_id:
+                raise ConvertError(
+                    "Please provide project_id so tmt knows which "
+                    "Polarion project to use for this test case.")
+            if not dry_mode:
+                polarion_case = create_polarion_case(
+                    summary, project_id=project_id)
+            else:
+                echo(style(
+                    f"Test case '{summary}' created.", fg='blue'))
+            test._metadata['extra-summary'] = summary
+        else:
+            raise ConvertError(
+                f"Polarion test case id not found for '{test}'. "
+                f"(You can use --create option to enforce creating testcases.)")
+
+    # Title
+    if not dry_mode and polarion_case.title != test.summary:
+        polarion_case.title = test.summary
+    echo(style('title: ', fg='green') + test.summary)
+
+    # Description
+    description = summary
+    if test.description:
+        description += ' - ' + test.description
+    if not dry_mode:
+        polarion_case.description = description
+    echo(style('description: ', fg='green') + description)
+
+    # Automation
+    if test.node.get('extra-task'):
+        automation_script = test.node.get('extra-task')
+        automation_script += ' ' + test.fmf_id['url']
+    else:
+        automation_script = test.fmf_id['url']
+    if not dry_mode:
+        polarion_case.caseautomation = 'automated'
+        polarion_case.automation_script = automation_script
+    echo(style('script: ', fg='green') + automation_script)
+
+    # Components
+    if not dry_mode:
+        polarion_case.caselevel = 'component'
+        polarion_case.testtype = 'functional'
+        if test.component:
+            polarion_case.casecomponent = [test.component[0]]
+    echo(style('components: ', fg='green') + ' '.join(test.component))
+
+    # Tags and Importance
+    if not dry_mode:
+        if test.tier is not None:
+            if int(test.tier) <= 1:
+                polarion_case.caseimportance = 'high'
+            elif int(test.tier) == 2:
+                polarion_case.caseimportance = 'medium'
+            else:
+                polarion_case.caseimportance = 'low'
+            test.tag.append(f"Tier{test.tier}")
+        else:
+            polarion_case.caseimportance = 'medium'
+
+    test.tag.append('fmf-export')
+    if not dry_mode:
+        polarion_case.tags = ' '.join(test.tag)
+    echo(style('tags: ', fg='green') + ' '.join(set(test.tag)))
+
+    # Default tester
+    if test.contact:
+        # Need to pick one value, so picking the first contact
+        email_address = email.utils.parseaddr(test.contact[0])[1]
+        login_name = email_address[:email_address.find('@')]
         try:
             if not dry_mode:
-                bz_set_coverage(
-                    bz_instance, verifies_bug_ids, int(
-                        nitrate_case.id))
-            echo(style("Linked to Bugzilla: {}.".format(", ".join(
-                [f"BZ#{bz_id}" for bz_id in verifies_bug_ids])), fg='magenta'))
+                polarion_case.add_assignee(login_name)
+            echo(style('default tester: ', fg='green') + login_name)
+        except PolarionException as err:
+            log.debug(err)
+
+    # Status
+    if not dry_mode:
+        if test.enabled:
+            polarion_case.status = 'approved'
+        else:
+            polarion_case.status = 'inactive'
+    echo(style('enabled: ', fg='green') + str(test.enabled))
+
+    echo(style("Append the Polarion test case link.", fg='green'))
+    if not dry_mode:
+        with test.node as data:
+            server_url = str(polarion_case._session._server.url)
+            add_link(
+                f'{server_url}{"" if server_url.endswith("/") else "/"}'
+                f'#/project/{polarion_case.project_id}/workitem?id='
+                f'{str(polarion_case.work_item_id)}',
+                data, system=SYSTEM_OTHER, type_='implements')
+
+    # List of bugs test verifies
+    bug_ids = []
+    requirements = []
+    for link in test.link:
+        try:
+            bug_ids.append(
+                re.search(RE_BUGZILLA_URL, link['verifies']).group(1))
         except Exception as err:
-            raise ConvertError("Couldn't update bugs", original=err)
+            log.debug(err)
+        try:
+            requirements.append(
+                re.search(RE_POLARION_URL, link['verifies']).group(1))
+        except Exception as err:
+            log.debug(err)
+
+    # Add bugs to the Polarion case
+    if not dry_mode:
+        polarion_case.tcmsbug = ', '.join(bug_ids)
+
+    # Add TCMS Case ID to Polarion case
+    if test.node.get('extra-nitrate') and not dry_mode:
+        polarion_case.tcmscaseid = str(int(
+            re.search(r'\d+', test.node.get("extra-nitrate")).group()))
+
+    # Add id to Polarion case
+    uuid = add_uuid_if_not_defined(test.node, dry=dry_mode)
+    if not uuid:
+        uuid = test.node.get(ID_KEY)
+    if not dry_mode:
+        polarion_case.test_case_id = uuid
+    echo(style(f"Append the ID {uuid}.", fg='green'))
+
+    # Add Requirements to Polarion case
+    if not dry_mode:
+        for req in requirements:
+            polarion_case.add_linked_item(req, 'verifies')
+
+    # Update Polarion test case
+    if not dry_mode:
+        polarion_case.update()
+    echo(style(
+        f"Test case '{summary}' successfully exported to Polarion.",
+        fg='magenta'))
+
+    # Optionally link Bugzilla to Polarion case
+    if link_bugzilla and bug_ids and not dry_mode:
+        case_id = (f"{polarion_case.project_id}/workitem?id="
+                   f"{str(polarion_case.work_item_id)}")
+        bz_set_coverage(bug_ids, case_id, POLARION_TRACKER_ID)
 
 
 def add_to_nitrate_runs(nitrate_case, general_plan, test, dry_mode):
@@ -740,24 +989,34 @@ def return_markdown_file():
     return md_path
 
 
-def create_nitrate_case(summary):
-    """ Create new nitrate case """
-    import_nitrate()
-
-    # Get category from Makefile
+def get_category():
+    """ Get category from Makefile """
     try:
         with open('Makefile', encoding='utf-8') as makefile_file:
             makefile = makefile_file.read()
-        category = re.search(
+        return re.search(
             r'echo\s+"Type:\s*(.*)"', makefile, re.M).group(1)
     # Default to 'Sanity' if Makefile or Type not found
     except (IOError, AttributeError):
-        category = 'Sanity'
+        return 'Sanity'
 
+
+def create_nitrate_case(summary):
+    """ Create new nitrate case """
     # Create the new test case
-    category = nitrate.Category(name=category, product=DEFAULT_PRODUCT)
+    category = nitrate.Category(name=get_category(), product=DEFAULT_PRODUCT)
     testcase = nitrate.TestCase(summary=summary, category=category)
     echo(style(f"Test case '{testcase.identifier}' created.", fg='blue'))
+    return testcase
+
+
+def create_polarion_case(summary, project_id=None):
+    """ Create new polarion case """
+    # Create the new test case
+    testcase = PolarionTestCase.create(project_id, summary, summary)
+    testcase.tcmscategory = get_category()
+    testcase.update()
+    echo(style(f"Test case '{testcase.work_item_id}' created.", fg='blue'))
     return testcase
 
 

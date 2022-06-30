@@ -26,7 +26,7 @@ nitrate.xmlrpc_driver:
       - nitrate.xmlrpc_driver
       - single_request_with_cookies
     output:
-    - kt2gggn964mddzspzxd4srmy4w4en6e9
+    - wq64q7fp9u6snt93tg8u7afjk76lrdrt
   - metadata:
       guess_type: Tuple
       latency: 0.0
@@ -84,11 +84,19 @@ nitrate.xmlrpc_driver:
 
         name: /existing_testcase
 
-        url: https://github.com/psss/tmt.git
+        url: https://github.com/KwisatzHaderach/tmt.git
 
-        ref: bad_url
+        path: /tests/integrationb5z9duea
 
-        path: /tests/integrationj0_78egk
+
+        [uuid]
+
+        None
+
+
+        [id]
+
+        899d16c2-d183-4a2f-9e92-8bbd64f12ee6
 
 
         [structured-field-end]
@@ -286,11 +294,19 @@ nitrate.xmlrpc_driver:
 
           name: /existing_testcase
 
-          url: https://github.com/psss/tmt.git
+          url: https://github.com/KwisatzHaderach/tmt.git
 
-          ref: bad_url
+          path: /tests/integrationb5z9duea
 
-          path: /tests/integrationj0_78egk
+
+          [uuid]
+
+          None
+
+
+          [id]
+
+          899d16c2-d183-4a2f-9e92-8bbd64f12ee6
 
 
           [structured-field-end]
@@ -365,11 +381,21 @@ nitrate.xmlrpc_driver:
 
           name: /existing_testcase
 
-          url: https://github.com/psss/tmt.git
+          url: https://github.com/teemtee/tmt.git
 
-          ref: bad_url
+          ref: pr1118
 
-          path: /tests/integrationh_ypkx_n
+          path: /tests/integration7a6yuwsg
+
+
+          [uuid]
+
+          None
+
+
+          [id]
+
+          899d16c2-d183-4a2f-9e92-8bbd64f12ee6
 
 
           [structured-field-end]
@@ -413,7 +439,27 @@ nitrate.xmlrpc_driver:
         case_run: null
         case_run_id: null
         description: ''
-        id: 250305
+        id: 253274
+        summary: ''
+      - bug_id: '1925516'
+        bug_system: Bugzilla
+        bug_system_id: 1
+        case: tmt /existing_testcase - This is case what already exists inside nitrate
+        case_id: 609686
+        case_run: null
+        case_run_id: null
+        description: ''
+        id: 253273
+        summary: ''
+      - bug_id: '1925517'
+        bug_system: Bugzilla
+        bug_system_id: 1
+        case: tmt /existing_testcase - This is case what already exists inside nitrate
+        case_id: 609686
+        case_run: null
+        case_run_id: null
+        description: ''
+        id: 253268
         summary: ''
 requests.sessions:
   send:
@@ -444,9 +490,9 @@ requests.sessions:
           - send
         output:
           __store_indicator: 1
-          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>version</name><value><string>5.0.4.rh69</string></value></member></struct></value></param></params></methodResponse>
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>version</name><value><string>5.0.4.rh72</string></value></member></struct></value></param></params></methodResponse>
           _next: null
-          elapsed: 0.523683
+          elapsed: 0.477905
           encoding: ISO-8859-1
           headers:
             Cache-Control: private, must-revalidate
@@ -455,10 +501,10 @@ requests.sessions:
             Content-Length: '159'
             Content-Security-Policy: frame-ancestors 'self' bugzilla.redhat.com
             Content-Type: text/xml
-            Date: Mon, 28 Feb 2022 14:47:01 GMT
-            ETag: 5f0ISC/q8Idr6DyGLLYAJw
+            Date: Fri, 01 Jul 2022 11:35:08 GMT
+            ETag: 45p0UVGNQpsuSs8fNQskkA
             SOAPServer: SOAP::Lite/Perl/1.27
-            Set-Cookie: Bugzilla_login_request_cookie=J3PxDTx7UM; domain=bugzilla.redhat.com;
+            Set-Cookie: Bugzilla_login_request_cookie=eC1CtXhrik; domain=bugzilla.redhat.com;
               path=/; secure; HttpOnly; SameSite=Lax
             Strict-Transport-Security: max-age=63072000; includeSubDomains
             Vary: Accept-Encoding,User-Agent
@@ -466,8 +512,8 @@ requests.sessions:
             X-frame-options: ALLOW-FROM=https://bugzilla.redhat.com/
             X-xss-protection: 1; mode=block
             x-rh-edge-cache-status: Miss from child, Miss from parent
-            x-rh-edge-reference-id: 0.1f6ed417.1646059621.b7a0790
-            x-rh-edge-request-id: b7a0790
+            x-rh-edge-reference-id: 0.1f6ed417.1656675308.6bd884b
+            x-rh-edge-request-id: 6bd884b
           raw: !!binary ""
           reason: OK
           status_code: 200
@@ -496,20 +542,20 @@ requests.sessions:
           - send
         output:
           __store_indicator: 1
-          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>users</name><value><array><data><value><struct><member><name>name</name><value><string>aander07@packetmaster.com</string></value></member><member><name>can_login</name><value><boolean>1</boolean></value></member><member><name>id</name><value><int>1</int></value></member><member><name>email</name><value><string>aander07@packetmaster.com</string></value></member><member><name>real_name</name><value><string>Need
-            Real Name</string></value></member></struct></value></data></array></value></member></struct></value></param></params></methodResponse>
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>users</name><value><array><data><value><struct><member><name>id</name><value><int>1</int></value></member><member><name>email</name><value><string>aander07@packetmaster.com</string></value></member><member><name>can_login</name><value><boolean>1</boolean></value></member><member><name>real_name</name><value><string>Need
+            Real Name</string></value></member><member><name>name</name><value><string>aander07@packetmaster.com</string></value></member></struct></value></data></array></value></member></struct></value></param></params></methodResponse>
           _next: null
-          elapsed: 0.661358
+          elapsed: 0.612011
           encoding: ISO-8859-1
           headers:
             Cache-Control: private, must-revalidate
             Connection: keep-alive
             Content-Encoding: gzip
-            Content-Length: '252'
+            Content-Length: '254'
             Content-Security-Policy: frame-ancestors 'self' bugzilla.redhat.com
             Content-Type: text/xml
-            Date: Mon, 28 Feb 2022 14:47:02 GMT
-            ETag: 9SgNBGJ9dE/x3Oy+RvJjOQ
+            Date: Fri, 01 Jul 2022 11:35:08 GMT
+            ETag: nQ9nrW3l87UcyhYkoVGWUw
             SOAPServer: SOAP::Lite/Perl/1.27
             Strict-Transport-Security: max-age=63072000; includeSubDomains
             Vary: Accept-Encoding,User-Agent
@@ -517,8 +563,8 @@ requests.sessions:
             X-frame-options: ALLOW-FROM=https://bugzilla.redhat.com/
             X-xss-protection: 1; mode=block
             x-rh-edge-cache-status: Miss from child, Miss from parent
-            x-rh-edge-reference-id: 0.1f6ed417.1646059622.b7a0bec
-            x-rh-edge-request-id: b7a0bec
+            x-rh-edge-reference-id: 0.1f6ed417.1656675308.6bd8b29
+            x-rh-edge-request-id: 6bd8b29
           raw: !!binary ""
           reason: OK
           status_code: 200
@@ -545,22 +591,22 @@ requests.sessions:
           - send
         output:
           __store_indicator: 1
-          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>faults</name><value><array><data
-            /></array></value></member><member><name>bugs</name><value><array><data><value><struct><member><name>id</name><value><int>1925518</int></value></member><member><name>external_bugs</name><value><array><data><value><struct><member><name>ext_bz_id</name><value><int>69</int></value></member><member><name>ext_description</name><value><string>This
-            is case what already exists inside nitrate</string></value></member><member><name>type</name><value><struct><member><name>must_send</name><value><boolean>0</boolean></value></member><member><name>id</name><value><int>69</int></value></member><member><name>url</name><value><string>https://tcms.engineering.redhat.com</string></value></member><member><name>can_get</name><value><boolean>0</boolean></value></member><member><name>send_once</name><value><boolean>0</boolean></value></member><member><name>can_send</name><value><boolean>0</boolean></value></member><member><name>full_url</name><value><string>https://tcms.engineering.redhat.com/case/%id%/</string></value></member><member><name>description</name><value><string>TCMS
-            Test Case</string></value></member><member><name>type</name><value><string>None</string></value></member></struct></value></member><member><name>id</name><value><int>1815278</int></value></member><member><name>ext_priority</name><value><string>None</string></value></member><member><name>ext_bz_bug_id</name><value><string>609686</string></value></member><member><name>bug_id</name><value><int>1925518</int></value></member><member><name>ext_status</name><value><string>None</string></value></member></struct></value></data></array></value></member><member><name>flags</name><value><array><data
-            /></array></value></member></struct></value></data></array></value></member></struct></value></param></params></methodResponse>
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>bugs</name><value><array><data><value><struct><member><name>external_bugs</name><value><array><data><value><struct><member><name>bug_id</name><value><int>1925518</int></value></member><member><name>ext_description</name><value><string>This
+            is case what already exists inside nitrate</string></value></member><member><name>ext_priority</name><value><string>None</string></value></member><member><name>ext_bz_bug_id</name><value><string>609686</string></value></member><member><name>id</name><value><int>1815278</int></value></member><member><name>type</name><value><struct><member><name>must_send</name><value><boolean>0</boolean></value></member><member><name>description</name><value><string>TCMS
+            Test Case</string></value></member><member><name>can_send</name><value><boolean>0</boolean></value></member><member><name>url</name><value><string>https://tcms.engineering.redhat.com</string></value></member><member><name>send_once</name><value><boolean>0</boolean></value></member><member><name>full_url</name><value><string>https://tcms.engineering.redhat.com/case/%id%/</string></value></member><member><name>can_get</name><value><boolean>0</boolean></value></member><member><name>id</name><value><int>69</int></value></member><member><name>type</name><value><string>None</string></value></member></struct></value></member><member><name>ext_bz_id</name><value><int>69</int></value></member><member><name>ext_status</name><value><string>None</string></value></member></struct></value></data></array></value></member><member><name>id</name><value><int>1925518</int></value></member><member><name>flags</name><value><array><data
+            /></array></value></member></struct></value></data></array></value></member><member><name>faults</name><value><array><data
+            /></array></value></member></struct></value></param></params></methodResponse>
           _next: null
-          elapsed: 0.735558
+          elapsed: 0.586183
           encoding: ISO-8859-1
           headers:
             Cache-Control: private, must-revalidate
             Connection: keep-alive
             Content-Encoding: gzip
-            Content-Length: '454'
+            Content-Length: '442'
             Content-Security-Policy: frame-ancestors 'self' bugzilla.redhat.com
             Content-Type: text/xml
-            Date: Mon, 28 Feb 2022 14:47:47 GMT
+            Date: Fri, 01 Jul 2022 11:35:09 GMT
             ETag: 1QxMM33Z9jWuAFe5G3SImg
             SOAPServer: SOAP::Lite/Perl/1.27
             Strict-Transport-Security: max-age=63072000; includeSubDomains
@@ -569,8 +615,8 @@ requests.sessions:
             X-frame-options: ALLOW-FROM=https://bugzilla.redhat.com/
             X-xss-protection: 1; mode=block
             x-rh-edge-cache-status: Miss from child, Miss from parent
-            x-rh-edge-reference-id: 0.1f6ed417.1646059667.b7a1211
-            x-rh-edge-request-id: b7a1211
+            x-rh-edge-reference-id: 0.1f6ed417.1656675309.6bd8f1d
+            x-rh-edge-request-id: 6bd8f1d
           raw: !!binary ""
           reason: OK
           status_code: 200
@@ -597,10 +643,10 @@ requests.sessions:
           - send
         output:
           __store_indicator: 1
-          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><fault><value><struct><member><name>faultCode</name><value><int>700</int></value></member><member><name>faultString</name><value><string>No
-            data given for change or flag name invalid.</string></value></member></struct></value></fault></methodResponse>
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><fault><value><struct><member><name>faultString</name><value><string>No
+            data given for change or flag name invalid.</string></value></member><member><name>faultCode</name><value><int>700</int></value></member></struct></value></fault></methodResponse>
           _next: null
-          elapsed: 0.757003
+          elapsed: 0.682367
           encoding: ISO-8859-1
           headers:
             Cache-Control: private, must-revalidate
@@ -609,7 +655,7 @@ requests.sessions:
             Content-Length: '196'
             Content-Security-Policy: frame-ancestors 'self' bugzilla.redhat.com
             Content-Type: text/xml
-            Date: Mon, 28 Feb 2022 14:47:47 GMT
+            Date: Fri, 01 Jul 2022 11:35:10 GMT
             ETag: vTMu6h9LNWxa4sZ6nWpxPQ
             SOAPServer: SOAP::Lite/Perl/1.27
             Strict-Transport-Security: max-age=63072000; includeSubDomains
@@ -618,8 +664,59 @@ requests.sessions:
             X-frame-options: ALLOW-FROM=https://bugzilla.redhat.com/
             X-xss-protection: 1; mode=block
             x-rh-edge-cache-status: Miss from child, Miss from parent
-            x-rh-edge-reference-id: 0.1f6ed417.1646059667.b7b84e3
-            x-rh-edge-request-id: b7b84e3
+            x-rh-edge-reference-id: 0.1f6ed417.1656675310.6bd934f
+            x-rh-edge-request-id: 6bd934f
+          raw: !!binary ""
+          reason: OK
+          status_code: 200
+      - metadata:
+          latency: 0.0
+          module_call_list:
+          - unittest.case
+          - integration.test_nitrate
+          - click.testing
+          - click.core
+          - click.decorators
+          - tmt.cli
+          - tmt.base
+          - tmt.export
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - xmlrpc.client
+          - bugzilla._backendxmlrpc
+          - bugzilla._session
+          - requests.sessions
+          - requre.objects
+          - requre.cassette
+          - requests.sessions
+          - send
+        output:
+          __store_indicator: 1
+          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>bugs</name><value><array><data><value><struct><member><name>id</name><value><int>1925518</int></value></member><member><name>last_change_time</name><value><dateTime.iso8601>20220701T11:35:11</dateTime.iso8601></value></member><member><name>alias</name><value><array><data
+            /></array></value></member><member><name>changes</name><value><struct><member><name>extra_components</name><value><struct><member><name>added</name><value><string
+            /></value></member><member><name>removed</name><value><string /></value></member></struct></value></member><member><name>extra_versions</name><value><struct><member><name>removed</name><value><string
+            /></value></member><member><name>added</name><value><string /></value></member></struct></value></member></struct></value></member></struct></value></data></array></value></member></struct></value></param></params></methodResponse>
+          _next: null
+          elapsed: 1.145785
+          encoding: ISO-8859-1
+          headers:
+            Cache-Control: private, must-revalidate
+            Connection: keep-alive
+            Content-Encoding: gzip
+            Content-Length: '296'
+            Content-Security-Policy: frame-ancestors 'self' bugzilla.redhat.com
+            Content-Type: text/xml
+            Date: Fri, 01 Jul 2022 11:35:11 GMT
+            ETag: mUB1a/cXFhvja9o/oZKQ3Q
+            SOAPServer: SOAP::Lite/Perl/1.27
+            Strict-Transport-Security: max-age=63072000; includeSubDomains
+            Vary: Accept-Encoding,User-Agent
+            X-content-type-options: nosniff
+            X-frame-options: ALLOW-FROM=https://bugzilla.redhat.com/
+            X-xss-protection: 1; mode=block
+            x-rh-edge-cache-status: Miss from child, Miss from parent
+            x-rh-edge-reference-id: 0.1f6ed417.1656675311.6bd97b9
+            x-rh-edge-request-id: 6bd97b9
           raw: !!binary ""
           reason: OK
           status_code: 200
@@ -641,4 +738,4 @@ tmt.utils:
       - requre.cassette
       - tmt.utils
       - check_git_url
-    output: https://github.com/psss/tmt.git
+    output: https://github.com/teemtee/tmt.git

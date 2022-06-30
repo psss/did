@@ -76,7 +76,8 @@ extras_require = {
         'html2text'],
     'report-html': ['jinja2'],
     'report-junit': ['junit_xml'],
-    }
+    'export-polarion': ['pylero'],
+}
 extras_require['all'] = [
     dependency
     for extra in extras_require.values()

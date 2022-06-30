@@ -218,7 +218,7 @@ nitrate.xmlrpc_driver:
         is_active: true
         is_staff: true
         is_superuser: false
-        last_login: '2022-06-27 17:32:11'
+        last_login: '2022-07-01 19:36:19'
         last_name: "\u0160pl\xEDchal"
         user_permissions: []
         username: psplicha

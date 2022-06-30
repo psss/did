@@ -9,6 +9,7 @@ nitrate.xmlrpc_driver:
       latency: 0.0
       module_call_list:
       - unittest.case
+      - integration.test_nitrate
       - click.testing
       - click.core
       - click.decorators
@@ -60,11 +61,21 @@ nitrate.xmlrpc_driver:
 
         name: /existing_testcase
 
-        url: https://github.com/psss/tmt.git
+        url: https://github.com/teemtee/tmt.git
 
-        ref: lzachar_export_drymode
+        ref: pr1118
 
-        path: /tests/integrationr6tlrg6x
+        path: /tests/integrationux23mr37
+
+
+        [uuid]
+
+        None
+
+
+        [id]
+
+        899d16c2-d183-4a2f-9e92-8bbd64f12ee6
 
 
         [structured-field-end]
@@ -101,6 +112,7 @@ nitrate.xmlrpc_driver:
       latency: 0.0
       module_call_list:
       - unittest.case
+      - integration.test_nitrate
       - click.testing
       - click.core
       - click.decorators
@@ -132,6 +144,7 @@ nitrate.xmlrpc_driver:
       latency: 0.0
       module_call_list:
       - unittest.case
+      - integration.test_nitrate
       - click.testing
       - click.core
       - click.decorators
@@ -149,11 +162,6 @@ nitrate.xmlrpc_driver:
         author: psplicha
         author_id: 2117
         case:
-        - 609924
-        - 609925
-        - 609926
-        - 609927
-        - 609928
         - 610020
         - 603489
         - 608444
@@ -164,6 +172,11 @@ nitrate.xmlrpc_driver:
         - 609379
         - 609380
         - 609899
+        - 609924
+        - 609925
+        - 609926
+        - 609927
+        - 609928
         component:
         - 59878
         create_date: '2020-05-15 02:40:40'
@@ -189,6 +202,7 @@ nitrate.xmlrpc_driver:
       latency: 0.0
       module_call_list:
       - unittest.case
+      - integration.test_nitrate
       - click.testing
       - click.core
       - click.decorators
@@ -239,6 +253,7 @@ nitrate.xmlrpc_driver:
       latency: 0.0
       module_call_list:
       - unittest.case
+      - integration.test_nitrate
       - click.testing
       - click.core
       - click.decorators
@@ -280,6 +295,7 @@ nitrate.xmlrpc_driver:
       latency: 0.0
       module_call_list:
       - unittest.case
+      - integration.test_nitrate
       - click.testing
       - click.core
       - click.decorators
@@ -299,6 +315,7 @@ nitrate.xmlrpc_driver:
       latency: 0.0
       module_call_list:
       - unittest.case
+      - integration.test_nitrate
       - click.testing
       - click.core
       - click.decorators
@@ -314,111 +331,6 @@ nitrate.xmlrpc_driver:
       - single_request_with_cookies
     output:
     - []
-requests.sessions:
-  send:
-    POST:
-      https://bugzilla.redhat.com/xmlrpc.cgi:
-      - metadata:
-          latency: 0.0
-          module_call_list:
-          - unittest.case
-          - click.testing
-          - click.core
-          - click.decorators
-          - tmt.cli
-          - tmt.base
-          - tmt.export
-          - bugzilla.base
-          - bugzilla._backendxmlrpc
-          - xmlrpc.client
-          - bugzilla._backendxmlrpc
-          - xmlrpc.client
-          - bugzilla._backendxmlrpc
-          - bugzilla._session
-          - requests.sessions
-          - requre.objects
-          - requre.cassette
-          - requests.sessions
-          - send
-        output:
-          __store_indicator: 1
-          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>version</name><value><string>5.0.4.rh70</string></value></member></struct></value></param></params></methodResponse>
-          _next: null
-          elapsed: 0.55093
-          encoding: ISO-8859-1
-          headers:
-            Cache-Control: private, must-revalidate
-            Connection: keep-alive
-            Content-Encoding: gzip
-            Content-Length: '159'
-            Content-Security-Policy: frame-ancestors 'self' bugzilla.redhat.com
-            Content-Type: text/xml
-            Date: Wed, 11 May 2022 05:56:34 GMT
-            ETag: MfD3tM1qqAgXQ7JEt0yYsw
-            SOAPServer: SOAP::Lite/Perl/1.27
-            Set-Cookie: Bugzilla_login_request_cookie=rbzBR2hHFc; domain=bugzilla.redhat.com;
-              path=/; secure; HttpOnly; SameSite=Lax
-            Strict-Transport-Security: max-age=63072000; includeSubDomains
-            Vary: Accept-Encoding,User-Agent
-            X-content-type-options: nosniff
-            X-frame-options: ALLOW-FROM=https://bugzilla.redhat.com/
-            X-xss-protection: 1; mode=block
-            x-rh-edge-cache-status: Miss from child, Miss from parent
-            x-rh-edge-reference-id: 0.1f6ed417.1652248594.833b7ef
-            x-rh-edge-request-id: 833b7ef
-          raw: !!binary ""
-          reason: OK
-          status_code: 200
-      - metadata:
-          latency: 0.0
-          module_call_list:
-          - unittest.case
-          - click.testing
-          - click.core
-          - click.decorators
-          - tmt.cli
-          - tmt.base
-          - tmt.export
-          - bugzilla.base
-          - bugzilla._backendxmlrpc
-          - xmlrpc.client
-          - bugzilla._backendxmlrpc
-          - xmlrpc.client
-          - bugzilla._backendxmlrpc
-          - bugzilla._session
-          - requests.sessions
-          - requre.objects
-          - requre.cassette
-          - requests.sessions
-          - send
-        output:
-          __store_indicator: 1
-          _content: <?xml version="1.0" encoding="UTF-8"?><methodResponse><params><param><value><struct><member><name>users</name><value><array><data><value><struct><member><name>can_login</name><value><boolean>1</boolean></value></member><member><name>real_name</name><value><string>Need
-            Real Name</string></value></member><member><name>name</name><value><string>aander07@packetmaster.com</string></value></member><member><name>email</name><value><string>aander07@packetmaster.com</string></value></member><member><name>id</name><value><int>1</int></value></member></struct></value></data></array></value></member></struct></value></param></params></methodResponse>
-          _next: null
-          elapsed: 0.591902
-          encoding: ISO-8859-1
-          headers:
-            Cache-Control: private, must-revalidate
-            Connection: keep-alive
-            Content-Encoding: gzip
-            Content-Length: '251'
-            Content-Security-Policy: frame-ancestors 'self' bugzilla.redhat.com
-            Content-Type: text/xml
-            Date: Wed, 11 May 2022 05:56:35 GMT
-            ETag: 4mXrOiIQpTDN0N1bcDsCFQ
-            SOAPServer: SOAP::Lite/Perl/1.27
-            Strict-Transport-Security: max-age=63072000; includeSubDomains
-            Vary: Accept-Encoding,User-Agent
-            X-content-type-options: nosniff
-            X-frame-options: ALLOW-FROM=https://bugzilla.redhat.com/
-            X-xss-protection: 1; mode=block
-            x-rh-edge-cache-status: Miss from child, Miss from parent
-            x-rh-edge-reference-id: 0.1f6ed417.1652248595.833b9a7
-            x-rh-edge-request-id: 833b9a7
-          raw: !!binary ""
-          reason: OK
-          status_code: 200
 tmt.utils:
   check_git_url:
   - metadata:
@@ -426,6 +338,7 @@ tmt.utils:
       latency: 0.0
       module_call_list:
       - unittest.case
+      - integration.test_nitrate
       - click.testing
       - click.core
       - click.decorators
@@ -436,4 +349,4 @@ tmt.utils:
       - requre.cassette
       - tmt.utils
       - check_git_url
-    output: https://github.com/psss/tmt.git
+    output: https://github.com/teemtee/tmt.git

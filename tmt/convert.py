@@ -33,6 +33,7 @@ JIRA_URL = 'https://issues.redhat.com/browse/'
 # Bug system constants
 SYSTEM_BUGZILLA = 1
 SYSTEM_JIRA = 2
+SYSTEM_OTHER = 42
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -155,12 +156,15 @@ def write_markdown(path, content):
         raise ConvertError(f"Unable to write '{path}'.")
 
 
-def add_bug(bug, data, system=SYSTEM_BUGZILLA):
-    """ Add relevant bug into data under the 'link' key """
+def add_link(target, data, system=SYSTEM_BUGZILLA, type_='relates'):
+    """ Add relevant link into data under the 'link' key """
+    new_link = dict()
     if system == SYSTEM_BUGZILLA:
-        new_link = dict(relates=f"{BUGZILLA_URL}{bug}")
+        new_link[type_] = f"{BUGZILLA_URL}{target}"
     elif system == SYSTEM_JIRA:
-        new_link = dict(relates=f"{JIRA_URL}{bug}")
+        new_link[type_] = f"{JIRA_URL}{target}"
+    elif system == SYSTEM_OTHER:
+        new_link[type_] = target
 
     try:
         # Make sure there are no duplicates
@@ -169,7 +173,7 @@ def add_bug(bug, data, system=SYSTEM_BUGZILLA):
         data['link'].append(new_link)
     except KeyError:
         data['link'] = [new_link]
-    echo(style('relates: ', fg='green') + new_link['relates'])
+    echo(style(f'{type_}: ', fg='green') + new_link[type_])
 
 
 def read_datafile(path, filename, datafile, types, testinfo=None):
@@ -319,7 +323,7 @@ def read_datafile(path, filename, datafile, types, testinfo=None):
         # Add relevant bugs to the 'link' attribute
         for bug_line in re.findall(r'^Bug:\s*([0-9\s]+)', testinfo, re.M):
             for bug in re.findall(r'(\d+)', bug_line):
-                add_bug(bug, data, SYSTEM_BUGZILLA)
+                add_link(bug, data, SYSTEM_BUGZILLA)
 
     return beaker_task, data
 
@@ -770,7 +774,7 @@ def read_nitrate_case(testcase, makefile_data=None, general=False):
     except (KeyError, TypeError):
         pass
     for bug in testcase.bugs:
-        add_bug(bug.bug, data, bug.system)
+        add_link(bug.bug, data, bug.system)
 
     # Header and footer from notes (do not import the warning back)
     data['description'] = re.sub(
@@ -842,7 +846,7 @@ def write(path, data):
     """ Write gathered metadata in the fmf format """
     # Put keys into a reasonable order
     extra_keys = [
-        'adjust', 'extra-nitrate',
+        'adjust', 'extra-nitrate', 'extra-polarion',
         'extra-summary', 'extra-task',
         'extra-hardware', 'extra-pepa']
     sorted_data = dict()

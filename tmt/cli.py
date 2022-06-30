@@ -546,8 +546,13 @@ def tests_import(
 @click.pass_context
 @name_filter_condition_long
 @click.option(
+    '-h', '--how', metavar='METHOD',
+    help='Use specified method for export (nitrate or polarion).')
+@click.option(
     '--nitrate', is_flag=True,
-    help='Export test metadata to Nitrate.')
+    help="Export test metadata to Nitrate, deprecated by '--how nitrate'.")
+@click.option(
+    '--project-id', help='Use specific Polarion project ID.')
 @click.option(
     '--bugzilla', is_flag=True,
     help="Link Nitrate case to Bugzilla specified in the 'link' attribute "
@@ -583,7 +588,7 @@ def tests_import(
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-def tests_export(context, format_, nitrate, bugzilla, **kwargs):
+def tests_export(context, format_, how, nitrate, bugzilla, **kwargs):
     """
     Export test data into the desired format.
 
@@ -591,13 +596,17 @@ def tests_export(context, format_, nitrate, bugzilla, **kwargs):
     Use '.' to select tests under the current working directory.
     """
     tmt.Test._save_context(context)
-    if bugzilla and not nitrate:
-        raise tmt.utils.GeneralError(
-            "The --bugzilla option is supported only with --nitrate for now.")
-
     if nitrate:
+        context.obj.warn("Option '--nitrate' is deprecated, please use '--how nitrate' instead.")
+        how = 'nitrate'
+    if bugzilla and not how:
+        raise tmt.utils.GeneralError(
+            "The --bugzilla option is supported only with --nitrate "
+            "or --polarion for now.")
+
+    if how == 'nitrate' or how == 'polarion':
         for test in context.obj.tree.tests():
-            test.export(format_='nitrate')
+            test.export(format_=how)
     elif format_ in ['dict', 'yaml']:
         keys = None
         if kwargs.get('fmf_id'):

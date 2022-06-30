@@ -27,7 +27,7 @@ nitrate.xmlrpc_driver:
       - nitrate.xmlrpc_driver
       - single_request_with_cookies
     output:
-    - d3wl1o0ewocvjmoo49pyfypgmlmu5cku
+    - 8vevwm4pntsntdkhafyj3cmcuk1or64d
   - metadata:
       guess_type: Tuple
       latency: 0.0
@@ -111,15 +111,15 @@ nitrate.xmlrpc_driver:
     - alias: ''
       arguments: ''
       attachment: []
-      author: jscotka
-      author_id: 2150
-      case_id: 612631
+      author: psplicha
+      author_id: 2117
+      case_id: 614033
       case_status: PROPOSED
       case_status_id: 1
       category: Sanity
       category_id: 518
       component: []
-      create_date: '2021-12-01 15:53:08'
+      create_date: '2022-07-01 19:35:25'
       default_tester: null
       default_tester_id: null
       estimated_time: 00:00:00
@@ -139,17 +139,17 @@ nitrate.xmlrpc_driver:
       text:
         action: ''
         action_checksum: d41d8cd98f00b204e9800998ecf8427e
-        author: jscotka
-        author_id: 2150
+        author: psplicha
+        author_id: 2117
         breakdown: ''
         breakdown_checksum: d41d8cd98f00b204e9800998ecf8427e
         case: tmt /new_testcase - This is new testcase inside nitrate
-        case_id: 613228
+        case_id: 614033
         case_text_version: 1
-        create_date: '2021-12-01 15:53:08'
+        create_date: '2022-07-01 19:35:25'
         effect: ''
         effect_checksum: d41d8cd98f00b204e9800998ecf8427e
-        id: 881907
+        id: 883930
         setup: ''
         setup_checksum: d41d8cd98f00b204e9800998ecf8427e
   - metadata:
@@ -262,15 +262,15 @@ nitrate.xmlrpc_driver:
     - - alias: ''
         arguments: ''
         attachment: []
-        author: jscotka
-        author_id: 2150
-        case_id: 612631
+        author: psplicha
+        author_id: 2117
+        case_id: 614033
         case_status: PROPOSED
         case_status_id: 1
         category: Sanity
         category_id: 518
         component: []
-        create_date: '2021-12-01 15:53:08'
+        create_date: '2022-07-01 19:35:25'
         default_tester: null
         default_tester_id: null
         estimated_time: 00:05:00
@@ -311,15 +311,15 @@ nitrate.xmlrpc_driver:
     - - alias: ''
         arguments: ''
         attachment: []
-        author: jscotka
-        author_id: 2150
-        case_id: 612631
+        author: psplicha
+        author_id: 2117
+        case_id: 614033
         case_status: CONFIRMED
         case_status_id: 2
         category: Sanity
         category_id: 518
         component: []
-        create_date: '2021-12-01 15:53:08'
+        create_date: '2022-07-01 19:35:25'
         default_tester: null
         default_tester_id: null
         estimated_time: 00:05:00
@@ -360,15 +360,15 @@ nitrate.xmlrpc_driver:
     - - alias: ''
         arguments: ' '
         attachment: []
-        author: jscotka
-        author_id: 2150
-        case_id: 612631
+        author: psplicha
+        author_id: 2117
+        case_id: 614033
         case_status: CONFIRMED
         case_status_id: 2
         category: Sanity
         category_id: 518
         component: []
-        create_date: '2021-12-01 15:53:08'
+        create_date: '2022-07-01 19:35:25'
         default_tester: null
         default_tester_id: null
         estimated_time: 00:05:00
@@ -409,15 +409,15 @@ nitrate.xmlrpc_driver:
     - - alias: ''
         arguments: ' '
         attachment: []
-        author: jscotka
-        author_id: 2150
-        case_id: 612631
+        author: psplicha
+        author_id: 2117
+        case_id: 614033
         case_status: CONFIRMED
         case_status_id: 2
         category: Sanity
         category_id: 518
         component: []
-        create_date: '2021-12-01 15:53:08'
+        create_date: '2022-07-01 19:35:25'
         default_tester: null
         default_tester_id: null
         estimated_time: 00:05:00
@@ -449,11 +449,16 @@ nitrate.xmlrpc_driver:
 
           name: /new_testcase
 
-          url: https://github.com/psss/tmt.git
+          url: https://github.com/teemtee/tmt.git
 
-          ref: bad_url
+          ref: pr1118
 
-          path: /tests/integrationtu2j02xw
+          path: /tests/integrationukl7hp2n
+
+
+          [id]
+
+          0a0a80b5-5a78-4771-9700-2c4610091b91
 
 
           [structured-field-end]
@@ -487,4 +492,4 @@ tmt.utils:
       - requre.cassette
       - tmt.utils
       - check_git_url
-    output: https://github.com/psss/tmt.git
+    output: https://github.com/teemtee/tmt.git

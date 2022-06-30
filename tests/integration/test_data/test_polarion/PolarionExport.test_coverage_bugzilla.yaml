@@ -6,10 +6,10 @@ tmt.utils:
   check_git_url:
   - metadata:
       guess_type: Simple
-      latency: 0.0
+      latency: 0.6193697452545166
       module_call_list:
       - unittest.case
-      - integration.test_nitrate
+      - integration.test_polarion
       - click.testing
       - click.core
       - click.decorators

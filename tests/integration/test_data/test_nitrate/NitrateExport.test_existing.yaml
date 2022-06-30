@@ -61,11 +61,21 @@ nitrate.xmlrpc_driver:
 
         name: /existing_testcase
 
-        url: https://github.com/psss/tmt.git
+        url: https://github.com/teemtee/tmt.git
 
-        ref: bad_url
+        ref: pr1118
 
-        path: /tests/integrationppzuow9w
+        path: /tests/integration7a6yuwsg
+
+
+        [uuid]
+
+        None
+
+
+        [id]
+
+        899d16c2-d183-4a2f-9e92-8bbd64f12ee6
 
 
         [structured-field-end]
@@ -283,11 +293,21 @@ nitrate.xmlrpc_driver:
 
           name: /existing_testcase
 
-          url: https://github.com/psss/tmt.git
+          url: https://github.com/teemtee/tmt.git
 
-          ref: bad_url
+          ref: pr1118
 
-          path: /tests/integrationppzuow9w
+          path: /tests/integration7a6yuwsg
+
+
+          [uuid]
+
+          None
+
+
+          [id]
+
+          899d16c2-d183-4a2f-9e92-8bbd64f12ee6
 
 
           [structured-field-end]
@@ -362,11 +382,21 @@ nitrate.xmlrpc_driver:
 
           name: /existing_testcase
 
-          url: https://github.com/psss/tmt.git
+          url: https://github.com/teemtee/tmt.git
 
-          ref: bad_url
+          ref: pr1118
 
-          path: /tests/integrationj0_78egk
+          path: /tests/integrationux23mr37
+
+
+          [uuid]
+
+          None
+
+
+          [id]
+
+          899d16c2-d183-4a2f-9e92-8bbd64f12ee6
 
 
           [structured-field-end]
@@ -410,7 +440,27 @@ nitrate.xmlrpc_driver:
         case_run: null
         case_run_id: null
         description: ''
-        id: 250305
+        id: 253274
+        summary: ''
+      - bug_id: '1925516'
+        bug_system: Bugzilla
+        bug_system_id: 1
+        case: tmt /existing_testcase - This is case what already exists inside nitrate
+        case_id: 609686
+        case_run: null
+        case_run_id: null
+        description: ''
+        id: 253273
+        summary: ''
+      - bug_id: '1925517'
+        bug_system: Bugzilla
+        bug_system_id: 1
+        case: tmt /existing_testcase - This is case what already exists inside nitrate
+        case_id: 609686
+        case_run: null
+        case_run_id: null
+        description: ''
+        id: 253268
         summary: ''
 tmt.utils:
   check_git_url:
@@ -430,4 +480,4 @@ tmt.utils:
       - requre.cassette
       - tmt.utils
       - check_git_url
-    output: https://github.com/psss/tmt.git
+    output: https://github.com/teemtee/tmt.git
