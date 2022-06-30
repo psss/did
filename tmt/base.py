@@ -929,11 +929,13 @@ class Plan(Core):
     def _lint_discover_fmf(discover):
         """ Lint fmf discover method """
         # Validate remote id and translate to human readable errors
-        valid, error = FmfId(**{
+        fmf_id_data = {
             key: value
             for key, value in discover.items()
             if key in ['url', 'ref', 'path']
-            }).validate()
+            }
+
+        valid, error = FmfId(**fmf_id_data).validate()
 
         if valid:
             name = discover.get('name')
