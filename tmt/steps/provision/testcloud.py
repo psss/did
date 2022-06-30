@@ -70,6 +70,15 @@ runcmd:
   grep -q platform:el8; then systemctl restart sshd; fi']
 """
 
+COREOS_DATA = """variant: fcos
+version: 1.4.0
+passwd:
+  users:
+    - name: {user_name}
+      ssh_authorized_keys:
+        - {public_key}
+"""
+
 # Libvirt domain XML template related variables
 DOMAIN_TEMPLATE_NAME = 'domain-template.jinja'
 DOMAIN_TEMPLATE_FILE = os.path.join(TESTCLOUD_DATA, DOMAIN_TEMPLATE_NAME)
@@ -166,6 +175,13 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
 
     Short names are also provided for 'centos', 'centos-stream',
     'debian' and 'ubuntu' (e.g. 'centos-8' or 'c8').
+
+    Supported Fedora CoreOS images are:
+
+        fedora-coreos
+        fedora-coreos-stable
+        fedora-coreos-testing
+        fedora-coreos-next
 
     Use the full path for images stored on local disk, for example:
 
@@ -338,6 +354,8 @@ class GuestTestcloud(tmt.GuestSsh):
 
         # Map fedora aliases (e.g. rawhide, fedora, fedora-32, f-32, f32)
         matched_fedora = re.match(r'^f(edora)?-?(\d+)$', name)
+        # Map fedora coreos aliases (e.g. stable, next or testing)
+        matched_fedora_coreos = re.match(r'^f(edora-coreos)?-?(stable|testing|next)$', name)
         # Map centos aliases (e.g. centos:X, centos, centos-stream:X)
         matched_centos = [re.match(r'^c(entos)?-?(\d+)$', name),
                           re.match(r'^c(entos-stream)?-?(\d+)$', name)]
@@ -347,6 +365,8 @@ class GuestTestcloud(tmt.GuestSsh):
         # Plain name match means we want the latest release
         if name == 'fedora':
             url = testcloud.util.get_fedora_image_url("latest", self.arch)
+        elif name == 'fedora-coreos':
+            url = testcloud.util.get_fedora_image_url("stable", self.arch)
         elif name == 'centos':
             url = testcloud.util.get_centos_image_url("latest", self.arch)
         elif name == 'centos-stream':
@@ -360,6 +380,9 @@ class GuestTestcloud(tmt.GuestSsh):
         elif matched_fedora:
             url = testcloud.util.get_fedora_image_url(
                 matched_fedora.group(2), self.arch)
+        elif matched_fedora_coreos:
+            url = testcloud.util.get_fedora_image_url(
+                matched_fedora_coreos.group(2), self.arch)
         elif matched_centos[0]:
             url = testcloud.util.get_centos_image_url(
                 matched_centos[0].group(2), self.arch)
@@ -433,6 +456,9 @@ class GuestTestcloud(tmt.GuestSsh):
         self.run(command)
         with open(self.pubkey, 'r') as pubkey:
             self.config.USER_DATA = USER_DATA.format(
+                user_name=self.user, public_key=pubkey.read())
+        with open(self.pubkey, 'r') as pubkey:
+            self.config.COREOS_DATA = COREOS_DATA.format(
                 user_name=self.user, public_key=pubkey.read())
 
     def prepare_config(self):
@@ -516,6 +542,10 @@ class GuestTestcloud(tmt.GuestSsh):
                 self._instance.pci_net = "virtio-net-pci"
 
         # Prepare ssh key
+        # TODO: Maybe... some better way to do this?
+        if "coreos" in self.image.lower():
+            self._instance.coreos = True
+            self._instance.ssh_path = self.key
         self.prepare_ssh_key(SSH_KEYGEN_TYPE)
 
         # Boot the virtual machine
