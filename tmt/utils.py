@@ -1006,81 +1006,130 @@ def environment_to_dict(variables: Union[str, List[str]]) -> EnvironmentType:
     return result
 
 
-def environment_file_to_dict(
-        env_files: Iterable[str], root: str = ".") -> Dict[str, str]:
+@lru_cache(maxsize=None)
+def environment_file_to_dict(env_file: str, root: str = ".") -> EnvironmentType:
     """
-    Create dict from files.
+    Read environment variables from the given file.
 
-    Files should be in yaml/yml or dotenv format.
+    File should be in YAML format (``.yaml`` or ``.yml`` suffixes), or in dotenv format.
 
-    dotenv file example:
-        ```bash
-        A=B
-        C=D
-        ```
-    yaml file example:
-        ```yaml
-        A: B
-        C: D
-        ```
+    .. code-block:: bash
+       :caption: dotenv file example
 
-    Path to the file should be relative to the metadata tree root.
+       A=B
+       C=D
+
+    .. code-block:: yaml
+       :caption: YAML file example
+
+       A: B
+       C: D
+
+    Path to each file should be relative to the metadata tree root.
+
+    .. note::
+
+       For loading environment variables from multiple files, see
+       :py:func:`environment_files_to_dict`.
     """
-    result = {}
+
+    env_file = env_file.strip()
+
+    # Fetch a remote file
+    if env_file.startswith("http"):
+        # Create retry session for longer retries, see #1229
+        session = retry_session.create(
+            retries=ENVFILE_RETRY_SESSION_RETRIES,
+            backoff_factor=ENVFILE_RETRY_SESSION_BACKOFF_FACTOR,
+            allowed_methods=('GET',),
+            status_forcelist=(
+                429,  # Too Many Requests
+                500,  # Internal Server Error
+                502,  # Bad Gateway
+                503,  # Service Unavailable
+                504   # Gateway Timeout
+                ),
+            )
+        try:
+            response = session.get(env_file)
+            response.raise_for_status()
+            content = response.text
+        except requests.RequestException as error:
+            raise GeneralError(
+                f"Failed to fetch the environment file from '{env_file}'. "
+                f"The problem was: '{error}'")
+
+    # Read a local file
+    else:
+        # Ensure we don't escape from the metadata tree root
+        try:
+            root_path = Path(root).resolve()
+            full_path = (Path(root_path) / Path(env_file)).resolve()
+            full_path.relative_to(root_path)
+        except ValueError:
+            raise GeneralError(
+                f"The 'environment-file' path '{full_path}' is outside "
+                f"of the metadata tree root '{root}'.")
+        if not Path(full_path).is_file():
+            raise GeneralError(f"File '{full_path}' doesn't exist.")
+
+        content = Path(full_path).read_text()
+
+    # Parse yaml file
+    if os.path.splitext(env_file)[1].lower() in ('.yaml', '.yml'):
+        environment = parse_yaml(content)
+
+    else:
+        try:
+            environment = parse_dotenv(content)
+
+        except ValueError:
+            raise GeneralError(
+                f"Failed to extract variables from environment file "
+                f"'{full_path}'. Ensure it has the proper format "
+                f"(i.e. A=B).")
+
+    if not environment:
+        log.warn(f"Empty environment file '{env_file}'.")
+
+        return {}
+
+    return environment
+
+
+def environment_files_to_dict(env_files: Iterable[str], root: str = ".") -> EnvironmentType:
+    """
+    Read environment variables from the given list of files.
+
+    Files should be in YAML format (``.yaml`` or ``.yml`` suffixes), or in dotenv format.
+
+    .. code-block:: bash
+       :caption: dotenv file example
+
+       A=B
+       C=D
+
+    .. code-block:: yaml
+       :caption: YAML file example
+
+       A: B
+       C: D
+
+    Path to each file should be relative to the metadata tree root.
+
+    .. note::
+
+       For loading environment variables from a single file, see
+       :py:func:`environment_file_to_dict`, which is a function
+       ``environment_files_to_dict()`` calls for each file,
+       accumulating data from all input files.
+    """
+
+    result: EnvironmentType = {}
+
     for env_file in env_files:
-        env_file = str(env_file).strip()
-        # Fetch a remote file
-        if env_file.startswith("http"):
-            # Create retry session for longer retries, see #1229
-            session = retry_session.create(
-                retries=ENVFILE_RETRY_SESSION_RETRIES,
-                backoff_factor=ENVFILE_RETRY_SESSION_BACKOFF_FACTOR,
-                allowed_methods=('GET',),
-                status_forcelist=(
-                    429,  # Too Many Requests
-                    500,  # Internal Server Error
-                    502,  # Bad Gateway
-                    503,  # Service Unavailable
-                    504   # Gateway Timeout
-                    ),
-                )
-            try:
-                response = session.get(env_file)
-                response.raise_for_status()
-                content = response.text
-            except requests.RequestException as error:
-                raise GeneralError(
-                    f"Failed to fetch the environment file from '{env_file}'. "
-                    f"The problem was: '{error}'")
-        # Read a local file
-        else:
-            # Ensure we don't escape from the metadata tree root
-            try:
-                root_path = Path(root).resolve()
-                full_path = (Path(root_path) / Path(env_file)).resolve()
-                full_path.relative_to(root_path)
-            except ValueError:
-                raise GeneralError(
-                    f"The 'environment-file' path '{full_path}' is outside "
-                    f"of the metadata tree root '{root}'.")
-            if not Path(full_path).is_file():
-                raise GeneralError(f"File '{full_path}' doesn't exist.")
-            content = Path(full_path).read_text()
-        # Parse yaml file
-        if re.match(r".*\.ya?ml$", env_file):
-            environment = parse_yaml(content)
-            if not environment:
-                log.warn(f"Empty environment file '{env_file}'.")
-            result.update(environment)
-        # Parse dotenv file
-        else:
-            try:
-                result.update(parse_dotenv(content))
-            except ValueError:
-                raise GeneralError(
-                    f"Failed to extract variables from environment file "
-                    f"'{full_path}'. Ensure it has the proper format "
-                    f"(i.e. A=B).")
+        result.update(environment_file_to_dict(env_file, root=root))
+
     return result
 
 

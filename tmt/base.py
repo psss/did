@@ -709,7 +709,7 @@ class Plan(Core):
             raise tmt.utils.SpecificationError(
                 f"The 'environment-file' should be a list. "
                 f"Received '{type(environment_files).__name__}'.")
-        combined = tmt.utils.environment_file_to_dict(
+        combined = tmt.utils.environment_files_to_dict(
             environment_files, root=node.root)
 
         # Environment variables from key, make sure that values are string
@@ -1564,7 +1564,7 @@ class Run(tmt.utils.Common):
             self._environment_from_options = dict()
             # Variables gathered from 'environment-file' options
             self._environment_from_options.update(
-                tmt.utils.environment_file_to_dict(
+                tmt.utils.environment_files_to_dict(
                     (self.opt('environment-file') or []),
                     root=self.tree.root))
             # Variables from 'environment' options (highest priority)
