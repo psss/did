@@ -26,8 +26,9 @@ import click
 import fmf
 import requests
 import requests.adapters
+import requests.packages.urllib3.util.retry
+import urllib3.exceptions
 from click import echo, style, wrap_text
-from requests.packages.urllib3.util.retry import Retry
 from ruamel.yaml import YAML, scalarstring
 from ruamel.yaml.comments import CommentedMap
 
@@ -1649,6 +1650,38 @@ class TimeoutHTTPAdapter(requests.adapters.HTTPAdapter):
         return super().send(request, **kwargs)
 
 
+class RetryStrategy(requests.packages.urllib3.util.retry.Retry):  # type: ignore[misc]
+    def increment(
+            self,
+            *args: Any,
+            **kwargs: Any
+            ) -> requests.packages.urllib3.util.retry.Retry:
+        error = cast(Optional[Exception], kwargs.get('error', None))
+
+        # Detect a subset of exception we do not want to follow with a retry.
+        if error is not None:
+            # Failed certificate verification - this issue will probably not get any better
+            # should we try again.
+            if isinstance(error, urllib3.exceptions.SSLError) \
+                    and 'certificate verify failed' in str(error):
+
+                # [mpr] I'm not sure how stable this *iternal* API is, but pool seems to be the
+                # only place aware of the remote hostname. Try our best to get the hostname for
+                # a better error message, but don't crash because of a missing attribute or
+                # something as dumb.
+
+                connection_pool = kwargs.get('_pool', None)
+
+                if connection_pool is not None and hasattr(connection_pool, 'host'):
+                    message = f"Certificate verify failed for '{connection_pool.host}'."
+                else:
+                    message = 'Certificate verify failed.'
+
+                raise GeneralError(message, original=error) from error
+
+        return super().increment(*args, **kwargs)
+
+
 class retry_session(contextlib.AbstractContextManager):  # type: ignore
     """
     Context manager for requests.Session() with retries and timeout
@@ -1661,7 +1694,7 @@ class retry_session(contextlib.AbstractContextManager):  # type: ignore
             status_forcelist: Optional[Tuple[int, ...]] = None,
             timeout: Optional[int] = None
             ) -> requests.Session:
-        retry_strategy = Retry(
+        retry_strategy = RetryStrategy(
             total=retries,
             status_forcelist=status_forcelist,
             # `method_whitelist`` has been renamed to `allowed_methods` since
