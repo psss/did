@@ -18,6 +18,7 @@ require:
 - rpm-build
 - make
 - procps-ng
+- /usr/bin/virsh
 recommend:
 - guestfs-tools
 - python3-docutils
