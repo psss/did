@@ -2,7 +2,7 @@ import os
 import re
 import time
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional, Type
 
 import click
 import fmf
@@ -195,7 +195,10 @@ class ExecutePlugin(tmt.steps.Plugin):
     how = 'tmt'
 
     @classmethod
-    def base_command(cls, method_class=None, usage=None):
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
         """ Create base click command (common for all execute plugins) """
 
         # Prepare general usage message for the step

@@ -1,5 +1,6 @@
 import collections
 import copy
+from typing import Optional, Type
 
 import click
 import fmf
@@ -174,7 +175,10 @@ class PreparePlugin(tmt.steps.Plugin):
     _common_keys = ['where']
 
     @classmethod
-    def base_command(cls, method_class=None, usage=None):
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
         """ Create base click command (common for all prepare plugins) """
 
         # Prepare general usage message for the step

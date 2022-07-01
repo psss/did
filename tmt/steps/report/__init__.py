@@ -1,6 +1,9 @@
+from typing import Any, List, Optional, Type
+
 import click
 
 import tmt
+import tmt.steps
 
 
 class Report(tmt.steps.Step):
@@ -8,8 +11,9 @@ class Report(tmt.steps.Step):
 
     # Default implementation for report is display
     how = 'display'
+    data: List[tmt.steps.StepData]
 
-    def wake(self):
+    def wake(self) -> None:
         """ Wake up the step (process workdir and command line) """
         super().wake()
 
@@ -28,17 +32,17 @@ class Report(tmt.steps.Step):
             self.status('todo')
             self.save()
 
-    def show(self):
+    def show(self) -> None:
         """ Show discover details """
         for data in self.data:
             ReportPlugin.delegate(self, data).show()
 
-    def summary(self):
+    def summary(self) -> None:
         """ Give a concise report summary """
         summary = tmt.base.Result.summary(self.plan.execute.results())
         self.info('summary', summary, 'green', shift=1)
 
-    def go(self):
+    def go(self) -> None:
         """ Report the guests """
         super().go()
 
@@ -58,7 +62,7 @@ class Report(tmt.steps.Step):
         self.status('done')
         self.save()
 
-    def requires(self):
+    def requires(self) -> List[str]:
         """
         Packages required by all enabled report plugins
 
@@ -79,10 +83,13 @@ class ReportPlugin(tmt.steps.Plugin):
     how = 'display'
 
     # List of all supported methods aggregated from all plugins
-    _supported_methods = []
+    _supported_methods: List[tmt.steps.Method] = []
 
     @classmethod
-    def base_command(cls, method_class=None, usage=None):
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
         """ Create base click command (common for all report plugins) """
 
         # Prepare general usage message for the step
@@ -95,7 +102,7 @@ class ReportPlugin(tmt.steps.Plugin):
         @click.option(
             '-h', '--how', metavar='METHOD',
             help='Use specified method for results reporting.')
-        def report(context, **kwargs):
+        def report(context: click.Context, **kwargs: Any) -> None:
             context.obj.steps.add('report')
             Report._save_context(context)
 

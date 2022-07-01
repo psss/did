@@ -1,4 +1,5 @@
 import copy
+from typing import Optional, Type
 
 import click
 import fmf
@@ -106,7 +107,10 @@ class FinishPlugin(tmt.steps.Plugin):
     _supported_methods = []
 
     @classmethod
-    def base_command(cls, method_class=None, usage=None):
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
         """ Create base click command (common for all finish plugins) """
 
         # Prepare general usage message for the step

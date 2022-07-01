@@ -3,7 +3,8 @@
 
 import re
 import sys
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union, cast
+from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar,
+                    Union, cast, overload)
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict
@@ -63,12 +64,17 @@ class Phase(tmt.utils.Common):
         """ Execute the phase """
 
 
+# A variable used to describe a generic type for all classes derived from Phase
+PhaseT = TypeVar('PhaseT', bound=Phase)
+
+
 class StepData(TypedDict, total=False):
     """
     Step data structure
     """
-    name: Optional[str]
-    how: Optional[str]
+    name: str
+    how: str
+    order: Optional[int]
 
 
 class Step(tmt.utils.Common):
@@ -261,8 +267,15 @@ class Step(tmt.utils.Common):
                 f"with order '{reboot_plugin.order}'.", level=2)
             self._phases.append(reboot_plugin)
 
-    def phases(
-            self, classes: Any = None) -> List[Phase]:
+    @overload
+    def phases(self, classes: Type[PhaseT]) -> List[PhaseT]:
+        pass
+
+    @overload
+    def phases(self, classes: None = None) -> List[Phase]:
+        pass
+
+    def phases(self, classes: Optional[Type[PhaseT]] = None) -> Union[List[Phase], List[PhaseT]]:
         """
         Iterate over phases by their order
 
@@ -370,7 +383,7 @@ class Plugin(Phase, metaclass=PluginIndex):
     def __init__(
             self,
             step: Step,
-            data: Dict[Any, Any],
+            data: StepData,
             workdir: tmt.utils.WorkdirArgumentType = None) -> None:
         """ Store plugin name, data and parent step """
 
@@ -399,12 +412,14 @@ class Plugin(Phase, metaclass=PluginIndex):
             order=order)
         # It is not possible to use TypedDict here because
         # all keys are not known at the time of the class definition
-        self.data: Dict[Any, Any] = data
+        self.data = data
         self.step = step
 
     @classmethod
-    def base_command(cls, method_class: Optional[Type[click.Command]] = None,
-                     usage: Optional[str] = None) -> click.Command:
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
         """ Create base click command (common for all step plugins) """
         raise NotImplementedError
 
@@ -430,8 +445,7 @@ class Plugin(Phase, metaclass=PluginIndex):
 
         # Create base command with common options using method class
         method_class = tmt.options.create_method_class(commands)
-        command = cls.base_command(
-            method_class, usage=method_overview)
+        command = cls.base_command(usage=method_overview, method_class=method_class)
         # Apply common options
         for option in cls.options():
             command = option(command)
@@ -446,7 +460,7 @@ class Plugin(Phase, metaclass=PluginIndex):
     def delegate(
             cls,
             step: Step,
-            data: Dict[Any, Any]) -> 'Plugin':
+            data: StepData) -> 'Plugin':
         """
         Return plugin instance implementing the data['how'] method
 
@@ -479,7 +493,8 @@ class Plugin(Phase, metaclass=PluginIndex):
         """ Get option from plugin data, user/system config or defaults """
         # Check plugin data first
         try:
-            return self.data[option]
+            # FIXME Enable type check once StepData defined more precisely
+            return self.data[option]  # type: ignore
         except KeyError:
             pass
 
@@ -540,7 +555,8 @@ class Plugin(Phase, metaclass=PluginIndex):
         for key in keys:
             value = self.opt(key)
             if value:
-                self.data[key] = value
+                # FIXME Enable type check once StepData defined more precisely
+                self.data[key] = value  # type: ignore
 
     def go(self, *args: Any, **kwargs: Any) -> None:
         """ Go and perform the plugin task """
