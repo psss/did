@@ -22,13 +22,13 @@ else:
 # older APIs.
 SUPPORTED_API_VERSIONS = (
     # NEW: added hostname HW constraint
-    'v0.0.38',
+    '0.0.38',
     # NEW: virtualization HW constraint
-    'v0.0.37',
+    '0.0.37',
     # NEW: boot.method HW constraint
-    'v0.0.32',
+    '0.0.32',
     # NEW: network HW constraint
-    'v0.0.28'
+    '0.0.28'
     )
 
 
