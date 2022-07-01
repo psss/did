@@ -68,7 +68,7 @@ extras_require = {
         'pre-commit',
         'mypy'
         ],
-    'provision': ['testcloud>=0.7.0'],
+    'provision': ['testcloud>=0.8.1'],
     'convert': [
         'nitrate',
         'markdown',
