@@ -1,14 +1,19 @@
 import os
+import types
+from typing import Any, List, Optional, overload
 
 import click
 
 import tmt
+import tmt.options
 import tmt.steps.report
 
 DEFAULT_NAME = "junit.xml"
 
+junit_xml: Optional[types.ModuleType] = None
 
-def import_junit_xml():
+
+def import_junit_xml() -> None:
     """
     Import junit_xml module only when needed
 
@@ -22,7 +27,15 @@ def import_junit_xml():
             "Missing 'junit-xml', fixable by 'pip install tmt[report-junit]'.")
 
 
-def duration_to_seconds(duration):
+@overload
+def duration_to_seconds(duration: str) -> int: pass
+
+
+@overload
+def duration_to_seconds(duration: None) -> None: pass
+
+
+def duration_to_seconds(duration: Optional[str]) -> Optional[int]:
     """ Convert valid duration string in to seconds """
     if duration is None:
         return None
@@ -49,19 +62,22 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
     _keys = ["file"]
 
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for connect """
-        return [
+        options = super().options(how)
+        options[:0] = [
             click.option(
                 '--file', metavar='FILE',
                 help='Path to the file to store junit to'),
-            ] + super().options(how)
+            ]
+        return options
 
-    def go(self):
+    def go(self, *args: Any, **kwargs: Any) -> None:
         """ Read executed tests and write junit """
         super().go()
 
         import_junit_xml()
+        assert junit_xml
 
         suite = junit_xml.TestSuite(self.step.plan.name)
         for result in self.step.plan.execute.results():
@@ -86,6 +102,8 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
                 case.add_error_info(result.result)
             # Passed state is the default
             suite.test_cases.append(case)
+
+        assert self.workdir is not None
         f_path = self.opt("file", os.path.join(self.workdir, DEFAULT_NAME))
         try:
             with open(f_path, 'w') as fw:
