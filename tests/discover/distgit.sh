@@ -311,7 +311,7 @@ done
     rlPhaseStartTest "Run directly from the DistGit (Fedora) [cli]"
         rlRun 'pushd tmt'
         rlRun -s 'tmt run --remove plans --default \
-            discover -v --how fmf --dist-git-source --dist-git-init \
+            discover -v --how fmf --dist-git-source \
             tests --name tests/prepare/install$'
         rlAssertGrep "summary: 1 test selected" $rlRun_LOG -F
         rlAssertGrep "/tests/prepare/install" $rlRun_LOG -F
@@ -329,7 +329,7 @@ done
     rlPhaseStartTest "URL is path to a local distgit repo"
         rlRun -s 'tmt run --remove plans --default \
             discover --how fmf --dist-git-source --dist-git-type fedora --url $CLONED_TMT \
-            --dist-git-init --dist-git-merge tests --name tests/prepare/install$'
+            --dist-git-merge tests --name tests/prepare/install$'
         rlAssertGrep "summary: 1 test selected" $rlRun_LOG -F
     rlPhaseEnd
 

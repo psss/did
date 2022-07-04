@@ -81,7 +81,7 @@ execute:
         discover:
             how: fmf
             dist-git-source: true
-            dist-git-init: true
+            dist-git-init: false
             test: tests/prepare/install$
     /exclude:
         discover:
