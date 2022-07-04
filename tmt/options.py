@@ -13,7 +13,7 @@ MethodDictType = Dict[str, click.core.Command]
 # Originating in click.decorators, an opaque type describing "decorator" functions
 # produced by click.option() calls: not options, but rather functions that attach
 # options to a given command.
-ClickOptionDecoratorType = Callable[[click.Command], click.Command]
+ClickOptionDecoratorType = Callable[[Callable[..., Any]], Any]
 
 # Verbose, debug and quiet output
 verbose_debug_quiet: List[ClickOptionDecoratorType] = [
