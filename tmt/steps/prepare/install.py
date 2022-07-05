@@ -234,6 +234,21 @@ class InstallRpmOstree(InstallBase):
     package_manager = "rpm-ostree"
     copr_plugin = "dnf-plugins-core"
 
+    def sort_packages(self):
+        self.recommend_packages = []
+        self.required_packages = []
+        for package in self.repository_packages:
+            try:
+                msg = self.guest.execute(f"rpm -q --whatprovides {package}")
+            except tmt.utils.RunError:
+                if self.skip:
+                    self.recommend_packages.append(package)
+                else:
+                    self.required_packages.append(package)
+                continue
+            # Do nothing
+            self.warn(f"Package: '{package}' already provided '{msg.stdout}'")
+
     def prepare_command(self):
         """ Prepare installation command for rpm-ostree"""
         self.skip = True if self.parent.get('missing') == 'skip' else False
@@ -266,15 +281,20 @@ class InstallRpmOstree(InstallBase):
 
     def install_from_repository(self):
         """ Install packages from the repository """
-        packages = self.list_packages(self.repository_packages, title="package")
-        for package in packages:
-            try:
-                self.guest.execute(f"dnf whatprovides {package}")
-            except tmt.utils.RunError as error:
-                if "Error: No Matches found" in error.stderr and self.skip:
-                    self.warn(f"No package match for recommended package '{package}'.")
-                    continue
-            self.guest.execute(f"{self.command} install {self.options} {package}")
+        self.sort_packages()
+        if self.recommend_packages:
+            self.list_packages(self.recommend_packages, title="package")
+            for package in self.recommend_packages:
+                try:
+                    self.guest.execute(f"{self.command} install {self.options} {package}")
+                except tmt.utils.RunError as error:
+                    if "error: Packages not found" in error.stderr and self.skip:
+                        self.warn(f"No package match for recommended package '{package}'.")
+                        continue
+
+        if self.required_packages:
+            packages = self.list_packages(self.required_packages, title="package")
+            self.guest.execute(f"{self.command} install {self.options} {packages}")
 
 
 class PrepareInstall(tmt.steps.prepare.PreparePlugin):
