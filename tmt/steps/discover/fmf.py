@@ -10,11 +10,12 @@ import click
 import fmf
 
 import tmt
+import tmt.base
 import tmt.beakerlib
+import tmt.options
 import tmt.steps
 import tmt.steps.discover
 import tmt.utils
-from tmt.utils import git_clone
 
 
 @dataclasses.dataclass
@@ -152,9 +153,10 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         )
 
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for given method """
-        return [
+        options = super().options(how)
+        options[:0] = [
             click.option(
                 '-u', '--url', metavar='REPOSITORY',
                 help='URL of the git repository with fmf metadata.'),
@@ -205,16 +207,17 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                      'supported. Defaults to the top fmf root if it is '
                      'present, otherwise top directory (shortcut "/").'
                 ),
-            ] + super().options(how)
+            ]
+        return options
 
     @property
-    def is_in_standalone_mode(self):
+    def is_in_standalone_mode(self) -> bool:
         """ Enable standalone mode when listing fmf ids """
         if self.opt('fmf_id'):
             return True
         return super().is_in_standalone_mode
 
-    def go(self):
+    def go(self) -> None:
         """ Discover available tests """
         super(DiscoverFmf, self).go()
 
@@ -223,6 +226,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         path = self.get('path')
         # Save the test directory so that others can reference it
         ref = self.get('ref')
+        assert self.workdir is not None
         self.testdir = os.path.join(self.workdir, 'tests')
         sourcedir = os.path.join(self.workdir, 'source')
         dist_git_source = self.get('dist-git-source', False)
@@ -237,15 +241,15 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 "Cannot manipulate with dist-git without "
                 "the `--dist-git-merge` option.")
 
-        def get_git_root(dir):
-            return self.run(
-                ["git", "rev-parse", "--show-toplevel"],
-                cwd=dir, dry=True)[0].strip('\n')
+        def get_git_root(dir: str) -> str:
+            stdout, _ = self.run(["git", "rev-parse", "--show-toplevel"], cwd=dir, dry=True)
+            assert stdout is not None
+            return stdout.strip("\n")
 
         # Raise an exception if --fmf-id uses w/o url and git root
         # doesn't exist for discovered plan
         if self.opt('fmf_id'):
-            def assert_git_url(plan_name=None):
+            def assert_git_url(plan_name: Optional[str] = None) -> None:
                 try:
                     subprocess.run(
                         'git rev-parse --show-toplevel'.split(),
@@ -286,7 +290,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.debug(f"Clone '{url}' to '{self.testdir}'.")
             # Shallow clone to speed up testing and
             # minimize data transfers if ref is not provided
-            git_clone(url, self.testdir, self, env={"GIT_ASKPASS": "echo"}, shallow=ref is None)
+            tmt.utils.git_clone(
+                url, self.testdir, self, env={"GIT_ASKPASS": "echo"}, shallow=ref is None)
             git_root = self.testdir
         # Copy git repository root to workdir
         else:
@@ -341,7 +346,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             try:
                 hash_, _ = self.run(["git", "rev-parse", "--short", "HEAD"],
                                     cwd=self.testdir)
-                self.verbose('hash', hash_.strip(), 'green')
+                if hash_ is not None:
+                    self.verbose('hash', hash_.strip(), 'green')
             except (tmt.utils.RunError, AttributeError):
                 pass
 
@@ -454,11 +460,11 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             output = self.run(
                 ['git', 'log', '--format=', '--stat', '--name-only',
                  f"{modified_ref}..HEAD"], cwd=self.testdir)[0]
-            modified = set(
-                f"^/{re.escape(name)}"
-                for name in map(os.path.dirname, output.split('\n')) if name)
-            self.debug(f"Limit to modified test dirs: {modified}", level=3)
-            names.extend(modified)
+            if output:
+                directories = [os.path.dirname(name) for name in output.split('\n')]
+                modified = set(f"^/{re.escape(name)}" for name in directories if name)
+                self.debug(f"Limit to modified test dirs: {modified}", level=3)
+                names.extend(modified)
 
         # Initialize the metadata tree, search for available tests
         self.debug(f"Check metadata tree in '{tree_path}'.")
@@ -488,6 +494,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             for test in self._tests:
                 test.environment['TMT_SOURCE_DIR'] = sourcedir
 
-    def tests(self):
+    def tests(self) -> List[tmt.base.Test]:
         """ Return all discovered tests """
         return self._tests
