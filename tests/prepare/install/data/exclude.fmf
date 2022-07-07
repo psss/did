@@ -1,6 +1,4 @@
 summary: Exclude packages during installation
-provision:
-    how: container
 prepare:
     how: install
     package: httpd-*

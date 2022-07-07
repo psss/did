@@ -1,0 +1,6 @@
+summary: Install an existing package
+prepare:
+    how: install
+    package: tree
+execute:
+    script: rpm -q tree

@@ -1,4 +1,17 @@
 summary: Various package installation options
 description:
+    Check basic installation of an existing and missing package.
     Make sure that special characters are correctly escaped.
-    Verify that installation from copr works for epel7.
+    Verify that installation from copr works for epel7. Exercises
+    all provision methods in full mode, container only by default.
+environment:
+    METHODS: container
+adjust:
+  - when: trigger == commit
+    environment:
+        METHODS: container local
+    because: the pipeline does not support nested virtualization
+  - when: how == full
+    environment:
+        METHODS: container virtual local
+    because: local/virtual provision needs root/full virtualization

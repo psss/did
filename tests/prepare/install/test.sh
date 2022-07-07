@@ -6,6 +6,32 @@ rlJournalStart
         rlRun "pushd data"
     rlPhaseEnd
 
+    # Run basic tests against all enabled provision methods
+    for method in ${METHODS:-container}; do
+        provision="provision --how $method"
+
+        rlPhaseStartTest "Install an existing package ($method)"
+            rlRun "tmt run -adddvvvr $provision plan --name existing"
+        rlPhaseEnd
+
+        rlPhaseStartTest "Report a missing package ($method)"
+            rlRun "tmt run -adddvvvr $provision plan --name missing" 2
+        rlPhaseEnd
+
+        # Add one extra CoreOS run for virtual provision
+        if [[ "$method" == "virtual" ]]; then
+            provision="provision --how $method --image fedora-coreos"
+
+            rlPhaseStartTest "Install an existing package ($method, CoreOS)"
+                rlRun "tmt run -adddvvvr $provision plan --name existing"
+            rlPhaseEnd
+
+            rlPhaseStartTest "Report a missing package ($method, CoreOS)"
+                rlRun "tmt run -adddvvvr $provision plan --name missing" 2
+            rlPhaseEnd
+        fi
+    done
+
     rlPhaseStartTest "Just enable copr"
         rlRun "tmt run -adddvvvr plan --name copr"
     rlPhaseEnd

@@ -1,5 +1,4 @@
-provision:
-    how: container
+provision+:
     image: centos:7
 prepare:
     how: install

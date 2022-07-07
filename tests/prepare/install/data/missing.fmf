@@ -1,0 +1,6 @@
+summary: Report a missing package
+prepare:
+    how: install
+    package: forest
+execute:
+    script: we should not get here

@@ -235,19 +235,18 @@ class InstallRpmOstree(InstallBase):
     copr_plugin = "dnf-plugins-core"
 
     def sort_packages(self):
-        self.recommend_packages = []
+        """ Identify required and recommended packages """
+        self.recommended_packages = []
         self.required_packages = []
         for package in self.repository_packages:
             try:
-                msg = self.guest.execute(f"rpm -q --whatprovides {package}")
+                output = self.guest.execute(f"rpm -q --whatprovides '{package}'")
+                self.debug(f"Package '{output.stdout.strip()}' already installed.")
             except tmt.utils.RunError:
                 if self.skip:
-                    self.recommend_packages.append(package)
+                    self.recommended_packages.append(package)
                 else:
                     self.required_packages.append(package)
-                continue
-            # Do nothing
-            self.warn(f"Package: '{package}' already provided '{msg.stdout}'")
 
     def prepare_command(self):
         """ Prepare installation command for rpm-ostree"""
@@ -257,9 +256,9 @@ class InstallRpmOstree(InstallBase):
         for package in self.exclude:
             # exclude not supported in rpm-ostree
             self.warn(f"there is no support for rpm-ostree exclude. "
-                      f"Packages: {package} may be installed still")
+                      f"Package '{package}' may still be installed.")
         self.debug(f"Using '{self.command}' for all package operations.")
-        self.debug(f"Options for package operations are '{self.options}'")
+        self.debug(f"Options for package operations are '{self.options}'.")
 
     def install_debuginfo(self):
         """ Install debuginfo packages """
@@ -282,16 +281,20 @@ class InstallRpmOstree(InstallBase):
     def install_from_repository(self):
         """ Install packages from the repository """
         self.sort_packages()
-        if self.recommend_packages:
-            self.list_packages(self.recommend_packages, title="package")
-            for package in self.recommend_packages:
+
+        # Install recommended packages
+        if self.recommended_packages:
+            self.list_packages(self.recommended_packages, title="package")
+            for package in self.recommended_packages:
                 try:
-                    self.guest.execute(f"{self.command} install {self.options} {package}")
+                    self.guest.execute(f"{self.command} install {self.options} '{package}'")
                 except tmt.utils.RunError as error:
                     if "error: Packages not found" in error.stderr and self.skip:
-                        self.warn(f"No package match for recommended package '{package}'.")
+                        self.warn(f"No match for recommended package '{package}'.")
                         continue
+                    raise
 
+        # Install required packages
         if self.required_packages:
             packages = self.list_packages(self.required_packages, title="package")
             self.guest.execute(f"{self.command} install {self.options} {packages}")

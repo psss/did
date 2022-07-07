@@ -1,7 +1,5 @@
 summary:
     Install debuginfo packages
-provision:
-    how: container
 prepare:
   - name: debuginfo
     how: install
