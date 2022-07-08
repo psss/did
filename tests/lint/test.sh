@@ -52,6 +52,10 @@ rlJournalStart
         rlAssertGrep 'relevancy converted into adjust' $rlRun_LOG
     rlPhaseEnd
 
+    rlPhaseStartTest "Check empty fmf file"
+        rlRun -s "tmt lint empty" 0 "Empty file should be ok"
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
 rlJournalEnd

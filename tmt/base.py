@@ -785,6 +785,8 @@ class Plan(Core):
                     #        there may be a better way to do this.
                     try:
                         data = tmt.utils.yaml_to_dict(option, yaml_type='safe')
+                        if not (data):
+                            raise tmt.utils.GeneralError("Step data cannot be empty.")
                     except tmt.utils.GeneralError as error:
                         raise tmt.utils.GeneralError(
                             f"Invalid step data for {step}: '{option}'"

@@ -1197,6 +1197,8 @@ def yaml_to_dict(data: Any,
     """ Convert yaml into dictionary """
     yaml = YAML(typ=yaml_type)
     loaded_data = yaml.load(data)
+    if loaded_data is None:
+        return dict()
     if not isinstance(loaded_data, dict):
         raise GeneralError(
             f"Expected dictionary in yaml data, "
