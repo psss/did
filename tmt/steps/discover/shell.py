@@ -1,11 +1,15 @@
 import copy
 import os
+from typing import TYPE_CHECKING, List, Optional
 
 import click
 import fmf
 
 import tmt
 import tmt.steps.discover
+
+if TYPE_CHECKING:
+    import tmt.base
 
 
 class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
@@ -42,7 +46,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
     # Supported methods
     _methods = [tmt.steps.Method(name='shell', doc=__doc__, order=50)]
 
-    def show(self, keys=None):
+    def show(self, keys: Optional[List[str]] = None) -> None:
         """ Show config details """
         super().show([])
         tests = self.get('tests')
@@ -50,24 +54,26 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             test_names = [test['name'] for test in tests]
             click.echo(tmt.utils.format('tests', test_names))
 
-    def wake(self, keys=None):
+    def wake(self, keys: Optional[List[str]] = None) -> None:
         """ Wake up the plugin, process data, apply options """
         super().wake(keys=keys)
         # Check provided tests, default to an empty list
         if 'tests' not in self.data:
             self.data['tests'] = []
-        self._tests = []
+        self._tests: List[tmt.base.Test] = []
 
-    def go(self):
+    def go(self) -> None:
         """ Discover available tests """
         super(DiscoverShell, self).go()
         tests = fmf.Tree(dict(summary='tests'))
 
         # dist-git related
+        assert self.workdir is not None
         sourcedir = os.path.join(self.workdir, 'source')
         dist_git_source = self.get('dist-git-source', False)
 
         # Check and process each defined shell test
+        assert self.data['tests'] is not None
         for data in self.data['tests']:
             # Create data copy (we want to keep original data for save()
             data = copy.deepcopy(data)
@@ -103,10 +109,12 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
 
         if dist_git_source:
             try:
-                git_root = self.run(
+                run_result = self.run(
                     ["git", "rev-parse", "--show-toplevel"],
                     cwd=self.step.plan.my_run.tree.root,
-                    dry=True)[0].strip('\n')
+                    dry=True)[0]
+                assert run_result is not None
+                git_root = run_result.strip('\n')
             except tmt.utils.RunError:
                 raise tmt.utils.DiscoverError(
                     f"Directory '{self.step.plan.my_run.tree.root}' "
@@ -122,5 +130,5 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         tests = tmt.Tree(tree=tests).tests(conditions=["manual is False"])
         self._tests = tests
 
-    def tests(self):
+    def tests(self) -> List[tmt.base.Test]:
         return self._tests
