@@ -19,6 +19,7 @@ import tmt.utils
 from tmt.options import show_step_method_hints
 
 if TYPE_CHECKING:
+    import tmt.base
     from tmt.base import Plan
     from tmt.steps.provision import Guest
 
@@ -75,6 +76,7 @@ class StepData(TypedDict, total=False):
     name: str
     how: str
     order: Optional[int]
+    tests: Optional[List['tmt.base.Test']]
 
 
 class Step(tmt.utils.Common):

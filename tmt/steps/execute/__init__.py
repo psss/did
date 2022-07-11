@@ -2,7 +2,7 @@ import os
 import re
 import time
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, cast
 
 import click
 import fmf
@@ -245,7 +245,11 @@ class ExecutePlugin(tmt.steps.Plugin):
     def discover(self) -> tmt.steps.discover.Discover:
         """ Return discover plugin instance """
         # This is necessary so that upgrade plugin can inject a fake discover
-        return self.step.plan.discover
+
+        # TODO: Mypy complains about this return value without cast(). It might
+        # be related to mypy not following imports. It's possible that the cast
+        # could be removed later.
+        return cast(tmt.steps.discover.Discover, self.step.plan.discover)
 
     def data_path(
             self,
