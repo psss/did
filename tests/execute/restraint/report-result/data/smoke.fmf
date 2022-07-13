@@ -1,0 +1,16 @@
+summary: Verify that test results are correctly mapped
+description:
+    Test to generate a rstrnt-report-result file to check
+    whether tmt can read the result.
+
+/good:
+    test: rstrnt-report-result report PASS
+
+/bad:
+    test: rstrnt-report-result report FAIL
+
+/skip:
+    test: rstrnt-report-result report SKIP
+
+/warn:
+    test: rstrnt-report-result report WARN

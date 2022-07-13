@@ -1,0 +1,27 @@
+title: Report test result
+story:
+    As a tester I want to report test results using the restraint
+    command during test execution.
+
+description: |
+    The ``tmt-report-result`` command can be used to report result
+    of the test during its execution. This command together with
+    ``rstrnt-report-result`` and ``rhts-report-result`` provides a
+    backward-compatible way to execute tests written for the
+    `restraint`__ framework. These scripts are installed on the
+    guest and overwrite any existing scripts with the same name.
+
+    The command can be called multiple times for a single test,
+    the final result will be the most severe rating. Available
+    values ordered by severity are SKIP, PASS, WARN and FAIL.
+    Note, that the only value currently processed by ``tmt`` is
+    the test result, other options are silently ignored.
+
+    __ https://restraint.readthedocs.io/en/latest/commands.html#rstrnt-report-result
+
+example: |
+        tmt-report-result /test/name PASS
+
+link:
+  - implemented-by: /tmt/steps/execute/internal.py
+  - verified-by: /tests/execute/restraint/report_result

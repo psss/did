@@ -199,7 +199,7 @@ description: |
             reported by the test. The hierarchy is as follows:
             SKIP, PASS, WARN, FAIL.
             For more information see the
-            :ref:`/stories/features/report_result` feature documentation.
+            :ref:`/stories/features/report-result` feature documentation.
 
     example: |
         execute:

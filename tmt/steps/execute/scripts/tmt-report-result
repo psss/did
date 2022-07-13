@@ -94,7 +94,7 @@ write_report_file () {
 
 declare -A RESULTS_HIERARCHY=( ["FAIL"]=4 ["WARN"]=3 ["PASS"]=2 ["SKIP"]=1 )
 # Create the output file in which to store the results.
-REPORT_RESULT_OUTPUTFILE="$TMT_TEST_DATA/reportResult"
+REPORT_RESULT_OUTPUTFILE="$TMT_TEST_DATA/restraint-result"
 if [ -e "$REPORT_RESULT_OUTPUTFILE" ]; then
     # Check the existing output file.
     # If new result is higher on the hierarchy

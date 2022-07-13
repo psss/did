@@ -23,6 +23,9 @@ TEST_OUTPUT_FILENAME = 'output.txt'
 SCRIPTS_SRC_DIR = pkg_resources.resource_filename(
     'tmt', 'steps/execute/scripts')
 
+# File in which report-result output is stored.
+RESTRAINT_REPORT_RESULT_OUTPUT = "restraint-result"
+
 
 class Execute(tmt.steps.Step):
     """
@@ -294,7 +297,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             if test.returncode == tmt.utils.PROCESS_TIMEOUT:
                 data['note'] = 'timeout'
                 self.timeout_hint(test)
-        return tmt.Result(data, test.name, test.result)
+        return tmt.Result(data, name=test.name, interpret=test.result)
 
     def check_beakerlib(self, test):
         """ Check result of a beakerlib test """
@@ -313,7 +316,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         except tmt.utils.FileError:
             self.debug(f"Unable to read '{beakerlib_results_file}'.", level=3)
             data['note'] = 'beakerlib: TestResults FileError'
-            return tmt.Result(data, test.name, test.result)
+            return tmt.Result(data, name=test.name, interpret=test.result)
         try:
             result = re.search(
                 'TESTRESULT_RESULT_STRING=(.*)', results).group(1)
@@ -325,7 +328,7 @@ class ExecutePlugin(tmt.steps.Plugin):
                 f"No result or state found in '{beakerlib_results_file}'.",
                 level=3)
             data['note'] = 'beakerlib: Result/State missing'
-            return tmt.Result(data, test.name, test.result)
+            return tmt.Result(data, name=test.name, interpret=test.result)
         # Check if it was killed by timeout (set by tmt executor)
         if test.returncode == tmt.utils.PROCESS_TIMEOUT:
             data['result'] = 'error'
@@ -338,7 +341,51 @@ class ExecutePlugin(tmt.steps.Plugin):
         # Finally we have a valid result
         else:
             data['result'] = result.lower()
-        return tmt.Result(data, test.name, test.result)
+        return tmt.Result(data, name=test.name, interpret=test.result)
+
+    def check_result_file(self, test):
+        """
+        Check result file created by tmt-report-result
+
+        Extract the test result from the result file if it exists and
+        return a Result instance. Raise the FileError exception when no
+        test result file is found.
+        """
+        report_result_path = os.path.join(
+            self.data_path(test, full=True),
+            tmt.steps.execute.TEST_DATA,
+            RESTRAINT_REPORT_RESULT_OUTPUT)
+
+        # Nothing to do if there's no result file
+        if not os.path.exists(report_result_path):
+            raise tmt.utils.FileError
+
+        # Prepare the log path and duration
+        data = {'log': self.data_path(test, TEST_OUTPUT_FILENAME),
+                'duration': test.real_duration}
+
+        # Check the test result
+        self.debug("The report-result output file detected.", level=3)
+        with open(report_result_path) as result_file:
+            result = [line for line in result_file.readlines() if "TESTRESULT" in line]
+        if not result:
+            raise tmt.utils.ExecuteError(
+                f"Test result not found in result file '{report_result_path}'.")
+        result = result[0].split("=")[1].strip()
+
+        # Map the restraint result to the corresponding tmt value
+        try:
+            result_map = {
+                "PASS": "pass",
+                "FAIL": "fail",
+                "SKIP": "info",
+                "WARN": "warn",
+                }
+            data['result'] = result_map[result]
+        except KeyError:
+            data['result'] = "error"
+            data['note'] = f"invalid test result '{result}' in result file"
+        return tmt.Result(data, name=test.name, interpret=test.result)
 
     @staticmethod
     def test_duration(start, end):
