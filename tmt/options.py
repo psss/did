@@ -32,7 +32,7 @@ force_dry = [
     ]
 
 fix = click.option(
-    '-f', '--fix', is_flag=True,
+    '-F', '--fix', is_flag=True,
     help='Attempt to fix all discovered issues.')
 
 
