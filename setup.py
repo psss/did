@@ -44,17 +44,15 @@ install_requires = [
     'click',
     'requests',
     'ruamel.yaml',
-]
+    ]
 
 # typing_extensions is needed with Python 3.7 and older, types imported
 # from that package (Literal, Protocol, TypedDict, ...) become available
 # from typing since Python 3.8.
-if sys.version_info.minor <= 7:
-    install_requires.append('typing-extensions>=3.7.4.3')
+install_requires.append("typing-extensions>=3.7.4.3; python_version < '3.8'")
 
 # dataclasses is needed with Python 3.6
-if sys.version_info.minor <= 6:
-    install_requires.append('dataclasses')
+install_requires.append("dataclasses; python_version < '3.7'")
 
 extras_require = {
     'docs': [
