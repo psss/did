@@ -29,7 +29,12 @@ TMT_REPORT_RESULT_SCRIPT = Script("/usr/local/bin/tmt-report-result",
                                   )
 
 # Script for archiving a file, usable for BEAKERLIB_COMMAND_SUBMIT_LOG
-TMT_FILE_SUBMIT_SCRIPT = Script("/usr/local/bin/tmt-file-submit")
+TMT_FILE_SUBMIT_SCRIPT = Script("/usr/local/bin/tmt-file-submit",
+                                aliases=[
+                                    "/usr/local/bin/rstrnt-report-log",
+                                    "/usr/local/bin/rhts-report-log"],
+                                related_variables=[]
+                                )
 
 # File for requesting reboot
 REBOOT_REQUEST_FILENAME = "reboot_request"

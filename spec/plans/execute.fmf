@@ -183,6 +183,8 @@ description: |
 
         ``tmt-file-submit``
             Archive the given file in the tmt test data directory.
+            See the :ref:`/stories/features/report-log` section
+            for more details.
 
         ``tmt-reboot``
             Soft reboot the machine from inside the test. After reboot

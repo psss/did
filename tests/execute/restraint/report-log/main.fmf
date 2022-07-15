@@ -1,0 +1,6 @@
+summary: Verify mocked Restraint rstrnt-report-log functionality.
+description:
+    Verify that the mocked rstrnt-report-log Restraint functionality
+    can be executed successfully.
+contact: Philip Daly <pdaly@redhat.com>
+tier: 2

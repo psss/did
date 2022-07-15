@@ -1,5 +1,32 @@
 #!/bin/sh
-FILENAME="$2"
+set -o errexit -o pipefail -o noclobber -o nounset
+
+die() { echo "$*" >&2; exit 2; }  # complain to STDERR and exit with error
+needs_arg() { if [ -z "$OPTARG" ]; then die "No arg for --$OPT option"; fi; }
+
+check_opt_args () {
+    local OPTIND
+    while getopts l:filename:s:server:port-: OPT; do
+        # support long options: https://stackoverflow.com/a/28466267/519360
+        if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
+            OPT="${OPTARG%%=*}"       # extract long option name
+        fi
+        case "$OPT" in
+            filename )       needs_arg; eval "FILENAME=\"\$$OPTIND\"" ; OPTIND=$((OPTIND+1)) ;;
+            l )              needs_arg; FILENAME=$OPTARG ;;
+            s )              continue;;
+            server )         OPTIND=$((OPTIND+1));;
+            port )           OPTIND=$((OPTIND+1));;
+        esac
+    done
+    shift $((OPTIND-1)) # remove parsed options and args from $@ list
+}
+
+if [ $# -eq 2 ]; then
+    FILENAME=$2
+elif [ $# -gt 2 ]; then
+    check_opt_args "$@"
+fi
 [ -d "$TMT_TEST_DATA" ] || mkdir -p "$TMT_TEST_DATA"
-cp "$FILENAME" "$TMT_TEST_DATA"
-echo "File $FILENAME stored to $TMT_TEST_DATA"
+cp -f "$FILENAME" "$TMT_TEST_DATA"
+echo "File '$FILENAME' stored to '$TMT_TEST_DATA'."
