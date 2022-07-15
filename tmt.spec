@@ -42,10 +42,11 @@ BuildRequires: python%{python3_pkgversion}-testcloud >= 0.8.1
 BuildRequires: python%{python3_pkgversion}-markdown
 BuildRequires: python%{python3_pkgversion}-junit_xml
 BuildRequires: python%{python3_pkgversion}-ruamel-yaml
-# The typing-extensions and dataclasses are only needed for rhel-8
+# Only needed for rhel-8 (it has python3.6)
 %if 0%{?rhel} == 8
 BuildRequires: python%{python3_pkgversion}-typing-extensions
 BuildRequires: python%{python3_pkgversion}-dataclasses
+BuildRequires: python%{python3_pkgversion}-importlib-metadata
 %endif
 # Required for tests
 BuildRequires: rsync

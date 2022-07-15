@@ -7,8 +7,9 @@
 Let's have a look at plugins. Each of the six steps defined by
 :ref:`/spec/plans` supports multiple methods. These methods are
 implemented by plugins which are dynamically loaded from the
-standard location under ``tmt/steps`` and from all directories
-provided in the ``TMT_PLUGINS`` environment variable.
+standard location under ``tmt/steps`` , from all directories
+provided in the ``TMT_PLUGINS`` environment variable and from
+``tmt.plugin`` entry point.
 
 
 Inheritance

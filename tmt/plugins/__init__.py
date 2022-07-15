@@ -8,12 +8,23 @@ import pkgutil
 import sys
 from typing import Generator, Optional
 
+if sys.version_info < (3, 9):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
+
 import fmf
 
 import tmt
 from tmt.steps import STEPS
 
 log = fmf.utils.Logging('tmt').logger
+
+# Two possibilities to load additional plugins:
+# entry_points (setup_tools)
+ENTRY_POINT_NAME = 'tmt.plugin'
+# Directories with module in environment variable
+ENVIRONMENT_NAME = 'TMT_PLUGINS'
 
 
 def explore() -> None:
@@ -32,15 +43,23 @@ def explore() -> None:
     try:
         paths = [
             os.path.realpath(os.path.expandvars(os.path.expanduser(path)))
-            for path in os.environ["TMT_PLUGINS"].split(os.pathsep)]
+            for path in os.environ[ENVIRONMENT_NAME].split(os.pathsep)]
     except KeyError:
-        log.debug('No custom plugin locations detected in TMT_PLUGINS.')
+        log.debug(f'No custom plugin locations detected in {ENVIRONMENT_NAME}.')
         paths = []
     for path in paths:
         for module in discover(path):
             if path not in sys.path:
                 sys.path.insert(0, path)
             import_(module, path)
+
+    # Import by entry_points
+    try:
+        for found in entry_points()[ENTRY_POINT_NAME]:
+            log.debug(f'Loading plugin "{found.name}" ({found.value}).')
+            found.load()
+    except KeyError:
+        log.debug(f'No custom plugins detected for "{ENTRY_POINT_NAME}".')
 
 
 def import_(module: str, path: Optional[str] = None) -> None:

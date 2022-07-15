@@ -54,6 +54,9 @@ install_requires.append("typing-extensions>=3.7.4.3; python_version < '3.8'")
 # dataclasses is needed with Python 3.6
 install_requires.append("dataclasses; python_version < '3.7'")
 
+# entry_points is part of Python 3.9+
+install_requires.append("importlib_metadata; python_version < '3.9'")
+
 extras_require = {
     'docs': [
         'sphinx>=3',
