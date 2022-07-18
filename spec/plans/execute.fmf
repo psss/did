@@ -203,6 +203,13 @@ description: |
             For more information see the
             :ref:`/stories/features/report-result` feature documentation.
 
+        ``tmt-abort``
+            Generate an abort file from inside the test. This will
+            set the current test result to failed and terminate
+            the execution of subsequent tests.
+            For more information see the
+            :ref:`/stories/features/abort` feature documentation.
+
     example: |
         execute:
             how: tmt

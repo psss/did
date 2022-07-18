@@ -803,6 +803,7 @@ class StructuredFieldError(GeneralError):
 
 # Step exceptions
 
+
 class DiscoverError(GeneralError):
     """ Discover step error """
 
@@ -825,6 +826,10 @@ class ReportError(GeneralError):
 
 class FinishError(GeneralError):
     """ Finish step error """
+
+
+class AbortTestError(ExecuteError):
+    """ Abort test error """
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

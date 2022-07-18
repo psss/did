@@ -1,0 +1,5 @@
+#!/bin/bash
+# Create the abort file.
+touch "$TMT_TEST_DATA/abort"
+# Kill PPID to exit test execution.
+kill $PPID

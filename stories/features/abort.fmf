@@ -1,0 +1,22 @@
+title: Abort test execution
+story:
+    As a tester I want to abort current, and all subsequent,
+    test executions using a shell command during test
+    execution.
+
+description: |
+    The ``tmt-abort`` command can be used to abort the current
+    test execution. This command together with the
+    ``rstrnt-abort`` and ``rhts-abort`` aliases provides a
+    backward-compatible way to execute tests written for the
+    `restraint`__ framework. These scripts are installed on the
+    guest and overwrite any existing scripts with the same name.
+
+    __ https://restraint.readthedocs.io/en/latest/commands.html#rstrnt-abort
+
+example: |
+        tmt-abort
+
+link:
+  - implemented-by: /tmt/steps/execute/internal.py
+  - verified-by: /tests/execute/restraint/tmt-abort

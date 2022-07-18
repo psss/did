@@ -36,11 +36,23 @@ TMT_FILE_SUBMIT_SCRIPT = Script("/usr/local/bin/tmt-file-submit",
                                 related_variables=[]
                                 )
 
+# Script handling text execution abortion, in restraint compatible fashion
+TMT_ABORT_SCRIPT = Script("/usr/local/bin/tmt-abort",
+                          aliases=[
+                              "/usr/local/bin/rstrnt-abort",
+                              "/usr/local/bin/rhts-abort"],
+                          related_variables=[]
+                          )
+
 # File for requesting reboot
 REBOOT_REQUEST_FILENAME = "reboot_request"
 
 # List of all available scripts
-SCRIPTS = (TMT_FILE_SUBMIT_SCRIPT, TMT_REBOOT_SCRIPT, TMT_REPORT_RESULT_SCRIPT)
+SCRIPTS = (TMT_FILE_SUBMIT_SCRIPT,
+           TMT_REBOOT_SCRIPT,
+           TMT_REPORT_RESULT_SCRIPT,
+           TMT_ABORT_SCRIPT
+           )
 
 
 class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
@@ -303,12 +315,20 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             if self._handle_reboot(test, guest):
                 continue
             self._results.append(self.check(test))
-            if (exit_first and
-                    self._results[-1].result not in ('pass', 'info')):
+            try:
+                self.check_abort_file(test)
+                if (exit_first and
+                        self._results[-1].result not in ('pass', 'info')):
+                    # Clear the progress bar before outputting
+                    self._show_progress('', '', True)
+                    self.warn(
+                        f'Test {test.name} failed, stopping execution.')
+                    break
+            except tmt.utils.AbortTestError:
                 # Clear the progress bar before outputting
                 self._show_progress('', '', True)
                 self.warn(
-                    f'Test {test.name} failed, stopping execution.')
+                    f'Test {test.name} aborted, stopping execution.')
                 break
             index += 1
         # Overwrite the progress bar, the test data is irrelevant
