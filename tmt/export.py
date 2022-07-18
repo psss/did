@@ -399,6 +399,12 @@ def export_to_nitrate(test: 'tmt.Test') -> None:
                     echo(style(
                         f"Test case '{extra_summary}' created.", fg='blue'))
                 test._metadata['extra-summary'] = extra_summary
+            # Either newly created or duplicate with missing extra-nitrate
+            if nitrate_case:
+                echo(style("Append the nitrate test case id.", fg='green'))
+                if not dry_mode:
+                    with test.node as data:
+                        data["extra-nitrate"] = nitrate_case.identifier
         else:
             raise ConvertError(f"Nitrate test case id not found for {test}"
                                " (You can use --create option to enforce"
@@ -589,25 +595,6 @@ def export_to_nitrate(test: 'tmt.Test') -> None:
             nitrate.User()._server.TestCase.store_text(
                 nitrate_case.id, step, expect, setup, cleanup)
         echo(style("manual steps:", fg='green') + f" found in {md_path}")
-
-    # Append id of newly created nitrate case to its file
-    if not test.node.get('extra-nitrate'):
-        echo(style("Append the nitrate test case id.", fg='green'))
-        if not dry_mode:
-            try:
-                with test.node as data:
-                    data["extra-nitrate"] = nitrate_case.identifier
-            except AttributeError:
-                # FIXME: Remove this deprecated code after fmf support
-                # for storing modified data is released long enough
-                file_path = test.node.sources[-1]
-                try:
-                    with open(file_path, encoding='utf-8', mode='a+') as file:
-                        file.write(
-                            f"extra-nitrate: {nitrate_case.identifier}\n")
-                except IOError:
-                    raise ConvertError(
-                        "Unable to open '{0}'.".format(file_path))
 
     # List of bugs test verifies
     verifies_bug_ids = []
