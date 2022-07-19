@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -o errexit -o pipefail -o noclobber -o nounset
 
 die() { echo "$*" >&2; exit 2; }  # complain to STDERR and exit with error
