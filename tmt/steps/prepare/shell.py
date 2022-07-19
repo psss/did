@@ -14,7 +14,7 @@ from tmt.steps.provision import Guest
 @tmt.steps.provides_method('shell')
 class PrepareShell(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     """
-    Prepare guest using shell scripts
+    Prepare guest using shell (bash) scripts
 
     Example config:
 

@@ -12,7 +12,7 @@ from tmt.steps.provision import Guest
 @tmt.steps.provides_method('shell')
 class FinishShell(tmt.steps.finish.FinishPlugin):
     """
-    Perform finishing tasks using shell scripts
+    Perform finishing tasks using shell (bash) scripts
 
     Example config:
 

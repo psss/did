@@ -79,7 +79,8 @@ PROCESS_TIMEOUT = 124
 # Default select.select(timeout) in seconds
 DEFAULT_SELECT_TIMEOUT = 5
 
-# Shell options to be set for all run shell scripts
+# Default shell and options to be set for all shell scripts
+DEFAULT_SHELL = "/bin/bash"
 SHELL_OPTIONS = 'set -eo pipefail'
 
 # Defaults for HTTP/HTTPS retries and timeouts (see `retry_session()`).
@@ -554,11 +555,15 @@ class Common:
             environment = None
         self.debug('environment', pprint.pformat(environment), level=4)
 
+        # Set only for shell=True as it would affect command
+        executable = DEFAULT_SHELL if shell else None
+
         # Run the command in interactive mode if requested
         if interactive:
             try:
                 subprocess.run(
-                    command, cwd=cwd, shell=shell, env=environment, check=True)
+                    command, cwd=cwd, shell=shell, env=environment, check=True,
+                    executable=executable)
             except subprocess.CalledProcessError:
                 # Interactive mode can return non-zero if the last command
                 # failed, ignore errors here
@@ -571,7 +576,8 @@ class Common:
             process = subprocess.Popen(
                 command, cwd=cwd, shell=shell, env=environment,
                 stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT if join else subprocess.PIPE)
+                stderr=subprocess.STDOUT if join else subprocess.PIPE,
+                executable=executable)
         except FileNotFoundError as error:
             raise RunError(
                 f"File '{error.filename}' not found.", command, 127)

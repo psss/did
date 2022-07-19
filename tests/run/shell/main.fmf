@@ -1,0 +1,14 @@
+summary: Use bash regardless users' login shell or /bin/sh value
+test: ./test.sh
+framework: beakerlib
+require:
+- zsh
+- tmt
+tag+:
+- as_root
+- provision-virtual-only
+enabled: false
+adjust:
+  - enabled: true
+    when: how == full
+tier: null

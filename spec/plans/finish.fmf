@@ -15,7 +15,7 @@ example: |
 
 /shell:
     summary:
-        Perform finishing tasks using shell scripts
+        Perform finishing tasks using shell (bash) scripts
 
     example: |
         finish:

@@ -37,9 +37,9 @@ example: |
 
 /shell:
     summary:
-        Prepare system using shell commands
+        Prepare system using shell (bash) commands
     description:
-        Execute arbitratry shell commands to set up the system.
+        Execute arbitrary shell commands to set up the system.
 
         Default shell options are applied to the script, see
         :ref:`/spec/tests/test` for more details.

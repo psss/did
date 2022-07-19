@@ -1,0 +1,17 @@
+execute:
+    how: tmt
+discover:
+    how: shell
+    tests:
+      - name: uses bash
+        test: declare -p BASH_VERSION
+provision:
+    how: local
+prepare:
+  - name: Test that tmt uses bash in prepare
+    how: shell
+    script: declare -p BASH_VERSION
+finish:
+  - name: Test that tmt uses bash in finish
+    how: shell
+    script: declare -p BASH_VERSION
