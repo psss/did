@@ -2456,6 +2456,34 @@ def get_distgit_handler_names() -> List[str]:
     return [i.usage_name for i in DistGitHandler.__subclasses__()]
 
 
+def git_clone(
+        url: str,
+        destination: str,
+        common: Common,
+        env: Optional[EnvironmentType] = None,
+        shallow: bool = False
+        ) -> CommandOutput:
+    """
+    Git clone url to destination, retry without shallow if necessary
+
+    For shallow=True attempt to clone repository using --depth=1 option first.
+    If not successful attempt to clone whole repo.
+
+    Common instance is used to run the command for appropriate logging.
+    Environment is updated by 'env' dictionary.
+    """
+    depth = ['--depth=1'] if shallow else []
+    command = ['git', 'clone'] + depth + [url, destination]
+    try:
+        return common.run(command, env=env)
+    except RunError:
+        if not shallow:
+            # Do not retry if shallow was not used
+            raise
+        # Git server might not support shallow cloning, try again
+        return git_clone(url, destination, common, env, shallow=False)
+
+
 class updatable_message(contextlib.AbstractContextManager):  # type: ignore
     """ Updatable message suitable for progress-bar-like reporting """
 

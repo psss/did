@@ -182,9 +182,9 @@ class Library(object):
                 # tmt guessed url so try if repo exists
                 if self.format == 'rpm':
                     with TemporaryDirectory() as tmp:
-                        command = ['git', 'clone', '--depth=1', str(self.url), str(tmp)]
                         try:
-                            self.parent.run(command, env={"GIT_ASKPASS": "echo"})
+                            tmt.utils.git_clone(str(self.url), str(tmp), self.parent,
+                                                env={"GIT_ASKPASS": "echo"}, shallow=True)
                         except tmt.utils.RunError:
                             self.parent.debug(f"Repository '{self.url}' not found.")
                             raise LibraryError
@@ -213,13 +213,10 @@ class Library(object):
             # Clone repo with disabled prompt to ignore missing/private repos
             try:
                 if self.url:
-                    # Use 'git clone --depth=1 <url>' to speed up testing and
+                    # Shallow clone to speed up testing and
                     # minimize data transfers if ref is not provided
-                    command = ['git', 'clone', '--depth=1', self.url,
-                               directory]
-                    if self.ref is not None:
-                        command = ['git', 'clone', self.url, directory]
-                    self.parent.run(command, env={"GIT_ASKPASS": "echo"})
+                    tmt.utils.git_clone(self.url, directory, self.parent,
+                                        env={"GIT_ASKPASS": "echo"}, shallow=self.ref is None)
                 else:
                     # Either url or path must be defined
                     assert self.path is not None
