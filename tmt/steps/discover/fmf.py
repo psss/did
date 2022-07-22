@@ -91,7 +91,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     _keys = [
         "url", "ref", "path", "test", "link", "filter",
         "modified-only", "modified-url", "modified-ref",
-        "dist-git-source", "dist-git-type",
         "dist-git-init", "dist-git-remove-fmf-root", "dist-git-merge",
         "dist-git-extract",
         "fmf-id", "exclude"]
@@ -153,13 +152,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 '--sync-repo', default=False, is_flag=True,
                 help='Force the sync of the whole git repo. By default, the '
                      'repo is copied only if the used options require it.'),
-            click.option(
-                '--dist-git-source', is_flag=True,
-                help='Extract DistGit sources and run discover on top of it.'),
-            click.option(
-                '--dist-git-type',
-                type=click.Choice(tmt.utils.get_distgit_handler_names()),
-                help='Use the provided DistGit handler instead of detection.'),
             click.option(
                 '--dist-git-init', is_flag=True,
                 help='Initialize fmf root inside extracted sources '
