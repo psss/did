@@ -2,13 +2,20 @@ import os
 import re
 import time
 from dataclasses import dataclass, field
-from typing import List, Optional, Type
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type
 
 import click
 import fmf
 import pkg_resources
 
 import tmt
+from tmt.steps import Method
+
+if TYPE_CHECKING:
+    import tmt.options
+    import tmt.steps
+    import tmt.steps.discover
+    import tmt.steps.provision
 
 # Test data directory name
 TEST_DATA = 'data'
@@ -42,15 +49,13 @@ class Execute(tmt.steps.Step):
 
     # Internal executor is the default implementation
     how = 'tmt'
+    data: List[tmt.steps.StepData]
 
-    def __init__(self, plan, data):
+    def __init__(self, plan: "tmt.Plan", data: tmt.steps.StepData) -> None:
         """ Initialize execute step data """
         super().__init__(plan=plan, data=data)
         # List of Result() objects representing test results
-        self._results = []
-
-        # List of scripts to install
-        self.scripts = []
+        self._results: List[tmt.Result] = []
 
         # Default test framework and mapping old methods
         # FIXME remove when we drop the old execution methods
@@ -59,7 +64,7 @@ class Execute(tmt.steps.Step):
         if not self.plan.my_run:
             self._map_old_methods()
 
-    def load(self, extra_keys=None):
+    def load(self, extra_keys: Optional[List[str]] = None) -> None:
         """ Load test results """
         extra_keys = extra_keys or []
         super().load(extra_keys)
@@ -70,7 +75,7 @@ class Execute(tmt.steps.Step):
         except tmt.utils.FileError:
             self.debug('Test results not found.', level=2)
 
-    def save(self, data=None):
+    def save(self, data: Optional[tmt.steps.StepData] = None) -> None:
         """ Save test results to the workdir """
         data = data or {}
         super().save(data)
@@ -78,7 +83,7 @@ class Execute(tmt.steps.Step):
             (result.name, result.export()) for result in self.results()])
         self.write('results.yaml', tmt.utils.dict_to_yaml(results))
 
-    def _map_old_methods(self):
+    def _map_old_methods(self) -> None:
         """ Map the old execute methods in a backward-compatible way """
         how = self.data[0]['how']
         matched = re.search(r"^(shell|beakerlib)(\.tmt)?$", how)
@@ -99,7 +104,7 @@ class Execute(tmt.steps.Step):
         self._framework = framework
         self.warn("Support for old methods will be dropped in tmt-2.0.")
 
-    def wake(self):
+    def wake(self) -> None:
         """ Wake up the step (process workdir and command line) """
         super().wake()
 
@@ -123,16 +128,16 @@ class Execute(tmt.steps.Step):
             self.status('todo')
             self.save()
 
-    def show(self):
+    def show(self) -> None:
         """ Show execute details """
         ExecutePlugin.delegate(self, self.data[0]).show()
 
-    def summary(self):
+    def summary(self) -> None:
         """ Give a concise summary of the execution """
         tests = fmf.utils.listed(self.results(), 'test')
         self.info('summary', f'{tests} executed', 'green', shift=1)
 
-    def go(self):
+    def go(self) -> None:
         """ Execute tests """
         super().go()
 
@@ -160,7 +165,7 @@ class Execute(tmt.steps.Step):
         self.status('done')
         self.save()
 
-    def requires(self):
+    def requires(self) -> List[str]:
         """
         Packages required for test execution
 
@@ -172,7 +177,7 @@ class Execute(tmt.steps.Step):
             requires.update(plugin.requires())
         return list(requires)
 
-    def results(self):
+    def results(self) -> List["tmt.base.Result"]:
         """
         Results from executed tests
 
@@ -186,13 +191,15 @@ class ExecutePlugin(tmt.steps.Plugin):
     """ Common parent of execute plugins """
 
     # List of all supported methods aggregated from all plugins
-    _supported_methods = []
+    _supported_methods: List[Method] = []
 
     # Common keys for all execute plugins
     _common_keys = ["exit-first"]
 
     # Internal executor is the default implementation
     how = 'tmt'
+
+    scripts: Tuple['Script', ...] = ()
 
     @classmethod
     def base_command(
@@ -211,33 +218,41 @@ class ExecutePlugin(tmt.steps.Plugin):
         @click.option(
             '-h', '--how', metavar='METHOD',
             help='Use specified method for test execution.')
-        def execute(context, **kwargs):
+        def execute(context: click.Context, **kwargs: Any) -> None:
             context.obj.steps.add('execute')
             Execute._save_context(context)
 
         return execute
 
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         # Add option to exit after the first test failure
-        options = [click.option(
-            '-x', '--exit-first', is_flag=True,
-            help='Stop execution after the first test failure.')]
-        return options + super().options(how)
+        options = super().options(how)
+        options[:0] = [
+            click.option(
+                '-x', '--exit-first', is_flag=True,
+                help='Stop execution after the first test failure.'),
+            ]
+        return options
 
-    def go(self):
+    def go(self, *args: Any, **kwargs: Any) -> None:
         super().go()
         self.verbose(
             'exit-first', self.get('exit-first', default=False),
             'green', level=2)
 
     @property
-    def discover(self):
+    def discover(self) -> tmt.steps.discover.Discover:
         """ Return discover plugin instance """
         # This is necessary so that upgrade plugin can inject a fake discover
         return self.step.plan.discover
 
-    def data_path(self, test, filename=None, full=False, create=False):
+    def data_path(
+            self,
+            test: "tmt.Test",
+            filename: Optional[str] = None,
+            full: bool = False,
+            create: bool = False) -> str:
         """
         Prepare full/relative test data directory/file path
 
@@ -246,6 +261,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         filename not provided) or to the given data file otherwise.
         """
         # Prepare directory path, create if requested
+        assert self.step.workdir is not None
         directory = os.path.join(
             self.step.workdir, TEST_DATA, test.name.lstrip('/'))
         if create and not os.path.isdir(directory):
@@ -255,7 +271,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         path = os.path.join(directory, filename)
         return path if full else os.path.relpath(path, self.step.workdir)
 
-    def prepare_tests(self):
+    def prepare_tests(self) -> List["tmt.Test"]:
         """
         Prepare discovered tests for testing
 
@@ -263,7 +279,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         the aggregated metadata in a 'metadata.yaml' file under the test
         data directory and finally return a list of discovered tests.
         """
-        tests = self.discover.tests()
+        tests: List[tmt.Test] = self.discover.tests()
         for test in tests:
             metadata_filename = self.data_path(
                 test, filename='metadata.yaml', full=True, create=True)
@@ -271,7 +287,7 @@ class ExecutePlugin(tmt.steps.Plugin):
                 metadata_filename, tmt.utils.dict_to_yaml(test._metadata))
         return tests
 
-    def prepare_scripts(self, guest):
+    def prepare_scripts(self, guest: "tmt.steps.provision.Guest") -> None:
         """
         Prepare additional scripts for testing
         """
@@ -286,7 +302,7 @@ class ExecutePlugin(tmt.steps.Plugin):
                     destination=dest,
                     options=["-p", "--chmod=755"])
 
-    def check_shell(self, test):
+    def check_shell(self, test: "tmt.Test") -> "tmt.Result":
         """ Check result of a shell test """
         # Prepare the log path
         data = {'log': self.data_path(test, TEST_OUTPUT_FILENAME),
@@ -302,7 +318,7 @@ class ExecutePlugin(tmt.steps.Plugin):
                 self.timeout_hint(test)
         return tmt.Result(data, name=test.name, interpret=test.result)
 
-    def check_beakerlib(self, test):
+    def check_beakerlib(self, test: "tmt.Test") -> "tmt.Result":
         """ Check result of a beakerlib test """
         # Initialize data, prepare log paths
         data = {'result': 'error',
@@ -320,18 +336,22 @@ class ExecutePlugin(tmt.steps.Plugin):
             self.debug(f"Unable to read '{beakerlib_results_file}'.", level=3)
             data['note'] = 'beakerlib: TestResults FileError'
             return tmt.Result(data, name=test.name, interpret=test.result)
-        try:
-            result = re.search(
-                'TESTRESULT_RESULT_STRING=(.*)', results).group(1)
-            # States are: started, incomplete and complete
-            # FIXME In quotes until beakerlib/beakerlib/pull/92 is merged
-            state = re.search(r'TESTRESULT_STATE="?(\w+)"?', results).group(1)
-        except AttributeError:
+
+        search_result = re.search('TESTRESULT_RESULT_STRING=(.*)', results)
+        # States are: started, incomplete and complete
+        # FIXME In quotes until beakerlib/beakerlib/pull/92 is merged
+        search_state = re.search(r'TESTRESULT_STATE="?(\w+)"?', results)
+
+        if search_result is None or search_state is None:
             self.debug(
                 f"No result or state found in '{beakerlib_results_file}'.",
                 level=3)
             data['note'] = 'beakerlib: Result/State missing'
             return tmt.Result(data, name=test.name, interpret=test.result)
+
+        result = search_result.group(1)
+        state = search_state.group(1)
+
         # Check if it was killed by timeout (set by tmt executor)
         if test.returncode == tmt.utils.PROCESS_TIMEOUT:
             data['result'] = 'error'
@@ -346,7 +366,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             data['result'] = result.lower()
         return tmt.Result(data, name=test.name, interpret=test.result)
 
-    def check_result_file(self, test):
+    def check_result_file(self, test: "tmt.Test") -> "tmt.Result":
         """
         Check result file created by tmt-report-result
 
@@ -370,11 +390,11 @@ class ExecutePlugin(tmt.steps.Plugin):
         # Check the test result
         self.debug("The report-result output file detected.", level=3)
         with open(report_result_path) as result_file:
-            result = [line for line in result_file.readlines() if "TESTRESULT" in line]
-        if not result:
+            result_list = [line for line in result_file.readlines() if "TESTRESULT" in line]
+        if not result_list:
             raise tmt.utils.ExecuteError(
                 f"Test result not found in result file '{report_result_path}'.")
-        result = result[0].split("=")[1].strip()
+        result = result_list[0].split("=")[1].strip()
 
         # Map the restraint result to the corresponding tmt value
         try:
@@ -391,11 +411,11 @@ class ExecutePlugin(tmt.steps.Plugin):
         return tmt.Result(data, name=test.name, interpret=test.result)
 
     @staticmethod
-    def test_duration(start, end):
+    def test_duration(start: float, end: float) -> str:
         """ Convert duration to a human readable format """
         return time.strftime("%H:%M:%S", time.gmtime(end - start))
 
-    def timeout_hint(self, test):
+    def timeout_hint(self, test: "tmt.Test") -> None:
         """ Append a duration increase hint to the test output """
         output = self.data_path(test, TEST_OUTPUT_FILENAME, full=True)
         self.write(
@@ -405,7 +425,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             f"https://tmt.readthedocs.io/en/stable/spec/tests.html#duration\n",
             mode='a', level=3)
 
-    def results(self):
+    def results(self) -> List["tmt.Result"]:
         """ Return test results """
         raise NotImplementedError
 
