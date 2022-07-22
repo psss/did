@@ -3,12 +3,14 @@
 """ Export metadata into nitrate """
 
 
-import email
+import email.utils
 import os
 import re
 import traceback
+import types
 import xmlrpc.client
 from functools import lru_cache
+from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
 
 import fmf
 from click import echo, secho, style
@@ -18,6 +20,20 @@ import tmt.utils
 from tmt.convert import SYSTEM_OTHER, add_link
 from tmt.identifier import ID_KEY, add_uuid_if_not_defined
 from tmt.utils import ConvertError, check_git_url, markdown_to_html
+
+bugzilla: Optional[types.ModuleType] = None
+gssapi: Optional[types.ModuleType] = None
+nitrate: Optional[types.ModuleType] = None
+
+PolarionException: Any = None
+PolarionTestCase: Any = None
+PolarionWorkItem: Any = None
+
+DEFAULT_PRODUCT: Any = None
+
+SectionsReturnType = Tuple[str, str, str, str]
+HeadingsType = List[List[Union[int, str]]]
+SectionsHeadingsType = Dict[str, HeadingsType]
 
 log = fmf.utils.Logging('tmt').logger
 
@@ -35,7 +51,7 @@ RE_POLARION_URL = r'.*/polarion/#/project/.*/workitem\?id=(.*)'
 LEGACY_POLARION_PROJECTS = set(['RedHatEnterpriseLinux7'])
 
 
-def import_nitrate():
+def import_nitrate() -> Any:
     """ Conditionally import the nitrate module """
     # Need to import nitrate only when really needed. Otherwise we get
     # traceback when nitrate not installed or config file not available.
@@ -44,16 +60,17 @@ def import_nitrate():
         global nitrate, DEFAULT_PRODUCT, gssapi
         import gssapi
         import nitrate
+        assert nitrate
         DEFAULT_PRODUCT = nitrate.Product(name='RHEL Tests')
         return nitrate
     except ImportError:
         raise ConvertError(
             "Install tmt-test-convert to export tests to nitrate.")
-    except nitrate.NitrateError as error:
+    except nitrate.NitrateError as error:  # type: ignore
         raise ConvertError(error)
 
 
-def import_polarion():
+def import_polarion() -> None:
     """ Import polarion python api - pylero """
     try:
         global PolarionException, PolarionTestCase, PolarionWorkItem
@@ -65,7 +82,7 @@ def import_polarion():
             "Run 'pip install tmt[export-polarion]' so pylero is installed.")
 
 
-def get_bz_instance():
+def get_bz_instance() -> Any:
     """ Import the bugzilla module and return BZ instance """
     try:
         import bugzilla
@@ -87,12 +104,13 @@ def get_bz_instance():
     return bz_instance
 
 
-def _nitrate_find_fmf_testcases(test):
+def _nitrate_find_fmf_testcases(test: 'tmt.Test') -> Generator[Any, None, None]:
     """
     Find all Nitrate test cases with the same fmf identifier
 
     All component general plans are explored for possible duplicates.
     """
+    assert nitrate
     for component in test.component:
         try:
             for testcase in find_general_plan(component).testcases:
@@ -110,7 +128,7 @@ def _nitrate_find_fmf_testcases(test):
             pass
 
 
-def convert_manual_to_nitrate(test_md):
+def convert_manual_to_nitrate(test_md: str) -> SectionsReturnType:
     """
     Convert Markdown document to html sections.
 
@@ -120,18 +138,17 @@ def convert_manual_to_nitrate(test_md):
     as html strings.
     """
 
-    values = []
-    sections_headings = {}
-    for _ in list(tmt.base.SECTIONS_HEADINGS.values()):
-        values += _
-    for _ in values:
-        sections_headings[_] = []
+    sections_headings: SectionsHeadingsType = {
+        heading: []
+        for heading_list in tmt.base.SECTIONS_HEADINGS.values()
+        for heading in heading_list
+        }
 
     html = markdown_to_html(test_md)
     html_splitlines = html.splitlines()
 
     for key in sections_headings.keys():
-        result = []
+        result: HeadingsType = []
         i = 0
         while html_splitlines:
             try:
@@ -159,16 +176,17 @@ def convert_manual_to_nitrate(test_md):
                 sections_headings[key] = result
                 break
 
-    def concatenate_headings_content(headings):
+    def concatenate_headings_content(headings: Tuple[str, ...]) -> HeadingsType:
         content = list()
         for v in headings:
             content += sections_headings[v]
         return content
 
-    def enumerate_content(content):
-        content.sort()
+    def enumerate_content(content: HeadingsType) -> HeadingsType:
+        # for sorting convert the index to integer, but keep whole list as list of strings
+        content.sort(key=lambda a: int(a[0]))
         for c in range(len(content)):
-            content[c][1] = f"<p>Step {c + 1}.</p>" + content[c][1]
+            content[c][1] = f"<p>Step {c + 1}.</p>" + str(content[c][1])
         return content
 
     sorted_test = sorted(concatenate_headings_content((
@@ -186,9 +204,9 @@ def convert_manual_to_nitrate(test_md):
         '<h2>Expected Result</h2>'))) + sorted_test)
     expect = ''.join([f"{v[1]}" for v in sorted_expect])
 
-    def check_section_exists(text):
+    def check_section_exists(text: str) -> str:
         try:
-            return sections_headings[text][0][1]
+            return str(sections_headings[text][0][1])
         except (IndexError, KeyError):
             return ''
 
@@ -198,7 +216,7 @@ def convert_manual_to_nitrate(test_md):
     return step, expect, setup, cleanup
 
 
-def bz_set_coverage(bug_ids, case_id, tracker_id):
+def bz_set_coverage(bug_ids: List[int], case_id: str, tracker_id: int) -> None:
     """ Set coverage in Bugzilla """
     bz_instance = get_bz_instance()
 
@@ -257,7 +275,9 @@ def bz_set_coverage(bug_ids, case_id, tracker_id):
         " ".join([f"BZ#{bz_id}" for bz_id in bug_ids])), fg='magenta'))
 
 
-def _get_polarion_ids(query_result, preferred_project=None):
+def _get_polarion_ids(
+        query_result: List[Any],
+        preferred_project: Optional[int] = None) -> Tuple[str, Optional[int]]:
     """ Return case and project ids from query results """
     if not query_result:
         return 'None', None
@@ -281,11 +301,15 @@ def _get_polarion_ids(query_result, preferred_project=None):
     return query_result[0].work_item_id, query_result[0].project_id
 
 
-def get_polarion_case(data, preferred_project=None):
+def get_polarion_case(data: Dict[str, str], preferred_project: Optional[int] = None) -> Any:
     """ Get Polarion case through couple different methods """
     import_polarion()
     polarion_id = 'None'
     project_id = None
+
+    assert PolarionWorkItem
+    assert PolarionTestCase
+    assert PolarionException
 
     # Search by UUID
     if data.get(ID_KEY):
@@ -293,9 +317,13 @@ def get_polarion_case(data, preferred_project=None):
             data.get(ID_KEY), fields=['work_item_id', 'project_id'])
         polarion_id, project_id = _get_polarion_ids(query_result, preferred_project)
     # Search by TCMS Case ID
-    if not project_id and data.get('extra-nitrate'):
-        nitrate_case_id = str(int(
-            re.search(r'\d+', data.get("extra-nitrate")).group()))
+    extra_nitrate = data.get('extra-nitrate')
+    if not project_id and extra_nitrate:
+        nitrate_case_id_search = re.search(r'\d+', extra_nitrate)
+        if not nitrate_case_id_search:
+            raise ConvertError(
+                "Could not find a valid nitrate testcase ID in 'extra-nitrate' attribute")
+        nitrate_case_id = str(int(nitrate_case_id_search.group()))
         query_result = PolarionWorkItem.query(
             nitrate_case_id, fields=['work_item_id', 'project_id'])
         polarion_id, project_id = _get_polarion_ids(query_result, preferred_project)
@@ -316,9 +344,11 @@ def get_polarion_case(data, preferred_project=None):
         return None
 
 
-def export_to_nitrate(test):
+def export_to_nitrate(test: 'tmt.Test') -> None:
     """ Export fmf metadata to nitrate test cases """
     import_nitrate()
+    assert nitrate
+    assert gssapi
 
     # Check command line options
     create = test.opt('create')
@@ -583,8 +613,12 @@ def export_to_nitrate(test):
     verifies_bug_ids = []
     for link in test.link:
         try:
-            verifies_bug_ids.append(
-                int(re.search(RE_BUGZILLA_URL, link['verifies']).group(1)))
+            bug_id_search = re.search(RE_BUGZILLA_URL, link['verifies'])
+            if not bug_id_search:
+                log.debug(f"Did not find bugzila URL in {link['verifies']}")
+                continue
+            bug_id = int(bug_id_search.group(1))
+            verifies_bug_ids.append(bug_id)
         except Exception as err:
             log.debug(err)
 
@@ -605,10 +639,10 @@ def export_to_nitrate(test):
     # Optionally link Bugzilla to Nitrate case
     if link_bugzilla and verifies_bug_ids:
         if not dry_mode:
-            bz_set_coverage(verifies_bug_ids, int(nitrate_case.id), NITRATE_TRACKER_ID)
+            bz_set_coverage(verifies_bug_ids, nitrate_case.id, NITRATE_TRACKER_ID)
 
 
-def export_to_polarion(test):
+def export_to_polarion(test: 'tmt.Test') -> None:
     """ Export fmf metadata to a Polarion test case """
     import_polarion()
 
@@ -726,16 +760,16 @@ def export_to_polarion(test):
     bug_ids = []
     requirements = []
     for link in test.link:
-        try:
-            bug_ids.append(
-                re.search(RE_BUGZILLA_URL, link['verifies']).group(1))
-        except Exception as err:
-            log.debug(err)
-        try:
-            requirements.append(
-                re.search(RE_POLARION_URL, link['verifies']).group(1))
-        except Exception as err:
-            log.debug(err)
+        bug_ids_search = re.search(RE_BUGZILLA_URL, link['verifies'])
+        if bug_ids_search:
+            bug_ids.append(bug_ids_search.group(1))
+        else:
+            log.debug('Failed to find bug ID in verifies link')
+        polarion_url_search = re.search(RE_POLARION_URL, link['verifies'])
+        if polarion_url_search:
+            requirements.append(polarion_url_search.group(1))
+        else:
+            log.debug('Failed to find Polarion URL in verifies link')
 
     # Add bugs to the Polarion case
     if not dry_mode:
@@ -743,8 +777,9 @@ def export_to_polarion(test):
 
     # Add TCMS Case ID to Polarion case
     if test.node.get('extra-nitrate') and not dry_mode:
-        polarion_case.tcmscaseid = str(int(
-            re.search(r'\d+', test.node.get("extra-nitrate")).group()))
+        tcms_case_id_search = re.search(r'\d+', test.node.get("extra-nitrate"))
+        if tcms_case_id_search:
+            polarion_case.tcmscaseid = str(int(tcms_case_id_search.group()))
 
     # Add id to Polarion case
     uuid = add_uuid_if_not_defined(test.node, dry=dry_mode)
@@ -773,13 +808,18 @@ def export_to_polarion(test):
         bz_set_coverage(bug_ids, case_id, POLARION_TRACKER_ID)
 
 
-def add_to_nitrate_runs(nitrate_case, general_plan, test, dry_mode):
+def add_to_nitrate_runs(
+        nitrate_case: Any,
+        general_plan: Any,
+        test: 'tmt.Test',
+        dry_mode: bool) -> None:
     """
     Add nitrate test case to all active runs under given general plan
 
     Go down plan tree from general plan, add case and case run to
     all open runs. Try to apply adjust.
     """
+    assert nitrate
     for child_plan in nitrate.TestPlan.search(parent=general_plan.id):
         for testrun in child_plan.testruns:
             if testrun.status == nitrate.RunStatus("FINISHED"):
@@ -798,12 +838,12 @@ def add_to_nitrate_runs(nitrate_case, general_plan, test, dry_mode):
                     nitrate.CaseRun(testcase=nitrate_case, testrun=testrun)
 
 
-def enabled_for_environment(test, tcms_notes):
+def enabled_for_environment(test: 'tmt.Test', tcms_notes: str) -> bool:
     """ Check whether test is enabled for specified environment """
     field = tmt.utils.StructuredField(tcms_notes)
     context_dict = {}
     try:
-        for line in field.get('environment').split('\n'):
+        for line in cast(str, field.get('environment')).split('\n'):
             try:
                 dimension, values = line.split('=', maxsplit=2)
                 context_dict[dimension.strip()] = [
@@ -820,20 +860,22 @@ def enabled_for_environment(test, tcms_notes):
         context = fmf.context.Context(**context_dict)
         test_node = test.node.copy()
         test_node.adjust(context)
-        return tmt.Test(test_node).enabled
+        # TODO: remove cast later
+        return cast(bool, tmt.Test(test_node).enabled)
     except BaseException as exception:
         log.debug(f"Failed to process adjust: {exception}")
         return True
 
 
-def check_md_file_respects_spec(md_path):
+def check_md_file_respects_spec(md_path: str) -> List[str]:
     """
     Check that the file respects manual test specification
 
     Return list of warnings, empty list if no problems found.
     """
     warnings_list = []
-    sections_headings = tmt.base.SECTIONS_HEADINGS
+    # TODO: remove cast lastr
+    sections_headings = cast(Dict[str, List[str]], tmt.base.SECTIONS_HEADINGS)
     required_headings = set(sections_headings['Step'] +
                             sections_headings['Expect'])
     values = []
@@ -862,7 +904,7 @@ def check_md_file_respects_spec(md_path):
         html_headings_from_file = [i for i in html_headings_from_file
                                    if i != index]
 
-    def count_html_headings(heading):
+    def count_html_headings(heading: str) -> None:
         if html_headings_from_file.count(heading) > 1:
             warnings_list.append(
                 f'{html_headings_from_file.count(heading)}'
@@ -883,7 +925,10 @@ def check_md_file_respects_spec(md_path):
     warn_unexpected_headings = 'Headings "{}" aren\'t expected in the ' \
                                'section "{}"'
 
-    def required_section_exists(section, section_name, prefix):
+    def required_section_exists(
+            section: List[str],
+            section_name: str,
+            prefix: Union[str, Tuple[str, ...]]) -> int:
         res = list(filter(
             lambda t: t.startswith(prefix), section))
         if not res:
@@ -969,7 +1014,7 @@ def check_md_file_respects_spec(md_path):
     return warnings_list
 
 
-def return_markdown_file():
+def return_markdown_file() -> str:
     """ Return path to the markdown file """
     files = '\n'.join(os.listdir())
     reg_exp = r'.+\.md$'
@@ -989,28 +1034,33 @@ def return_markdown_file():
     return md_path
 
 
-def get_category():
+def get_category() -> str:
     """ Get category from Makefile """
+    category = 'Sanity'
     try:
         with open('Makefile', encoding='utf-8') as makefile_file:
             makefile = makefile_file.read()
-        return re.search(
-            r'echo\s+"Type:\s*(.*)"', makefile, re.M).group(1)
+        category_search = re.search(
+            r'echo\s+"Type:\s*(.*)"', makefile, re.M)
+        if category_search:
+            category = category_search.group(1)
     # Default to 'Sanity' if Makefile or Type not found
     except (IOError, AttributeError):
-        return 'Sanity'
+        pass
+    return category
 
 
-def create_nitrate_case(summary):
+def create_nitrate_case(summary: str) -> Any:
     """ Create new nitrate case """
     # Create the new test case
+    assert nitrate
     category = nitrate.Category(name=get_category(), product=DEFAULT_PRODUCT)
     testcase = nitrate.TestCase(summary=summary, category=category)
     echo(style(f"Test case '{testcase.identifier}' created.", fg='blue'))
     return testcase
 
 
-def create_polarion_case(summary, project_id=None):
+def create_polarion_case(summary: str, project_id: Optional[str] = None) -> Any:
     """ Create new polarion case """
     # Create the new test case
     testcase = PolarionTestCase.create(project_id, summary, summary)
@@ -1020,7 +1070,7 @@ def create_polarion_case(summary, project_id=None):
     return testcase
 
 
-def prepare_extra_summary(test):
+def prepare_extra_summary(test: 'tmt.Test') -> str:
     """ extra-summary for export --create test """
     remote_dirname = re.sub('.git$', '', os.path.basename(test.fmf_id['url']))
     if not remote_dirname:
@@ -1028,13 +1078,15 @@ def prepare_extra_summary(test):
     generated = f"{remote_dirname} {test.name}"
     if test.summary:
         generated += f" - {test.summary}"
-    return test.node.get('extra-summary', generated)
+    # TODO: remove cast later
+    return cast(str, test.node.get('extra-summary', generated))
 
 
 # avoid multiple searching for general plans (it is expensive)
 @lru_cache(maxsize=None)
-def find_general_plan(component):
+def find_general_plan(component: str) -> Any:
     """ Return single General Test Plan or raise an error """
+    assert nitrate
     # At first find by linked components
     found = nitrate.TestPlan.search(
         type__name="General",
