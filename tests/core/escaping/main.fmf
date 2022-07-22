@@ -1,0 +1,15 @@
+summary: Verify correct escaping of special characters
+description:
+  Verify that special shell characters in tests and plans
+  names are correctly escaped and do not cause errors
+  during execution.
+test: ./test.sh
+framework: beakerlib
+tag-: [container, virtual]
+
+environment:
+    METHODS: local container
+adjust:
+  - when: how == full
+    environment:
+        METHODS: container virtual local

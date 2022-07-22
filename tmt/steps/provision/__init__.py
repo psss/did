@@ -9,6 +9,7 @@ import string
 import subprocess
 import tempfile
 import time
+from shlex import quote
 from typing import Dict, List, Optional, Type
 
 import click
@@ -736,7 +737,7 @@ class GuestSsh(Guest):
         # Change to given directory on guest if cwd provided
         directory = kwargs.get('cwd') or ''
         if directory:
-            directory = f"cd '{directory}'; "
+            directory = f"cd {quote(directory)}; "
 
         # Run in interactive mode if requested
         interactive = ['-t'] if kwargs.get('interactive') else []

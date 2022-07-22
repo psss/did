@@ -1,0 +1,16 @@
+summary: Verify correct weird string escaping
+discover:
+  - name: Test name escaping
+    how: fmf
+
+  - name: Test name and plan escaping's check
+    how: fmf
+
+  - name: Advanced plan's name escaping \n @? 'test' \"|"
+    how: fmf
+
+provision:
+  how: container
+
+execute:
+  how: tmt

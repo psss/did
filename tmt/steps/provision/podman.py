@@ -1,5 +1,6 @@
 import dataclasses
 import os
+from shlex import quote
 from typing import Optional
 
 import click
@@ -202,7 +203,7 @@ class GuestContainer(tmt.Guest):
         # Change to given directory on guest if cwd provided
         directory = kwargs.get('cwd', '')
         if directory:
-            directory = f"cd '{directory}'; "
+            directory = f"cd {quote(directory)}; "
 
         # Prepare the environment variables export
         environment = self._export_environment(
