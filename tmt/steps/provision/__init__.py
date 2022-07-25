@@ -15,8 +15,9 @@ import click
 import fmf
 
 import tmt
-import tmt.plugins
+import tmt.steps
 import tmt.utils
+from tmt.steps import Action
 
 # Timeout in seconds of waiting for a connection after reboot
 # (long enough to allow operations such as system upgrade)
@@ -137,7 +138,7 @@ class Provision(tmt.steps.Step):
         self.is_multihost = sum([isinstance(phase, ProvisionPlugin)
                                 for phase in self.phases()]) > 1
         try:
-            for phase in self.phases():
+            for phase in self.phases(classes=(Action, ProvisionPlugin)):
                 try:
                     phase.go()
                     if isinstance(phase, ProvisionPlugin):
@@ -181,7 +182,7 @@ class Provision(tmt.steps.Step):
         return list(requires)
 
 
-class ProvisionPlugin(tmt.steps.Plugin):
+class ProvisionPlugin(tmt.steps.GuestlessPlugin):
     """ Common parent of provision plugins """
 
     # Default implementation for provision is a virtual machine

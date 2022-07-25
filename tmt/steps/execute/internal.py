@@ -266,7 +266,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
     def go(self, guest):
         """ Execute available tests """
-        super().go()
+        super().go(guest)
         self._results = []
 
         # Nothing to do in dry mode

@@ -5,6 +5,9 @@ import click
 import fmf
 
 import tmt
+import tmt.steps
+from tmt.steps import Action
+from tmt.utils import GeneralError
 
 
 class Finish(tmt.steps.Step):
@@ -69,8 +72,16 @@ class Finish(tmt.steps.Step):
             # finish step config rather than provision step config.
             guest_copy = copy.copy(guest)
             guest_copy.parent = self
-            for phase in self.phases():
-                phase.go(guest_copy)
+            for phase in self.phases(classes=(Action, FinishPlugin)):
+                if isinstance(phase, Action):
+                    phase.go()
+
+                elif isinstance(phase, FinishPlugin):
+                    phase.go(guest_copy)
+
+                else:
+                    raise GeneralError(f'Unexpected phase in finish step: {phase}')
+
             # Pull artifacts created in the plan data directory
             # if there was at least one plugin executed
             if self.phases():

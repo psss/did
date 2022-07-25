@@ -55,7 +55,7 @@ class FinishShell(tmt.steps.finish.FinishPlugin):  # type: ignore[misc]
 
     def go(self, guest: Guest) -> None:
         """ Perform finishing tasks on given guest """
-        super().go()
+        super().go(guest)
 
         # Give a short summary
         scripts = self.get('script')

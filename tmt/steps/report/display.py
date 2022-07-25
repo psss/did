@@ -1,5 +1,4 @@
 import os
-from typing import Any
 
 import tmt
 import tmt.steps.report
@@ -36,7 +35,7 @@ class ReportDisplay(tmt.steps.report.ReportPlugin):
                 self.verbose(
                     'content', self.read(full_path), color='yellow', shift=2)
 
-    def go(self, *args: Any, **kwargs: Any) -> None:
+    def go(self) -> None:
         """ Discover available tests """
         super().go()
         # Show individual test results only in verbose mode

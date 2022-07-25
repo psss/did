@@ -126,7 +126,7 @@ class ExecuteUpgrade(ExecuteInternal):
         """ Execute available tests """
         self._results = []
         # Inform about the how, skip the actual execution
-        super(ExecutePlugin, self).go()
+        super(ExecutePlugin, self).go(guest)
 
         self.url = self.get('url')
         self.upgrade_path = self.get('upgrade-path')

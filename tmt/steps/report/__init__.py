@@ -1,9 +1,10 @@
-from typing import Any, List, Optional, Type
+from typing import Any, List, Optional, Type, Union, cast
 
 import click
 
 import tmt
 import tmt.steps
+from tmt.steps import Action
 
 
 class Report(tmt.steps.Step):
@@ -54,8 +55,13 @@ class Report(tmt.steps.Step):
             return
 
         # Perform the reporting
-        for phase in self.phases():
-            phase.go()
+        for phase in self.phases(classes=(Action, ReportPlugin)):
+            # TODO: I don't understand this, but mypy seems to be confused about the type
+            # of `phase`. Mypy in my Code reports correct `Action | ReportPlugin` union,
+            # but pre-commit's mypy sees `Phase` - which should not be the right answer
+            # since `classes` is clearly not `None`. Adding `cast()` to overcome this
+            # because I can't find the actual error :/
+            cast(Union[Action, ReportPlugin], phase).go()
 
         # Give a summary, update status and save
         self.summary()
@@ -76,7 +82,7 @@ class Report(tmt.steps.Step):
         return list(requires)
 
 
-class ReportPlugin(tmt.steps.Plugin):
+class ReportPlugin(tmt.steps.GuestlessPlugin):
     """ Common parent of report plugins """
 
     # Default implementation for report is display

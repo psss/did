@@ -6,6 +6,9 @@ import click
 import fmf
 
 import tmt
+import tmt.steps
+from tmt.steps import Action
+from tmt.utils import GeneralError
 
 
 class Prepare(tmt.steps.Step):
@@ -136,11 +139,23 @@ class Prepare(tmt.steps.Step):
             guest_copy = copy.copy(guest)
             guest_copy.parent = self
             # Execute each prepare plugin
-            for phase in self.phases():
-                if phase.enabled_on_guest(guest_copy):
-                    self.preparations_applied += 1
+            for phase in self.phases(classes=(Action, PreparePlugin)):
+                if not phase.enabled_on_guest(guest_copy):
+                    continue
+
+                if isinstance(phase, Action):
+                    phase.go()
+
+                elif isinstance(phase, PreparePlugin):
                     phase.go(guest_copy)
-                    self.info('')
+
+                    self.preparations_applied += 1
+
+                else:
+                    raise GeneralError(f'Unexpected phase in prepare step: {phase}')
+
+                self.info('')
+
             # Pull artifacts created in the plan data directory
             # if there was at least one plugin executed
             if self.phases():
@@ -199,7 +214,7 @@ class PreparePlugin(tmt.steps.Plugin):
 
     def go(self, guest):
         """ Prepare the guest (common actions) """
-        super().go()
+        super().go(guest)
 
         # Show guest name first in multihost scenarios
         if self.step.plan.provision.is_multihost:

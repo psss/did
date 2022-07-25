@@ -3,8 +3,8 @@
 
 import re
 import sys
-from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar,
-                    Union, cast, overload)
+from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type,
+                    TypeVar, Union, cast, overload)
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict
@@ -60,9 +60,6 @@ class Phase(tmt.utils.Common):
         (e.g. listing images inside a provision plugin).
         """
         return False
-
-    def go(self, *args: Any, **kwargs: Any) -> None:
-        """ Execute the phase """
 
 
 # A variable used to describe a generic type for all classes derived from Phase
@@ -270,14 +267,19 @@ class Step(tmt.utils.Common):
             self._phases.append(reboot_plugin)
 
     @overload
+    def phases(self, classes: None = None) -> List[Phase]:
+        pass
+
+    @overload
     def phases(self, classes: Type[PhaseT]) -> List[PhaseT]:
         pass
 
     @overload
-    def phases(self, classes: None = None) -> List[Phase]:
+    def phases(self, classes: Tuple[Type[PhaseT], ...]) -> List[PhaseT]:
         pass
 
-    def phases(self, classes: Optional[Type[PhaseT]] = None) -> Union[List[Phase], List[PhaseT]]:
+    def phases(self, classes: Optional[Union[Type[PhaseT],
+               Tuple[Type[PhaseT], ...]]] = None) -> List[PhaseT]:
         """
         Iterate over phases by their order
 
@@ -285,16 +287,24 @@ class Step(tmt.utils.Common):
         'classes' can be used to iterate only over instances of given
         class (single class or tuple of classes).
         """
+
+        if classes is None:
+            _classes: Tuple[Union[Type[Phase], Type[PhaseT]], ...] = (Phase,)
+
+        elif not isinstance(classes, tuple):
+            _classes = (classes,)
+
+        else:
+            _classes = classes
+
         return sorted(
-            [phase for phase in self._phases
-                if classes is None or isinstance(phase, classes)],
+            [cast(PhaseT, phase) for phase in self._phases if isinstance(phase, _classes)],
             key=lambda phase: phase.order)
 
     def actions(self) -> None:
         """ Run all loaded Login or Reboot action instances of the step """
-        for phase in self.phases():
-            if isinstance(phase, Action):
-                phase.go()
+        for phase in self.phases(classes=Action):
+            phase.go()
 
     def go(self) -> None:
         """ Execute the test step """
@@ -307,7 +317,7 @@ class Step(tmt.utils.Common):
 class Method(object):
     """ Step implementation method """
 
-    class_: Type['Plugin']
+    class_: Type['BasePlugin']
 
     def __init__(self, name: str, doc: str, order: int):
         """ Store method data """
@@ -341,7 +351,7 @@ class PluginIndex(type):
     def __init__(
             cls,
             name: str,
-            bases: List['Plugin'],
+            bases: List['BasePlugin'],
             attributes: Any) -> None:
         """ Store all defined methods in the parent class """
         try:
@@ -363,7 +373,7 @@ class PluginData(TypedDict, total=False):
     order: Optional[int]
 
 
-class Plugin(Phase, metaclass=PluginIndex):
+class BasePlugin(Phase, metaclass=PluginIndex):
     """ Common parent of all step plugins """
 
     # Default implementation for all steps is shell
@@ -462,7 +472,7 @@ class Plugin(Phase, metaclass=PluginIndex):
     def delegate(
             cls,
             step: Step,
-            data: StepData) -> 'Plugin':
+            data: StepData) -> 'BasePlugin':
         """
         Return plugin instance implementing the data['how'] method
 
@@ -476,7 +486,7 @@ class Plugin(Phase, metaclass=PluginIndex):
                     f"Using the '{method.class_.__name__}' plugin "
                     f"for the '{data['how']}' method.", level=2)
                 plugin = method.class_(step, data)
-                assert isinstance(plugin, Plugin)
+                assert isinstance(plugin, BasePlugin)
                 return plugin
 
         show_step_method_hints(step, step.name, data['how'])
@@ -560,8 +570,17 @@ class Plugin(Phase, metaclass=PluginIndex):
                 # FIXME Enable type check once StepData defined more precisely
                 self.data[key] = value  # type: ignore
 
-    def go(self, *args: Any, **kwargs: Any) -> None:
-        """ Go and perform the plugin task """
+    # NOTE: it's tempting to rename this method to `go()` and use more natural
+    # `super().go()` in child classes' `go()` methods. But, `go()` does not have
+    # the same signature across all plugin types, therefore we cannot have shared
+    # `go()` method in superclass - overriding it in (some) child classes would
+    # raise a typing linter error reporting superclass signature differs from the
+    # one in a subclass.
+    #
+    # Therefore we need a different name, and a way how not to forget to call this
+    # method from child classes.
+    def go_prolog(self) -> None:
+        """ Perform actions shared among plugins when beginning their tasks """
         # Show the method
         self.info('how', self.get('how'), 'magenta')
         # Give summary if provided
@@ -576,6 +595,24 @@ class Plugin(Phase, metaclass=PluginIndex):
     def requires(self) -> List[str]:
         """ List of packages required by the plugin on the guest """
         return []
+
+
+class GuestlessPlugin(BasePlugin):
+    """ Common parent of all step plugins that do not work against a particular guest """
+
+    def go(self) -> None:
+        """ Perform actions shared among plugins when beginning their tasks """
+
+        self.go_prolog()
+
+
+class Plugin(BasePlugin):
+    """ Common parent of all step plugins that do work against a particular guest """
+
+    def go(self, guest: 'Guest') -> None:
+        """ Perform actions shared among plugins when beginning their tasks """
+
+        self.go_prolog()
 
 
 class Action(Phase):
@@ -648,6 +685,9 @@ class Action(Phase):
                 phases[step_name] = [phase]
         return phases
 
+    def go(self) -> None:
+        raise NotImplementedError()
+
 
 class Reboot(Action):
     """ Reboot guest """
@@ -687,7 +727,7 @@ class Reboot(Action):
             return []
         return [Reboot(step, phase) for phase in cls.phases(step)]
 
-    def go(self, *args: Any, **kwargs: Any) -> None:
+    def go(self) -> None:
         """ Reboot the guest(s) """
         self.info('reboot', 'Rebooting guest', color='yellow')
         assert isinstance(self.parent, Step)
@@ -764,7 +804,7 @@ class Login(Action):
             return []
         return [Login(step, phase) for phase in cls.phases(step)]
 
-    def go(self, *args: Any, **kwargs: Any) -> None:
+    def go(self) -> None:
         """ Login to the guest(s) """
         # Verify possible test result condition
         count: Dict[str, int] = dict()

@@ -9,7 +9,9 @@ import fmf
 import pkg_resources
 
 import tmt
-from tmt.steps import Method
+from tmt.steps import Action, Method
+from tmt.steps.provision import Guest
+from tmt.utils import GeneralError
 
 if TYPE_CHECKING:
     import tmt.options
@@ -157,11 +159,20 @@ class Execute(tmt.steps.Step):
 
         # Execute the tests, store results
         for guest in self.plan.provision.guests():
-            for phase in self.phases():
-                if phase.enabled_on_guest(guest):
+            for phase in self.phases(classes=(Action, ExecutePlugin)):
+                if not phase.enabled_on_guest(guest):
+                    continue
+
+                if isinstance(phase, Action):
+                    phase.go()
+
+                elif isinstance(phase, ExecutePlugin):
                     phase.go(guest)
-                    if isinstance(phase, ExecutePlugin):
-                        self._results.extend(phase.results())
+
+                    self._results.extend(phase.results())
+
+                else:
+                    raise GeneralError(f'Unexpected phase in execute step: {phase}')
 
         # Give a summary, update status and save
         self.summary()
@@ -238,8 +249,8 @@ class ExecutePlugin(tmt.steps.Plugin):
             ]
         return options
 
-    def go(self, *args: Any, **kwargs: Any) -> None:
-        super().go()
+    def go(self, guest: Guest) -> None:
+        super().go(guest)
         self.verbose(
             'exit-first', self.get('exit-first', default=False),
             'green', level=2)

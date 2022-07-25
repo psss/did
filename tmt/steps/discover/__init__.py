@@ -10,7 +10,10 @@ if TYPE_CHECKING:
     import tmt.steps
     import tmt.options
 
+import tmt.steps
 import tmt.utils
+from tmt.steps import Action
+from tmt.utils import GeneralError
 
 
 class Discover(tmt.steps.Step):
@@ -142,25 +145,30 @@ class Discover(tmt.steps.Step):
 
         # Perform test discovery, gather discovered tests
         self._tests = []
-        for phase in self.phases():
-            # Go and discover tests
-            phase.go()
-            # Nothing more to be done for other plugins
-            if not isinstance(phase, DiscoverPlugin):
-                continue
-            # Prefix test name only if multiple plugins configured
-            prefix = f'/{phase.name}' if len(self.phases()) > 1 else ''
-            # Check discovered tests, modify test name/path
-            for test in phase.tests():
-                test.name = f"{prefix}{test.name}"
-                test.path = f"/{phase.name}{test.path}"
-                # Use the default test framework if not defined in L1
-                # FIXME remove when we drop the old execution methods
-                if not test.framework:
-                    test.framework = self.plan.execute._framework
-                # Update test environment with plan environment
-                test.environment.update(self.plan.environment)
-                self._tests.append(test)
+        for phase in self.phases(classes=(Action, DiscoverPlugin)):
+            if isinstance(phase, Action):
+                phase.go()
+
+            elif isinstance(phase, DiscoverPlugin):
+                # Go and discover tests
+                phase.go()
+
+                # Prefix test name only if multiple plugins configured
+                prefix = f'/{phase.name}' if len(self.phases()) > 1 else ''
+                # Check discovered tests, modify test name/path
+                for test in phase.tests():
+                    test.name = f"{prefix}{test.name}"
+                    test.path = f"/{phase.name}{test.path}"
+                    # Use the default test framework if not defined in L1
+                    # FIXME remove when we drop the old execution methods
+                    if not test.framework:
+                        test.framework = self.plan.execute._framework
+                    # Update test environment with plan environment
+                    test.environment.update(self.plan.environment)
+                    self._tests.append(test)
+
+            else:
+                raise GeneralError(f'Unexpected phase in discover step: {phase}')
 
         # Show fmf identifiers for tests discovered in plan
         # TODO: This part should go into the 'fmf.py' module
@@ -198,7 +206,7 @@ class Discover(tmt.steps.Step):
         return list(recommends)
 
 
-class DiscoverPlugin(tmt.steps.Plugin):
+class DiscoverPlugin(tmt.steps.GuestlessPlugin):
     """ Common parent of discover plugins """
 
     # List of all supported methods aggregated from all plugins

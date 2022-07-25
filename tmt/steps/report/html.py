@@ -2,7 +2,7 @@ import os
 import os.path
 import types
 import webbrowser
-from typing import Any, List, Optional
+from typing import List, Optional
 
 import click
 import pkg_resources
@@ -59,7 +59,7 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
             ]
         return options
 
-    def go(self, *args: Any, **kwargs: Any) -> None:
+    def go(self) -> None:
         """ Process results """
         super().go()
 

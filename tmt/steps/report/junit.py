@@ -1,6 +1,6 @@
 import os
 import types
-from typing import Any, List, Optional, overload
+from typing import List, Optional, overload
 
 import click
 
@@ -72,7 +72,7 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
             ]
         return options
 
-    def go(self, *args: Any, **kwargs: Any) -> None:
+    def go(self) -> None:
         """ Read executed tests and write junit """
         super().go()
 
