@@ -1,2 +1,3 @@
 test: /bin/true
-extra-summary: "Some extra summary"
+extra-summary: Some extra summary
+id: 229669f1-b167-4deb-be4c-15c62dc889ee

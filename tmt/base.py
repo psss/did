@@ -46,7 +46,10 @@ OBSOLETED_TEST_KEYS = "relevancy coverage".split()
 # Unofficial temporary test keys
 EXTRA_TEST_KEYS = (
     "extra-nitrate extra-hardware extra-pepa "
-    "extra-summary extra-task".split())
+    "extra-summary extra-task id".split())
+
+# Unofficial temporary story keys
+EXTRA_STORY_KEYS = ("id".split())
 
 SECTIONS_HEADINGS = {
     'Setup': ['<h1>Setup</h1>'],
@@ -114,7 +117,7 @@ class Core(tmt.utils.Common):
     """
 
     # Core attributes (supported across all levels)
-    _keys = ['summary', 'description', 'enabled', 'order', 'link', 'adjust']
+    _keys = ['summary', 'description', 'enabled', 'order', 'link', 'id', 'adjust']
 
     def __init__(self, node, parent=None):
         """ Initialize the node """
@@ -1273,7 +1276,7 @@ class Story(Core):
         Return whether the story is valid.
         """
         self.ls()
-        invalid_keys = self.lint_keys([])
+        invalid_keys = self.lint_keys(EXTRA_STORY_KEYS)
 
         if invalid_keys:
             for key in invalid_keys:

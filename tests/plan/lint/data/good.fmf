@@ -1,3 +1,4 @@
 summary: Basic smoke test
 execute:
     script: tmt --help
+id: 9c73e336-983e-4349-9586-b63c20ea2b89
