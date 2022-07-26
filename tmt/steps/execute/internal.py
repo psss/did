@@ -1,7 +1,9 @@
+import dataclasses
 import json
 import os
 import sys
 import time
+from typing import List
 
 import click
 
@@ -11,6 +13,14 @@ import tmt.steps.execute
 import tmt.utils
 from tmt.steps.execute import (SCRIPTS, TEST_OUTPUT_FILENAME,
                                TMT_FILE_SUBMIT_SCRIPT, TMT_REBOOT_SCRIPT)
+
+
+@dataclasses.dataclass
+class ExecuteInternalData(tmt.steps.execute.ExecuteStepData):
+    script: List[str] = dataclasses.field(default_factory=list)
+    interactive: bool = False
+
+    _normalize_script = tmt.utils.NormalizeKeysMixin._normalize_string_list
 
 
 @tmt.steps.provides_method('tmt')
@@ -26,8 +36,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     results file (for beakerlib tests).
     """
 
-    # Supported keys
-    _keys = ["script", "interactive"]
+    _data_class = ExecuteInternalData
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,12 +60,6 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             '--no-progress-bar', is_flag=True,
             help='Disable interactive progress bar showing the current test.'))
         return options + super().options(how)
-
-    def wake(self):
-        """ Wake up the plugin, process data, apply options """
-        super().wake()
-        # Make sure that script is a list
-        tmt.utils.listify(self.data, keys=['script'])
 
     # TODO: consider switching to utils.updatable_message() - might need more
     # work, since use of _show_progress is split over several methods.

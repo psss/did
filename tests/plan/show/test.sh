@@ -16,7 +16,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Show a full plan"
-        rlRun -s "tmt plans show full"
+        rlRun -s "tmt plans show -v full"
         # Core
         rlAssertGrep "summary Plan keys are correctly displayed" $rlRun_LOG
         rlAssertGrep "description Some description" $rlRun_LOG
@@ -28,19 +28,19 @@ rlJournalStart
         rlAssertGrep "relates https://something.org/related" $rlRun_LOG
 
         # Steps
-        rlRun "grep -A2 '^ *discover' $rlRun_LOG > $output"
+        rlRun "grep -Pzo '(?sm)^ *discover ?$.*^ *provision' $rlRun_LOG > $output"
         rlAssertGrep "    how fmf" $output
         rlAssertGrep "    filter tier:1" $output
-        rlRun "grep -A2 '^ *provision' $rlRun_LOG > $output"
+        rlRun "grep -Pzo '(?sm)^ *provision ?$.*^ *prepare' $rlRun_LOG > $output"
         rlAssertGrep "    how container" $output
         rlAssertGrep "    image fedora" $output
-        rlRun "grep -A2 '^ *prepare' $rlRun_LOG > $output"
+        rlRun "grep -Pzo '(?sm)^ *prepare ?$.*^ *report' $rlRun_LOG > $output"
         rlAssertGrep "    how shell" $output
         rlAssertGrep "    script systemctl start libvirtd" $output
-        rlRun "grep -A2 '^ *report' $rlRun_LOG > $output"
+        rlRun "grep -Pzo '(?sm)^ *report ?$.*^ *finish' $rlRun_LOG > $output"
         rlAssertGrep "    how html" $output
         rlAssertGrep "    open true" $output
-        rlRun "grep -A2 '^ *finish' $rlRun_LOG > $output"
+        rlRun "grep -A30 '^ *finish' $rlRun_LOG > $output"
         rlAssertGrep "    how ansible" $output
         rlAssertGrep "    playbook cleanup.yaml" $output
 

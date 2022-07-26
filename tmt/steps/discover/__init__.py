@@ -1,5 +1,6 @@
+import dataclasses
 import os
-from typing import TYPE_CHECKING, Any, List, Optional, Type
+from typing import TYPE_CHECKING, Any, List, Optional, Type, cast
 
 import click
 from fmf.utils import listed
@@ -16,17 +17,20 @@ from tmt.steps import Action
 from tmt.utils import GeneralError
 
 
+@dataclasses.dataclass
+class DiscoverStepData(tmt.steps.StepData):
+    dist_git_source: bool = False
+    # TODO: use enum!
+    dist_git_type: Optional[str] = None
+
+
 class DiscoverPlugin(tmt.steps.GuestlessPlugin):
     """ Common parent of discover plugins """
 
+    _data_class = DiscoverStepData
+
     # List of all supported methods aggregated from all plugins of the same step.
     _supported_methods: List[tmt.steps.Method] = []
-
-    # Common keys for all discover step implementations
-    _common_keys = [
-        "dist-git-source",
-        "dist-git-type",
-        ]
 
     @classmethod
     def base_command(
@@ -124,7 +128,7 @@ class Discover(tmt.steps.Step):
 
     _plugin_base_class = DiscoverPlugin
 
-    def __init__(self, plan: 'tmt.base.Plan', data: tmt.steps.StepData):
+    def __init__(self, plan: 'tmt.base.Plan', data: tmt.steps.RawStepDataArgument):
         """ Store supported attributes, check for sanity """
         super().__init__(plan=plan, data=data)
 
@@ -135,9 +139,10 @@ class Discover(tmt.steps.Step):
         """ Load step data from the workdir """
         super().load()
         try:
-            tests = tmt.utils.yaml_to_dict(self.read('tests.yaml'))
+            raw_test_data = tmt.utils.yaml_to_dict(self.read('tests.yaml'))
             self._tests = [tmt.Test.from_dict(data, name, skip_validation=True)
-                           for name, data in tests.items()]
+                           for name, data in raw_test_data.items()]
+
         except tmt.utils.FileError:
             self.debug('Discovered tests not found.', level=2)
 
@@ -146,18 +151,21 @@ class Discover(tmt.steps.Step):
         super().save()
 
         # Create tests.yaml with the full test data
-        tests = dict([
-            (test.name, test.export(format_='dict'))
-            for test in self.tests()])
-        self.write('tests.yaml', tmt.utils.dict_to_yaml(tests))
+        raw_test_data = {
+            test.name: test.export(format_='dict')
+            for test in self.tests()
+            }
+
+        self.write('tests.yaml', tmt.utils.dict_to_yaml(raw_test_data))
 
         # Create 'run.yaml' with the list of tests for the executor
         if not self.tests():
             return
-        tests = dict([
-            (test.name, test.export(format_='execute'))
-            for test in self.tests()])
-        self.write('run.yaml', tmt.utils.dict_to_yaml(tests, width=1000000))
+        raw_test_data = {
+            test.name: test.export(format_='execute')
+            for test in self.tests()
+            }
+        self.write('run.yaml', tmt.utils.dict_to_yaml(raw_test_data, width=1000000))
 
     def _discover_from_execute(self) -> None:
         """ Check the execute step for possible shell script tests """
@@ -165,36 +173,48 @@ class Discover(tmt.steps.Step):
         # Check scripts for command line and data, convert to list if needed
         scripts = self.plan.execute.opt('script')
         if not scripts:
-            scripts = self.plan.execute.data[0].get('script')
+            scripts = getattr(self.plan.execute.data[0], 'script', [])
         if not scripts:
             return
         if isinstance(scripts, str):
             scripts = [scripts]
 
+        # Avoid circular imports
+        import tmt.base
+        from tmt.steps.discover.shell import DiscoverShellData, TestDescription
+
         # Give a warning when discover step defined as well
-        default_data = [{'name': 'default-0', 'how': 'shell'}]
-        if self.data and self.data != default_data:
+        if self.data and not all(datum.is_bare for datum in self.data):
             raise tmt.utils.DiscoverError(
                 "Use either 'discover' or 'execute' step "
                 "to define tests, but not both.")
 
+        if not isinstance(self.data[0], DiscoverShellData):
+            # TODO: or should we rather create a new `shell` discovery step data,
+            # and fill it with our tests? Before step data patch, `tests` attribute
+            # was simply created as a list, with no check whether the step data and
+            # plugin even support `data.tests`. Which e.g. `internal` does not.
+            # Or should we find the first DiscoverShellData instance, use it, and
+            # create a new one when no such entry exists yet?
+            raise GeneralError(
+                f'Cannot append tests from execute to non-shell step "{self.data[0].how}"')
+
+        discover_step_data = self.data[0]
+
         # Check the execute step for possible custom duration limit
-        duration = self.plan.execute.data[0].get(
-            'duration', tmt.base.DEFAULT_TEST_DURATION_L2)
+        duration = cast(
+            str,
+            getattr(
+                self.plan.execute.data[0],
+                'duration',
+                tmt.base.DEFAULT_TEST_DURATION_L2))
 
         # Prepare the list of tests
-        tests = []
         for index, script in enumerate(scripts):
             name = f'script-{str(index).zfill(2)}'
-            tests.append(dict(name=name, test=script, duration=duration))
-
-        # Append new data if tests already defined
-        if self.data[0].get('tests'):
-            self.data.append(
-                dict(how='shell', tests=tests, name='execute'))
-        # Otherwise override current empty definition
-        else:
-            self.data[0]['tests'] = tests
+            discover_step_data.tests.append(
+                TestDescription(name=name, test=script, duration=duration)
+                )
 
     def wake(self) -> None:
         """ Wake up the step (process workdir and command line) """
@@ -206,7 +226,9 @@ class Discover(tmt.steps.Step):
 
         # Choose the right plugin and wake it up
         for data in self.data:
-            plugin = DiscoverPlugin.delegate(self, data)
+            # TODO: with generic BasePlugin, delegate() should return more fitting type,
+            # not the base class.
+            plugin = cast(DiscoverPlugin, DiscoverPlugin.delegate(self, data=data))
             self._phases.append(plugin)
             plugin.wake()
 
@@ -222,7 +244,7 @@ class Discover(tmt.steps.Step):
     def show(self) -> None:
         """ Show discover details """
         for data in self.data:
-            DiscoverPlugin.delegate(self, data).show()
+            DiscoverPlugin.delegate(self, data=data).show()
 
     def summary(self) -> None:
         """ Give a concise summary of the discovery """

@@ -85,6 +85,11 @@ class ArtemisGuestData(tmt.steps.provision.GuestSshData):
     api_retry_backoff_factor: int = DEFAULT_RETRY_BACKOFF_FACTOR
 
 
+@dataclasses.dataclass
+class ProvisionArtemisData(ArtemisGuestData, tmt.steps.StepData):
+    pass
+
+
 GUEST_STATE_COLOR_DEFAULT = 'green'
 
 GUEST_STATE_COLORS = {
@@ -269,26 +274,10 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
             api-retry-backoff-factor: 1
     """
 
-    _data_class = ArtemisGuestData
+    _data_class = ProvisionArtemisData
 
     # Guest instance
     _guest = None
-
-    _keys = [
-        'api-url',
-        'api-version',
-        'arch',
-        'image',
-        'hardware',
-        'pool',
-        'priority-group',
-        'keyname',
-        'user-data',
-        'provision-timeout',
-        'provision-tick',
-        'api-timeout',
-        'api-retries',
-        'api-retry-backoff-factor']
 
     # TODO: fix types once superclass gains its annotations
     @classmethod
@@ -359,11 +348,6 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
                      f'{DEFAULT_RETRY_BACKOFF_FACTOR} by default.',
                 ),
             ]) + super().options(how)
-
-    def default(self, option: str, default: Optional[Any] = None) -> Any:
-        """ Return default data for given option """
-
-        return getattr(ArtemisGuestData(), option.replace('-', '_'), default)
 
     # More specific type is a violation of Liskov substitution principle, and mypy
     # complains about it - rightfully so. Ignoring the issue which should be resolved

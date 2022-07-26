@@ -51,9 +51,6 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
     # List of all supported methods aggregated from all plugins of the same step.
     _supported_methods: List[tmt.steps.Method] = []
 
-    # Common keys for all provision step implementations
-    _common_keys = ['role']
-
     @classmethod
     def base_command(
             cls,
@@ -113,24 +110,29 @@ class Provision(tmt.steps.Step):
 
     _plugin_base_class = ProvisionPlugin
 
-    def __init__(self, plan: 'tmt.Plan', data: tmt.steps.StepData) -> None:
+    def __init__(self, plan: 'tmt.Plan', data: tmt.steps.RawStepDataArgument) -> None:
         """ Initialize provision step data """
         super().__init__(plan=plan, data=data)
-        # Check that the names are unique
-        names = [data['name'] for data in self.data]
-        names_count: Dict[str, int] = collections.defaultdict(int)
-        for name in names:
-            names_count[name] += 1
-        if len(self.data) > 1 and len(self.data) != len(names_count):
-            duplicate = [k for k, v in names_count.items() if v > 1]
-            duplicate_string = ', '.join(duplicate)
-            raise tmt.utils.GeneralError(
-                f"Provision step names must be unique for multihost testing. "
-                f"Duplicate names: {duplicate_string} in plan '{plan.name}'.")
+
         # List of provisioned guests and loaded guest data
         self._guests: List['Guest'] = []
         self._guest_data: Dict[str, 'GuestData'] = {}
         self.is_multihost = False
+
+    def _normalize_data(self, raw_data: List[tmt.steps._RawStepData]) -> List[tmt.steps.StepData]:
+        data = super()._normalize_data(raw_data)
+
+        # Check that the names are unique
+        names = [datum.name for datum in data]
+        names_count = collections.Counter(names)
+        if len(data) > 1 and names_count.most_common(1)[0][1] > 1:
+            duplicate_names = [name for name in names_count.elements() if names_count[name] > 1]
+            duplicate_string = ', '.join(duplicate_names)
+            raise tmt.utils.GeneralError(
+                f"Provision step names must be unique for multihost testing. "
+                f"Duplicate names: '{duplicate_string}' in plan '{self.plan.name}'.")
+
+        return data
 
     def load(self) -> None:
         """ Load guest data from the workdir """
@@ -165,7 +167,7 @@ class Provision(tmt.steps.Step):
         for data in self.data:
             # TODO: with generic BasePlugin, delegate() should return more fitting type,
             # not the base class.
-            plugin = cast(ProvisionPlugin, ProvisionPlugin.delegate(self, data))
+            plugin = cast(ProvisionPlugin, ProvisionPlugin.delegate(self, data=data))
             self._phases.append(plugin)
             # If guest data loaded, perform a complete wake up
             plugin.wake(data=self._guest_data.get(plugin.name))
@@ -186,7 +188,7 @@ class Provision(tmt.steps.Step):
     def show(self) -> None:
         """ Show discover details """
         for data in self.data:
-            ProvisionPlugin.delegate(self, data).show()
+            ProvisionPlugin.delegate(self, data=data).show()
 
     def summary(self) -> None:
         """ Give a concise summary of the provisioning """

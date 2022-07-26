@@ -26,6 +26,11 @@ class PodmanGuestData(tmt.steps.provision.GuestData):
     container: Optional[str] = None
 
 
+@dataclasses.dataclass
+class ProvisionPodmanData(PodmanGuestData, tmt.steps.StepData):
+    pass
+
+
 @tmt.steps.provides_method('container')
 class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
     """
@@ -43,11 +48,10 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
     use 'user: USER'.
     """
 
+    _data_class = ProvisionPodmanData
+
     # Guest instance
     _guest = None
-
-    # Supported keys
-    _keys = ["image", "container", "pull", "user"]
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
@@ -72,9 +76,9 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
     def default(self, option: str, default: Any = None) -> Any:
         """ Return default data for given option """
         if option == 'pull':
-            return PodmanGuestData().force_pull
+            return self.get('force-pull', default=default)
 
-        return getattr(PodmanGuestData(), option.replace('-', '_'), default)
+        return super().default(option, default=default)
 
     def wake(self, data: Optional[tmt.steps.provision.GuestData] = None) -> None:
         """ Wake up the plugin, process data, apply options """

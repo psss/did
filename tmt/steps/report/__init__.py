@@ -54,7 +54,9 @@ class Report(tmt.steps.Step):
 
         # Choose the right plugin and wake it up
         for data in self.data:
-            plugin = ReportPlugin.delegate(self, data)
+            # TODO: with generic BasePlugin, delegate() should return more fitting type,
+            # not the base class.
+            plugin = cast(ReportPlugin, ReportPlugin.delegate(self, data=data))
             plugin.wake()
             self._phases.append(plugin)
 
@@ -70,7 +72,7 @@ class Report(tmt.steps.Step):
     def show(self) -> None:
         """ Show discover details """
         for data in self.data:
-            ReportPlugin.delegate(self, data).show()
+            ReportPlugin.delegate(self, data=data).show()
 
     def summary(self) -> None:
         """ Give a concise report summary """

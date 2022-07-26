@@ -1,6 +1,7 @@
 import collections
 import copy
-from typing import List, Optional, Type
+import dataclasses
+from typing import List, Optional, Type, cast
 
 import click
 import fmf
@@ -11,14 +12,18 @@ from tmt.steps import Action
 from tmt.utils import GeneralError
 
 
+@dataclasses.dataclass
+class PrepareStepData(tmt.steps.WhereableStepData, tmt.steps.StepData):
+    pass
+
+
 class PreparePlugin(tmt.steps.Plugin):
     """ Common parent of prepare plugins """
 
+    _data_class = PrepareStepData
+
     # List of all supported methods aggregated from all plugins of the same step.
     _supported_methods: List[tmt.steps.Method] = []
-
-    # Common keys for all prepare step implementations
-    _common_keys = ['where']
 
     @classmethod
     def base_command(
@@ -80,10 +85,12 @@ class Prepare(tmt.steps.Step):
 
         # Choose the right plugin and wake it up
         for data in self.data:
-            plugin = PreparePlugin.delegate(self, data)
+            # TODO: with generic BasePlugin, delegate() should return more fitting type,
+            # not the base class.
+            plugin = cast(PreparePlugin, PreparePlugin.delegate(self, data=data))
             plugin.wake()
             # Add plugin only if there are data
-            if len(plugin.data.keys()) > 2:
+            if not plugin.data.is_bare:
                 self._phases.append(plugin)
 
         # Nothing more to do if already done
@@ -98,7 +105,7 @@ class Prepare(tmt.steps.Step):
     def show(self):
         """ Show discover details """
         for data in self.data:
-            PreparePlugin.delegate(self, data).show()
+            PreparePlugin.delegate(self, data=data).show()
 
     def summary(self):
         """ Give a concise summary of the preparation """
@@ -152,7 +159,7 @@ class Prepare(tmt.steps.Step):
                 summary='Install required packages',
                 order=tmt.utils.DEFAULT_PLUGIN_ORDER_REQUIRES,
                 package=list(requires))
-            self._phases.append(PreparePlugin.delegate(self, data))
+            self._phases.append(PreparePlugin.delegate(self, raw_data=data))
 
         # Recommended packages
         recommends = self.plan.discover.recommends()
@@ -164,7 +171,7 @@ class Prepare(tmt.steps.Step):
                 order=tmt.utils.DEFAULT_PLUGIN_ORDER_RECOMMENDS,
                 package=recommends,
                 missing='skip')
-            self._phases.append(PreparePlugin.delegate(self, data))
+            self._phases.append(PreparePlugin.delegate(self, raw_data=data))
 
         # Implicit multihost setup
         if self.plan.provision.is_multihost:
@@ -176,7 +183,7 @@ class Prepare(tmt.steps.Step):
                 roles=self._prepare_roles(),
                 hosts=self._prepare_hosts(),
                 )
-            self._phases.append(PreparePlugin.delegate(self, data))
+            self._phases.append(PreparePlugin.delegate(self, raw_data=data))
 
         # Prepare guests (including workdir sync)
         for guest in self.plan.provision.guests():

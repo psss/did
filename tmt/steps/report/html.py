@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import os.path
 import types
@@ -32,6 +33,11 @@ def import_jinja2() -> None:
             "Missing 'jinja2', fixable by 'pip install tmt[report-html]'")
 
 
+@dataclasses.dataclass
+class ReportHtmlData(tmt.steps.StepData):
+    open: bool = False
+
+
 @tmt.steps.provides_method('html')
 class ReportHtml(tmt.steps.report.ReportPlugin):
     """
@@ -44,8 +50,7 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
             open: true
     """
 
-    # Supported keys
-    _keys = ["open"]
+    _data_class = ReportHtmlData
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:

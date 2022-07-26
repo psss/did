@@ -1,6 +1,7 @@
 import tmt
 import tmt.steps
 import tmt.steps.finish
+import tmt.steps.prepare.ansible
 from tmt.steps.prepare.ansible import PrepareAnsible
 
 
@@ -28,6 +29,8 @@ class FinishAnsible(tmt.steps.finish.FinishPlugin, PrepareAnsible):
     Use 'order' attribute to select in which order finishing tasks
     should happen if there are multiple configs. Default order is '50'.
     """
+
+    _data_class = tmt.steps.prepare.ansible.PrepareAnsibleData
 
     # Assigning class methods seems to cause trouble to mypy
     # See also: https://github.com/python/mypy/issues/6700

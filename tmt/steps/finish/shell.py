@@ -1,4 +1,5 @@
-from typing import Any, List, Optional
+import dataclasses
+from typing import List, Optional
 
 import click
 import fmf
@@ -7,6 +8,13 @@ import tmt
 import tmt.steps
 import tmt.steps.finish
 from tmt.steps.provision import Guest
+
+
+@dataclasses.dataclass
+class FinishShellData(tmt.steps.finish.FinishStepData):
+    script: List[str] = dataclasses.field(default_factory=list)
+
+    _normalize_script = tmt.utils.NormalizeKeysMixin._normalize_string_list
 
 
 @tmt.steps.provides_method('shell')
@@ -26,8 +34,7 @@ class FinishShell(tmt.steps.finish.FinishPlugin):
     should happen if there are multiple configs. Default order is '50'.
     """
 
-    # Supported keys
-    _keys = ["script"]
+    _data_class = FinishShellData
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
@@ -39,20 +46,6 @@ class FinishShell(tmt.steps.finish.FinishPlugin):
                 help='Shell script to be executed.')
             ]
         return options
-
-    def default(self, option: str, default: Optional[Any] = None) -> Any:
-        """ Return default data for given option """
-        if option == 'script':
-            return []
-        return default
-
-    # TODO: use better types once superclass gains its annotations
-    def wake(self) -> None:
-        """ Wake up the plugin, process data, apply options """
-        super().wake()
-
-        # Convert to list if single script provided
-        tmt.utils.listify(self.data, keys=['script'])
 
     def go(self, guest: Guest) -> None:
         """ Perform finishing tasks on given guest """

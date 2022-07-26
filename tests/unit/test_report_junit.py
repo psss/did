@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, PropertyMock
 import pytest
 
 from tmt import Result
-from tmt.steps.report.junit import ReportJUnit
+from tmt.steps.report.junit import ReportJUnit, ReportJUnitData
 
 
 @pytest.fixture
@@ -24,9 +24,9 @@ def report_fix(tmpdir):
         return default
 
     report = ReportJUnit(
-        step=step_mock, data={
-            'name': 'x'}, workdir=str(
-            tmpdir.join('junit')))
+        step=step_mock,
+        data=ReportJUnitData(name='x', how='junit'),
+        workdir=str(tmpdir.join('junit')))
     report.get = get
     report.info = MagicMock()
 

@@ -1,11 +1,15 @@
+import dataclasses
+from typing import List, Optional
+
 import click
 import fmf.utils
 
 import tmt.base
 import tmt.steps
+import tmt.steps.execute
 import tmt.utils
 from tmt.steps.discover import DiscoverPlugin
-from tmt.steps.discover.fmf import DiscoverFmf
+from tmt.steps.discover.fmf import DiscoverFmf, DiscoverFmfStepData
 from tmt.steps.execute import ExecutePlugin
 from tmt.steps.execute.internal import ExecuteInternal
 
@@ -15,8 +19,23 @@ DURING_UPGRADE_PREFIX = 'upgrade'
 AFTER_UPGRADE_PREFIX = 'new'
 UPGRADE_DIRECTORY = 'upgrade'
 
-SUPPORTED_REMOTE_DISCOVER_KEYS = ['how', 'filter', 'test', 'exclude', 'tests']
-INHERIT_FROM_DISCOVER = ['ref', 'test', 'filter', 'exclude']
+PROPAGATE_TO_DISCOVER_KEYS = ['url', 'ref', 'filter', 'test', 'exclude']
+
+
+@dataclasses.dataclass
+class ExecuteUpgradeData(tmt.steps.execute.ExecuteStepData):
+    url: Optional[str] = None
+    upgrade_path: Optional[str] = None
+
+    # Inherit from tmt.steps.discover.fmf.DiscoverFmfStepData
+    ref: Optional[str] = None
+    filter: Optional[List[str]] = None
+    test: Optional[List[str]] = None
+    exclude: Optional[List[str]] = None
+
+    _normalize_test = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    _normalize_filter = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    _normalize_exclude = tmt.utils.NormalizeKeysMixin._normalize_string_list
 
 
 @tmt.steps.provides_method('upgrade')
@@ -87,8 +106,7 @@ class ExecuteUpgrade(ExecuteInternal):
             filter: "tag:fedora"
     """
 
-    # Supported keys
-    _keys = ['url', 'upgrade-path'] + INHERIT_FROM_DISCOVER
+    _data_class = ExecuteUpgradeData
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -169,9 +187,15 @@ class ExecuteUpgrade(ExecuteInternal):
 
     def _fetch_upgrade_tasks(self):
         """ Fetch upgrade tasks using DiscoverFmf """
-        data = self.data.copy()
-        data['how'] = 'fmf'
-        data['name'] = 'upgrade-discover'
+        data = DiscoverFmfStepData(
+            name='upgrade-discover',
+            how='fmf',
+            # url=self.data.url,
+            **{
+                key: getattr(self.data, key) for key in PROPAGATE_TO_DISCOVER_KEYS
+                }
+            )
+
         self._discover_upgrade = DiscoverFmf(self.step, data)
         self._run_discover_upgrade()
 
@@ -192,20 +216,30 @@ class ExecuteUpgrade(ExecuteInternal):
 
     def _prepare_remote_discover_data(self, plan):
         """ Merge remote discover data with the local filters """
-        data = plan.discover.data
-        if isinstance(data, list):
-            if len(data) > 1:
-                raise tmt.utils.ExecuteError(
-                    "Multiple discover configs are not supported.")
-            data = data[0]
-        result = {key: value for key, value in data.items()
-                  if key in SUPPORTED_REMOTE_DISCOVER_KEYS}
+        if len(plan.discover.data) > 1:
+            raise tmt.utils.ExecuteError(
+                "Multiple discover configs are not supported.")
+
+        data = plan.discover.data[0]
+
+        remote_raw_data: tmt.steps._RawStepData = {
+            # Force name
+            'name': 'upgrade-discover-remote',
+            'how': 'fmf'
+            }
+        remote_raw_data.update({
+            tmt.utils.key_to_option(key): value
+            for key, value in data.items()
+            if key in PROPAGATE_TO_DISCOVER_KEYS
+            })
+
         # Local values have priority, override
         for key in self._keys:
             value = self.get(key)
-            if key in SUPPORTED_REMOTE_DISCOVER_KEYS and value:
-                result[key] = value
-        return result
+            if key in PROPAGATE_TO_DISCOVER_KEYS and value:
+                remote_raw_data[key] = value
+
+        return remote_raw_data
 
     def _perform_upgrade(self, guest):
         """ Perform a system upgrade """
@@ -216,12 +250,12 @@ class ExecuteUpgrade(ExecuteInternal):
                 # Create a fake discover from the data in the upgrade path
                 plan = self._get_plan(self._discover_upgrade.testdir)
                 data = self._prepare_remote_discover_data(plan)
-                # Force name
-                data['name'] = 'upgrade-discover-remote'
-                # Override the path so that the correct tree is copied
+                # Unset `url` because we don't want discover step to perform clone.
+                # Instead, we want it to re-use existing, already cloned path.
+                data['url'] = None
                 data['path'] = self._discover_upgrade.testdir
                 self._discover_upgrade = DiscoverPlugin.delegate(
-                    self.step, data)
+                    self.step, raw_data=data)
                 self._run_discover_upgrade()
                 # Pass in the path-specific env variables
                 extra_environment = plan.environment

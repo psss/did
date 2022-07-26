@@ -1,9 +1,19 @@
-from typing import Any, Optional
+import dataclasses
+from typing import Dict, List
 
 import tmt
 import tmt.steps
 import tmt.steps.prepare
 from tmt.steps.provision import Guest
+
+
+# Derived from StepData, not PrepareStepData, on purpose: this is not a plugin
+# per se, but rather a metadata structure. Other plugins may refer to data
+# defined by this "step" by using `where` key in their own data.
+@dataclasses.dataclass
+class PrepareMultihostData(tmt.steps.StepData):
+    roles: Dict[str, List[str]] = dataclasses.field(default_factory=dict)
+    hosts: Dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 @tmt.steps.provides_method('multihost')
@@ -30,14 +40,7 @@ class PrepareMultihost(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     The exported roles are comma-separated.
     """
 
-    # Supported keys
-    _keys = ['roles', 'hosts']
-
-    def default(self, option: str, default: Optional[Any] = None) -> Any:
-        """ Return default data for given option """
-        if option in ('roles', 'hosts'):
-            return {}
-        return default
+    _data_class = PrepareMultihostData
 
     def go(self, guest: 'Guest') -> None:
         """ Prepare the guests """

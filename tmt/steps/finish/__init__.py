@@ -1,16 +1,25 @@
 import copy
-from typing import Any, List, Optional, Type
+import dataclasses
+from typing import Any, List, Optional, Type, cast
 
 import click
 import fmf
 
 import tmt
+import tmt.steps
 from tmt.steps import Action, Method, StepData
 from tmt.utils import GeneralError
 
 
+@dataclasses.dataclass
+class FinishStepData(tmt.steps.WhereableStepData, tmt.steps.StepData):
+    pass
+
+
 class FinishPlugin(tmt.steps.Plugin):
     """ Common parent of finish plugins """
+
+    _data_class = FinishStepData
 
     # List of all supported methods aggregated from all plugins of the same step.
     _supported_methods: List[Method] = []
@@ -56,16 +65,20 @@ class Finish(tmt.steps.Step):
 
     data: List[StepData]
 
+    _plugin_base_class = FinishPlugin
+
     def wake(self) -> None:
         """ Wake up the step (process workdir and command line) """
         super().wake()
 
         # Choose the right plugin and wake it up
         for data in self.data:
-            plugin = FinishPlugin.delegate(self, data)
+            # TODO: with generic BasePlugin, delegate() should return more fitting type,
+            # not the base class.
+            plugin = cast(FinishPlugin, FinishPlugin.delegate(self, data=data))
             plugin.wake()
             # Add plugin only if there are data
-            if len(plugin.data.keys()) > 2:
+            if not plugin.data.is_bare:
                 self._phases.append(plugin)
 
         # Nothing more to do if already done
@@ -80,7 +93,7 @@ class Finish(tmt.steps.Step):
     def show(self) -> None:
         """ Show finish details """
         for data in self.data:
-            FinishPlugin.delegate(self, data).show()
+            FinishPlugin.delegate(self, data=data).show()
 
     def summary(self) -> None:
         """ Give a concise summary """

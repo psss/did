@@ -1,4 +1,5 @@
-from typing import Any, List, Optional
+import dataclasses
+from typing import List, Optional
 
 import click
 
@@ -7,6 +8,18 @@ import tmt.steps
 import tmt.steps.provision
 import tmt.utils
 from tmt.steps.provision import GuestSshData
+
+DEFAULT_USER = "root"
+
+
+@dataclasses.dataclass
+class ConnectGuestData(tmt.steps.provision.GuestSshData):
+    user: str = DEFAULT_USER
+
+
+@dataclasses.dataclass
+class ProvisionConnectData(ConnectGuestData, tmt.steps.StepData):
+    pass
 
 
 @tmt.steps.provides_method('connect')
@@ -38,11 +51,10 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
             guest: host.example.org
     """
 
+    _data_class = ProvisionConnectData
+
     # Guest instance
     _guest = None
-
-    # Supported keys
-    _keys = ["guest", "key", "user", "password", "port"]
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
@@ -67,14 +79,6 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
             ]
         return options
 
-    def default(self, option: str, default: Optional[Any] = None) -> Any:
-        """ Return default data for given option """
-        # User root as the default user
-        if option == 'user':
-            return 'root'
-        # No other defaults available
-        return default
-
     def wake(self, data: Optional[GuestSshData] = None) -> None:  # type: ignore[override]
         """ Wake up the plugin, process data, apply options """
         super().wake(data=data)
@@ -96,7 +100,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         if not guest:
             raise tmt.utils.SpecificationError(
                 'Provide a host name or an ip address to connect.')
-        data = GuestSshData(
+        data = ConnectGuestData(
             role=self.get('role'),
             guest=guest,
             user=user

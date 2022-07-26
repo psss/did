@@ -1,7 +1,7 @@
+import dataclasses
 import os.path
-import sys
 import tempfile
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 import click
 import requests
@@ -10,22 +10,31 @@ import tmt
 import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
-from tmt.steps import Step
 from tmt.steps.provision import Guest
 from tmt.utils import PrepareError, retry_session
 
-if sys.version_info >= (3, 8):
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
 
-StepDataType = TypedDict(
-    'StepDataType',
-    {
-        'playbook': List[str],
-        'playbooks': List[str]
-        }
-    )
+class _RawAnsibleStepData(tmt.steps._RawStepData, total=False):
+    playbook: Union[str, List[str]]
+    playbooks: List[str]
+
+
+# TODO: remove `ignore` with follow-imports enablement
+@dataclasses.dataclass
+class PrepareAnsibleData(tmt.steps.prepare.PrepareStepData):  # type: ignore[misc]
+    playbook: List[str] = dataclasses.field(default_factory=list)
+    extra_args: Optional[str] = None
+
+    @classmethod
+    def pre_normalization(cls, raw_data: _RawAnsibleStepData, logger: tmt.utils.Common) -> None:
+        super().pre_normalization(raw_data, logger)
+
+        # Perform `playbook` normalization here, so we could merge `playbooks` to it.
+        playbook = raw_data.pop('playbook', [])
+        raw_data['playbook'] = [playbook] if isinstance(playbook, str) else playbook
+
+        assert isinstance(raw_data['playbook'], list)
+        raw_data['playbook'] += raw_data.pop('playbooks', [])
 
 
 @tmt.steps.provides_method('ansible')
@@ -65,15 +74,7 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     Default order of required packages installation is '70'.
     """
 
-    # Supported keys
-    _keys = ["playbook", "extra-args"]
-
-    def __init__(self, step: Step, data: StepDataType) -> None:
-        """ Store plugin name, data and parent step """
-        super().__init__(step, data)
-        # Rename plural playbooks to singular
-        if 'playbooks' in self.data:
-            self.data['playbook'] = self.data.pop('playbooks')
+    _data_class = PrepareAnsibleData
 
     # TODO: fix types once superclass gains its annotations
     @classmethod
@@ -87,20 +88,6 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
                 '--extra-args', metavar='EXTRA-ARGS',
                 help='Optional arguments for ansible-playbook.')
             ] + super().options(how)
-
-    def default(self, option: str, default: Optional[Any] = None) -> Any:
-        """ Return default data for given option """
-        if option == 'playbook':
-            return []
-        return default
-
-    # TODO: use better types once superclass gains its annotations
-    def wake(self) -> None:
-        """ Wake up the plugin, process data, apply options """
-        super().wake()
-
-        # Convert to list if necessary
-        tmt.utils.listify(self.data, keys=['playbook'])
 
     def go(self, guest: Guest) -> None:
         """ Prepare the guests """

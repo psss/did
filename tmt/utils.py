@@ -924,10 +924,9 @@ def ascii(text: Any) -> bytes:
 
 
 def listify(
-        data: Union[Tuple[Any, ...], List[Any], str, Dict[Any, Any], 'tmt.steps.StepData'],
+        data: Union[Tuple[Any, ...], List[Any], str, Dict[Any, Any]],
         split: bool = False,
-        keys: Optional[List[str]] = None) -> Union[List[Any], Dict[Any, Any],
-                                                   'tmt.steps.StepData']:
+        keys: Optional[List[str]] = None) -> Union[List[Any], Dict[Any, Any]]:
     """
     Ensure that variable is a list, convert if necessary
     For dictionaries check all items or only those with provided keys.
@@ -943,8 +942,7 @@ def listify(
     if isinstance(data, dict):
         for key in keys or data:
             if key in data:
-                # TODO: this "type: ignore" should go away once StepData becomes a dataclass
-                data[key] = listify(data[key], split=split)  # type: ignore
+                data[key] = listify(data[key], split=split)
         return data
     return [data]
 
@@ -1372,7 +1370,7 @@ class SerializableContainer:
     @property
     def is_bare(self) -> bool:
         """
-        Check whether all keys are set to their default values.
+        Check whether all keys are either unset or have their default value.
 
         :returns: ``True`` if all keys either hold their default value
             or are not set at all, ``False`` otherwise.

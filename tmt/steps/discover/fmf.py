@@ -1,8 +1,10 @@
+import dataclasses
 import glob
 import os
 import re
 import shutil
 import subprocess
+from typing import List, Optional
 
 import click
 import fmf
@@ -11,7 +13,46 @@ import tmt
 import tmt.beakerlib
 import tmt.steps
 import tmt.steps.discover
+import tmt.utils
 from tmt.utils import git_clone
+
+
+@dataclasses.dataclass
+class DiscoverFmfStepData(tmt.steps.discover.DiscoverStepData):
+    url: Optional[str] = None
+    ref: Optional[str] = None
+    path: Optional[str] = None
+    test: List[str] = dataclasses.field(default_factory=list)
+    link: List[str] = dataclasses.field(default_factory=list)
+    filter: List[str] = dataclasses.field(default_factory=list)
+    modified_only: bool = False
+    modified_url: Optional[str] = None
+    modified_ref: Optional[str] = None
+    dist_git_init: bool = False
+    dist_git_remove_fmf_root: bool = False
+    dist_git_merge: bool = False
+    dist_git_extract: Optional[str] = None
+    fmf_id: bool = False
+    exclude: List[str] = dataclasses.field(default_factory=list)
+
+    # Legacy fields
+    repository: Optional[str] = None
+    revision: Optional[str] = None
+
+    _normalize_test = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    _normalize_link = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    _normalize_filter = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    _normalize_exclude = tmt.utils.NormalizeKeysMixin._normalize_string_list
+
+    def post_normalization(self, raw_data: tmt.steps._RawStepData,
+                           logger: tmt.utils.Common) -> None:
+        super().post_normalization(raw_data, logger)
+
+        if self.repository:
+            self.url = self.repository
+
+        if self.revision:
+            self.ref = self.revision
 
 
 @tmt.steps.provides_method('fmf')
@@ -87,13 +128,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     not modified.
     """
 
-    # Supported keys
-    _keys = [
-        "url", "ref", "path", "test", "link", "filter",
-        "modified-only", "modified-url", "modified-ref",
-        "dist-git-init", "dist-git-remove-fmf-root", "dist-git-merge",
-        "dist-git-extract",
-        "fmf-id", "exclude"]
+    _data_class = DiscoverFmfStepData
 
     REF_OPTION = click.option(
         '-r', '--ref', metavar='REVISION',
@@ -171,20 +206,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                      'present, otherwise top directory (shortcut "/").'
                 ),
             ] + super().options(how)
-
-    def wake(self):
-        """ Wake up the plugin, process data, apply options """
-        # Handle backward-compatible stuff
-        if 'repository' in self.data:
-            self.data['url'] = self.data.pop('repository')
-        if 'revision' in self.data:
-            self.data['ref'] = self.data.pop('revision')
-
-        # Make sure that 'exclude', 'filter' and 'test' keys are lists
-        tmt.utils.listify(self.data, keys=["exclude", "filter", "test"])
-
-        # Process command line options, apply defaults
-        super().wake()
 
     @property
     def is_in_standalone_mode(self):

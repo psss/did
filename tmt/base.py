@@ -262,6 +262,8 @@ class Core(tmt.utils.Common):
 
     def _normalize_adjust(
             self, value: Union[_RawAdjustRule, List[_RawAdjustRule]]) -> List[_RawAdjustRule]:
+        if value is None:
+            return []
         return [value] if not isinstance(value, list) else value
 
     def _normalize_tier(self, value: Optional[Union[int, str]]) -> Optional[str]:
@@ -399,7 +401,7 @@ class Core(tmt.utils.Common):
 
             value = getattr(self, key)
 
-            if key == 'link':
+            if key == 'link' and value:
                 data[key] = value.links
 
             else:
@@ -2229,7 +2231,7 @@ class Clean(tmt.utils.Common):
 
     def _matches_how(self, plan):
         """ Check if the given plan matches options """
-        how = plan.provision.data[0]['how']
+        how = plan.provision.data[0].how
         target_how = self.opt('how')
         if target_how:
             return how == target_how
@@ -2464,7 +2466,7 @@ class Result:
         return data
 
 
-class Link:
+class Link(tmt.utils.SerializableContainer):
     """ Core attribute link parsing """
 
     # The list of all supported link relations

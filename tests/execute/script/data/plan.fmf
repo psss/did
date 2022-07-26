@@ -1,7 +1,8 @@
 discover:
     how: shell
     tests:
-      - test: echo discover script
+      - name: dummy tests
+        test: echo discover script
 provision:
     how: local
 execute:

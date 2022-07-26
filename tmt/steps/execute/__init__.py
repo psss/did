@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import re
 import time
@@ -99,14 +100,20 @@ SCRIPTS = (
     )
 
 
+@dataclasses.dataclass
+class ExecuteStepData(tmt.steps.WhereableStepData, tmt.steps.StepData):
+    # TODO: ugly circular dependency (see tmt.base.DEFAULT_TEST_DURATION_L2)
+    duration: str = '1h'
+    exit_first: bool = False
+
+
 class ExecutePlugin(tmt.steps.Plugin):
     """ Common parent of execute plugins """
 
+    _data_class = ExecuteStepData
+
     # List of all supported methods aggregated from all plugins of the same step.
     _supported_methods: List[tmt.steps.Method] = []
-
-    # Common keys for all execute plugins
-    _common_keys = ["exit-first"]
 
     # Internal executor is the default implementation
     how = 'tmt'
@@ -377,7 +384,7 @@ class Execute(tmt.steps.Step):
 
     _plugin_base_class = ExecutePlugin
 
-    def __init__(self, plan: "tmt.Plan", data: tmt.steps.StepData) -> None:
+    def __init__(self, plan: "tmt.Plan", data: tmt.steps.RawStepDataArgument) -> None:
         """ Initialize execute step data """
         super().__init__(plan=plan, data=data)
         # List of Result() objects representing test results
@@ -386,9 +393,36 @@ class Execute(tmt.steps.Step):
         # Default test framework and mapping old methods
         # FIXME remove when we drop the old execution methods
         self._framework = DEFAULT_FRAMEWORK
+
+    def _map_old_methods(self, data: List[tmt.steps.StepData]) -> None:
+        """ Map the old execute methods in a backward-compatible way """
+        how = data[0].how
+        matched = re.search(r"^(shell|beakerlib)(\.tmt)?$", how)
+        if not matched:
+            return
+        # Show the old method deprecation warning to users
+        self.warn(f"The '{how}' execute method has been deprecated.")
+        # Map the old syntax to the appropriate executor
+        # shell, beakerlib ---> tmt
+        # shell.tmt, beakerlib.tmt ---> tmt
+        how = 'tmt'
+        self.warn(f"Use 'how: {how}' in the execute step instead (L2).")
+        data[0].how = how
+        # Store shell or beakerlib as the default test framework
+        # (used when the framework is not defined in the L1 metadata)
+        framework = matched.group(1)
+        self.warn(f"Set 'framework: {framework}' in test metadata (L1).")
+        self._framework = framework
+        self.warn("Support for old methods will be dropped in tmt-2.0.")
+
+    def _normalize_data(self, raw_data: List[tmt.steps._RawStepData]) -> List[tmt.steps.StepData]:
+        data = super()._normalize_data(raw_data)
+
         # Map old methods now if there is no run (and thus no wake up)
-        if not self.plan.my_run:
-            self._map_old_methods()
+        # TODO: if not self.plan.my_run:
+        self._map_old_methods(data)
+
+        return data
 
     def load(self) -> None:
         """ Load test results """
@@ -407,27 +441,6 @@ class Execute(tmt.steps.Step):
             (result.name, result.export()) for result in self.results()])
         self.write('results.yaml', tmt.utils.dict_to_yaml(results))
 
-    def _map_old_methods(self) -> None:
-        """ Map the old execute methods in a backward-compatible way """
-        how = self.data[0]['how']
-        matched = re.search(r"^(shell|beakerlib)(\.tmt)?$", how)
-        if not matched:
-            return
-        # Show the old method deprecation warning to users
-        self.warn(f"The '{how}' execute method has been deprecated.")
-        # Map the old syntax to the appropriate executor
-        # shell, beakerlib ---> tmt
-        # shell.tmt, beakerlib.tmt ---> tmt
-        how = 'tmt'
-        self.warn(f"Use 'how: {how}' in the execute step instead (L2).")
-        self.data[0]['how'] = how
-        # Store shell or beakerlib as the default test framework
-        # (used when the framework is not defined in the L1 metadata)
-        framework = matched.group(1)
-        self.warn(f"Set 'framework: {framework}' in test metadata (L1).")
-        self._framework = framework
-        self.warn("Support for old methods will be dropped in tmt-2.0.")
-
     def wake(self) -> None:
         """ Wake up the step (process workdir and command line) """
         super().wake()
@@ -438,8 +451,9 @@ class Execute(tmt.steps.Step):
                 "Multiple execute steps defined in '{}'.".format(self.plan))
 
         # Choose the right plugin and wake it up
-        self._map_old_methods()
-        executor = ExecutePlugin.delegate(self, self.data[0])
+        # TODO: with generic BasePlugin, delegate() should return more fitting type,
+        # not the base class.
+        executor = cast(ExecutePlugin, ExecutePlugin.delegate(self, data=self.data[0]))
         executor.wake()
         self._phases.append(executor)
 
@@ -454,7 +468,7 @@ class Execute(tmt.steps.Step):
 
     def show(self) -> None:
         """ Show execute details """
-        ExecutePlugin.delegate(self, self.data[0]).show()
+        ExecutePlugin.delegate(self, data=self.data[0]).show()
 
     def summary(self) -> None:
         """ Give a concise summary of the execution """

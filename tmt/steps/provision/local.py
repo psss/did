@@ -1,8 +1,15 @@
+import dataclasses
 from typing import Any, List, Optional, Union
 
 import tmt
 import tmt.steps
 import tmt.steps.provision
+import tmt.utils
+
+
+@dataclasses.dataclass
+class ProvisionLocalData(tmt.steps.provision.GuestData, tmt.steps.StepData):
+    pass
 
 
 @tmt.steps.provides_method('local')
@@ -23,6 +30,8 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
     If there are admin rights required (for example in the prepare step)
     you might be asked for a sudo password.
     """
+
+    _data_class = ProvisionLocalData
 
     # Guest instance
     _guest = None

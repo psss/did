@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import os
 import xml.etree.ElementTree as ET
@@ -14,12 +15,21 @@ from .junit import make_junit_xml
 DEFAULT_NAME = 'xunit.xml'
 
 
+@dataclasses.dataclass
+class ReportPolarionData(tmt.steps.StepData):
+    file: Optional[str] = None
+    no_upload: bool = False
+    project_id: Optional[str] = None
+    testrun_title: Optional[str] = None
+
+
 @tmt.steps.provides_method('polarion')
 class ReportPolarion(tmt.steps.report.ReportPlugin):
     """
     Write test results into a xUnit file and upload to Polarion
     """
-    _keys = ['file', 'no-upload', 'project-id', 'testrun-title']
+
+    _data_class = ReportPolarionData
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:

@@ -1,6 +1,7 @@
 
 """ Step Classes """
 
+import dataclasses
 import re
 import sys
 import textwrap
@@ -72,14 +73,97 @@ class Phase(tmt.utils.Common):
 PhaseT = TypeVar('PhaseT', bound=Phase)
 
 
-class StepData(TypedDict, total=False):
+_RawStepData = TypedDict('_RawStepData', {
+    'how': str,
+    'name': str
+}, total=False)
+
+RawStepDataArgument = Union[_RawStepData, List[_RawStepData]]
+
+
+T = TypeVar('T', bound='StepData')
+
+
+@dataclasses.dataclass
+class StepData(tmt.utils.NormalizeKeysMixin, tmt.utils.SerializableContainer):
     """
-    Step data structure
+    Keys necessary to describe, create, save and restore a step.
+
+    Very basic set of keys shared across all steps.
+
+    Provides basic functionality for transition between "raw" step data, which
+    consists of fmf nodes and CLI options, and this container representation with
+    keys and types more suitable for internal use.
+
+    Implementation expects simple 1:1 relation between ``StepData`` attributes - keys -
+    and their fmf/CLI sources, where keys replace options' dashes (``-``) with
+    underscores (``_``). For example, to hold value of an fmf key ``foo-bar`` - or
+    value of a corresponding CLI option, ``--foo-bar``, a step data class should
+    declare key named ``foo_data``. All ``StepData`` methods would honor this mapping.
     """
+
+    # TODO: we can easily add lists of keys for various verbosity levels...
+    KEYS_SHOW_ORDER = ['name', 'how']
+
     name: str
     how: str
-    order: Optional[int]
-    tests: Optional[List['tmt.base.Test']]
+    order: int = tmt.utils.DEFAULT_PLUGIN_ORDER
+    summary: Optional[str] = None
+
+    def to_raw(self) -> _RawStepData:
+        """
+        Serialize step data instance to a raw representation.
+
+        The returned value can be used to recreate step data when given
+        to :py:meth:`from_raw`.
+        """
+
+        return cast(_RawStepData, {
+            tmt.utils.key_to_option(key): value
+            for key, value in self.items()
+            })
+
+    @classmethod
+    def pre_normalization(cls, raw_data: _RawStepData, logger: tmt.utils.Common) -> None:
+        """ Called before normalization, useful for tweaking raw data """
+
+        logger.debug(f'{cls.__name__}: original raw data', str(raw_data), level=4)
+
+    def post_normalization(self, raw_data: _RawStepData, logger: tmt.utils.Common) -> None:
+        """ Called after normalization, useful for tweaking normalized data """
+
+        pass
+
+    @classmethod
+    def from_raw(cls: Type[T], raw_data: _RawStepData, logger: tmt.utils.Common) -> T:
+        """
+        Unserialize step data instance from its a raw representation.
+        """
+
+        cls.pre_normalization(raw_data, logger)
+
+        data = cls(name=raw_data['name'], how=raw_data['how'])
+        data._load_keys(cast(Dict[str, Any], raw_data), cls.__name__, logger)
+
+        data.post_normalization(raw_data, logger)
+
+        return data
+
+
+@dataclasses.dataclass
+class WhereableStepData:
+    """
+    Keys shared by step data that may be limited to a particular guest.
+
+    To be used as a mixin class, adds necessary keys.
+
+    See [1] and [2] for specification.
+
+    1. https://tmt.readthedocs.io/en/stable/spec/plans.html#where
+    2. https://tmt.readthedocs.io/en/stable/spec/plans.html#spec-plans-prepare-where
+    """
+
+    where: Optional[str] = None
 
 
 class Step(tmt.utils.Common):
@@ -93,10 +177,24 @@ class Step(tmt.utils.Common):
     # Refers to a base class for all plugins registered with this step.
     _plugin_base_class: Type['BasePlugin']
 
+    #: Stores the normalized step data. Initialized first time step's `data`
+    #: is accessed.
+    #
+    # The delayed initialization is necessary to support `how` changes via
+    # command-line - code instantiating steps must be able to invalidate
+    # and replace raw step data entries before they get normalized and become
+    # the single source of information for plugins involved.
+    _data: List[StepData]
+
+    #: Stores the original raw step data. Initialized by :py:meth:`__init__`
+    #: or :py:meth:`wake`, and serves as a source for normalization performed
+    #: by :py:meth:`_normalize_data`.
+    _raw_data: List[_RawStepData]
+
     def __init__(
             self,
             plan: 'Plan',
-            data: Optional[Union[StepData, List[StepData]]] = None,
+            data: Optional[RawStepDataArgument] = None,
             name: Optional[str] = None,
             workdir: tmt.utils.WorkdirArgumentType = None) -> None:
         """ Initialize and check the step data """
@@ -106,37 +204,69 @@ class Step(tmt.utils.Common):
         self._status: Optional[str] = None
         self._phases: List[Phase] = []
 
-        # Normalize `data` attribute to carry a list of step configuration data, one item per
+        # Normalize raw data to be a list of step configuration data, one item per
         # distinct step configuration. Make sure all items have `name`` and `how` keys.
-        self.data: List[StepData] = []
+        #
+        # NOTE: this is not a normalization step as performed by NormalizeKeysMixin.
+        # Here we make sure the raw data can be consumed by the delegation code, we
+        # do not modify any existing content of raw data items.
 
         # Create an empty step by default (can be updated from cli)
         if data is None:
-            self.data = [{}]
+            self._raw_data = [{}]
 
         # Convert to list if only a single config provided
         elif isinstance(data, dict):
-            self.data = [data]
+            self._raw_data = [data]
 
         # List is as good as it gets
         elif isinstance(data, list):
-            self.data = data
+            self._raw_data = data
 
         # Shout about invalid configuration
         else:
             raise tmt.utils.GeneralError(
                 f"Invalid '{self}' config in '{self.plan}'.")
 
-        # Final sanity checks
-        for i, single_config_data in enumerate(self.data):
+        for i, raw_datum in enumerate(self._raw_data):
             # Add default unique names even to multiple configs so that the users
             # don't need to specify it if they don't care about the name
-            if 'name' not in single_config_data:
-                single_config_data['name'] = f'{tmt.utils.DEFAULT_NAME}-{i}'
+            if raw_datum.get('name', None) is None:
+                raw_datum['name'] = f'{tmt.utils.DEFAULT_NAME}-{i}'
 
             # Set 'how' to the default if not specified
-            if single_config_data.get('how') is None:
-                single_config_data['how'] = self.DEFAULT_HOW
+            if raw_datum.get('how', None) is None:
+                raw_datum['how'] = self.DEFAULT_HOW
+
+    def _normalize_data(self, raw_data: List[_RawStepData]) -> List[StepData]:
+        """
+        Normalize step data entries.
+
+        Every entry of ``raw_data`` is converted into an instance of
+        :py:class:`StepData` or one of its subclasses. Particular class
+        is derived from a plugin identified by raw data's ``how`` field
+        and step's plugin registry.
+        """
+
+        data: List[StepData] = []
+
+        for raw_datum in raw_data:
+            plugin = self._plugin_base_class.delegate(self, raw_data=raw_datum)
+
+            data.append(plugin.data)
+
+        return data
+
+    @property
+    def data(self) -> List[StepData]:
+        if not hasattr(self, '_data'):
+            self._data = self._normalize_data(self._raw_data)
+
+        return self._data
+
+    @data.setter
+    def data(self, data: List[StepData]) -> None:
+        self._data = data
 
     @property
     def enabled(self) -> Optional[bool]:
@@ -203,11 +333,13 @@ class Step(tmt.utils.Common):
     def load(self) -> None:
         """ Load status and step data from the workdir """
         try:
-            content: Dict[Any, Any] = tmt.utils.yaml_to_dict(
-                self.read('step.yaml'))
+            raw_step_data: Dict[Any, Any] = tmt.utils.yaml_to_dict(self.read('step.yaml'))
             self.debug('Successfully loaded step data.', level=2)
-            self.data = content['data']
-            self.status(content['status'])
+
+            self.data = [
+                StepData.unserialize(raw_datum) for raw_datum in raw_step_data['data']
+                ]
+            self.status(raw_step_data['status'])
         except tmt.utils.GeneralError:
             self.debug('Step data not found.', level=2)
 
@@ -215,7 +347,7 @@ class Step(tmt.utils.Common):
         """ Save status and step data to the workdir """
         content: Dict[str, Any] = {
             'status': self.status(),
-            'data': self.data
+            'data': [datum.to_serialized() for datum in self.data]
             }
         self.write('step.yaml', tmt.utils.dict_to_yaml(content))
 
@@ -242,21 +374,55 @@ class Step(tmt.utils.Common):
         # order to cover a very frequent use case 'tmt run --last report'
         # FIXME find a better way how to enable always-force per plugin
         if (isinstance(self, tmt.steps.report.Report) and
-                self.data[0].get('how') in ['display', 'html']):
+                self.data[0].how in ['display', 'html']):
             self.debug("Report step always force mode enabled.")
             self._workdir_cleanup()
             self.status('todo')
 
         # Nothing more to do when the step is already done
         if self.status() == 'done':
+            self.debug('Step is done, not touching its data.')
             return
 
         # Override step data with command line options
         how: str = self.opt('how')
         if how is not None:
-            for data in self.data:
-                assert isinstance(data, dict)
-                data['how'] = how
+            # If 'how' has been given, when it comes to current entries in `self.data`,
+            # there are two options:
+            #
+            # * entry's `how` is the same as the one given via command-line. Then we can
+            # keep step data we already have.
+            # * entry's `how` is different, and then we need to throw the entry away and
+            # replace it with new `how`.
+            #
+            # To handle both variants, we replace `self.data` with new set of entries,
+            # based on newly constructed set of raw data.
+            self.debug(f'CLI-provided how={how} overrides all existing step data', level=4)
+
+            _raw_data: List[_RawStepData] = []
+
+            for datum in self.data:
+                # We can re-use this one - to make handling easier, just dump it to "raw"
+                # form for _normalize_data().
+                if datum.how == how:
+                    self.debug(f'  compatible:   {datum}', level=4)
+                    _raw_data.append(datum.to_raw())
+
+                # Mismatch, throwing away, replacing with new `how` - but we can keep the name.
+                else:
+                    self.debug(f'  incompatible: {datum}', level=4)
+                    _raw_data.append({
+                        'name': datum.name,
+                        'how': how
+                        })
+
+            self.data = self._normalize_data(_raw_data)
+            self._raw_data = _raw_data
+
+            self.debug('updated data', str(self.data), level=4)
+
+        else:
+            self.debug('CLI did not change existing step data', level=4)
 
     def setup_actions(self) -> None:
         """ Insert login and reboot plugins if requested """
@@ -365,13 +531,6 @@ class Method:
         return re.sub('\n\n', '\n\n\b\n', usage)
 
 
-class PluginData(TypedDict, total=False):
-    """ Step data structure """
-    name: Optional[str]
-    how: Optional[str]
-    order: Optional[int]
-
-
 def provides_method(
         name: str,
         doc: Optional[str] = None,
@@ -448,14 +607,18 @@ class BasePlugin(Phase, metaclass=PluginIndex):
     # except for provision (virtual) and report (display)
     how: str = 'shell'
 
-    # Common keys for all plugins of given step
-    _common_keys: List[str] = []
-
-    # Keys specific for given plugin
-    _keys: List[str] = []
-
     # List of all supported methods aggregated from all plugins of the same step.
     _supported_methods: List[Method] = []
+
+    _data_class: Type[StepData] = StepData
+    data: StepData
+
+    # TODO: do we need this list? Can whatever code is using it use _data_class directly?
+    # List of supported keys
+    # (used for import/export to/from attributes during load and save)
+    @property
+    def _keys(self) -> List[str]:
+        return list(self._data_class.keys())
 
     def __init__(
             self,
@@ -463,30 +626,12 @@ class BasePlugin(Phase, metaclass=PluginIndex):
             data: StepData,
             workdir: tmt.utils.WorkdirArgumentType = None) -> None:
         """ Store plugin name, data and parent step """
-
-        # Ensure that plugin data contains name
-        if 'name' not in data:
-            raise tmt.utils.GeneralError(
-                f"Missing 'name' in the {step} step config "
-                f"of the '{step.plan}' plan.")
-
-        # Initialize plugin order
-        if 'order' not in data or data['order'] is None:
-            order = tmt.utils.DEFAULT_PLUGIN_ORDER
-        else:
-            try:
-                order = int(data['order'])
-            except ValueError:
-                raise tmt.utils.SpecificationError(
-                    f"Invalid order '{data['order']}' in {step} config "
-                    f"'{data['name']}'. Should be an integer.")
-
         # Store name, data and parent step
         super().__init__(
             parent=step,
-            name=data['name'],
+            name=data.name,
             workdir=workdir,
-            order=order)
+            order=data.order)
         # It is not possible to use TypedDict here because
         # all keys are not known at the time of the class definition
         self.data = data
@@ -538,76 +683,170 @@ class BasePlugin(Phase, metaclass=PluginIndex):
     def delegate(
             cls,
             step: Step,
-            data: StepData) -> 'BasePlugin':
+            data: Optional[StepData] = None,
+            raw_data: Optional[_RawStepData] = None) -> 'BasePlugin':
         """
         Return plugin instance implementing the data['how'] method
 
         Supports searching by method prefix as well (e.g. 'virtual').
         The first matching method with the lowest 'order' wins.
         """
+
+        if data is not None:
+            how = data.how
+        elif raw_data is not None:
+            how = raw_data['how']
+        else:
+            raise tmt.utils.GeneralError('Either data or raw data must be given.')
+
+        step.debug(
+            f'{cls.__name__}.delegate(step={step}, data={data}, raw_data={raw_data})',
+            level=3)
+
         # Filter matching methods, pick the one with the lowest order
         for method in cls.methods():
             assert method.class_ is not None
-            if method.name.startswith(data['how']):
+            if method.name.startswith(how):
                 step.debug(
                     f"Using the '{method.class_.__name__}' plugin "
-                    f"for the '{data['how']}' method.", level=2)
-                plugin = method.class_(step, data)
+                    f"for the '{how}' method.", level=2)
+
+                plugin_class = method.class_
+                plugin_data_class = plugin_class._data_class
+
+                # If we're given raw data, construct a step data instance, applying
+                # normalization in the process.
+                if raw_data is not None:
+                    try:
+                        data = plugin_data_class.from_raw(raw_data, step)
+
+                    except Exception as exc:
+                        raise tmt.utils.GeneralError(
+                            f'Failed to load step data for {plugin_data_class.__name__}: {exc}',
+                            original=exc)
+
+                assert data is not None
+                assert data.__class__ is plugin_data_class, \
+                    f'Data package is instance of {data.__class__.__name__}, ' \
+                    f'plugin {plugin_class.__name__} ' \
+                    f'expects {plugin_data_class.__name__}'
+
+                plugin = plugin_class(step, data)
                 assert isinstance(plugin, BasePlugin)
                 return plugin
 
-        show_step_method_hints(step, step.name, data['how'])
+        show_step_method_hints(step, step.name, how)
         # Report invalid method
         if step.plan is None:
             raise tmt.utils.GeneralError(f"Plan for {step.name} is not set.")
         raise tmt.utils.SpecificationError(
-            f"Unsupported {step.name} method '{data['how']}' "
+            f"Unsupported {step.name} method '{how}' "
             f"in the '{step.plan.name}' plan.")
 
     def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """
-        return default
+
+        value = self._data_class.default(tmt.utils.option_to_key(option), default=default)
+
+        if value is None:
+            return default
+
+        return value
 
     def get(self, option: str, default: Optional[Any] = None) -> Any:
         """ Get option from plugin data, user/system config or defaults """
+
         # Check plugin data first
+        #
+        # Since self.data is a dataclass instance, the option would probably exist.
+        # As long as there's no typo in name, it would be defined. Which complicates
+        # the handling of "default" as in "return *this* when attribute is unset".
+        key = tmt.utils.option_to_key(option)
+
         try:
-            # FIXME Enable type check once StepData defined more precisely
-            return self.data[option]  # type: ignore
-        except KeyError:
+            value = getattr(self.data, key)
+
+            # If the value is no longer the default one, return the value. If it
+            # still matches the default value, instead of returning the default
+            # value right away, call `self.default()` so the plugin has chance to
+            # catch calls for computed or virtual keys, keys that don't exist as
+            # atributes of our step data.
+            #
+            # One way would be to subclass step's base plugin class' step data class
+            # (which is a subclass of `StepData` and `SerializedContainer`), and
+            # override its `default()` method to handle these keys. But, plugins often
+            # are pretty happy with the base data class, many don't need their own
+            # step data class, and plugin developer might be forced to create a subclass
+            # just for this single method override.
+            #
+            # Instead, keep plugin's `default()` around - everyone can use it to get
+            # default value for a given option/key, and plugins can override it as needed
+            # (they will always subclass step's base plugin class anyway!). Default
+            # implementation would delegate to step data `default()`, and everyone's
+            # happy.
+
+            if value != self.data.default(key):
+                return value
+
+        except AttributeError:
             pass
 
-        # Check user config and system config
-        # TODO
-
-        # Finally check plugin defaults
         return self.default(option, default)
 
     def show(self, keys: Optional[List[str]] = None) -> None:
         """ Show plugin details for given or all available keys """
+        # Avoid circular imports
+        import tmt.base
+
         # Show empty config with default method only in verbose mode
-        if (set(self.data.keys()) == set(['how', 'name'])
-                and not self.opt('verbose')
-                and self.data['how'] == self.how):
+        if self.data.is_bare and not self.opt('verbose'):
             return
         # Step name (and optional summary)
         echo(tmt.utils.format(
-            self.step.name, self.get('summary', ''),
+            self.step.name, self.get('summary') or '',
             key_color='blue', value_color='blue'))
         # Show all or requested step attributes
-        base_keys = ['name', 'how']
         if keys is None:
-            keys = self._common_keys + self._keys
-        for key in base_keys + keys:
+            keys = list(set(self.data.keys()))
+
+        def _emit_key(key: str) -> None:
             # Skip showing the default name
             if key == 'name' and self.name.startswith(tmt.utils.DEFAULT_NAME):
-                continue
+                return
+
             # Skip showing summary again
             if key == 'summary':
-                continue
+                return
+
             value = self.get(key)
-            if value is not None:
-                echo(tmt.utils.format(key, value))
+
+            # No need to show the default order
+            if key == 'order' and value == tmt.base.DEFAULT_ORDER:
+                return
+
+            if value is None:
+                return
+
+            # TODO: hides keys that were used to be in the output...
+            # if value == self.data.default(key):
+            #     return
+
+            echo(tmt.utils.format(tmt.utils.key_to_option(key), value))
+
+        # First, follow the order prefered by step data, but emit only the keys
+        # that are allowed. Each emitted key would be removed so we wouldn't
+        # emit it again when showing the unsorted rest of keys.
+        for key in self.data.KEYS_SHOW_ORDER:
+            if key not in keys:
+                continue
+
+            _emit_key(key)
+
+            keys.remove(key)
+
+        # Show the rest
+        for key in keys:
+            _emit_key(key)
 
     def enabled_on_guest(self, guest: 'Guest') -> bool:
         """ Check if the plugin is enabled on the specific guest """
@@ -615,6 +854,12 @@ class BasePlugin(Phase, metaclass=PluginIndex):
         if not where:
             return True
         return where in (guest.name, guest.role)
+
+    def _update_data_from_options(self, keys: List[str]) -> None:
+        for key in keys:
+            value = self.opt(tmt.utils.key_to_option(key))
+            if value:
+                setattr(self.data, key, value)
 
     def wake(self) -> None:
         """
@@ -629,13 +874,25 @@ class BasePlugin(Phase, metaclass=PluginIndex):
         in the 'keys' parameter can be used to override only
         selected ones.
         """
-        keys = self._common_keys + self._keys
 
-        for key in keys:
-            value = self.opt(key)
-            if value:
-                # FIXME Enable type check once StepData defined more precisely
-                self.data[key] = value  # type: ignore
+        assert self.data.__class__ is self._data_class, \
+            f'Plugin {self.__class__.__name__} woken with incompatible ' \
+            f'data {self.data}, ' \
+            f'expects {self._data_class.__name__}'
+
+        if self.step.status() == 'done':
+            self.debug('step is done, not overwriting plugin data')
+            return
+
+        # TODO: conflicts with `upgrade` plugin which does this on purpose :/
+        # if self.opt('how') is not None:
+        #     assert self.opt('how') in [method.name for method in self.methods()], \
+        #         f'Plugin {self.__class__.__name__} woken with unsupported ' \
+        #         f'how "{self.opt("how")}", ' \
+        #         f'supported methods {", ".join([method.name for method in self.methods()])}, ' \
+        #         f'current data is {self.data}'
+
+        self._update_data_from_options(keys=self._keys)
 
     # NOTE: it's tempting to rename this method to `go()` and use more natural
     # `super().go()` in child classes' `go()` methods. But, `go()` does not have

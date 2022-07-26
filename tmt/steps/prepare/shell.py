@@ -1,4 +1,5 @@
-from typing import Any, Optional
+import dataclasses
+from typing import Any, List, Optional
 
 import click
 import fmf
@@ -8,6 +9,14 @@ import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
 from tmt.steps.provision import Guest
+
+
+# TODO: remove `ignore` with follow-imports enablement
+@dataclasses.dataclass
+class PrepareShellData(tmt.steps.prepare.PrepareStepData):  # type: ignore[misc]
+    script: List[str] = dataclasses.field(default_factory=list)
+
+    _normalize_script = tmt.utils.NormalizeKeysMixin._normalize_string_list
 
 
 # TODO: drop ignore once type annotations between modules enabled
@@ -30,8 +39,7 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     Default order of required packages installation is '70'.
     """
 
-    # Supported keys
-    _keys = ["script"]
+    _data_class = PrepareShellData
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> Any:
@@ -41,19 +49,6 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
                 '-s', '--script', metavar='SCRIPT',
                 help='Shell script to be executed.')
             ] + super().options(how)
-
-    def default(self, option: str, default: Optional[Any] = None) -> Any:
-        """ Return default data for given option """
-        if option == 'script':
-            return []
-        return default
-
-    def wake(self) -> None:
-        """ Wake up the plugin, process data, apply options """
-        super().wake()
-
-        # Convert to list if single script provided
-        tmt.utils.listify(self.data, keys=['script'])
 
     def go(self, guest: Guest) -> None:
         """ Prepare the guests """

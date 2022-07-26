@@ -1,6 +1,8 @@
+import dataclasses
 import os
 import re
 import shutil
+import sys
 from typing import Any, List, Optional, cast
 
 import click
@@ -9,7 +11,14 @@ import fmf
 import tmt
 import tmt.steps
 import tmt.steps.prepare
+import tmt.utils
 from tmt.steps.provision import Guest
+
+if sys.version_info >= (3, 8):
+    from typing import Literal
+else:
+    from typing_extensions import Literal
+
 
 COPR_URL = 'https://copr.fedorainfracloud.org/coprs'
 
@@ -318,6 +327,22 @@ class InstallRpmOstree(InstallBase):
             self.guest.execute(f"{self.command} install {self.options} {packages}")
 
 
+# TODO: remove `ignore` with follow-imports enablement
+@dataclasses.dataclass
+class PrepareInstallData(tmt.steps.prepare.PrepareStepData):  # type: ignore[misc]
+    package: List[str] = dataclasses.field(default_factory=list)
+    directory: List[str] = dataclasses.field(default_factory=list)
+    copr: List[str] = dataclasses.field(default_factory=list)
+    exclude: List[str] = dataclasses.field(default_factory=list)
+    # TODO: use enum
+    missing: Literal['skip', 'fail'] = 'fail'
+
+    _normalize_package = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    _normalize_directory = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    _normalize_copr = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    _normalize_exclude = tmt.utils.NormalizeKeysMixin._normalize_string_list
+
+
 @tmt.steps.provides_method('install')
 class PrepareInstall(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     """
@@ -365,8 +390,7 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
         No support for installing debuginfo packages at this time.
     """
 
-    # Supported keys
-    _keys = ["package", "directory", "copr", "exclude", "missing"]
+    _data_class = PrepareInstallData
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> Any:
@@ -389,22 +413,6 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
                 type=click.Choice(['fail', 'skip']),
                 help='Action on missing packages, fail (default) or skip.'),
             ] + super().options(how)
-
-    def default(self, option: str, default: Optional[Any] = None) -> Any:
-        """ Return default data for given option """
-        if option == 'missing':
-            return 'fail'
-        if option == 'exclude':
-            return []
-        return default
-
-    def wake(self) -> None:
-        """ Wake up the plugin, process data, apply options """
-        super().wake()
-        # Convert to list if necessary
-        tmt.utils.listify(
-            self.data, split=True,
-            keys=['package', 'directory', 'copr', 'exclude'])
 
     def go(self, guest: Guest) -> None:
         """ Perform preparation for the guests """

@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import types
 from typing import Any, List, Optional, cast, overload
@@ -85,6 +86,11 @@ def make_junit_xml(report: "tmt.steps.report.ReportPlugin") -> JunitTestSuite:
     return cast(JunitTestSuite, suite)
 
 
+@dataclasses.dataclass
+class ReportJUnitData(tmt.steps.StepData):
+    file: Optional[str] = None
+
+
 @tmt.steps.provides_method('junit')
 class ReportJUnit(tmt.steps.report.ReportPlugin):
     """
@@ -94,8 +100,7 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
     located in the current workdir.
     """
 
-    # Supported keys
-    _keys = ["file"]
+    _data_class = ReportJUnitData
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:

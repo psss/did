@@ -178,6 +178,11 @@ class TestcloudGuestData(tmt.steps.provision.GuestSshData):
     instance_name: Optional[str] = None
 
 
+@dataclasses.dataclass
+class ProvisionTestcloudData(TestcloudGuestData, tmt.steps.StepData):
+    pass
+
+
 @tmt.steps.provides_method('virtual.testcloud')
 class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
     """
@@ -221,11 +226,10 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
     testcloud will take care of unpacking the image for you.
     """
 
+    _data_class = ProvisionTestcloudData
+
     # Guest instance
     _guest = None
-
-    # Supported keys
-    _keys = ["image", "user", "memory", "disk", "connection", "arch"]
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
@@ -255,10 +259,6 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 help="What architecture to virtualize, host arch by default."),
             ]
         return options
-
-    def default(self, option: str, default: Any = None) -> Any:
-        """ Return default data for given option """
-        return getattr(TestcloudGuestData(), option, default)
 
     # TODO: Revisit this `type: ignore` once `Guest` becomes a generic type
     def wake(self, data: Optional[TestcloudGuestData] = None) -> None:  # type: ignore[override]
