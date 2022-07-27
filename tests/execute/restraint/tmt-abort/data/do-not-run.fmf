@@ -1,0 +1,3 @@
+summary: Should not be run
+framework: shell
+test: echo "This should not be executed either."

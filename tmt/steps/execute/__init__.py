@@ -417,22 +417,18 @@ class ExecutePlugin(tmt.steps.Plugin):
             data['note'] = f"invalid test result '{result}' in result file"
         return tmt.Result(data, name=test.name, interpret=test.result)
 
-    def check_abort_file(self, test):
+    def check_abort_file(self, test: "tmt.Test") -> bool:
         """
         Check for an abort file created by tmt-abort
 
-        If it exists raise an AbortTestError
-        exception.
+        Returns whether an abort file is present (i.e. abort occurred).
         """
         abort_file_path = os.path.join(
             self.data_path(test, full=True),
             tmt.steps.execute.TEST_DATA,
             TMT_ABORT_OUTPUT)
 
-        # Raise exception if abort file is present.
-        if os.path.exists(abort_file_path):
-            self.debug("The abort file has been detected.", level=3)
-            raise tmt.utils.AbortTestError
+        return os.path.exists(abort_file_path)
 
     @staticmethod
     def test_duration(start: float, end: float) -> str:

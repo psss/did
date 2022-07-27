@@ -315,20 +315,14 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             if self._handle_reboot(test, guest):
                 continue
             self._results.append(self.check(test))
-            try:
-                self.check_abort_file(test)
-                if (exit_first and
-                        self._results[-1].result not in ('pass', 'info')):
-                    # Clear the progress bar before outputting
-                    self._show_progress('', '', True)
-                    self.warn(
-                        f'Test {test.name} failed, stopping execution.')
-                    break
-            except tmt.utils.AbortTestError:
+            abort = self.check_abort_file(test)
+            if (abort or exit_first and
+                    self._results[-1].result not in ('pass', 'info')):
                 # Clear the progress bar before outputting
                 self._show_progress('', '', True)
+                what_happened = "aborted" if abort else "failed"
                 self.warn(
-                    f'Test {test.name} aborted, stopping execution.')
+                    f'Test {test.name} {what_happened}, stopping execution.')
                 break
             index += 1
         # Overwrite the progress bar, the test data is irrelevant
