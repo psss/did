@@ -32,7 +32,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Destination"
-        rlRun "$tmt destination 2>&1 | tee $tmp/output" 1
+        rlRun "$tmt destination 2>&1 | tee $tmp/output" 0
         rlAssertGrep 'Cloning into.*custom/openssl' $tmp/output
     rlPhaseEnd
 

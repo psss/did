@@ -173,7 +173,14 @@ the full test suite wrapper against the desired branch::
 Or schedule the full test suite under an external test system::
 
     cd tests/full
-    tmt test export --fmf-id | wow fedora-35 x86_64 --fmf-id -
+    tmt test export --fmf-id | wow fedora-35 x86_64 --fmf-id - --taskparam=BRANCH=target
+
+Or run local modifications copied to the virtual machine. Because this
+requires changes outside of the fmf root you need to run make
+which tars sources to the expected location::
+
+    cd tests/full
+    make test
 
 To run unit tests using pytest and generate coverage report::
 

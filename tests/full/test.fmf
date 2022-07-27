@@ -1,10 +1,15 @@
 summary: Run the full tmt test suite in an external system
 description: |
+    To check local changes without pushing to git:
+    make test
+
     Run under a local virtual machine:
-    tmt run
+    tmt run -vvv -e BRANCH=<tested branch>
 
     Schedule a job using workflow-tomorrow:
-    tmt test export --fmf-id | wow fedora-35 x86_64 --fmf-id -
+    tmt test export --fmf-id | wow fedora-35 x86_64 --fmf-id - --taskparam=BRANCH=<branch>
+
+    See head of the test.sh for future information
 
 test: ./test.sh
 framework: beakerlib

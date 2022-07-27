@@ -1,12 +1,11 @@
 #!/bin/bash
 . /usr/share/beakerlib/beakerlib.sh || exit 1
 
-trim() {
-    sed -e 's/ *$//g' -e 's/^ *//g'
-}
 
-get_value() {
-    grep "$1:" "$2" | cut -d':' -f2 | trim
+TEST_DIR="$(pwd)"
+
+get_value(){
+    $TEST_DIR/get_value.py "$1" "$2"
 }
 
 rlJournalStart

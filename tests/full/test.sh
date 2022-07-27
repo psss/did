@@ -7,8 +7,17 @@ USER_HOME="/home/$USER"
 
 CONNECT_RUN="/tmp/CONNECT"
 
+# Where to get sources from?
+# Set to '1' to use local checkout, otherwise git clone happens
+# Plan cannot copy it to the right location so user is expected
+# to do so (tests/full/repo_copy/.git has to exist as well)
+COPY_IN="${COPY_IN:-0}"
+
+# Set to desired tag/branch/commit (instead of the default branch)
+# Used only if COPY_IN not equal 1
 BRANCH="${BRANCH:-}"
-# Set following to 1 if you are running pre-relase
+
+# Set to '1' to keep tmt.spec as is
 PRE_RELEASE="${PRE_RELEASE:-0}"
 
 # Set to `test <options>` for test filtering
@@ -16,13 +25,13 @@ TEST_CMD="${TEST_CMD:-}"
 
 set -o pipefail
 
+
+get_value(){
+    $USER_HOME/tmt/tests/execute/reboot/get_value.py "$1" "$2"
+}
+
 rlJournalStart
     rlPhaseStartSetup
-
-        if [[ $PRE_RELEASE -eq 1 ]]; then
-            [[ -z "$BRANCH" ]] && rlDie "Please set BRANCH when running pre-release"
-        fi
-
         if ! rlIsFedora; then
             rlRun "rlImport epel/epel"
             rlRun "dnf config-manager --set-enabled epel"
@@ -34,7 +43,7 @@ rlJournalStart
                 fi
             done
 
-            #better to install SOME tmt than none (python3-html2text missing on rhel-9)
+            # Better to install SOME tmt than none (python3-html2text missing on rhel-9)
             SKIP_BROKEN="--skip-broken"
         fi
 
@@ -53,12 +62,23 @@ rlJournalStart
         # Making sure USER can r/w to the /var/tmp/tmt
         test -d /var/tmp/tmt && rlRun "chown $USER:$USER /var/tmp/tmt"
 
-        # Clone repo
-        rlRun "git clone https://github.com/teemtee/tmt $USER_HOME/tmt"
-        rlRun "pushd $USER_HOME/tmt"
-        [ -n "$BRANCH" ] && rlRun "git checkout --force '$BRANCH'"
+        # Use repo copied to tests/full/repo_copy directory
+        # use `make bundle` if you run this outside of `make test`
+        if [[ $COPY_IN -eq 1 ]]; then
+            rlRun "mkdir -p $USER_HOME/tmt"
+            rlRun "tar xzf repo_copy.tgz -C $USER_HOME/tmt"
+            rlRun "pushd $USER_HOME/tmt"
+            rlRun "chown root:root -R ."
+        else
+            # Clone repo otherwise
+            rlRun "git clone https://github.com/teemtee/tmt $USER_HOME/tmt"
+            rlRun "pushd $USER_HOME/tmt"
+            [ -n "$BRANCH" ] && rlRun "git checkout --force '$BRANCH'"
+        fi
+
         # Make current commit visible in the log
         rlRun "git show -s | cat"
+
         # Do not "patch" version for pre-release...
         [[ $PRE_RELEASE -ne 1 ]] && rlRun "sed 's/^Version:.*/Version: 9.9.9/' -i tmt.spec"
 
@@ -66,7 +86,7 @@ rlJournalStart
         rlRun "dnf builddep -y tmt.spec" 0 "Install build dependencies"
         rlRun "make rpm" || rlDie "Failed to build tmt rpms"
 
-        # From now one we can use tmt (freshly built)
+        # After this we can use tmt (install freshly built rpms)
         rlRun "find $USER_HOME/tmt/tmp/RPMS -type f -name '*rpm' | xargs dnf install -y $SKIP_BROKEN"
 
         # Make sure that libvirt is running
@@ -77,7 +97,6 @@ rlJournalStart
         # remove possible leftovers
         test -d $CONNECT_RUN && rlRun "rm -rf $CONNECT_RUN"
         test -d /var/tmp/tmt/testcloud && rlRun "rm -rf /var/tmp/tmt/testcloud"
-
 
         # Prepare fedora container image (https://tmt.readthedocs.io/en/latest/questions.html#container-package-cache)
         # but make it work with podman run  registry.fedoraproject.org/fedora:latest
@@ -99,15 +118,34 @@ rlJournalStart
         CONNECT_TO=$CONNECT_RUN/plans/default/provision/guests.yaml
         rlAssertExists $CONNECT_TO
 
-        # Patch plans/provision/connect.fmf
+        # Create new plans/provision/connect.fmf
         CONNECT_FMF=plans/provision/connect.fmf
-        echo 'summary: Connect to a running guest' > $CONNECT_FMF
-        echo 'provision:' >> $CONNECT_FMF
-        sed '/default:/d' $CONNECT_RUN/plans/default/provision/guests.yaml >> $CONNECT_FMF
+
+        cat <<EOF > $CONNECT_FMF
+summary: Connect to a running guest
+provision:
+    how: connect
+    guest: $(get_value guest $CONNECT_TO)
+    key: $(get_value key $CONNECT_TO)
+    port: $(get_value port $CONNECT_TO)
+    user: $(get_value user $CONNECT_TO)
+EOF
+
         rlLog "$(cat $CONNECT_FMF)"
 
         # Delete the plan -> container vs host are not synced so rpms might not be installable
         rlRun 'rm -f plans/install/minimal.fmf'
+
+        # Disable tests which need root #FIXME find a better way (one run with root...)
+        for t in \
+            /tests/run/permissions \
+            /tests/prepare/install \
+        ; do
+            sed '/enabled:/d' -i $USER_HOME/tmt${t}/main.fmf
+            echo 'enabled: false' >> $USER_HOME/tmt${t}/main.fmf
+        done
+
+        # Make all local changes visible in the log
         rlRun "git diff | cat"
         if [ -z "$PLANS" ]; then
             rlRun "su -l -c 'cd $USER_HOME/tmt; tmt -c how=full plans ls --filter=enabled:true > $USER_HOME/enabled_plans' $USER"
@@ -119,10 +157,10 @@ rlJournalStart
         rlPhaseStartTest "Test: $plan"
             RUN="run$(echo $plan | tr '/' '-')"
             # Core of the test runs as $USER, -l should clear all BEAKER_envs.
-            rlRun "su -l -c 'cd $USER_HOME/tmt; tmt -c how=full run --id $USER_HOME/$RUN -v plans --name $plan $TEST_CMD' $USER"
+            rlRun "su -l -c 'cd $USER_HOME/tmt; tmt -c how=full run --id $USER_HOME/$RUN -vvv -a report -h html plans --name $plan $TEST_CMD' $USER"
 
             # Upload file so one can review ASAP
-            rlRun "tar czf /tmp/$RUN.tgz $USER_HOME/$RUN"
+            rlRun "tar czf /tmp/$RUN.tgz  --exclude *.qcow2 $USER_HOME/$RUN"
             rlFileSubmit /tmp/$RUN.tgz && rm -f /tmp/$RUN.tgz
         rlPhaseEnd
     done
@@ -132,6 +170,7 @@ rlJournalStart
         rlFileRestore
         rlRun "pkill -u $USER" 0,1
         rlRun "loginctl terminate-user $USER" 0,1
-        rlRun "userdel -r $USER"
+        # Maybe add some delay?
+        rlRun "userdel -fr $USER" "0-255"
     rlPhaseEnd
 rlJournalEnd
