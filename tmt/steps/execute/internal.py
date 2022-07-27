@@ -9,53 +9,8 @@ import tmt
 import tmt.steps
 import tmt.steps.execute
 import tmt.utils
-from tmt.steps.execute import TEST_OUTPUT_FILENAME, Script
-
-# Script handling reboots, in restraint compatible fashion
-TMT_REBOOT_SCRIPT = Script("/usr/local/bin/tmt-reboot",
-                           aliases=[
-                               "/usr/local/bin/rstrnt-reboot",
-                               "/usr/local/bin/rhts-reboot"],
-                           related_variables=[
-                               "TMT_REBOOT_COUNT",
-                               "REBOOTCOUNT",
-                               "RSTRNT_REBOOTCOUNT"]
-                           )
-
-# Script handling result reporting, in restraint compatible fashion
-TMT_REPORT_RESULT_SCRIPT = Script("/usr/local/bin/tmt-report-result",
-                                  aliases=[
-                                      "/usr/local/bin/rstrnt-report-result",
-                                      "/usr/local/bin/rhts-report-result"],
-                                  related_variables=[]
-                                  )
-
-# Script for archiving a file, usable for BEAKERLIB_COMMAND_SUBMIT_LOG
-TMT_FILE_SUBMIT_SCRIPT = Script("/usr/local/bin/tmt-file-submit",
-                                aliases=[
-                                    "/usr/local/bin/rstrnt-report-log",
-                                    "/usr/local/bin/rhts-submit-log",
-                                    "/usr/local/bin/rhts_submit_log"],
-                                related_variables=[]
-                                )
-
-# Script handling text execution abortion, in restraint compatible fashion
-TMT_ABORT_SCRIPT = Script("/usr/local/bin/tmt-abort",
-                          aliases=[
-                              "/usr/local/bin/rstrnt-abort",
-                              "/usr/local/bin/rhts-abort"],
-                          related_variables=[]
-                          )
-
-# File for requesting reboot
-REBOOT_REQUEST_FILENAME = "reboot_request"
-
-# List of all available scripts
-SCRIPTS = (TMT_FILE_SUBMIT_SCRIPT,
-           TMT_REBOOT_SCRIPT,
-           TMT_REPORT_RESULT_SCRIPT,
-           TMT_ABORT_SCRIPT
-           )
+from tmt.steps.execute import (SCRIPTS, TEST_OUTPUT_FILENAME,
+                               TMT_FILE_SUBMIT_SCRIPT, TMT_REBOOT_SCRIPT)
 
 
 @tmt.steps.provides_method('tmt')
@@ -154,7 +109,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         environment["TMT_REBOOT_REQUEST"] = os.path.join(
             data_directory,
             tmt.steps.execute.TEST_DATA,
-            REBOOT_REQUEST_FILENAME)
+            TMT_REBOOT_SCRIPT.created_file)
         # Set all supported reboot variables
         for reboot_variable in TMT_REBOOT_SCRIPT.related_variables:
             environment[reboot_variable] = str(test._reboot_count)
@@ -226,7 +181,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         reboot_request_path = os.path.join(
             self.data_path(test, full=True),
             tmt.steps.execute.TEST_DATA,
-            REBOOT_REQUEST_FILENAME)
+            TMT_REBOOT_SCRIPT.created_file)
         return reboot_request_path
 
     def _handle_reboot(self, test, guest):
