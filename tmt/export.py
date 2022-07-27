@@ -762,7 +762,7 @@ def export_to_polarion(test: 'tmt.Test') -> None:
     for link in test.link:
         bug_ids_search = re.search(RE_BUGZILLA_URL, link['verifies'])
         if bug_ids_search:
-            bug_ids.append(bug_ids_search.group(1))
+            bug_ids.append(int(bug_ids_search.group(1)))
         else:
             log.debug('Failed to find bug ID in verifies link')
         polarion_url_search = re.search(RE_POLARION_URL, link['verifies'])
@@ -773,7 +773,7 @@ def export_to_polarion(test: 'tmt.Test') -> None:
 
     # Add bugs to the Polarion case
     if not dry_mode:
-        polarion_case.tcmsbug = ', '.join(bug_ids)
+        polarion_case.tcmsbug = ', '.join(str(bug_ids))
 
     # Add TCMS Case ID to Polarion case
     if test.node.get('extra-nitrate') and not dry_mode:
