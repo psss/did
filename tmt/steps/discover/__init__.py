@@ -19,8 +19,6 @@ from tmt.utils import GeneralError
 class Discover(tmt.steps.Step):
     """ Gather information about test cases to be executed. """
 
-    data: List[tmt.steps.StepData]
-
     def __init__(self, plan: 'tmt.base.Plan', data: tmt.steps.StepData):
         """ Store supported attributes, check for sanity """
         super().__init__(plan=plan, data=data)
@@ -71,7 +69,7 @@ class Discover(tmt.steps.Step):
             scripts = [scripts]
 
         # Give a warning when discover step defined as well
-        default_data = [{'name': 'default', 'how': 'shell'}]
+        default_data = [{'name': 'default-0', 'how': 'shell'}]
         if self.data and self.data != default_data:
             raise tmt.utils.DiscoverError(
                 "Use either 'discover' or 'execute' step "

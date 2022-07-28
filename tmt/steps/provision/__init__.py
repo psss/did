@@ -118,7 +118,7 @@ class Provision(tmt.steps.Step):
         self.info('summary', f'{guests} provisioned', 'green', shift=1)
         # Guest list in verbose mode
         for guest in self.guests():
-            if guest.name != tmt.utils.DEFAULT_NAME:
+            if not guest.name.startswith(tmt.utils.DEFAULT_NAME):
                 self.verbose(guest.name, color='red', shift=2)
 
     def go(self):

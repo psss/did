@@ -13,7 +13,7 @@ rlJournalStart
         rlRun "rm $rlRun_LOG"
 
         rlRun -s "tmt plan lint valid_fmf"
-        rlAssertGrep "pass fmf remote id in 'default' is valid" $rlRun_LOG
+        rlAssertGrep "pass fmf remote id in 'default-0' is valid" $rlRun_LOG
         rlAssertNotGrep 'warn summary ' $rlRun_LOG
         rlRun "rm $rlRun_LOG"
 

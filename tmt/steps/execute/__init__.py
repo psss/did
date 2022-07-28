@@ -54,7 +54,6 @@ class Execute(tmt.steps.Step):
 
     # Internal executor is the default implementation
     DEFAULT_HOW = 'tmt'
-    data: List[tmt.steps.StepData]
 
     def __init__(self, plan: "tmt.Plan", data: tmt.steps.StepData) -> None:
         """ Initialize execute step data """

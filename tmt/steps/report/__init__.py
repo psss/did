@@ -12,7 +12,6 @@ class Report(tmt.steps.Step):
 
     # Default implementation for report is display
     DEFAULT_HOW = 'display'
-    data: List[tmt.steps.StepData]
 
     def wake(self) -> None:
         """ Wake up the step (process workdir and command line) """

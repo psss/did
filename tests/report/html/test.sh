@@ -17,7 +17,7 @@ rlJournalStart
             rlRun "tmt run -av --scratch --id $run_dir execute -h $method report -h html | tee output" 2
             rlAssertGrep "summary: 2 tests passed, 1 test failed and 2 errors" output -F
 
-            HTML="$run_dir/plan/report/default/index.html"
+            HTML="$run_dir/plan/report/default-0/index.html"
 
             test_name_suffix=error
             grep -B 1 "/test/$test_name_suffix</td>" $HTML | tee $tmp/$test_name_suffix

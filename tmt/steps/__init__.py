@@ -88,47 +88,47 @@ class Step(tmt.utils.Common):
     def __init__(
             self,
             plan: 'Plan',
-            data: Optional[StepData] = None,
+            data: Optional[Union[StepData, List[StepData]]] = None,
             name: Optional[str] = None,
             workdir: tmt.utils.WorkdirArgumentType = None) -> None:
         """ Initialize and check the step data """
         super().__init__(name=name, parent=plan, workdir=workdir)
         # Initialize data
         self.plan: 'Plan' = plan
-        self.data: Union[StepData, List[StepData]] = data or {}
         self._status: Optional[str] = None
         self._phases: List[Phase] = []
 
+        # Normalize `data` attribute to carry a list of step configuration data, one item per
+        # distinct step configuration. Make sure all items have `name`` and `how` keys.
+        self.data: List[StepData] = []
+
         # Create an empty step by default (can be updated from cli)
-        if self.data is None:
-            self.data = [{'name': tmt.utils.DEFAULT_NAME}]
+        if data is None:
+            self.data = [{}]
+
         # Convert to list if only a single config provided
-        elif isinstance(self.data, dict):
-            # Give it a name unless defined
-            if not self.data.get('name'):
-                self.data['name'] = tmt.utils.DEFAULT_NAME
-            self.data = [self.data]
+        elif isinstance(data, dict):
+            self.data = [data]
+
+        # List is as good as it gets
+        elif isinstance(data, list):
+            self.data = data
+
         # Shout about invalid configuration
-        elif not isinstance(self.data, list):
+        else:
             raise tmt.utils.GeneralError(
                 f"Invalid '{self}' config in '{self.plan}'.")
 
-        # Add default unique names even to multiple configs so that the users
-        # don't need to specify it if they don't care about the name
-        for i, data in enumerate(self.data):
-            if 'name' not in data:
-                data['name'] = f'{tmt.utils.DEFAULT_NAME}-{i}'
-
         # Final sanity checks
-        for data in self.data:
+        for i, single_config_data in enumerate(self.data):
+            # Add default unique names even to multiple configs so that the users
+            # don't need to specify it if they don't care about the name
+            if 'name' not in single_config_data:
+                single_config_data['name'] = f'{tmt.utils.DEFAULT_NAME}-{i}'
+
             # Set 'how' to the default if not specified
-            if data.get('how') is None:
-                data['how'] = self.DEFAULT_HOW
-            # Ensure that each config has a name
-            if 'name' not in data and len(self.data) > 1:
-                raise tmt.utils.GeneralError(
-                    f"Missing 'name' in the {self} step config "
-                    f"of the '{self.plan}' plan.")
+            if single_config_data.get('how') is None:
+                single_config_data['how'] = self.DEFAULT_HOW
 
     @property
     def enabled(self) -> Optional[bool]:
@@ -535,7 +535,7 @@ class BasePlugin(Phase, metaclass=PluginIndex):
             keys = self._common_keys + self._keys
         for key in base_keys + keys:
             # Skip showing the default name
-            if key == 'name' and self.name == tmt.utils.DEFAULT_NAME:
+            if key == 'name' and self.name.startswith(tmt.utils.DEFAULT_NAME):
                 continue
             # Skip showing summary again
             if key == 'summary':
@@ -589,7 +589,7 @@ class BasePlugin(Phase, metaclass=PluginIndex):
         if self.get('summary'):
             self.info('summary', self.get('summary'), 'magenta')
         # Show name only if it's not the default one
-        if self.name != tmt.utils.DEFAULT_NAME:
+        if not self.name.startswith(tmt.utils.DEFAULT_NAME):
             self.info('name', self.name, 'magenta')
         # Include order in verbose mode
         self.verbose('order', str(self.order), 'magenta', level=3)
