@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Optional
+from typing import Any, List, Optional, Union, cast
 
 import click
 import fmf.utils
@@ -106,42 +106,46 @@ class ExecuteUpgrade(ExecuteInternal):
             filter: "tag:fedora"
     """
 
-    _data_class = ExecuteUpgradeData
+    _data_class = ExecuteUpgradeData  # type: ignore[assignment]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self._discover_upgrade = None
+        self._discover_upgrade: Optional[DiscoverFmf] = None
 
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for given method """
-        options = []
-        options.append(click.option(
-            '--url', '-u', metavar='REPOSITORY',
-            help='URL of the git repository with upgrade tasks.'))
-        options.append(click.option(
-            '--upgrade-path', '-p', metavar='PLAN_NAME',
-            help='Upgrade path corresponding to a plan name in the repository '
-                 'with upgrade tasks.'))
-        options.extend([DiscoverFmf.REF_OPTION, DiscoverFmf.TEST_OPTION,
-                        DiscoverFmf.FILTER_OPTION, DiscoverFmf.EXCLUDE_OPTION])
-        return options + super().options(how)
+        options = super().options(how)
+        options[:0] = [
+            click.option(
+                '--url', '-u', metavar='REPOSITORY',
+                help='URL of the git repository with upgrade tasks.'),
+            click.option(
+                '--upgrade-path', '-p', metavar='PLAN_NAME',
+                help='Upgrade path corresponding to a plan name in the repository '
+                'with upgrade tasks.'),
+            DiscoverFmf.REF_OPTION,
+            DiscoverFmf.TEST_OPTION,
+            DiscoverFmf.FILTER_OPTION,
+            DiscoverFmf.EXCLUDE_OPTION
+            ]
+        return options
 
     @property
-    def discover(self):
+    def discover(self) -> Union[tmt.steps.discover.Discover, DiscoverFmf]:  # type:ignore[override]
         """ Return discover plugin instance """
         # If we are in the second phase (upgrade), take tests from our fake
         # discover plugin.
         if self._discover_upgrade:
             return self._discover_upgrade
         else:
-            return self.step.plan.discover
+            return cast(tmt.steps.discover.Discover, self.step.plan.discover)
 
-    def go(self, guest):
+    def go(self, guest: tmt.steps.provision.Guest) -> None:
         """ Execute available tests """
-        self._results = []
+        self._results: List[tmt.base.Result] = []
         # Inform about the how, skip the actual execution
-        super(ExecutePlugin, self).go(guest)
+        ExecutePlugin.go(self, guest)
 
         self.url = self.get('url')
         self.upgrade_path = self.get('upgrade-path')
@@ -171,7 +175,7 @@ class ExecuteUpgrade(ExecuteInternal):
             'upgrade', 'run tests on the new system', color='blue', shift=1)
         self._run_test_phase(guest, AFTER_UPGRADE_PREFIX)
 
-    def _get_plan(self, upgrades_repo):
+    def _get_plan(self, upgrades_repo: str) -> tmt.base.Plan:
         """ Get plan based on upgrade path """
         tree = tmt.base.Tree(upgrades_repo)
         try:
@@ -192,7 +196,7 @@ class ExecuteUpgrade(ExecuteInternal):
                 f"{fmf.utils.listed(names)}.")
         return plans[0]
 
-    def _fetch_upgrade_tasks(self):
+    def _fetch_upgrade_tasks(self) -> None:
         """ Fetch upgrade tasks using DiscoverFmf """
         data = DiscoverFmfStepData(
             name='upgrade-discover',
@@ -206,9 +210,11 @@ class ExecuteUpgrade(ExecuteInternal):
         self._discover_upgrade = DiscoverFmf(self.step, data)
         self._run_discover_upgrade()
 
-    def _run_discover_upgrade(self):
+    def _run_discover_upgrade(self) -> None:
         """ Silently run discover upgrade """
         # Make it quiet, we do not want any output from discover
+        assert self._discover_upgrade is not None
+        assert self._discover_upgrade._context is not None
         quiet = self._discover_upgrade._context.params['quiet']
         try:
             self._discover_upgrade._context.params['quiet'] = True
@@ -221,7 +227,7 @@ class ExecuteUpgrade(ExecuteInternal):
             self._discover_upgrade._context.params['quiet'] = quiet
             tmt.base.Test.ignore_class_options = False
 
-    def _prepare_remote_discover_data(self, plan):
+    def _prepare_remote_discover_data(self, plan: tmt.base.Plan) -> tmt.base._RawFmfId:
         """ Merge remote discover data with the local filters """
         if len(plan.discover.data) > 1:
             raise tmt.utils.ExecuteError(
@@ -234,25 +240,26 @@ class ExecuteUpgrade(ExecuteInternal):
             'name': 'upgrade-discover-remote',
             'how': 'fmf'
             }
-        remote_raw_data.update({
+        remote_raw_data.update(cast(tmt.steps._RawStepData, {
             tmt.utils.key_to_option(key): value
             for key, value in data.items()
             if key in PROPAGATE_TO_DISCOVER_KEYS
-            })
+            }))
 
         # Local values have priority, override
         for key in self._keys:
             value = self.get(key)
             if key in PROPAGATE_TO_DISCOVER_KEYS and value:
-                remote_raw_data[key] = value
+                remote_raw_data[key] = value  # type:ignore[literal-required]
 
         return remote_raw_data
 
-    def _perform_upgrade(self, guest):
+    def _perform_upgrade(self, guest: tmt.steps.provision.Guest) -> None:
         """ Perform a system upgrade """
         try:
             self._fetch_upgrade_tasks()
             extra_environment = None
+            assert self._discover_upgrade is not None
             if self.upgrade_path:
                 # Create a fake discover from the data in the upgrade path
                 plan = self._get_plan(self._discover_upgrade.testdir)
@@ -261,8 +268,8 @@ class ExecuteUpgrade(ExecuteInternal):
                 # Instead, we want it to re-use existing, already cloned path.
                 data['url'] = None
                 data['path'] = self._discover_upgrade.testdir
-                self._discover_upgrade = DiscoverPlugin.delegate(
-                    self.step, raw_data=data)
+                self._discover_upgrade = cast(DiscoverFmf, DiscoverPlugin.delegate(
+                    self.step, raw_data=data))
                 self._run_discover_upgrade()
                 # Pass in the path-specific env variables
                 extra_environment = plan.environment
@@ -272,7 +279,7 @@ class ExecuteUpgrade(ExecuteInternal):
         finally:
             self._discover_upgrade = None
 
-    def _run_test_phase(self, guest, prefix):
+    def _run_test_phase(self, guest: tmt.steps.provision.Guest, prefix: str) -> None:
         """
         Execute a single test phase on the guest
 
