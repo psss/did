@@ -76,7 +76,7 @@ class Execute(tmt.steps.Step):
         try:
             results = tmt.utils.yaml_to_dict(self.read('results.yaml'))
             self._results = [
-                tmt.Result(data, test) for test, data in results.items()]
+                tmt.Result(data, name=test) for test, data in results.items()]
         except tmt.utils.FileError:
             self.debug('Test results not found.', level=2)
 
@@ -334,7 +334,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             if test.returncode == tmt.utils.PROCESS_TIMEOUT:
                 data['note'] = 'timeout'
                 self.timeout_hint(test)
-        return tmt.Result(data, name=test.name, interpret=test.result)
+        return tmt.Result(data, test=test)
 
     def check_beakerlib(self, test: "tmt.Test") -> "tmt.Result":
         """ Check result of a beakerlib test """
@@ -353,7 +353,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         except tmt.utils.FileError:
             self.debug(f"Unable to read '{beakerlib_results_file}'.", level=3)
             data['note'] = 'beakerlib: TestResults FileError'
-            return tmt.Result(data, name=test.name, interpret=test.result)
+            return tmt.Result(data, test=test)
 
         search_result = re.search('TESTRESULT_RESULT_STRING=(.*)', results)
         # States are: started, incomplete and complete
@@ -365,7 +365,7 @@ class ExecutePlugin(tmt.steps.Plugin):
                 f"No result or state found in '{beakerlib_results_file}'.",
                 level=3)
             data['note'] = 'beakerlib: Result/State missing'
-            return tmt.Result(data, name=test.name, interpret=test.result)
+            return tmt.Result(data, test=test)
 
         result = search_result.group(1)
         state = search_state.group(1)
@@ -382,7 +382,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         # Finally we have a valid result
         else:
             data['result'] = result.lower()
-        return tmt.Result(data, name=test.name, interpret=test.result)
+        return tmt.Result(data, test=test)
 
     def check_result_file(self, test: "tmt.Test") -> "tmt.Result":
         """
@@ -426,7 +426,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         except KeyError:
             data['result'] = "error"
             data['note'] = f"invalid test result '{result}' in result file"
-        return tmt.Result(data, name=test.name, interpret=test.result)
+        return tmt.Result(data, test=test)
 
     def check_abort_file(self, test: "tmt.Test") -> bool:
         """

@@ -80,6 +80,9 @@ def import_polarion() -> None:
     except ImportError:
         raise ConvertError(
             "Run 'pip install tmt[export-polarion]' so pylero is installed.")
+    except PolarionException as exc:
+        log.debug(traceback.format_exc())
+        raise ConvertError("Failed to login with pylero", original=exc)
 
 
 def get_bz_instance() -> Any:
@@ -275,9 +278,9 @@ def bz_set_coverage(bug_ids: List[int], case_id: str, tracker_id: int) -> None:
         " ".join([f"BZ#{bz_id}" for bz_id in bug_ids])), fg='magenta'))
 
 
-def _get_polarion_ids(
+def get_polarion_ids(
         query_result: List[Any],
-        preferred_project: Optional[int] = None) -> Tuple[str, Optional[int]]:
+        preferred_project: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """ Return case and project ids from query results """
     if not query_result:
         return 'None', None
@@ -301,7 +304,7 @@ def _get_polarion_ids(
     return query_result[0].work_item_id, query_result[0].project_id
 
 
-def get_polarion_case(data: Dict[str, str], preferred_project: Optional[int] = None) -> Any:
+def get_polarion_case(data: Dict[str, str], preferred_project: Optional[str] = None) -> Any:
     """ Get Polarion case through couple different methods """
     import_polarion()
     polarion_id = 'None'
@@ -315,7 +318,7 @@ def get_polarion_case(data: Dict[str, str], preferred_project: Optional[int] = N
     if data.get(ID_KEY):
         query_result = PolarionWorkItem.query(
             data.get(ID_KEY), fields=['work_item_id', 'project_id'])
-        polarion_id, project_id = _get_polarion_ids(query_result, preferred_project)
+        polarion_id, project_id = get_polarion_ids(query_result, preferred_project)
     # Search by TCMS Case ID
     extra_nitrate = data.get('extra-nitrate')
     if not project_id and extra_nitrate:
@@ -326,12 +329,12 @@ def get_polarion_case(data: Dict[str, str], preferred_project: Optional[int] = N
         nitrate_case_id = str(int(nitrate_case_id_search.group()))
         query_result = PolarionWorkItem.query(
             nitrate_case_id, fields=['work_item_id', 'project_id'])
-        polarion_id, project_id = _get_polarion_ids(query_result, preferred_project)
+        polarion_id, project_id = get_polarion_ids(query_result, preferred_project)
     # Search by extra task
     if not project_id and data.get('extra-task'):
         query_result = PolarionWorkItem.query(
             data.get('extra-task'), fields=['work_item_id', 'project_id'])
-        polarion_id, project_id = _get_polarion_ids(query_result, preferred_project)
+        polarion_id, project_id = get_polarion_ids(query_result, preferred_project)
 
     try:
         polarion_case = PolarionTestCase(
@@ -1047,7 +1050,7 @@ def create_nitrate_case(summary: str) -> Any:
     return testcase
 
 
-def create_polarion_case(summary: str, project_id: Optional[str] = None) -> Any:
+def create_polarion_case(summary: str, project_id: str) -> Any:
     """ Create new polarion case """
     # Create the new test case
     testcase = PolarionTestCase.create(project_id, summary, summary)

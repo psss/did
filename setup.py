@@ -77,6 +77,7 @@ extras_require = {
         'html2text'],
     'report-html': ['jinja2'],
     'report-junit': ['junit_xml'],
+    'report-polarion': ['junit_xml', 'pylero'],
     'export-polarion': ['pylero'],
 }
 extras_require['all'] = [

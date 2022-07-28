@@ -2077,9 +2077,9 @@ class Result(object):
         result ........... test execution result
         log .............. one or more log files
         note ............. additional result details
-        duration.......... test execution time (hh:mm:ss)
+        duration ......... test execution time (hh:mm:ss)
 
-    Required parameter 'name' should contain a unique test name.
+    Required parameter 'test' or 'name' should contain a test reference.
     """
 
     _results = {
@@ -2090,16 +2090,29 @@ class Result(object):
         'error': 'magenta',
         }
 
-    def __init__(self, data, name, interpret='respect'):
-        """
-        Initialize test result data """
+    def __init__(self, data, name=None, test=None):
+        """ Initialize test result data """
 
         # Save the test name and optional note
-        if not name or not isinstance(name, str):
+        if not test and not name:
+            raise tmt.utils.SpecificationError(
+                "Either name or test have to be specified")
+        if test and not isinstance(test, Test):
+            raise tmt.utils.SpecificationError(f"Invalid test '{test}'.")
+        if name and not isinstance(name, str):
             raise tmt.utils.SpecificationError(f"Invalid test name '{name}'.")
-        self.name = name
+        self.name = name or test.name
         self.note = data.get('note')
         self.duration = data.get('duration')
+        if test:
+            self.id = test.node.get(
+                'id', test.node.get(
+                    'extra-nitrate', test.node.get(
+                        'extra-task', '')))
+            interpret = test.result or 'respect'
+        else:
+            self.id = ''
+            interpret = 'respect'
 
         # Check for valid results
         try:
@@ -2137,7 +2150,7 @@ class Result(object):
                 self.result = interpret
             else:
                 raise tmt.utils.SpecificationError(
-                    f"Invalid result '{interpret}' in test '{name}'.")
+                    f"Invalid result '{interpret}' in test '{self.name}'.")
 
     @staticmethod
     def total(results):

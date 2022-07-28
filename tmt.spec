@@ -111,6 +111,13 @@ Requires: python3-junit_xml
 %description report-junit
 Generate test results in the JUnit format.
 
+%package report-polarion
+Summary: Report plugin with support for generating Polarion test runs
+Requires: tmt-report-junit >= %{version}
+
+%description report-polarion
+Generate test results in xUnit format for exporting to Polarion.
+
 %package all
 Summary: Extra dependencies for the Test Management Tool
 Requires: tmt >= %{version}
@@ -119,6 +126,7 @@ Requires: tmt-provision-virtual >= %{version}
 Requires: tmt-test-convert >= %{version}
 Requires: tmt-report-html >= %{version}
 Requires: tmt-report-junit >= %{version}
+Requires: tmt-report-polarion >= %{version}
 
 %description all
 All extra dependencies of the Test Management Tool. Install this
@@ -165,6 +173,7 @@ chmod 1777 %{buildroot}%{workdir_root}
 %exclude %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}{podman,testcloud}.*
 %exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}html*
 %exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}junit.*
+%exclude %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}polarion.*
 
 %files provision-container
 %{python3_sitelib}/%{name}/steps/provision/{,__pycache__/}podman.*
@@ -178,6 +187,9 @@ chmod 1777 %{buildroot}%{workdir_root}
 
 %files report-junit
 %{python3_sitelib}/%{name}/steps/report/{,__pycache__/}junit.*
+
+%files report-polarion
+%{python3_sitelib}/%{name}/steps/report/{,__pycache__/}polarion.*
 
 %files test-convert
 %license LICENSE

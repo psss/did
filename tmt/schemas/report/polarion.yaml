@@ -1,0 +1,36 @@
+---
+
+#
+# JSON Schema definition for `polarion` report plugin
+#
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#polarion
+#
+
+$id: /schemas/report/polarion
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - polarion
+
+  file:
+    type: string
+
+  project-id:
+    type: string
+
+  testrun-title:
+    type: string
+
+  upload:
+    type: boolean
+
+required:
+  - how
+  - project-id

@@ -1,0 +1,22 @@
+/plan:
+    discover:
+        how: fmf
+    provision:
+        how: local
+    execute:
+        how: tmt
+/test:
+    framework: shell
+    /pass:
+        summary: Run command 'true'
+        test: 'true'
+        id: d94990fd-11dd-4ebf-89b6-4ab215f70c68
+    /fail:
+        summary: Run command 'false'
+        test: 'false'
+        id: 9a30b897-2a77-4397-b234-89c7df71dfe7
+    /timeout:
+        summary: Run sleep to exceed timeout
+        test: sleep 10
+        duration: 2s
+        id: 745e893f-5b8d-4859-8b43-29352dcfbd38
