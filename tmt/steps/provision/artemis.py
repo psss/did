@@ -7,6 +7,7 @@ import click
 import requests
 
 import tmt
+import tmt.options
 import tmt.steps
 import tmt.steps.provision
 import tmt.utils
@@ -56,7 +57,7 @@ DEFAULT_RETRY_BACKOFF_FACTOR = 1
 
 
 @dataclasses.dataclass
-class ArtemisGuestData(tmt.steps.provision.GuestSshData):  # type: ignore[misc]
+class ArtemisGuestData(tmt.steps.provision.GuestSshData):
     # Override parent class with our defaults
     user: str = DEFAULT_USER
 
@@ -218,9 +219,8 @@ class ArtemisAPI:
         return self.query(path, method='delete', request_kwargs=request_kwargs)
 
 
-# TODO: get rid of `ignore` once superclass is no longer `Any`
 @tmt.steps.provides_method('artemis')
-class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):  # type: ignore[misc]
+class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
     """
     Provision guest using Artemis backend
 
@@ -290,9 +290,9 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):  # type: ignore[mis
 
     # TODO: fix types once superclass gains its annotations
     @classmethod
-    def options(cls, how: Any = None) -> List[click.Option]:
+    def options(cls, how: Any = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for Artemis """
-        return cast(List[click.Option], [
+        return cast(List[tmt.options.ClickOptionDecoratorType], [
             click.option(
                 '--api-url', metavar='URL',
                 help="Artemis API URL.",
@@ -356,15 +356,17 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):  # type: ignore[mis
                 help=f'A factor for exponential API retry backoff, '
                      f'{DEFAULT_RETRY_BACKOFF_FACTOR} by default.',
                 ),
-            ]) + cast(List[click.Option], super().options(how))
+            ]) + super().options(how)
 
     def default(self, option: str, default: Optional[Any] = None) -> Any:
         """ Return default data for given option """
 
         return getattr(ArtemisGuestData(), option.replace('-', '_'), default)
 
-    # TODO: use better types once superclass gains its annotations
-    def wake(self, keys: Optional[List[str]] = None,
+    # More specific type is a violation of Liskov substitution principle, and mypy
+    # complains about it - rightfully so. Ignoring the issue which should be resolved
+    # with https://github.com/teemtee/tmt/pull/1439.
+    def wake(self, keys: Optional[List[str]] = None,  # type: ignore[override]
              data: Optional[ArtemisGuestData] = None) -> None:
         """ Wake up the plugin, process data, apply options """
 
@@ -420,8 +422,7 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):  # type: ignore[mis
         return self._guest
 
 
-# TODO: get rid of `ignore` once superclass is no longer `Any`
-class GuestArtemis(tmt.GuestSsh):  # type: ignore[misc]
+class GuestArtemis(tmt.GuestSsh):
     """
     Artemis guest instance
 
