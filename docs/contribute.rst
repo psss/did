@@ -59,18 +59,44 @@ Develop
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to experiment, play with the latest bits and develop
-improvements it is best to use a virtual environment. First make
-sure that you have all required packages installed on your box::
+improvements it is best to use a virtual environment. Make sure
+that you have all required packages installed on your box::
 
-    sudo dnf install gcc {python3,libvirt,krb5,libpq}-devel
+    sudo dnf install gcc make git python3-docutils {python3,libvirt,krb5,libpq}-devel
+
+In case you're using Centos Stream 9 system you need to enable CRB
+repository first to make all the necessary packages available::
+
+    sudo dnf config-manager --set-enabled crb # for CentOS Stream 9
+
+For CentOS Stream 8 install also::
+
+    sudo dnf install python3-virtualenv
 
 Install ``python3-virtualenvwrapper`` to easily create and enable
 virtual environments using ``mkvirtualenv`` and ``workon``::
 
     sudo dnf install python3-virtualenvwrapper
 
+If ``python3-virtualenvwrapper`` package is not available for your
+system you can install it via ``pip``::
+
+    pip install virtualenvwrapper --user # use pip3 in case of CentOS Stream 8
+
 Note that if you have freshly installed the package you need to
-open a new shell session to enable the wrapper functions.
+open a new shell session to enable the wrapper functions. In case
+you installed package via ``pip``, you need to source
+``virtualenvwrapper.sh`` script. You can also consider adding
+following lines into your ``.bash_profile``::
+
+    source ${HOME}/.local/bin/virtualenvwrapper.sh
+
+There is no default ``python`` in ``$PATH`` in case of CentOS Stream 8,
+which causes sourcing of ``virtualenvwrapper.sh`` script to fail.
+You can resolve it using ``alternatives``::
+
+    alternatives --set python /usr/bin/python3
+
 Now let's create a new virtual environment and install ``tmt`` in
 editable mode there::
 
@@ -93,8 +119,13 @@ everything needed for the tmt development ready on your system::
 
     pip install -e '.[all]'
 
-Install the ``pre-commit`` hooks to run all available checks
-for your commits to the project::
+Install the ``pre-commit`` package to run all available checks for
+your commits to the project::
+
+    sudo dnf install pre-commit # for Fedora
+    pip install pre-commit --user # for CentOS Stream
+
+Then you can install the hooks it via::
 
     pre-commit install
 
