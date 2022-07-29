@@ -43,6 +43,47 @@ description:
     link:
       - implemented-by: /tmt/steps/report/html.py
 
+/junit:
+    summary: Generate a JUnit report file
+    story:
+        As a tester I want to review results in a JUnit xml file.
+    description:
+        Create a JUnit file ``junit.xml`` with test results.
+    example: |
+        # Enable junit report from the command line
+        tmt run --all report --how junit
+        tmt run --all report --how junit --file test.xml
+
+        # Use junit as the default report for given plan
+        report:
+            how: junit
+            file: test.xml
+    link:
+        - implemented-by: /tmt/steps/report/junit.py
+
+/polarion:
+    summary: Generate a xUnit file and export it into Polarion
+    story:
+        As a tester I want to review tests in Polarion
+        and have all results linked to existing test cases there.
+    description:
+        Create a xUnit file ``xunit.xml`` with test results
+        and Polarion properties so the xUnit can then be
+        exported into Polarion.
+    example: |
+        # Enable polarion report from the command line
+        tmt run --all report --how polarion --project-id TMT
+        tmt run --all report --how polarion --project-id TMT --no-upload --file test.xml
+
+        # Use polarion as the default report for given plan
+        report:
+            how: polarion
+            file: test.xml
+            project-id: TMT
+            testrun-title: tests_that_pass
+    link:
+        - implemented-by: /tmt/steps/report/polarion.py
+
 /file:
     description: |
 
