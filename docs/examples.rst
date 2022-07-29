@@ -940,6 +940,57 @@ some of them it is possible to use the ``--all`` option::
     tmt run --all provision --how=local
 
 
+Execute Progress
+------------------------------------------------------------------
+
+When run in terminal ``execute`` step prints name of the executed test
+unless ``--debug`` or ``--verbose`` options are used::
+
+    $ tmt run
+
+        execute
+            how: tmt
+            progress: /tests/core/enabled [5/16]
+
+
+In the verbose mode the duration and result after the test is executed
+are printed::
+
+    $ tmt run --all execute -v
+
+        execute
+            how: tmt
+                00:00:03 pass /tests/core/adjust [1/16]
+
+More verbose mode prints summary of the test being executed first::
+
+    $ tmt run --all execute -vv
+
+        execute
+            how: tmt
+            exit-first: False
+                test: Verify test/plan adjustments based on context
+                    00:00:04 pass /tests/core/adjust [1/16]
+
+The most verbose mode prints also the test output::
+
+    $ tmt run --all execute -vvv
+
+        execute
+            how: tmt
+            order: 50
+            exit-first: False
+                test: Verify test/plan adjustments based on context
+                    out:
+                    out: ::::::::::::::::::::::::::::::::::::::::::::
+                    out: ::   Setup
+                    out: ::::::::::::::::::::::::::::::::::::::::::::
+                    out:
+                    out: :: [ 17:03:06 ] :: [  BEGIN   ] :: Create...
+                        ....
+                    00:00:04 pass /tests/core/adjust [1/16]
+
+
 Check Report
 ------------------------------------------------------------------
 

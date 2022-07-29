@@ -167,12 +167,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
         return environment
 
-    def execute(self, test, guest, progress, extra_environment):
+    def execute(self, test, guest, extra_environment):
         """ Run test on the guest """
-        # Provide info/debug message
-        self._show_progress(progress, test.name)
-        self.verbose(
-            'test', test.summary or test.name, color='cyan', shift=1, level=2)
         self.debug(f"Execute '{test.name}' as a '{test.framework}' test.")
 
         # Test will be executed in it's own directory, relative to the workdir
@@ -193,7 +189,6 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             self.verbose(key, value, color, shift=2, level=3)
 
         # Execute the test, save the output and return code
-        timeout = ''
         start = time.time()
         try:
             stdout, stderr = guest.execute(
@@ -205,17 +200,12 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             stdout = error.stdout
             test.returncode = error.returncode
             if test.returncode == tmt.utils.PROCESS_TIMEOUT:
-                timeout = ' (timeout)'
                 self.debug(f"Test duration '{test.duration}' exceeded.")
         end = time.time()
         self.write(
             self.data_path(test, TEST_OUTPUT_FILENAME, full=True),
             stdout or '', mode='a', level=3)
         test.real_duration = self.test_duration(start, end)
-        duration = click.style(test.real_duration, fg='cyan')
-        shift = 1 if self.opt('verbose') < 2 else 2
-        self.verbose(
-            f"{duration} {test.name} [{progress}]{timeout}", shift=shift)
 
     def check(self, test):
         """ Check the test result """
@@ -228,6 +218,18 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             except tmt.utils.FileError:
                 return self.check_shell(test)
 
+    def _will_reboot(self, test):
+        """ True if reboot is requested """
+        return os.path.exists(self._reboot_request_path(test))
+
+    def _reboot_request_path(self, test):
+        """ Return reboot_request """
+        reboot_request_path = os.path.join(
+            self.data_path(test, full=True),
+            tmt.steps.execute.TEST_DATA,
+            REBOOT_REQUEST_FILENAME)
+        return reboot_request_path
+
     def _handle_reboot(self, test, guest):
         """
         Reboot the guest if the test requested it.
@@ -237,13 +239,14 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         REBOOTCOUNT variable, reset it to 0 if no reboot was requested
         (going forward to the next test). Return whether reboot was done.
         """
-        test_data = os.path.join(
-            self.data_path(test, full=True), tmt.steps.execute.TEST_DATA)
-        reboot_request_path = os.path.join(test_data, REBOOT_REQUEST_FILENAME)
-        if os.path.exists(reboot_request_path):
+        if self._will_reboot(test):
             test._reboot_count += 1
             self.debug(f"Reboot during test '{test}' "
                        f"with reboot count {test._reboot_count}.")
+            reboot_request_path = self._reboot_request_path(test)
+            test_data = os.path.join(
+                self.data_path(test, full=True),
+                tmt.steps.execute.TEST_DATA)
             with open(reboot_request_path, 'r') as reboot_file:
                 reboot_command = reboot_file.read().strip()
             # Reset the file
@@ -296,8 +299,14 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             test = tests[index]
             if not hasattr(test, "_reboot_count"):
                 test._reboot_count = 0
+
+            progress = f"{index + 1}/{len(tests)}"
+            self._show_progress(progress, test.name)
+            self.verbose(
+                'test', test.summary or test.name, color='cyan', shift=1, level=2)
+
             self.execute(
-                test, guest, progress=f"{index + 1}/{len(tests)}",
+                test, guest,
                 extra_environment=extra_environment)
 
             # Pull test logs from the guest, exclude beakerlib backups
@@ -311,13 +320,25 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 source=self.data_path(test, full=True),
                 extend_options=exclude)
 
-            # Handle reboot, check results
-            if self._handle_reboot(test, guest):
-                continue
-            self._results.append(self.check(test))
+            result = self.check(test)
+            duration = click.style(test.real_duration, fg='cyan')
+            shift = 1 if self.opt('verbose') < 2 else 2
+
+            # Handle reboot, abort, exit-first
+            if self._will_reboot(test):
+                # Output before the reboot
+                self.verbose(
+                    f"{duration} {test.name} [{progress}]", shift=shift)
+                if self._handle_reboot(test, guest):
+                    continue
             abort = self.check_abort_file(test)
+            if abort:
+                result.note = 'aborted'
+            self._results.append(result)
+            self.verbose(
+                f"{duration} {result.show()} [{progress}]", shift=shift)
             if (abort or exit_first and
-                    self._results[-1].result not in ('pass', 'info')):
+                    result.result not in ('pass', 'info')):
                 # Clear the progress bar before outputting
                 self._show_progress('', '', True)
                 what_happened = "aborted" if abort else "failed"
