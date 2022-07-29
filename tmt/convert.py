@@ -6,6 +6,7 @@ import copy
 import os
 import pprint
 import re
+import shlex
 import subprocess
 from io import open
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
@@ -202,10 +203,11 @@ def read_datafile(
     """
 
     data: NitrateDataType = dict()
+    makefile_regex_test = r'^run:.*\n\t(.*)$'
     if filename == 'Makefile':
         regex_task = r'Name:\s*(.*)\n'
         regex_summary = r'^Description:\s*(.*)\n'
-        regex_test = r'^run:.*\n\t(.*)$'
+        regex_test = makefile_regex_test
         regex_contact = r'^Owner:\s*(.*)'
         regex_duration = r'^TestTime:\s*(.*)'
         regex_recommend = r'^Requires:\s*(.*)'
@@ -242,20 +244,44 @@ def read_datafile(
     # Test script
     search_result = re.search(regex_test, datafile, re.M)
     if search_result is None:
-        raise ConvertError("Makefile is missing the 'run' target.")
-    data['test'] = search_result.group(1)
-    if filename == 'metadata':
-        data['test'] = data['test'].split()[-1]
-    echo(style('test: ', fg='green') + data['test'])
+        if filename == 'metadata':
+            # entry_point property is optional. When absent 'make run' is used.
+            data['test'] = 'make run'
+        else:
+            raise ConvertError("Makefile is missing the 'run' target.")
+    else:
+        data['test'] = search_result.group(1)
+        echo(style('test: ', fg='green') + data['test'])
 
     # Detect framework
     try:
-        test_path = os.path.join(path, data["test"])
-        with open(test_path, encoding="utf-8") as test_file:
-            if re.search("beakerlib", test_file.read()):
-                data["framework"] = "beakerlib"
-            else:
-                data["framework"] = "shell"
+        test_path = ""
+        if data["test"].split()[0] != 'make':
+            script_paths = [s for s in shlex.split(data['test']) if s.endswith('.sh')]
+            if script_paths:
+                test_path = os.path.join(path, script_paths[0])
+        else:
+            # As 'make' command was specified for test, ensure Makefile present.
+            makefile_path = os.path.join(path, 'Makefile')
+            try:
+                with open(makefile_path, encoding='utf-8') as makefile_file:
+                    makefile = makefile_file.read()
+                    search_result = \
+                        re.search(makefile_regex_test, makefile, re.M)
+            except IOError:
+                raise ConvertError("Makefile is missing.")
+            # Retrieve the path to the test file from the Makefile
+            if search_result is not None:
+                test_path = os.path.join(path, search_result.group(1).split()[-1])
+        # Read the test file and determine the framework used.
+        if test_path:
+            with open(test_path, encoding="utf-8") as test_file:
+                if re.search("beakerlib", test_file.read()):
+                    data["framework"] = "beakerlib"
+                else:
+                    data["framework"] = "shell"
+        else:
+            data["framework"] = "shell"
         echo(style("framework: ", fg="green") + data["framework"])
     except IOError:
         raise ConvertError("Unable to open '{0}'.".format(test_path))

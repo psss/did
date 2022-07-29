@@ -41,7 +41,7 @@ rlJournalStart
         rlAssertGrep 'summary: Simple smoke test using restraint' 'main.fmf'
 	rlRun 'grep -A2 require main.fmf | grep "fmf\|tmt"'
         rlRun 'grep -A1 recommend main.fmf | grep fmf'
-        rlAssertGrep 'test: ./runtest.sh' 'output'
+        rlAssertGrep 'test: bash -x ./runtest.sh' 'output'
         rlAssertGrep 'duration: 6m' 'main.fmf'
     rlPhaseEnd
 
@@ -51,7 +51,7 @@ rlJournalStart
         rlAssertGrep 'summary: Simple smoke test using restraint' 'main.fmf'
 	rlRun 'grep -A2 require main.fmf | grep "fmf\|tmt"'
         rlRun 'grep -A1 recommend main.fmf | grep fmf'
-        rlAssertGrep 'test: ./runtest.sh' 'output'
+        rlAssertGrep 'test: bash -x ./runtest.sh' 'output'
         rlAssertGrep 'duration: 6m' 'main.fmf'
     rlPhaseEnd
 
