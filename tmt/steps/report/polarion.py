@@ -7,17 +7,18 @@ import click
 from requests import post
 
 import tmt
+import tmt.steps
 
 from .junit import make_junit_xml
 
 DEFAULT_NAME = 'xunit.xml'
 
 
+@tmt.steps.provides_method('polarion')
 class ReportPolarion(tmt.steps.report.ReportPlugin):
     """
     Write test results into a xUnit file and upload to Polarion
     """
-    _methods = [tmt.steps.Method(name='polarion', doc=__doc__, order=50)]
     _keys = ['file', 'no-upload', 'project-id', 'testrun-title']
 
     @classmethod

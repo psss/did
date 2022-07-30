@@ -9,13 +9,13 @@ import fmf
 import pkg_resources
 
 import tmt
-from tmt.steps import Action, Method
+import tmt.steps
+from tmt.steps import Action
 from tmt.steps.provision import Guest
 from tmt.utils import GeneralError
 
 if TYPE_CHECKING:
     import tmt.options
-    import tmt.steps
     import tmt.steps.discover
     import tmt.steps.provision
 
@@ -201,8 +201,8 @@ class Execute(tmt.steps.Step):
 class ExecutePlugin(tmt.steps.Plugin):
     """ Common parent of execute plugins """
 
-    # List of all supported methods aggregated from all plugins
-    _supported_methods: List[Method] = []
+    # List of all supported methods aggregated from all plugins of the same step.
+    _supported_methods: List[tmt.steps.Method] = []
 
     # Common keys for all execute plugins
     _common_keys = ["exit-first"]

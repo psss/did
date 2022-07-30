@@ -4,12 +4,14 @@ import click
 import fmf
 
 import tmt
+import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
 from tmt.steps.provision import Guest
 
 
 # TODO: drop ignore once type annotations between modules enabled
+@tmt.steps.provides_method('shell')
 class PrepareShell(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     """
     Prepare guest using shell scripts
@@ -27,9 +29,6 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     happen if there are multiple configs. Default order is '50'.
     Default order of required packages installation is '70'.
     """
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='shell', doc=__doc__, order=50)]
 
     # Supported keys
     _keys = ["script"]

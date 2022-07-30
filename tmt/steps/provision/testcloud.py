@@ -12,6 +12,7 @@ import click
 import requests
 
 import tmt
+import tmt.steps
 import tmt.steps.provision
 import tmt.utils
 from tmt.utils import WORKDIR_ROOT, ProvisionError, retry_session
@@ -176,6 +177,7 @@ class TestcloudGuestData(
     instance_name: Optional[str] = None
 
 
+@tmt.steps.provides_method('virtual.testcloud')
 class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
     """
     Local virtual machine using testcloud
@@ -220,11 +222,6 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
 
     # Guest instance
     _guest = None
-
-    # Supported methods
-    _methods = [
-        tmt.steps.Method(name='virtual.testcloud', doc=__doc__, order=50),
-        ]
 
     # Supported keys
     _keys = ["image", "user", "memory", "disk", "connection", "arch"]

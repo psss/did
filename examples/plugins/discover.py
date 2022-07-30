@@ -1,10 +1,12 @@
 import tmt
+import tmt.steps
 import tmt.steps.discover
 
 # See the online documentation for more details about writing plugins
 # https://tmt.readthedocs.io/en/stable/plugins.html
 
 
+@tmt.steps.provides_method('example')
 class DiscoverExample(tmt.steps.discover.DiscoverPlugin):
     """
     A concise summary of what the plugin does
@@ -13,9 +15,6 @@ class DiscoverExample(tmt.steps.discover.DiscoverPlugin):
     in the --help message. It is recommended to include a couple
     of configuration examples as well.
     """
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='example', doc=__doc__, order=50)]
 
     def show(self):
         """ Show plugin details for given or all available keys """

@@ -1,11 +1,13 @@
 import click
 
 import tmt
+import tmt.steps
 
 # See the online documentation for more details about writing plugins
 # https://tmt.readthedocs.io/en/stable/plugins.html
 
 
+@tmt.steps.provides_method('example')
 class ProvisionExample(tmt.steps.provision.ProvisionPlugin):
     """
     Provision guest using nothing. Just example
@@ -22,9 +24,6 @@ class ProvisionExample(tmt.steps.provision.ProvisionPlugin):
     """
 
     _guest = None
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='example', doc=__doc__, order=50)]
 
     @classmethod
     def options(cls, how=None):

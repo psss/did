@@ -1,10 +1,12 @@
 import os
 
 import tmt
+import tmt.steps
 import tmt.steps.report
 from tmt.steps.execute import TEST_OUTPUT_FILENAME
 
 
+@tmt.steps.provides_method('display')
 class ReportDisplay(tmt.steps.report.ReportPlugin):
     """
     Show test results on the terminal
@@ -12,9 +14,6 @@ class ReportDisplay(tmt.steps.report.ReportPlugin):
     Give a concise summary of test results directly on the terminal.
     List individual test results in verbose mode.
     """
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='display', doc=__doc__, order=50)]
 
     def details(self, result: tmt.Result, verbosity: int) -> None:
         """ Print result details based on the verbose mode """

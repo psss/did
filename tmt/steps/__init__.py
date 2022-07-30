@@ -4,6 +4,7 @@
 import re
 import sys
 import textwrap
+import warnings
 from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type,
                     TypeVar, Union, cast, overload)
 
@@ -23,6 +24,10 @@ if TYPE_CHECKING:
     import tmt.base
     from tmt.base import Plan
     from tmt.steps.provision import Guest
+
+
+DEFAULT_PLUGIN_METHOD_ORDER: int = 50
+
 
 # Supported steps and actions
 STEPS = ['discover', 'provision', 'prepare', 'execute', 'report', 'finish']
@@ -312,15 +317,29 @@ class Step(tmt.utils.Common):
         self.debug('workdir', self.workdir, 'magenta')
 
 
-class Method(object):
+class Method:
     """ Step implementation method """
 
-    class_: Type['BasePlugin']
-
-    def __init__(self, name: str, doc: str, order: int):
+    def __init__(
+            self,
+            name: str,
+            class_: Optional[Type['BasePlugin']] = None,
+            doc: Optional[str] = None,
+            order: int = DEFAULT_PLUGIN_METHOD_ORDER
+            ) -> None:
         """ Store method data """
-        self.name: str = name
-        self.doc: str = doc.strip()
+
+        doc = (doc or getattr(class_, '__doc__') or '').strip()
+
+        if not doc:
+            if class_:
+                raise tmt.utils.GeneralError(f"Plugin class '{class_}' provides no docstring.")
+
+            raise tmt.utils.GeneralError(f"Plugin method '{name}' provides no docstring.")
+
+        self.name = name
+        self.class_ = class_
+        self.doc = doc
         self.order = order
 
         # Parse summary and description from provided doc string
@@ -343,27 +362,6 @@ class Method(object):
         return re.sub('\n\n', '\n\n\b\n', usage)
 
 
-class PluginIndex(type):
-    """ Plugin metaclass used to register all available plugins """
-
-    def __init__(
-            cls,
-            name: str,
-            bases: List['BasePlugin'],
-            attributes: Any) -> None:
-        """ Store all defined methods in the parent class """
-        try:
-            # Ignore typing here, because mypy mixes cls with self and thinks
-            # it is Type[PluginIndex] and cannot be told otherwise
-            for method in cls._methods:  # type: ignore
-                # Store reference to the implementing class
-                method.class_ = cls
-                # Add to the list of supported methods in parent class
-                bases[0]._supported_methods.append(method)
-        except AttributeError:
-            pass
-
-
 class PluginData(TypedDict, total=False):
     """ Step data structure """
     name: Optional[str]
@@ -371,8 +369,77 @@ class PluginData(TypedDict, total=False):
     order: Optional[int]
 
 
+def provides_method(
+        name: str,
+        doc: Optional[str] = None,
+        order: int = DEFAULT_PLUGIN_METHOD_ORDER) -> Any:
+    """
+    A plugin class decorator to register plugin's method with tmt steps.
+
+    In the following example, developer marks ``SomePlugin`` as providing two discover methods,
+    ``foo`` and ``bar``, with ``bar`` being sorted to later position among methods:
+
+    .. code-block:: python
+
+       @tmt.steps.provides_method('foo')
+       @tmt.steps.provides_method('bar', order=80)
+       class SomePlugin(tmt.steps.discover.DicoverPlugin):
+         ...
+
+    :param name: name of the method.
+    :param doc: method documentation. If not specified, docstring of the decorated class is used.
+    :param order: order of the method among other step methods.
+    """
+
+    def _method(cls: Type['BasePlugin']) -> Any:
+        plugin_method = Method(name, class_=cls, doc=doc, order=order)
+
+        cast('BasePlugin', cls.__bases__[0])._supported_methods.append(plugin_method)
+
+        return cls
+
+    return _method
+
+
+class PluginIndex(type):
+    """
+    Plugin metaclass used to register all available plugins.
+
+    .. deprecated:: 1.17
+       Instead of declaring `_methods` list, use :py:func:`provides_method` decorator
+       to announce provided methods.
+    """
+
+    def __init__(
+            cls,
+            name: str,
+            bases: List['BasePlugin'],
+            attributes: Any) -> None:
+        """ Store all defined methods in the parent class """
+
+        plugin_methods = cast(Optional[List[Method]], getattr(cls, '_methods'))
+
+        if not plugin_methods:
+            return
+
+        warnings.warn(
+            'Use of _methods to declare plugin methods is deprecated.'
+            'Use tmt.steps.provides_method decorator instead.',
+            DeprecationWarning,
+            stacklevel=2)
+
+        for plugin_method in plugin_methods:
+            plugin_method.class_ = cast(Type['BasePlugin'], cls)
+            # Add to the list of supported methods in parent class
+            bases[0]._supported_methods.append(plugin_method)
+
+
 class BasePlugin(Phase, metaclass=PluginIndex):
     """ Common parent of all step plugins """
+
+    # Deprecated, use @provides_method(...) instead. left for backward
+    # compatibility with out-of-tree plugins.
+    _methods: List[Method] = []
 
     # Default implementation for all steps is shell
     # except for provision (virtual) and report (display)
@@ -384,11 +451,8 @@ class BasePlugin(Phase, metaclass=PluginIndex):
     # Keys specific for given plugin
     _keys: List[str] = []
 
-    # Supported methods
-    _methods: List[Method]
-
-    # List of all supported methods aggregated from all plugins
-    _supported_methods: List[Method]
+    # List of all supported methods aggregated from all plugins of the same step.
+    _supported_methods: List[Method] = []
 
     def __init__(
             self,
@@ -446,6 +510,7 @@ class BasePlugin(Phase, metaclass=PluginIndex):
         commands: Dict[str, click.Command] = {}
         method_overview: str = f'Supported methods ({cls.how} by default):\n\n\b'
         for method in cls.methods():
+            assert method.class_ is not None
             method_overview += f'\n{method.describe()}'
             command: click.Command = cls.base_command(usage=method.usage())
             # Apply plugin specific options
@@ -479,6 +544,7 @@ class BasePlugin(Phase, metaclass=PluginIndex):
         """
         # Filter matching methods, pick the one with the lowest order
         for method in cls.methods():
+            assert method.class_ is not None
             if method.name.startswith(data['how']):
                 step.debug(
                     f"Using the '{method.class_.__name__}' plugin "

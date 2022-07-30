@@ -6,12 +6,14 @@ import click
 import fmf
 
 import tmt
+import tmt.steps
 import tmt.steps.discover
 
 if TYPE_CHECKING:
     import tmt.base
 
 
+@tmt.steps.provides_method('shell')
 class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
     """
     Use provided list of shell script tests
@@ -42,9 +44,6 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         - name: /upstream
           test: cd $TMT_SOURCE_DIR/*/tests && make test
     """
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='shell', doc=__doc__, order=50)]
 
     def show(self, keys: Optional[List[str]] = None) -> None:
         """ Show config details """

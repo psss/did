@@ -7,6 +7,7 @@ import click
 import requests
 
 import tmt
+import tmt.steps
 import tmt.steps.provision
 import tmt.utils
 from tmt.utils import ProvisionError, retry_session, updatable_message
@@ -218,8 +219,8 @@ class ArtemisAPI:
 
 
 # TODO: get rid of `ignore` once superclass is no longer `Any`
-class ProvisionArtemis(
-        tmt.steps.provision.ProvisionPlugin):  # type: ignore[misc]
+@tmt.steps.provides_method('artemis')
+class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):  # type: ignore[misc]
     """
     Provision guest using Artemis backend
 
@@ -270,11 +271,6 @@ class ProvisionArtemis(
 
     # Guest instance
     _guest = None
-
-    # Supported methods
-    _methods = [
-        tmt.steps.Method(name='artemis', doc=__doc__, order=50),
-        ]
 
     _keys = [
         'api-url',

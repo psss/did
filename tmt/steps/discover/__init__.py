@@ -205,7 +205,7 @@ class Discover(tmt.steps.Step):
 class DiscoverPlugin(tmt.steps.GuestlessPlugin):
     """ Common parent of discover plugins """
 
-    # List of all supported methods aggregated from all plugins
+    # List of all supported methods aggregated from all plugins of the same step.
     _supported_methods: List[tmt.steps.Method] = []
 
     # Common keys for all discover step implementations

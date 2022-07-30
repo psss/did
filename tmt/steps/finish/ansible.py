@@ -1,8 +1,10 @@
 import tmt
+import tmt.steps
 import tmt.steps.finish
 from tmt.steps.prepare.ansible import PrepareAnsible
 
 
+@tmt.steps.provides_method('ansible')
 class FinishAnsible(tmt.steps.finish.FinishPlugin, PrepareAnsible):
     """
     Perform finishing tasks using ansible
@@ -27,11 +29,6 @@ class FinishAnsible(tmt.steps.finish.FinishPlugin, PrepareAnsible):
     should happen if there are multiple configs. Default order is '50'.
     """
 
-    # Supported methods
-    _methods = [tmt.steps.Method(name='ansible', doc=__doc__, order=50)]
-
-    # Explicitly use these from FinishPlugin class
-    _supported_methods = tmt.steps.finish.FinishPlugin._supported_methods
     # Assigning class methods seems to cause trouble to mypy
     # See also: https://github.com/python/mypy/issues/6700
     base_command = tmt.steps.finish.FinishPlugin.base_command  # type: ignore

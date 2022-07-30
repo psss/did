@@ -6,6 +6,7 @@ import click
 import fmf
 
 import tmt
+import tmt.steps
 import tmt.steps.prepare
 
 COPR_URL = 'https://copr.fedorainfracloud.org/coprs'
@@ -300,6 +301,7 @@ class InstallRpmOstree(InstallBase):
             self.guest.execute(f"{self.command} install {self.options} {packages}")
 
 
+@tmt.steps.provides_method('install')
 class PrepareInstall(tmt.steps.prepare.PreparePlugin):
     """
     Install packages on the guest
@@ -345,9 +347,6 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
         Cannot install new version of already installed local rpm.
         No support for installing debuginfo packages at this time.
     """
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='install', doc=__doc__, order=50)]
 
     # Supported keys
     _keys = ["package", "directory", "copr", "exclude", "missing"]

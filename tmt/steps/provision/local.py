@@ -1,7 +1,9 @@
 import tmt
+import tmt.steps
 import tmt.steps.provision
 
 
+@tmt.steps.provides_method('local')
 class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
     """
     Use local host for test execution
@@ -22,9 +24,6 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
 
     # Guest instance
     _guest = None
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='local', doc=__doc__, order=50)]
 
     def wake(self, keys=None, data=None):
         """ Wake up the plugin, process data, apply options """

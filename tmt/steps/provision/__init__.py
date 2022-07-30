@@ -186,8 +186,8 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
     # Default implementation for provision is a virtual machine
     how = 'virtual'
 
-    # List of all supported methods aggregated from all plugins
-    _supported_methods = []
+    # List of all supported methods aggregated from all plugins of the same step.
+    _supported_methods: List[tmt.steps.Method] = []
 
     # Common keys for all provision step implementations
     _common_keys = ['role']

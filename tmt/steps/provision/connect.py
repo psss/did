@@ -1,9 +1,11 @@
 import click
 
 import tmt
+import tmt.steps
 import tmt.steps.provision
 
 
+@tmt.steps.provides_method('connect')
 class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
     """
     Connect to a provisioned guest using ssh
@@ -34,9 +36,6 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
 
     # Guest instance
     _guest = None
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='connect', doc=__doc__, order=50)]
 
     # Supported keys
     _keys = ["guest", "key", "user", "password", "port"]

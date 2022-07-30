@@ -2,6 +2,7 @@ import click
 import fmf.utils
 
 import tmt.base
+import tmt.steps
 import tmt.utils
 from tmt.steps.discover import DiscoverPlugin
 from tmt.steps.discover.fmf import DiscoverFmf
@@ -18,6 +19,7 @@ SUPPORTED_REMOTE_DISCOVER_KEYS = ['how', 'filter', 'test', 'exclude', 'tests']
 INHERIT_FROM_DISCOVER = ['ref', 'test', 'filter', 'exclude']
 
 
+@tmt.steps.provides_method('upgrade')
 class ExecuteUpgrade(ExecuteInternal):
     """
     Perform system upgrade during testing.
@@ -84,11 +86,6 @@ class ExecuteUpgrade(ExecuteInternal):
             url: https://github.com/teemtee/upgrade
             filter: "tag:fedora"
     """
-
-    # Supported methods
-    _methods = [
-        tmt.steps.Method(name='upgrade', doc=__doc__, order=50),
-        ]
 
     # Supported keys
     _keys = ['url', 'upgrade-path'] + INHERIT_FROM_DISCOVER

@@ -4,10 +4,12 @@ import click
 import fmf
 
 import tmt
+import tmt.steps
 import tmt.steps.finish
 from tmt.steps.provision import Guest
 
 
+@tmt.steps.provides_method('shell')
 class FinishShell(tmt.steps.finish.FinishPlugin):
     """
     Perform finishing tasks using shell scripts
@@ -23,9 +25,6 @@ class FinishShell(tmt.steps.finish.FinishPlugin):
     Use the 'order' attribute to select in which order finishing tasks
     should happen if there are multiple configs. Default order is '50'.
     """
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='shell', doc=__doc__, order=50)]
 
     # Supported keys
     _keys = ["script"]

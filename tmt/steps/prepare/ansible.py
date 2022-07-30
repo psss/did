@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 import click
 
 import tmt
+import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
 from tmt.steps import Step
@@ -23,6 +24,7 @@ StepDataType = TypedDict(
     )
 
 
+@tmt.steps.provides_method('ansible')
 class PrepareAnsible(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     """
     Prepare guest using ansible
@@ -48,9 +50,6 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     happen if there are multiple configs. Default order is '50'.
     Default order of required packages installation is '70'.
     """
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='ansible', doc=__doc__, order=50)]
 
     # Supported keys
     _keys = ["playbook", "extra-args"]

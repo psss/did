@@ -6,6 +6,7 @@ from typing import Optional
 import click
 
 import tmt
+import tmt.steps
 import tmt.steps.provision
 
 # Timeout in seconds of waiting for a connection
@@ -27,6 +28,7 @@ class PodmanGuestData(tmt.steps.provision.GuestData):  # type: ignore[misc]
     container: Optional[str] = None
 
 
+@tmt.steps.provides_method('container')
 class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
     """
     Create a new container using podman
@@ -48,9 +50,6 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
 
     # Supported keys
     _keys = ["image", "container", "pull", "user"]
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='container', doc=__doc__, order=50)]
 
     @classmethod
     def options(cls, how=None):

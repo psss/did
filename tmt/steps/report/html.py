@@ -9,6 +9,7 @@ import pkg_resources
 
 import tmt
 import tmt.options
+import tmt.steps
 import tmt.steps.report
 
 HTML_TEMPLATE_PATH = pkg_resources.resource_filename(
@@ -31,6 +32,7 @@ def import_jinja2() -> None:
             "Missing 'jinja2', fixable by 'pip install tmt[report-html]'")
 
 
+@tmt.steps.provides_method('html')
 class ReportHtml(tmt.steps.report.ReportPlugin):
     """
     Format test results into an html report
@@ -41,9 +43,6 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
             how: html
             open: true
     """
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='html', doc=__doc__, order=50)]
 
     # Supported keys
     _keys = ["open"]

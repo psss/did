@@ -6,6 +6,7 @@ import time
 import click
 
 import tmt
+import tmt.steps
 import tmt.steps.execute
 import tmt.utils
 from tmt.steps.execute import TEST_OUTPUT_FILENAME, Script
@@ -57,6 +58,9 @@ SCRIPTS = (TMT_FILE_SUBMIT_SCRIPT,
            )
 
 
+@tmt.steps.provides_method('tmt')
+@tmt.steps.provides_method('shell.tmt', order=80)
+@tmt.steps.provides_method('beakerlib.tmt', order=80)
 class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     """
     Use the internal tmt executor to execute tests
@@ -66,13 +70,6 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     result is based on the script exit code (for shell tests) or the
     results file (for beakerlib tests).
     """
-
-    # Supported methods
-    _methods = [
-        tmt.steps.Method(name='tmt', doc=__doc__, order=50),
-        tmt.steps.Method(name='shell.tmt', doc=__doc__, order=80),
-        tmt.steps.Method(name='beakerlib.tmt', doc=__doc__, order=80),
-        ]
 
     # Supported keys
     _keys = ["script", "interactive"]

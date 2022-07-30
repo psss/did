@@ -114,7 +114,7 @@ class Finish(tmt.steps.Step):
 class FinishPlugin(tmt.steps.Plugin):
     """ Common parent of finish plugins """
 
-    # List of all supported methods aggregated from all plugins
+    # List of all supported methods aggregated from all plugins of the same step.
     _supported_methods: List[Method] = []
 
     @classmethod

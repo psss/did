@@ -87,7 +87,7 @@ class ReportPlugin(tmt.steps.GuestlessPlugin):
     # Default implementation for report is display
     how = 'display'
 
-    # List of all supported methods aggregated from all plugins
+    # List of all supported methods aggregated from all plugins of the same step.
     _supported_methods: List[tmt.steps.Method] = []
 
     @classmethod

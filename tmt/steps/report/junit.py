@@ -6,6 +6,7 @@ import click
 
 import tmt
 import tmt.options
+import tmt.steps
 import tmt.steps.report
 
 DEFAULT_NAME = "junit.xml"
@@ -84,6 +85,7 @@ def make_junit_xml(report: "tmt.steps.report.ReportPlugin") -> JunitTestSuite:
     return cast(JunitTestSuite, suite)
 
 
+@tmt.steps.provides_method('junit')
 class ReportJUnit(tmt.steps.report.ReportPlugin):
     """
     Write test results in JUnit format
@@ -91,9 +93,6 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
     When FILE is not specified output is written to the 'junit.xml'
     located in the current workdir.
     """
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='junit', doc=__doc__, order=50)]
 
     # Supported keys
     _keys = ["file"]

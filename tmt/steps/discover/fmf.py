@@ -9,10 +9,12 @@ import fmf
 
 import tmt
 import tmt.beakerlib
+import tmt.steps
 import tmt.steps.discover
 from tmt.utils import git_clone
 
 
+@tmt.steps.provides_method('fmf')
 class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     """
     Discover available tests from fmf metadata
@@ -84,9 +86,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     specified via 'test', so those tests will also be selected even if
     not modified.
     """
-
-    # Supported methods
-    _methods = [tmt.steps.Method(name='fmf', doc=__doc__, order=50)]
 
     # Supported keys
     _keys = [

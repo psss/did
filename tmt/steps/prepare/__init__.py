@@ -1,6 +1,6 @@
 import collections
 import copy
-from typing import Optional, Type
+from typing import List, Optional, Type
 
 import click
 import fmf
@@ -183,8 +183,8 @@ class Prepare(tmt.steps.Step):
 class PreparePlugin(tmt.steps.Plugin):
     """ Common parent of prepare plugins """
 
-    # List of all supported methods aggregated from all plugins
-    _supported_methods = []
+    # List of all supported methods aggregated from all plugins of the same step.
+    _supported_methods: List[tmt.steps.Method] = []
 
     # Common keys for all prepare step implementations
     _common_keys = ['where']
