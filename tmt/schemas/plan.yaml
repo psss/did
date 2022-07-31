@@ -97,15 +97,11 @@ properties:
     $ref: "/schemas/core#/definitions/description"
 
   # https://tmt.readthedocs.io/en/stable/spec/plans.html#spec-plans-discover
-  discover:
-    oneOf:
-      - $ref: "/schemas/discover/fmf#"
-      - $ref: "/schemas/discover/shell#"
-      - type: array
-        items:
-          anyOf:
-            - $ref: "/schemas/discover/fmf#"
-            - $ref: "/schemas/discover/shell#"
+  #
+  # NOTE: the `discover` schema will be extended dynamically to support all
+  # discover plugins known to tmt in runtime. See tmt.utils.load_schema_store
+  # for details.
+  discover: true
 
   # https://tmt.readthedocs.io/en/stable/spec/core.html#enabled
   enabled:
@@ -120,27 +116,18 @@ properties:
     $ref: "/schemas/common#/definitions/array_of_strings"
 
   # https://tmt.readthedocs.io/en/stable/spec/plans.html#execute
-  execute:
-    oneOf:
-      - $ref: "/schemas/execute/tmt#"
-      - $ref: "/schemas/execute/upgrade#"
-      - type: array
-        items:
-          $ref: "/schemas/execute/tmt#"
-      - type: array
-        items:
-          $ref: "/schemas/execute/upgrade#"
+  #
+  # NOTE: the `execute` schema will be extended dynamically to support all
+  # execute plugins known to tmt in runtime. See tmt.utils.load_schema_store
+  # for details.
+  execute: true
 
   # https://tmt.readthedocs.io/en/stable/spec/plans.html#finish
-  finish:
-    oneOf:
-      - $ref: "/schemas/finish/ansible#"
-      - $ref: "/schemas/finish/shell#"
-      - type: array
-        items:
-          anyOf:
-            - $ref: "/schemas/prepare/ansible#"
-            - $ref: "/schemas/prepare/shell#"
+  #
+  # NOTE: the `finish` schema will be extended dynamically to support all
+  # finish plugins known to tmt in runtime. See tmt.utils.load_schema_store
+  # for details.
+  finish: true
 
   # https://tmt.readthedocs.io/en/stable/spec/core.html#link
   link:
@@ -151,47 +138,25 @@ properties:
     $ref: "/schemas/core#/definitions/order"
 
   # https://tmt.readthedocs.io/en/stable/spec/plans.html#prepare
-  prepare:
-    oneOf:
-      - $ref: "/schemas/prepare/ansible#"
-      - $ref: "/schemas/prepare/install#"
-      - $ref: "/schemas/prepare/shell#"
-      - type: array
-        items:
-          anyOf:
-            - $ref: "/schemas/prepare/ansible#"
-            - $ref: "/schemas/prepare/install#"
-            - $ref: "/schemas/prepare/shell#"
+  #
+  # NOTE: the `prepare` schema will be extended dynamically to support all
+  # prepare plugins known to tmt in runtime. See tmt.utils.load_schema_store
+  # for details.
+  prepare: true
 
   # https://tmt.readthedocs.io/en/stable/spec/plans.html#provision
-  provision:
-    oneOf:
-      - $ref: "/schemas/provision/artemis#"
-      - $ref: "/schemas/provision/connect#"
-      - $ref: "/schemas/provision/container#"
-      - $ref: "/schemas/provision/local#"
-      - $ref: "/schemas/provision/virtual#"
-      - type: array
-        items:
-          anyOf:
-            - $ref: "/schemas/provision/artemis#"
-            - $ref: "/schemas/provision/connect#"
-            - $ref: "/schemas/provision/container#"
-            - $ref: "/schemas/provision/local#"
-            - $ref: "/schemas/provision/virtual#"
+  #
+  # NOTE: the `provision` schema will be extended dynamically to support all
+  # provision plugins known to tmt in runtime. See tmt.utils.load_schema_store
+  # for details.
+  provision: true
 
   # https://tmt.readthedocs.io/en/stable/spec/plans.html#report
-  report:
-    oneOf:
-      - $ref: "/schemas/report/display#"
-      - $ref: "/schemas/report/html#"
-      - $ref: "/schemas/report/junit#"
-      - type: array
-        items:
-          anyOf:
-            - $ref: "/schemas/report/display#"
-            - $ref: "/schemas/report/html#"
-            - $ref: "/schemas/report/junit#"
+  #
+  # NOTE: the `report` schema will be extended dynamically to support all
+  # report plugins known to tmt in runtime. See tmt.utils.load_schema_store
+  # for details.
+  report: true
 
   # https://tmt.readthedocs.io/en/stable/spec/core.html#summary
   summary:

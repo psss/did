@@ -2609,9 +2609,60 @@ Schema = Dict[str, Any]
 SchemaStore = Dict[str, Schema]
 
 
-@functools.lru_cache(maxsize=None)
-def load_schema(schema_filepath: str) -> Schema:
-    """ Load a JSON schema from a given filepath """
+def _patch_plan_schema(schema: Schema, store: SchemaStore) -> None:
+    """
+    Resolve references to per-plugin schema known to steps. All schemas have
+    been loaded into store, all that's left is to update each step in plan
+    schema with the list of schemas allowed for that particular step.
+
+    For each step, we create the following schema (see also plan.yaml for the
+    rest of plan schema):
+
+    .. code-block:: yaml
+
+       <step name>:
+         oneOf:
+           - $ref: "/schemas/<step name>/plugin1"
+           - $ref: "/schemas/<step name>/plugin2"
+           ...
+           - $ref: "/schemas/<step name>/pluginN"
+           - type: array
+             items:
+               anyOf:
+                 - $ref: "/schemas/<step name>/plugin1"
+                 - $ref: "/schemas/<step name>/plugin2"
+                 ...
+                 - $ref: "/schemas/<step name>/pluginN"
+    """
+
+    for step in ('discover', 'execute', 'finish', 'prepare', 'provision', 'report'):
+        step_schema_prefix = f'/schemas/{step}/'
+
+        step_plugin_schema_ids = [schema_id for schema_id in store.keys() if schema_id.startswith(
+            step_schema_prefix) and schema_id != '/schemas/provision/hardware']
+
+        refs: List[Schema] = [
+            {'$ref': schema_id} for schema_id in step_plugin_schema_ids
+            ]
+
+        schema['properties'][step] = {
+            'oneOf': refs + [
+                {
+                    'type': 'array',
+                    'items': {
+                        'anyOf': refs
+                        }
+                    }
+                ]
+            }
+
+
+def _load_schema(schema_filepath: str) -> Schema:
+    """
+    Load a JSON schema from a given filepath.
+
+    A helper returning the raw loaded schema.
+    """
 
     if not os.path.isabs(schema_filepath):
         schema_filepath = os.path.join(
@@ -2624,6 +2675,25 @@ def load_schema(schema_filepath: str) -> Schema:
 
     except Exception as exc:
         raise FileError(f"Failed to load schema file {schema_filepath}\n{exc}")
+
+
+@functools.lru_cache(maxsize=None)
+def load_schema(schema_filepath: str) -> Schema:
+    """
+    Load a JSON schema from a given filepath.
+
+    Recommended for general use, the method may apply some post-loading touches
+    to the given schema, and unless caller is interested in the raw content of
+    the file, this functions should be used instead of the real workhorse of
+    schema loading, :py:func:`_load_schema`.
+    """
+
+    schema = _load_schema(schema_filepath)
+
+    if schema.get('$id') == '/schemas/plan':
+        _patch_plan_schema(schema, load_schema_store())
+
+    return schema
 
 
 @functools.lru_cache(maxsize=None)
@@ -2646,12 +2716,17 @@ def load_schema_store() -> SchemaStore:
                 if os.path.splitext(filename)[1].lower() not in ('.yaml', '.yml'):
                     continue
 
-                schema = load_schema(os.path.join(dirpath, filename))
+                schema = _load_schema(os.path.join(dirpath, filename))
 
                 store[schema['$id']] = schema
 
     except Exception as exc:
         raise FileError(f"Failed to discover schema files\n{exc}")
+
+    if '/schemas/plan' not in store:
+        raise FileError('Failed to discover schema for plans')
+
+    _patch_plan_schema(store['/schemas/plan'], store)
 
     return store
 
