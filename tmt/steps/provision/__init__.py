@@ -32,7 +32,7 @@ class Provision(tmt.steps.Step):
     """ Provision an environment for testing or use localhost. """
 
     # Default implementation for provision is a virtual machine
-    how = 'virtual'
+    DEFAULT_HOW = 'virtual'
 
     def __init__(self, plan, data):
         """ Initialize provision step data """

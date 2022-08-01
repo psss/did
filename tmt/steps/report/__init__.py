@@ -11,7 +11,7 @@ class Report(tmt.steps.Step):
     """ Provide test results overview and send reports. """
 
     # Default implementation for report is display
-    how = 'display'
+    DEFAULT_HOW = 'display'
     data: List[tmt.steps.StepData]
 
     def wake(self) -> None:

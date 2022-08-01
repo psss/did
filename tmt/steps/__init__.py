@@ -80,9 +80,10 @@ class StepData(TypedDict, total=False):
 class Step(tmt.utils.Common):
     """ Common parent of all test steps """
 
-    # Default implementation for all steps is shell
-    # except for provision (virtual) and report (display)
-    how: str = 'shell'
+    # Default implementation for all steps is "shell", but some
+    # steps like provision may have better defaults for their
+    # area of expertise.
+    DEFAULT_HOW: str = 'shell'
 
     def __init__(
             self,
@@ -122,7 +123,7 @@ class Step(tmt.utils.Common):
         for data in self.data:
             # Set 'how' to the default if not specified
             if data.get('how') is None:
-                data['how'] = self.how
+                data['how'] = self.DEFAULT_HOW
             # Ensure that each config has a name
             if 'name' not in data and len(self.data) > 1:
                 raise tmt.utils.GeneralError(
