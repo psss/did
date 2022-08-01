@@ -3,6 +3,7 @@
 
 import re
 import sys
+import textwrap
 from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type,
                     TypeVar, Union, cast, overload)
 
@@ -160,7 +161,7 @@ class Step(tmt.utils.Common):
             raise tmt.utils.GeneralError(
                 f"Missing docstring of the step {cls.__name__.lower()}.")
 
-        usage = re.sub('\n    ', '\n', cls.__doc__)
+        usage = textwrap.dedent(cls.__doc__)
         # Append the list of supported methods
         usage += '\n\n' + method_overview
         # Give a hint about detailed help
