@@ -7,6 +7,13 @@ rlJournalStart
         export REPO="$(pwd)/../.."
         export REV="$(git rev-parse --short HEAD)"
         rlRun "set -o pipefail"
+        if ! command -v pre-commit ; then
+          if test -e /root/.local/bin/pre-commit; then
+            rlRun "export PATH=/root/.local/bin:$PATH" 0 "Fix PATH to include /root/.local/bin with pre-commit"
+          else
+            rlFail "pre-commit is not on PATH nor in /root/.local/bin"
+          fi
+        fi
     rlPhaseEnd
 
 for WHAT in "tests-" "plans-" "stories-" ''; do
