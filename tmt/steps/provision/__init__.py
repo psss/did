@@ -10,6 +10,7 @@ import subprocess
 import tempfile
 import time
 from shlex import quote
+from threading import Thread
 from typing import Dict, List, Optional, Type
 
 import click
@@ -22,9 +23,6 @@ from tmt.steps import Action
 
 # Timeout in seconds of waiting for a connection after reboot
 CONNECTION_TIMEOUT = 5 * 60
-
-# Wait time when reboot happens in seconds
-RECONNECT_INITIAL_WAIT_TIME = 5
 
 # Default rsync options
 DEFAULT_RSYNC_OPTIONS = [
@@ -521,8 +519,6 @@ class Guest(tmt.utils.Common):
         # The default is handled here rather than in the argument so that
         # the caller can pass in None as an argument (i.e. don't care value)
         timeout = timeout or CONNECTION_TIMEOUT
-        # Try to wait for machine to really shutdown
-        time.sleep(RECONNECT_INITIAL_WAIT_TIME)
         self.debug("Wait for a connection to the guest.")
 
         # A small shortcut... `now` or `utcnow`, should not matter, becase we
@@ -880,7 +876,7 @@ class GuestSsh(Guest):
 
     def reboot(self, hard=False, command=None, timeout=None):
         """
-        Reboot the guest, return True if successful
+        Reboot the guest, return True if reconnect was successful
 
         Parameter 'hard' set to True means that guest should be
         rebooted by way which is not clean in sense that data can be
@@ -894,6 +890,26 @@ class GuestSsh(Guest):
             raise tmt.utils.ProvisionError(
                 "Method does not support hard reboot.")
 
+        # Reboot takes its time and timeout is for whole reboot + reconnect
+        # so we need to shorten reconnect() appropriately
+        # but whole outcome is ignored https://github.com/teemtee/tmt/issues/1405
+        # and there is plan to make common handler for timeouts
+        # https://github.com/teemtee/tmt/pull/1280
+        # So do not pretend it is doing what is written and ignore it as the
+        # rest of tmt does (FIXME) and wait until better API
+
+        timeout = timeout or tmt.steps.provision.CONNECTION_TIMEOUT
+
+        def sleep_past_reboot():
+            try:
+                # Really long sleep which will be killed by connection drop
+                self.execute(f'sleep {timeout * 2}')
+            except tmt.utils.RunError:
+                pass
+
+        connection_probe = Thread(target=sleep_past_reboot)
+        connection_probe.start()
+
         try:
             command = command or "reboot"
             self.debug(f"Reboot using the command '{command}'.")
@@ -906,6 +922,12 @@ class GuestSsh(Guest):
                     "Seems the connection was closed too fast, ignoring.")
             else:
                 raise
+        # Wait until ssh connection drops (sleep_past_reboot is terminated)
+        self.debug(f"Waiting up to {timeout}s for the connection to be dropped.")
+        connection_probe.join(timeout=timeout)
+
+        # FIXME reconnect should not be called if timeout is exceeded
+        # FIXME shorten reconnect timeout
         return self.reconnect(timeout=timeout)
 
     def remove(self):
