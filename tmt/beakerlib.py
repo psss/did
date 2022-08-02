@@ -13,6 +13,7 @@ import tmt.utils
 
 # A beakerlib indetified type, can be a string or a dictionary
 BeakerlibIdentifierType = Union[str, Dict[str, str]]
+ImportedIdentifiersType = Optional[List[BeakerlibIdentifierType]]
 
 # A type for Beakerlib dependencies
 LibraryDependenciesType = Tuple[
@@ -82,9 +83,11 @@ class Library(object):
         # Default branch is detected from the origin after cloning
         self.default_branch: Optional[str] = None
 
+        self.identifier: BeakerlibIdentifierType
         # The 'library(repo/lib)' format
         if isinstance(identifier, str):
             identifier = identifier.strip()
+            self.identifier = identifier
             matched = LIBRARY_REGEXP.search(identifier)
             if not matched:
                 raise LibraryError
@@ -100,6 +103,7 @@ class Library(object):
 
         # The fmf identifier
         elif isinstance(identifier, dict):
+            self.identifier = identifier
             self.parent.debug(f"Detected library '{identifier}'.", level=3)
             self.format = 'fmf'
             self.url = identifier.get('url')
@@ -292,7 +296,8 @@ class Library(object):
 def dependencies(
     original_require: List[str],
     original_recommend: Optional[List[str]] = None,
-    parent: Optional[tmt.utils.Common] = None
+    parent: Optional[tmt.utils.Common] = None,
+    imported_lib_ids: ImportedIdentifiersType = None,
         ) -> LibraryDependenciesType:
     """
     Check dependencies for possible beakerlib libraries
@@ -302,22 +307,34 @@ def dependencies(
     list of regular rpm package names aggregated from all fetched
     libraries, list of aggregated recommended packages and a list of
     gathered libraries (instances of the Library class).
+
+    Avoid infinite recursion by keeping track of imported library identifiers
+    and not trying to fetch those again.
     """
     # Initialize lists, use set for require & recommend
     processed_require = set()
     processed_recommend = set()
+    imported_lib_ids = imported_lib_ids or []
     gathered_libraries = []
     original_require = original_require or []
     original_recommend = original_recommend or []
 
-    for dependency in original_require + original_recommend:
+    # Cut circular dependencies to avoid infinite recursion
+    def already_fetched(lib: str) -> bool:
+        if not imported_lib_ids:
+            return True
+        return lib not in imported_lib_ids
+
+    to_fetch = original_require + original_recommend
+    for dependency in filter(already_fetched, to_fetch):
         # Library require/recommend
         try:
             library = Library(dependency, parent=parent)
             gathered_libraries.append(library)
+            imported_lib_ids.append(library.identifier)
             # Recursively check for possible dependent libraries
             requires, recommends, libraries = dependencies(
-                library.require, library.recommend, parent)
+                library.require, library.recommend, parent, imported_lib_ids)
             processed_require.update(set(requires))
             processed_recommend.update(set(recommends))
             gathered_libraries.extend(libraries)
