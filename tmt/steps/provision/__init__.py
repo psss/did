@@ -731,6 +731,10 @@ class GuestSsh(Guest):
         If the command is provided as a list, it will be space-joined.
         If necessary, quote escaping has to be handled by the caller.
         """
+        # Abort if guest is unavailable
+        if self.guest is None:
+            if not self.opt('dry'):
+                raise tmt.utils.GeneralError('The guest is not available.')
 
         # Prepare the export of environment variables
         environment = self._export_environment(
@@ -762,6 +766,11 @@ class GuestSsh(Guest):
         location and the 'options' parametr to modify default options
         which are '-Rrz --links --safe-links --delete'.
         """
+        # Abort if guest is unavailable
+        if self.guest is None:
+            if not self.opt('dry'):
+                raise tmt.utils.GeneralError('The guest is not available.')
+
         # Prepare options and the push command
         if options is None:
             options = DEFAULT_RSYNC_OPTIONS
@@ -810,6 +819,11 @@ class GuestSsh(Guest):
         default options '-Rrz --links --safe-links --protect-args'
         and 'extend_options' to extend them (e.g. by exclude).
         """
+        # Abort if guest is unavailable
+        if self.guest is None:
+            if not self.opt('dry'):
+                raise tmt.utils.GeneralError('The guest is not available.')
+
         # Prepare options and the pull command
         if options is None:
             options = "-Rrz --links --safe-links --protect-args".split()
