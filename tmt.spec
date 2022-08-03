@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.15.0
+Version: 1.16.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -199,6 +199,55 @@ chmod 1777 %{buildroot}%{workdir_root}
 
 
 %changelog
+* Wed Aug 03 2022 Lukáš Zachar <lzachar@redhat.com> - 1.16.0-1
+- Reboot has to check for boot time
+- Fix path inside pre-commit test
+- Cut circular dependency of libraries
+- Update 'Develop' section of contribution docs
+- Precommit hooks to call tmt * lint
+- Schema loading helpers
+- Package schemas in subdirectories too
+- Implement reboot reconnect timeout configuration
+- Add missing report specifications/docs
+- Print result for execute -v
+- Correct import assumption about script
+- Ask mypy to check whole tmt.steps.report package
+- Fixing the directory name escaping in 'cd' command
+- Add polarion report plugin
+- Add schemas for plans
+- Write extra-nitrate as soon as possible
+- Retry git clone without --depth=1 if it failed
+- Support to lint attribute 'id'
+- Do not apply test command filter in upgrade
+- Fix export.py typing issues
+- Refactor location and signature of Phase's go() method
+- Simplify abort handling
+- Backwards compatibility for rstrnt-abort
+- Add type annotations for tmt/cli.py
+- Add typing for tmt/export.py
+- add typing for steps/discover/__init__.py
+- Convert guest implementations to use serializable container for load/save
+- Detect plugins by entry_point as well
+- Add typing for `steps/execute/__init__.py`
+- Add typing for `tmt/convert.py`
+- Remove duplicated dist-git-source/dist-git-type
+- Add typing for `steps/report/junit.py`
+- Add typing for `steps/report/html.py`
+- add typing for steps/report/display.py
+- Add typing for steps/report/__init__.py
+- tmt-file-submit is a bash script
+- Add type annotations for tmt/options.py
+- Backwards compatibility for `rstrnt-report-log`
+- Support conditional requires with `pip` as well
+- Remove duplicated short option in tmt lint
+- Adjust the `rstrnt-report-result` implementation
+- Backwards compatibility for `rstrnt-report-result`
+- Set the `1777` permision for `/var/tmp/tmt`
+- Adjust the fix for the `rpm-ostree` intallation
+- Fix package installation using `rpm-ostree`
+- Handle empty fmf file as an empty dictionary
+- Fix distgit testsuite after tmt packaging change
+
 * Sat Jul 02 2022 Lukáš Zachar <lzachar@redhat.com> - 1.15.0-1
 - Require fresh testcloud with coreos support
 - Bad substitution in tmt-reboot
