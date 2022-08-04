@@ -33,7 +33,8 @@ TMT_REPORT_RESULT_SCRIPT = Script("/usr/local/bin/tmt-report-result",
 TMT_FILE_SUBMIT_SCRIPT = Script("/usr/local/bin/tmt-file-submit",
                                 aliases=[
                                     "/usr/local/bin/rstrnt-report-log",
-                                    "/usr/local/bin/rhts-report-log"],
+                                    "/usr/local/bin/rhts-submit-log",
+                                    "/usr/local/bin/rhts_submit_log"],
                                 related_variables=[]
                                 )
 

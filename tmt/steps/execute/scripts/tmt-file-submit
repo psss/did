@@ -6,7 +6,7 @@ needs_arg() { if [ -z "$OPTARG" ]; then die "No arg for --$OPT option"; fi; }
 
 check_opt_args () {
     local OPTIND
-    while getopts l:filename:s:server:port-: OPT; do
+    while getopts T:l:filename:s:server:port-: OPT; do
         # support long options: https://stackoverflow.com/a/28466267/519360
         if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
             OPT="${OPTARG%%=*}"       # extract long option name
@@ -15,6 +15,7 @@ check_opt_args () {
             filename )       needs_arg; eval "FILENAME=\"\$$OPTIND\"" ; OPTIND=$((OPTIND+1)) ;;
             l )              needs_arg; FILENAME=$OPTARG ;;
             s )              continue;;
+            T )              continue;;
             server )         OPTIND=$((OPTIND+1));;
             port )           OPTIND=$((OPTIND+1));;
         esac
