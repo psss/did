@@ -292,7 +292,10 @@ class Guest(tmt.utils.Common):
 
         raise NotImplementedError()
 
-    def execute(self, command: Union[str, List[str]], **kwargs: Any) -> tmt.utils.CommandOutput:
+    def execute(self,
+                command: Union[str, List[str]],
+                test_session: bool = False,
+                **kwargs: Any) -> tmt.utils.CommandOutput:
         """
         Execute command on the guest
 
@@ -612,7 +615,10 @@ class GuestSsh(Guest):
             env=self._prepare_environment())
         self._ansible_summary(stdout)
 
-    def execute(self, command: Union[str, List[str]], **kwargs: Any) -> tmt.utils.CommandOutput:
+    def execute(self,
+                command: Union[str, List[str]],
+                test_session: bool = False,
+                **kwargs: Any) -> tmt.utils.CommandOutput:
         """
         Execute command on the guest
 
@@ -640,6 +646,14 @@ class GuestSsh(Guest):
         # Run in interactive mode if requested
         interactive = ['-t'] if kwargs.get('interactive') else []
 
+        # Force ssh to allocate pseudo-terminal if requested. Without a pseudo-terminal,
+        # remote processes spawned by SSH would keep running after SSH process death, e.g.
+        # in the case of a timeout.
+        #
+        # Note that polite request, `-t`, is not enough since `ssh` itself has no pseudo-terminal,
+        # and a single `-t` wouldn't have the necessary effect.
+        ptty = ['-tt'] if test_session else []
+
         # Prepare command and run it
         if isinstance(command, (list, tuple)):
             command = ' '.join(command)
@@ -650,7 +664,7 @@ class GuestSsh(Guest):
         assert isinstance(ssh_command, list)
 
         command = (
-            ssh_command + interactive + [self._ssh_guest()] +
+            ssh_command + interactive + ptty + [self._ssh_guest()] +
             [f'{environment}{directory}{command}'])
         return self.run(command, **kwargs)
 

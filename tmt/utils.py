@@ -13,6 +13,7 @@ import pprint
 import re
 import shlex
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -604,6 +605,7 @@ class Common:
         try:
             process = subprocess.Popen(
                 command, cwd=cwd, shell=shell, env=environment,
+                start_new_session=True,
                 stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT if join else subprocess.PIPE,
                 executable=executable)
@@ -629,14 +631,37 @@ class Common:
         stdout_thread.start()
         if not join:
             stderr_thread.start()
+
+        # A bit of logging helpers for debugging duration behavior
+        start_timestamp = time.monotonic()
+
+        def _event_timestamp() -> str:
+            return f'{time.monotonic() - start_timestamp:.4}'
+
+        def log_event(msg: str) -> None:
+            self.debug('Command event', f'{_event_timestamp()} {msg}', level=4)
+
         try:
             process.wait(timeout=timeout)
         except subprocess.TimeoutExpired:
-            process.kill()
+            log_event(f'duration "{timeout}" exceeded')
+
+            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+            log_event('sent SIGKILL signal')
+
+            process.wait()
+            log_event('kill confirmed')
+
             process.returncode = PROCESS_TIMEOUT
+
+        log_event('waiting for stream readers')
+
         stdout_thread.join()
+        log_event('stdout reader done')
+
         if not join:
             stderr_thread.join()
+            log_event('stderr reader done')
 
         # Handle the exit code, return output
         if process.returncode != 0:

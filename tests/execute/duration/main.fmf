@@ -1,1 +1,11 @@
 summary: Verify that the test duration is correctly handled
+environment:
+    PROVISION_METHODS: "local container"
+duration: 10m
+
+adjust:
+    when: how == full
+    environment:
+        PROVISION_METHODS: "local container virtual"
+    duration: 30m
+    because: with full virtualization more methods can be tested

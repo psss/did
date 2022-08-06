@@ -19,6 +19,10 @@ from tmt.steps.execute import (SCRIPTS, TEST_OUTPUT_FILENAME,
 from tmt.steps.provision import Guest
 from tmt.utils import EnvironmentType
 
+TEST_WRAPPER_FILENAME = 'tmt-test-wrapper.sh'
+TEST_WRAPPER_INTERACTIVE = '{remote_command}'
+TEST_WRAPPER_NONINTERACTIVE = 'set -eo pipefail; {remote_command} </dev/null |& cat'
+
 
 @dataclasses.dataclass
 class ExecuteInternalData(tmt.steps.execute.ExecuteStepData):
@@ -149,11 +153,29 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         # Create data directory, prepare test environment
         environment = self._test_environment(test, extra_environment)
 
+        test_wrapper_filepath = os.path.join(workdir, TEST_WRAPPER_FILENAME)
+
         # Prepare the test command (use default options for shell tests)
         if test.framework == "shell":
-            command = f"{tmt.utils.SHELL_OPTIONS}; {test.test}"
+            test_command = f"{tmt.utils.SHELL_OPTIONS}; {test.test}"
         else:
-            command = test.test
+            test_command = test.test
+        self.debug('Test script', test_command, level=3)
+
+        # Prepare the wrapper, push to guest
+        self.write(test_wrapper_filepath, test_command, 'w')
+        os.chmod(test_wrapper_filepath, 0o755)
+        guest.push(
+            source=test_wrapper_filepath,
+            destination=test_wrapper_filepath,
+            options=["-p", "--chmod=755"])
+
+        # Prepare the actual remote command
+        remote_command = f'./{TEST_WRAPPER_FILENAME}'
+        if self.get('interactive'):
+            remote_command = TEST_WRAPPER_INTERACTIVE.format(remote_command=remote_command)
+        else:
+            remote_command = TEST_WRAPPER_NONINTERACTIVE.format(remote_command=remote_command)
 
         # Prepare custom function to log output in verbose mode
         def log(
@@ -168,9 +190,10 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         start = time.time()
         try:
             stdout, stderr = guest.execute(
-                command, cwd=workdir, env=environment,
+                remote_command, cwd=workdir, env=environment,
                 join=True, interactive=self.get('interactive'), log=log,
-                timeout=tmt.utils.duration_to_seconds(test.duration))
+                timeout=tmt.utils.duration_to_seconds(test.duration),
+                test_session=True)
             test.returncode = 0
         except tmt.utils.RunError as error:
             stdout = error.stdout

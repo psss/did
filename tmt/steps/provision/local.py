@@ -29,7 +29,10 @@ class GuestLocal(tmt.Guest):
             env=self._prepare_environment())
         self._ansible_summary(stdout)
 
-    def execute(self, command: Union[List[str], str], **kwargs: Any) -> tmt.utils.CommandOutput:
+    def execute(self,
+                command: Union[List[str], str],
+                test_session: bool = False,
+                **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Execute command on localhost """
         # Prepare the environment (plan/cli variables override)
         environment: tmt.utils.EnvironmentType = dict()

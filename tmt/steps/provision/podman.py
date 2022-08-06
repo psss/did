@@ -122,7 +122,10 @@ class GuestContainer(tmt.Guest):
         """ Run given command via podman """
         return self.run(['podman'] + command, **kwargs)
 
-    def execute(self, command: Union[List[str], str], **kwargs: Any) -> tmt.utils.CommandOutput:
+    def execute(self,
+                command: Union[List[str], str],
+                test_session: bool = False,
+                **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Execute given commands in podman via shell """
         if not self.container and not self.opt('dry'):
             raise tmt.utils.ProvisionError(

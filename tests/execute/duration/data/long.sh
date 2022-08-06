@@ -4,6 +4,6 @@
 rlJournalStart
     rlPhaseStartTest
         rlPass "Passing assert"
-        sleep 10 # more than timeout
+        sleep 120 # Way more than timeout of 5 seconds imposed by `duration`
     rlPhaseEnd
 rlJournalEnd

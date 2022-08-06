@@ -1,18 +1,18 @@
-/good:
+/short:
     summary: Test with an appropriate duration
 
     /shell:
         test: sleep 1
     /beakerlib:
         framework: beakerlib
-        test: ./good.sh
+        test: ./short.sh
 
 /long:
     summary: Test exceeding the duration limit
-    duration: 3s
+    duration: 5s
 
     /shell:
-        test: sleep 10s
+        test: sleep 120s
     /beakerlib:
         framework: beakerlib
         test: ./long.sh
