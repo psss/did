@@ -78,6 +78,12 @@ class GitHub(object):
             try:
                 data = json.loads(response.text)["items"]
                 result.extend(data)
+            except KeyError:
+                if json.loads(response.text)["message"].startswith(
+                        "API rate limit exceeded"):
+                    raise ReportError(
+                        "GitHub API rate limit exceeded. "
+                        "Consider creating an access token.")
             except requests.exceptions.JSONDecodeError as error:
                 log.debug(error)
                 raise ReportError(f"GitHub JSON failed: {response.text}.")
