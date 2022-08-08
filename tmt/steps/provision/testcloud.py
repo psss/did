@@ -6,7 +6,8 @@ import os
 import platform
 import re
 import time
-from typing import Optional
+import types
+from typing import Any, List, Optional, cast
 
 import click
 import requests
@@ -17,8 +18,11 @@ import tmt.steps.provision
 import tmt.utils
 from tmt.utils import WORKDIR_ROOT, ProvisionError, retry_session
 
+libvirt: Optional[types.ModuleType] = None
+testcloud: Optional[types.ModuleType] = None
 
-def import_testcloud():
+
+def import_testcloud() -> None:
     """
     Import testcloud module only when needed
 
@@ -158,12 +162,9 @@ DEFAULT_IMAGE = 'fedora'
 DEFAULT_CONNECTION = 'session'
 DEFAULT_ARCH = platform.machine()
 
-# TODO: get rid of `ignore` once superclass is no longer `Any`
-
 
 @dataclasses.dataclass
-class TestcloudGuestData(
-        tmt.steps.provision.GuestSshData):  # type: ignore[misc]
+class TestcloudGuestData(tmt.steps.provision.GuestSshData):
     # Override parent class with our defaults
     user: str = DEFAULT_USER
 
@@ -227,9 +228,10 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
     _keys = ["image", "user", "memory", "disk", "connection", "arch"]
 
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for testcloud """
-        return [
+        options = super().options(how)
+        options[:0] = [
             click.option(
                 '-i', '--image', metavar='IMAGE',
                 help='Select image to be used. Provide a short name, '
@@ -251,13 +253,15 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 '-a', '--arch',
                 type=click.Choice(['x86_64', 'aarch64', 's390x', 'ppc64le']),
                 help="What architecture to virtualize, host arch by default."),
-            ] + super().options(how)
+            ]
+        return options
 
-    def default(self, option, default=None):
+    def default(self, option: str, default: Any = None) -> Any:
         """ Return default data for given option """
         return getattr(TestcloudGuestData(), option, default)
 
-    def wake(self, data=None):
+    # TODO: Revisit this `type: ignore` once `Guest` becomes a generic type
+    def wake(self, data: Optional[TestcloudGuestData] = None) -> None:  # type: ignore[override]
         """ Wake up the plugin, process data, apply options """
         super().wake(data=data)
 
@@ -267,7 +271,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
             guest.wake()
             self._guest = guest
 
-    def go(self):
+    def go(self) -> None:
         """ Provision the testcloud instance """
         super().go()
 
@@ -304,12 +308,12 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
         self._guest = GuestTestcloud(data, name=self.name, parent=self.step)
         self._guest.start()
 
-    def guest(self):
+    def guest(self) -> Optional[tmt.Guest]:
         """ Return the provisioned guest """
         return self._guest
 
     @classmethod
-    def clean_images(cls, clean, dry):
+    def clean_images(cls, clean: Any, dry: Any) -> None:
         """ Remove the testcloud images """
         clean.info('testcloud', shift=1, color='green')
         if not os.path.exists(TESTCLOUD_IMAGES):
@@ -339,7 +343,8 @@ class GuestTestcloud(tmt.GuestSsh):
         arch ....... architecture for the VM, host arch is the default
     """
 
-    _data_class = TestcloudGuestData
+    # TODO: Revisit this `type: ignore` once `Guest` becomes a generic type
+    _data_class = TestcloudGuestData  # type: ignore
 
     image: str
     image_url: Optional[str]
@@ -351,10 +356,10 @@ class GuestTestcloud(tmt.GuestSsh):
 
     # Not to be saved, recreated from image_url/instance_name/... every
     # time guest is instantiated.
-    _image: Optional['testcloud.image.Image'] = None
-    _instance: Optional['testcloud.instance.Instance'] = None
+    _image: Optional['testcloud.image.Image'] = None  # type: ignore
+    _instance: Optional['testcloud.instance.Instance'] = None  # type: ignore
 
-    def _get_url(self, url, message):
+    def _get_url(self, url: str, message: str) -> requests.Response:
         """ Get url, retry when fails, return response """
 
         def try_get_url() -> requests.Response:
@@ -366,6 +371,8 @@ class GuestTestcloud(tmt.GuestSsh):
                     return response
 
             except requests.RequestException:
+                pass
+            finally:
                 raise tmt.utils.WaitingIncomplete()
 
         try:
@@ -377,7 +384,7 @@ class GuestTestcloud(tmt.GuestSsh):
             raise ProvisionError(
                 f'Failed to {message} in {DEFAULT_CONNECT_TIMEOUT}s.')
 
-    def _guess_image_url(self, name):
+    def _guess_image_url(self, name: str) -> str:
         """ Guess image url for given name """
 
         # Try to check if given url is a local file
@@ -397,6 +404,7 @@ class GuestTestcloud(tmt.GuestSsh):
         matched_ubuntu = re.match(r'^u(buntu)?-?(\w+)$', name)
         matched_debian = re.match(r'^d(ebian)?-?(\w+)$', name)
 
+        assert testcloud is not None
         # Plain name match means we want the latest release
         if name == 'fedora':
             url = testcloud.util.get_fedora_image_url("latest", self.arch)
@@ -435,30 +443,32 @@ class GuestTestcloud(tmt.GuestSsh):
 
         if not url:
             raise ProvisionError(f"Could not map '{name}' to compose.")
-        return url
+        return cast(str, url)
 
     @staticmethod
-    def _create_template():
+    def _create_template() -> None:
         """ Create libvirt domain template """
         # Write always to ovewrite possible outdated version
         with open(DOMAIN_TEMPLATE_FILE, 'w') as template:
             template.write(DOMAIN_TEMPLATE)
 
-    def wake(self):
+    def wake(self) -> None:
         """ Wake up the guest """
         self.debug(
             f"Waking up testcloud instance '{self.instance_name}'.",
             level=2, shift=0)
         self.prepare_config()
+        assert testcloud is not None
         self._image = testcloud.image.Image(self.image_url)
         self._instance = testcloud.instance.Instance(
             self.instance_name, image=self._image,
             connection=f"qemu:///{self.connection}", desired_arch=self.arch)
 
-    def prepare_ssh_key(self, key_type=None):
+    def prepare_ssh_key(self, key_type: Optional[str] = None) -> None:
         """ Prepare ssh key for authentication """
         # Create ssh key paths
         key_name = "id_{}".format(key_type if key_type is not None else 'rsa')
+        assert self.workdir is not None
         self.key = [os.path.join(self.workdir, key_name)]
         self.pubkey = os.path.join(self.workdir, f'{key_name}.pub')
 
@@ -475,11 +485,12 @@ class GuestTestcloud(tmt.GuestSsh):
             self.config.COREOS_DATA = COREOS_DATA.format(
                 user_name=self.user, public_key=pubkey.read())
 
-    def prepare_config(self):
+    def prepare_config(self) -> None:
         """ Prepare common configuration """
         import_testcloud()
 
         # Get configuration
+        assert testcloud is not None
         self.config = testcloud.config.get_config()
 
         # Make sure download progress is disabled unless in debug mode,
@@ -491,7 +502,7 @@ class GuestTestcloud(tmt.GuestSsh):
         self.config.DATA_DIR = TESTCLOUD_DATA
         self.config.STORE_DIR = TESTCLOUD_IMAGES
 
-    def start(self):
+    def start(self) -> None:
         """ Start provisioned guest """
         if self.opt('dry'):
             return
@@ -515,6 +526,7 @@ class GuestTestcloud(tmt.GuestSsh):
             self.debug(f"Guessed image url: '{self.image_url}'", level=3)
 
         # Initialize and prepare testcloud image
+        assert testcloud is not None
         self._image = testcloud.image.Image(self.image_url)
         self.verbose('qcow', self._image.name, 'green')
         if not os.path.exists(self._image.local_path):
@@ -566,6 +578,7 @@ class GuestTestcloud(tmt.GuestSsh):
         self.info('progress', 'booting...', 'cyan')
         self._instance.ram = self.memory
         self._instance.disk_size = self.disk
+        assert libvirt is not None
         try:
             self._instance.prepare()
             self._instance.spawn_vm()
@@ -575,9 +588,9 @@ class GuestTestcloud(tmt.GuestSsh):
             raise ProvisionError(
                 f'Failed to boot testcloud instance ({error}).')
         self.guest = self._instance.get_ip()
-        self.port = self._instance.get_instance_port()
+        self.port = int(self._instance.get_instance_port())
         self.verbose('ip', self.guest, 'green')
-        self.verbose('port', self.port, 'green')
+        self.verbose('port', str(self.port), 'green')
         self._instance.create_ip_file(self.guest)
 
         # Wait a bit until the box is up
@@ -594,12 +607,13 @@ class GuestTestcloud(tmt.GuestSsh):
                 f"for non-kvm instance...")
             time.sleep(NON_KVM_ADDITIONAL_WAIT)
 
-    def stop(self):
+    def stop(self) -> None:
         """ Stop provisioned guest """
         super().stop()
         # Stop only if the instance successfully booted
         if self._instance and self.guest:
             self.debug(f"Stopping testcloud instance '{self.instance_name}'.")
+            assert testcloud is not None
             try:
                 self._instance.stop()
             except testcloud.exceptions.TestcloudInstanceError as error:
@@ -607,7 +621,7 @@ class GuestTestcloud(tmt.GuestSsh):
                     f"Failed to stop testcloud instance: {error}")
             self.info('guest', 'stopped', 'green')
 
-    def remove(self):
+    def remove(self) -> None:
         """ Remove the guest (disk cleanup) """
         if self._instance:
             self.debug(f"Removing testcloud instance '{self.instance_name}'.")
@@ -618,7 +632,12 @@ class GuestTestcloud(tmt.GuestSsh):
                     f"Failed to remove testcloud instance: {error}")
             self.info('guest', 'removed', 'green')
 
-    def reboot(self, hard=False, command=None, timeout=None):
+    def reboot(self,
+               hard: bool = False,
+               command: Optional[str] = None,
+               timeout: Optional[int] = None,
+               tick: float = tmt.utils.DEFAULT_WAIT_TICK,
+               tick_increase: float = tmt.utils.DEFAULT_WAIT_TICK_INCREASE) -> Any:
         """ Reboot the guest, return True if successful """
         # Use custom reboot command if provided
         if command:
