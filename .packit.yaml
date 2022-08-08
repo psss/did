@@ -15,23 +15,38 @@ actions:
 jobs:
 - job: tests
   trigger: pull_request
-  metadata:
-    targets:
-    - fedora-all
-    - epel-8
-    - epel-9
-    enable_net: False
+  targets:
+  - fedora-all
+  - epel-8
+  - epel-9
+  enable_net: False
+
+- job: tests
+  trigger: pull_request
+  identifier: "internal-plugins"
+  targets:
+  - fedora-latest-stable
+  use_internal_tf: True
+  fmf_url: "https://gitlab.cee.redhat.com/baseos-qe/tmt.git"
+
+- job: tests
+  trigger: pull_request
+  identifier: "internal-wow"
+  targets:
+  - fedora-latest-stable
+  use_internal_tf: True
+  fmf_url: "https://gitlab.cee.redhat.com/baseos-qe/integration_scripts.git"
+  tmt_plan: "/tmt/integration/plan"
 
 - job: copr_build
   trigger: commit
-  metadata:
-    branch: main
-    targets:
-    - fedora-all
-    - epel-8
-    - epel-9
-    enable_net: False
-    list_on_homepage: True
-    preserve_project: True
-    owner: psss
-    project: tmt
+  branch: main
+  targets:
+  - fedora-all
+  - epel-8
+  - epel-9
+  enable_net: False
+  list_on_homepage: True
+  preserve_project: True
+  owner: psss
+  project: tmt
