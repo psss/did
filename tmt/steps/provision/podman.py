@@ -1,7 +1,7 @@
 import dataclasses
 import os
 from shlex import quote
-from typing import Optional
+from typing import Any, List, Optional, Tuple, Union
 
 import click
 
@@ -16,11 +16,9 @@ CONNECTION_TIMEOUT = 60
 DEFAULT_IMAGE = "fedora"
 DEFAULT_USER = "root"
 
-# TODO: get rid of `ignore` once superclass is no longer `Any`
-
 
 @dataclasses.dataclass
-class PodmanGuestData(tmt.steps.provision.GuestData):  # type: ignore[misc]
+class PodmanGuestData(tmt.steps.provision.GuestData):
     image: str = DEFAULT_IMAGE
     user: str = DEFAULT_USER
     force_pull: bool = False
@@ -52,9 +50,10 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
     _keys = ["image", "container", "pull", "user"]
 
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for connect """
-        return [
+        options = super().options(how)
+        options[:0] = [
             click.option(
                 '-i', '--image', metavar='IMAGE',
                 help='Select image to use. Short name or complete url.'),
@@ -67,16 +66,17 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
             click.option(
                 '-u', '--user', metavar='USER',
                 help='User to use for all container operations.')
-            ] + super().options(how)
+            ]
+        return options
 
-    def default(self, option, default=None):
+    def default(self, option: str, default: Any = None) -> Any:
         """ Return default data for given option """
         if option == 'pull':
             return PodmanGuestData().force_pull
 
         return getattr(PodmanGuestData(), option.replace('-', '_'), default)
 
-    def wake(self, data=None):
+    def wake(self, data: Optional[tmt.steps.provision.GuestData] = None) -> None:
         """ Wake up the plugin, process data, apply options """
         super().wake(data=data)
         # Wake up podman instance
@@ -85,7 +85,7 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
             guest.wake()
             self._guest = guest
 
-    def go(self):
+    def go(self) -> None:
         """ Provision the container """
         super().go()
 
@@ -108,11 +108,11 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
         self._guest = GuestContainer(data, name=self.name, parent=self.step)
         self._guest.start()
 
-    def guest(self):
+    def guest(self) -> Optional['GuestContainer']:
         """ Return the provisioned guest """
         return self._guest
 
-    def requires(self):
+    def requires(self) -> List[str]:
         """ List of required packages needed for workdir sync """
         return GuestContainer.requires()
 
@@ -126,20 +126,31 @@ class GuestContainer(tmt.Guest):
     container: Optional[str]
     user: str
     force_pull: bool
+    parent: tmt.steps.Step
 
-    def wake(self):
+    def wake(self) -> None:
         """ Wake up the guest """
         self.debug(
             f"Waking up container '{self.container}'.", level=2, shift=0)
 
-    def start(self):
+    def start(self) -> None:
         """ Start provisioned guest """
         if self.opt('dry'):
             return
         # Check if the image is available
-        image_id = self.podman(
-            ['images', '-q', self.image],
-            message=f"Check for container image '{self.image}'.")[0].strip()
+        assert self.image is not None
+        command = ['images', '-q', self.image]
+        podman_output = self.podman(command, message=f"Check for container image '{self.image}'.")
+
+        if podman_output.stdout is None:
+            raise tmt.utils.RunError(
+                'command produced no usable output',
+                command,
+                0,
+                podman_output.stdout,
+                podman_output.stderr)
+
+        image_id = podman_output.stdout.strip()
 
         # Pull image if not available or pull forced
         if not image_id or self.force_pull:
@@ -158,12 +169,15 @@ class GuestContainer(tmt.Guest):
 
         # Run the container
         self.debug(f"Start container '{self.image}'.")
+        assert self.container is not None
         self.podman(
             ['run'] + workaround +
             ['--name', self.container, '-v', f'{workdir}:{workdir}:z',
              '-itd', '--user', self.user, self.image])
 
-    def reboot(self, hard=False, command=None, timeout=None):
+    def reboot(self, hard: bool = False,
+               command: Optional[Union[str, List[str], Tuple[str, ...]]] = None,
+               timeout: Optional[int] = None) -> bool:
         """ Restart the container, return True if successful  """
         if command:
             raise tmt.utils.ProvisionError(
@@ -172,10 +186,11 @@ class GuestContainer(tmt.Guest):
             raise tmt.utils.ProvisionError(
                 "Containers do not support soft reboot, they can only be "
                 "stopped and started again (hard reboot).")
+        assert self.container is not None
         self.podman(['container', 'restart', self.container])
         return self.reconnect(timeout=timeout or CONNECTION_TIMEOUT)
 
-    def ansible(self, playbook, extra_args=None):
+    def ansible(self, playbook: str, extra_args: Optional[str] = None) -> None:
         """ Prepare container using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
         # As non-root we must run with podman unshare
@@ -189,11 +204,11 @@ class GuestContainer(tmt.Guest):
             env=self._prepare_environment())
         self._ansible_summary(stdout)
 
-    def podman(self, command, **kwargs):
+    def podman(self, command: List[str], **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Run given command via podman """
         return self.run(['podman'] + command, **kwargs)
 
-    def execute(self, command, **kwargs):
+    def execute(self, command: Union[List[str], str], **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Execute given commands in podman via shell """
         if not self.container and not self.opt('dry'):
             raise tmt.utils.ProvisionError(
@@ -216,11 +231,16 @@ class GuestContainer(tmt.Guest):
         if isinstance(command, list):
             command = ' '.join(command)
         command = directory + environment + command
+        assert isinstance(command, str)
         return self.podman(
             ['exec'] + interactive +
             [self.container or 'dry', 'bash', '-c', command], **kwargs)
 
-    def push(self, source=None, destination=None, options=None):
+    def push(
+            self,
+            source: Optional[str] = None,
+            destination: Optional[str] = None,
+            options: Optional[List[str]] = None) -> None:
         """ Make sure that the workdir has a correct selinux context """
         self.debug("Update selinux context of the run workdir.", level=3)
         self.run(
@@ -228,24 +248,24 @@ class GuestContainer(tmt.Guest):
              self.parent.plan.workdir], shell=False)
         # In case explicit destination is given, use `podman cp` to copy data
         # to the container
-        if destination:
+        if source and destination:
             self.podman(["cp", source, f"{self.container}:{destination}"])
 
     def pull(
             self,
-            source=None,
-            destination=None,
-            options=None,
-            extend_options=None):
+            source: Optional[str] = None,
+            destination: Optional[str] = None,
+            options: Optional[List[str]] = None,
+            extend_options: Optional[List[str]] = None) -> None:
         """ Nothing to be done to pull workdir """
 
-    def stop(self):
+    def stop(self) -> None:
         """ Stop provisioned guest """
         if self.container:
             self.podman(['container', 'stop', self.container])
             self.info('container', 'stopped', 'green')
 
-    def remove(self):
+    def remove(self) -> None:
         """ Remove the container """
         if self.container:
             self.podman(['container', 'rm', '-f', self.container])
