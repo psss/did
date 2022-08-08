@@ -15,8 +15,8 @@ Config example::
 Make sure you have additional dependencies of the google plugin
 installed on your system::
 
-    sudo dnf install python2-google-api-client      # Fedora
-    pip install did[google]                         # pip
+    sudo dnf install python3-google-api-client python3-oauth2client  # dnf
+    pip install did[google]                                          # pip
 
 To retrieve data via Google API, you will need to create access credentials
 (``client_id`` and ``client_secret``) first. Perform the following steps to
