@@ -26,6 +26,7 @@ from typing import (IO, TYPE_CHECKING, Any, Callable, Dict, Generator,
 
 import click
 import fmf
+import jsonschema
 import pkg_resources
 import requests
 import requests.adapters
@@ -286,6 +287,20 @@ class Common(object):
     ignore_class_options: bool = False
     _options: Dict[str, Any] = dict()
     _workdir: WorkdirType = None
+
+    # TODO: must be declared outside of __init__(), because it must exist before
+    # __init__() gets called to allow logging helpers work correctly when used
+    # from mixins. But that's not very clean, is it? :( Maybe decoupling logging
+    # from Common class would help, such a class would be able to initialize
+    # itself without involving the rest of Common code. On the other hand,
+    # Common owns workdir, for example, whose value affects logging too, so no
+    # clear solution so far.
+    #
+    # Note: cannot use CommonDerivedType - it's a TypeVar filled in by the type
+    # given to __init__() and therefore the type it's representing *now* is
+    # unknown. but we know `parent` will be derived from `Common` class, so it's
+    # mostly fine.
+    parent: Optional['Common'] = None
 
     def __init__(
             self,
@@ -2729,6 +2744,145 @@ def load_schema_store() -> SchemaStore:
     _patch_plan_schema(store['/schemas/plan'], store)
 
     return store
+
+
+def _prenormalize_fmf_node(node: fmf.Tree, schema_name: str) -> fmf.Tree:
+    """
+    Apply the minimal possible normalization steps to nodes before validating them with schemas.
+
+    tmt allows some fields to have default values, and at least ``how`` field is necessary for
+    schema-based validation to work reliably. Based on ``how`` field, plan schema identifies
+    the correct *plugin* schema for step validation. Without ``how``, it's hard to pick the
+    correct schema.
+
+    This function tries to do minimal number of changes to a given fmf node to honor the promise
+    of ``how`` being optional, with known defaults for each step. It might be possible to resolve
+    this purely with schemas, but since we don't know how (yet?), a Python implementation has been
+    chosen to unblock schema-based validation while keeping things easier for users. This may
+    change in the future, dropping the need for this pre-validation step.
+
+    .. note::
+
+       This function is not part of the normalization process that happens after validation. The
+       purpose of this function is to make the world nice and shiny for tmt users while avoiding
+       the possibility of schema becoming way too complicated, especially when we would need
+       non-trivial amount fo time for experiments.
+
+       The real normalization process takes place after validation, and is responsible for
+       converting raw fmf data to data types and structures more suited for tmt internal
+       implementation.
+    """
+
+    # As of now, only `how` field in plan steps seems to be required for schema-based validation
+    # to work correctly, therefore ignore any other node.
+    if schema_name != 'plan.yaml':
+        return node
+
+    # Perform the very crude and careful semi-validation. We need to set the `how` key to a default
+    # value - but it's not our job to validate the general structure of node data. Walk the "happy"
+    # path, touch the node only when it matches the specification of being a mapping of steps and
+    # these being either mappings or lists of mappings. Whenever we notice some value does not
+    # match this basic structure, ignore the step completely - its issues will be cought by schema
+    # later, don't waste time on steps that do not follow specification.
+
+    # Fmf data describing a plan shall be a mapping (with keys like `discover` or `adjust`).
+    if not isinstance(node.data, dict):
+        return node
+
+    # Avoid possible circular imports
+    import tmt.steps
+
+    def _process_step(step_name: str, step: Dict[Any, Any]) -> None:
+        """
+        Process a single step configuration.
+        """
+
+        # If `how` is set, don't touch it, and there's nothing to do.
+        if 'how' in step:
+            return
+
+        # Magic!
+        # No, seriously: step is implemented in `tmt.steps.$step_name` package,
+        # by a class `tmt.steps.$step_name.$step_name_with_capitalized_first_letter`.
+        # Instead of having a set of if-elif tests, we can reach the default `how`
+        # dynamically.
+
+        from tmt.plugins import import_
+
+        step_module_name = f'tmt.steps.{step_name}'
+        step_class_name = step_name.capitalize()
+
+        # Make sure the step module is imported. It probably is, but really,
+        # make sure of it.
+        import_(step_module_name)
+
+        # Now the module should be available in `sys.modules` like any
+        # other, and we can go and grab the class we need from it.
+        step_module = sys.modules[step_module_name]
+        step_class = getattr(step_module, step_class_name)
+
+        if step_class is None:
+            raise GeneralError(
+                f'Step {step_name} implementation cannot be found '
+                f'in {step_module_name}.{step_class_name}')
+
+        step['how'] = cast(tmt.steps.Step, step_class).DEFAULT_HOW
+
+    def _process_step_collection(step_name: str, step_collection: Any) -> None:
+        """
+        Process a collection of step configurations.
+        """
+
+        # Ignore anything that is not a step.
+        if step_name not in tmt.steps.STEPS:
+            return
+
+        # A single step configuration, represented as a mapping.
+        if isinstance(step_collection, dict):
+            _process_step(step_name, step_collection)
+
+            return
+
+        # Multiple step configurations, as mappings in a list
+        if isinstance(step_collection, list):
+            for step_config in step_collection:
+                # Unexpected, maybe instead of a mapping describing a step someone put
+                # in an integer... Ignore, schema will report it.
+                if not isinstance(step_config, dict):
+                    continue
+
+                _process_step(step_name, step_config)
+
+    for step_name, step_config in node.data.items():
+        _process_step_collection(step_name, step_config)
+
+    return node
+
+
+def validate_fmf_node(
+        node: fmf.Tree, schema_name: str) -> List[Tuple[jsonschema.ValidationError, str]]:
+    """ Validate a given fmf node """
+
+    node = _prenormalize_fmf_node(node, schema_name)
+
+    result = node.validate(load_schema(schema_name), schema_store=load_schema_store())
+
+    if result.result is True:
+        return []
+
+    # A bit of error formatting. It is possible to use str(error), but the result
+    # is a bit too JSON-ish. Let's present an error message in a way that helps
+    # users to point finger on each and every issue. But don't throw the original
+    # errors away!
+
+    errors: List[Tuple[jsonschema.ValidationError, str]] = []
+
+    for error in result.errors:
+        path = f'{node.name}:{".".join(error.path)}'
+
+        errors.append((error, f'{path} - {error.message}'))
+
+    return errors
 
 
 # A type for callbacks given to wait()

@@ -75,6 +75,7 @@ PLAN['mini'] = """
 summary:
     Basic smoke test
 execute:
+    how: tmt
     script: tmt --help
 """.lstrip()
 

@@ -66,13 +66,33 @@ definitions:
 
     additionalProperties: false
 
+    # NOTE: Because of old jsonschema package on RHEL-8, we cannot use
+    # `url: true` and inherit `url` attributes from parent schema. It
+    # seems like we have to repeat properties schemas here as well.
     properties:
-      url: true
-      ref: true
-      path: true
-      name: true
+      url:
+        # https://github.com/teemtee/tmt/issues/1258
+        type: string
+
+      ref:
+        type: string
+
+      path:
+        type: string
+
+      name:
+        type: string
+        pattern: "^/"
+
       nick:
         type: string
+
+    # This would have been the easy way, understandable by newer jsonschema
+    # packages.
+    # url: true
+    # ref: true
+    # path: true
+    # name: true
 
   # https://tmt.readthedocs.io/en/stable/spec/plans.html#fmf
   # https://tmt.readthedocs.io/en/stable/spec/plans.html#shell
@@ -106,13 +126,37 @@ definitions:
 
     additionalProperties: false
 
+    # NOTE: Because of old jsonschema package on RHEL-8, we cannot use
+    # `url: true` and inherit `url` attributes from parent schema. It
+    # seems like we have to repeat properties schemas here as well.
     properties:
-      url: true
-      ref: true
-      path: true
-      name: true
+      url:
+        # https://github.com/teemtee/tmt/issues/1258
+        type: string
+
+      ref:
+        type: string
+
+      path:
+        type: string
+
+      name:
+        type: string
+        pattern: "^/"
+
+    # This would have been the easy way, understandable by newer jsonschema
+    # packages.
+    #
+    # url: true
+    # ref: true
+    # path: true
+    # name: true
 
   # helper used by beakerlib_library and fmf_id
+  #
+  # NOTE: when changing the following properties, thanks to old jsonschema tmt
+  # depends on in RHEL-8 lands, update also their copies in `fmf_id` and
+  # `beaker_library` definitions.
   fmf_id_base:
     type: object
     minProperties: 1

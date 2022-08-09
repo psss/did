@@ -1,5 +1,7 @@
 provision:
-    - name: client
-    - name: client
+    - how: container
+      name: client
+    - how: container
+      name: client
 execute:
     script: tmt --help

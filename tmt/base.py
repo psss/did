@@ -107,6 +107,46 @@ class FmfId:
         return (True, '')
 
 
+class ValidateFmfMixin:
+    """
+    Mixin adding validation of an fmf node.
+
+    Loads a schema whose name is derived from class name, and uses fmf's validate()
+    method to perform the validation.
+    """
+
+    def _validate_fmf_node(self, node: fmf.Tree) -> None:
+        """ Validate a given fmf node """
+
+        errors = tmt.utils.validate_fmf_node(
+            node, f'{self.__class__.__name__.lower()}.yaml')
+
+        for _, error_message in errors:
+            # TODO: how to proceed requires more context. At the beginning, log the
+            # error and continue - requires a logger, and with what level? - but
+            # later, validation would become mandatory and this would become an
+            # exception.
+            #
+            # Or will it? Wouldn't an option to ignore this kind of error be useful?
+            # We'll see, in any case, more parameters will be needed.
+
+            # TODO: really, needs a fully functioning logger. But since we get called
+            # before classes like Common get their job done, many members of self
+            # might not be ready yet. See a note in Common WRT Common.parent :/
+            if hasattr(self, 'warn'):
+                self.warn(error_message, shift=1)
+
+            else:
+                print(error_message)
+
+    def __init__(self, node, *args, skip_validation: bool = False, **kwargs) -> None:
+        # Validate *before* letting next class in line touch the data.
+        if not skip_validation:
+            self._validate_fmf_node(node)
+
+        super().__init__(node, *args, **kwargs)
+
+
 class Core(tmt.utils.Common):
     """
     General node object
@@ -330,7 +370,7 @@ class Core(tmt.utils.Common):
 Node = Core
 
 
-class Test(Core):
+class Test(ValidateFmfMixin, Core):
     """ Test object (L1 Metadata) """
 
     # Supported attributes (listed in display order)
@@ -360,7 +400,7 @@ class Test(Core):
         'link',
         ]
 
-    def __init__(self, data, name=None):
+    def __init__(self, data, name=None, skip_validation: bool = False):
         """
         Initialize test data from an fmf node or a dictionary
 
@@ -384,7 +424,7 @@ class Test(Core):
             node.name = name
         else:
             node = data
-        super().__init__(node)
+        super().__init__(node, skip_validation=skip_validation)
 
         # Test script or path to the manual test must be defined
         self._check('test', expected=str)
@@ -623,7 +663,7 @@ class Test(Core):
             return super().export(format_, keys)
 
 
-class Plan(Core):
+class Plan(ValidateFmfMixin, Core):
     """ Plan object (L2 Metadata) """
 
     extra_L2_keys = [
@@ -633,9 +673,9 @@ class Plan(Core):
         'gate',
         ]
 
-    def __init__(self, node, run=None):
+    def __init__(self, node, run=None, skip_validation: bool = False):
         """ Initialize the plan """
-        super().__init__(node, parent=run)
+        super().__init__(node, parent=run, skip_validation=skip_validation)
 
         # Save the run, prepare worktree and plan data directory
         self.my_run = run
@@ -1079,7 +1119,7 @@ class Plan(Core):
                 f"Invalid plan export format '{format_}'.")
 
 
-class Story(Core):
+class Story(ValidateFmfMixin, Core):
     """ User story object """
 
     # Supported attributes (listed in display order)
@@ -1095,9 +1135,9 @@ class Story(Core):
         'link',
         ]
 
-    def __init__(self, node):
+    def __init__(self, node, skip_validation: bool = False):
         """ Initialize the story """
-        super().__init__(node)
+        super().__init__(node, skip_validation=skip_validation)
         self._update_metadata()
 
     @property
@@ -1628,19 +1668,17 @@ class Run(tmt.utils.Common):
         self._environment_from_workdir = data.get('environment')
         self._context.obj.steps = set(data['steps'])
         plans = []
+
         # The root directory of the tree may not be available, create
-        # a partial Core object that only contains the necessary
-        # attributes required for plan/step loading.
+        # an fmf node that only contains the necessary attributes
+        # required for plan/step loading. We will also need a dummy
+        # parent for these nodes, so we would correctly load each
+        # plan's name.
+        dummy_parent = fmf.Tree({'summary': 'unused'})
+
         for plan in data.get('plans'):
-            node = type('Core', (), {
-                'name': plan,
-                'data': {},
-                'root': None,
-                # No attributes will ever need to be accessed, just create
-                # a compatible method signature
-                'get': lambda section, item=None: item,
-                })
-            plans.append(Plan(node, run=self))
+            node = fmf.Tree({'execute': None}, name=plan, parent=dummy_parent)
+            plans.append(Plan(node, run=self, skip_validation=True))
 
         self._plans = plans
 
