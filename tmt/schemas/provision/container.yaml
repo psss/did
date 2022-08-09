@@ -28,6 +28,9 @@ properties:
   pull:
     type: boolean
 
+  role:
+    $ref: "/schemas/common#/definitions/role"
+
   user:
     type: string
 

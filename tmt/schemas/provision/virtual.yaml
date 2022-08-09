@@ -43,5 +43,8 @@ properties:
   arch:
     $ref: "/schemas/common#/definitions/arch"
 
+  role:
+    $ref: "/schemas/common#/definitions/role"
+
 required:
   - how

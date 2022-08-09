@@ -22,5 +22,8 @@ properties:
   name:
     type: string
 
+  role:
+    $ref: "/schemas/common#/definitions/role"
+
 required:
   - how

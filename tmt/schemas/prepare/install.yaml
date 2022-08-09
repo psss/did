@@ -53,5 +53,8 @@ properties:
   package:
     $ref: "/schemas/common#/definitions/one_or_more_strings"
 
+  where:
+    $ref: "/schemas/common#/definitions/where"
+
 required:
   - how

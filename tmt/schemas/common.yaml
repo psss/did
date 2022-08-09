@@ -35,6 +35,9 @@ definitions:
       summary:
         $ref: "/schemas/core#/definitions/summary"
 
+      where:
+        $ref: "/schemas/common#/definitions/where"
+
     required:
       - how
 
@@ -228,6 +231,11 @@ definitions:
         items:
           type: string
 
+  # In multihost scenarios, guests can be given roles
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#multihost
+  role:
+    type: string
+
   # common definition of a shell execution method
   shell:
     type: object
@@ -251,6 +259,9 @@ definitions:
       summary:
         $ref: "/schemas/core#/definitions/summary"
 
+      where:
+        $ref: "/schemas/common#/definitions/where"
+
     required:
       - how
 
@@ -268,3 +279,8 @@ definitions:
         pattern: "^/"
 
       - $ref: "/schemas/common#/definitions/fmf_id"
+
+  # In multihost scenarios, some steps can be executed on some guests only.
+  # https://tmt.readthedocs.io/en/stable/spec/plans.html#multihost
+  where:
+    $ref: "/schemas/common#/definitions/one_or_more_strings"

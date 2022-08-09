@@ -31,6 +31,9 @@ properties:
   password:
     type: string
 
+  role:
+    $ref: "/schemas/common#/definitions/role"
+
   key:
     type: string
 

@@ -64,6 +64,9 @@ properties:
     type: integer
     minimum: 1
 
+  role:
+    $ref: "/schemas/common#/definitions/role"
+
   keyname:
     type: string
 
