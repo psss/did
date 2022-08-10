@@ -8,8 +8,9 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import click
 import fmf
@@ -30,6 +31,11 @@ import tmt.steps.report
 import tmt.templates
 import tmt.utils
 from tmt.utils import verdict
+
+if sys.version_info >= (3, 8):
+    from typing import Literal, TypedDict
+else:
+    from typing_extensions import Literal, TypedDict
 
 # Default test duration is 5m for individual tests discovered from L1
 # metadata and 1h for scripts defined directly in plans (L2 metadata).
@@ -64,8 +70,25 @@ SECTIONS_HEADINGS = {
     }
 
 
+#
+# fmf id types
+#
 # See https://fmf.readthedocs.io/en/latest/concept.html#identifiers for
 # formal specification.
+#
+
+# A "raw" fmf id as stored in fmf node data, i.e. as a mapping with various keys.
+# Used for a brief moment, to annotate raw fmf data before they are converted
+# into FmfId instances.
+_RawFmfId = TypedDict('_RawFmfId', {
+    'url': Optional[str],
+    'ref': Optional[str],
+    'path': Optional[str],
+    'name': Optional[str]
+})
+
+
+# An internal fmf id representation.
 @dataclasses.dataclass
 class FmfId:
     url: Optional[str] = None
@@ -105,6 +128,85 @@ class FmfId:
             return (False, errors[0] if errors else stringified_error)
 
         return (True, '')
+
+#
+# Various types describing constructs as stored in "raw" fmf node data.
+# Used for a brief moment, to annotate raw fmf data before they are converted
+# into their internal representations.
+#
+
+
+# A type describing the raw form of the core `link` attribute. See
+# https://tmt.readthedocs.io/en/stable/spec/core.html#link for its
+# formal specification. Internally, the data is wrapped with `Link`
+# instances, the type below describes the raw data coming from Fmf
+# nodes.
+# TODO: `*Link._relations` would be much better, DRY, but that's allowed
+# since Python 3.11.
+_RawLinkRelation = Literal[
+    'verifies', 'verified-by',
+    'implements', 'implemented-by',
+    'documents', 'documented-by',
+    'blocks', 'blocked-by',
+    'duplicates', 'duplicated-by',
+    'parent', 'child',
+    'relates',
+    # Special case: not a relation, but it can appear where relations appear in
+    # link data structures.
+    'note'
+]
+
+# A "relation": "link" subtype.
+#
+# An example from TMT docs says:
+#
+# link:
+#   verifies: /stories/cli/init/base
+#
+# link:
+#     blocked-by:
+#         url: https://github.com/teemtee/fmf
+#         name: /stories/select/filter/regexp
+#     note: Need to get the regexp filter working first.
+_RawLinkRelationAware = Dict[_RawLinkRelation, Union[str, _RawFmfId]]
+
+_RawLink = Union[
+    # link: https://github.com/teemtee/tmt/issues/461
+    str,
+    _RawFmfId,
+    _RawLinkRelationAware,
+
+    # link:
+    # - verifies: /stories/cli/init/base
+    # - verifies: https://bugzilla.redhat.com/show_bug.cgi?id=1234
+    List[Union[str, _RawFmfId, _RawLinkRelationAware]],
+]
+
+
+# A type describing `adjust` content. See
+# https://tmt.readthedocs.io/en/stable/spec/core.html#adjust for its formal specification.
+#
+# The type is incomplete in the sense it does not describe all keys it may contain,
+# like `environment` or `provision`, and focuses only on the keys defined for `adjust`
+# itself.
+_RawAdjustRule = TypedDict(
+    'AdjustRuleType',
+    {
+        'when': Optional[str],
+        'continue': Optional[bool],
+        'because': Optional[str]
+        }
+)
+
+# A type describing content accepted by various require-like keys: - a string, fmf id,
+# or a list with a mixture of these two types.
+#
+# TODO: what other keys accept this kind of fmf data??
+_RawRequire = Union[
+    str,
+    _RawFmfId,
+    List[Union[str, _RawFmfId]]
+]
 
 
 class ValidateFmfMixin:
