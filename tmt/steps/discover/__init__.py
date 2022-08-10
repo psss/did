@@ -31,8 +31,8 @@ class Discover(tmt.steps.Step):
         super().load()
         try:
             tests = tmt.utils.yaml_to_dict(self.read('tests.yaml'))
-            self._tests = [
-                tmt.Test(data, name, skip_validation=True) for name, data in tests.items()]
+            self._tests = [tmt.Test(node=data, name=name, skip_validation=True)
+                           for name, data in tests.items()]
         except tmt.utils.FileError:
             self.debug('Discovered tests not found.', level=2)
 

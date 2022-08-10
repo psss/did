@@ -851,7 +851,7 @@ def enabled_for_environment(test: 'tmt.Test', tcms_notes: str) -> bool:
         test_node = test.node.copy()
         test_node.adjust(context)
         # TODO: remove cast later
-        return cast(bool, tmt.Test(test_node).enabled)
+        return cast(bool, tmt.Test(node=test_node).enabled)
     except BaseException as exception:
         log.debug(f"Failed to process adjust: {exception}")
         return True

@@ -32,7 +32,7 @@ def test_invalid_yaml_syntax():
 
 def test_test_defaults():
     """ Test default test attributes """
-    test = tmt.Test(dict(test='./test.sh'), name='/smoke')
+    test = tmt.Test(node=dict(test='./test.sh'), name='/smoke')
     assert test.name == '/smoke'
     assert test.component == list()
     assert test.test == './test.sh'
@@ -49,21 +49,21 @@ def test_test_invalid():
     """ Test invalid test """
     # Missing name
     with pytest.raises(tmt.utils.GeneralError):
-        tmt.Test({})
+        tmt.Test(node={})
     # Invalid name
     with pytest.raises(SpecificationError):
-        tmt.Test({}, name='bad')
+        tmt.Test(node={}, name='bad')
     # Invalid attributes
     for key in ['component', 'require', 'tag']:
         with pytest.raises(SpecificationError):
-            tmt.Test({key: 1}, name='/smoke')
+            tmt.Test(node={key: 1}, name='/smoke')
     with pytest.raises(SpecificationError):
-        tmt.Test({'environment': 'string'}, name='/smoke')
+        tmt.Test(node={'environment': 'string'}, name='/smoke')
     # Listify attributes
     assert tmt.Test(
-        {'test': 'test', 'tag': 'a'}, name='/smoke').tag == ['a']
+        node={'test': 'test', 'tag': 'a'}, name='/smoke').tag == ['a']
     assert tmt.Test(
-        {'test': 'test', 'tag': ['a', 'b']}, name='/smoke').tag == ['a', 'b']
+        node={'test': 'test', 'tag': ['a', 'b']}, name='/smoke').tag == ['a', 'b']
 
 
 def test_link():

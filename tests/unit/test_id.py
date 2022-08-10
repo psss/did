@@ -26,7 +26,7 @@ class IdLocationDefined(TestCase):
 
     def test_defined_partially(self):
         node = self.base_tree.find("/partial")
-        test = tmt.Test(node)
+        test = tmt.Test(node=node)
         self.assertEqual(locate_key(node, ID_KEY), test.node)
 
     def test_not_defined(self):
@@ -71,19 +71,19 @@ class IdEmpty(TestCase):
 
     def test_base(self):
         node = self.base_tree.find("/some/structure")
-        test = tmt.Test(node)
+        test = tmt.Test(node=node)
         self.assertEqual(test.id, None)
 
     def test_manually_add_id(self):
         node = self.base_tree.find("/some/structure")
-        test = tmt.Test(node)
+        test = tmt.Test(node=node)
         self.assertEqual(test.id, None)
         identifier = tmt.identifier.add_uuid_if_not_defined(node, dry=False)
         self.assertGreater(len(identifier), 10)
 
         self.base_tree = fmf.Tree(self.path)
         node = self.base_tree.find("/some/structure")
-        test = tmt.Test(node)
+        test = tmt.Test(node=node)
         self.assertEqual(test.id, identifier)
 
 

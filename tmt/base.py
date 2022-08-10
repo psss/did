@@ -139,12 +139,12 @@ class ValidateFmfMixin:
             else:
                 print(error_message)
 
-    def __init__(self, node, *args, skip_validation: bool = False, **kwargs) -> None:
+    def __init__(self, *, node, skip_validation: bool = False, **kwargs) -> None:
         # Validate *before* letting next class in line touch the data.
         if not skip_validation:
             self._validate_fmf_node(node)
 
-        super().__init__(node, *args, **kwargs)
+        super().__init__(node=node, **kwargs)
 
 
 class Core(tmt.utils.Common):
@@ -159,9 +159,9 @@ class Core(tmt.utils.Common):
     # Core attributes (supported across all levels)
     _keys = ['summary', 'description', 'enabled', 'order', 'link', 'id', 'adjust']
 
-    def __init__(self, node, parent=None):
+    def __init__(self, *, node, parent=None, **kwargs):
         """ Initialize the node """
-        super(Core, self).__init__(parent=parent, name=node.name)
+        super(Core, self).__init__(parent=parent, name=node.name, **kwargs)
         self.node = node
 
         # Store original metadata with applied defaults and including
@@ -400,7 +400,7 @@ class Test(ValidateFmfMixin, Core):
         'link',
         ]
 
-    def __init__(self, data, name=None, skip_validation: bool = False):
+    def __init__(self, *, node, name=None, skip_validation: bool = False, **kwargs):
         """
         Initialize test data from an fmf node or a dictionary
 
@@ -413,18 +413,17 @@ class Test(ValidateFmfMixin, Core):
         """
 
         # Create a simple test node if dictionary given
-        if isinstance(data, dict):
+        if isinstance(node, dict):
             if name is None:
                 raise tmt.utils.GeneralError(
                     'Name required to initialize test.')
             elif not name.startswith('/'):
                 raise tmt.utils.SpecificationError(
                     "Test name should start with a '/'.")
-            node = fmf.Tree(data)
+            node = fmf.Tree(node)
             node.name = name
-        else:
-            node = data
-        super().__init__(node, skip_validation=skip_validation)
+
+        super().__init__(node=node, skip_validation=skip_validation, **kwargs)
 
         # Test script or path to the manual test must be defined
         self._check('test', expected=str)
@@ -673,9 +672,9 @@ class Plan(ValidateFmfMixin, Core):
         'gate',
         ]
 
-    def __init__(self, node, run=None, skip_validation: bool = False):
+    def __init__(self, *, node, run=None, skip_validation: bool = False, **kwargs):
         """ Initialize the plan """
-        super().__init__(node, parent=run, skip_validation=skip_validation)
+        super().__init__(node=node, parent=run, skip_validation=skip_validation, **kwargs)
 
         # Save the run, prepare worktree and plan data directory
         self.my_run = run
@@ -1135,9 +1134,9 @@ class Story(ValidateFmfMixin, Core):
         'link',
         ]
 
-    def __init__(self, node, skip_validation: bool = False):
+    def __init__(self, *, node, skip_validation: bool = False, **kwargs):
         """ Initialize the story """
-        super().__init__(node, skip_validation=skip_validation)
+        super().__init__(node=node, skip_validation=skip_validation, **kwargs)
         self._update_metadata()
 
     @property
@@ -1437,7 +1436,9 @@ class Tree(tmt.utils.Common):
                 if any([re.search(name, node.name) for name in cmd_line_names])]
 
         if Test._opt('source'):
-            tests = [Test(test) for test in self.tree.prune(keys=keys, sources=cmd_line_names)]
+            tests = [
+                Test(node=test) for test in self.tree.prune(
+                    keys=keys, sources=cmd_line_names)]
         else:
             # First let's build the list of test objects based on keys & names.
             # If duplicate test names are allowed, match test name/regexp
@@ -1446,14 +1447,14 @@ class Tree(tmt.utils.Common):
                 tests = []
                 for name in names:
                     selected_tests = [
-                        Test(test) for test
+                        Test(node=test) for test
                         in name_filter(self.tree.prune(keys=keys, names=[name]))]
                     tests.extend(
                         sorted(selected_tests, key=lambda test: test.order))
             # Otherwise just perform a regular key/name filtering
             else:
                 selected_tests = [
-                    Test(test) for test
+                    Test(node=test) for test
                     in name_filter(self.tree.prune(keys=keys, names=names))]
                 tests = sorted(selected_tests, key=lambda test: test.order)
 
@@ -1481,7 +1482,7 @@ class Tree(tmt.utils.Common):
 
         # Build the list, convert to objects, sort and filter
         plans = [
-            Plan(plan, run=run) for plan
+            Plan(node=plan, run=run) for plan
             in self.tree.prune(keys=keys, names=names, sources=sources)]
         return self._filters_conditions(
             sorted(plans, key=lambda plan: plan.order),
@@ -1507,7 +1508,7 @@ class Tree(tmt.utils.Common):
 
         # Build the list, convert to objects, sort and filter
         stories = [
-            Story(story) for story
+            Story(node=story) for story
             in self.tree.prune(keys=keys, names=names, whole=whole, sources=sources)]
         return self._filters_conditions(
             sorted(stories, key=lambda story: story.order),
@@ -1678,7 +1679,7 @@ class Run(tmt.utils.Common):
 
         for plan in data.get('plans'):
             node = fmf.Tree({'execute': None}, name=plan, parent=dummy_parent)
-            plans.append(Plan(node, run=self, skip_validation=True))
+            plans.append(Plan(node=node, run=self, skip_validation=True))
 
         self._plans = plans
 
