@@ -115,22 +115,22 @@ class ValidateFmfMixin:
     method to perform the validation.
     """
 
-    def _validate_fmf_node(self, node: fmf.Tree, logger: tmt.utils.Common) -> None:
+    def _validate_fmf_node(self, node: fmf.Tree, logger: tmt.utils.Common,
+                           raise_on_validation_error: bool) -> None:
         """ Validate a given fmf node """
 
         errors = tmt.utils.validate_fmf_node(
             node, f'{self.__class__.__name__.lower()}.yaml')
 
-        for _, error_message in errors:
-            # TODO: how to proceed requires more context. At the beginning, log the
-            # error and continue - requires a logger, and with what level? - but
-            # later, validation would become mandatory and this would become an
-            # exception.
-            #
-            # Or will it? Wouldn't an option to ignore this kind of error be useful?
-            # We'll see, in any case, more parameters will be needed.
+        if errors:
+            if raise_on_validation_error:
+                # Raise the very first issue found - there may be more, of course...
+                raise tmt.utils.SpecificationError(
+                    f'fmf node {node.name} failed validation',
+                    validation_errors=errors)
 
-            logger.warn(error_message, shift=1)
+            for _, error_message in errors:
+                logger.warn(error_message, shift=1)
 
     def __init__(
             self,
@@ -138,10 +138,11 @@ class ValidateFmfMixin:
             node,
             logger: tmt.utils.Common,
             skip_validation: bool = False,
+            raise_on_validation_error: bool = False,
             **kwargs) -> None:
         # Validate *before* letting next class in line touch the data.
         if not skip_validation:
-            self._validate_fmf_node(node, logger)
+            self._validate_fmf_node(node, logger, raise_on_validation_error)
 
         kwargs.setdefault('logger', logger)
         super().__init__(node=node, **kwargs)
@@ -401,7 +402,14 @@ class Test(ValidateFmfMixin, Core):
         'link',
         ]
 
-    def __init__(self, *, node, name=None, skip_validation: bool = False, **kwargs):
+    def __init__(
+            self,
+            *,
+            node,
+            name=None,
+            skip_validation: bool = False,
+            raise_on_validation_error: bool = False,
+            **kwargs):
         """
         Initialize test data from an fmf node or a dictionary
 
@@ -425,7 +433,8 @@ class Test(ValidateFmfMixin, Core):
             node.name = name
 
         kwargs.setdefault('logger', self)
-        super().__init__(node=node, skip_validation=skip_validation, **kwargs)
+        super().__init__(node=node, skip_validation=skip_validation,
+                         raise_on_validation_error=raise_on_validation_error, **kwargs)
 
         # Test script or path to the manual test must be defined
         self._check('test', expected=str)
@@ -674,10 +683,18 @@ class Plan(ValidateFmfMixin, Core):
         'gate',
         ]
 
-    def __init__(self, *, node, run=None, skip_validation: bool = False, **kwargs):
+    def __init__(
+            self,
+            *,
+            node,
+            run=None,
+            skip_validation: bool = False,
+            raise_on_validation_error: bool = False,
+            **kwargs):
         """ Initialize the plan """
         kwargs.setdefault('logger', self)
-        super().__init__(node=node, parent=run, skip_validation=skip_validation, **kwargs)
+        super().__init__(node=node, parent=run, skip_validation=skip_validation,
+                         raise_on_validation_error=raise_on_validation_error, **kwargs)
 
         # Save the run, prepare worktree and plan data directory
         self.my_run = run
@@ -1137,10 +1154,17 @@ class Story(ValidateFmfMixin, Core):
         'link',
         ]
 
-    def __init__(self, *, node, skip_validation: bool = False, **kwargs):
+    def __init__(
+            self,
+            *,
+            node,
+            skip_validation: bool = False,
+            raise_on_validation_error: bool = False,
+            **kwargs):
         """ Initialize the story """
         kwargs.setdefault('logger', self)
-        super().__init__(node=node, skip_validation=skip_validation, **kwargs)
+        super().__init__(node=node, skip_validation=skip_validation,
+                         raise_on_validation_error=raise_on_validation_error, **kwargs)
         self._update_metadata()
 
     @property

@@ -819,6 +819,17 @@ class MetadataError(GeneralError):
 class SpecificationError(MetadataError):
     """ Metadata specification error """
 
+    def __init__(
+            self,
+            message: str,
+            validation_errors: Optional[List[Tuple[jsonschema.ValidationError, str]]] = None,
+            *args: Any,
+            **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+
+        self.message = message
+        self.validation_errors = validation_errors
+
 
 class ConvertError(MetadataError):
     """ Metadata conversion error """
