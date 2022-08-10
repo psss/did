@@ -1379,6 +1379,11 @@ class SerializableContainer:
         from tmt.plugins import import_
 
         # Unpack class info, to get nicer variable names
+        if "__class__" not in serialized:
+            raise GeneralError(
+                "Failed to load saved state, probably because of old data format.\n"
+                "Use 'tmt clean runs' to clean up old runs.")
+
         klass_info = serialized.pop('__class__')
         klass_module_name = klass_info['module']
         klass_name = klass_info['name']
