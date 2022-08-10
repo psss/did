@@ -115,7 +115,7 @@ class ValidateFmfMixin:
     method to perform the validation.
     """
 
-    def _validate_fmf_node(self, node: fmf.Tree) -> None:
+    def _validate_fmf_node(self, node: fmf.Tree, logger: tmt.utils.Common) -> None:
         """ Validate a given fmf node """
 
         errors = tmt.utils.validate_fmf_node(
@@ -130,20 +130,20 @@ class ValidateFmfMixin:
             # Or will it? Wouldn't an option to ignore this kind of error be useful?
             # We'll see, in any case, more parameters will be needed.
 
-            # TODO: really, needs a fully functioning logger. But since we get called
-            # before classes like Common get their job done, many members of self
-            # might not be ready yet. See a note in Common WRT Common.parent :/
-            if hasattr(self, 'warn'):
-                self.warn(error_message, shift=1)
+            logger.warn(error_message, shift=1)
 
-            else:
-                print(error_message)
-
-    def __init__(self, *, node, skip_validation: bool = False, **kwargs) -> None:
+    def __init__(
+            self,
+            *,
+            node,
+            logger: tmt.utils.Common,
+            skip_validation: bool = False,
+            **kwargs) -> None:
         # Validate *before* letting next class in line touch the data.
         if not skip_validation:
-            self._validate_fmf_node(node)
+            self._validate_fmf_node(node, logger)
 
+        kwargs.setdefault('logger', logger)
         super().__init__(node=node, **kwargs)
 
 
@@ -161,6 +161,7 @@ class Core(tmt.utils.Common):
 
     def __init__(self, *, node, parent=None, **kwargs):
         """ Initialize the node """
+        kwargs.setdefault('logger', self)
         super(Core, self).__init__(parent=parent, name=node.name, **kwargs)
         self.node = node
 
@@ -423,6 +424,7 @@ class Test(ValidateFmfMixin, Core):
             node = fmf.Tree(node)
             node.name = name
 
+        kwargs.setdefault('logger', self)
         super().__init__(node=node, skip_validation=skip_validation, **kwargs)
 
         # Test script or path to the manual test must be defined
@@ -674,6 +676,7 @@ class Plan(ValidateFmfMixin, Core):
 
     def __init__(self, *, node, run=None, skip_validation: bool = False, **kwargs):
         """ Initialize the plan """
+        kwargs.setdefault('logger', self)
         super().__init__(node=node, parent=run, skip_validation=skip_validation, **kwargs)
 
         # Save the run, prepare worktree and plan data directory
@@ -1136,6 +1139,7 @@ class Story(ValidateFmfMixin, Core):
 
     def __init__(self, *, node, skip_validation: bool = False, **kwargs):
         """ Initialize the story """
+        kwargs.setdefault('logger', self)
         super().__init__(node=node, skip_validation=skip_validation, **kwargs)
         self._update_metadata()
 
