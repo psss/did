@@ -57,10 +57,9 @@ class Provision(tmt.steps.Step):
         self._guest_data: Dict[str, 'GuestData'] = {}
         self.is_multihost = False
 
-    def load(self, extra_keys=None):
+    def load(self):
         """ Load guest data from the workdir """
-        extra_keys = extra_keys or []
-        super().load(extra_keys)
+        super().load()
         try:
             raw_guest_data = tmt.utils.yaml_to_dict(self.read('guests.yaml'))
 
@@ -72,10 +71,9 @@ class Provision(tmt.steps.Step):
         except tmt.utils.FileError:
             self.debug('Provisioned guests not found.', level=2)
 
-    def save(self, data=None):
+    def save(self):
         """ Save guest data to the workdir """
-        data = data or {}
-        super().save(data)
+        super().save()
         try:
             raw_guest_data = {guest.name: guest.save().to_serialized()
                               for guest in self.guests()}

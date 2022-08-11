@@ -68,10 +68,9 @@ class Execute(tmt.steps.Step):
         if not self.plan.my_run:
             self._map_old_methods()
 
-    def load(self, extra_keys: Optional[List[str]] = None) -> None:
+    def load(self) -> None:
         """ Load test results """
-        extra_keys = extra_keys or []
-        super().load(extra_keys)
+        super().load()
         try:
             results = tmt.utils.yaml_to_dict(self.read('results.yaml'))
             self._results = [
@@ -79,10 +78,9 @@ class Execute(tmt.steps.Step):
         except tmt.utils.FileError:
             self.debug('Test results not found.', level=2)
 
-    def save(self, data: Optional[tmt.steps.StepData] = None) -> None:
+    def save(self) -> None:
         """ Save test results to the workdir """
-        data = data or {}
-        super().save(data)
+        super().save()
         results = dict([
             (result.name, result.export()) for result in self.results()])
         self.write('results.yaml', tmt.utils.dict_to_yaml(results))

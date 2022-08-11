@@ -192,27 +192,23 @@ class Step(tmt.utils.Common):
         # Return status
         return self._status
 
-    def load(self, extra_keys: Optional[List[str]] = None) -> None:
+    def load(self) -> None:
         """ Load status and step data from the workdir """
-        extra_keys = extra_keys or []
         try:
             content: Dict[Any, Any] = tmt.utils.yaml_to_dict(
                 self.read('step.yaml'))
             self.debug('Successfully loaded step data.', level=2)
             self.data = content['data']
-            for key in extra_keys:
-                if key in content:
-                    setattr(self, key, content[key])
             self.status(content['status'])
         except tmt.utils.GeneralError:
             self.debug('Step data not found.', level=2)
 
-    def save(self, data: Optional[StepData] = None) -> None:
+    def save(self) -> None:
         """ Save status and step data to the workdir """
-        data = data or {}
-        content: Dict[Any, Any] = dict(
-            status=self.status(), data=self.data)
-        content.update(data)
+        content: Dict[str, Any] = {
+            'status': self.status(),
+            'data': self.data
+            }
         self.write('step.yaml', tmt.utils.dict_to_yaml(content))
 
     def wake(self) -> None:
