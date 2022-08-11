@@ -642,6 +642,7 @@ def export_to_polarion(test: 'tmt.Test') -> None:
     project_id = test.opt('project_id')
     dry_mode = test.opt('dry')
     duplicate = test.opt('duplicate')
+    link_polarion = test.opt('link_polarion')
 
     polarion_case = None
     if not duplicate:
@@ -737,7 +738,7 @@ def export_to_polarion(test: 'tmt.Test') -> None:
     echo(style('enabled: ', fg='green') + str(test.enabled))
 
     echo(style("Append the Polarion test case link.", fg='green'))
-    if not dry_mode:
+    if not dry_mode and link_polarion:
         with test.node as data:
             server_url = str(polarion_case._session._server.url)
             add_link(
@@ -749,17 +750,20 @@ def export_to_polarion(test: 'tmt.Test') -> None:
     # List of bugs test verifies
     bug_ids = []
     requirements = []
-    for link in test.link:
-        bug_ids_search = re.search(RE_BUGZILLA_URL, link['verifies'])
-        if bug_ids_search:
-            bug_ids.append(int(bug_ids_search.group(1)))
-        else:
-            log.debug('Failed to find bug ID in verifies link')
-        polarion_url_search = re.search(RE_POLARION_URL, link['verifies'])
-        if polarion_url_search:
-            requirements.append(polarion_url_search.group(1))
-        else:
-            log.debug('Failed to find Polarion URL in verifies link')
+    for link in test.link.get():
+        try:
+            bug_ids_search = re.search(RE_BUGZILLA_URL, link['verifies'])
+            if bug_ids_search:
+                bug_ids.append(int(bug_ids_search.group(1)))
+            else:
+                log.debug('Failed to find bug ID in verifies link')
+            polarion_url_search = re.search(RE_POLARION_URL, link['verifies'])
+            if polarion_url_search:
+                requirements.append(polarion_url_search.group(1))
+            else:
+                log.debug('Failed to find Polarion URL in verifies link')
+        except Exception as err:
+            log.debug(err)
 
     # Add bugs to the Polarion case
     if not dry_mode:
