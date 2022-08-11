@@ -1825,6 +1825,12 @@ class Tree(tmt.utils.Common):
                 node for node in nodes
                 if any([re.search(name, node.name) for name in cmd_line_names])]
 
+        # Append post filter to support option --enabled or --disabled
+        if Test._opt('enabled'):
+            filters.append('enabled:true')
+        if Test._opt('disabled'):
+            filters.append('enabled:false')
+
         if Test._opt('source'):
             tests = [
                 Test(node=test) for test in self.tree.prune(
@@ -1863,6 +1869,12 @@ class Tree(tmt.utils.Common):
         links = (links or []) + list(Plan._opt('links', []))
         excludes = (excludes or []) + list(Plan._opt('exclude', []))
 
+        # Append post filter to support option --enabled or --disabled
+        if Plan._opt('enabled'):
+            filters.append('enabled:true')
+        if Plan._opt('disabled'):
+            filters.append('enabled:false')
+
         # For --source option use names as sources
         if Plan._opt('source'):
             sources = names
@@ -1888,6 +1900,12 @@ class Tree(tmt.utils.Common):
         conditions = (conditions or []) + list(Story._opt('conditions', []))
         links = (links or []) + list(Story._opt('links', []))
         excludes = (excludes or []) + list(Story._opt('exclude', []))
+
+        # Append post filter to support option --enabled or --disabled
+        if Story._opt('enabled'):
+            filters.append('enabled:true')
+        if Story._opt('disabled'):
+            filters.append('enabled:false')
 
         # For --source option use names as sources
         if Story._opt('source'):

@@ -1,0 +1,6 @@
+summary: Test the feature to list/show stories
+story: I want to test tmt stories list/show with option --disabled
+example:
+  - tmt stories list --disabled
+  - tmt stories show --disabled
+enabled: false

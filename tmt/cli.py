@@ -113,6 +113,12 @@ def name_filter_condition(function: Callable[..., Any]) -> Callable[..., Any]:
             '-c', '--condition', 'conditions', metavar="EXPR", multiple=True,
             help="Use arbitrary Python expression for filtering."),
         click.option(
+            '--enabled', is_flag=True,
+            help="Show only enabled tests, plans or stories."),
+        click.option(
+            '--disabled', is_flag=True,
+            help="Show only disabled tests, plans or stories."),
+        click.option(
             '--link', 'links', metavar="RELATION:TARGET", multiple=True,
             help="Filter by linked objects (regular expressions are "
                  "supported for both relation and target)."),
@@ -144,6 +150,12 @@ def name_filter_condition_long(function: Callable[..., Any]) -> Callable[..., An
         click.option(
             '--condition', 'conditions', metavar="EXPR", multiple=True,
             help="Use arbitrary Python expression for filtering."),
+        click.option(
+            '--enabled', is_flag=True,
+            help="Show only enabled tests, plans or stories."),
+        click.option(
+            '--disabled', is_flag=True,
+            help="Show only disabled tests, plans or stories."),
         click.option(
             '--link', 'links', metavar="RELATION:TARGET", multiple=True,
             help="Filter by linked objects (regular expressions are "

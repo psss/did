@@ -1,0 +1,3 @@
+summary: Test tmt tests ls/show --enabled
+test: echo
+enabled: true
