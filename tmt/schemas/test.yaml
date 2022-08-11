@@ -41,10 +41,7 @@ properties:
 
   # https://tmt.readthedocs.io/en/stable/spec/tests.html#environment
   environment:
-    type: object
-
-    additionalProperties:
-      type: string
+    $ref: "/schemas/common#/definitions/environment"
 
   # https://tmt.readthedocs.io/en/stable/spec/tests.html#framework
   framework:

@@ -117,7 +117,13 @@ definitions:
   # https://tmt.readthedocs.io/en/stable/spec/tests.html#environment
   # https://tmt.readthedocs.io/en/stable/spec/plans.html#environment
   environment:
-    $ref: "/schemas/common#/definitions/object_with_string_properties"
+    type: object
+
+    additionalProperties:
+      anyOf:
+        - type: string
+        - type: boolean
+        - type: number
 
   # https://fmf.readthedocs.io/en/stable/concept.html#identifiers
   fmf_id:
