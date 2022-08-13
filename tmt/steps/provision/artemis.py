@@ -430,7 +430,8 @@ class GuestArtemis(tmt.GuestSsh):
     The following keys are expected in the 'data' dictionary:
     """
 
-    _data_class = ArtemisGuestData
+    # TODO: Revisit this `type: ignore` once `Guest` becomes a generic type
+    _data_class = ArtemisGuestData  # type: ignore[assignment]
 
     # API
     api_url: str

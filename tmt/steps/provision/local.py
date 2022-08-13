@@ -38,7 +38,7 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
         super().go()
 
         # Create a GuestLocal instance
-        data = tmt.steps.provision.GuestSshData(
+        data = tmt.steps.provision.GuestData(
             guest='localhost',
             role=self.get('role')
             )
