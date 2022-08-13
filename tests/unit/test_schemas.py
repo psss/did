@@ -63,16 +63,16 @@ def validate_node(node, schema, label, name):
         assert False, f'{label} {name} fails validation'
 
 
-@pytest.mark.parametrize(('test',), TESTS)
+@pytest.mark.parametrize(('test',), TESTS, ids=lambda node: node.name)
 def test_tests_schema(test):
     validate_node(test, 'test.yaml', 'Test', test.name)
 
 
-@pytest.mark.parametrize(('story',), STORIES)
+@pytest.mark.parametrize(('story',), STORIES, ids=lambda node: node.name)
 def test_stories_schema(story):
     validate_node(story, 'story.yaml', 'Story', story.name)
 
 
-@pytest.mark.parametrize(('plan',), PLANS)
+@pytest.mark.parametrize(('plan',), PLANS, ids=lambda node: node.name)
 def test_plans_schema(plan):
     validate_node(plan, 'plan.yaml', 'Plan', plan.name)
