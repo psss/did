@@ -269,6 +269,8 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
             api-retry-backoff-factor: 1
     """
 
+    _data_class = ArtemisGuestData
+
     # Guest instance
     _guest = None
 
@@ -427,6 +429,8 @@ class GuestArtemis(tmt.GuestSsh):
 
     The following keys are expected in the 'data' dictionary:
     """
+
+    _data_class = ArtemisGuestData
 
     # API
     api_url: str
