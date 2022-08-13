@@ -1,4 +1,6 @@
+import itertools
 import os
+import textwrap
 
 import pytest
 
@@ -7,8 +9,6 @@ import tmt.utils
 
 PATH = os.path.dirname(os.path.realpath(__file__))
 ROOTDIR = os.path.join(PATH, "../..")
-
-TREE = tmt.Tree(ROOTDIR)
 
 
 # This is what `Tree.{tests,plans,stories}`` do internally, but after getting
@@ -23,32 +23,42 @@ TREE = tmt.Tree(ROOTDIR)
 # uses).
 def _iter_nodes(tree, keys):
     for node in tree.tree.prune(keys=keys):
-        yield node
+        yield tree, node
 
 
-def iter_tests(tree):
+def _iter_trees():
+    yield tmt.Tree(ROOTDIR)
+
+    # Ad hoc construction, but here me out: there are small, custom-tailored fmf trees
+    # to serve various tests. These are invisible to the top-level tree. Lucky us though,
+    # they are still fmf trees, therefore we can look for .fmf directories under tests/.
+    #
+    # TODO: disabled on purpose - when enabled, there's plenty of failed tests, including
+    # those that are expected to be broken as they are used to verify `tmt lint` or similar
+    # features. First we need to find a way how to get those ignored by this generator.
+    # But the code below works, like a charm, and we will need to cover more trees than
+    # just the root one, so leaving the code here but disabled.
+    if False:
+        for dirpath, dirnames, _ in os.walk(os.path.join(ROOTDIR, 'tests')):
+            if '.fmf' in dirnames:
+                yield tmt.Tree(dirpath)
+
+
+def _iter_tests_in_tree(tree):
     yield from _iter_nodes(tree, ['test'])
 
 
-def iter_plans(tree):
+def _iter_plans_in_tree(tree):
     yield from _iter_nodes(tree, ['execute'])
 
 
-def iter_stories(tree):
+def _iter_stories_in_tree(tree):
     yield from _iter_nodes(tree, ['story'])
 
 
-# pytest.mark.parametrize expects us to deliver an iterable for each test invocation,
-# and since there's only a single argument for our test cases, the node to validate,
-# we need to construct the iterable with this single item.
-def as_parameters(nodes):
-    for node in nodes:
-        yield (node,)
-
-
-TESTS = list(as_parameters(iter_tests(TREE)))
-PLANS = list(as_parameters(iter_plans(TREE)))
-STORIES = list(as_parameters(iter_stories(TREE)))
+TESTS = itertools.chain.from_iterable(_iter_tests_in_tree(tree) for tree in _iter_trees())
+PLANS = itertools.chain.from_iterable(_iter_plans_in_tree(tree) for tree in _iter_trees())
+STORIES = itertools.chain.from_iterable(_iter_stories_in_tree(tree) for tree in _iter_trees())
 
 
 def validate_node(node, schema, label, name):
@@ -56,23 +66,33 @@ def validate_node(node, schema, label, name):
 
     if errors:
         for error, message in errors:
-            print(f'* {message}')
-            print(f'    {error}')
-            print()
+            print(f"""* {message}
+
+Detailed validation error:
+
+{textwrap.indent(str(error), '  ')}
+""")
 
         assert False, f'{label} {name} fails validation'
 
 
-@pytest.mark.parametrize(('test',), TESTS, ids=lambda node: node.name)
-def test_tests_schema(test):
+def extract_testcase_id(arg):
+    if isinstance(arg, tmt.Tree):
+        return os.path.relpath(os.path.abspath(arg._path))
+
+    return arg.name
+
+
+@pytest.mark.parametrize(('tree', 'test'), TESTS, ids=extract_testcase_id)
+def test_tests_schema(tree, test):
     validate_node(test, 'test.yaml', 'Test', test.name)
 
 
-@pytest.mark.parametrize(('story',), STORIES, ids=lambda node: node.name)
-def test_stories_schema(story):
+@pytest.mark.parametrize(('tree', 'story'), STORIES, ids=extract_testcase_id)
+def test_stories_schema(tree, story):
     validate_node(story, 'story.yaml', 'Story', story.name)
 
 
-@pytest.mark.parametrize(('plan',), PLANS, ids=lambda node: node.name)
-def test_plans_schema(plan):
+@pytest.mark.parametrize(('tree', 'plan'), PLANS, ids=extract_testcase_id)
+def test_plans_schema(tree, plan):
     validate_node(plan, 'plan.yaml', 'Plan', plan.name)
