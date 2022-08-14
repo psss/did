@@ -47,9 +47,9 @@ class FinishShell(tmt.steps.finish.FinishPlugin):
         return default
 
     # TODO: use better types once superclass gains its annotations
-    def wake(self, keys: Optional[List[str]] = None) -> None:
+    def wake(self) -> None:
         """ Wake up the plugin, process data, apply options """
-        super().wake(keys=keys)
+        super().wake()
 
         # Convert to list if single script provided
         tmt.utils.listify(self.data, keys=['script'])

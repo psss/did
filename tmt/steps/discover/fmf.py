@@ -172,7 +172,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 ),
             ] + super().options(how)
 
-    def wake(self, keys=None):
+    def wake(self):
         """ Wake up the plugin, process data, apply options """
         # Handle backward-compatible stuff
         if 'repository' in self.data:
@@ -184,7 +184,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         tmt.utils.listify(self.data, keys=["exclude", "filter", "test"])
 
         # Process command line options, apply defaults
-        super().wake(keys=keys)
+        super().wake()
 
     @property
     def is_in_standalone_mode(self):

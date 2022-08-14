@@ -613,7 +613,7 @@ class BasePlugin(Phase, metaclass=PluginIndex):
             return True
         return where in (guest.name, guest.role)
 
-    def wake(self, keys: Optional[List[str]] = None) -> None:
+    def wake(self) -> None:
         """
         Wake up the plugin, process data, apply options
 
@@ -626,8 +626,8 @@ class BasePlugin(Phase, metaclass=PluginIndex):
         in the 'keys' parameter can be used to override only
         selected ones.
         """
-        if keys is None:
-            keys = self._common_keys + self._keys
+        keys = self._common_keys + self._keys
+
         for key in keys:
             value = self.opt(key)
             if value:

@@ -257,9 +257,9 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
         """ Return default data for given option """
         return getattr(TestcloudGuestData(), option, default)
 
-    def wake(self, keys=None, data=None):
+    def wake(self, data=None):
         """ Wake up the plugin, process data, apply options """
-        super().wake(keys=keys, data=data)
+        super().wake(data=data)
 
         # Wake up testcloud instance
         if data:

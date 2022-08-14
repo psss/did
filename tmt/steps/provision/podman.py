@@ -76,9 +76,9 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
 
         return getattr(PodmanGuestData(), option.replace('-', '_'), default)
 
-    def wake(self, keys=None, data=None):
+    def wake(self, data=None):
         """ Wake up the plugin, process data, apply options """
-        super().wake(keys=keys, data=data)
+        super().wake(data=data)
         # Wake up podman instance
         if data:
             guest = GuestContainer(data, name=self.name, parent=self.step)

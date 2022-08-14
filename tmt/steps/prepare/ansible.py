@@ -81,9 +81,9 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
         return default
 
     # TODO: use better types once superclass gains its annotations
-    def wake(self, keys: Optional[List[str]] = None) -> None:
+    def wake(self) -> None:
         """ Wake up the plugin, process data, apply options """
-        super().wake(keys=keys)
+        super().wake()
 
         # Convert to list if necessary
         tmt.utils.listify(self.data, keys=['playbook'])

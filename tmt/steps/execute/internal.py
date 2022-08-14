@@ -97,9 +97,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             help='Disable interactive progress bar showing the current test.'))
         return options + super().options(how)
 
-    def wake(self, keys=None):
+    def wake(self):
         """ Wake up the plugin, process data, apply options """
-        super().wake(keys=keys)
+        super().wake()
         # Make sure that script is a list
         tmt.utils.listify(self.data, keys=['script'])
 

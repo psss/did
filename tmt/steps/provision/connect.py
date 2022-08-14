@@ -75,13 +75,9 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         # No other defaults available
         return default
 
-    # More specific type is a violation of Liskov substitution principle, and mypy
-    # complains about it - rightfully so. Ignoring the issue which should be resolved
-    # with https://github.com/teemtee/tmt/pull/1439.
-    def wake(self, keys: Optional[List[str]] = None,  # type: ignore[override]
-             data: Optional[GuestSshData] = None) -> None:
+    def wake(self, data: Optional[GuestSshData] = None) -> None:  # type: ignore[override]
         """ Wake up the plugin, process data, apply options """
-        super().wake(keys=keys, data=data)
+        super().wake(data=data)
         if data:
             self._guest = tmt.GuestSsh(data, name=self.name, parent=self.step)
 

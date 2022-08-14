@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import click
 import fmf
@@ -48,9 +48,9 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
             return []
         return default
 
-    def wake(self, keys: Optional[List[str]] = None) -> None:
+    def wake(self) -> None:
         """ Wake up the plugin, process data, apply options """
-        super().wake(keys=keys)
+        super().wake()
 
         # Convert to list if single script provided
         tmt.utils.listify(self.data, keys=['script'])

@@ -237,14 +237,14 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
 
         return provision
 
-    def wake(self, keys: Optional[List[str]] = None, data: Optional['GuestData'] = None) -> None:
+    def wake(self, data: Optional['GuestData'] = None) -> None:
         """
         Wake up the plugin
 
         Override data with command line options.
         Wake up the guest based on provided guest data.
         """
-        super().wake(keys=keys)
+        super().wake()
 
     def guest(self) -> Optional['Guest']:
         """
