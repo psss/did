@@ -1483,7 +1483,7 @@ class SerializableContainer:
         and dynamic imports of modules as needed.
         """
 
-        from tmt.plugins import import_
+        from tmt.plugins import import_member
 
         # Unpack class info, to get nicer variable names
         if "__class__" not in serialized:
@@ -1492,22 +1492,7 @@ class SerializableContainer:
                 "Use 'tmt clean runs' to clean up old runs.")
 
         klass_info = serialized.pop('__class__')
-        klass_module_name = klass_info['module']
-        klass_name = klass_info['name']
-
-        # Make sure the module is imported. It probably is, but really,
-        # make sure of it.
-        import_(klass_module_name)
-
-        # Now the module should be available in `sys.modules` like any
-        # other, and we can go and grab the class we need from it.
-        klass_module = sys.modules[klass_module_name]
-        klass = getattr(klass_module, klass_name)
-
-        if klass is None:
-            raise SystemExit(
-                f"Failed to import '{klass_name}' "
-                f"from '{klass_module_name}' module.")
+        klass = import_member(klass_info['module'], klass_info['name'])
 
         # Stay away from classes that are not derived from this one, to
         # honor promise given by return value annotation.
@@ -2920,26 +2905,20 @@ def _prenormalize_fmf_node(node: fmf.Tree, schema_name: str) -> fmf.Tree:
         # Instead of having a set of if-elif tests, we can reach the default `how`
         # dynamically.
 
-        from tmt.plugins import import_
+        from tmt.plugins import import_member
 
         step_module_name = f'tmt.steps.{step_name}'
         step_class_name = step_name.capitalize()
 
-        # Make sure the step module is imported. It probably is, but really,
-        # make sure of it.
-        import_(step_module_name)
+        step_class = import_member(step_module_name, step_class_name)
 
-        # Now the module should be available in `sys.modules` like any
-        # other, and we can go and grab the class we need from it.
-        step_module = sys.modules[step_module_name]
-        step_class = getattr(step_module, step_class_name)
-
-        if step_class is None:
+        if not issubclass(step_class, tmt.steps.Step):
             raise GeneralError(
-                f'Step {step_name} implementation cannot be found '
-                f'in {step_module_name}.{step_class_name}')
+                'Possible step {step_name} implementation '
+                f'{step_module_name}.{step_class_name} is not a subclass '
+                'of tmt.steps.Step class.')
 
-        step['how'] = cast(tmt.steps.Step, step_class).DEFAULT_HOW
+        step['how'] = step_class.DEFAULT_HOW
 
     def _process_step_collection(step_name: str, step_collection: Any) -> None:
         """

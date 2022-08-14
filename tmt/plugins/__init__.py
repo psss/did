@@ -6,7 +6,7 @@ import importlib
 import os
 import pkgutil
 import sys
-from typing import Generator, Optional
+from typing import Any, Generator, Optional
 
 if sys.version_info < (3, 9):
     from importlib_metadata import entry_points
@@ -71,6 +71,27 @@ def import_(module: str, path: Optional[str] = None) -> None:
         raise SystemExit(
             f"Failed to import the '{module}' module" +
             (f" from '{path}'." if path else ".") + f"\n({error})")
+
+
+def import_member(module_name: str, member_name: str) -> Any:
+    """ Import member from given module, handle errors nicely """
+    # Make sure the module is imported. It probably is, but really,
+    # make sure of it.
+    try:
+        import_(module_name)
+    except SystemExit as exc:
+        raise tmt.utils.GeneralError(f"Failed to import module '{module_name}'.", original=exc)
+
+    # Now the module should be available in `sys.modules` like any
+    # other, and we can go and grab the class we need from it.
+    if module_name not in sys.modules:
+        raise tmt.utils.GeneralError(f"Failed to import module '{module_name}'.")
+    module = sys.modules[module_name]
+
+    # Get the member and return it
+    if not hasattr(module, member_name):
+        raise tmt.utils.GeneralError(f"No such member '{member_name}' in module '{module_name}'.")
+    return getattr(module, member_name)
 
 
 def discover(path: str) -> Generator[str, None, None]:

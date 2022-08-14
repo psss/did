@@ -12,6 +12,8 @@ import unittest.mock
 import pytest
 
 import tmt
+import tmt.plugins
+import tmt.steps.discover
 from tmt.utils import (Common, GeneralError, StructuredField,
                        StructuredFieldError, WaitingIncomplete,
                        WaitingTimedOutError, duration_to_seconds, listify,
@@ -804,3 +806,23 @@ def test_wait_success_but_too_late():
 
     with pytest.raises(WaitingTimedOutError):
         wait(Common(), check, datetime.timedelta(seconds=1))
+
+
+def test_import_member():
+    klass = tmt.plugins.import_member('tmt.steps.discover', 'Discover')
+
+    assert klass is tmt.steps.discover.Discover
+
+
+def test_import_member_no_such_module():
+    with pytest.raises(
+            tmt.utils.GeneralError,
+            match=r"Failed to import module 'tmt\.steps\.nope_does_not_exist'."):
+        tmt.plugins.import_member('tmt.steps.nope_does_not_exist', 'Discover')
+
+
+def test_import_member_no_such_class():
+    with pytest.raises(
+            tmt.utils.GeneralError,
+            match=r"No such member 'NopeDoesNotExist' in module 'tmt\.steps\.discover'."):
+        tmt.plugins.import_member('tmt.steps.discover', 'NopeDoesNotExist')
