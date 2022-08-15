@@ -26,6 +26,11 @@ couple of recommendations to keep on mind when writing code:
 * The closing brace/bracket/parenthesis on multiline constructs
   is under the first non-whitespace character of the last line.
 
+When generating user messages use the whole sentence with the
+first word capitalized and enclose any names in single quotes::
+
+    self.warn(f"File '{path}' not found.")
+
 __ https://github.com/teemtee/tmt
 __ https://www.python.org/dev/peps/pep-0008/
 
