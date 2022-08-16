@@ -1,0 +1,8 @@
+summary: Make sure that virtual.testcloud works
+adjust:
+-   when: how is not defined or how != full
+    enabled: false
+    because: needs to be able to spawn VM
+require:
+- tmt-provision-virtual
+tag: [virtual]

@@ -235,10 +235,10 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 help='Select image to be used. Provide a short name, '
                      'full path to a local file or a complete url.'),
             click.option(
-                '-m', '--memory', metavar='MEMORY',
+                '-m', '--memory', metavar='MEMORY', type=int,
                 help='Set available memory in MB, 2048 MB by default.'),
             click.option(
-                '-D', '--disk', metavar='MEMORY',
+                '-D', '--disk', metavar='MEMORY', type=int,
                 help='Specify disk size in GB, 10 GB by default.'),
             click.option(
                 '-u', '--user', metavar='USER',
@@ -261,12 +261,6 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
         """ Wake up the plugin, process data, apply options """
         super().wake(keys=keys, data=data)
 
-        # Convert memory and disk to integers
-        # TODO: can they ever *not* be integers at this point?
-        # for key in ['memory', 'disk']:
-        #     if isinstance(self.get(key), str):
-        #         self.data[key] = int(self.data[key])
-
         # Wake up testcloud instance
         if data:
             guest = GuestTestcloud(data, name=self.name, parent=self.step)
@@ -282,6 +276,20 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
             key: self.get(key)
             for key in TestcloudGuestData.keys()
             })
+
+        # Once plan schema is enforced this won't be necessary
+        # click enforces int for cmdline and schema validation
+        # will make sure 'int' gets from plan data.
+        # Another key is 'port' however that is not exposed to the cli
+        for int_key in ["memory", "disk", "port"]:
+            value = getattr(data, int_key)
+            if value is not None:
+                try:
+                    setattr(data, int_key, int(value))
+                except ValueError:
+                    raise tmt.utils.SpecificationError(
+                        f"Value '{value}' cannot be converted to int for '{int_key}' attribute.")
+
         for key, value in data.to_dict().items():
             if key == 'memory':
                 self.info('memory', f"{value} MB", 'green')

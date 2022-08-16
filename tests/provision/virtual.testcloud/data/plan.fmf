@@ -1,0 +1,15 @@
+execute:
+    how: tmt
+discover:
+    how: shell
+    tests:
+    - name: smoke
+      test: echo
+provision:
+    how: virtual.testcloud
+    image: fedora
+    disk: 10
+    memory: 2048
+    #user: custom_user
+    connection: system
+    arch: x86_64
