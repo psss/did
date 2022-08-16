@@ -2124,7 +2124,7 @@ class Clean(tmt.utils.Common):
         return successful
 
 
-class Result(object):
+class Result:
     """
     Test result
 
@@ -2255,7 +2255,7 @@ class Result(object):
         return data
 
 
-class Link(object):
+class Link:
     """ Core attribute link parsing """
 
     # The list of all supported link relations

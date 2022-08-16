@@ -191,7 +191,7 @@ def indent(
     return indent + message
 
 
-class Config(object):
+class Config:
     """ User configuration """
 
     def __init__(self) -> None:
@@ -271,7 +271,7 @@ class CommandOutput(NamedTuple):
     stderr: Optional[str]
 
 
-class Common(object):
+class Common:
     """
     Common shared stuff
 
@@ -1955,7 +1955,7 @@ def load_run(run: 'tmt.base.Run') -> Tuple[bool, Optional[Exception]]:
 SFSectionValueType = Union[str, List[str]]
 
 
-class StructuredField(object):
+class StructuredField:
     """
     Handling multiple text data in a single text field
 
@@ -2401,7 +2401,7 @@ class StructuredField(object):
             self._sections[section] = self._write_section(dictionary)
 
 
-class DistGitHandler(object):
+class DistGitHandler:
     """ Common functionality for DistGit handlers """
     sources_file_name = 'sources'
     uri = "/rpms/{name}/{filename}/{hashtype}/{hash}/{filename}"

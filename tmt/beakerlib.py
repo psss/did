@@ -43,7 +43,7 @@ class LibraryError(Exception):
     """ Used when library cannot be parsed from the identifier """
 
 
-class Library(object):
+class Library:
     """
     A beakerlib library
 
