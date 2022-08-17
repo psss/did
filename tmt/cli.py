@@ -394,7 +394,7 @@ if run_callback is None:
 
 
 # TODO: commands is unknown, needs revisit
-@run_callback()  # type: ignore
+@run_callback()  # type: ignore[misc]
 @click.pass_context
 def finito(
         click_context: click.core.Context,
@@ -1310,7 +1310,7 @@ if clean_callback is None:
 
 
 # TODO: commands is unknown, needs revisit
-@clean_callback()  # type: ignore
+@clean_callback()  # type: ignore[misc]
 @click.pass_context
 def perform_clean(
         click_context: click.core.Context,

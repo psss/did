@@ -34,4 +34,4 @@ class FinishAnsible(tmt.steps.finish.FinishPlugin, PrepareAnsible):
 
     # Assigning class methods seems to cause trouble to mypy
     # See also: https://github.com/python/mypy/issues/6700
-    base_command = tmt.steps.finish.FinishPlugin.base_command  # type: ignore
+    base_command = tmt.steps.finish.FinishPlugin.base_command  # type: ignore[assignment]

@@ -350,7 +350,7 @@ class GuestTestcloud(tmt.GuestSsh):
     """
 
     # TODO: Revisit this `type: ignore` once `Guest` becomes a generic type
-    _data_class = TestcloudGuestData  # type: ignore
+    _data_class = TestcloudGuestData  # type: ignore[assignment]
 
     image: str
     image_url: Optional[str]
@@ -362,8 +362,8 @@ class GuestTestcloud(tmt.GuestSsh):
 
     # Not to be saved, recreated from image_url/instance_name/... every
     # time guest is instantiated.
-    _image: Optional['testcloud.image.Image'] = None  # type: ignore
-    _instance: Optional['testcloud.instance.Instance'] = None  # type: ignore
+    _image: Optional['testcloud.image.Image'] = None  # type: ignore[name-defined]
+    _instance: Optional['testcloud.instance.Instance'] = None  # type: ignore[name-defined]
 
     def _get_url(self, url: str, message: str) -> requests.Response:
         """ Get url, retry when fails, return response """

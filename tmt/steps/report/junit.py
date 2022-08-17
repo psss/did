@@ -124,10 +124,10 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
         try:
             with open(f_path, 'w') as fw:
                 if hasattr(junit_xml, 'to_xml_report_file'):
-                    junit_xml.to_xml_report_file(fw, [suite])  # type: ignore
+                    junit_xml.to_xml_report_file(fw, [suite])  # type: ignore[union-attr]
                 else:
                     # For older junit-xml
-                    junit_xml.TestSuite.to_file(fw, [suite])  # type: ignore
+                    junit_xml.TestSuite.to_file(fw, [suite])  # type: ignore[union-attr]
             self.info("output", f_path, 'yellow')
         except Exception as error:
             raise tmt.utils.ReportError(

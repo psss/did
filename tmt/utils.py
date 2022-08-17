@@ -1798,7 +1798,7 @@ class TimeoutHTTPAdapter(requests.adapters.HTTPAdapter):
 
         super().__init__(*args, **kwargs)
 
-    def send(  # type: ignore # does not match superclass type on purpose
+    def send(  # type: ignore[override] # does not match superclass type on purpose
             self,
             request: requests.PreparedRequest,
             **kwargs: Any) -> requests.Response:
@@ -1839,7 +1839,7 @@ class RetryStrategy(requests.packages.urllib3.util.retry.Retry):  # type: ignore
         return super().increment(*args, **kwargs)
 
 
-class retry_session(contextlib.AbstractContextManager):  # type: ignore
+class retry_session(contextlib.AbstractContextManager):  # type: ignore[type-arg]
     """
     Context manager for requests.Session() with retries and timeout
     """
@@ -2627,7 +2627,7 @@ def git_clone(
         return git_clone(url, destination, common, env, shallow=False)
 
 
-class updatable_message(contextlib.AbstractContextManager):  # type: ignore
+class updatable_message(contextlib.AbstractContextManager):  # type: ignore[type-arg]
     """ Updatable message suitable for progress-bar-like reporting """
 
     def __init__(

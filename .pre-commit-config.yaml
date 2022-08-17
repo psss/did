@@ -60,3 +60,22 @@ repos:
     hooks:
       - id: yamllint
         files: ^tmt/schemas/.*\.yaml
+
+  # Yet another static analysis - these hooks use regular expressions to
+  # process Python code, and offer interesting "metalinters", checks for
+  # what we do to appease flake8 and mypy linters.
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.9.0
+    hooks:
+      # Enforce `noqa` and `type: ignore` to always appear with specific
+      # error code(s).
+      - id: python-check-blanket-noqa
+      - id: python-check-blanket-type-ignore
+
+      # Other potentially useful hooks for future consideration:
+      #
+      # - id: python-check-mock-methods
+      # - id: python-no-eval
+      # - id: python-no-log-warn
+      # - id: python-use-type-annotations
+      # - id: text-unicode-replacement-char
