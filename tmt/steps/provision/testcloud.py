@@ -459,12 +459,12 @@ class GuestTestcloud(tmt.GuestSsh):
         """ Prepare ssh key for authentication """
         # Create ssh key paths
         key_name = "id_{}".format(key_type if key_type is not None else 'rsa')
-        self.key = os.path.join(self.workdir, key_name)
+        self.key = [os.path.join(self.workdir, key_name)]
         self.pubkey = os.path.join(self.workdir, f'{key_name}.pub')
 
         # Generate ssh key
         self.debug('Generating an ssh key.')
-        command = ["ssh-keygen", "-f", self.key, "-N", ""]
+        command = ["ssh-keygen", "-f", self.key[0], "-N", ""]
         if key_type is not None:
             command.extend(["-t", key_type])
         self.run(command)
@@ -559,7 +559,7 @@ class GuestTestcloud(tmt.GuestSsh):
         # TODO: Maybe... some better way to do this?
         if "coreos" in self.image.lower():
             self._instance.coreos = True
-            self._instance.ssh_path = self.key
+            self._instance.ssh_path = self.key[0]
         self.prepare_ssh_key(SSH_KEYGEN_TYPE)
 
         # Boot the virtual machine

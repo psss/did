@@ -110,7 +110,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         else:
             self.info('key', key or 'not provided', 'green')
             self.debug('Using private key authentication.')
-            data.key = key
+            data.key = [key]
 
         # And finally create the guest
         self._guest = tmt.GuestSsh(data, name=self.name, parent=self.step)
