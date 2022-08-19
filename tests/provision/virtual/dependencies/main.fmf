@@ -1,0 +1,11 @@
+summary: Verify `tmt-provision-virtual` package dependencies
+description:
+    Check that `tmt-provision-virtual` package brings with itself
+    all necessary dependencies needed for both `session` and
+    `system` connection to work without additional steps except
+    for setting group and starting the `libvirtd` service for the
+    `system` case.
+tag: provision-virtual-only
+tier: null
+require: tmt-provision-virtual
+order: 10

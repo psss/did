@@ -72,6 +72,7 @@ Summary: Virtual machine provisioner for the Test Management Tool
 Obsoletes: tmt-testcloud < 0.17
 Requires: tmt == %{version}-%{release}
 Requires: python%{python3_pkgversion}-testcloud >= 0.8.1
+Requires: libvirt-daemon-config-network
 Requires: openssh-clients
 Requires: (ansible or ansible-core)
 # Recommend qemu system emulators for supported arches
