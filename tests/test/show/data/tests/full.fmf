@@ -1,0 +1,20 @@
+summary: Check the test keys are correctly displayed
+description: Some description
+contact: Some Body <somebody@somewhere.org>
+component: package
+id: e3a9a8ed-4585-4e86-80e8-1d99eb5345a9
+test: ./test.sh
+path: /some/path
+framework: beakerlib
+manual: false
+require: required-package
+recommend: recommended-package
+environment:
+    KEY: VAL
+duration: 3m
+enabled: true
+order: 70
+result: respect
+tag: foo
+tier: 3
+link: https://something.org/related

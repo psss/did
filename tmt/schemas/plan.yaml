@@ -129,6 +129,10 @@ properties:
   # for details.
   finish: true
 
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#id
+  id:
+    $ref: "/schemas/core#/definitions/id"
+
   # https://tmt.readthedocs.io/en/stable/spec/core.html#link
   link:
     $ref: "/schemas/core#/definitions/link"
@@ -161,6 +165,14 @@ properties:
   # https://tmt.readthedocs.io/en/stable/spec/core.html#summary
   summary:
     $ref: "/schemas/core#/definitions/summary"
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#tag
+  tag:
+    $ref: "/schemas/core#/definitions/tag"
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#tier
+  tier:
+    $ref: "/schemas/core#/definitions/tier"
 
 required:
   - execute

@@ -1,0 +1,36 @@
+# Core
+summary: Plan keys are correctly displayed
+description: Some description
+id: e3a9a8ed-4585-4e86-80e8-1d99eb5345a9
+enabled: true
+order: 70
+tag: foo
+tier: 3
+link: https://something.org/related
+
+# Steps
+discover:
+    how: fmf
+    filter: tier:1
+provision:
+    how: container
+    image: fedora
+prepare:
+    how: shell
+    script: systemctl start libvirtd
+execute:
+    how: tmt
+report:
+    how: html
+    open: true
+finish:
+    how: ansible
+    playbook: cleanup.yaml
+
+# Extra
+environment:
+    KEY: VAL
+environment-file:
+  - variables.yaml
+context:
+    distro: fedora

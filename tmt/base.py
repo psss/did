@@ -458,31 +458,45 @@ class Core(tmt.utils.Common):
     order: int = DEFAULT_ORDER
     link: Optional['Link'] = None
     id: Optional[str] = None
+    tag: List[str] = []
+    tier: Optional[str] = None
     adjust: Optional[List[_RawAdjustRule]] = None
 
     KEYS_SHOW_ORDER = [
+        # Basic stuff
         'summary',
         'description',
         'enabled',
         'order',
-        'link',
         'id',
-        'adjust']
+
+        # Filtering and more
+        'tag',
+        'tier',
+        'link',
+        'adjust',
+        ]
+
+    # Normalization methods
+    _normalize_tag = LoadFmfKeysMixin._normalize_string_list
 
     # TODO: remove when schema becomes mandatory, `order` shall never be `null`
     def _normalize_order(self, value: Optional[int]) -> int:
         if value is None:
             return DEFAULT_ORDER
-
         return int(value)
 
     def _normalize_link(self, value: _RawLink) -> 'Link':
         return Link(data=value)
 
-    def _normalize_adjust(self,
-                          value: Union[_RawAdjustRule, List[_RawAdjustRule]]
-                          ) -> List[_RawAdjustRule]:
+    def _normalize_adjust(
+            self, value: Union[_RawAdjustRule, List[_RawAdjustRule]]) -> List[_RawAdjustRule]:
         return [value] if not isinstance(value, list) else value
+
+    def _normalize_tier(self, value: Optional[Union[int, str]]) -> Optional[str]:
+        if value is None:
+            return None
+        return str(value)
 
     def __init__(self,
                  *,
@@ -688,27 +702,15 @@ class Test(ValidateFmfMixin, LoadFmfKeysMixin, Core):
     duration: Optional[str] = DEFAULT_TEST_DURATION_L1
     result: str = 'respect'
 
-    # Filtering attributes
-    tag: List[str] = []
-    tier: Optional[str] = None
-
     _normalize_contact = LoadFmfKeysMixin._normalize_string_list
     _normalize_component = LoadFmfKeysMixin._normalize_string_list
     _normalize_recommend = LoadFmfKeysMixin._normalize_string_list
-    _normalize_tag = LoadFmfKeysMixin._normalize_string_list
 
-    def _normalize_require(self,
-                           value: Optional[_RawRequire]) -> List[Union[str, FmfId]]:
+    def _normalize_require(
+            self, value: Optional[_RawRequire]) -> List[Union[str, FmfId]]:
         if value is None:
             return []
-
         return [value] if isinstance(value, str) else value
-
-    def _normalize_tier(self, value: Optional[Union[int, str]]) -> Optional[str]:
-        if value is None:
-            return None
-
-        return str(value)
 
     KEYS_SHOW_ORDER = [
         # Basic test information
@@ -1259,22 +1261,36 @@ class Plan(ValidateFmfMixin, LoadFmfKeysMixin, Core):
 
     def show(self):
         """ Show plan details """
+
+        # Summary and description first
         self.ls(summary=True)
         if self.description:
             echo(tmt.utils.format(
                 'description', self.description, key_color='green'))
+
+        # Individual step details
         for step in self.steps(disabled=True):
             step.show()
+
+        # Environment and context
         if self.environment:
             echo(tmt.utils.format(
                 'environment', self.environment, key_color='blue'))
-        echo(tmt.utils.format('enabled', self.enabled, key_color='cyan'))
-        if self.order != DEFAULT_ORDER:
-            echo(tmt.utils.format('order', self.order, key_color='cyan'))
-        self.link.show()
         if self._fmf_context():
             echo(tmt.utils.format(
                 'context', self._fmf_context(), key_color='blue'))
+
+        # The rest
+        echo(tmt.utils.format('enabled', self.enabled, key_color='cyan'))
+        if self.order != DEFAULT_ORDER:
+            echo(tmt.utils.format('order', self.order, key_color='cyan'))
+        if self.id:
+            echo(tmt.utils.format('id', self.id, key_color='cyan'))
+        if self.tag:
+            echo(tmt.utils.format('tag', self.tag, key_color='cyan'))
+        if self.tier:
+            echo(tmt.utils.format('tier', self.tier, key_color='cyan'))
+        self.link.show()
         if self.opt('verbose'):
             self._show_additional_keys()
 
@@ -1498,7 +1514,6 @@ class Story(ValidateFmfMixin, LoadFmfKeysMixin, Core):
     def _normalize_priority(self, value: Optional[str]) -> Optional[StoryPriority]:
         if value is None:
             return None
-
         return StoryPriority(value)
 
     KEYS_SHOW_ORDER = [
@@ -1511,7 +1526,9 @@ class Story(ValidateFmfMixin, LoadFmfKeysMixin, Core):
         'example',
         'enabled',
         'order',
-        'link'
+        'tag',
+        'tier',
+        'link',
         ]
 
     def __init__(
@@ -1615,7 +1632,7 @@ class Story(ValidateFmfMixin, LoadFmfKeysMixin, Core):
                 value = cast(StoryPriority, value).value
             if key == 'order' and value == DEFAULT_ORDER:
                 continue
-            if value is not None:
+            if value is not None and value != []:
                 wrap = False if key == 'example' else 'auto'
                 echo(tmt.utils.format(key, value, wrap=wrap))
         if self.opt('verbose'):

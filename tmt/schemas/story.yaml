@@ -30,6 +30,10 @@ properties:
   example:
     $ref: "/schemas/common#/definitions/one_or_more_strings"
 
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#id
+  id:
+    $ref: "/schemas/core#/definitions/id"
+
   # https://tmt.readthedocs.io/en/stable/spec/core.html#link
   link:
     $ref: "/schemas/core#/definitions/link"
@@ -56,9 +60,17 @@ properties:
   summary:
     $ref: "/schemas/core#/definitions/summary"
 
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#tag
+  tag:
+    $ref: "/schemas/core#/definitions/tag"
+
   # https://tmt.readthedocs.io/en/stable/spec/stories.html#title
   title:
     type: string
+
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#tier
+  tier:
+    $ref: "/schemas/core#/definitions/tier"
 
 required:
   - story

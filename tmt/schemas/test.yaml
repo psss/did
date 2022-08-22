@@ -51,6 +51,10 @@ properties:
       - beakerlib
       - shell
 
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#id
+  id:
+    $ref: "/schemas/core#/definitions/id"
+
   # https://tmt.readthedocs.io/en/stable/spec/core.html#link
   link:
     $ref: "/schemas/core#/definitions/link"
@@ -100,21 +104,17 @@ properties:
   summary:
     $ref: "/schemas/core#/definitions/summary"
 
-  # https://tmt.readthedocs.io/en/stable/spec/tests.html#tag
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#tag
   tag:
-    $ref: "/schemas/common#/definitions/one_or_more_strings"
+    $ref: "/schemas/core#/definitions/tag"
 
   # https://tmt.readthedocs.io/en/stable/spec/tests.html#test
   test:
     type: string
 
-  # https://tmt.readthedocs.io/en/stable/spec/tests.html#tier
+  # https://tmt.readthedocs.io/en/stable/spec/core.html#tier
   tier:
-    oneOf:
-      - type: "null"
-      - type: string
-      - type: integer
-        minimum: 0
+    $ref: "/schemas/core#/definitions/tier"
 
 patternProperties:
   ^extra-:

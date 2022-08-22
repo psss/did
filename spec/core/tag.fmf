@@ -1,7 +1,8 @@
 summary: Free form tags for easy filtering
 
 story:
-    As a user I want to run only a subset of available tests.
+    As a user I want to run only a subset of available tests,
+    plans or stories.
 
 description:
     Throughout the years, free-form tags proved to be useful for

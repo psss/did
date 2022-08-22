@@ -1,11 +1,57 @@
 #!/bin/bash
-# vim: dict+=/usr/share/beakerlib/dictionary.vim cpt=.,w,b,u,t,i,k
 . /usr/share/beakerlib/beakerlib.sh || exit 1
 
 rlJournalStart
     rlPhaseStartSetup
         rlRun "pushd data"
         rlRun "set -o pipefail"
+    rlPhaseEnd
+
+    rlPhaseStartTest "Show a minimal test"
+        rlRun -s "tmt tests show mini"
+        rlAssertNotGrep "summary" $rlRun_LOG
+        rlAssertNotGrep "description" $rlRun_LOG
+        rlAssertNotGrep "contact" $rlRun_LOG
+        rlAssertNotGrep "component" $rlRun_LOG
+        rlAssertNotGrep "id" $rlRun_LOG
+        rlAssertGrep "test ./test.sh" $rlRun_LOG
+        rlAssertGrep "path /tests" $rlRun_LOG
+        rlAssertNotGrep "framework" $rlRun_LOG
+        rlAssertGrep "manual false" $rlRun_LOG
+        rlAssertNotGrep "require" $rlRun_LOG
+        rlAssertNotGrep "recommend" $rlRun_LOG
+        rlAssertNotGrep "environment" $rlRun_LOG
+        rlAssertGrep "duration 5m" $rlRun_LOG
+        rlAssertGrep "enabled true" $rlRun_LOG
+        rlAssertNotGrep "order" $rlRun_LOG
+        rlAssertGrep "result respect" $rlRun_LOG
+        rlAssertNotGrep "tag" $rlRun_LOG
+        rlAssertNotGrep "tier" $rlRun_LOG
+        rlAssertNotGrep "relates" $rlRun_LOG
+    rlPhaseEnd
+
+    rlPhaseStartTest "Show a full test"
+        rlRun -s "tmt tests show full"
+        rlAssertGrep "summary Check the test keys are correctly displayed" $rlRun_LOG
+        rlAssertGrep "description Some description" $rlRun_LOG
+        rlAssertGrep "contact Some Body <somebody@somewhere.org>" $rlRun_LOG
+        rlAssertGrep "component package" $rlRun_LOG
+        rlAssertGrep "id e3a9a8ed-4585-4e86-80e8-1d99eb5345a9" $rlRun_LOG
+        rlAssertGrep "test ./test.sh" $rlRun_LOG
+        rlAssertGrep "path /some/path" $rlRun_LOG
+        rlAssertGrep "framework beakerlib" $rlRun_LOG
+        rlAssertGrep "manual false" $rlRun_LOG
+        rlAssertGrep "require.*required-package" $rlRun_LOG
+        rlAssertGrep "require.*beakerlib" $rlRun_LOG
+        rlAssertGrep "recommend recommended-package" $rlRun_LOG
+        rlAssertGrep "environment KEY: VAL" $rlRun_LOG
+        rlAssertGrep "duration 3m" $rlRun_LOG
+        rlAssertGrep "enabled true" $rlRun_LOG
+        rlAssertGrep "order 70" $rlRun_LOG
+        rlAssertGrep "result respect" $rlRun_LOG
+        rlAssertGrep "tag foo" $rlRun_LOG
+        rlAssertGrep "tier 3" $rlRun_LOG
+        rlAssertGrep "relates https://something.org/related" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "List all tests by default"
