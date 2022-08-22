@@ -3,16 +3,20 @@ import json
 import os
 import sys
 import time
-from typing import List
+from typing import Any, List, Optional, cast
 
 import click
 
 import tmt
+import tmt.options
 import tmt.steps
 import tmt.steps.execute
 import tmt.utils
+from tmt.base import Result, Test
 from tmt.steps.execute import (SCRIPTS, TEST_OUTPUT_FILENAME,
                                TMT_FILE_SUBMIT_SCRIPT, TMT_REBOOT_SCRIPT)
+from tmt.steps.provision import Guest
+from tmt.utils import EnvironmentType
 
 
 @dataclasses.dataclass
@@ -38,32 +42,34 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
     _data_class = ExecuteInternalData
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self._previous_progress_message = ""
         self.scripts = SCRIPTS
 
     @classmethod
-    def options(cls, how=None):
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for given method """
-        options = []
-        # Shell script as a test
-        options.append(click.option(
-            '-s', '--script', metavar='SCRIPT', multiple=True,
-            help='Shell script to be executed as a test.'))
-        # Interactive mode
-        options.append(click.option(
-            '-i', '--interactive', is_flag=True,
-            help='Run in interactive mode, do not capture output.'))
-        # Disable interactive progress bar
-        options.append(click.option(
-            '--no-progress-bar', is_flag=True,
-            help='Disable interactive progress bar showing the current test.'))
-        return options + super().options(how)
+        options = super().options(how)
+        options[:0] = [
+            click.option(
+                '-s', '--script', metavar='SCRIPT', multiple=True,
+                help='Shell script to be executed as a test.'),
+            # Interactive mode
+            click.option(
+                '-i', '--interactive', is_flag=True,
+                help='Run in interactive mode, do not capture output.'),
+            # Disable interactive progress bar
+            click.option(
+                '--no-progress-bar', is_flag=True,
+                help='Disable interactive progress bar showing the current test.')
+            ]
+        return options
 
     # TODO: consider switching to utils.updatable_message() - might need more
     # work, since use of _show_progress is split over several methods.
-    def _show_progress(self, progress, test_name, finish=False):
+    def _show_progress(self, progress: str, test_name: str,
+                       finish: bool = False) -> None:
         """
         Show an interactive progress bar in non-verbose mode.
 
@@ -100,12 +106,20 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             self._previous_progress_message = ""
         sys.stdout.flush()
 
-    def _test_environment(self, test, extra_environment):
+    def _test_environment(
+            self,
+            test: Test,
+            extra_environment: Optional[EnvironmentType] = None) -> EnvironmentType:
         """ Return test environment """
+
+        extra_environment = extra_environment or {}
+
         data_directory = self.data_path(test, full=True, create=True)
 
         environment = extra_environment.copy()
         environment.update(test.environment)
+        assert self.parent is not None
+        assert isinstance(self.parent, tmt.steps.execute.Execute)
         environment["TMT_TREE"] = self.parent.plan.worktree
         environment["TMT_TEST_DATA"] = os.path.join(
             data_directory, tmt.steps.execute.TEST_DATA)
@@ -124,11 +138,13 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
         return environment
 
-    def execute(self, test, guest, extra_environment):
+    def execute(self, test: Test, guest: Guest,
+                extra_environment: Optional[EnvironmentType] = None) -> None:
         """ Run test on the guest """
         self.debug(f"Execute '{test.name}' as a '{test.framework}' test.")
 
         # Test will be executed in it's own directory, relative to the workdir
+        assert self.discover.workdir is not None
         workdir = os.path.join(self.discover.workdir, test.path.lstrip('/'))
         self.debug(f"Use workdir '{workdir}'.", level=3)
 
@@ -142,7 +158,12 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             command = test.test
 
         # Prepare custom function to log output in verbose mode
-        def log(key, value=None, color=None, shift=1, level=1):
+        def log(
+                key: str,
+                value: Optional[str] = None,
+                color: Optional[str] = None,
+                shift: int = 1,
+                level: int = 1) -> None:
             self.verbose(key, value, color, shift=2, level=3)
 
         # Execute the test, save the output and return code
@@ -164,7 +185,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             stdout or '', mode='a', level=3)
         test.real_duration = self.test_duration(start, end)
 
-    def check(self, test):
+    def check(self, test: Test) -> Result:
         """ Check the test result """
         self.debug(f"Check result of '{test.name}'.")
         if test.framework == 'beakerlib':
@@ -175,11 +196,11 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             except tmt.utils.FileError:
                 return self.check_shell(test)
 
-    def _will_reboot(self, test):
+    def _will_reboot(self, test: Test) -> bool:
         """ True if reboot is requested """
         return os.path.exists(self._reboot_request_path(test))
 
-    def _reboot_request_path(self, test):
+    def _reboot_request_path(self, test: Test) -> str:
         """ Return reboot_request """
         reboot_request_path = os.path.join(
             self.data_path(test, full=True),
@@ -187,7 +208,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             TMT_REBOOT_SCRIPT.created_file)
         return reboot_request_path
 
-    def _handle_reboot(self, test, guest):
+    def _handle_reboot(self, test: Test, guest: Guest) -> bool:
         """
         Reboot the guest if the test requested it.
 
@@ -232,10 +253,10 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             return True
         return False
 
-    def go(self, guest):
+    def go(self, guest: Guest) -> None:
         """ Execute available tests """
         super().go(guest)
-        self._results = []
+        self._results: List[Result] = []
 
         # Nothing to do in dry mode
         if self.opt('dry'):
@@ -244,9 +265,11 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
         self._run_tests(guest)
 
-    def _run_tests(self, guest, extra_environment=None):
+    def _run_tests(
+            self,
+            guest: Guest,
+            extra_environment: Optional[EnvironmentType] = None) -> None:
         """ Execute tests on provided guest """
-        extra_environment = extra_environment or {}
 
         # Prepare tests and helper scripts, check options
         tests = self.prepare_tests()
@@ -270,9 +293,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             self.verbose(
                 'test', test.summary or test.name, color='cyan', shift=1, level=2)
 
-            self.execute(
-                test, guest,
-                extra_environment=extra_environment)
+            self.execute(test, guest, extra_environment=extra_environment)
 
             # Pull test logs from the guest, exclude beakerlib backups
             if test.framework == "beakerlib":
@@ -322,11 +343,14 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         self.debug("Pull the plan data directory.", level=2)
         guest.pull(source=self.step.plan.data_directory)
 
-    def results(self):
+    def results(self) -> List[Result]:
         """ Return test results """
         return self._results
 
-    def requires(self):
+    def requires(self) -> List[str]:
         """ Return list of required packages """
         # FIXME Remove when we drop support for the old execution methods
-        return ['beakerlib'] if self.step._framework == 'beakerlib' else []
+        # FIXME Remove casting once https://github.com/teemtee/tmt/issues/1373 is resolved.
+        return ['beakerlib'] if cast(
+            tmt.steps.execute.Execute,
+            self.step)._framework == 'beakerlib' else []
