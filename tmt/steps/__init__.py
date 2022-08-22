@@ -271,10 +271,10 @@ class Step(tmt.utils.Common):
     @property
     def enabled(self) -> Optional[bool]:
         """ True if the step is enabled """
-        try:
-            return self.name in self.plan.my_run._context.obj.steps
-        except AttributeError:
+        if self.plan.my_run is None or self.plan.my_run._context_object is None:
             return None
+
+        return self.name in self.plan.my_run._context_object.steps
 
     @property
     def plugins_in_standalone_mode(self) -> int:
@@ -977,6 +977,7 @@ class Action(Phase):
             if step.plan is None:
                 raise tmt.utils.GeneralError(
                     f"Plan for {step.name} is not set.")
+            assert step.plan.my_run is not None  # narrow type
             if step.plan.my_run.opt('last'):
                 steps: List[Step] = [
                     s for s in step.plan.steps() if s.status() == 'done']
@@ -1083,6 +1084,9 @@ class Login(Action):
             method_class: Optional[Method] = None,
             usage: Optional[str] = None) -> click.Command:
         """ Create the login command """
+        # Avoid circular imports
+        from tmt.base import ResultOutcome
+
         @click.command()
         @click.pass_context
         @click.option(
@@ -1090,7 +1094,7 @@ class Login(Action):
             help='Log in during given phase of selected step(s).')
         @click.option(
             '-w', '--when', metavar='RESULT', multiple=True,
-            type=click.Choice(tmt.base.Result._results),
+            type=click.Choice([m.value for m in ResultOutcome.__members__.values()]),
             help='Log in if a test finished with given result(s).')
         @click.option(
             '-c', '--command', metavar='COMMAND',
@@ -1136,19 +1140,26 @@ class Login(Action):
 
     def go(self) -> None:
         """ Login to the guest(s) """
-        # Verify possible test result condition
-        count: Dict[str, int] = dict()
-        expected_results: Optional[List[str]] = self.opt('when')
 
         assert isinstance(self.parent, Step)
         assert hasattr(self.parent, 'plan') and self.parent.plan is not None
 
+        # Avoid circular imports
+        from tmt.base import ResultOutcome
+
+        # Verify possible test result condition
+        expected_results: Optional[List[ResultOutcome]] = [
+            ResultOutcome(raw_expected_result) for raw_expected_result in self.opt('when', [])
+            ]
+
         if expected_results:
-            for expected_result in expected_results:
-                count[expected_result] = len([
-                    result for result in self.parent.plan.execute.results()
-                    if result.result == expected_result])
-            if not any(count.values()):
+            matching_results = (
+                result.result
+                for result in self.parent.plan.execute.results()
+                if result.result in expected_results
+                )
+
+            if not any(matching_results):
                 self.info('Skipping interactive shell', color='yellow')
                 return
 

@@ -103,7 +103,7 @@
     </thead>
     {% for result in results %}
     <tr class="result {{ loop.cycle('odd', 'even') }}">
-        <td class="result {{ result.result|e }}">{{ result.result|e }}</td>
+        <td class="result {{ result.result.value|e }}">{{ result.result.value|e }}</td>
         <td class="name">{{ result.name|e }}</td>
         <td class="log">
         {% for log in result.log %}

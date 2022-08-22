@@ -9,15 +9,16 @@ from typing import Dict, List, Optional, Tuple, Union, cast
 import fmf
 
 import tmt
+import tmt.base
 import tmt.utils
 
-# A beakerlib indetified type, can be a string or a dictionary
-BeakerlibIdentifierType = Union[str, Dict[str, str]]
+# A beakerlib identifier type, can be a string or a fmf id (with extra beakerlib keys)
+BeakerlibIdentifierType = Union[str, tmt.base.RequireFmfId]
 ImportedIdentifiersType = Optional[List[BeakerlibIdentifierType]]
 
 # A type for Beakerlib dependencies
 LibraryDependenciesType = Tuple[
-    List[str], List[str], List['Library']
+    List[tmt.base.Require], List[str], List['Library']
     ]
 
 # Regular expressions for beakerlib libraries
@@ -102,12 +103,12 @@ class Library:
             self.dest: str = DEFAULT_DESTINATION
 
         # The fmf identifier
-        elif isinstance(identifier, dict):
+        elif isinstance(identifier, tmt.base.RequireFmfId):
             self.identifier = identifier
             self.parent.debug(f"Detected library '{identifier}'.", level=3)
             self.format = 'fmf'
-            self.url = identifier.get('url')
-            self.path = identifier.get('path')
+            self.url = identifier.url
+            self.path = identifier.path
             # Strip possible trailing slash from path
             if isinstance(self.path, str):
                 self.path = self.path.rstrip('/')
@@ -120,16 +121,15 @@ class Library:
                     if (self.url.startswith(forge)
                             and self.url.endswith('.git')):
                         self.url = self.url.rstrip('.git')
-            self.ref = identifier.get('ref', None)
-            self.dest = identifier.get(
-                'destination', DEFAULT_DESTINATION).lstrip('/')
-            self.name = identifier.get('name', '/')
+            self.ref = identifier.ref
+            self.dest = identifier.destination or DEFAULT_DESTINATION.lstrip('/')
+            self.name = identifier.name or '/'
             if not self.name.startswith('/'):
                 raise tmt.utils.SpecificationError(
                     f"Library name '{self.name}' does not start with a '/'.")
 
             # Use provided repository nick name or parse it from the url/path
-            repo = identifier.get('nick')
+            repo = identifier.nick
             if repo:
                 if not isinstance(repo, str):
                     raise tmt.utils.SpecificationError(
@@ -273,8 +273,8 @@ class Library:
                 raise LibraryError
             raise tmt.utils.GeneralError(
                 f"Library '{self.name}' not found in '{self.repo}'.")
-        self.require = cast(List[str], tmt.utils.listify(library_node.get('require', [])))
-        self.recommend = cast(List[str], tmt.utils.listify(library_node.get('recommend', [])))
+        self.require = tmt.base.normalize_require(library_node.get('require', []))
+        self.recommend = tmt.base.normalize_recommend(library_node.get('recommend', []))
 
         # Create a symlink if the library is deep in the structure
         # FIXME: hot fix for https://github.com/beakerlib/beakerlib/pull/72
@@ -294,7 +294,7 @@ class Library:
 
 
 def dependencies(
-    original_require: List[str],
+    original_require: List[tmt.base.Require],
     original_recommend: Optional[List[str]] = None,
     parent: Optional[tmt.utils.Common] = None,
     imported_lib_ids: ImportedIdentifiersType = None,
@@ -320,12 +320,12 @@ def dependencies(
     original_recommend = original_recommend or []
 
     # Cut circular dependencies to avoid infinite recursion
-    def already_fetched(lib: str) -> bool:
+    def already_fetched(lib: BeakerlibIdentifierType) -> bool:
         if not imported_lib_ids:
             return True
         return lib not in imported_lib_ids
 
-    to_fetch = original_require + original_recommend
+    to_fetch = original_require + cast(List[tmt.base.Require], original_recommend)
     for dependency in filter(already_fetched, to_fetch):
         # Library require/recommend
         try:
@@ -342,7 +342,7 @@ def dependencies(
         except LibraryError:
             if dependency in original_require:
                 processed_require.add(dependency)
-            if dependency in original_recommend:
+            if isinstance(dependency, str) and dependency in original_recommend:
                 processed_recommend.add(dependency)
 
     # Convert to list and return the results

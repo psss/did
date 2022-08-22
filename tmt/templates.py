@@ -69,7 +69,7 @@ DEFAULT_PLAN = """
         how: tmt
 """.lstrip()
 
-PLAN = dict()
+PLAN: Dict[str, str] = dict()
 
 PLAN['mini'] = """
 summary:
@@ -105,7 +105,7 @@ execute:
 #  Story Templates
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-STORY = dict()
+STORY: Dict[str, str] = dict()
 
 STORY['mini'] = """
 story: As a user I want to do this and that.

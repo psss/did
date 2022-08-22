@@ -247,6 +247,7 @@ class GuestContainer(tmt.Guest):
             options: Optional[List[str]] = None) -> None:
         """ Make sure that the workdir has a correct selinux context """
         self.debug("Update selinux context of the run workdir.", level=3)
+        assert self.parent.plan.workdir is not None  # narrow type
         self.run(
             ["chcon", "--recursive", "--type=container_file_t",
              self.parent.plan.workdir], shell=False)

@@ -153,14 +153,14 @@ on the concept of serialization.
    ]
 
 
-``to_dict``
+``to_dict``/``to_minimal_dict``
 ------------------------------------------------------------------
 
-Very special helper method: its use cases are not related to any
+Very special helper methods: its use cases are not related to any
 input or output data, and most of the time, when in need of
 iterating over object's keys and/or values, one can use ``keys()``,
-``values()`` or ``items()`` methods. It is used as a source of data
-for serialization and validation, but it usually has no use outside
+``values()`` or ``items()`` methods. They are used as sources of data
+for serialization and validation, but they usually have no use outside
 of default implementations.
 
 .. warning::
@@ -170,6 +170,8 @@ of default implementations.
    perfectly compatible with output of ``to_serialized()`` or ``to_spec()``,
    it is not generaly true, and using it instead of proper methods may lead
    to unexpected exceptions.
+
+   The same applies to ``to_minimal_dict()``.
 
 .. code-block:: python
 

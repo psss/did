@@ -335,6 +335,8 @@ class Guest(tmt.utils.Common):
         # TODO: with generic Step and Common, this should not be needed
         parent = cast(Provision, self.parent)
 
+        assert parent.plan.my_run is not None  # narrow type
+        assert parent.plan.my_run.workdir is not None  # narrow type
         _, run_id = os.path.split(parent.plan.my_run.workdir)
         return self._random_name(prefix="tmt-{0}-".format(run_id[-3:]))
 
@@ -478,6 +480,9 @@ class Guest(tmt.utils.Common):
         self.debug(f"Applying playbook '{playbook}' on guest '{self.guest}'.")
         # TODO: with generic Step and Common, this should not be needed
         parent = cast(Provision, self.parent)
+        assert parent.plan.my_run is not None  # narrow type
+        assert parent.plan.my_run.tree is not None  # narrow type
+        assert parent.plan.my_run.tree.root is not None  # narrow type
         playbook = os.path.join(parent.plan.my_run.tree.root, playbook)
         self.debug(f"Playbook full path: '{playbook}'", level=2)
         return playbook

@@ -1,21 +1,20 @@
-
 """ Base Metadata Classes """
 
 import copy
 import dataclasses
 import enum
-import functools
 import os
 import re
 import shutil
-import subprocess
 import sys
 import time
-from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union, cast
+from typing import (Any, ClassVar, Dict, Generator, Iterable, List, Optional,
+                    Sequence, Tuple, TypeVar, Union, cast, overload)
 
 import click
 import fmf
 import fmf.base
+import fmf.utils
 from click import confirm, echo, style
 from fmf.utils import listed
 from ruamel.yaml.error import MarkedYAMLError
@@ -31,12 +30,15 @@ import tmt.steps.provision
 import tmt.steps.report
 import tmt.templates
 import tmt.utils
-from tmt.utils import FmfContextType, verdict
+from tmt.utils import (EnvironmentType, FmfContextType, WorkdirArgumentType,
+                       verdict)
 
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
 else:
     from typing_extensions import Literal, TypedDict
+
+T = TypeVar('T')
 
 # Default test duration is 5m for individual tests discovered from L1
 # metadata and 1h for scripts defined directly in plans (L2 metadata).
@@ -74,6 +76,20 @@ SECTIONS_HEADINGS = {
 EXTRA_RESULT_IDENTIFICATION_KEYS = ['extra-nitrate', 'extra-task']
 
 
+# TODO: it might be better to open this functionality to custom plugins. Provide
+# a basic set of formats - dict, YAML - and allow plugins define and handle
+# additional formats (like Nitrate and Polarion). In that case, this particular
+# enum would need a few changes.
+class ExportFormat(enum.Enum):
+    """ Formats supported by base class export functionality """
+
+    DICT = 'dict'
+    YAML = 'yaml'
+    RST = 'rst'
+    NITRATE = 'nitrate'
+    POLARION = 'polarion'
+
+
 #
 # fmf id types
 #
@@ -84,26 +100,36 @@ EXTRA_RESULT_IDENTIFICATION_KEYS = ['extra-nitrate', 'extra-task']
 # A "raw" fmf id as stored in fmf node data, i.e. as a mapping with various keys.
 # Used for a brief moment, to annotate raw fmf data before they are converted
 # into FmfId instances.
-_RawFmfId = TypedDict('_RawFmfId', {
-    'url': Optional[str],
-    'ref': Optional[str],
-    'path': Optional[str],
-    'name': Optional[str]
-})
-
+class _RawFmfId(TypedDict):
+    url: Optional[str]
+    ref: Optional[str]
+    path: Optional[str]
+    name: Optional[str]
 
 # An internal fmf id representation.
+
+
 @dataclasses.dataclass
 class FmfId(tmt.utils.SpecBasedContainer, tmt.utils.SerializableContainer):
     # The list of valid fmf id keys
-    keys: ClassVar[List[str]] = ['url', 'ref', 'path', 'name']
+    VALID_KEYS: ClassVar[List[str]] = ['url', 'ref', 'path', 'name']
 
     url: Optional[str] = None
     ref: Optional[str] = None
     path: Optional[str] = None
     name: Optional[str] = None
 
-    def to_spec(self) -> Dict[str, Any]:
+    def to_dict(self) -> _RawFmfId:  # type: ignore[override]
+        """ Return keys and values in the form of a dictionary """
+
+        return cast(_RawFmfId, super().to_dict())
+
+    def to_minimal_dict(self) -> _RawFmfId:  # type: ignore[override]
+        """ Convert to a mapping with unset keys omitted """
+
+        return cast(_RawFmfId, super().to_minimal_dict())
+
+    def to_spec(self) -> _RawFmfId:  # type: ignore[override]
         """ Convert to a form suitable for saving in a specification file """
 
         return self.to_dict()
@@ -112,7 +138,7 @@ class FmfId(tmt.utils.SpecBasedContainer, tmt.utils.SerializableContainer):
     def from_spec(cls, raw: _RawFmfId) -> 'FmfId':
         """ Convert from a specification file or from a CLI option """
 
-        return FmfId(**{key: raw.get(key, None) for key in cls.keys})
+        return FmfId(**{key: cast(Optional[str], raw.get(key, None)) for key in cls.VALID_KEYS})
 
     def validate(self) -> Tuple[bool, str]:
         """
@@ -204,7 +230,7 @@ _RawLinks = Union[
 # like `environment` or `provision`, and focuses only on the keys defined for `adjust`
 # itself.
 _RawAdjustRule = TypedDict(
-    'AdjustRuleType',
+    '_RawAdjustRule',
     {
         'when': Optional[str],
         'continue': Optional[bool],
@@ -215,15 +241,77 @@ _RawAdjustRule = TypedDict(
 # A type describing content accepted by various require-like keys: - a string, fmf id,
 # or a list with a mixture of these two types.
 #
-# TODO: what other keys accept this kind of fmf data??
-_RawRequire = Union[
-    str,
-    _RawFmfId,
-    List[Union[str, _RawFmfId]]
-]
+# Note the use of custom fmf-id-based class - fmf id is accepted as a require,
+# but allows several extra keys that must be stored.
+#
+# See https://tmt.readthedocs.io/en/latest/spec/tests.html#require
 
 
-class Core(tmt.utils.Common):
+class _RawRequireFmfId(_RawFmfId):
+    destination: Optional[str]
+    nick: Optional[str]
+
+
+@dataclasses.dataclass
+class RequireFmfId(FmfId):
+    VALID_KEYS: ClassVar[List[str]] = FmfId.VALID_KEYS + ['destination', 'nick']
+
+    destination: Optional[str] = None
+    nick: Optional[str] = None
+
+    @classmethod
+    def from_spec(cls, raw: _RawRequireFmfId) -> 'RequireFmfId':  # type: ignore[override]
+        """ Convert from a specification file or from a CLI option """
+
+        return RequireFmfId(
+            **{key: cast(Optional[str], raw.get(key, None)) for key in cls.VALID_KEYS})
+
+
+_RawRequireItem = Union[str, _RawRequireFmfId]
+_RawRequire = Union[_RawRequireItem, List[_RawRequireItem]]
+
+Require = Union[str, RequireFmfId]
+
+
+def normalize_require(raw_require: Optional[_RawRequire]) -> List[Require]:
+    """
+    Normalize content of ``require`` key.
+
+    The requirements may be defined as either string or a special fmf id
+    flavor, or a mixed list of these types. The goal here is to reduce the
+    space of possibilities to a list, with fmf ids being converted to their
+    internal representation.
+    """
+
+    if raw_require is None:
+        return []
+
+    if isinstance(raw_require, str):
+        return [raw_require]
+
+    if isinstance(raw_require, dict):
+        return [RequireFmfId.from_spec(raw_require)]
+
+    return [
+        require if isinstance(require, str) else RequireFmfId.from_spec(require)
+        for require in raw_require
+        ]
+
+
+def normalize_recommend(raw_recommend: Optional[Union[str, List[str]]]) -> List[str]:
+    if raw_recommend is None:
+        return []
+
+    return [raw_recommend] if isinstance(raw_recommend, str) else raw_recommend
+
+
+CoreT = TypeVar('CoreT', bound='Core')
+
+
+class Core(
+        tmt.utils.ValidateFmfMixin,
+        tmt.utils.LoadFmfKeysMixin,
+        tmt.utils.Common):
     """
     General node object
 
@@ -304,75 +392,48 @@ class Core(tmt.utils.Common):
         # self._update_metadata() must be called to work correctly.
         self._metadata = self.node.data.copy()
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Node name """
         return self.name
 
-    def _update_metadata(self):
+    def _update_metadata(self) -> None:
         """ Update the _metadata attribute """
-        self._metadata.update(self.export(format_='dict'))
+        self._metadata.update(self.export(format_=ExportFormat.DICT))
         self._metadata['name'] = self.name
 
-    def _show_additional_keys(self):
+    def _show_additional_keys(self) -> None:
         """ Show source files """
         if self.id is not None:
             echo(tmt.utils.format('id', self.id, key_color='magenta'))
         echo(tmt.utils.format(
             'sources', self.node.sources, key_color='magenta'))
 
-    def _fmf_id(self):
+    def _fmf_id(self) -> None:
         """ Show fmf identifier """
-        echo(tmt.utils.format('fmf-id', self.fmf_id, key_color='magenta'))
+        echo(tmt.utils.format('fmf-id', cast(Dict[str, Any],
+             self.fmf_id.to_dict()), key_color='magenta'))
 
+    # Caching properties does not play nicely with mypy and annotations,
+    # and constructing a workaround would be hard because of support of
+    # Python 3.6 tmt wishes to maintain.
+    # https://github.com/python/mypy/issues/5858
     @property
-    @functools.lru_cache(maxsize=None)
-    def fmf_id(self):
+    def fmf_id(self) -> FmfId:
         """ Return full fmf identifier of the node """
 
-        def run(command):
-            """ Run command, return output """
-            cwd = fmf_root
-            result = subprocess.run(
-                command.split(),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL,
-                cwd=cwd)
-            return result.stdout.strip().decode("utf-8")
-
-        fmf_id = {'name': self.name}
-
-        fmf_root = self.node.root
-        # Prepare url (for now handle just the most common schemas)
-        branch = run("git rev-parse --abbrev-ref --symbolic-full-name @{u}")
-        try:
-            remote_name = branch[:branch.index('/')]
-        except ValueError:
-            remote_name = 'origin'
-        remote = run(f"git config --get remote.{remote_name}.url")
-        fmf_id['url'] = tmt.utils.public_git_url(remote)
-
-        # Get the ref (skip for master as it is the default)
-        ref = run('git rev-parse --abbrev-ref HEAD')
-        if ref != 'master':
-            fmf_id['ref'] = ref
-
-        # Construct path (if different from git root)
-        git_root = run('git rev-parse --show-toplevel')
-        if git_root != fmf_root:
-            fmf_id['path'] = os.path.join(
-                '/', os.path.relpath(fmf_root, git_root))
-
-        return fmf_id
+        return tmt.utils.fmf_id(self.name, self.node.root)
 
     @classmethod
-    def _save_context(cls, context):
+    def _save_context(cls, context: click.Context) -> None:
         """ Save provided command line context for future use """
         super(Core, cls)._save_context(context)
 
         # Handle '.' as an alias for the current working directory
         names = cls._opt('names')
         if names is not None and '.' in names:
-            root = context.obj.tree.root
+            obj = cast(Optional['tmt.cli.ContextObject'], context.obj)
+            assert obj is not None  # narrow type
+            root = obj.tree.root
             current = os.getcwd()
             # Handle special case when directly in the metadata root
             if current == root:
@@ -382,29 +443,56 @@ class Core(tmt.utils.Common):
                 pattern = os.path.join('/', os.path.relpath(current, root))
                 # Prevent matching common prefix from other directories
                 pattern = f"{pattern}(/|$)"
+            assert cls._context is not None  # narrow type
             cls._context.params['names'] = tuple([
                 pattern if name == '.' else name for name in names])
 
-    def name_and_summary(self):
+    def name_and_summary(self) -> str:
         """ Node name and optional summary """
         if self.summary:
             return '{0} ({1})'.format(self.name, self.summary)
         else:
             return self.name
 
-    def ls(self, summary=False):
+    def ls(self, summary: bool = False) -> None:
         """ List node """
         echo(style(self.name, fg='red'))
         if summary and self.summary:
             echo(tmt.utils.format('summary', self.summary))
 
-    def export(self, format_='yaml', keys=None):
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.DICT],
+               keys: Optional[List[str]] = None) -> Dict[str, Any]:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.YAML],
+               keys: Optional[List[str]] = None) -> str:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.RST],
+               keys: Optional[List[str]] = None) -> str:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.NITRATE],
+               keys: Optional[List[str]] = None) -> None:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.POLARION],
+               keys: Optional[List[str]] = None) -> None:
+        pass
+
+    def export(self, *, format_: ExportFormat = ExportFormat.YAML,
+               keys: Optional[List[str]] = None) -> Any:
         """ Export data into requested format (yaml or dict) """
         if keys is None:
             keys = self._keys()
 
         # Always include node name, add requested keys, ignore adjust
-        data = dict(name=self.name)
+        data: Dict[str, Any] = dict(name=self.name)
         for key in keys:
             if key == 'adjust':
                 continue
@@ -418,24 +506,35 @@ class Core(tmt.utils.Common):
                 # when loading saved data back, so we can't go this way. Yet.
                 data[key] = cast('Links', value).to_spec()
 
+            elif isinstance(value, FmfId):
+                data[key] = value.to_dict()
+
+            # TODO: this belongs to Test.export, and it will be moved when the time
+            # of export() cleanup comes.
+            elif key == 'require' and value:
+                data[key] = [
+                    require.to_minimal_dict() if isinstance(
+                        require, RequireFmfId) else require for require in cast(
+                        List[Require], value)]
+
             else:
                 data[key] = value
 
         # Choose proper format
-        if format_ == 'dict':
+        if format_ == ExportFormat.DICT:
             return data
-        elif format_ == 'yaml':
-            return tmt.utils.dict_to_yaml(data)
-        else:
-            raise tmt.utils.GeneralError(
-                f"Invalid export format '{format_}'.")
 
-    def lint_keys(self, additional_keys):
+        if format_ == ExportFormat.YAML:
+            return tmt.utils.dict_to_yaml(data)
+
+        raise tmt.utils.GeneralError(f"Invalid export format '{format_}'.")
+
+    def lint_keys(self, additional_keys: List[str]) -> List[str]:
         """ Return list of invalid keys used, empty when all good """
         known_keys = additional_keys + self._keys()
         return [key for key in self.node.get().keys() if key not in known_keys]
 
-    def _lint_summary(self):
+    def _lint_summary(self) -> bool:
         """ Lint summary attribute """
         # Summary is advised with a resonable length
         if self.summary is None:
@@ -456,7 +555,7 @@ class Core(tmt.utils.Common):
 Node = Core
 
 
-class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
+class Test(Core):
     """ Test object (L1 Metadata) """
 
     # Basic test information
@@ -468,21 +567,22 @@ class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
     path: Optional[str] = None
     framework: Optional[str] = None
     manual: bool = False
-    require: List[Union[str, FmfId]] = []
+    require: List[Require] = []
     recommend: List[str] = []
-    environment: Optional[tmt.utils.EnvironmentType] = {}
-    duration: Optional[str] = DEFAULT_TEST_DURATION_L1
+    environment: tmt.utils.EnvironmentType = {}
+    duration: str = DEFAULT_TEST_DURATION_L1
     result: str = 'respect'
+
+    returncode: Optional[int] = None
+    real_duration: Optional[str] = None
+    _reboot_count: int = 0
 
     _normalize_contact = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_component = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_recommend = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
-    def _normalize_require(
-            self, value: Optional[_RawRequire]) -> List[Union[str, FmfId]]:
-        if value is None:
-            return []
-        return [value] if isinstance(value, str) else value
+    def _normalize_require(self, value: Optional[_RawRequire]) -> List[Require]:
+        return normalize_require(value)
 
     KEYS_SHOW_ORDER = [
         # Basic test information
@@ -585,7 +685,7 @@ class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         self._update_metadata()
 
     @staticmethod
-    def overview(tree):
+    def overview(tree: 'Tree') -> None:
         """ Show overview of available tests """
         tests = [
             style(str(test), fg='red') for test in tree.tests()]
@@ -597,7 +697,12 @@ class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
                 ), fg='blue'))
 
     @staticmethod
-    def create(name, template, path, force=False, dry=None):
+    def create(
+            name: str,
+            template: str,
+            path: str,
+            force: bool = False,
+            dry: Optional[bool] = None) -> None:
         """ Create a new test """
         if dry is None:
             dry = Test._opt('dry')
@@ -632,7 +737,7 @@ class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
             path=script_path, content=content,
             name='test script', dry=dry, force=force, mode=0o755)
 
-    def show(self):
+    def show(self) -> None:
         """ Show test details """
         self.ls()
         for key in self.KEYS_SHOW_ORDER:
@@ -658,7 +763,7 @@ class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
                 if value not in [None, list(), dict()]:
                     echo(tmt.utils.format(key, value, key_color='blue'))
 
-    def _lint_manual(self, test_path):
+    def _lint_manual(self, test_path: str) -> bool:
         """ Check that the manual instructions respect the specification """
         manual_test = os.path.join(test_path, self.test)
 
@@ -676,13 +781,14 @@ class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         # Everything looks ok
         return verdict(True, f"correct manual test syntax in '{self.test}'")
 
-    def lint(self):
+    def lint(self) -> bool:
         """
         Check test against the L1 metadata specification.
 
         Return whether the test is valid.
         """
         self.ls()
+        assert self.path is not None  # narrow type
         stripped_path = self.path.strip()
         test_path = self.node.root + stripped_path
 
@@ -733,7 +839,33 @@ class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
 
         return valid
 
-    def export(self, format_='yaml', keys=None):
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.DICT],
+               keys: Optional[List[str]] = None) -> Dict[str, Any]:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.YAML],
+               keys: Optional[List[str]] = None) -> str:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.RST],
+               keys: Optional[List[str]] = None) -> str:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.NITRATE],
+               keys: Optional[List[str]] = None) -> None:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.POLARION],
+               keys: Optional[List[str]] = None) -> None:
+        pass
+
+    def export(self, *, format_: ExportFormat = ExportFormat.YAML,
+               keys: Optional[List[str]] = None) -> Any:
         """
         Export test data into requested format
 
@@ -743,29 +875,28 @@ class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         """
 
         # Export to Nitrate test case management system
-        if format_ == 'nitrate':
-            tmt.export.export_to_nitrate(self)
+        if format_ == ExportFormat.NITRATE:
+            return tmt.export.export_to_nitrate(self)
 
         # Export to Polarion test case management system
-        elif format_ == 'polarion':
-            tmt.export.export_to_polarion(self)
+        if format_ == ExportFormat.POLARION:
+            return tmt.export.export_to_polarion(self)
 
         # Export the fmf identifier
-        elif keys == 'fmf-id':
-            if format_ == 'dict':
-                return self.fmf_id
-            elif format_ == 'yaml':
-                return tmt.utils.dict_to_yaml(self.fmf_id)
-            else:
-                raise tmt.utils.GeneralError(
-                    f"Invalid test export format '{format_}'.")
+        if keys == ['fmf-id']:
+            if format_ == ExportFormat.DICT:
+                return self.fmf_id.to_minimal_dict()
+
+            if format_ == ExportFormat.YAML:
+                return tmt.utils.dict_to_yaml(self.fmf_id.to_minimal_dict())
+
+            raise tmt.utils.GeneralError(f"Invalid test export format '{format_}'.")
 
         # Common node export otherwise
-        else:
-            return super().export(format_, keys)
+        return super().export(format_=format_, keys=keys)  # type: ignore[call-overload]
 
 
-class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
+class Plan(Core):
     """ Plan object (L2 Metadata) """
 
     # `environment` and `environment-file` are NOT promoted to instance variables.
@@ -805,7 +936,7 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
             # Skip to initialize the work tree if the corresponding option is
             # true. Note that 'tmt clean' consumes the option because it
             # should not initialize the work tree at all.
-            if not run.opt(tmt.utils.PLAN_SKIP_WORKTREE_INIT):
+            if not self.my_run.opt(tmt.utils.PLAN_SKIP_WORKTREE_INIT):
                 self._initialize_worktree()
 
             self._initialize_data_directory()
@@ -831,14 +962,16 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
             plan=self, data=self.node.get('finish'))
 
         # Test execution context defined in the plan
-        self._plan_context = self.node.get('context', dict())
+        self._plan_context: FmfContextType = self.node.get('context', dict())
 
         self._update_metadata()
 
-    def _expand_node_data(self, data):
+    def _expand_node_data(self, data: T) -> T:
         """ Recursively expand variables in node data """
         if isinstance(data, str):
-            return os.path.expandvars(data)
+            # This cast is tricky: we get a string, and we return a string, so T -> T hold,
+            # yet mypy does not recognize this, and we need to help with an explicit cast().
+            return cast(T, os.path.expandvars(data))
         elif isinstance(data, dict):
             for key, value in data.items():
                 data[key] = self._expand_node_data(value)
@@ -848,7 +981,7 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         return data
 
     @property
-    def environment(self):
+    def environment(self) -> EnvironmentType:
         """ Return combined environment from plan data and command line """
         if self.my_run:
             combined = self._environment.copy()
@@ -860,7 +993,7 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         else:
             return self._environment
 
-    def _get_environment_vars(self, node):
+    def _get_environment_vars(self, node: fmf.Tree) -> EnvironmentType:
         """ Get variables from 'environment' and 'environment-file' keys """
         # Environment variables from files
         environment_files = node.get("environment-file") or []
@@ -880,13 +1013,16 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         combined.update(environment)
         return combined
 
-    def _initialize_worktree(self):
+    def _initialize_worktree(self) -> None:
         """
         Prepare the worktree, a copy of the metadata tree root
 
         Used as cwd in prepare, execute and finish steps.
         """
+        assert self.my_run is not None  # narrow type
+        assert self.workdir is not None  # narrow type
         self.worktree = os.path.join(self.workdir, 'tree')
+        assert self.my_run.tree is not None  # narrow type
         tree_root = self.my_run.tree.root
 
         # Create an empty directory if there's no metadata tree
@@ -901,7 +1037,7 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
             "rsync", "-ar", "--exclude", ".git",
             f"{tree_root}/", self.worktree])
 
-    def _initialize_data_directory(self):
+    def _initialize_data_directory(self) -> None:
         """
         Create the plan data directory
 
@@ -909,29 +1045,33 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         prepare step, test execution or finish step and which are pulled
         from the guest for possible future inspection.
         """
+        assert self.workdir is not None  # narrow type
         self.data_directory = os.path.join(self.workdir, "data")
         self.debug(
             f"Create the data directory '{self.data_directory}'.", level=2)
         os.makedirs(self.data_directory, exist_ok=True)
 
-    def _fmf_context(self):
+    def _fmf_context(self) -> tmt.utils.FmfContextType:
         """ Return combined context from plan data and command line """
         combined = self._plan_context.copy()
-        combined.update(self._context.obj.fmf_context)
+        assert self._context_object is not None  # narrow type
+        combined.update(self._context_object.fmf_context)
         return combined
 
     @staticmethod
-    def edit_template(content):
+    def edit_template(raw_content: str) -> str:
         """ Edit the default template with custom values """
 
-        content = tmt.utils.yaml_to_dict(content)
+        content = tmt.utils.yaml_to_dict(raw_content)
 
         # For each step check for possible command line data
         for step in tmt.steps.STEPS:
             options = Plan._opt(step)
             if not options:
                 continue
-            step_data = []
+            # TODO: it'd be nice to annotate things here and there, template
+            # is not a critical, let's go with Any for now
+            step_data: Any = []
 
             # For each option check for valid yaml and store
             for option in options:
@@ -963,7 +1103,7 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         return tmt.utils.dict_to_yaml(content)
 
     @staticmethod
-    def overview(tree):
+    def overview(tree: 'Tree') -> None:
         """ Show overview of available plans """
         plans = [
             style(str(plan), fg='red') for plan in tree.plans()]
@@ -975,7 +1115,12 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
                 ), fg='blue'))
 
     @staticmethod
-    def create(name, template, path, force=False, dry=None):
+    def create(
+            name: str,
+            template: str,
+            path: str,
+            force: bool = False,
+            dry: Optional[bool] = None) -> None:
         """ Create a new plan """
         # Prepare paths
         if dry is None:
@@ -1002,12 +1147,16 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
             path=plan_path, content=content,
             name='plan', dry=dry, force=force)
 
-    def steps(self, enabled=True, disabled=False, names=False, skip=None):
+    def _iter_steps(self,
+                    enabled: bool = True,
+                    disabled: bool = False,
+                    skip: Optional[List[str]] = None
+                    ) -> Generator[Tuple[str, tmt.steps.Step], None, None]:
         """
         Iterate over enabled / all steps
 
-        Yields instances of all enabled steps by default. Use 'names' to
-        yield step names only and 'disabled=True' to iterate over all.
+        Yields instances of all enabled steps by default.
+        Use 'disabled=True' to iterate over all.
         Use 'skip' to pass the list of steps to be skipped.
         """
         skip = skip or []
@@ -1016,9 +1165,33 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
                 continue
             step = getattr(self, name)
             if (enabled and step.enabled or disabled and not step.enabled):
-                yield name if names else step
+                yield (name, step)
 
-    def show(self):
+    def steps(self, enabled: bool = True, disabled: bool = False,
+              skip: Optional[List[str]] = None) -> Generator[tmt.steps.Step, None, None]:
+        """
+        Iterate over enabled / all steps
+
+        Yields instances of all enabled steps by default.
+        Use 'disabled=True' to iterate over all.
+        Use 'skip' to pass the list of steps to be skipped.
+        """
+        for _, step in self._iter_steps(enabled=enabled, disabled=disabled, skip=skip):
+            yield step
+
+    def step_names(self, enabled: bool = True, disabled: bool = False,
+                   skip: Optional[List[str]] = None) -> Generator[str, None, None]:
+        """
+        Iterate over enabled / all step names.
+
+        Yields step names of all enabled steps by default.
+        Use 'disabled=True' to iterate over all.
+        Use 'skip' to pass the list of steps to be skipped.
+        """
+        for name, _ in self._iter_steps(enabled=enabled, disabled=disabled, skip=skip):
+            yield name
+
+    def show(self) -> None:
         """ Show plan details """
 
         # Summary and description first
@@ -1042,18 +1215,19 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         # The rest
         echo(tmt.utils.format('enabled', self.enabled, key_color='cyan'))
         if self.order != DEFAULT_ORDER:
-            echo(tmt.utils.format('order', self.order, key_color='cyan'))
+            echo(tmt.utils.format('order', str(self.order), key_color='cyan'))
         if self.id:
             echo(tmt.utils.format('id', self.id, key_color='cyan'))
         if self.tag:
             echo(tmt.utils.format('tag', self.tag, key_color='cyan'))
         if self.tier:
             echo(tmt.utils.format('tier', self.tier, key_color='cyan'))
-        self.link.show()
+        if self.link is not None:
+            self.link.show()
         if self.opt('verbose'):
             self._show_additional_keys()
 
-    def _lint_execute(self):
+    def _lint_execute(self) -> Optional[bool]:
         """ Lint execute step """
         execute = self.node.get('execute')
         if not execute:
@@ -1075,46 +1249,50 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
 
         return correct
 
-    def _lint_discover(self):
+    def _lint_discover(self) -> bool:
         """ Lint discover step """
+        # TODO: can we use self.discover & its data instead? A question to be answered
+        # by better schema & lint cooperation - e.g. unknown methods shall be reported
+        # by schema-based validation already.
+
         # The discover step is optional
-        discover = self.node.get('discover')
-        if not discover:
+        discover_data = cast(Optional[tmt.steps.RawStepDataArgument], self.node.get('discover'))
+        if not discover_data:
             return True
-        if isinstance(discover, dict):
-            discover = [discover]
+        if not isinstance(discover_data, list):
+            discover_data = [discover_data]
 
         methods = [
             method.name
             for method in tmt.steps.discover.DiscoverPlugin.methods()]
         correct = True
-        for configuration in discover:
-            how = configuration.get('how')
+        for discover_datum in discover_data:
+            how = discover_datum.get('how')
 
             if how not in methods:
-                verdict(False, f"unknown discover method '{how}'")
-                correct = False
+                correct = verdict(False, f"unknown discover method '{how}'")
                 continue
 
             # FIXME Add check for the shell discover method
             if how == 'shell':
                 continue
 
-            if not self._lint_discover_fmf(configuration):
-                correct = False
+            correct &= self._lint_discover_fmf(discover_datum)
+
         return correct
 
     @staticmethod
-    def _lint_discover_fmf(discover):
+    def _lint_discover_fmf(discover: tmt.steps._RawStepData) -> bool:
         """ Lint fmf discover method """
         # Validate remote id and translate to human readable errors
-        fmf_id_data = {
-            key: value
-            for key, value in discover.items()
-            if key in ['url', 'ref', 'path']
-            }
+        fmf_id_data = cast(
+            _RawFmfId,
+            {key: value for key, value in discover.items() if key in ['url', 'ref', 'path']}
+            )
 
-        valid, error = FmfId(**fmf_id_data).validate()
+        # Skipping `name` on purpose - that belongs to the whole step,
+        # it's not treated as part of fmf id.
+        valid, error = FmfId.from_spec(fmf_id_data).validate()
 
         if valid:
             name = discover.get('name')
@@ -1122,7 +1300,7 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
 
         return verdict(False, error)
 
-    def lint(self):
+    def lint(self) -> bool:
         """
         Check plan against the L2 metadata specification
 
@@ -1134,7 +1312,7 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         tmt.plugins.explore()
 
         invalid_keys = self.lint_keys(
-            list(self.steps(enabled=True, disabled=True, names=True)) +
+            list(self.step_names(enabled=True, disabled=True)) +
             self.extra_L2_keys)
 
         if invalid_keys:
@@ -1149,7 +1327,7 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
             self._lint_discover(),
             len(invalid_keys) == 0])
 
-    def go(self):
+    def go(self) -> None:
         """ Execute the plan """
         # Show plan name and summary (one blank line to separate plans)
         self.info('')
@@ -1159,8 +1337,9 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
 
         # Additional debug info like plan environment
         self.debug('info', color='cyan', shift=0, level=3)
-        self.debug('environment', self.environment, 'magenta', level=3)
-        self.debug('context', self._fmf_context(), 'magenta', level=3)
+        # TODO: something better than str()?
+        self.debug('environment', str(self.environment), 'magenta', level=3)
+        self.debug('context', str(self._fmf_context()), 'magenta', level=3)
 
         # Wake up all steps
         self.debug('wake', color='cyan', shift=0, level=2)
@@ -1173,8 +1352,8 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
                 # step data), otherwise just warn the user and continue.
                 if step.enabled:
                     raise error
-                else:
-                    step.warn(error)
+
+                step.warn(str(error))
 
         # Set up login and reboot plugins for all steps
         self.debug("action", color="blue", level=2)
@@ -1198,7 +1377,8 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
                 f'with the given options is not compatible: '
                 f'{fmf.utils.listed(standalone)}.')
         elif standalone:
-            self._context.obj.steps = standalone
+            assert self._context_object is not None  # narrow type
+            self._context_object.steps = standalone
             self.debug(
                 f"Running the '{list(standalone)[0]}' step as standalone.")
 
@@ -1209,7 +1389,7 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
             for step in self.steps(skip=['finish']):
                 step.go()
                 # Finish plan if no tests found (except dry mode)
-                if (step.name == 'discover' and not step.tests()
+                if (isinstance(step, tmt.steps.discover.Discover) and not step.tests()
                         and not self.opt('dry')):
                     step.info(
                         'warning', 'No tests found, finishing plan.',
@@ -1221,13 +1401,39 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
             if not abort and self.finish.enabled:
                 self.finish.go()
 
-    def export(self, format_='yaml'):
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.DICT],
+               keys: Optional[List[str]] = None) -> Dict[str, Any]:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.YAML],
+               keys: Optional[List[str]] = None) -> str:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.RST],
+               keys: Optional[List[str]] = None) -> str:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.NITRATE],
+               keys: Optional[List[str]] = None) -> None:
+        pass
+
+    @overload
+    def export(self, *, format_: Literal[ExportFormat.POLARION],
+               keys: Optional[List[str]] = None) -> None:
+        pass
+
+    def export(self, *, format_: ExportFormat = ExportFormat.YAML,
+               keys: Optional[List[str]] = None) -> Any:
         """
         Export plan data into requested format
 
         Supported formats are 'yaml' and 'dict'.
         """
-        data = super().export(format_='dict')
+        data = super().export(format_=ExportFormat.DICT, keys=keys)
 
         for key in self.extra_L2_keys:
             value = self.node.data.get(key)
@@ -1240,13 +1446,13 @@ class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
                 data[step] = value
 
         # Choose proper format
-        if format_ == 'dict':
+        if format_ == ExportFormat.DICT:
             return data
-        elif format_ == 'yaml':
+
+        if format_ == ExportFormat.YAML:
             return tmt.utils.dict_to_yaml(data)
-        else:
-            raise tmt.utils.GeneralError(
-                f"Invalid plan export format '{format_}'.")
+
+        raise tmt.utils.GeneralError(f"Invalid plan export format '{format_}'.")
 
 
 class StoryPriority(enum.Enum):
@@ -1260,7 +1466,7 @@ class StoryPriority(enum.Enum):
         return self.value
 
 
-class Story(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
+class Story(Core):
     """ User story object """
 
     example: List[str] = []
@@ -1304,23 +1510,23 @@ class Story(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         self._update_metadata()
 
     @property
-    def documented(self):
+    def documented(self) -> List['Link']:
         """ Return links to relevant documentation """
-        return self.link.get('documented-by')
+        return self.link.get('documented-by') if self.link else []
 
     @property
-    def verified(self):
+    def verified(self) -> List['Link']:
         """ Return links to relevant test coverage """
-        return self.link.get('verified-by')
+        return self.link.get('verified-by') if self.link else []
 
     @property
-    def implemented(self):
+    def implemented(self) -> List['Link']:
         """ Return links to relevant source code """
-        return self.link.get('implemented-by')
+        return self.link.get('implemented-by') if self.link else []
 
     def _match(
-            self, implemented, verified, documented, covered,
-            unimplemented, unverified, undocumented, uncovered):
+            self, implemented: bool, verified: bool, documented: bool, covered: bool,
+            unimplemented: bool, unverified: bool, undocumented: bool, uncovered: bool) -> bool:
         """ Return true if story matches given conditions """
         if implemented and not self.implemented:
             return False
@@ -1343,7 +1549,12 @@ class Story(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         return True
 
     @staticmethod
-    def create(name, template, path, force=False, dry=None):
+    def create(
+            name: str,
+            template: str,
+            path: str,
+            force: bool = False,
+            dry: Optional[bool] = None) -> None:
         """ Create a new story """
         if dry is None:
             dry = Story._opt('dry')
@@ -1368,7 +1579,7 @@ class Story(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
             name='story', dry=dry, force=force)
 
     @staticmethod
-    def overview(tree):
+    def overview(tree: 'Tree') -> None:
         """ Show overview of available stories """
         stories = [
             style(str(story), fg='red') for story in tree.stories()]
@@ -1379,7 +1590,7 @@ class Story(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
                 listed(stories, max=12)
                 ), fg='blue'))
 
-    def show(self):
+    def show(self) -> None:
         """ Show story details """
         self.ls()
         for key in self.KEYS_SHOW_ORDER:
@@ -1392,12 +1603,12 @@ class Story(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
             if key == 'order' and value == DEFAULT_ORDER:
                 continue
             if value is not None and value != []:
-                wrap = False if key == 'example' else 'auto'
+                wrap: tmt.utils.FormatWrap = False if key == 'example' else 'auto'
                 echo(tmt.utils.format(key, value, wrap=wrap))
         if self.opt('verbose'):
             self._show_additional_keys()
 
-    def coverage(self, code, test, docs):
+    def coverage(self, code: bool, test: bool, docs: bool) -> Tuple[bool, bool, bool]:
         """ Show story coverage """
         if code:
             code = bool(self.implemented)
@@ -1411,17 +1622,38 @@ class Story(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         echo(self)
         return (code, test, docs)
 
-    def export(self, format_='rst', title=True):
+    @overload  # type: ignore[override]
+    def export(self, *, format_: Literal[ExportFormat.RST,
+               ExportFormat.YAML], include_title: bool = True) -> str:
+        pass
+
+    @overload
+    def export(self,
+               *,
+               format_: Literal[ExportFormat.DICT],
+               include_title: bool = True) -> Dict[str,
+                                                   Any]:
+        pass
+
+    @overload
+    def export(self,
+               *,
+               format_: Literal[ExportFormat.NITRATE, ExportFormat.POLARION],
+               include_title: bool = True) -> None:
+        pass
+
+    def export(self, *, format_: ExportFormat = ExportFormat.RST,
+               include_title: bool = True) -> Any:
         """ Export story data into requested format """
 
         # Use common Core export unless 'rst' requested
-        if format_ != 'rst':
-            return super().export(format_=format_)
+        if format_ != ExportFormat.RST:
+            return super().export(format_=format_)  # type: ignore[call-overload]
 
         output = ''
 
         # Title and its anchor
-        if title:
+        if include_title:
             depth = len(re.findall('/', self.name)) - 1
             if self.title and self.title != self.node.parent.get('title'):
                 title = self.title
@@ -1468,13 +1700,13 @@ class Story(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
 
         return output
 
-    def _lint_story(self):
+    def _lint_story(self) -> Optional[bool]:
         story = self.node.get('story')
         if not story:
             return verdict(False, "story is required")
         return True
 
-    def lint(self):
+    def lint(self) -> bool:
         """
         Check story against the L3 metadata specification.
 
@@ -1497,19 +1729,28 @@ class Story(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
 class Tree(tmt.utils.Common):
     """ Test Metadata Tree """
 
-    def __init__(self, path='.', tree=None, context=None):
+    def __init__(self,
+                 path: str = '.',
+                 tree: Optional[fmf.Tree] = None,
+                 context: Optional[tmt.utils.FmfContextType] = None) -> None:
         """ Initialize tmt tree from directory path or given fmf tree """
         self._path = path
         self._tree = tree
         self._custom_context = context
 
-    def _fmf_context(self):
+    def _fmf_context(self) -> FmfContextType:
         """ Use custom fmf context if provided, default otherwise """
         if self._custom_context is not None:
             return self._custom_context
         return super()._fmf_context()
 
-    def _filters_conditions(self, nodes, filters, conditions, links: List['LinkNeedle'], excludes):
+    def _filters_conditions(
+            self,
+            nodes: Sequence[CoreT],
+            filters: List[str],
+            conditions: List[str],
+            links: List['LinkNeedle'],
+            excludes: List[str]) -> List[CoreT]:
         """ Apply filters and conditions, return pruned nodes """
         result = []
         for node in nodes:
@@ -1555,7 +1796,7 @@ class Tree(tmt.utils.Common):
         return result
 
     @property
-    def tree(self):
+    def tree(self) -> fmf.Tree:
         """ Initialize tree only when accessed """
         if self._tree is None:
             try:
@@ -1571,16 +1812,25 @@ class Tree(tmt.utils.Common):
         return self._tree
 
     @tree.setter
-    def tree(self, new_tree):
+    def tree(self, new_tree: fmf.Tree) -> None:
         self._tree = new_tree
 
     @property
-    def root(self):
+    def root(self) -> Optional[str]:
         """ Metadata root """
-        return self.tree.root
+        # TODO: drop cast() when fmf becomes annotated
+        return cast(Optional[str], self.tree.root)
 
-    def tests(self, keys=None, names=None, filters=None, conditions=None,
-              unique=True, links: Optional[List['LinkNeedle']] = None, excludes=None):
+    def tests(
+            self,
+            keys: Optional[List[str]] = None,
+            names: Optional[List[str]] = None,
+            filters: Optional[List[str]] = None,
+            conditions: Optional[List[str]] = None,
+            unique: bool = True,
+            links: Optional[List['LinkNeedle']] = None,
+            excludes: Optional[List[str]] = None
+            ) -> List[Test]:
         """ Search available tests """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['test']
@@ -1593,12 +1843,12 @@ class Tree(tmt.utils.Common):
             ]
         excludes = (excludes or []) + list(Test._opt('exclude', []))
         # Used in: tmt run test --name NAME, tmt test ls NAME...
-        cmd_line_names = list(Test._opt('names', []))
+        cmd_line_names: List[str] = list(Test._opt('names', []))
 
-        def name_filter(nodes):
+        def name_filter(nodes: Iterable[fmf.Tree]) -> List[fmf.Tree]:
             """ Filter nodes based on names provided on the command line """
             if not cmd_line_names:
-                return nodes
+                return list(nodes)
             return [
                 node for node in nodes
                 if any(re.search(name, node.name) for name in cmd_line_names)]
@@ -1613,6 +1863,7 @@ class Tree(tmt.utils.Common):
             tests = [
                 Test(node=test) for test in self.tree.prune(
                     keys=keys, sources=cmd_line_names)]
+
         else:
             # First let's build the list of test objects based on keys & names.
             # If duplicate test names are allowed, match test name/regexp
@@ -1636,8 +1887,16 @@ class Tree(tmt.utils.Common):
         return self._filters_conditions(
             tests, filters, conditions, links, excludes)
 
-    def plans(self, keys=None, names=None, filters=None, conditions=None,
-              run=None, links: Optional[List['LinkNeedle']] = None, excludes=None):
+    def plans(
+            self,
+            keys: Optional[List[str]] = None,
+            names: Optional[List[str]] = None,
+            filters: Optional[List[str]] = None,
+            conditions: Optional[List[str]] = None,
+            run: Optional['Run'] = None,
+            links: Optional[List['LinkNeedle']] = None,
+            excludes: Optional[List[str]] = None
+            ) -> List[Plan]:
         """ Search available plans """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['execute']
@@ -1671,8 +1930,16 @@ class Tree(tmt.utils.Common):
             sorted(plans, key=lambda plan: plan.order),
             filters, conditions, links, excludes)
 
-    def stories(self, keys=None, names=None, filters=None, conditions=None,
-                whole=False, links: Optional[List['LinkNeedle']] = None, excludes=None):
+    def stories(
+            self,
+            keys: Optional[List[str]] = None,
+            names: Optional[List[str]] = None,
+            filters: Optional[List[str]] = None,
+            conditions: Optional[List[str]] = None,
+            whole: bool = False,
+            links: Optional[List['LinkNeedle']] = None,
+            excludes: Optional[List[str]] = None
+            ) -> List[Story]:
         """ Search available stories """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['story']
@@ -1707,15 +1974,18 @@ class Tree(tmt.utils.Common):
             filters, conditions, links, excludes)
 
     @staticmethod
-    def init(path, template, force, **kwargs):
+    def init(path: str, template: str, force: bool, **kwargs: Any) -> None:
         """ Initialize a new tmt tree, optionally with a template """
         path = os.path.realpath(path)
         dry = Tree._opt('dry')
 
         # Check for existing tree
+        tree: Optional[Tree] = None
+
         try:
-            tree = tmt.Tree(path)
+            tree = Tree(path)
             # Are we creating a new tree under the existing one?
+            assert tree is not None  # narrow type
             if path == tree.root:
                 echo(f"Tree '{tree.root}' already exists.")
             else:
@@ -1734,7 +2004,8 @@ class Tree(tmt.utils.Common):
             else:
                 try:
                     fmf.Tree.init(path)
-                    tree = tmt.Tree(path)
+                    tree = Tree(path)
+                    assert tree.root is not None  # narrow type
                     path = tree.root
                 except fmf.utils.GeneralError as error:
                     raise tmt.utils.GeneralError(
@@ -1761,33 +2032,50 @@ class Tree(tmt.utils.Common):
             tmt.Story.create('/stories/example', 'full', path, force, dry)
 
 
+@dataclasses.dataclass
+class RunData(tmt.utils.SerializableContainer):
+    root: Optional[str]
+    plans: Optional[List[str]]
+    # TODO: this needs resolution - _context_object.steps is List[Step],
+    # but stores as a List[str] in run.yaml...
+    steps: List[str]
+    environment: EnvironmentType
+    remove: bool
+
+
 class Run(tmt.utils.Common):
     """ Test run, a container of plans """
 
-    def __init__(self, id_=None, tree=None, context=None):
+    tree: Optional[Tree]
+
+    def __init__(self,
+                 id_: Optional[str] = None,
+                 tree: Optional[Tree] = None,
+                 context: Optional[click.Context] = None) -> None:
         """ Initialize tree, workdir and plans """
         # Use the last run id if requested
         self.config = tmt.utils.Config()
-        if context.params.get('last'):
-            id_ = self.config.last_run()
-            if id_ is None:
+        if context is not None:
+            if context.params.get('last'):
+                id_ = self.config.last_run()
+                if id_ is None:
+                    raise tmt.utils.GeneralError(
+                        "No last run id found. Have you executed any run?")
+            if context.params.get('follow') and id_ is None:
                 raise tmt.utils.GeneralError(
-                    "No last run id found. Have you executed any run?")
-        if context.params.get('follow') and id_ is None:
-            raise tmt.utils.GeneralError(
-                "Run id has to be specified in order to use --follow.")
+                    "Run id has to be specified in order to use --follow.")
         # Do not create workdir now, postpone it until later, as options
         # have not been processed yet and we do not want commands such as
         # tmt run discover --how fmf --help to create a new workdir.
         super().__init__(context=context)
-        self._workdir_path = id_ or True
+        self._workdir_path: WorkdirArgumentType = id_ or True
         self._tree = tree
-        self._plans = None
-        self._environment_from_workdir = dict()
-        self._environment_from_options = None
+        self._plans: Optional[List[Plan]] = None
+        self._environment_from_workdir: EnvironmentType = dict()
+        self._environment_from_options: Optional[EnvironmentType] = None
         self.remove = self.opt('remove')
 
-    def _use_default_plan(self):
+    def _use_default_plan(self) -> None:
         """ Prepare metadata tree with only the default plan """
         default_plan = tmt.utils.yaml_to_dict(tmt.templates.DEFAULT_PLAN)
         # The default discover method for this case is 'shell'
@@ -1795,7 +2083,7 @@ class Run(tmt.utils.Common):
         self.tree = tmt.Tree(tree=fmf.Tree(default_plan))
         self.debug("No metadata found, using the default plan.")
 
-    def _save_tree(self, tree):
+    def _save_tree(self, tree: Optional[Tree]) -> None:
         """ Save metadata tree, handle the default plan """
         default_plan = tmt.utils.yaml_to_dict(tmt.templates.DEFAULT_PLAN)
         try:
@@ -1816,10 +2104,11 @@ class Run(tmt.utils.Common):
             self._use_default_plan()
 
     @property
-    def environment(self):
+    def environment(self) -> EnvironmentType:
         """ Return environment combined from wake up and command line """
         # Gather environment variables from options only once
         if self._environment_from_options is None:
+            assert self.tree is not None  # narrow type
             self._environment_from_options = dict()
             # Variables gathered from 'environment-file' options
             self._environment_from_options.update(
@@ -1835,18 +2124,20 @@ class Run(tmt.utils.Common):
         combined.update(self._environment_from_options)
         return combined
 
-    def save(self):
+    def save(self) -> None:
         """ Save list of selected plans and enabled steps """
-        data = {
-            'root': self.tree.root,
-            'plans': [plan.name for plan in self._plans],
-            'steps': list(self._context.obj.steps),
-            'environment': self.environment,
-            'remove': self.remove,
-            }
-        self.write('run.yaml', tmt.utils.dict_to_yaml(data))
+        assert self.tree is not None  # narrow type
+        assert self._context_object is not None  # narrow type
+        data = RunData(
+            root=self.tree.root,
+            plans=[plan.name for plan in self._plans] if self._plans is not None else None,
+            steps=list(self._context_object.steps),
+            environment=self.environment,
+            remove=self.remove
+            )
+        self.write('run.yaml', tmt.utils.dict_to_yaml(data.to_serialized()))
 
-    def load_from_workdir(self):
+    def load_from_workdir(self) -> None:
         """
         Load the run from its workdir, do not require the root in
         run.yaml to exist. Doest not load the fmf tree.
@@ -1858,13 +2149,15 @@ class Run(tmt.utils.Common):
         self._save_tree(self._tree)
         self._workdir_load(self._workdir_path)
         try:
-            data = tmt.utils.yaml_to_dict(self.read('run.yaml'))
+            data = RunData.from_serialized(tmt.utils.yaml_to_dict(self.read('run.yaml')))
         except tmt.utils.FileError:
             self.debug('Run data not found.')
             return
-        self._environment_from_workdir = data.get('environment')
-        self._context.obj.steps = set(data['steps'])
-        plans = []
+        self._environment_from_workdir = data.environment
+        assert self._context_object is not None  # narrow type
+        self._context_object.steps = set(data.steps)
+
+        self._plans = []
 
         # The root directory of the tree may not be available, create
         # an fmf node that only contains the necessary attributes
@@ -1873,25 +2166,23 @@ class Run(tmt.utils.Common):
         # plan's name.
         dummy_parent = fmf.Tree({'summary': 'unused'})
 
-        for plan in data.get('plans'):
+        for plan in (data.plans or []):
             node = fmf.Tree({'execute': None}, name=plan, parent=dummy_parent)
-            plans.append(Plan(node=node, run=self, skip_validation=True))
+            self._plans.append(Plan(node=node, run=self, skip_validation=True))
 
-        self._plans = plans
-
-    def load(self):
+    def load(self) -> None:
         """ Load list of selected plans and enabled steps """
         try:
-            data = tmt.utils.yaml_to_dict(self.read('run.yaml'))
+            data = RunData.from_serialized(tmt.utils.yaml_to_dict(self.read('run.yaml')))
         except tmt.utils.FileError:
             self.debug('Run data not found.')
             return
 
         # If run id was given and root was not explicitly specified,
         # create a new Tree from the root in run.yaml
-        if self._workdir and 'root' in data and not self.opt('root'):
-            if data['root']:
-                self._save_tree(tmt.Tree(data['root']))
+        if self._workdir and not self.opt('root'):
+            if data.root:
+                self._save_tree(tmt.Tree(data.root))
             else:
                 # The run was used without any metadata, default plan
                 # was used, load it
@@ -1900,34 +2191,37 @@ class Run(tmt.utils.Common):
         # Filter plans by name unless specified on the command line
         plan_options = ['names', 'filters', 'conditions', 'links', 'default']
         if not any(Plan._opt(option) for option in plan_options):
+            assert self.tree is not None  # narrow type
             self._plans = [
                 plan for plan in self.tree.plans(run=self)
-                if plan.name in data['plans']]
+                if data.plans and plan.name in data.plans]
 
         # Initialize steps only if not selected on the command line
         step_options = 'all since until after before skip'.split()
         selected = any(self.opt(option) for option in step_options)
-        if not selected and not self._context.obj.steps:
-            self._context.obj.steps = set(data['steps'])
+        assert self._context_object is not None  # narrow type
+        if not selected and not self._context_object.steps:
+            self._context_object.steps = set(data.steps)
 
         # Store loaded environment
-        self._environment_from_workdir = data.get('environment')
+        self._environment_from_workdir = data.environment
         self.debug(
             f"Loaded environment: '{self._environment_from_workdir}'.",
             level=3)
 
         # If the remove was enabled, restore it, option overrides
-        self.remove = self.remove or data.get('remove', 'False')
+        self.remove = self.remove or data.remove
         self.debug(f"Remove workdir when finished: {self.remove}", level=3)
 
     @property
-    def plans(self):
+    def plans(self) -> List[Plan]:
         """ Test plans for execution """
         if self._plans is None:
+            assert self.tree is not None  # narrow type
             self._plans = self.tree.plans(run=self, filters=['enabled:true'])
         return self._plans
 
-    def finish(self):
+    def finish(self) -> None:
         """ Check overall results, return appropriate exit code """
         # We get interesting results only if execute or prepare step is enabled
         execute = self.plans[0].execute
@@ -1959,16 +2253,17 @@ class Run(tmt.utils.Common):
         stats = Result.total(results)
         if sum(stats.values()) == 0:
             raise SystemExit(3)
-        if stats['error']:
+        if stats[ResultOutcome.ERROR]:
             raise SystemExit(2)
-        if stats['fail'] + stats['warn']:
+        if stats[ResultOutcome.FAIL] + stats[ResultOutcome.WARN]:
             raise SystemExit(1)
-        if stats['pass']:
+        if stats[ResultOutcome.PASS]:
             raise SystemExit(0)
         raise SystemExit(2)
 
-    def follow(self):
+    def follow(self) -> None:
         """ Periodically check for new lines in the log. """
+        assert self.workdir is not None  # narrow type
         logfile = open(os.path.join(self.workdir, tmt.utils.LOG_FILENAME), 'r')
         # Move to the end of the file
         logfile.seek(0, os.SEEK_END)
@@ -1991,14 +2286,17 @@ class Run(tmt.utils.Common):
             else:
                 time.sleep(0.5)
 
-    def go(self):
+    def go(self) -> None:
         """ Go and do test steps for selected plans """
         # Create the workdir and save last run
         self._save_tree(self._tree)
         self._workdir_load(self._workdir_path)
+        assert self.tree is not None  # narrow type
+        assert self._workdir is not None  # narrow type
         if self.tree.root and self._workdir.startswith(self.tree.root):
             raise tmt.utils.GeneralError(
                 "Run workdir must not be inside fmf root.")
+        assert self.workdir is not None  # narrow type
         self.config.last_run(self.workdir)
         # Show run id / workdir path
         self.info(self.workdir, color='magenta')
@@ -2017,7 +2315,8 @@ class Run(tmt.utils.Common):
             tmt.steps.finish.Finish._options["dry"] = True
 
         # Enable selected steps
-        enabled_steps = self._context.obj.steps
+        assert self._context_object is not None  # narrow type
+        enabled_steps = self._context_object.steps
         all_steps = self.opt('all') or not enabled_steps
         since = self.opt('since')
         until = self.opt('until')
@@ -2071,10 +2370,10 @@ class Status(tmt.utils.Common):
     FIRST_COL_LEN = len(LONGEST_STEP) + 2
 
     @staticmethod
-    def get_overall_plan_status(plan):
+    def get_overall_plan_status(plan: Plan) -> str:
         """ Examines the plan status (find the last done step) """
         steps = list(plan.steps())
-        step_names = list(plan.steps(names=True))
+        step_names = list(plan.step_names())
         for i in range(len(steps) - 1, -1, -1):
             if steps[i].status() == 'done':
                 if i + 1 == len(steps):
@@ -2084,7 +2383,7 @@ class Status(tmt.utils.Common):
                     return step_names[i]
         return 'todo'
 
-    def plan_matches_filters(self, plan):
+    def plan_matches_filters(self, plan: Plan) -> bool:
         """ Check if the given plan matches filters from the command line """
         if self.opt('abandoned'):
             return (plan.provision.status() == 'done'
@@ -2096,7 +2395,7 @@ class Status(tmt.utils.Common):
         return True
 
     @staticmethod
-    def colorize_column(content):
+    def colorize_column(content: str) -> str:
         """ Add color to a status column """
         if 'done' in content:
             return style(content, fg='green')
@@ -2104,11 +2403,11 @@ class Status(tmt.utils.Common):
             return style(content, fg='yellow')
 
     @classmethod
-    def pad_with_spaces(cls, string):
+    def pad_with_spaces(cls, string: str) -> str:
         """ Append spaces to string to properly align the first column """
         return string + (cls.FIRST_COL_LEN - len(string)) * ' '
 
-    def run_matches_filters(self, run):
+    def run_matches_filters(self, run: Run) -> bool:
         """ Check if the given run matches filters from the command line """
         if self.opt('abandoned') or self.opt('active'):
             # Any of the plans must be abandoned/active for the whole
@@ -2119,7 +2418,7 @@ class Status(tmt.utils.Common):
             return all(self.plan_matches_filters(p) for p in run.plans)
         return True
 
-    def print_run_status(self, run):
+    def print_run_status(self, run: Run) -> None:
         """ Display the overall status of the run """
         if not self.run_matches_filters(run):
             return
@@ -2147,7 +2446,7 @@ class Status(tmt.utils.Common):
         echo(run_status, nl=False)
         echo(run.workdir)
 
-    def print_plans_status(self, run):
+    def print_plans_status(self, run: Run) -> None:
         """ Display the status of each plan of the given run """
         for plan in run.plans:
             if self.plan_matches_filters(plan):
@@ -2156,7 +2455,7 @@ class Status(tmt.utils.Common):
                      nl=False)
                 echo(f'{run.workdir}  {plan.name}')
 
-    def print_verbose_status(self, run):
+    def print_verbose_status(self, run: Run) -> None:
         """ Display the status of each step of the given run """
         for plan in run.plans:
             if self.plan_matches_filters(plan):
@@ -2165,7 +2464,7 @@ class Status(tmt.utils.Common):
                     echo(self.colorize_column(column), nl=False)
                 echo(f' {run.workdir}  {plan.name}')
 
-    def process_run(self, run):
+    def process_run(self, run: Run) -> None:
         """ Display the status of the given run based on verbosity """
         loaded, error = tmt.utils.load_run(run)
         if not loaded:
@@ -2178,7 +2477,7 @@ class Status(tmt.utils.Common):
         else:
             self.print_verbose_status(run)
 
-    def print_header(self):
+    def print_header(self) -> None:
         """ Print the header of the status table based on verbosity """
         header = ''
         if self.opt('verbose') >= 2:
@@ -2190,49 +2489,58 @@ class Status(tmt.utils.Common):
         header += 'id'
         echo(style(header, fg='blue'))
 
-    def show(self):
+    def show(self) -> None:
         """ Display the current status """
         # Prepare absolute workdir path if --id was used
         id_ = self.opt('id')
         root_path = self.opt('workdir-root')
         self.print_header()
+        assert self._context_object is not None  # narrow type
+        assert self._context_object.tree is not None  # narrow type
         for abs_path in tmt.utils.generate_runs(root_path, id_):
-            run = Run(abs_path, self._context.obj.tree, self._context)
+            run = Run(id_=abs_path, tree=self._context_object.tree, context=self._context)
             self.process_run(run)
 
 
 class Clean(tmt.utils.Common):
     """ A class for cleaning up workdirs, guests or images """
 
-    def __init__(self, parent=None, name=None, workdir=None, context=None):
+    def __init__(self,
+                 parent: Optional[tmt.utils.Common] = None,
+                 name: Optional[str] = None,
+                 workdir: tmt.utils.WorkdirArgumentType = None,
+                 context: Optional[click.Context] = None) -> None:
         """
         Initialize name and relation with the parent object
 
         Always skip to initialize the work tree.
         """
         # Set the option to skip to initialize the work tree
-        context.params[tmt.utils.PLAN_SKIP_WORKTREE_INIT] = True
+        if context:
+            context.params[tmt.utils.PLAN_SKIP_WORKTREE_INIT] = True
         super().__init__(parent, name, workdir, context)
 
-    def images(self):
+    def images(self) -> bool:
         """ Clean images of provision plugins """
         self.info('images', color='blue')
         successful = True
         for method in tmt.steps.provision.ProvisionPlugin.methods():
-            if not method.class_.clean_images(self, self.opt('dry')):
+            # TODO: when generic, there would be no doubt about whether `clean_images`
+            # is allowed or not.
+            if not method.class_.clean_images(self, self.opt('dry')):  # type: ignore[union-attr]
                 successful = False
         return successful
 
-    def _matches_how(self, plan):
+    def _matches_how(self, plan: Plan) -> bool:
         """ Check if the given plan matches options """
         how = plan.provision.data[0].how
-        target_how = self.opt('how')
+        target_how = cast(Optional[str], self.opt('how'))
         if target_how:
             return how == target_how
         # No target provision method, always matches
         return True
 
-    def _stop_running_guests(self, run):
+    def _stop_running_guests(self, run: Run) -> bool:
         """ Stop all running guests of a run """
         loaded, error = tmt.utils.load_run(run)
         if not loaded:
@@ -2255,6 +2563,7 @@ class Clean(tmt.utils.Common):
                         self.verbose(f"Stopping guests in run '{run.workdir}' "
                                      f"plan '{plan.name}'.", shift=1)
                         # Set --quiet to avoid finish logging to terminal
+                        assert self._context is not None  # narrow type
                         quiet = self._context.params['quiet']
                         self._context.params['quiet'] = True
                         try:
@@ -2267,7 +2576,7 @@ class Clean(tmt.utils.Common):
                             self._context.params['quiet'] = quiet
         return successful
 
-    def guests(self):
+    def guests(self) -> bool:
         """ Clean guests of runs """
         self.info('guests', color='blue')
         root_path = self.opt('workdir-root')
@@ -2277,13 +2586,14 @@ class Clean(tmt.utils.Common):
             # the correct one.
             return self._stop_running_guests(Run(context=self._context))
         successful = True
+        assert self._context_object is not None  # narrow type
         for abs_path in tmt.utils.generate_runs(root_path, id_):
-            run = Run(abs_path, self._context.obj.tree, self._context)
+            run = Run(abs_path, self._context_object.tree, self._context)
             if not self._stop_running_guests(run):
                 successful = False
         return successful
 
-    def _clean_workdir(self, path):
+    def _clean_workdir(self, path: str) -> bool:
         """ Remove a workdir (unless in dry mode) """
         if self.opt('dry'):
             self.verbose(f"Would remove workdir '{path}'.", shift=1)
@@ -2296,7 +2606,7 @@ class Clean(tmt.utils.Common):
                 return False
         return True
 
-    def runs(self):
+    def runs(self) -> bool:
         """ Clean workdirs of runs """
         self.info('runs', color='blue')
         root_path = self.opt('workdir-root')
@@ -2306,6 +2616,7 @@ class Clean(tmt.utils.Common):
             # the correct one.
             last_run = Run(context=self._context)
             last_run._workdir_load(last_run._workdir_path)
+            assert last_run.workdir is not None  # narrow type
             return self._clean_workdir(last_run.workdir)
         all_workdirs = [path for path in tmt.utils.generate_runs(root_path, id_)]
         keep = self.opt('keep')
@@ -2323,7 +2634,51 @@ class Clean(tmt.utils.Common):
         return successful
 
 
-class Result:
+# TODO: this should become a more strict data class, with an enum or two to handle
+# allowed values, etc. See https://github.com/teemtee/tmt/issues/1456.
+# Defining a type alias so we can follow where the package is used.
+class ResultOutcome(enum.Enum):
+    PASS = 'pass'
+    FAIL = 'fail'
+    INFO = 'info'
+    WARN = 'warn'
+    ERROR = 'error'
+
+
+# Cannot subclass enums :/
+# https://docs.python.org/3/library/enum.html#restricted-enum-subclassing
+class ResultInterpret(enum.Enum):
+    # These are "inherited" from ResultOutcome
+    PASS = 'pass'
+    FAIL = 'fail'
+    INFO = 'info'
+    WARN = 'warn'
+    ERROR = 'error'
+
+    # Special interpret values
+    RESPECT = 'respect'
+    CUSTOM = 'custom'
+    XFAIL = 'xfail'
+
+    @classmethod
+    def is_result_outcome(cls, value: 'ResultInterpret') -> bool:
+        return value.name in list(ResultOutcome.__members__.keys())
+
+
+RESULT_OUTCOME_COLORS: Dict[ResultOutcome, str] = {
+    ResultOutcome.PASS: 'green',
+    ResultOutcome.FAIL: 'red',
+    ResultOutcome.INFO: 'blue',
+    ResultOutcome.WARN: 'yellow',
+    ResultOutcome.ERROR: 'magenta'
+}
+
+
+ResultData = Dict[str, Any]
+
+
+@dataclasses.dataclass(init=False)
+class Result(tmt.utils.SerializableContainer):
     """
     Test result
 
@@ -2337,16 +2692,21 @@ class Result:
     Required parameter 'test' or 'name' should contain a test reference.
     """
 
-    _results = {
-        'pass': 'green',
-        'fail': 'red',
-        'info': 'blue',
-        'warn': 'yellow',
-        'error': 'magenta',
-        }
+    name: str
+    result: ResultOutcome
+    note: Optional[str] = None
+    duration: Optional[str] = None
+    ids: Dict[str, Optional[str]] = dataclasses.field(default_factory=dict)
+    log: Union[List[Any], Dict[Any, Any]] = dataclasses.field(default_factory=list)
 
-    def __init__(self, data, name=None, test=None):
+    def __init__(
+            self,
+            data: ResultData,
+            name: Optional[str] = None,
+            test: Optional[Test] = None) -> None:
         """ Initialize test result data """
+
+        super().__init__()
 
         # Save the test name and optional note
         if not test and not name:
@@ -2356,31 +2716,32 @@ class Result:
             raise tmt.utils.SpecificationError(f"Invalid test '{test}'.")
         if name and not isinstance(name, str):
             raise tmt.utils.SpecificationError(f"Invalid test name '{name}'.")
-        self.name = name or test.name
+        self.name = name or test.name  # type: ignore[union-attr]  # either `name` or `test` is set
         self.note = data.get('note')
         self.duration = data.get('duration')
         if test:
             # Saving identifiable information for each test case so we can match them
             # to Polarion/Nitrate/other cases and report run results there
+            # TODO: would an exception be better? Can test.id be None?
             self.ids = {tmt.identifier.ID_KEY: test.id}
             for key in EXTRA_RESULT_IDENTIFICATION_KEYS:
                 self.ids[key] = test.node.get(key)
-            interpret = test.result or 'respect'
+            interpret = ResultInterpret(test.result) if test.result else ResultInterpret.RESPECT
         else:
             try:
                 self.ids = data['ids']
             except KeyError:
                 self.ids = {}
-            interpret = 'respect'
+            interpret = ResultInterpret.RESPECT
 
         # Check for valid results
         try:
-            self.result = data['result']
+            self.result = ResultOutcome(data['result'])
         except KeyError:
             raise tmt.utils.SpecificationError("Missing test result.")
-        if self.result not in self._results:
+        except ValueError:
             raise tmt.utils.SpecificationError(
-                f"Invalid result '{self.result}'.")
+                f"Invalid result '{data['result']}'.")
 
         # Convert log into list if necessary
         try:
@@ -2389,75 +2750,74 @@ class Result:
             self.log = []
 
         # Handle alternative result interpretation
-        if interpret not in ('respect', 'custom'):
+        if interpret not in (ResultInterpret.RESPECT, ResultInterpret.CUSTOM):
             # Extend existing note or set a new one
             if self.note and isinstance(self.note, str):
-                self.note += f', original result: {self.result}'
+                self.note += f', original result: {self.result.value}'
             elif self.note is None:
-                self.note = f'original result: {self.result}'
+                self.note = f'original result: {self.result.value}'
             else:
                 raise tmt.utils.SpecificationError(
                     f"Test result note '{self.note}' must be a string.")
 
-            if interpret == "xfail":
+            if interpret == ResultInterpret.XFAIL:
                 # Swap just fail<-->pass, keep the rest as is (info, warn,
                 # error)
                 self.result = {
-                    'fail': 'pass', 'pass': 'fail'}.get(
-                    self.result, self.result)
-            elif interpret in self._results:
-                self.result = interpret
+                    ResultOutcome.FAIL: ResultOutcome.PASS,
+                    ResultOutcome.PASS: ResultOutcome.FAIL
+                    }.get(self.result, self.result)
+            elif ResultInterpret.is_result_outcome(interpret):
+                self.result = ResultOutcome(interpret.value)
             else:
                 raise tmt.utils.SpecificationError(
-                    f"Invalid result '{interpret}' in test '{self.name}'.")
+                    f"Invalid result '{interpret.value}' in test '{self.name}'.")
 
     @staticmethod
-    def total(results):
+    def total(results: List['Result']) -> Dict[ResultOutcome, int]:
         """ Return dictionary with total stats for given results """
-        stats = dict([(result, 0) for result in Result._results])
+        stats = dict([(result, 0) for result in RESULT_OUTCOME_COLORS])
         for result in results:
             stats[result.result] += 1
         return stats
 
     @staticmethod
-    def summary(results):
+    def summary(results: List['Result']) -> str:
         """ Prepare a nice human summary of provided results """
         stats = Result.total(results)
         comments = []
-        if stats.get('pass'):
+        if stats.get(ResultOutcome.PASS):
             passed = ' ' + click.style('passed', fg='green')
-            comments.append(fmf.utils.listed(stats['pass'], 'test') + passed)
-        if stats.get('fail'):
+            comments.append(fmf.utils.listed(stats[ResultOutcome.PASS], 'test') + passed)
+        if stats.get(ResultOutcome.FAIL):
             failed = ' ' + click.style('failed', fg='red')
-            comments.append(fmf.utils.listed(stats['fail'], 'test') + failed)
-        if stats.get('info'):
-            count, comment = fmf.utils.listed(stats['info'], 'info').split()
+            comments.append(fmf.utils.listed(stats[ResultOutcome.FAIL], 'test') + failed)
+        if stats.get(ResultOutcome.INFO):
+            count, comment = fmf.utils.listed(stats[ResultOutcome.INFO], 'info').split()
             comments.append(count + ' ' + click.style(comment, fg='blue'))
-        if stats.get('warn'):
-            count, comment = fmf.utils.listed(stats['warn'], 'warn').split()
+        if stats.get(ResultOutcome.WARN):
+            count, comment = fmf.utils.listed(stats[ResultOutcome.WARN], 'warn').split()
             comments.append(count + ' ' + click.style(comment, fg='yellow'))
-        if stats.get('error'):
-            count, comment = fmf.utils.listed(stats['error'], 'error').split()
+        if stats.get(ResultOutcome.ERROR):
+            count, comment = fmf.utils.listed(stats[ResultOutcome.ERROR], 'error').split()
             comments.append(count + ' ' + click.style(comment, fg='magenta'))
-        return fmf.utils.listed(comments or ['no results found'])
+        return cast(str, fmf.utils.listed(comments or ['no results found']))
 
-    def show(self):
+    def show(self) -> str:
         """ Return a nicely colored result with test name (and note) """
-        result = 'errr' if self.result == 'error' else self.result
-        colored = style(result, fg=self._results[self.result])
+        result = 'errr' if self.result == ResultOutcome.ERROR else self.result.value
+        colored = style(result, fg=RESULT_OUTCOME_COLORS[self.result])
         note = f" ({self.note})" if self.note else ''
         return f"{colored} {self.name}{note}"
 
-    def export(self):
-        """ Save result data for future wake-up """
-        data = dict(result=self.result, log=self.log)
-        if self.note:
-            data['note'] = self.note
-        if self.duration:
-            data['duration'] = self.duration
-        if self.ids:
-            data['ids'] = self.ids
-        return data
+    def to_serialized(self) -> Dict[str, Any]:
+        fields = super().to_serialized()
+        fields['result'] = self.result.value
+        return fields
+
+    @classmethod
+    def from_serialized(cls, serialized: Dict[str, Any]) -> 'Result':
+        return cls(serialized, name=serialized.pop('name'))
 
 
 @dataclasses.dataclass
@@ -2556,9 +2916,8 @@ class Link(tmt.utils.SpecBasedContainer):
         note = cast(Optional[str], spec.get('note', None))
 
         # Count how many relations are stored in spec.
-        relations = [
-            cast(_RawLinkRelationName, key) for key in spec if key not in (FmfId.keys + ['note'])
-            ]
+        relations = [cast(_RawLinkRelationName, key)
+                     for key in spec if key not in (FmfId.VALID_KEYS + ['note'])]
 
         # If there are no relations, spec must be an fmf id, representing
         # a target.
@@ -2583,7 +2942,7 @@ class Link(tmt.utils.SpecBasedContainer):
         # the right side of relation must be _RawLinkTarget and nothing else. Helping
         # mypy to realize that.
         relation = relations[0]
-        raw_target = cast(_RawLinkTarget, spec[relation])
+        raw_target = cast(_RawLinkTarget, spec[relation])  # type: ignore[typeddict-item]
 
         # TODO: this should not happen with mandatory validation
         if relation not in Links._relations:
@@ -2596,7 +2955,7 @@ class Link(tmt.utils.SpecBasedContainer):
 
         return Link(relation=relation, target=FmfId.from_spec(raw_target), note=note)
 
-    def to_spec(self) -> _RawLinkRelation:
+    def to_spec(self) -> _RawLinkRelation:  # type: ignore[override]
         """
         Convert to a form suitable for saving in a specification file
 
@@ -2611,7 +2970,7 @@ class Link(tmt.utils.SpecBasedContainer):
         [1] https://tmt.readthedocs.io/en/stable/spec/core.html#link
         """
 
-        spec = {
+        spec: _RawLinkRelation = {
             self.relation: self.target.to_spec() if isinstance(
                 self.target,
                 FmfId) else self.target}
@@ -2665,7 +3024,7 @@ class Links(tmt.utils.SpecBasedContainer):
         # Ensure that each link is in the canonical form
         self._links = [Link.from_spec(spec) for spec in specs]
 
-    def to_spec(self) -> List[_RawLinkRelation]:
+    def to_spec(self) -> List[_RawLinkRelation]:  # type: ignore[override]
         """
         Convert to a form suitable for saving in a specification file
 

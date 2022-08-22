@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     import tmt.steps
     import tmt.options
 
+import tmt.base
 import tmt.steps
 import tmt.utils
 from tmt.steps import Action
@@ -152,7 +153,7 @@ class Discover(tmt.steps.Step):
 
         # Create tests.yaml with the full test data
         raw_test_data = {
-            test.name: test.export(format_='dict')
+            test.name: test.export(format_=tmt.base.ExportFormat.DICT)
             for test in self.tests()
             }
 
@@ -283,9 +284,10 @@ class Discover(tmt.steps.Step):
         # TODO: This part should go into the 'fmf.py' module
         if self.opt('fmf_id'):
             if self.tests():
-                fmf_id_list = [tmt.utils.dict_to_yaml(test.fmf_id, start=True)
-                               for test in self.tests()
-                               if 'url' in test.fmf_id]
+                fmf_id_list = [
+                    tmt.utils.dict_to_yaml(
+                        test.fmf_id.to_minimal_dict(),
+                        start=True) for test in self.tests() if test.fmf_id.url]
                 click.echo(''.join(fmf_id_list), nl=False)
             return
 

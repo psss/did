@@ -19,7 +19,7 @@ rlJournalStart
         cmd="tmt tests export $tname"
         rlPhaseStartTest "$cmd"
             rlRun -s "$cmd" 0 "Export test"
-            rlAssertGrep "- name: $tname" $rlRun_LOG
+            rlAssertGrep "name: $tname" $rlRun_LOG
         rlPhaseEnd
 
         cmd="tmt tests export --format dict $tname"
@@ -31,7 +31,7 @@ rlJournalStart
         cmd="tmt tests export --format yaml $tname"
         rlPhaseStartTest "$cmd"
             rlRun -s "$cmd" 0 "Export test"
-            rlAssertGrep "- name: $tname" $rlRun_LOG
+            rlAssertGrep "name: $tname" $rlRun_LOG
         rlPhaseEnd
     done
 
@@ -46,7 +46,7 @@ rlJournalStart
     rlPhaseStartTest "$cmd"
         rlRun -s "$cmd" 0 "Export test"
         for tname in $tnames; do
-            rlAssertGrep "- name: $tname" $rlRun_LOG
+            rlAssertGrep "name: $tname" $rlRun_LOG
         done
     rlPhaseEnd
 
@@ -54,7 +54,7 @@ rlJournalStart
         cmd="tmt tests export --fmf-id $tname"
         rlPhaseStartTest "$cmd"
             rlRun -s "$cmd" 0 "Export test"
-            rlAssertGrep "- name: $tname" $rlRun_LOG
+            rlAssertGrep "name: $tname" $rlRun_LOG
         rlPhaseEnd
 
         cmd="tmt tests export --format dict --fmf-id $tname"
@@ -66,7 +66,7 @@ rlJournalStart
         cmd="tmt tests export --format yaml --fmf-id $tname"
         rlPhaseStartTest "$cmd"
             rlRun -s "$cmd" 0 "Export test"
-            rlAssertGrep "- name: $tname" $rlRun_LOG
+            rlAssertGrep "name: $tname" $rlRun_LOG
         rlPhaseEnd
     done
 

@@ -3,6 +3,7 @@ import shutil
 import pytest
 
 import tmt
+import tmt.base
 import tmt.beakerlib
 
 
@@ -32,7 +33,7 @@ def test_library():
         ])
 def test_library_from_fmf(url, name, default_branch):
     """ Fetch beakerlib library referenced by fmf identifier """
-    library = tmt.beakerlib.Library(dict(url=url, name=name))
+    library = tmt.beakerlib.Library(tmt.base.RequireFmfId(url=url, name=name))
     assert library.format == 'fmf'
     assert library.ref == default_branch
     assert library.url == url
@@ -48,9 +49,10 @@ def test_invalid_url_conflict():
     parent = tmt.utils.Common(workdir=True)
     # Fetch to cache 'tmt' repo
     tmt.beakerlib.Library(
-        dict(url='https://github.com/teemtee/tmt',
-             name='/',
-             path='/tests/libraries/local/data'),
+        tmt.base.RequireFmfId(
+            url='https://github.com/teemtee/tmt',
+            name='/',
+            path='/tests/libraries/local/data'),
         parent=parent)
     # Library 'tmt' repo is already fetched from different git,
     # however upstream (gh.com/beakerlib/tmt) repo does not exist,

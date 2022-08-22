@@ -16,6 +16,7 @@ import fmf
 from click import echo, secho, style
 
 import tmt
+import tmt.base
 import tmt.utils
 from tmt.convert import SYSTEM_OTHER, add_link
 from tmt.identifier import ID_KEY, add_uuid_if_not_defined
@@ -121,7 +122,8 @@ def _nitrate_find_fmf_testcases(test: 'tmt.Test') -> Generator[Any, None, None]:
             for testcase in find_general_plan(component).testcases:
                 struct_field = tmt.utils.StructuredField(testcase.notes)
                 try:
-                    fmf_id = tmt.utils.yaml_to_dict(struct_field.get('fmf'))
+                    fmf_id = tmt.base.FmfId.from_spec(
+                        cast(tmt.base._RawFmfId, tmt.utils.yaml_to_dict(struct_field.get('fmf'))))
                     if fmf_id == test.fmf_id:
                         echo(style(
                             f"Existing test case '{testcase.identifier}' "
@@ -307,7 +309,7 @@ def get_polarion_ids(
 
 
 def find_polarion_case_ids(
-        data: Dict[str, str],
+        data: Dict[str, Optional[str]],
         preferred_project: Optional[str] = None,
         polarion_case_id: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """ Find IDs for Polarion case from data dictionary """
@@ -350,7 +352,7 @@ def find_polarion_case_ids(
 
 
 def get_polarion_case(
-        data: Dict[str, str],
+        data: Dict[str, Optional[str]],
         preferred_project: Optional[str] = None,
         polarion_case_id: Optional[str] = None) -> Any:
     """ Get Polarion case through couple different methods """
@@ -469,7 +471,7 @@ def export_to_nitrate(test: 'tmt.Test') -> None:
         raise ConvertError(error)
 
     # Check if URL is accessible, to be able to reach from nitrate
-    check_git_url(test.fmf_id['url'])
+    check_git_url(test.fmf_id.url)
 
     # Summary
     try:
@@ -622,7 +624,7 @@ def export_to_nitrate(test: 'tmt.Test') -> None:
             echo(style(section + ': ', fg='green') + attribute.strip())
 
     # fmf identifer
-    fmf_id = tmt.utils.dict_to_yaml(test.fmf_id)
+    fmf_id = tmt.utils.dict_to_yaml(test.fmf_id.to_dict())
     struct_field.set('fmf', fmf_id)
     echo(style('fmf id:\n', fg='green') + fmf_id.strip())
 
@@ -656,6 +658,10 @@ def export_to_nitrate(test: 'tmt.Test') -> None:
     verifies_bug_ids = []
     if test.link:
         for link in test.link.get('verifies'):
+            if isinstance(link.target, tmt.base.FmfId):
+                log.debug(f"Will not look for bugzila URL in fmf id '{link.target}'.")
+                continue
+
             try:
                 bug_id_search = re.search(RE_BUGZILLA_URL, link.target)
                 if not bug_id_search:
@@ -722,9 +728,12 @@ def export_to_polarion(test: 'tmt.Test') -> None:
                 f"(You can use --create option to enforce creating testcases.)")
 
     # Title
-    if not dry_mode and polarion_case.title != test.summary:
+    if not dry_mode and test.summary is not None and polarion_case.title != test.summary:
         polarion_case.title = test.summary
-    echo(style('title: ', fg='green') + test.summary)
+    # TODO: test.summary may be left unset, i.e. `None` is a possibility here. Shall we print
+    # new title then? It may also be `None`...
+    if test.summary is not None:
+        echo(style('title: ', fg='green') + test.summary)
 
     # Description
     description = summary
@@ -735,11 +744,12 @@ def export_to_polarion(test: 'tmt.Test') -> None:
     echo(style('description: ', fg='green') + description)
 
     # Automation
+    assert test.fmf_id.url is not None  # narrow type
     if test.node.get('extra-task'):
         automation_script = test.node.get('extra-task')
-        automation_script += ' ' + test.fmf_id['url']
+        automation_script += ' ' + test.fmf_id.url
     else:
-        automation_script = test.fmf_id['url']
+        automation_script = test.fmf_id.url
     if not dry_mode:
         polarion_case.caseautomation = 'automated'
         polarion_case.automation_script = automation_script
@@ -806,6 +816,10 @@ def export_to_polarion(test: 'tmt.Test') -> None:
     requirements = []
     if test.link:
         for link in test.link.get('verifies'):
+            if isinstance(link.target, tmt.base.FmfId):
+                log.debug(f"Will not look for bugzila URL in fmf id '{link.target}'.")
+                continue
+
             try:
                 bug_ids_search = re.search(RE_BUGZILLA_URL, link.target)
                 if bug_ids_search:
@@ -909,8 +923,7 @@ def enabled_for_environment(test: 'tmt.Test', tcms_notes: str) -> bool:
         context = fmf.context.Context(**context_dict)
         test_node = test.node.copy()
         test_node.adjust(context)
-        # TODO: remove cast later
-        return cast(bool, tmt.Test(node=test_node).enabled)
+        return tmt.Test(node=test_node).enabled
     except BaseException as exception:
         log.debug(f"Failed to process adjust: {exception}")
         return True
@@ -924,7 +937,7 @@ def check_md_file_respects_spec(md_path: str) -> List[str]:
     """
     warnings_list = []
     # TODO: remove cast lastr
-    sections_headings = cast(Dict[str, List[str]], tmt.base.SECTIONS_HEADINGS)
+    sections_headings = tmt.base.SECTIONS_HEADINGS
     required_headings = set(sections_headings['Step'] +
                             sections_headings['Expect'])
     values = []
@@ -1121,7 +1134,8 @@ def create_polarion_case(summary: str, project_id: str) -> Any:
 
 def prepare_extra_summary(test: 'tmt.Test') -> str:
     """ extra-summary for export --create test """
-    remote_dirname = re.sub('.git$', '', os.path.basename(test.fmf_id['url']))
+    assert test.fmf_id.url is not None  # narrow type
+    remote_dirname = re.sub('.git$', '', os.path.basename(test.fmf_id.url))
     if not remote_dirname:
         raise ConvertError("Unable to find git remote url.")
     generated = f"{remote_dirname} {test.name}"

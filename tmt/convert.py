@@ -15,6 +15,7 @@ from uuid import UUID, uuid4
 import fmf.utils
 from click import echo, style
 
+import tmt.base
 import tmt.export
 import tmt.identifier
 import tmt.utils

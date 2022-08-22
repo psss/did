@@ -26,41 +26,49 @@ rlJournalStart
         rlPhaseEnd
     done
 
+    # NOTE: regular expressions below are slightly less trivial. The order of keys in results.yaml
+    # is not fixed, if parser decides, they may swap positions, therefore expressions try to match
+    # a *multiline section* of results.yaml that should include test and whatever we're grepping
+    # for. Non-greedy matching is used to limit to just a single result in results.yaml, otherwise
+    # grep might not reveal a `result` key missing in a particular results because it'd exist in
+    # the *next* result in the file.
     for method in tmt; do
         rlPhaseStartTest "Check shell.$method results"
             results="$run/plan/shell/$method/execute/results.yaml"
-            rlRun "grep -A1 good:  $results | grep pass" 0 "Check pass"
+
+            rlRun "grep -Pzo '(?sm)^/test/shell/good:$.*?^ *result: pass$' $results" 0 "Check pass"
             check_duration "$results" "good:"
 
-            rlRun "grep -A1 weird: $results | grep error" 0 "Check error"
+            rlRun "grep -Pzo '(?sm)^/test/shell/weird:$.*?^ *result: error$' $results" 0 "Check error"
             check_duration "$results" "weird:"
 
-            rlRun "grep -A1 bad:   $results | grep fail" 0 "Check fail"
+            rlRun "grep -Pzo '(?sm)^/test/shell/bad:$.*?^ *result: fail$' $results" 0 "Check fail"
             check_duration "$results" "bad:"
 
             # Check log file exists
-            rlRun "grep -A3 good:  $results | grep -A1 log: | grep output.txt" \
+            rlRun "grep -Pzo '(?sm)^/test/shell/good:$.*?^ +log:$.*?^ +- data/.+?$' $results | grep output.txt" \
               0 "Check output.txt log exists in $results"
         rlPhaseEnd
 
         rlPhaseStartTest "Check beakerlib.$method results"
             results="$run/plan/beakerlib/$method/execute/results.yaml"
-            rlRun "grep -A1 good:  $results | grep pass" 0 "Check pass"
+
+            rlRun "grep -Pzo '(?sm)^/test/beakerlib/good:$.*?^ *result: pass$' $results" 0 "Check pass"
             check_duration "$results" "good:"
 
-            rlRun "grep -A1 need:  $results | grep warn" 0 "Check warn"
+            rlRun "grep -Pzo '(?sm)^/test/beakerlib/need:$.*?^ *result: warn$' $results" 0 "Check warn"
             check_duration "$results" "need:"
 
-            rlRun "grep -A1 weird: $results | grep error" 0 "Check error"
+            rlRun "grep -Pzo '(?sm)^/test/beakerlib/weird:$.*?^ *result: error$' $results" 0 "Check error"
             check_duration "$results" "weird:"
 
-            rlRun "grep -A1 bad:   $results | grep fail" 0 "Check fail"
+            rlRun "grep -Pzo '(?sm)^/test/beakerlib/bad:$.*?^ *result: fail$' $results" 0 "Check fail"
             check_duration "$results" "bad:"
 
             # Check log files exist
-            rlRun "grep -A3 good:  $results | grep -A1 log: | grep output.txt" \
+            rlRun "grep -Pzo '(?sm)^/test/beakerlib/good:$.*^ +log:$.*?^ +- data/.+?$' $results | grep output.txt" \
               0 "Check output.txt log exists"
-            rlRun "grep -A4 good:  $results | grep -A2 log: | grep journal.txt" \
+            rlRun "grep -Pzo '(?sm)^/test/beakerlib/good:$.*^ +log:$.*?^ +- data/.+?$' $results | grep journal.txt" \
               0 "Check journal.txt log exists"
         rlPhaseEnd
     done

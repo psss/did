@@ -10,6 +10,7 @@ import fmf
 import pkg_resources
 
 import tmt
+import tmt.base
 import tmt.steps
 from tmt.steps import Action
 from tmt.steps.provision import Guest
@@ -165,10 +166,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         """ Return discover plugin instance """
         # This is necessary so that upgrade plugin can inject a fake discover
 
-        # TODO: Mypy complains about this return value without cast(). It might
-        # be related to mypy not following imports. It's possible that the cast
-        # could be removed later.
-        return cast(tmt.steps.discover.Discover, self.step.plan.discover)
+        return self.step.plan.discover
 
     def data_path(
             self,
@@ -227,6 +225,8 @@ class ExecutePlugin(tmt.steps.Plugin):
 
     def check_shell(self, test: "tmt.Test") -> List["tmt.Result"]:
         """ Check result of a shell test """
+        assert test.returncode is not None
+        assert test.real_duration is not None
         # Prepare the log path
         data = {'log': self.data_path(test, TEST_OUTPUT_FILENAME),
                 'duration': test.real_duration}
@@ -244,9 +244,9 @@ class ExecutePlugin(tmt.steps.Plugin):
     def check_beakerlib(self, test: "tmt.Test") -> List["tmt.Result"]:
         """ Check result of a beakerlib test """
         # Initialize data, prepare log paths
-        data = {'result': 'error',
-                'log': [],
-                'duration': test.real_duration}
+        data: tmt.base.ResultData = {'result': 'error',
+                                     'log': [],
+                                     'duration': test.real_duration}
         for log in [TEST_OUTPUT_FILENAME, 'journal.txt']:
             if os.path.isfile(self.data_path(test, log, full=True)):
                 data['log'].append(self.data_path(test, log))
@@ -460,16 +460,16 @@ class Execute(tmt.steps.Step):
         super().load()
         try:
             results = tmt.utils.yaml_to_dict(self.read('results.yaml'))
-            self._results = [
-                tmt.Result(data, name=test) for test, data in results.items()]
+            self._results = [tmt.base.Result.from_serialized(data) for data in results.values()]
         except tmt.utils.FileError:
             self.debug('Test results not found.', level=2)
 
     def save(self) -> None:
         """ Save test results to the workdir """
         super().save()
-        results = dict([
-            (result.name, result.export()) for result in self.results()])
+        results = {
+            result.name: result.to_serialized() for result in self.results()
+            }
         self.write('results.yaml', tmt.utils.dict_to_yaml(results))
 
     def wake(self) -> None:

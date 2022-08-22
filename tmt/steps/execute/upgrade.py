@@ -139,7 +139,7 @@ class ExecuteUpgrade(ExecuteInternal):
         if self._discover_upgrade:
             return self._discover_upgrade
         else:
-            return cast(tmt.steps.discover.Discover, self.step.plan.discover)
+            return self.step.plan.discover
 
     def go(self, guest: tmt.steps.provision.Guest) -> None:
         """ Execute available tests """
@@ -227,7 +227,7 @@ class ExecuteUpgrade(ExecuteInternal):
             self._discover_upgrade._context.params['quiet'] = quiet
             tmt.base.Test.ignore_class_options = False
 
-    def _prepare_remote_discover_data(self, plan: tmt.base.Plan) -> tmt.base._RawFmfId:
+    def _prepare_remote_discover_data(self, plan: tmt.base.Plan) -> tmt.steps._RawStepData:
         """ Merge remote discover data with the local filters """
         if len(plan.discover.data) > 1:
             raise tmt.utils.ExecuteError(
@@ -266,8 +266,8 @@ class ExecuteUpgrade(ExecuteInternal):
                 data = self._prepare_remote_discover_data(plan)
                 # Unset `url` because we don't want discover step to perform clone.
                 # Instead, we want it to re-use existing, already cloned path.
-                data['url'] = None
-                data['path'] = self._discover_upgrade.testdir
+                data['url'] = None  # type: ignore[typeddict-item]
+                data['path'] = self._discover_upgrade.testdir  # type: ignore[typeddict-item]
                 self._discover_upgrade = cast(DiscoverFmf, DiscoverPlugin.delegate(
                     self.step, raw_data=data))
                 self._run_discover_upgrade()

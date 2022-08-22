@@ -278,4 +278,4 @@ for area in areas:
         # Included stories
         for story in tree.stories(names=[area], whole=True):
             if story.enabled:
-                doc.write(story.export(title=story.name != area))
+                doc.write(story.export(include_title=story.name != area))

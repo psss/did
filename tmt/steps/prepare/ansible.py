@@ -107,6 +107,8 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
 
             if lowercased_playbook.startswith(
                     'http://') or lowercased_playbook.startswith('https://'):
+                assert self.step.plan.my_run is not None  # narrow type
+                assert self.step.plan.my_run.tree is not None  # narrow type
                 root_path = self.step.plan.my_run.tree.root
 
                 try:

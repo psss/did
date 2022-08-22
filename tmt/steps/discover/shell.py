@@ -62,7 +62,7 @@ class TestDescription(
     path: Optional[str] = None
     framework: Optional[str] = None
     manual: bool = False
-    require: List[Union[str, 'tmt.base.FmfId']] = dataclasses.field(default_factory=list)
+    require: List['tmt.base.Require'] = dataclasses.field(default_factory=list)
     recommend: List[str] = dataclasses.field(default_factory=list)
     environment: tmt.utils.EnvironmentType = dataclasses.field(default_factory=dict)
     duration: str = '1h'
@@ -100,11 +100,10 @@ class TestDescription(
         return str(value)
 
     def _normalize_require(
-            self, value: Optional['tmt.base._RawRequire']) -> List[Union[str, 'tmt.base.FmfId']]:
-        if value is None:
-            return []
-        # TODO: remove ignore when base.py becomes annotated
-        return [value] if isinstance(value, str) else value  # type: ignore[no-any-return]
+            self, value: Optional['tmt.base._RawRequire']) -> List['tmt.base.Require']:
+        from tmt.base import normalize_require
+
+        return normalize_require(value)
 
     # Our own implementation, parent uses `name` and `how`, and tests don't have any `how`.
     @classmethod
@@ -156,7 +155,7 @@ class TestDescription(
         obj = super().from_serialized(serialized)
         obj.link = tmt.base.Links(serialized['link'])
         obj.require = [
-            require if isinstance(require, str) else tmt.base.FmfId.from_serialized(require)
+            require if isinstance(require, str) else tmt.base.RequireFmfId.from_serialized(require)
             for require in serialized['require']
             ]
 
@@ -287,6 +286,9 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         os.symlink(relative_path, testdir)
 
         if dist_git_source:
+            assert self.step.plan.my_run is not None  # narrow type
+            assert self.step.plan.my_run.tree is not None  # narrow type
+            assert self.step.plan.my_run.tree.root is not None  # narrow type
             try:
                 run_result = self.run(
                     ["git", "rev-parse", "--show-toplevel"],
@@ -295,6 +297,8 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
                 assert run_result is not None
                 git_root = run_result.strip('\n')
             except tmt.utils.RunError:
+                assert self.step.plan.my_run is not None  # narrow type
+                assert self.step.plan.my_run.tree is not None  # narrow type
                 raise tmt.utils.DiscoverError(
                     f"Directory '{self.step.plan.my_run.tree.root}' "
                     f"is not a git repository.")

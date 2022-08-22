@@ -223,7 +223,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
 
         # Check url and path, prepare test directory
         url = self.get('url')
-        path = self.get('path')
+        path = cast(Optional[str], self.get('path'))
         # Save the test directory so that others can reference it
         ref = self.get('ref')
         assert self.workdir is not None
@@ -295,7 +295,12 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             git_root = self.testdir
         # Copy git repository root to workdir
         else:
-            fmf_root = path or self.step.plan.my_run.tree.root
+            if path is not None:
+                fmf_root: Optional[str] = path
+            else:
+                assert self.step.plan.my_run is not None  # narrow type
+                assert self.step.plan.my_run.tree is not None  # narrow type
+                fmf_root = self.step.plan.my_run.tree.root
             requires_git = self.opt('sync-repo') or any(
                 self.get(opt) for opt in self._REQUIRES_GIT)
             # Path for distgit sources cannot be checked until the
@@ -306,8 +311,13 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             if dist_git_source:
                 # Ensure we're in a git repo when extracting dist-git sources
                 try:
+                    assert self.step.plan.my_run is not None  # narrow type
+                    assert self.step.plan.my_run.tree is not None  # narrow type
+                    assert self.step.plan.my_run.tree.root is not None  # narrow type
                     git_root = get_git_root(self.step.plan.my_run.tree.root)
                 except tmt.utils.RunError:
+                    assert self.step.plan.my_run is not None  # narrow type
+                    assert self.step.plan.my_run.tree is not None  # narrow type
                     raise tmt.utils.DiscoverError(
                         f"{self.step.plan.my_run.tree.root} is not a git repo")
             else:
@@ -326,7 +336,11 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
 
             # And finally copy the git/fmf root directory to testdir
             # (for dist-git case only when merge explicitly requested)
-            directory = git_root if requires_git else fmf_root
+            if requires_git:
+                directory: str = git_root
+            else:
+                assert fmf_root is not None  # narrow type
+                directory = fmf_root
             self.info('directory', directory, 'green')
             if not dist_git_source or dist_git_merge:
                 self.debug(f"Copy '{directory}' to '{self.testdir}'.")
@@ -443,7 +457,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             raw_needle) for raw_needle in raw_link_needles]
 
         for link_needle in link_needles:
-            self.info('link', link_needle, 'green')
+            self.info('link', str(link_needle), 'green')
 
         excludes = list(tmt.base.Test._opt('exclude')
                         or self.get('exclude', []))
@@ -487,6 +501,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         # Prefix tests and handle library requires
         for test in self._tests:
             # Prefix test path with 'tests' and possible 'path' prefix
+
+            assert test.path is not None  # narrow type
             test.path = os.path.join(prefix_path, test.path.lstrip('/'))
             # Check for possible required beakerlib libraries
             if test.require or test.recommend:

@@ -120,7 +120,8 @@ rlJournalStart
     rlPhaseStartTest "fmf-id (w/o url): all steps(discover, provision, etc.) \
                       are enabled"
         plan='plan --name fmf/nourl/noref/nopath'
-        rlRun "tmt run -dvvvr --all $plan discover -h fmf --fmf-id | tail -n1 \
+        rlRun "tmt run -dvvvr --all $plan discover -h fmf --fmf-id \
+               | grep -Pzo '(?sm)^---$.*?^path:' \
                | tee output"
         rlAssertGrep "path:" output
     rlPhaseEnd

@@ -24,6 +24,8 @@ class ReportDisplay(tmt.steps.report.ReportPlugin):
         if verbosity == 1:
             return
         # -vv and more follows
+        # TODO: are we sure it cannot be None?
+        assert self.step.plan.execute.workdir is not None
         for log_file in result.log:
             log_name = os.path.basename(log_file)
             full_path = os.path.join(self.step.plan.execute.workdir, log_file)

@@ -12,7 +12,7 @@ import tmt.options
 import tmt.steps
 import tmt.steps.execute
 import tmt.utils
-from tmt.base import Result, Test
+from tmt.base import Result, ResultOutcome, Test
 from tmt.steps.execute import (SCRIPTS, TEST_OUTPUT_FILENAME,
                                TMT_FILE_SUBMIT_SCRIPT, TMT_REBOOT_SCRIPT)
 from tmt.steps.provision import Guest
@@ -144,7 +144,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         self.debug(f"Execute '{test.name}' as a '{test.framework}' test.")
 
         # Test will be executed in it's own directory, relative to the workdir
-        assert self.discover.workdir is not None
+        assert self.discover.workdir is not None  # narrow type
+        assert test.path is not None  # narrow type
         workdir = os.path.join(self.discover.workdir, test.path.lstrip('/'))
         self.debug(f"Use workdir '{workdir}'.", level=3)
 
@@ -185,7 +186,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             stdout or '', mode='a', level=3)
         test.real_duration = self.test_duration(start, end)
 
-    def check(self, test: Test) -> Result:
+    def check(self, test: Test) -> List[Result]:
         """ Check the test result """
         self.debug(f"Check result of '{test.name}'.")
         if test.result == 'custom':
@@ -287,8 +288,6 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         index = 0
         while index < len(tests):
             test = tests[index]
-            if not hasattr(test, "_reboot_count"):
-                test._reboot_count = 0
 
             progress = f"{index + 1}/{len(tests)}"
             self._show_progress(progress, test.name)
@@ -309,6 +308,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 extend_options=exclude)
 
             results = self.check(test)  # Produce list of results
+            assert test.real_duration is not None  # narrow type
             duration = click.style(test.real_duration, fg='cyan')
             shift = 1 if self.opt('verbose') < 2 else 2
 
@@ -322,7 +322,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                         continue
                 except tmt.utils.RebootTimeoutError:
                     for result in results:
-                        result.result = 'error'
+                        result.result = ResultOutcome.ERROR
                         result.note = 'reboot timeout'
             abort = self.check_abort_file(test)
             if abort:
@@ -335,7 +335,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 duration = click.style(result.duration, fg='cyan') if result.duration else 8 * ' '
                 self.verbose(f"{duration} {result.show()} [{progress}]", shift=shift)
             if (abort or exit_first and
-                    result.result not in ('pass', 'info')):
+                    result.result not in (ResultOutcome.PASS, ResultOutcome.INFO)):
                 # Clear the progress bar before outputting
                 self._show_progress('', '', True)
                 what_happened = "aborted" if abort else "failed"

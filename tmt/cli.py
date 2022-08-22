@@ -7,7 +7,7 @@ import dataclasses
 import os
 import subprocess
 import sys
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, cast
 
 import click
 import fmf
@@ -15,6 +15,7 @@ from click import echo, style
 from fmf.utils import listed
 
 import tmt
+import tmt.base
 import tmt.convert
 import tmt.export
 import tmt.identifier
@@ -41,8 +42,8 @@ class ContextObject:
     """ Click Context Object Container """
     common: tmt.utils.Common
     fmf_context: tmt.utils.FmfContextType
-    steps: Set[tmt.steps.Step]
     tree: tmt.Tree
+    steps: Set[str] = dataclasses.field(default_factory=set)
     clean: Optional[tmt.Clean] = None
     run: Optional[tmt.Run] = None
 
@@ -402,7 +403,7 @@ def finito(
         *args: Any,
         **kwargs: Any) -> None:
     """ Run tests if run defined """
-    if hasattr(click_context.obj, 'run'):
+    if isinstance(click_context.obj, ContextObject) and click_context.obj.run:
         click_context.obj.run.go()
 
 
@@ -705,14 +706,16 @@ def tests_export(
 
     if how == 'nitrate' or how == 'polarion':
         for test in context.obj.tree.tests():
-            test.export(format_=how)
+            test.export(format_=tmt.base.ExportFormat(how))
     elif format_ in ['dict', 'yaml']:
         keys = None
         if kwargs.get('fmf_id'):
-            keys = 'fmf-id'
+            keys = ['fmf-id']
 
-        tests = [test.export(format_='dict', keys=keys) for test in
-                 context.obj.tree.tests()]
+        # Do not be fooled by explicit DICT, YAML export format is honored by
+        # the `else` branch, and applied to `tests` list as a whole.
+        tests = [test.export(format_=tmt.base.ExportFormat.DICT, keys=keys)
+                 for test in context.obj.tree.tests()]
         if format_ == 'dict':
             echo(tests, nl=False)
         else:
@@ -876,7 +879,7 @@ def plans_export(context: click.core.Context, format_: str, **kwargs: Any) -> No
     Use '.' to select plans under the current working directory.
     """
     tmt.Plan._save_context(context)
-    plans = [plan.export(format_='dict') for plan in context.obj.tree.plans()]
+    plans = [plan.export(format_=tmt.base.ExportFormat.DICT) for plan in context.obj.tree.plans()]
 
     # Choose proper format
     if format_ == 'dict':
@@ -951,7 +954,7 @@ def stories_ls(
     Use '.' to select stories under the current working directory.
     """
     tmt.Story._save_context(context)
-    for story in context.obj.tree.stories():
+    for story in cast(tmt.Tree, context.obj.tree).stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):
             story.ls()
@@ -980,7 +983,7 @@ def stories_show(
     Use '.' to select stories under the current working directory.
     """
     tmt.Story._save_context(context)
-    for story in context.obj.tree.stories():
+    for story in cast(tmt.Tree, context.obj.tree).stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):
             story.show()
@@ -1007,7 +1010,7 @@ def stories_create(
         **kwargs: Any) -> None:
     """ Create a new story based on given template. """
     tmt.Story._save_context(context)
-    tmt.base.Story.create(name, template, context.obj.tree.root, force)
+    tmt.Story.create(name, template, context.obj.tree.root, force)
 
 
 @stories.command(name='coverage')
@@ -1051,7 +1054,7 @@ def stories_coverage(
     total = code_coverage = test_coverage = docs_coverage = 0
     if not any([code, test, docs]):
         code = test = docs = True
-    for story in context.obj.tree.stories():
+    for story in cast(tmt.Tree, context.obj.tree).stories():
         # Check conditions
         if not story._match(
                 implemented, verified, documented, covered, unimplemented,
@@ -1117,10 +1120,12 @@ def stories_export(
     """
     tmt.Story._save_context(context)
 
-    for story in context.obj.tree.stories(whole=True):
-        if story._match(implemented, verified, documented, covered,
-                        unimplemented, unverified, undocumented, uncovered):
-            echo(story.export(format_))
+    for story in cast(tmt.Tree, context.obj.tree).stories(whole=True):
+        if not story._match(implemented, verified, documented, covered,
+                            unimplemented, unverified, undocumented, uncovered):
+            continue
+
+        echo(story.export(format_=tmt.base.ExportFormat(format_)))  # type: ignore[call-overload]
 
 
 @stories.command(name='lint')
@@ -1171,7 +1176,7 @@ def stories_id(
     are kept intact.
     """
     tmt.Story._save_context(context)
-    for story in context.obj.tree.stories():
+    for story in cast(tmt.Tree, context.obj.tree).stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):
             tmt.identifier.id_command(story.node, "story", dry=kwargs["dry"])
@@ -1210,8 +1215,8 @@ def init(
     * 'full' template contains a 'full' story, an 'full' plan and a shell test.
     """
 
-    tmt.base.Tree._save_context(context)
-    tmt.base.Tree.init(path, template, force, **kwargs)
+    tmt.Tree._save_context(context)
+    tmt.Tree.init(path, template, force, **kwargs)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

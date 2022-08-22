@@ -46,6 +46,7 @@ else:
 
 if TYPE_CHECKING:
     import tmt.base
+    import tmt.cli
     import tmt.steps
 
 log = fmf.utils.Logging('tmt').logger
@@ -375,15 +376,19 @@ class Common:
             return default
         return cls._options.get(option, default)
 
+    @property
+    def _context_object(self) -> Optional['tmt.cli.ContextObject']:
+        if self._context is None:
+            return None
+
+        return cast(Optional['tmt.cli.ContextObject'], self._context.obj)
+
     def _fmf_context(self) -> FmfContextType:
         """ Return the current fmf context """
-        if self._context is None:
+        if self._context_object is None:
             return dict()
 
-        try:
-            return cast(FmfContextType, self._context.obj.fmf_context)
-        except AttributeError:
-            return dict()
+        return self._context_object.fmf_context
 
     def opt(self, option: str, default: Optional[Any] = None) -> Any:
         """
@@ -1190,7 +1195,9 @@ def environment_file_to_dict(env_file: str, root: str = ".") -> EnvironmentType:
     return environment
 
 
-def environment_files_to_dict(env_files: Iterable[str], root: str = ".") -> EnvironmentType:
+def environment_files_to_dict(
+        env_files: Iterable[str],
+        root: Optional[str] = None) -> EnvironmentType:
     """
     Read environment variables from the given list of files.
 
@@ -1217,6 +1224,8 @@ def environment_files_to_dict(env_files: Iterable[str], root: str = ".") -> Envi
        ``environment_files_to_dict()`` calls for each file,
        accumulating data from all input files.
     """
+
+    root = root or '.'
 
     result: EnvironmentType = {}
 
@@ -1256,7 +1265,7 @@ def context_to_dict(context: List[str]) -> FmfContextType:
 
 
 def dict_to_yaml(
-        data: Union[Dict[str, Any], List[Any]],
+        data: Union[Dict[str, Any], List[Any], 'tmt.base._RawFmfId'],
         width: Optional[int] = None,
         sort: bool = False,
         start: bool = False) -> str:
@@ -1275,7 +1284,7 @@ def dict_to_yaml(
         # Sort the data https://stackoverflow.com/a/40227545
         sorted_data = CommentedMap()
         for key in sorted(data):
-            sorted_data[key] = data[key]
+            sorted_data[key] = data[key]  # type: ignore[literal-required]
         data = sorted_data
     yaml.dump(data, output)
     return output.getvalue()
@@ -1336,10 +1345,21 @@ class DataContainer:
         """
         Convert to a mapping.
 
-        See :ref:`classes.rst` for more details.
+        See https://tmt.readthedocs.io/en/stable/classes.html#class-conversions for more details.
         """
 
         return dataclasses.asdict(self)
+
+    def to_minimal_dict(self) -> Dict[str, Any]:
+        """
+        Convert to a mapping with unset keys omitted.
+
+        See https://tmt.readthedocs.io/en/stable/classes.html#class-conversions for more details.
+        """
+
+        return {
+            key: value for key, value in self.to_dict().items() if value is not None
+            }
 
     # This method should remain a class-method: 1. list of keys is known
     # already, therefore it's not necessary to create an instance, and
@@ -1423,7 +1443,7 @@ class SpecBasedContainer(DataContainer):
         """
         Convert from a specification file or from a CLI option
 
-        See :ref:`classes.rst` for more details.
+        See https://tmt.readthedocs.io/en/stable/classes.html#class-conversions for more details.
 
         See :py:meth:`to_spec` for its counterpart.
         """
@@ -1434,7 +1454,7 @@ class SpecBasedContainer(DataContainer):
         """
         Convert to a form suitable for saving in a specification file
 
-        See :ref:`classes.rst` for more details.
+        See https://tmt.readthedocs.io/en/stable/classes.html#class-conversions for more details.
 
         See :py:meth:`from_spec` for its counterpart.
         """
@@ -1490,7 +1510,7 @@ class SerializableContainer(DataContainer):
         """
         Convert to a form suitable for saving in a file.
 
-        See :ref:`classes.rst` for more details.
+        See https://tmt.readthedocs.io/en/stable/classes.html#class-conversions for more details.
 
         See :py:meth:`from_serialized` for its counterpart.
         """
@@ -1514,7 +1534,7 @@ class SerializableContainer(DataContainer):
         """
         Convert from a serialized form loaded from a file.
 
-        See :ref:`classes.rst` for more details.
+        See https://tmt.readthedocs.io/en/stable/classes.html#class-conversions for more details.
 
         See :py:meth:`to_serialized` for its counterpart.
         """
@@ -1543,7 +1563,7 @@ class SerializableContainer(DataContainer):
         Restoring such containers requires inspection of serialized data
         and dynamic imports of modules as needed.
 
-        See :ref:`classes.rst` for more details.
+        See https://tmt.readthedocs.io/en/stable/classes.html#class-conversions for more details.
 
         See :py:meth:`to_serialized` for its counterpart.
         """
@@ -1633,6 +1653,28 @@ def duration_to_seconds(duration: str) -> int:
         raise SpecificationError(f"Invalid duration '{duration}'.")
 
 
+@overload
+def verdict(
+        decision: bool,
+        comment: Optional[str] = None,
+        good: str = 'pass',
+        bad: str = 'fail',
+        problem: str = 'warn',
+        **kwargs: Any) -> bool:
+    pass
+
+
+@overload
+def verdict(
+        decision: None,
+        comment: Optional[str] = None,
+        good: str = 'pass',
+        bad: str = 'fail',
+        problem: str = 'warn',
+        **kwargs: Any) -> None:
+    pass
+
+
 def verdict(
         decision: Optional[bool],
         comment: Optional[str] = None,
@@ -1668,14 +1710,17 @@ def verdict(
     return decision
 
 
+FormatWrap = Literal[True, False, 'auto']
+
+
 def format(
         key: str,
-        value: Union[None, str, List[Any], Dict[Any, Any]] = None,
+        value: Union[None, bool, str, List[Any], Dict[Any, Any]] = None,
         indent: int = 12,
         width: int = 72,
-        wrap: Literal[True, False, 'auto'] = 'auto',
-        key_color: str = 'green',
-        value_color: str = 'black') -> str:
+        wrap: FormatWrap = 'auto',
+        key_color: Optional[str] = 'green',
+        value_color: Optional[str] = 'black') -> str:
     """
     Nicely format and indent a key-value pair
 
@@ -1834,6 +1879,47 @@ def public_git_url(url: str) -> str:
 
     # Otherwise return unmodified
     return url
+
+
+@lru_cache(maxsize=None)
+def fmf_id(name: str, fmf_root: str) -> 'tmt.base.FmfId':
+    """ Return full fmf identifier of the node """
+
+    def run(command: str) -> str:
+        """ Run command, return output """
+        cwd = fmf_root
+        result = subprocess.run(
+            command.split(),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            cwd=cwd)
+        return result.stdout.strip().decode("utf-8")
+
+    from tmt.base import FmfId
+
+    fmf_id = FmfId(name=name)
+
+    # Prepare url (for now handle just the most common schemas)
+    branch = run("git rev-parse --abbrev-ref --symbolic-full-name @{u}")
+    try:
+        remote_name = branch[:branch.index('/')]
+    except ValueError:
+        remote_name = 'origin'
+    remote = run(f"git config --get remote.{remote_name}.url")
+    fmf_id.url = public_git_url(remote)
+
+    # Get the ref (skip for master as it is the default)
+    ref = run('git rev-parse --abbrev-ref HEAD')
+    if ref != 'master':
+        fmf_id.ref = ref
+
+    # Construct path (if different from git root)
+    git_root = run('git rev-parse --show-toplevel')
+    if git_root != fmf_root:
+        fmf_id.path = os.path.join(
+            '/', os.path.relpath(fmf_root, git_root))
+
+    return fmf_id
 
 
 class TimeoutHTTPAdapter(requests.adapters.HTTPAdapter):
