@@ -1,0 +1,6 @@
+summary: Minimal import plan test
+
+plan:
+  import:
+    url: https://github.com/teemtee/tmt
+    name: /plans/sanity/lint

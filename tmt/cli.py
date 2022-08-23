@@ -139,6 +139,13 @@ def name_filter_condition(function: Callable[..., Any]) -> Callable[..., Any]:
     return function
 
 
+def shallow(function: Callable[..., Any]) -> Callable[..., Any]:
+    return click.option(
+        '-s', '--shallow', is_flag=True,
+        help='Do not clone remote plan.',
+        )(function)
+
+
 def source(function: Callable[..., Any]) -> Callable[..., Any]:
     """ Option to select fmf objects by their sources """
     return click.option(
@@ -750,6 +757,7 @@ def tests_id(context: click.core.Context, **kwargs: Any) -> None:
 @main.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @verbose_debug_quiet
+@shallow
 def plans(context: click.core.Context, **kwargs: Any) -> None:
     """
     Manage test plans (L2 metadata).
@@ -769,6 +777,7 @@ def plans(context: click.core.Context, **kwargs: Any) -> None:
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
+@shallow
 def plans_ls(context: click.core.Context, **kwargs: Any) -> None:
     """
     List available plans.
@@ -785,6 +794,7 @@ def plans_ls(context: click.core.Context, **kwargs: Any) -> None:
 @click.pass_context
 @name_filter_condition
 @verbose_debug_quiet
+@shallow
 def plans_show(context: click.core.Context, **kwargs: Any) -> None:
     """
     Show plan details.

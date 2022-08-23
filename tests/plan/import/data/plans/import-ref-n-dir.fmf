@@ -1,0 +1,8 @@
+summary: Import plan with git ref and custom working dir
+
+plan:
+  import:
+    url: https://github.com/teemtee/tmt
+    name: /plan
+    ref: 1.16.0
+    path: tests/run/worktree/data/prepare

@@ -174,5 +174,16 @@ properties:
   tier:
     $ref: "/schemas/core#/definitions/tier"
 
-required:
-  - execute
+  plan:
+    type: object
+    additionalProperties: false
+
+    properties:
+      import:
+        $ref: "/schemas/common#/definitions/fmf_id"
+
+oneOf:
+  - required:
+      - execute
+  - required:
+      - plan

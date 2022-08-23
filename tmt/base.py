@@ -906,6 +906,9 @@ class Plan(Core):
     _normalize_context = tmt.utils.LoadFmfKeysMixin._normalize_environment
     _normalize_gate = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
+    _imported_plan: Optional['Plan'] = None
+    _origin_plan: Optional['Plan'] = None
+
     extra_L2_keys = [
         'context',
         'environment',
@@ -923,6 +926,7 @@ class Plan(Core):
             **kwargs: Any) -> None:
         """ Initialize the plan """
         kwargs.setdefault('logger', self)
+        kwargs.setdefault('run', run)
         super().__init__(
             node=node,
             parent=run,
@@ -960,6 +964,8 @@ class Plan(Core):
             plan=self, data=self.node.get('report'))
         self.finish = tmt.steps.finish.Finish(
             plan=self, data=self.node.get('finish'))
+
+        self._import_plan_node = self.node.get(['plan', 'import'])
 
         # Test execution context defined in the plan
         self._plan_context: FmfContextType = self.node.get('context', dict())
@@ -1227,6 +1233,13 @@ class Plan(Core):
         if self.opt('verbose'):
             self._show_additional_keys()
 
+        if self._origin_plan and self.opt('verbose'):
+            echo(tmt.utils.format(
+                'imported plan', '', key_color='blue'))
+            for k, v in self._origin_plan._import_plan_node.items():
+                echo(tmt.utils.format(
+                    k, v, key_color='green'))
+
     def _lint_execute(self) -> Optional[bool]:
         """ Lint execute step """
         execute = self.node.get('execute')
@@ -1453,6 +1466,31 @@ class Plan(Core):
             return tmt.utils.dict_to_yaml(data)
 
         raise tmt.utils.GeneralError(f"Invalid plan export format '{format_}'.")
+
+    @property
+    def is_remote_plan_reference(self) -> bool:
+        return self._import_plan_node is not None
+
+    @property
+    def imported_plan(self) -> Optional['Plan']:
+        if not self.is_remote_plan_reference:
+            return None
+        if not self._imported_plan:
+            if self.parent:  # check whether the run obj is set
+                plan_id = tmt.base.FmfId(**self._import_plan_node)
+                destination = os.path.join(self.parent.workdir, "import", self.name.lstrip("/"))
+                tmt.utils.git_clone(plan_id.url, destination, self)
+                if plan_id.ref:
+                    self.run(['git', 'checkout', plan_id.ref], cwd=destination)
+                if plan_id.path:
+                    destination = os.path.join(destination, plan_id.path)
+                node = fmf.Tree(destination).find(self._import_plan_node['name'])
+            else:
+                node = fmf.Tree.node(self._import_plan_node)
+            self._imported_plan = Plan(node=node, run=self.parent, logger=self)
+            self._imported_plan.name = self.name
+            self._imported_plan._origin_plan = self
+        return self._imported_plan
 
 
 class StoryPriority(enum.Enum):
@@ -1899,7 +1937,8 @@ class Tree(tmt.utils.Common):
             ) -> List[Plan]:
         """ Search available plans """
         # Handle defaults, apply possible command line options
-        keys = (keys or []) + ['execute']
+        local_plan_keys = (keys or []) + ['execute']
+        remote_plan_keys = (keys or []) + ['plan']
         names = (names or []) + list(Plan._opt('names', []))
         filters = (filters or []) + list(Plan._opt('filters', []))
         conditions = (conditions or []) + list(Plan._opt('conditions', []))
@@ -1923,12 +1962,19 @@ class Tree(tmt.utils.Common):
             sources = None
 
         # Build the list, convert to objects, sort and filter
-        plans = [
-            Plan(node=plan, run=run) for plan
-            in self.tree.prune(keys=keys, names=names, sources=sources)]
-        return self._filters_conditions(
+        plans = [Plan(node=plan, run=run)
+                 for plan in [
+                     *self.tree.prune(keys=local_plan_keys, names=names, sources=sources),
+                     *self.tree.prune(keys=remote_plan_keys, names=names, sources=sources),
+            ]]
+
+        plans = self._filters_conditions(
             sorted(plans, key=lambda plan: plan.order),
             filters, conditions, links, excludes)
+        if Plan._opt('shallow'):
+            return plans
+        else:
+            return [plan.imported_plan or plan for plan in plans]
 
     def stories(
             self,
