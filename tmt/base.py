@@ -16,7 +16,7 @@ from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
 import click
 import fmf
 import fmf.base
-from click import echo, style
+from click import confirm, echo, style
 from fmf.utils import listed
 from ruamel.yaml.error import MarkedYAMLError
 
@@ -1915,8 +1915,12 @@ class Tree(tmt.utils.Common):
             tree = tmt.Tree(path)
             # Are we creating a new tree under the existing one?
             if path == tree.root:
-                echo("Tree '{}' already exists.".format(tree.root))
+                echo(f"Tree '{tree.root}' already exists.")
             else:
+                # Are we creating a nested tree?
+                echo(f"Path '{path}' already has a parent tree root '{tree.root}'.")
+                if not force and not confirm("Do you really want to initialize a nested tree?"):
+                    return
                 tree = None
         except tmt.utils.GeneralError:
             tree = None
