@@ -214,6 +214,9 @@ class Config:
                 pass
             try:
                 os.symlink(run_id, symlink)
+            except FileExistsError:
+                # Race when tmt runs in parallel
+                log.warning(f"Race condition, unable to save last run '{run_id}'.")
             except OSError as error:
                 raise GeneralError(
                     f"Unable to save last run '{self.path}'.\n{error}")

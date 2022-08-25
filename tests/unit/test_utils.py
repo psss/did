@@ -2,7 +2,9 @@
 
 import datetime
 import os
+import queue
 import re
+import threading
 import time
 import unittest
 import unittest.mock
@@ -107,6 +109,43 @@ def test_config():
     config1.last_run(run)
     config2 = tmt.utils.Config()
     assert config2.last_run() == run
+
+
+def test_last_run_race(tmpdir, monkeypatch):
+    """ Race in last run symlink should't be fatal """
+    monkeypatch.setattr(tmt.utils, 'CONFIG_PATH', tmpdir.mkdir('config'))
+    mock_logger = unittest.mock.MagicMock()
+    monkeypatch.setattr(tmt.utils.log, 'warning', mock_logger)
+    config = tmt.utils.Config()
+    results = queue.Queue()
+    threads = []
+
+    def create_last_run(config, counter):
+        try:
+            val = config.last_run(tmpdir.mkdir(f"run-{counter}"))
+            results.put(val)
+        except Exception as err:
+            results.put(err)
+
+    total = 20
+    for i in range(total):
+        threads.append(threading.Thread(target=create_last_run, args=(config, i)))
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    all_good = True
+    for t in threads:
+        value = results.get()
+        if isinstance(value, Exception):
+            # Print exception for logging
+            print(value)
+            all_good = False
+    assert all_good
+    # Getting into race is not certain, do not assert
+    # assert mock_logger.called
+    assert config.last_run(), "Some run was stored as last run"
 
 
 def test_duration_to_seconds():
