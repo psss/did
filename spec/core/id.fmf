@@ -1,5 +1,9 @@
 summary: Persistent unique identifier of the object
 
+story:
+    As a user I want to be able to track execution history of a
+    test even if it is renamed or moved to another repository.
+
 description: |
     Sometimes tests, plans or stories are renamed or moved across
     the directory structure, into a different git branch or even

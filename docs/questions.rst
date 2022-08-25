@@ -123,6 +123,17 @@ Metadata Specification and are supposed to be synced temporarily
 to keep backward compatibility.
 
 
+Why is the 'id' key added to my test during export?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When exporting ``tmt`` test metadata using ``tmt tests export`` to
+other test case management systems, a unique ``id`` is created in
+order to provide a persistent way to identify the test even if it
+is renamed, moved across the directory structure or into a
+different repository. See the :ref:`/spec/core/id` key
+specification for more details.
+
+
 How can I integrate tmt tests with other tools?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
