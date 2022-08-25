@@ -328,7 +328,7 @@ def get_polarion_case(data: Dict[str, str], preferred_project: Optional[str] = N
                 "Could not find a valid nitrate testcase ID in 'extra-nitrate' attribute")
         nitrate_case_id = str(int(nitrate_case_id_search.group()))
         query_result = PolarionWorkItem.query(
-            nitrate_case_id, fields=['work_item_id', 'project_id'])
+            f"tcmscaseid:{nitrate_case_id}", fields=['work_item_id', 'project_id'])
         polarion_id, project_id = get_polarion_ids(query_result, preferred_project)
     # Search by extra task
     if not project_id and data.get('extra-task'):
