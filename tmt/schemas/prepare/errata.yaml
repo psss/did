@@ -1,0 +1,46 @@
+---
+
+#
+# JSON Schema definition for `errata` prepare plugin
+#
+# Private plugin usable only within RH
+#
+
+$id: /schemas/prepare/errata
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - errata
+
+  errata:
+    oneOf:
+      - anyOf:
+          - type: string
+            pattern: "^[0-9]+$"
+          - type: integer
+
+      - type: array
+        items:
+          anyOf:
+            - type: string
+              pattern: "^[0-9]+$"
+            - type: integer
+
+  force-dist:
+    type: string
+
+  force-arch:
+    type: string
+
+  no-filter:
+    type: boolean
+
+required:
+  - how

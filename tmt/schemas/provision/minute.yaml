@@ -1,0 +1,44 @@
+---
+
+#
+# JSON Schema definition for `minute` provision plugin
+#
+# Private plugin usable only within RH
+#
+
+$id: /schemas/provision/minute
+$schema: https://json-schema.org/draft-07/schema
+
+type: object
+additionalProperties: false
+
+properties:
+
+  how:
+    type: string
+    enum:
+      - minute
+
+  flavor:
+    type: string
+
+  image:
+    type: string
+
+  allow-ipv4-only:
+    type: boolean
+
+  auto-select-network:
+    type: boolean
+
+  skip-prereserve:
+    type: boolean
+
+  role:
+    $ref: "/schemas/common#/definitions/role"
+
+  name:
+    type: string
+
+required:
+  - how
