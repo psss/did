@@ -148,6 +148,62 @@ def test_last_run_race(tmpdir, monkeypatch):
     assert config.last_run(), "Some run was stored as last run"
 
 
+def test_workdir_root_full(tmpdir, monkeypatch):
+    """ Raise if all ids lower than WORKDIR_MAX are exceeded """
+    monkeypatch.setattr(tmt.utils, 'WORKDIR_ROOT', tmpdir)
+    monkeypatch.setattr(tmt.utils, 'WORKDIR_MAX', 1)
+    possible_workdir = str(tmpdir.join('run-001'))
+    # First call success
+    common1 = Common()
+    common1._workdir_init()
+    assert common1.workdir == possible_workdir
+    # Second call has no id to try
+    with pytest.raises(GeneralError):
+        Common()._workdir_init()
+    # Removed run-001 should be used again
+    common1._workdir_cleanup(common1.workdir)
+    assert not os.path.exists(possible_workdir)
+    common2 = Common()
+    common2._workdir_init()
+    assert common2.workdir == possible_workdir
+
+
+def test_workdir_root_race(tmpdir, monkeypatch):
+    """ Avoid race in workdir creation """
+    monkeypatch.setattr(tmt.utils, 'WORKDIR_ROOT', str(tmpdir))
+    results = queue.Queue()
+    threads = []
+
+    def create_workdir():
+        try:
+            common = Common()
+            common._workdir_init()
+            results.put(common.workdir)
+        except Exception as err:
+            results.put(err)
+
+    total = 30
+    for _ in range(total):
+        threads.append(threading.Thread(target=create_workdir))
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    all_good = True
+    unique_workdirs = set()
+    for t in threads:
+        value = results.get()
+        if isinstance(value, str):
+            unique_workdirs.add(value)
+        else:
+            # None or Exception: Record to the log and fail test
+            print(value)
+            all_good = False
+    assert all_good, "No exception raised"
+    assert len(unique_workdirs) == total, "Each workdir is unique"
+
+
 def test_duration_to_seconds():
     """ Check conversion from sleep time format to seconds """
     assert duration_to_seconds(5) == 5
