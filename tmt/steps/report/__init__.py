@@ -7,11 +7,46 @@ import tmt.steps
 from tmt.steps import Action
 
 
+class ReportPlugin(tmt.steps.GuestlessPlugin):
+    """ Common parent of report plugins """
+
+    # Default implementation for report is display
+    how = 'display'
+
+    # List of all supported methods aggregated from all plugins of the same step.
+    _supported_methods: List[tmt.steps.Method] = []
+
+    @classmethod
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
+        """ Create base click command (common for all report plugins) """
+
+        # Prepare general usage message for the step
+        if method_class:
+            usage = Report.usage(method_overview=usage)
+
+        # Create the command
+        @click.command(cls=method_class, help=usage)
+        @click.pass_context
+        @click.option(
+            '-h', '--how', metavar='METHOD',
+            help='Use specified method for results reporting.')
+        def report(context: click.Context, **kwargs: Any) -> None:
+            context.obj.steps.add('report')
+            Report._save_context(context)
+
+        return report
+
+
 class Report(tmt.steps.Step):
     """ Provide test results overview and send reports. """
 
     # Default implementation for report is display
     DEFAULT_HOW = 'display'
+
+    _plugin_base_class = ReportPlugin
 
     def wake(self) -> None:
         """ Wake up the step (process workdir and command line) """
@@ -79,36 +114,3 @@ class Report(tmt.steps.Step):
         for plugin in self.phases(classes=ReportPlugin):
             requires.update(plugin.requires())
         return list(requires)
-
-
-class ReportPlugin(tmt.steps.GuestlessPlugin):
-    """ Common parent of report plugins """
-
-    # Default implementation for report is display
-    how = 'display'
-
-    # List of all supported methods aggregated from all plugins of the same step.
-    _supported_methods: List[tmt.steps.Method] = []
-
-    @classmethod
-    def base_command(
-            cls,
-            usage: str,
-            method_class: Optional[Type[click.Command]] = None) -> click.Command:
-        """ Create base click command (common for all report plugins) """
-
-        # Prepare general usage message for the step
-        if method_class:
-            usage = Report.usage(method_overview=usage)
-
-        # Create the command
-        @click.command(cls=method_class, help=usage)
-        @click.pass_context
-        @click.option(
-            '-h', '--how', metavar='METHOD',
-            help='Use specified method for results reporting.')
-        def report(context: click.Context, **kwargs: Any) -> None:
-            context.obj.steps.add('report')
-            Report._save_context(context)
-
-        return report

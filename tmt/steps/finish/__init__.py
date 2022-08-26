@@ -9,6 +9,36 @@ from tmt.steps import Action, Method, StepData
 from tmt.utils import GeneralError
 
 
+class FinishPlugin(tmt.steps.Plugin):
+    """ Common parent of finish plugins """
+
+    # List of all supported methods aggregated from all plugins of the same step.
+    _supported_methods: List[Method] = []
+
+    @classmethod
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
+        """ Create base click command (common for all finish plugins) """
+
+        # Prepare general usage message for the step
+        if method_class:
+            usage = Finish.usage(method_overview=usage)
+
+        # Create the command
+        @click.command(cls=method_class, help=usage)
+        @click.pass_context
+        @click.option(
+            '-h', '--how', metavar='METHOD',
+            help='Use specified method for finishing tasks.')
+        def finish(context: click.Context, **kwargs: Any) -> None:
+            context.obj.steps.add('finish')
+            Finish._save_context(context)
+
+        return finish
+
+
 class Finish(tmt.steps.Step):
     """
     Perform the finishing tasks and clean up provisioned guests.
@@ -21,6 +51,9 @@ class Finish(tmt.steps.Step):
     steps failed (for example when the environment preparation was not
     successful) so that provisioned systems are not kept running.
     """
+
+    _plugin_base_class = FinishPlugin
+
     data: List[StepData]
 
     def wake(self) -> None:
@@ -109,33 +142,3 @@ class Finish(tmt.steps.Step):
         for plugin in self.phases(classes=FinishPlugin):
             requires.update(plugin.requires())
         return list(requires)
-
-
-class FinishPlugin(tmt.steps.Plugin):
-    """ Common parent of finish plugins """
-
-    # List of all supported methods aggregated from all plugins of the same step.
-    _supported_methods: List[Method] = []
-
-    @classmethod
-    def base_command(
-            cls,
-            usage: str,
-            method_class: Optional[Type[click.Command]] = None) -> click.Command:
-        """ Create base click command (common for all finish plugins) """
-
-        # Prepare general usage message for the step
-        if method_class:
-            usage = Finish.usage(method_overview=usage)
-
-        # Create the command
-        @click.command(cls=method_class, help=usage)
-        @click.pass_context
-        @click.option(
-            '-h', '--how', metavar='METHOD',
-            help='Use specified method for finishing tasks.')
-        def finish(context: click.Context, **kwargs: Any) -> None:
-            context.obj.steps.add('finish')
-            Finish._save_context(context)
-
-        return finish

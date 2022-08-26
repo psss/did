@@ -16,8 +16,113 @@ from tmt.steps import Action
 from tmt.utils import GeneralError
 
 
+class DiscoverPlugin(tmt.steps.GuestlessPlugin):
+    """ Common parent of discover plugins """
+
+    # List of all supported methods aggregated from all plugins of the same step.
+    _supported_methods: List[tmt.steps.Method] = []
+
+    # Common keys for all discover step implementations
+    _common_keys = [
+        "dist-git-source",
+        "dist-git-type",
+        ]
+
+    @classmethod
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
+        """ Create base click command (common for all discover plugins) """
+
+        # Prepare general usage message for the step
+        if method_class:
+            usage = Discover.usage(method_overview=usage)
+
+        # Create the command
+        @click.command(cls=method_class, help=usage)
+        @click.pass_context
+        @click.option(
+            '-h', '--how', metavar='METHOD',
+            help='Use specified method to discover tests.')
+        def discover(context: click.Context, **kwargs: Any) -> None:
+            # TODO: This part should go into the 'fmf.py' module
+            if kwargs.get('fmf_id'):
+                # Set quiet, disable debug and verbose to avoid logging
+                # to terminal with discover --fmf-id
+                assert context.parent is not None
+                context.parent.params['quiet'] = True
+                context.parent.params['debug'] = 0
+                context.parent.params['verbose'] = 0
+            context.obj.steps.add('discover')
+            Discover._save_context(context)
+
+        return discover
+
+    @classmethod
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
+        """ Prepare command line options for given method """
+        options = super().options(how)
+        options[:0] = [
+            click.option(
+                '--dist-git-source',
+                is_flag=True,
+                help='Extract DistGit sources.'),
+            click.option(
+                '--dist-git-type',
+                type=click.Choice(tmt.utils.get_distgit_handler_names()),
+                help='Use the provided DistGit handler '
+                     'instead of the auto detection.'),
+            ]
+        return options
+
+    def tests(self) -> List['tmt.Test']:
+        """
+        Return discovered tests
+
+        Each DiscoverPlugin has to implement this method.
+        Should return a list of Test() objects.
+        """
+        raise NotImplementedError
+
+    def extract_distgit_source(
+            self, distgit_dir: str, target_dir: str, handler_name: Optional[str] = None) -> None:
+        """
+        Extract source tarball into target_dir
+
+        distgit_dir is path to the DistGit repository.
+        Source tarball is discovered from the 'sources' file content.
+        """
+        if handler_name is None:
+            stdout, _ = self.run(
+                ["git", "config", "--get-regexp", '^remote\\..*.url'],
+                cwd=distgit_dir)
+            if stdout is None:
+                raise tmt.utils.GeneralError("Missing remote origin url.")
+
+            remotes = stdout.split('\n')
+            handler = tmt.utils.get_distgit_handler(remotes=remotes)
+        else:
+            handler = tmt.utils.get_distgit_handler(usage_name=handler_name)
+        for url, source_name in handler.url_and_name(distgit_dir):
+            if handler.re_ignore_extensions.search(source_name):
+                continue
+            self.debug(f"Download sources from '{url}'.")
+            with tmt.utils.retry_session() as session:
+                response = session.get(url)
+            response.raise_for_status()
+            os.makedirs(target_dir, exist_ok=True)
+            with open(os.path.join(target_dir, source_name), 'wb') as tarball:
+                tarball.write(response.content)
+            self.run(
+                ["tar", "--auto-compress", "--extract", "-f", source_name],
+                cwd=target_dir)
+
+
 class Discover(tmt.steps.Step):
     """ Gather information about test cases to be executed. """
+
+    _plugin_base_class = DiscoverPlugin
 
     def __init__(self, plan: 'tmt.base.Plan', data: tmt.steps.StepData):
         """ Store supported attributes, check for sanity """
@@ -200,106 +305,3 @@ class Discover(tmt.steps.Step):
             for value in getattr(test, 'recommend', []):
                 recommends.add(value)
         return list(recommends)
-
-
-class DiscoverPlugin(tmt.steps.GuestlessPlugin):
-    """ Common parent of discover plugins """
-
-    # List of all supported methods aggregated from all plugins of the same step.
-    _supported_methods: List[tmt.steps.Method] = []
-
-    # Common keys for all discover step implementations
-    _common_keys = [
-        "dist-git-source",
-        "dist-git-type",
-        ]
-
-    @classmethod
-    def base_command(
-            cls,
-            usage: str,
-            method_class: Optional[Type[click.Command]] = None) -> click.Command:
-        """ Create base click command (common for all discover plugins) """
-
-        # Prepare general usage message for the step
-        if method_class:
-            usage = Discover.usage(method_overview=usage)
-
-        # Create the command
-        @click.command(cls=method_class, help=usage)
-        @click.pass_context
-        @click.option(
-            '-h', '--how', metavar='METHOD',
-            help='Use specified method to discover tests.')
-        def discover(context: click.Context, **kwargs: Any) -> None:
-            # TODO: This part should go into the 'fmf.py' module
-            if kwargs.get('fmf_id'):
-                # Set quiet, disable debug and verbose to avoid logging
-                # to terminal with discover --fmf-id
-                assert context.parent is not None
-                context.parent.params['quiet'] = True
-                context.parent.params['debug'] = 0
-                context.parent.params['verbose'] = 0
-            context.obj.steps.add('discover')
-            Discover._save_context(context)
-
-        return discover
-
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options for given method """
-        options = super().options(how)
-        options[:0] = [
-            click.option(
-                '--dist-git-source',
-                is_flag=True,
-                help='Extract DistGit sources.'),
-            click.option(
-                '--dist-git-type',
-                type=click.Choice(tmt.utils.get_distgit_handler_names()),
-                help='Use the provided DistGit handler '
-                     'instead of the auto detection.'),
-            ]
-        return options
-
-    def tests(self) -> List['tmt.Test']:
-        """
-        Return discovered tests
-
-        Each DiscoverPlugin has to implement this method.
-        Should return a list of Test() objects.
-        """
-        raise NotImplementedError
-
-    def extract_distgit_source(
-            self, distgit_dir: str, target_dir: str, handler_name: Optional[str] = None) -> None:
-        """
-        Extract source tarball into target_dir
-
-        distgit_dir is path to the DistGit repository.
-        Source tarball is discovered from the 'sources' file content.
-        """
-        if handler_name is None:
-            stdout, _ = self.run(
-                ["git", "config", "--get-regexp", '^remote\\..*.url'],
-                cwd=distgit_dir)
-            if stdout is None:
-                raise tmt.utils.GeneralError("Missing remote origin url.")
-
-            remotes = stdout.split('\n')
-            handler = tmt.utils.get_distgit_handler(remotes=remotes)
-        else:
-            handler = tmt.utils.get_distgit_handler(usage_name=handler_name)
-        for url, source_name in handler.url_and_name(distgit_dir):
-            if handler.re_ignore_extensions.search(source_name):
-                continue
-            self.debug(f"Download sources from '{url}'.")
-            with tmt.utils.retry_session() as session:
-                response = session.get(url)
-            response.raise_for_status()
-            os.makedirs(target_dir, exist_ok=True)
-            with open(os.path.join(target_dir, source_name), 'wb') as tarball:
-                tarball.write(response.content)
-            self.run(
-                ["tar", "--auto-compress", "--extract", "-f", source_name],
-                cwd=target_dir)

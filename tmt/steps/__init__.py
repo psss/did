@@ -90,6 +90,9 @@ class Step(tmt.utils.Common):
     # area of expertise.
     DEFAULT_HOW: str = 'shell'
 
+    # Refers to a base class for all plugins registered with this step.
+    _plugin_base_class: Type['BasePlugin']
+
     def __init__(
             self,
             plan: 'Plan',

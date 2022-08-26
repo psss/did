@@ -11,6 +11,52 @@ from tmt.steps import Action
 from tmt.utils import GeneralError
 
 
+class PreparePlugin(tmt.steps.Plugin):
+    """ Common parent of prepare plugins """
+
+    # List of all supported methods aggregated from all plugins of the same step.
+    _supported_methods: List[tmt.steps.Method] = []
+
+    # Common keys for all prepare step implementations
+    _common_keys = ['where']
+
+    @classmethod
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
+        """ Create base click command (common for all prepare plugins) """
+
+        # Prepare general usage message for the step
+        if method_class:
+            usage = Prepare.usage(method_overview=usage)
+
+        # Create the command
+        @click.command(cls=method_class, help=usage)
+        @click.pass_context
+        @click.option(
+            '-h', '--how', metavar='METHOD',
+            help='Use specified method for environment preparation.')
+        def prepare(context, **kwargs):
+            context.obj.steps.add('prepare')
+            Prepare._save_context(context)
+
+        return prepare
+
+    def go(self, guest):
+        """ Prepare the guest (common actions) """
+        super().go(guest)
+
+        # Show guest name first in multihost scenarios
+        if self.step.plan.provision.is_multihost:
+            self.info('guest', guest.name, 'green')
+
+        # Show requested role if defined
+        where = self.get('where')
+        if where:
+            self.info('where', where, 'green')
+
+
 class Prepare(tmt.steps.Step):
     """
     Prepare the environment for testing.
@@ -20,6 +66,8 @@ class Prepare(tmt.steps.Step):
     Default order of required packages installation is '70', for the
     recommended packages it is '75'.
     """
+
+    _plugin_base_class = PreparePlugin
 
     def __init__(self, plan, data):
         """ Initialize prepare step data """
@@ -178,49 +226,3 @@ class Prepare(tmt.steps.Step):
         for plugin in self.phases(classes=PreparePlugin):
             requires.update(plugin.requires())
         return list(requires)
-
-
-class PreparePlugin(tmt.steps.Plugin):
-    """ Common parent of prepare plugins """
-
-    # List of all supported methods aggregated from all plugins of the same step.
-    _supported_methods: List[tmt.steps.Method] = []
-
-    # Common keys for all prepare step implementations
-    _common_keys = ['where']
-
-    @classmethod
-    def base_command(
-            cls,
-            usage: str,
-            method_class: Optional[Type[click.Command]] = None) -> click.Command:
-        """ Create base click command (common for all prepare plugins) """
-
-        # Prepare general usage message for the step
-        if method_class:
-            usage = Prepare.usage(method_overview=usage)
-
-        # Create the command
-        @click.command(cls=method_class, help=usage)
-        @click.pass_context
-        @click.option(
-            '-h', '--how', metavar='METHOD',
-            help='Use specified method for environment preparation.')
-        def prepare(context, **kwargs):
-            context.obj.steps.add('prepare')
-            Prepare._save_context(context)
-
-        return prepare
-
-    def go(self, guest):
-        """ Prepare the guest (common actions) """
-        super().go(guest)
-
-        # Show guest name first in multihost scenarios
-        if self.step.plan.provision.is_multihost:
-            self.info('guest', guest.name, 'green')
-
-        # Show requested role if defined
-        where = self.get('where')
-        if where:
-            self.info('where', where, 'green')

@@ -42,11 +42,76 @@ class CheckRsyncOutcome(enum.Enum):
     INSTALLED = 'installed'
 
 
+class ProvisionPlugin(tmt.steps.GuestlessPlugin):
+    """ Common parent of provision plugins """
+
+    # Default implementation for provision is a virtual machine
+    how = 'virtual'
+
+    # List of all supported methods aggregated from all plugins of the same step.
+    _supported_methods: List[tmt.steps.Method] = []
+
+    # Common keys for all provision step implementations
+    _common_keys = ['role']
+
+    @classmethod
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
+        """ Create base click command (common for all provision plugins) """
+
+        # Prepare general usage message for the step
+        if method_class:
+            usage = Provision.usage(method_overview=usage)
+
+        # Create the command
+        @click.command(cls=method_class, help=usage)
+        @click.pass_context
+        @click.option(
+            '-h', '--how', metavar='METHOD',
+            help='Use specified method for provisioning.')
+        def provision(context: click.Context, **kwargs: Any) -> None:
+            context.obj.steps.add('provision')
+            Provision._save_context(context)
+
+        return provision
+
+    def wake(self, data: Optional['GuestData'] = None) -> None:
+        """
+        Wake up the plugin
+
+        Override data with command line options.
+        Wake up the guest based on provided guest data.
+        """
+        super().wake()
+
+    def guest(self) -> Optional['Guest']:
+        """
+        Return provisioned guest
+
+        Each ProvisionPlugin has to implement this method.
+        Should return a provisioned Guest() instance.
+        """
+        raise NotImplementedError()
+
+    def requires(self) -> List[str]:
+        """ List of required packages needed for workdir sync """
+        return Guest.requires()
+
+    @classmethod
+    def clean_images(cls, clean: 'tmt.base.Clean', dry: bool) -> bool:
+        """ Remove the images of one particular plugin """
+        return True
+
+
 class Provision(tmt.steps.Step):
     """ Provision an environment for testing or use localhost. """
 
     # Default implementation for provision is a virtual machine
     DEFAULT_HOW = 'virtual'
+
+    _plugin_base_class = ProvisionPlugin
 
     def __init__(self, plan: 'tmt.Plan', data: tmt.steps.StepData) -> None:
         """ Initialize provision step data """
@@ -200,69 +265,6 @@ class Provision(tmt.steps.Step):
         for plugin in self.phases(classes=ProvisionPlugin):
             requires.update(plugin.requires())
         return list(requires)
-
-
-class ProvisionPlugin(tmt.steps.GuestlessPlugin):
-    """ Common parent of provision plugins """
-
-    # Default implementation for provision is a virtual machine
-    how = 'virtual'
-
-    # List of all supported methods aggregated from all plugins of the same step.
-    _supported_methods: List[tmt.steps.Method] = []
-
-    # Common keys for all provision step implementations
-    _common_keys = ['role']
-
-    @classmethod
-    def base_command(
-            cls,
-            usage: str,
-            method_class: Optional[Type[click.Command]] = None) -> click.Command:
-        """ Create base click command (common for all provision plugins) """
-
-        # Prepare general usage message for the step
-        if method_class:
-            usage = Provision.usage(method_overview=usage)
-
-        # Create the command
-        @click.command(cls=method_class, help=usage)
-        @click.pass_context
-        @click.option(
-            '-h', '--how', metavar='METHOD',
-            help='Use specified method for provisioning.')
-        def provision(context: click.Context, **kwargs: Any) -> None:
-            context.obj.steps.add('provision')
-            Provision._save_context(context)
-
-        return provision
-
-    def wake(self, data: Optional['GuestData'] = None) -> None:
-        """
-        Wake up the plugin
-
-        Override data with command line options.
-        Wake up the guest based on provided guest data.
-        """
-        super().wake()
-
-    def guest(self) -> Optional['Guest']:
-        """
-        Return provisioned guest
-
-        Each ProvisionPlugin has to implement this method.
-        Should return a provisioned Guest() instance.
-        """
-        raise NotImplementedError()
-
-    def requires(self) -> List[str]:
-        """ List of required packages needed for workdir sync """
-        return Guest.requires()
-
-    @classmethod
-    def clean_images(cls, clean: 'tmt.base.Clean', dry: bool) -> bool:
-        """ Remove the images of one particular plugin """
-        return True
 
 
 @dataclasses.dataclass
