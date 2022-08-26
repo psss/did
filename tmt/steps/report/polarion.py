@@ -42,7 +42,7 @@ class ReportPolarion(tmt.steps.report.ReportPlugin):
         """ Go through executed tests and report into Polarion """
         super().go()
 
-        from tmt.export import get_polarion_ids, import_polarion
+        from tmt.export import find_polarion_case_ids, import_polarion
         import_polarion()
         from tmt.export import PolarionWorkItem
         assert PolarionWorkItem
@@ -73,16 +73,16 @@ class ReportPolarion(tmt.steps.report.ReportPlugin):
             '*property[@name="polarion-project-span-ids"]')
 
         for result in self.step.plan.execute.results():
-            if not result.id:
+            if not result.ids or not any(result.ids.values()):
                 raise tmt.utils.ReportError(
                     f"Test Case {result.name} is not exported to Polarion, "
                     "please run 'tmt tests export --how polarion' on it")
-            work_item_id, test_project_id = get_polarion_ids(
-                PolarionWorkItem.query(
-                    result.id, fields=['work_item_id', 'project_id']))
+            work_item_id, test_project_id = find_polarion_case_ids(result.ids)
+
+            if test_project_id is None:
+                raise tmt.utils.ReportError("Test case missing or not found in Polarion")
 
             assert work_item_id is not None
-            assert test_project_id is not None
             assert project_span_ids is not None
 
             if test_project_id not in project_span_ids.attrib['value']:

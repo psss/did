@@ -70,6 +70,9 @@ SECTIONS_HEADINGS = {
     'Cleanup': ['<h1>Cleanup</h1>']
     }
 
+# Extra keys used for identification in Result class
+EXTRA_RESULT_IDENTIFICATION_KEYS = ['extra-nitrate', 'extra-task']
+
 
 #
 # fmf id types
@@ -2593,13 +2596,17 @@ class Result:
         self.note = data.get('note')
         self.duration = data.get('duration')
         if test:
-            self.id = test.node.get(
-                'id', test.node.get(
-                    'extra-nitrate', test.node.get(
-                        'extra-task', '')))
+            # Saving identifiable information for each test case so we can match them
+            # to Polarion/Nitrate/other cases and report run results there
+            self.ids = {tmt.identifier.ID_KEY: test.id}
+            for key in EXTRA_RESULT_IDENTIFICATION_KEYS:
+                self.ids[key] = test.node.get(key)
             interpret = test.result or 'respect'
         else:
-            self.id = ''
+            try:
+                self.ids = data['ids']
+            except KeyError:
+                self.ids = {}
             interpret = 'respect'
 
         # Check for valid results
@@ -2684,6 +2691,8 @@ class Result:
             data['note'] = self.note
         if self.duration:
             data['duration'] = self.duration
+        if self.ids:
+            data['ids'] = self.ids
         return data
 
 
