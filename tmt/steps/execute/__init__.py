@@ -13,7 +13,7 @@ import tmt
 import tmt.base
 import tmt.result
 import tmt.steps
-from tmt.steps import Action
+from tmt.steps import Action, Step, StepData
 from tmt.steps.provision import Guest
 from tmt.utils import GeneralError
 
@@ -121,6 +121,17 @@ class ExecutePlugin(tmt.steps.Plugin):
     how = 'tmt'
 
     scripts: Tuple['Script', ...] = ()
+
+    _login_after_test: Optional[tmt.steps.Login] = None
+
+    def __init__(
+            self,
+            step: Step,
+            data: StepData,
+            workdir: tmt.utils.WorkdirArgumentType = None) -> None:
+        super().__init__(step, data, workdir)
+        if tmt.steps.Login._opt('test'):
+            self._login_after_test = tmt.steps.Login(self.step, 90)
 
     @classmethod
     def base_command(

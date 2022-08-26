@@ -342,6 +342,16 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                     f'Test {test.name} {what_happened}, stopping execution.')
                 break
             index += 1
+
+            # Log into the guest after each executed test if "login
+            # --test" option is provided
+            if self._login_after_test:
+                assert test.path is not None  # narrow type
+                self._login_after_test.after_test(
+                    result,
+                    cwd=os.path.join(self.discover.workdir or "", test.path.lstrip('/')),
+                    env=self._test_environment(test, extra_environment),
+                    )
         # Overwrite the progress bar, the test data is irrelevant
         self._show_progress('', '', True)
 

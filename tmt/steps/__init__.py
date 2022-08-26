@@ -1051,6 +1051,10 @@ class Reboot(Action):
 class Login(Action):
     """ Log into the guest """
 
+    # TODO: remove when Step becomes Generic (#1372)
+    # Change typing of inherited attr
+    parent: Step
+
     # True if interactive login enabled
     _enabled: bool = False
 
@@ -1080,6 +1084,9 @@ class Login(Action):
             '-c', '--command', metavar='COMMAND',
             multiple=True, default=['bash'],
             help="Run given command(s). Default is 'bash'.")
+        @click.option(
+            '-t', '--test', is_flag=True,
+            help='Log into the guest after each executed test in the execute phase.')
         def login(context: click.Context, **kwargs: Any) -> None:
             """
             Provide user with an interactive shell on the guest.
@@ -1121,41 +1128,54 @@ class Login(Action):
     def go(self) -> None:
         """ Login to the guest(s) """
 
-        assert isinstance(self.parent, Step)
-        assert hasattr(self.parent, 'plan') and self.parent.plan is not None
+        if self._enabled_by_results(self.parent.plan.execute.results()):
+            self._login()
 
+    def _enabled_by_results(self, results: List['tmt.base.Result']) -> bool:
+        """ Verify possible test result condition """
         # Avoid circular imports
         from tmt.result import ResultOutcome
-
-        # Verify possible test result condition
         expected_results: Optional[List[ResultOutcome]] = [
-            ResultOutcome(raw_expected_result) for raw_expected_result in self.opt('when', [])
-            ]
+            ResultOutcome(raw_expected_result) for raw_expected_result in self.opt('when', [])]
 
-        if expected_results:
-            matching_results = (
-                result.result
-                for result in self.parent.plan.execute.results()
-                if result.result in expected_results
-                )
+        # Return True by default -> no expected results
+        if not expected_results:
+            return True
 
-            if not any(matching_results):
-                self.info('Skipping interactive shell', color='yellow')
-                return
+        # Check for expected result
+        for result in results:
+            if result.result in expected_results:
+                return True
+        else:  # No break/return in for cycle
+            self.info('Skipping interactive shell', color='yellow')
+            return False
 
-        # Run the interactive command
+    def _login(
+            self,
+            cwd: Optional[str] = None,
+            env: Optional[tmt.utils.EnvironmentType] = None) -> None:
+        """ Run the interactive command """
         commands: List[str] = self.opt('command')
         self.info('login', 'Starting interactive shell', color='yellow')
         for guest in self.parent.plan.provision.guests():
             # Attempt to push the workdir to the guest
             try:
                 guest.push()
-                cwd: Optional[str] = self.parent.plan.worktree
+                cwd = cwd or self.parent.plan.worktree
             except tmt.utils.GeneralError:
                 self.warn("Failed to push workdir to the guest.")
                 cwd = None
             # Execute all requested commands
             for command in commands:
                 self.debug(f"Run '{command}' in interactive mode.")
-                guest.execute(command, interactive=True, cwd=cwd)
+                guest.execute(command, interactive=True, cwd=cwd, env=env)
         self.info('login', 'Interactive shell finished', color='yellow')
+
+    def after_test(
+            self,
+            result: 'tmt.base.Result',
+            cwd: Optional[str] = None,
+            env: Optional[tmt.utils.EnvironmentType] = None) -> None:
+        """ Check and login after test execution """
+        if self._enabled_by_results([result]):
+            self._login(cwd, env)

@@ -1,0 +1,6 @@
+summary: dummy test
+
+/test3:
+  test: "false"
+/test4:
+  test: "true"

@@ -1,0 +1,2 @@
+summary: dummy
+test: ./test.sh

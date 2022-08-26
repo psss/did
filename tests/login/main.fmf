@@ -13,3 +13,7 @@
 /debug:
     summary: Log into the guest after report
     test: ./debug.sh
+
+/test:
+    summary: Log into the guest after each test
+    test: ./test.sh
