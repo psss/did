@@ -1342,6 +1342,58 @@ class SerializableContainer:
 
         yield from self.to_dict().items()
 
+    @classmethod
+    def default(cls, key: str, default: Any = None) -> Any:
+        """
+        Return a default value for a given key.
+
+        Keys may have a default value, or a default *factory* has been specified.
+
+        :param key: key to look for.
+        :param default: when key has no default value, ``default`` is returned.
+        :returns: a default value defined for the key, or its ``default_factory``'s
+            return value of ``default_factory``, or ``default`` when key has no
+            default value.
+        """
+
+        for field in dataclasses.fields(cls):
+            if key != field.name:
+                continue
+
+            if not isinstance(field.default_factory, dataclasses._MISSING_TYPE):
+                return field.default_factory()
+
+            if not isinstance(field.default, dataclasses._MISSING_TYPE):
+                return field.default
+
+        else:
+            return default
+
+    @property
+    def is_bare(self) -> bool:
+        """
+        Check whether all keys are set to their default values.
+
+        :returns: ``True`` if all keys either hold their default value
+            or are not set at all, ``False`` otherwise.
+        """
+
+        for field in dataclasses.fields(self):
+            value = getattr(self, field.name)
+
+            if not isinstance(field.default_factory, dataclasses._MISSING_TYPE):
+                if value != field.default_factory():
+                    return False
+
+            elif not isinstance(field.default, dataclasses._MISSING_TYPE):
+                if value != field.default:
+                    return False
+
+            else:
+                pass
+
+        return True
+
     #
     # Moving data between containers and objects owning them
     #
