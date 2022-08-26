@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import sys
 import time
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import click
 import fmf
@@ -213,238 +213,6 @@ _RawRequire = Union[
 ]
 
 
-class ValidateFmfMixin:
-    """
-    Mixin adding validation of an fmf node.
-
-    Loads a schema whose name is derived from class name, and uses fmf's validate()
-    method to perform the validation.
-    """
-
-    def _validate_fmf_node(self, node: fmf.Tree, logger: tmt.utils.Common,
-                           raise_on_validation_error: bool) -> None:
-        """ Validate a given fmf node """
-
-        errors = tmt.utils.validate_fmf_node(
-            node, f'{self.__class__.__name__.lower()}.yaml')
-
-        if errors:
-            if raise_on_validation_error:
-                raise tmt.utils.SpecificationError(
-                    f'fmf node {node.name} failed validation',
-                    validation_errors=errors)
-
-            for _, error_message in errors:
-                logger.warn(error_message, shift=1)
-
-    def __init__(
-            self,
-            *,
-            node: fmf.Tree,
-            logger: tmt.utils.Common,
-            skip_validation: bool = False,
-            raise_on_validation_error: bool = False,
-            **kwargs: Any) -> None:
-        # Validate *before* letting next class in line touch the data.
-        if not skip_validation:
-            self._validate_fmf_node(node, logger, raise_on_validation_error)
-
-        kwargs.setdefault('logger', self)
-        super().__init__(node=node, **kwargs)
-
-
-# A type representing compatible sources of keys and values.
-KeySource = Union[Dict[str, Any], fmf.Tree]
-
-
-class LoadFmfKeysMixin:
-    """
-    Mixin adding support for loading fmf keys into object attributes.
-
-    When invoked, annotated class-level variables are searched for in a given fmf node,
-    and if the key of the same name as the variable exists, its value is "promoted" to
-    instance variable.
-
-    If a method named ``_normalize_<variable name>`` exists, it is called with the fmf
-    key value as its single argument, and its return value is assigned to instance
-    variable. This gives class chance to modify or transform the original value when
-    needed, e.g. to convert the original value to a type more suitable for internal
-    processing.
-    """
-
-    # If specified, keys would be iterated over in the order as listed here.
-    KEYS_SHOW_ORDER: List[str] = []
-
-    # NOTE: these could be static methods, self is probably useless, but that would
-    # cause complications when classes assign these to their members. That makes them
-    # no longer static as far as class is concerned, which means they get called with
-    # `self` as the first argument. A workaround would be to assign staticmethod()-ized
-    # version of them, but that's too much repetition.
-    def _normalize_string_list(self, value: Union[None, str, List[str]]) -> List[str]:
-        if value is None:
-            return []
-
-        return [value] if isinstance(value, str) else value
-
-    def _normalize_environment(self, value: Optional[Dict[str, Any]]) -> tmt.utils.EnvironmentType:
-        if value is None:
-            return {}
-
-        return {
-            name: str(value) for name, value in value.items()
-            }
-
-    @classmethod
-    def _iter_key_annotations(cls) -> Generator[Tuple[str, Any], None, None]:
-        """
-        Iterate over keys' type annotations.
-
-        Keys are yielded in the order: keys declared by parent classes first, then
-        keys declared by the class itself, all following the order in which keys
-        were defined in their respective classes.
-
-        Yields:
-            pairs of key name and its annotations.
-        """
-
-        for base in cls.__bases__:
-            for name, value in base.__dict__.get('__annotations__', {}).items():
-                # Skip special fields that are not keys.
-                if name == 'KEYS_SHOW_ORDER':
-                    continue
-
-                yield (name, value)
-
-        yield from cls.__dict__.get('__annotations__', {}).items()
-
-    @classmethod
-    def keys(cls) -> Generator[str, None, None]:
-        """
-        Iterate over key names.
-
-        Keys are yielded in the order: keys declared by parent classes first, then
-        keys declared by the class itself, all following the order in which keys
-        were defined in their respective classes.
-
-        Yields:
-            key names.
-        """
-
-        for keyname, _ in cls._iter_key_annotations():
-            yield keyname
-
-    def items(self) -> Generator[Tuple[str, Any], None, None]:
-        """
-        Iterate over keys and their values.
-
-        Keys are yielded in the order: keys declared by parent classes first, then
-        keys declared by the class itself, all following the order in which keys
-        were defined in their respective classes.
-
-        Yields:
-            pairs of key name and its value.
-        """
-
-        for keyname in self.keys():
-            yield (keyname, getattr(self, keyname))
-
-    # TODO: exists for backward compatibility for the transition period. Once full
-    # type annotations land, there should be no need for extra _keys attribute.
-    @classmethod
-    def _keys(cls) -> List[str]:
-        """ Return a list of names of object's keys. """
-
-        return list(cls.keys())
-
-    def _load_keys(
-            self,
-            node: fmf.Tree,
-            logger: tmt.utils.Common) -> None:
-        """ Extract values for class-level attributes, and verify they match declared types. """
-
-        LOG_SHIFT, LOG_LEVEL = 2, 4
-
-        debug = functools.partial(self.debug, shift=LOG_SHIFT, level=LOG_LEVEL)
-
-        for keyname, keytype in self._iter_key_annotations():
-            key_address = f'{node.name}{keyname}'
-
-            # Do not indent this particular entry like the rest, so it could serve
-            # as a "header" for a single key processing.
-            logger.debug('key', key_address, shift=LOG_SHIFT - 1, level=LOG_LEVEL)
-
-            debug('desired type', str(keytype))
-
-            value: Any = None
-
-            debug('dict', self.__dict__)
-
-            if hasattr(self, keyname):
-                # If the key exists as instance's attribute already, it is because it's been
-                # declared with a default value, and the attribute now holds said default value.
-                default_value = getattr(self, keyname)
-
-                # If the default value is a mutable container, we cannot use it directly.
-                # Should we do so, the very same default value would be assigned to multiple
-                # instances/attributes instead of each instance having its own distinct container.
-                if isinstance(default_value, (list, dict)):
-                    debug('detected mutable default')
-                    default_value = copy.copy(default_value)
-
-                debug('default value', str(default_value))
-                debug('default value type', str(type(default_value)))
-
-                # try+except seems to work better than get(), especially when
-                # semantic of fmf.Tree.get() is slightly different than that
-                # of dict().get().
-                try:
-                    value = node[keyname]
-
-                except KeyError:
-                    value = default_value
-
-                debug('raw value', str(value))
-                debug('raw value type', str(type(value)))
-
-            else:
-                value = node.get(keyname)
-
-                debug('raw value', str(value))
-                debug('raw value type', str(type(value)))
-
-            debug('value', str(value))
-            debug('value type', str(type(value)))
-
-            normalize_callback = getattr(self, f'_normalize_{keyname}', None)
-
-            if normalize_callback:
-                value = normalize_callback(value)
-
-                debug('normalized value', str(value))
-                debug('normalized value type', str(type(value)))
-
-            debug('final value', str(value))
-            debug('final value type', str(type(value)))
-
-            setattr(self, keyname, value)
-
-            # Apparently pointless, but makes the debugging output more readable.
-            # There may be plenty of tests and plans and keys, a bit of spacing
-            # can't hurt.
-            debug('')
-
-    def __init__(
-            self,
-            *,
-            node: fmf.Tree,
-            logger: tmt.utils.Common,
-            **kwargs: Any) -> None:
-        self._load_keys(node, logger)
-
-        kwargs.setdefault('logger', self)
-        super().__init__(node=node, **kwargs)
-
-
 class Core(tmt.utils.Common):
     """
     General node object
@@ -481,7 +249,7 @@ class Core(tmt.utils.Common):
         ]
 
     # Normalization methods
-    _normalize_tag = LoadFmfKeysMixin._normalize_string_list
+    _normalize_tag = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
     # TODO: remove when schema becomes mandatory, `order` shall never be `null`
     def _normalize_order(self, value: Optional[int]) -> int:
@@ -687,7 +455,7 @@ class Core(tmt.utils.Common):
 Node = Core
 
 
-class Test(ValidateFmfMixin, LoadFmfKeysMixin, Core):
+class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
     """ Test object (L1 Metadata) """
 
     # Basic test information
@@ -705,9 +473,9 @@ class Test(ValidateFmfMixin, LoadFmfKeysMixin, Core):
     duration: Optional[str] = DEFAULT_TEST_DURATION_L1
     result: str = 'respect'
 
-    _normalize_contact = LoadFmfKeysMixin._normalize_string_list
-    _normalize_component = LoadFmfKeysMixin._normalize_string_list
-    _normalize_recommend = LoadFmfKeysMixin._normalize_string_list
+    _normalize_contact = tmt.utils.LoadFmfKeysMixin._normalize_string_list
+    _normalize_component = tmt.utils.LoadFmfKeysMixin._normalize_string_list
+    _normalize_recommend = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
     def _normalize_require(
             self, value: Optional[_RawRequire]) -> List[Union[str, FmfId]]:
@@ -1009,15 +777,15 @@ class Test(ValidateFmfMixin, LoadFmfKeysMixin, Core):
             return super().export(format_, keys)
 
 
-class Plan(ValidateFmfMixin, LoadFmfKeysMixin, Core):
+class Plan(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
     """ Plan object (L2 Metadata) """
 
     # `environment` and `environment-file` are NOT promoted to instance variables.
     context: FmfContextType = {}
     gate: List[str] = []
 
-    _normalize_context = LoadFmfKeysMixin._normalize_environment
-    _normalize_gate = LoadFmfKeysMixin._normalize_string_list
+    _normalize_context = tmt.utils.LoadFmfKeysMixin._normalize_environment
+    _normalize_gate = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
     extra_L2_keys = [
         'context',
@@ -1504,7 +1272,7 @@ class StoryPriority(enum.Enum):
         return self.value
 
 
-class Story(ValidateFmfMixin, LoadFmfKeysMixin, Core):
+class Story(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
     """ User story object """
 
     example: List[str] = []
@@ -1512,7 +1280,7 @@ class Story(ValidateFmfMixin, LoadFmfKeysMixin, Core):
     title: Optional[str] = None
     priority: Optional[StoryPriority] = None
 
-    _normalize_example = LoadFmfKeysMixin._normalize_string_list
+    _normalize_example = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
     def _normalize_priority(self, value: Optional[str]) -> Optional[StoryPriority]:
         if value is None:

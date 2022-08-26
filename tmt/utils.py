@@ -2,6 +2,7 @@
 """ Test Metadata Utilities """
 
 import contextlib
+import copy
 import dataclasses
 import datetime
 import functools
@@ -1291,6 +1292,18 @@ def yaml_to_dict(data: Any,
             f"Expected dictionary in yaml data, "
             f"got '{type(loaded_data).__name__}'.")
     return loaded_data
+
+
+def key_to_option(key: str) -> str:
+    """ Convert a key name to corresponding option name """
+
+    return key.replace('_', '-')
+
+
+def option_to_key(option: str) -> str:
+    """ Convert an option name to corresponding key name """
+
+    return option.replace('-', '_')
 
 
 SerializableContainerDerivedType = TypeVar(
@@ -3024,3 +3037,266 @@ def wait(
             tick *= tick_increase
 
             continue
+
+
+class ValidateFmfMixin:
+    """
+    Mixin adding validation of an fmf node.
+
+    Loads a schema whose name is derived from class name, and uses fmf's validate()
+    method to perform the validation.
+    """
+
+    def _validate_fmf_node(self, node: fmf.Tree, logger: Common,
+                           raise_on_validation_error: bool) -> None:
+        """ Validate a given fmf node """
+
+        errors = validate_fmf_node(
+            node, f'{self.__class__.__name__.lower()}.yaml')
+
+        if errors:
+            if raise_on_validation_error:
+                raise SpecificationError(
+                    f'fmf node {node.name} failed validation',
+                    validation_errors=errors)
+
+            for _, error_message in errors:
+                logger.warn(error_message, shift=1)
+
+    def __init__(
+            self,
+            *,
+            node: fmf.Tree,
+            logger: Common,
+            skip_validation: bool = False,
+            raise_on_validation_error: bool = False,
+            **kwargs: Any) -> None:
+        # Validate *before* letting next class in line touch the data.
+        if not skip_validation:
+            self._validate_fmf_node(node, logger, raise_on_validation_error)
+
+        kwargs.setdefault('logger', self)
+        super().__init__(node=node, **kwargs)  # type: ignore[call-arg]
+
+
+# A type representing compatible sources of keys and values.
+KeySource = Union[Dict[str, Any], fmf.Tree]
+
+
+class NormalizeKeysMixin:
+    """
+    Mixin adding support for loading fmf keys into object attributes.
+
+    When invoked, annotated class-level variables are searched for in a given source
+    container - a mapping, an fmf node, etc. - and if the key of the same name as the
+    variable exists, its value is "promoted" to instance variable.
+
+    If a method named ``_normalize_<variable name>`` exists, it is called with the fmf
+    key value as its single argument, and its return value is assigned to instance
+    variable. This gives class chance to modify or transform the original value when
+    needed, e.g. to convert the original value to a type more suitable for internal
+    processing.
+    """
+
+    # If specified, keys would be iterated over in the order as listed here.
+    KEYS_SHOW_ORDER: List[str] = []
+
+    # NOTE: these could be static methods, self is probably useless, but that would
+    # cause complications when classes assign these to their members. That makes them
+    # no longer static as far as class is concerned, which means they get called with
+    # `self` as the first argument. A workaround would be to assign staticmethod()-ized
+    # version of them, but that's too much repetition.
+    #
+    # TODO: wouldn't it be nice if these could be mention in dataclass.field()?
+    # It would require a clone of dataclass.field() though.
+    def _normalize_string_list(self, value: Union[None, str, List[str]]) -> List[str]:
+        if value is None:
+            return []
+
+        return [value] if isinstance(value, str) else value
+
+    def _normalize_environment(self, value: Optional[Dict[str, Any]]) -> EnvironmentType:
+        if value is None:
+            return {}
+
+        return {
+            name: str(value) for name, value in value.items()
+            }
+
+    @classmethod
+    def _iter_key_annotations(cls) -> Generator[Tuple[str, Any], None, None]:
+        """
+        Iterate over keys' type annotations.
+
+        Keys are yielded in the order: keys declared by parent classes first, then
+        keys declared by the class itself, all following the order in which keys
+        were defined in their respective classes.
+
+        Yields:
+            pairs of key name and its annotations.
+        """
+
+        def _iter_class_annotations(klass: type) -> Generator[Tuple[str, Any], None, None]:
+            # Skip, needs fixes to become compatible
+            if klass is Common:
+                return
+
+            for name, value in klass.__dict__.get('__annotations__', {}).items():
+                # Skip special fields that are not keys.
+                if name == 'KEYS_SHOW_ORDER':
+                    continue
+
+                yield (name, value)
+
+        # Reverse MRO to start with the most base classes first, to iterate over keys
+        # in the order they are defined.
+        for klass in reversed(cls.__mro__):
+            yield from _iter_class_annotations(klass)
+
+    @classmethod
+    def keys(cls) -> Generator[str, None, None]:
+        """
+        Iterate over key names.
+
+        Keys are yielded in the order: keys declared by parent classes first, then
+        keys declared by the class itself, all following the order in which keys
+        were defined in their respective classes.
+
+        Yields:
+            key names.
+        """
+
+        for keyname, _ in cls._iter_key_annotations():
+            yield keyname
+
+    def items(self) -> Generator[Tuple[str, Any], None, None]:
+        """
+        Iterate over keys and their values.
+
+        Keys are yielded in the order: keys declared by parent classes first, then
+        keys declared by the class itself, all following the order in which keys
+        were defined in their respective classes.
+
+        Yields:
+            pairs of key name and its value.
+        """
+
+        for keyname in self.keys():
+            yield (keyname, getattr(self, keyname))
+
+    # TODO: exists for backward compatibility for the transition period. Once full
+    # type annotations land, there should be no need for extra _keys attribute.
+    @classmethod
+    def _keys(cls) -> List[str]:
+        """ Return a list of names of object's keys. """
+
+        return list(cls.keys())
+
+    def _load_keys(
+            self,
+            key_source: Dict[str, Any],
+            key_source_name: str,
+            logger: Common) -> None:
+        """ Extract values for class-level attributes, and verify they match declared types. """
+
+        LOG_SHIFT, LOG_LEVEL = 2, 4
+
+        debug_intro = functools.partial(logger.debug, shift=LOG_SHIFT - 1, level=LOG_LEVEL)
+        debug = functools.partial(logger.debug, shift=LOG_SHIFT, level=LOG_LEVEL)
+
+        debug_intro('key source')
+        for k, v in key_source.items():
+            debug(f'{k}: {v} ({type(v)})')
+
+        debug('')
+
+        for keyname, keytype in self._iter_key_annotations():
+            key_address = f'{key_source_name}:{keyname}'
+            source_keyname = key_to_option(keyname)
+
+            # Do not indent this particular entry like the rest, so it could serve
+            # as a "header" for a single key processing.
+            debug_intro('key', key_address)
+            debug('field', source_keyname)
+
+            debug('desired type', str(keytype))
+
+            value: Any = None
+
+            # Verbose, let's hide it a bit deeper.
+            debug('dict', self.__dict__, level=LOG_LEVEL + 1)
+
+            if hasattr(self, keyname):
+                # If the key exists as instance's attribute already, it is because it's been
+                # declared with a default value, and the attribute now holds said default value.
+                default_value = getattr(self, keyname)
+
+                # If the default value is a mutable container, we cannot use it directly.
+                # Should we do so, the very same default value would be assigned to multiple
+                # instances/attributes instead of each instance having its own distinct container.
+                if isinstance(default_value, (list, dict)):
+                    debug('detected mutable default')
+                    default_value = copy.copy(default_value)
+
+                debug('default value', str(default_value))
+                debug('default value type', str(type(default_value)))
+
+                # try+except seems to work better than get(), especially when
+                # semantic of fmf.Tree.get() is slightly different than that
+                # of dict().get().
+                try:
+                    value = key_source[source_keyname]
+
+                except KeyError:
+                    value = default_value
+
+                debug('raw value', str(value))
+                debug('raw value type', str(type(value)))
+
+            else:
+                value = key_source.get(source_keyname)
+
+                debug('raw value', str(value))
+                debug('raw value type', str(type(value)))
+
+            normalize_callback = getattr(self, f'_normalize_{keyname}', None)
+
+            if normalize_callback:
+                value = normalize_callback(value)
+
+                debug('normalized value', str(value))
+                debug('normalized value type', str(type(value)))
+
+            debug('final value', str(value))
+            debug('final value type', str(type(value)))
+
+            # Set attribute by adding it to __dict__ directly. Messing with setattr()
+            # might cause re-use of mutable values by other instances.
+            self.__dict__[keyname] = value
+
+            # Apparently pointless, but makes the debugging output more readable.
+            # There may be plenty of tests and plans and keys, a bit of spacing
+            # can't hurt.
+            debug('')
+
+        debug_intro('normalized fields')
+        for k, v in self.__dict__.items():
+            debug(f'{k}: {v} ({type(v)})')
+
+        debug('')
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+
+
+class LoadFmfKeysMixin(NormalizeKeysMixin):
+    def __init__(
+            self,
+            *,
+            node: fmf.Tree,
+            logger: Common,
+            **kwargs: Any) -> None:
+        self._load_keys(node.get(), node.name, logger)
+
+        kwargs.setdefault('logger', logger)
+        super().__init__(node=node, **kwargs)
