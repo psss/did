@@ -19,13 +19,13 @@ class PrepareMultihost(tmt.steps.prepare.PreparePlugin):  # type: ignore[misc]
     the following:
 
     roles:
-      - server:
+      server:
           - server-one
           - server-two
 
     hosts:
-      - server-one: 10.10.10.10
-      - server-two: 10.10.10.11
+      server-one: 10.10.10.10
+      server-two: 10.10.10.11
 
     The exported roles are comma-separated.
     """
