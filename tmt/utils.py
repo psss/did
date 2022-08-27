@@ -636,15 +636,16 @@ class Common:
         Returns stdout if join=True, (stdout, stderr) tuple otherwise.
         """
 
-        # Use a generic message if none given, prepare error message
-        if not message:
-            if isinstance(command, (list, tuple)):
-                line = ' '.join(command)
-            else:
-                line = command
-            message = f"Run command '{line}'."
-        self.debug(message, level=2)
-        message = "Failed to " + message[0].lower() + message[1:]
+        # A bit of logging - command, default message, error message for later...
+        if isinstance(command, (list, tuple)):
+            printable_command = ' '.join(shlex.quote(s) for s in command)
+        else:
+            printable_command = command
+
+        if message:
+            self.debug(message, level=2)
+
+        self.debug(f'Run command: {printable_command}', level=2)
 
         # Nothing more to do in dry mode (unless requested)
         if self.opt('dry') and not dry:
@@ -663,7 +664,7 @@ class Common:
                 command, cwd, shell, env, log, join, interactive, timeout)
         except RunError as error:
             self.debug(error.message, level=3)
-            message += f" Reason: {error.message}"
+            message = f"Failed to run command: {printable_command} Reason: {error.message}"
             raise RunError(
                 message, error.command, error.returncode,
                 error.stdout, error.stderr)
