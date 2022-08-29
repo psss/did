@@ -347,6 +347,34 @@ def get_polarion_case(data: Dict[str, str], preferred_project: Optional[str] = N
         return None
 
 
+def enabled_somewhere(test: 'tmt.Test') -> bool:
+    """ True if the test is enabled for some context (adjust rules) """
+    # node.original_data are fmf data _before_ adjust was processed
+    try:
+        if test.node.original_data['enabled']:
+            return True
+    except KeyError:
+        # Key defaults to True so we already know the outcome
+        return True
+
+    # Some rule in adjust enables the test
+    try:
+        adjust_rules = test.node.original_data['adjust']
+        # TODO: Should not be necessary once we normalize data
+        if isinstance(adjust_rules, dict):
+            adjust_rules = [adjust_rules]
+        for rule in adjust_rules:
+            try:
+                if rule['enabled']:
+                    return True
+            except KeyError:
+                pass
+    except KeyError:
+        pass
+    # At this point nothing enables the test
+    return False
+
+
 def export_to_nitrate(test: 'tmt.Test') -> None:
     """ Export fmf metadata to nitrate test cases """
     import_nitrate()
@@ -520,7 +548,7 @@ def export_to_nitrate(test: 'tmt.Test') -> None:
     # Status
     current_status = nitrate_case.status if nitrate_case else nitrate.CaseStatus('CONFIRMED')
     # Enable enabled tests
-    if test.enabled:
+    if enabled_somewhere(test):
         if not dry_mode:
             nitrate_case.status = nitrate.CaseStatus('CONFIRMED')
         echo(style('status: ', fg='green') + 'CONFIRMED')
