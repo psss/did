@@ -8,21 +8,36 @@ description:
     present. Command line option ``--environment`` can be used to
     override environment variables defined in both tests and plan.
     Use the :ref:`/spec/plans/environment-file` key to load
-    variables from files.
-example: |
+    variables from files. The ``environment+`` notation can be
+    used to extend environment defined in the parent plan, see
+    also the :ref:`inherit-plans` section for more examples.
+example:
+  - |
     # Environment variables defined in a plan
-    /plan:
-        environment:
-            KOJI_TASK_ID: 42890031
-            RELEASE: f33
-        execute:
-            script:
-                - echo "Testing $KOJI_TASK_ID on release $RELEASE"
+    environment:
+        KOJI_TASK_ID: 42890031
+        RELEASE: f33
+    execute:
+        script: echo "Testing $KOJI_TASK_ID on release $RELEASE"
 
+  - |
+    # Share common variables across plans using inheritance
+    /plans:
+        environment:
+            COMMON: This is a common variable content
+
+        /mini:
+            environment+:
+                VARIANT: mini
+        /full:
+            environment+:
+                VARIANT: full
+  - |
     # Variables from the command line
     tmt run --environment X=1 --environment Y=2
     tmt run --environment "X=1 Y=2"
 
+  - |
     # Make sure to quote properly values which include spaces
     tmt run --environment "BUGS='123 456 789'"
 

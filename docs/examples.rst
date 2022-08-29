@@ -548,6 +548,8 @@ Metadata Specification::
     pass fmf remote id in 'default' is valid
 
 
+.. _inherit-plans:
+
 Inherit Plans
 ------------------------------------------------------------------
 
