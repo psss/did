@@ -1,0 +1,17 @@
+result: custom
+
+/custom-results:
+    summary: Test provides custom results
+    test: cp results.yaml ${TMT_TEST_DATA}
+/missing-custom-results:
+    summary: Test provides custom results but results.yaml is not present
+    test: 'true'
+/empty-custom-results-file:
+    summary: results.yaml is empty
+    test: touch ${TMT_TEST_DATA}/results.yaml
+/wrong-yaml-results-file:
+    summary: results.yaml is valid YAML but wrong format
+    test: echo "{}" > ${TMT_TEST_DATA}/results.yaml
+/invalid-yaml-results-file:
+    summary: results.yaml is invalid YAML
+    test: echo ":" > ${TMT_TEST_DATA}/results.yaml

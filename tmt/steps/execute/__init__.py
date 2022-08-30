@@ -225,7 +225,7 @@ class ExecutePlugin(tmt.steps.Plugin):
                     destination=dest,
                     options=["-p", "--chmod=755"])
 
-    def check_shell(self, test: "tmt.Test") -> "tmt.Result":
+    def check_shell(self, test: "tmt.Test") -> List["tmt.Result"]:
         """ Check result of a shell test """
         # Prepare the log path
         data = {'log': self.data_path(test, TEST_OUTPUT_FILENAME),
@@ -239,9 +239,9 @@ class ExecutePlugin(tmt.steps.Plugin):
             if test.returncode == tmt.utils.PROCESS_TIMEOUT:
                 data['note'] = 'timeout'
                 self.timeout_hint(test)
-        return tmt.Result(data, test=test)
+        return [tmt.Result(data, test=test)]
 
-    def check_beakerlib(self, test: "tmt.Test") -> "tmt.Result":
+    def check_beakerlib(self, test: "tmt.Test") -> List["tmt.Result"]:
         """ Check result of a beakerlib test """
         # Initialize data, prepare log paths
         data = {'result': 'error',
@@ -258,7 +258,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         except tmt.utils.FileError:
             self.debug(f"Unable to read '{beakerlib_results_file}'.", level=3)
             data['note'] = 'beakerlib: TestResults FileError'
-            return tmt.Result(data, test=test)
+            return [tmt.Result(data, test=test)]
 
         search_result = re.search('TESTRESULT_RESULT_STRING=(.*)', results)
         # States are: started, incomplete and complete
@@ -270,7 +270,7 @@ class ExecutePlugin(tmt.steps.Plugin):
                 f"No result or state found in '{beakerlib_results_file}'.",
                 level=3)
             data['note'] = 'beakerlib: Result/State missing'
-            return tmt.Result(data, test=test)
+            return [tmt.Result(data, test=test)]
 
         result = search_result.group(1)
         state = search_state.group(1)
@@ -287,9 +287,9 @@ class ExecutePlugin(tmt.steps.Plugin):
         # Finally we have a valid result
         else:
             data['result'] = result.lower()
-        return tmt.Result(data, test=test)
+        return [tmt.Result(data, test=test)]
 
-    def check_result_file(self, test: "tmt.Test") -> "tmt.Result":
+    def check_result_file(self, test: "tmt.Test") -> List["tmt.Result"]:
         """
         Check result file created by tmt-report-result
 
@@ -331,7 +331,38 @@ class ExecutePlugin(tmt.steps.Plugin):
         except KeyError:
             data['result'] = "error"
             data['note'] = f"invalid test result '{result}' in result file"
-        return tmt.Result(data, test=test)
+        return [tmt.Result(data, test=test)]
+
+    def check_custom_results(self, test: "tmt.Test") -> List["tmt.Result"]:
+        """
+        Process custom results.yaml file created by the test itself.
+        """
+        self.debug("Processing custom 'results.yaml' file created by the test itself.")
+
+        custom_results_path = os.path.join(
+            self.data_path(test, full=True),
+            tmt.steps.execute.TEST_DATA,
+            'results.yaml')
+
+        if not os.path.exists(custom_results_path):
+            # Missing results.yaml means error result, but tmt contines with other tests
+            return [tmt.Result(
+                data={
+                    'note': f"custom results file '{custom_results_path}' not found",
+                            'result': 'error'
+                    },
+                test=test)]
+
+        with open(custom_results_path) as custom_results_file:
+            results = tmt.utils.yaml_to_list(custom_results_file)
+
+        custom_results = []
+        for partial_result_data in results:
+            partial_result = tmt.Result(partial_result_data, test=test)
+            partial_result.name += partial_result_data['name']
+            custom_results.append(partial_result)
+
+        return custom_results
 
     def check_abort_file(self, test: "tmt.Test") -> bool:
         """

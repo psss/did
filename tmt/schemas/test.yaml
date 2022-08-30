@@ -99,6 +99,7 @@ properties:
       - warn
       - error
       - fail
+      - custom
 
   # https://tmt.readthedocs.io/en/stable/spec/core.html#summary
   summary:

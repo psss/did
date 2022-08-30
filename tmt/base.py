@@ -2394,7 +2394,7 @@ class Result:
             self.log = []
 
         # Handle alternative result interpretation
-        if interpret != "respect":
+        if interpret not in ('respect', 'custom'):
             # Extend existing note or set a new one
             if self.note and isinstance(self.note, str):
                 self.note += f', original result: {self.result}'

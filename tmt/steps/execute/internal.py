@@ -188,6 +188,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     def check(self, test: Test) -> Result:
         """ Check the test result """
         self.debug(f"Check result of '{test.name}'.")
+        if test.result == 'custom':
+            return self.check_custom_results(test)
         if test.framework == 'beakerlib':
             return self.check_beakerlib(test)
         else:
@@ -306,7 +308,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 source=self.data_path(test, full=True),
                 extend_options=exclude)
 
-            result = self.check(test)
+            results = self.check(test)  # Produce list of results
             duration = click.style(test.real_duration, fg='cyan')
             shift = 1 if self.opt('verbose') < 2 else 2
 
@@ -319,14 +321,19 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                     if self._handle_reboot(test, guest):
                         continue
                 except tmt.utils.RebootTimeoutError:
-                    result.result = 'error'
-                    result.note = 'reboot timeout'
+                    for result in results:
+                        result.result = 'error'
+                        result.note = 'reboot timeout'
             abort = self.check_abort_file(test)
             if abort:
-                result.note = 'aborted'
-            self._results.append(result)
-            self.verbose(
-                f"{duration} {result.show()} [{progress}]", shift=shift)
+                for result in results:
+                    # In case of aborted all results in list will be aborted
+                    result.note = 'aborted'
+            self._results.extend(results)
+            for result in results:
+                # If test duration information is missing, print 8 spaces to keep indention
+                duration = click.style(result.duration, fg='cyan') if result.duration else 8 * ' '
+                self.verbose(f"{duration} {result.show()} [{progress}]", shift=shift)
             if (abort or exit_first and
                     result.result not in ('pass', 'info')):
                 # Clear the progress bar before outputting

@@ -1,0 +1,12 @@
+- name: /test/passing
+  result: pass
+  log: pass_log
+  duration: 00:11:22
+  note: good result
+- name: /test/failing
+  result: fail
+  log: fail_log
+  duration: 00:22:33
+  note: fail result
+- name: /test/no_keys
+  result: pass

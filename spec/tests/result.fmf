@@ -13,18 +13,42 @@ description: |
     supported:
 
     respect
-        test result is respected (fails when test failed)
+        test result is respected (fails when test failed) - default value
     xfail
         expected fail (pass when test fails, fail when test passes)
     pass, info, warn, error, fail
         ignore the actual test result and always report provided
         value instead
+    custom
+        test needs to create it's own ``results.yaml`` file in the
+        ``${TMT_TEST_DATA}`` directory. The ``results.yaml`` contains list of
+        dictionaries. Each dictionary must contain at least ``name`` and
+        ``result`` keys. Optional keys are ``log`` (contains path to log file),
+        ``duration`` (in HH:MM:SS format) and ``note``.
 
-    The default value is ``respect``.
-
-example: |
+example:
+  - |
+    # Plain swapping fail to pass and pass to fail result
     result: xfail
+  - |
+    # Custom results - results.yaml needs to be provided to the ${TMT_TEST_DATA} directory
+    result: custom
+  - |
+    # Example content of results.yaml
+    - name: /test/passing
+      result: pass
+      log: pass_log
+      duration: 00:11:22
+      note: good result
+    - name: /test/failing
+      result: fail
+      log: fail_log
+      duration: 00:22:33
+      note: fail result
+    - name: /test/no_keys
+      result: pass
 
 link:
   - implemented-by: /tmt/base.py
   - verified-by: /tests/execute/result
+  - verified-by: /tests/execute/results-custom

@@ -36,6 +36,7 @@ import urllib3.exceptions
 from click import echo, style, wrap_text
 from ruamel.yaml import YAML, scalarstring
 from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.parser import ParserError
 
 if sys.version_info >= (3, 8):
     from typing import Literal, Protocol
@@ -1295,6 +1296,24 @@ def yaml_to_dict(data: Any,
             f"Expected dictionary in yaml data, "
             f"got '{type(loaded_data).__name__}'.")
     return loaded_data
+
+
+def yaml_to_list(data: Any,
+                 yaml_type: Optional[YamlTypType] = 'safe') -> List[Any]:
+    """ Convert yaml into list """
+    yaml = YAML(typ=yaml_type)
+    try:
+        loaded_data = yaml.load(data)
+    except ParserError as error:
+        raise GeneralError(f"Invalid yaml syntax: {error}")
+
+    if loaded_data is None:
+        return list()
+    if not isinstance(loaded_data, list):
+        raise GeneralError(
+            f"Expected list in yaml data, "
+            f"got '{type(loaded_data).__name__}'.")
+    return list(loaded_data)
 
 
 def key_to_option(key: str) -> str:
