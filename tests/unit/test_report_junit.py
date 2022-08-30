@@ -18,10 +18,8 @@ def report_fix(tmpdir):
 
     out_file_path = str(tmpdir.join("out.xml"))
 
-    def opt(key, default=None):
-        if key == 'verbose':
-            return 0
-        elif key == "file":
+    def get(key, default=None):
+        if key == "file":
             return out_file_path
         return default
 
@@ -29,7 +27,7 @@ def report_fix(tmpdir):
         step=step_mock, data={
             'name': 'x'}, workdir=str(
             tmpdir.join('junit')))
-    report.opt = opt
+    report.get = get
     report.info = MagicMock()
 
     results = []

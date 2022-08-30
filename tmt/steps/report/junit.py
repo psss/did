@@ -115,7 +115,7 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
         suite = make_junit_xml(self)
 
         assert self.workdir is not None
-        f_path = self.opt("file", os.path.join(self.workdir, DEFAULT_NAME))
+        f_path = self.get("file", os.path.join(self.workdir, DEFAULT_NAME))
         try:
             with open(f_path, 'w') as fw:
                 if hasattr(junit_xml, 'to_xml_report_file'):

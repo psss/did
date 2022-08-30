@@ -47,13 +47,13 @@ class ReportPolarion(tmt.steps.report.ReportPlugin):
         from tmt.export import PolarionWorkItem
         assert PolarionWorkItem
 
-        title = self.opt(
+        title = self.get(
             'testrun_title',
             self.step.plan.name.rsplit('/', 1)[1] +
             datetime.datetime.now().strftime("%Y%m%d%H%M%S"))
         title = title.replace('-', '_')
-        project_id = self.opt('project-id')
-        upload = self.opt('upload')
+        project_id = self.get('project-id')
+        upload = self.get('upload')
 
         junit_suite = make_junit_xml(self)
         xml_tree = ET.fromstring(junit_suite.to_xml_string([junit_suite]))
@@ -102,7 +102,7 @@ class ReportPolarion(tmt.steps.report.ReportPlugin):
 
         assert self.workdir is not None
 
-        f_path = self.opt("file", os.path.join(self.workdir, DEFAULT_NAME))
+        f_path = self.get("file", os.path.join(self.workdir, DEFAULT_NAME))
         with open(f_path, 'wb') as fw:
             ET.ElementTree(xml_tree).write(fw)
 
