@@ -1,0 +1,5 @@
+summary: Basic smoke test
+discover:
+    how: fmf
+execute:
+    how: tmt

@@ -1,0 +1,3 @@
+summary: Reboot quickly
+test: '[ "$TMT_REBOOT_COUNT" == "0" ] && tmt-reboot -t 1 || echo'
+framework: shell

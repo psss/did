@@ -894,6 +894,10 @@ class ExecuteError(GeneralError):
     """ Execute step error """
 
 
+class RebootTimeoutError(ExecuteError):
+    """ Reboot failed due to a timeout """
+
+
 class ReportError(GeneralError):
     """ Report step error """
 

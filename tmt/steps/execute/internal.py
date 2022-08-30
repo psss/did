@@ -211,8 +211,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             # Reset the file
             os.remove(reboot_request_path)
             guest.push(test_data)
+            rebooted = False
             try:
-                guest.reboot(command=reboot_command, timeout=timeout)
+                rebooted = guest.reboot(command=reboot_command, timeout=timeout)
             except tmt.utils.RunError:
                 self.fail(
                     f"Failed to reboot guest using the "
@@ -222,7 +223,9 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 self.warn(
                     "Guest does not support soft reboot, "
                     "trying hard reboot.")
-                guest.reboot(hard=True, timeout=timeout)
+                rebooted = guest.reboot(hard=True, timeout=timeout)
+            if not rebooted:
+                raise tmt.utils.RebootTimeoutError("Reboot timed out.")
             return True
         return False
 
@@ -288,8 +291,12 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 # Output before the reboot
                 self.verbose(
                     f"{duration} {test.name} [{progress}]", shift=shift)
-                if self._handle_reboot(test, guest):
-                    continue
+                try:
+                    if self._handle_reboot(test, guest):
+                        continue
+                except tmt.utils.RebootTimeoutError:
+                    result.result = 'error'
+                    result.note = 'reboot timeout'
             abort = self.check_abort_file(test)
             if abort:
                 result.note = 'aborted'

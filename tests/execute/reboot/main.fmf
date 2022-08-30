@@ -10,6 +10,17 @@ duration: 20m
     test: ./multi-part.sh
 
 
+/shorten-timeout:
+    summary: Verify that timeout shortening works
+    test: ./shorten-timeout.sh
+    enabled: false
+
+    adjust:
+        enabled: true
+        when: how == full
+        because: this can be run only with full virtualization
+
+
 /reuse_provision:
     summary: Verify that provision can be reused for reboot
     test: ./reuse.sh
