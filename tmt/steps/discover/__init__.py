@@ -266,10 +266,6 @@ class Discover(tmt.steps.Step):
                 for test in phase.tests():
                     test.name = f"{prefix}{test.name}"
                     test.path = f"/{phase.safe_name}{test.path}"
-                    # Use the default test framework if not defined in L1
-                    # FIXME remove when we drop the old execution methods
-                    if not test.framework:
-                        test.framework = self.plan.execute._framework
                     # Update test environment with plan environment
                     test.environment.update(self.plan.environment)
                     self._tests.append(test)

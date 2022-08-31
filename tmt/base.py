@@ -602,7 +602,7 @@ class Test(Core):
     # Test execution data
     test: str
     path: Optional[str] = None
-    framework: Optional[str] = None
+    framework: str = "shell"
     manual: bool = False
     require: List[Require] = []
     recommend: List[Require] = []

@@ -1,19 +1,14 @@
 /beakerlib:
+    summary: This is a beakerlib test
+    framework: beakerlib
     test: ./beakerlib.sh
-
-    /without-framework:
-        summary: This is a beakerlib test (without framework)
-
-    /with-framework:
-        summary: This is a beakerlib test (with framework)
-        framework: beakerlib
 
 /shell:
     test: ./shell.sh
 
-    /without-framework:
-        summary: This is a shell test (without framework)
+    /default:
+        summary: This is a shell test (default framework)
 
-    /with-framework:
-        summary: This is a shell test (with framework)
+    /explicit:
+        summary: This is a shell test (explicit framework)
         framework: shell

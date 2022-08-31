@@ -3,7 +3,7 @@ import json
 import os
 import sys
 import time
-from typing import Any, List, Optional, cast
+from typing import Any, List, Optional
 
 import click
 
@@ -29,8 +29,6 @@ class ExecuteInternalData(tmt.steps.execute.ExecuteStepData):
 
 
 @tmt.steps.provides_method('tmt')
-@tmt.steps.provides_method('shell.tmt', order=80)
-@tmt.steps.provides_method('beakerlib.tmt', order=80)
 class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     """
     Use the internal tmt executor to execute tests
@@ -365,8 +363,4 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
     def requires(self) -> List[str]:
         """ Return list of required packages """
-        # FIXME Remove when we drop support for the old execution methods
-        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1373
-        return ['beakerlib'] if cast(
-            tmt.steps.execute.Execute,
-            self.step)._framework == 'beakerlib' else []
+        return []

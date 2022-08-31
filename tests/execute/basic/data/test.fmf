@@ -10,6 +10,7 @@
         test: a-weird-command
 
 /beakerlib:
+    framework: beakerlib
     /good:
         summary: Passing test
         test: ./good.sh

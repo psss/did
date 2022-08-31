@@ -10,7 +10,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "No Metadata"
-        rlRun "tmt run -r $options execute -h shell -s 'touch $tmp/no-metadata'"
+        rlRun "tmt run -r $options execute -h tmt -s 'touch $tmp/no-metadata'"
         rlAssertExists "$tmp/no-metadata"
     rlPhaseEnd
 

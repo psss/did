@@ -407,14 +407,6 @@ class ExecutePlugin(tmt.steps.Plugin):
 class Execute(tmt.steps.Step):
     """
     Run tests using the specified executor.
-
-    Note that the old execution methods 'shell.tmt' and 'beakerlib.tmt'
-    have been deprecated and the backward-compatible support for them
-    will be dropped in tmt-2.0.
-
-    Use the new L1 metadata attribute 'framework' instead to specify
-    which test framework should be used for execution. This allows to
-    combine tests using different test frameworks in a single plan.
     """
 
     # Internal executor is the default implementation
@@ -428,40 +420,6 @@ class Execute(tmt.steps.Step):
         # List of Result() objects representing test results
         self._results: List[tmt.Result] = []
 
-        # Default test framework and mapping old methods
-        # FIXME remove when we drop the old execution methods
-        self._framework = DEFAULT_FRAMEWORK
-
-    def _map_old_methods(self, data: List[tmt.steps.StepData]) -> None:
-        """ Map the old execute methods in a backward-compatible way """
-        how = data[0].how
-        matched = re.search(r"^(shell|beakerlib)(\.tmt)?$", how)
-        if not matched:
-            return
-        # Show the old method deprecation warning to users
-        self.warn(f"The '{how}' execute method has been deprecated.")
-        # Map the old syntax to the appropriate executor
-        # shell, beakerlib ---> tmt
-        # shell.tmt, beakerlib.tmt ---> tmt
-        how = 'tmt'
-        self.warn(f"Use 'how: {how}' in the execute step instead (L2).")
-        data[0].how = how
-        # Store shell or beakerlib as the default test framework
-        # (used when the framework is not defined in the L1 metadata)
-        framework = matched.group(1)
-        self.warn(f"Set 'framework: {framework}' in test metadata (L1).")
-        self._framework = framework
-        self.warn("Support for old methods will be dropped in tmt-2.0.")
-
-    def _normalize_data(self, raw_data: List[tmt.steps._RawStepData]) -> List[tmt.steps.StepData]:
-        data = super()._normalize_data(raw_data)
-
-        # Map old methods now if there is no run (and thus no wake up)
-        # TODO: if not self.plan.my_run:
-        self._map_old_methods(data)
-
-        return data
-
     def load(self) -> None:
         """ Load test results """
         super().load()
@@ -474,9 +432,7 @@ class Execute(tmt.steps.Step):
     def save(self) -> None:
         """ Save test results to the workdir """
         super().save()
-        results = {
-            result.name: result.to_serialized() for result in self.results()
-            }
+        results = {result.name: result.to_serialized() for result in self.results()}
         self.write('results.yaml', tmt.utils.dict_to_yaml(results))
 
     def wake(self) -> None:

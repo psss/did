@@ -12,14 +12,14 @@ rlJournalStart
     rlPhaseStartTest "All steps at once (don't remove)"
         rlRun "tmt run --id $run --all \
             provision --how local \
-            execute --how shell --script true"
+            execute --how tmt --script true"
         rlAssertExists $run
     rlPhaseEnd
 
     rlPhaseStartTest "All steps at once (remove)"
         rlRun "tmt run --id $run --all --remove \
             provision --how local \
-            execute --how shell --script true"
+            execute --how tmt --script true"
         rlAssertNotExists $run
     rlPhaseEnd
 
@@ -27,7 +27,7 @@ rlJournalStart
         rlRun "tmt run --id $run --remove \
             discover \
             provision --how local \
-            execute --how shell --script true"
+            execute --how tmt --script true"
         rlAssertExists $run
         rlRun "tmt run --last report"
         rlAssertExists $run

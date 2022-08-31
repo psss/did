@@ -16,7 +16,7 @@ rlJournalStart
         rlAssertNotGrep "id" $rlRun_LOG
         rlAssertGrep "test ./test.sh" $rlRun_LOG
         rlAssertGrep "path /tests" $rlRun_LOG
-        rlAssertNotGrep "framework" $rlRun_LOG
+        rlAssertGrep "framework shell" $rlRun_LOG
         rlAssertGrep "manual false" $rlRun_LOG
         rlAssertNotGrep "require" $rlRun_LOG
         rlAssertNotGrep "recommend" $rlRun_LOG
