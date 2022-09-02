@@ -52,20 +52,30 @@ class InstallBase(tmt.utils.Common):
     def prepare_packages(self) -> None:
         """ Process package names and directories """
         self.local_packages = []
+        self.remote_packages = []
         self.debuginfo_packages = []
         self.repository_packages = []
 
         # Detect local, debuginfo and repository packages
         for package in self.packages:
-            if package.endswith('.rpm'):
-                self.local_packages.append(package)
-            elif re.search(r"-debug(info|source)(\.|$)", package):
-                # Strip the '-debuginfo' string from package name
-                # (installing with it doesn't work on RHEL7)
-                package = re.sub(r"-debuginfo((?=\.)|$)", "", package)
-                self.debuginfo_packages.append(package)
+            if re.match(r'^http(s)?://', package):
+                if re.search(r"-debug(info|source)(\.|$)", package):
+                    # Strip the '-debuginfo' string from package name
+                    # (installing with it doesn't work on RHEL7)
+                    package = re.sub(r"-debuginfo((?=\.)|$)", "", package)
+                    self.debuginfo_packages.append(package)
+                else:
+                    self.remote_packages.append(package)
             else:
-                self.repository_packages.append(package)
+                if package.endswith('.rpm'):
+                    self.local_packages.append(package)
+                elif re.search(r"-debug(info|source)(\.|$)", package):
+                    # Strip the '-debuginfo' string from package name
+                    # (installing with it doesn't work on RHEL7)
+                    package = re.sub(r"-debuginfo((?=\.)|$)", "", package)
+                    self.debuginfo_packages.append(package)
+                else:
+                    self.repository_packages.append(package)
 
         # Check rpm packages in local directories
         for directory in self.directories:
@@ -181,6 +191,10 @@ class InstallBase(tmt.utils.Common):
         """ Default base install method for local packages """
         pass
 
+    def install_from_url(self) -> None:
+        """ Default base install method for packages which are from URL """
+        pass
+
     def install_debuginfo(self) -> None:
         """ Default base install method for debuginfo packages """
         pass
@@ -190,6 +204,8 @@ class InstallBase(tmt.utils.Common):
         if self.local_packages:
             self.prepare_install_local()
             self.install_local()
+        if self.remote_packages:
+            self.install_from_url()
         if self.repository_packages:
             self.install_from_repository()
         if self.debuginfo_packages:
@@ -222,6 +238,11 @@ class InstallDnf(InstallBase):
         self.guest.execute(f"{self.command} reinstall {self.options} {self.rpms_directory}/*")
         summary = fmf.utils.listed(self.local_packages, 'local package')
         self.info('total', f"{summary} installed", 'green')
+
+    def install_from_url(self) -> None:
+        """ Install packages directly from URL """
+        packages = self.list_packages(self.remote_packages, title="remote package")
+        self.guest.execute(f"{self.command} install {self.options} {packages}")
 
     def install_from_repository(self) -> None:
         """ Install packages from the repository """

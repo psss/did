@@ -85,7 +85,8 @@ example: |
         One or more RPM packages can be specified under the
         ``package`` attribute. The packages will be installed
         on the guest. They can either be specified using their
-        names or paths to local rpm files.
+        names or paths to local rpm files or paths to remote
+        rpm files.
 
         Additionaly, the ``directory`` attribute can be used to
         install all packages from the given directory. Copr
@@ -105,6 +106,12 @@ example: |
             package:
                 - tmp/RPMS/noarch/tmt-0.15-1.fc31.noarch.rpm
                 - tmp/RPMS/noarch/python3-tmt-0.15-1.fc31.noarch.rpm
+
+        prepare:
+            how: install
+            package:
+                - https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+                - https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-8.noarch.rpm
 
         prepare:
             how: install

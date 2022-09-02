@@ -1,0 +1,10 @@
+provision+:
+    image: centos:stream8
+prepare:
+    how: install
+    package:
+    - https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    - https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-8.noarch.rpm
+execute:
+    how: tmt
+    script: rpm -q epel-release epel-next-release
