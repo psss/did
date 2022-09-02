@@ -6,10 +6,11 @@ story:
 description: |
     The ``tmt-file-submit`` command can be used to save a log
     file specified during test execution. This command together
-    with ``rstrnt-report-log`` and ``rhts-report-log`` provides
-    a backward-compatible way to execute tests written for the
-    `restraint`__ framework. These scripts are installed on the
-    guest and overwrite any existing scripts with the same name.
+    with ``rstrnt-report-log``, ``rhts-submit-log`` and
+    ``rhts_submit_log`` provides a backward-compatible way to
+    execute tests written for the `restraint`__ framework.
+    These scripts are installed on the guest and overwrite
+    any existing scripts with the same name.
 
     The command can be called multiple times for a single test,
     if a log of that name already exists then it will be
@@ -18,7 +19,7 @@ description: |
     __ https://restraint.readthedocs.io/en/latest/commands.html#rstrnt-report-log
 
 example: |
-        tmt-report-log -l /path/to/log/log.txt
+        tmt-file-submit -l /path/to/log/log.txt
 
 link:
   - implemented-by: /tmt/steps/execute/internal.py
