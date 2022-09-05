@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.16.0
+Version: 1.17.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -200,6 +200,70 @@ chmod 1777 %{buildroot}%{workdir_root}
 
 
 %changelog
+* Mon Sep 05 2022 Lukáš Zachar <lzachar@redhat.com> - 1.17.0-1
+- Unify Polarion case searching
+- Error out if reboot timeout is exceeded
+- Initialize workdir thread-safe
+- Add support for remote playbooks in prepare
+- Add plan schema for errata and minute plugins
+- Correct rhts command names in stories file
+- Print escaped command suitable for manual debugging
+- Fix report plugin not getting arguments from fmf file
+- Less eager to disable nitrate case during export
+- Move `tag` and `tier` to common core attributes
+- Use `/bin/bash` instead of `/bin/sh` for execute
+- Reorder step and their base plugin classes
+- Fix prepare/multihost docs to match implementation
+- Teach schema validation tests to peek into other trees
+- Clarify motivation for creating `id` during export
+- Add link-polarion option and fix link searching bug
+- Ignore race in last-run symlink creation
+- Fix polarion tcmscaseid search
+- Force order of clean operations
+- Convert status/clean argument to option
+- Report enabled plans/tests/stories via option
+- Hint user if 'tmt init' creates nested root
+- Require `libvirt-daemon-config-network` as well
+- Add type annotation for /steps/prepare/install.py
+- Encapsulate created file within script's dataclass
+- Adds normalization layer to base classes based on fmf
+- Fixes data class used for local guest creation
+- Fixes Artemis guest data class link
+- Making tests/full more usable
+- Add typing for tmt/steps/provision/podman.py
+- Add typing for tmt/steps/provision/testcloud.py
+- Add typing for tmt/steps/provision/local.py
+- Remove unused keys parameter from wake() methods
+- Adds types describing tmt constructs when as stored in raw fmf data
+- Typing /steps/provision/connect.py
+- Allow raising an exception on validation errors
+- Inject logger object to base node classes inheritance
+- Fixes use of SSH keys in testcloud and connect plugins
+- Annotate tmt.steps.provision
+- Ask mypy to show error codes in its messages
+- Testcloud expects disk and memory to be int
+- Do not inherit classes from object
+- Use keyword-only init in base fmf-backed classes
+- Use decorator to register plugin methods
+- Demonstrate inheritance on a virtual test example
+- Add a simple hint how to write user messages
+- Add typing for `steps/finish/ansible.py`
+- Remove unneeded parameters for step load/save (#1428)
+- Normalize step data to be always stored a list internally
+- Display test/plan/story name in parametrized schema tests
+- Allow numbers and booleans to be values of environment
+- Give a reasonable error for old data format
+- Add typing for tmt/steps/finish/__init__.py
+- add typing for steps/discover/shell.py
+- Adds a fmf node validation layer to core classes (Test/Plan/Story)
+- Add missing keys `role` and `where` to schemas
+- Extend plan schema with all known step plugin schemas
+- Correcting rhts aliases & adding rhts opt.
+- Adds a generic "wait for condition" primitive
+- Disallow push/pull/execute if guest is unavailable
+- Rename "default how" step attribute to enhance its visibility
+- Use textwrap.dedent() to unindent docstrings
+
 * Wed Aug 03 2022 Lukáš Zachar <lzachar@redhat.com> - 1.16.0-1
 - Reboot has to check for boot time
 - Fix path inside pre-commit test
