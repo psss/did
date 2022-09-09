@@ -245,8 +245,9 @@ Import Tests
 Use ``tmt tests import`` to gather old metadata stored in
 different sources and convert them into the new ``fmf`` format.
 By default ``Makefile`` and ``PURPOSE`` files in the current
-directory are inspected and the ``Nitrate`` test case management
-system is contacted to gather all related metadata.
+directory are inspected plus the ``Nitrate`` and ``Polarion`` test
+case management systems are contacted to gather all related
+metadata.
 
 In order to fetch data from Nitrate you need to have ``nitrate``
 module installed. For each test case found in Nitrate separate fmf
@@ -255,6 +256,16 @@ found in all test cases are stored in ``main.fmf``. You can use
 ``--no-nitrate`` to disable Nitrate integration, ``--no-makefile``
 and ``--no-purpose`` switches to disable the other two metadata
 sources.
+
+To read data from Polarion you need to install and setup
+``pylero`` library (described in `Export tests`_) and enable it
+with the ``--polarion`` flag.  If you are importing a single test
+case you can specify ``--polarion-case-id`` instead of searching
+by values pulled from other sources and you can specify
+``--no-link-polarion`` to not save Polarion links.  It reads
+summary, description, enabled status, assignee, id, component,
+tags and links. If ``id`` is not found in Polarion it's generated
+and exported.
 
 Manual test cases can be imported from Nitrate using the
 ``--manual`` option. Provide either ``--case ID`` or ``--plan ID``

@@ -10,11 +10,13 @@ import shlex
 import subprocess
 from io import open
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
+from uuid import UUID, uuid4
 
 import fmf.utils
 from click import echo, style
 
 import tmt.export
+import tmt.identifier
 import tmt.utils
 from tmt.utils import ConvertError, GeneralError
 
@@ -375,6 +377,9 @@ def read(
         makefile: bool,
         restraint: bool,
         nitrate: bool,
+        polarion: bool,
+        polarion_case_id: Optional[str],
+        link_polarion: bool,
         purpose: bool,
         disabled: bool,
         types: List[str],
@@ -570,6 +575,10 @@ def read(
         common_data = data
         individual_data = []
 
+    # Polarion (extract summary, assignee, id, component, tags, links)
+    if polarion:
+        read_polarion(common_data, polarion_case_id, link_polarion)
+
     # Remove keys which are inherited from parent
     parent_path = os.path.dirname(path.rstrip('/'))
     parent_name = '/' + os.path.relpath(parent_path, tree.root)
@@ -709,6 +718,103 @@ def read_nitrate(
     return common_data, individual_data
 
 
+def read_tier(tag: str, data: NitrateDataType) -> None:
+    """
+    Extract tier level from tag
+
+    Check for the tier attribute, if there are multiple TierX tags, pick
+    the one with the lowest index.
+    """
+    tier_match = re.match(r'^Tier ?(?P<num>\d+)$', tag, re.I)
+    if tier_match:
+        num = tier_match.group('num')
+        if 'tier' in data:
+            if int(num) < int(data['tier']):
+                log.warning('Multiple Tier tags found, using the one with a lower index.')
+                data['tier'] = num
+        else:
+            data['tier'] = num
+        echo(style('tier: ', fg='green') + str(data['tier']))
+
+
+def read_polarion(
+        data: NitrateDataType,
+        polarion_case_id: Optional[str],
+        link_polarion: bool) -> None:
+    """ Read data from Polarion """
+    # Find Polarion case
+    echo(style('Polarion ', fg='blue'), nl=False)
+    polarion_case = tmt.export.get_polarion_case(data, polarion_case_id=polarion_case_id)
+    if not polarion_case:
+        raise ConvertError('Failed to find test case in Polarion.')
+
+    # Update summary
+    if not data.get('summary') or data['summary'] != polarion_case.title:
+        data['summary'] = str(polarion_case.title)
+        echo(style('summary: ', fg='green') + data['summary'])
+
+    # Update description
+    if polarion_case.description:
+        data['description'] = str(polarion_case.description)
+        echo(style('description: ', fg='green') + data['description'])
+
+    # Update status
+    status = True if polarion_case.status == 'approved' else False
+    if not data.get('enabled') or data['enabled'] != status:
+        data['enabled'] = status
+        echo(style('enabled: ', fg='green') + str(data['enabled']))
+
+    # Update assignee
+    if polarion_case.assignee:
+        data['contact'] = str(polarion_case.assignee[0].name).replace(
+            '(', '<').replace(')', '@redhat.com>')
+        echo(style('contact: ', fg='green') + data['contact'])
+
+    # Set tmt id if available in Polarion, otherwise generate
+    try:
+        UUID(polarion_case.test_case_id)
+        uuid = str(polarion_case.test_case_id)
+    except (ValueError, TypeError):
+        uuid = str(uuid4())
+        polarion_case.test_case_id = uuid
+        polarion_case.update()
+    data[tmt.identifier.ID_KEY] = uuid
+    echo(style('ID: ', fg='green') + uuid)
+
+    # Update component
+    if polarion_case.casecomponent:
+        data['component'] = []
+        for component in polarion_case.casecomponent:
+            data['component'].append(str(component))
+        echo(style('component: ', fg='green') + ' '.join(data['component']))
+
+    # Update tags
+    if polarion_case.tags:
+        if not data.get('tag'):
+            data['tag'] = []
+        for tag in polarion_case.tags.split():
+            data['tag'].append(tag)
+            read_tier(tag, data)
+        data['tag'] = sorted(set(data['tag']))
+        echo(style('tag: ', fg='green') + ' '.join(data['tag']))
+
+    # Add Polarion links for Requirements and the case
+    if link_polarion:
+        server_url = str(polarion_case._session._server.url)
+        if not server_url.endswith('/'):
+            server_url += '/'
+        for link in polarion_case.linked_work_items:
+            if link.role == 'verifies':
+                add_link(
+                    f'{server_url}#/project/{link.project_id}/'
+                    f'workitem?id={str(link.work_item_id)}',
+                    data, system=SYSTEM_OTHER, type_=str(link.role))
+        add_link(
+            f'{server_url}#/project/{polarion_case.project_id}/workitem?id='
+            f'{str(polarion_case.work_item_id)}',
+            data, system=SYSTEM_OTHER, type_='implements')
+
+
 RelevancyType = Union[str, List[str]]
 
 
@@ -783,26 +889,10 @@ def read_nitrate_case(
             if tag.name == 'fmf-export':
                 continue
             tags.append(tag.name)
-            # Add the tier attribute, if there are multiple TierX tags,
-            # pick the one with the lowest index.
-            tier_match = re.match(r'^Tier ?(?P<num>\d+)$', tag.name, re.I)
-            if tier_match:
-                num = tier_match.group('num')
-                if 'tier' in data:
-                    log.warning('Multiple Tier tags found, using the one '
-                                'with a lower index')
-                    if int(num) < int(data['tier']):
-                        data['tier'] = num
-                else:
-                    data['tier'] = num
+            read_tier(tag.name, data)
         # Include possible multihost tag (avoid duplicates)
         data['tag'] = sorted(set(tags + data['tag']))
         echo(style('tag: ', fg='green') + str(data['tag']))
-    # Tier
-    try:
-        echo(style('tier: ', fg='green') + data['tier'])
-    except KeyError:
-        pass
     # Detect components either from general plans
     if general:
         data['component'] = []
@@ -913,7 +1003,7 @@ def write(path: str, data: NitrateDataType) -> None:
     """ Write gathered metadata in the fmf format """
     # Put keys into a reasonable order
     extra_keys = [
-        'adjust', 'extra-nitrate', 'extra-polarion',
+        'adjust', 'extra-nitrate',
         'extra-summary', 'extra-task',
         'extra-hardware', 'extra-pepa']
     sorted_data = dict()

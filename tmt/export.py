@@ -308,18 +308,29 @@ def get_polarion_ids(
 
 def find_polarion_case_ids(
         data: Dict[str, str],
-        preferred_project: Optional[str] = None) -> Tuple[str, Optional[str]]:
+        preferred_project: Optional[str] = None,
+        polarion_case_id: Optional[str] = None) -> Tuple[str, Optional[str]]:
     """ Find IDs for Polarion case from data dictionary """
     assert PolarionWorkItem
 
+    case_id = 'None'
+    project_id = None
+
+    # Search for Polarion case ID directly
+    if polarion_case_id:
+        query_result = PolarionWorkItem.query(
+            polarion_case_id, fields=['work_item_id', 'project_id'])
+        case_id, project_id = get_polarion_ids(query_result, preferred_project)
+
     # Search by UUID
-    if data.get(ID_KEY):
+    if not project_id and data.get(ID_KEY):
         query_result = PolarionWorkItem.query(
             data.get(ID_KEY), fields=['work_item_id', 'project_id'])
-        return get_polarion_ids(query_result, preferred_project)
+        case_id, project_id = get_polarion_ids(query_result, preferred_project)
+
     # Search by TCMS Case ID
     extra_nitrate = data.get('extra-nitrate')
-    if extra_nitrate:
+    if not project_id and extra_nitrate:
         nitrate_case_id_search = re.search(r'\d+', extra_nitrate)
         if not nitrate_case_id_search:
             raise ConvertError(
@@ -327,27 +338,32 @@ def find_polarion_case_ids(
         nitrate_case_id = str(int(nitrate_case_id_search.group()))
         query_result = PolarionWorkItem.query(
             f"tcmscaseid:{nitrate_case_id}", fields=['work_item_id', 'project_id'])
-        return get_polarion_ids(query_result, preferred_project)
+        case_id, project_id = get_polarion_ids(query_result, preferred_project)
+
     # Search by extra task
-    if data.get('extra-task'):
+    if not project_id and data.get('extra-task'):
         query_result = PolarionWorkItem.query(
             data.get('extra-task'), fields=['work_item_id', 'project_id'])
-        return get_polarion_ids(query_result, preferred_project)
-    return 'None', None
+        case_id, project_id = get_polarion_ids(query_result, preferred_project)
+
+    return case_id, project_id
 
 
-def get_polarion_case(data: Dict[str, str], preferred_project: Optional[str] = None) -> Any:
+def get_polarion_case(
+        data: Dict[str, str],
+        preferred_project: Optional[str] = None,
+        polarion_case_id: Optional[str] = None) -> Any:
     """ Get Polarion case through couple different methods """
     import_polarion()
 
     assert PolarionTestCase
     assert PolarionException
 
-    polarion_id, project_id = find_polarion_case_ids(data, preferred_project)
+    case_id, project_id = find_polarion_case_ids(data, preferred_project, polarion_case_id)
 
     try:
         polarion_case = PolarionTestCase(
-            project_id=project_id, work_item_id=polarion_id)
+            project_id=project_id, work_item_id=case_id)
         echo(style(
             f"Test case '{str(polarion_case.work_item_id)}' found.",
             fg='blue'))

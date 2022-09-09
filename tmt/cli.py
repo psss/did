@@ -516,20 +516,29 @@ def tests_create(
 @click.argument('paths', nargs=-1, metavar='[PATH]...')
 @click.option(
     '--nitrate / --no-nitrate', default=True,
-    help='Import test metadata from Nitrate')
+    help='Import test metadata from Nitrate.')
+@click.option(
+    '--polarion / --no-polarion', default=False,
+    help='Import test metadata from Polarion.')
 @click.option(
     '--purpose / --no-purpose', default=True,
-    help='Migrate description from PURPOSE file')
+    help='Migrate description from PURPOSE file.')
 @click.option(
     '--makefile / --no-makefile', default=True,
-    help='Convert Beaker Makefile metadata')
+    help='Convert Beaker Makefile metadata.')
 @click.option(
     '--restraint / --no-restraint', default=False,
-    help='Convert restraint metadata file')
+    help='Convert restraint metadata file.')
 @click.option(
     '--general / --no-general', default=True,
     help='Detect components from linked nitrate general plans '
          '(overrides Makefile/restraint component).')
+@click.option(
+    '--polarion-case-id',
+    help='Polarion Test case ID to import data from.')
+@click.option(
+    '--link-polarion / --no-link-polarion', default=True,
+    help='Add Polarion link to fmf testcase metadata.')
 @click.option(
     '--type', 'types', metavar='TYPE', default=['multihost'], multiple=True,
     show_default=True,
@@ -560,6 +569,9 @@ def tests_import(
         general: bool,
         types: List[str],
         nitrate: bool,
+        polarion: bool,
+        polarion_case_id: Optional[str],
+        link_polarion: bool,
         purpose: bool,
         disabled: bool,
         manual: bool,
@@ -576,11 +588,10 @@ def tests_import(
 
     \b
     makefile ..... summary, component, duration, require
-    restraint .... name, description, entry_point, owner,
-                   max_time, repoRequires
+    restraint .... name, description, entry_point, owner, max_time, repoRequires
     purpose ...... description
-    nitrate ...... contact, component, tag,
-                   environment, relevancy, enabled
+    nitrate ...... contact, component, tag, environment, relevancy, enabled
+    polarion ..... summary, enabled, assignee, id, component, tag, description, link
     """
     tmt.Test._save_context(context)
 
@@ -602,8 +613,8 @@ def tests_import(
                 "Path '{0}' is not a directory.".format(path))
         # Gather old metadata and store them as fmf
         common, individual = tmt.convert.read(
-            path, makefile, restraint, nitrate, purpose, disabled, types,
-            general)
+            path, makefile, restraint, nitrate, polarion, polarion_case_id, link_polarion,
+            purpose, disabled, types, general)
         # Add path to common metadata if there are virtual test cases
         if individual:
             root = fmf.Tree(path).root
