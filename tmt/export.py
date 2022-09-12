@@ -75,11 +75,13 @@ def import_polarion() -> None:
     try:
         global PolarionException, PolarionTestCase, PolarionWorkItem
         from pylero.exceptions import PyleroLibException as PolarionException
-        from pylero.work_item import TestCase as PolarionTestCase
-        from pylero.work_item import _WorkItem as PolarionWorkItem
     except ImportError:
         raise ConvertError(
             "Run 'pip install tmt[export-polarion]' so pylero is installed.")
+
+    try:
+        from pylero.work_item import TestCase as PolarionTestCase
+        from pylero.work_item import _WorkItem as PolarionWorkItem
     except PolarionException as exc:
         log.debug(traceback.format_exc())
         raise ConvertError("Failed to login with pylero", original=exc)
