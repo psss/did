@@ -797,10 +797,13 @@ class Common:
         """
         Initialize the work directory
 
-        Workdir under WORKDIR_ROOT is used/created if 'id' is provided.
+        The 'workdir_root' variable is initialized from TMT_WORKDIR_ROOT
+        environment variable, if present, otherwise defaults to WORKDIR_ROOT.
+
         If 'id' is a path, that directory is used instead. Otherwise a
-        new workdir is created under the WORKDIR_ROOT directory.
+        new workdir is created under the 'workdir_root' directory.
         """
+        workdir_root = os.getenv('TMT_WORKDIR_ROOT', WORKDIR_ROOT)
         # Prepare the workdir name from given id or path
         if isinstance(id_, str):
             # Use provided directory if full path given
@@ -808,29 +811,29 @@ class Common:
                 workdir = id_
             # Construct directory name under workdir root
             else:
-                workdir = os.path.join(WORKDIR_ROOT, id_)
+                workdir = os.path.join(workdir_root, id_)
         # Weird workdir id
         elif id_ is not None:
             raise GeneralError(
                 f"Invalid workdir '{id_}', expected a string or None.")
 
         def _check_or_create_workdir_root_with_perms() -> None:
-            """ If created WORKDIR_ROOT has to be 1777 for multi-user"""
-            if not os.path.isdir(WORKDIR_ROOT):
+            """ If created workdir_root has to be 1777 for multi-user"""
+            if not os.path.isdir(workdir_root):
                 try:
-                    os.makedirs(WORKDIR_ROOT, exist_ok=True)
-                    os.chmod(WORKDIR_ROOT, 0o1777)
+                    os.makedirs(workdir_root, exist_ok=True)
+                    os.chmod(workdir_root, 0o1777)
                 except OSError as error:
-                    raise FileError(f"Failed to prepare workdir '{WORKDIR_ROOT}': {error}")
+                    raise FileError(f"Failed to prepare workdir '{workdir_root}': {error}")
 
         if id_ is None:
-            # Prepare WORKDIR_ROOT first
+            # Prepare workdir_root first
             _check_or_create_workdir_root_with_perms()
 
             # Generated unique id or fail, has to be atomic call
             for id_bit in range(1, WORKDIR_MAX + 1):
                 directory = 'run-{}'.format(str(id_bit).rjust(3, '0'))
-                workdir = os.path.join(WORKDIR_ROOT, directory)
+                workdir = os.path.join(workdir_root, directory)
                 try:
                     # Call is atomic, no race possible
                     os.makedirs(workdir)
@@ -839,13 +842,13 @@ class Common:
                     pass
             else:
                 raise GeneralError(
-                    f"Workdir full. Cleanup the '{WORKDIR_ROOT}' directory.")
+                    f"Workdir full. Cleanup the '{workdir_root}' directory.")
         else:
             # Cleanup possible old workdir if called with --scratch
             if self.opt('scratch'):
                 self._workdir_cleanup(workdir)
 
-            if workdir.startswith(WORKDIR_ROOT):
+            if workdir.startswith(workdir_root):
                 _check_or_create_workdir_root_with_perms()
 
             # Create the workdir

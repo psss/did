@@ -344,6 +344,10 @@ TMT_PLUGINS
     Path to a directory with additional plugins. Multiple paths
     separated with the ``:`` character can be provided as well.
 
+TMT_WORKDIR_ROOT
+    Path to root directory containing run workdirs. Defaults to
+    ``/var/tmp/tmt``.
+
 NO_COLOR
     Disable colors in the terminal output. Output only plain,
     non-colored text. See https://no-color.org/ for more

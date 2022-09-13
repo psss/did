@@ -150,6 +150,16 @@ def test_last_run_race(tmpdir, monkeypatch):
     assert config.last_run(), "Some run was stored as last run"
 
 
+def test_workdir_env_var(tmpdir, monkeypatch):
+    """ Test TMT_WORKDIR_ROOT environment variable """
+    # Cannot use monkeypatch.context() as it is not present for CentOS Stream 8
+    monkeypatch.setenv('TMT_WORKDIR_ROOT', tmpdir)
+    common = Common()
+    common._workdir_init()
+    monkeypatch.delenv('TMT_WORKDIR_ROOT')
+    assert common.workdir == f'{tmpdir}/run-001'
+
+
 def test_workdir_root_full(tmpdir, monkeypatch):
     """ Raise if all ids lower than WORKDIR_MAX are exceeded """
     monkeypatch.setattr(tmt.utils, 'WORKDIR_ROOT', tmpdir)
