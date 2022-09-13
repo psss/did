@@ -24,6 +24,11 @@ description: |
     option of the reboot script, e.g. ``tmt-reboot -t 3600`` to
     wait for up to an hour for the guest to come back up.
 
+    On machines booted in UEFI mode, by default, the *BootNext*
+    property shall be set to the value of *BootCurrent*. The
+    ``-e`` option of the reboot script can be used to prevent
+    this from being set, e.g. ``tmt-reboot -e``.
+
     For backward-compatibility with the `restraint`__ framework
     the ``rstrnt-reboot`` and ``rhts-reboot`` commands are provided
     as well together with the ``RSTRNT_REBOOTCOUNT`` and ``REBOOTCOUNT``

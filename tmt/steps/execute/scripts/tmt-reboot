@@ -1,12 +1,34 @@
 #!/bin/bash
+PATH=/sbin:/usr/sbin:$PATH
+
+
 command=""
 timeout=""
-while getopts "c:t:" flag; do
+efi=True
+while getopts "c:t:e" flag; do
     case "${flag}" in
         c) command="${OPTARG}";;
         t) timeout="${OPTARG}";;
+        e) efi=False;;
     esac
 done
+
+if [ $efi = True ]; then
+    if efibootmgr &>/dev/null ; then
+        os_boot_entry=$(efibootmgr | awk '/BootCurrent/ { print $2 }')
+        # fall back to /root/EFI_BOOT_ENTRY.TXT if it exists and BootCurrent is not available
+        if [[ -z "$os_boot_entry" && -f /root/EFI_BOOT_ENTRY.TXT ]] ; then
+            os_boot_entry=$(</root/EFI_BOOT_ENTRY.TXT)
+        fi
+        if [[ -n "$os_boot_entry" ]] ; then
+            logger -s "efibootmgr -n $os_boot_entry"
+            efibootmgr -n $os_boot_entry
+        else
+            logger -s "Could not determine value for BootNext!"
+        fi
+    fi
+fi
+
 json_fmt='{"command": "%s", "timeout": "%s"}'
 printf "$json_fmt" "$command" "$timeout" > "$TMT_REBOOT_REQUEST"
 kill $PPID

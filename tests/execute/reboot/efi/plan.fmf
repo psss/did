@@ -1,0 +1,10 @@
+summary: Basic smoke test on UEFI booted machine
+discover:
+    how: fmf
+provision:
+    how: virtual
+    hardware:
+        boot:
+            method: uefi
+execute:
+    how: tmt

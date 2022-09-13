@@ -5,6 +5,14 @@ duration: 20m
     test: ./basic.sh
 
 
+# Disabled until the testing environment 'hardware specification' can be set.
+# https://tmt.readthedocs.io/en/stable/spec/plans.html#hardware
+/efi:
+    summary: Verify that reboot during test with and without efi option works
+    test: ./efi.sh
+    enabled: false
+
+
 /multi-part:
     summary: Verify reboot during multiple consecutive tests
     test: ./multi-part.sh
