@@ -743,21 +743,8 @@ class Test(tmt.utils.ValidateFmfMixin, tmt.utils.LoadFmfKeysMixin, Core):
         (test-name, test-data) tuples.
         """
 
-        # Prepare special format for the executor
-        if format_ == 'execute':
-            data = dict()
-            data['test'] = self.test
-            data['path'] = self.path
-            data['framework'] = self.framework
-            if self.duration is not None:
-                data['duration'] = self.duration
-            if self.environment:
-                data['environment'] = ' '.join(
-                    tmt.utils.shell_variables(self.environment))
-            return data
-
         # Export to Nitrate test case management system
-        elif format_ == 'nitrate':
+        if format_ == 'nitrate':
             tmt.export.export_to_nitrate(self)
 
         # Export to Polarion test case management system

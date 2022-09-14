@@ -158,15 +158,6 @@ class Discover(tmt.steps.Step):
 
         self.write('tests.yaml', tmt.utils.dict_to_yaml(raw_test_data))
 
-        # Create 'run.yaml' with the list of tests for the executor
-        if not self.tests():
-            return
-        raw_test_data = {
-            test.name: test.export(format_='execute')
-            for test in self.tests()
-            }
-        self.write('run.yaml', tmt.utils.dict_to_yaml(raw_test_data, width=1000000))
-
     def _discover_from_execute(self) -> None:
         """ Check the execute step for possible shell script tests """
 
