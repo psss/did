@@ -11,7 +11,7 @@ rlJournalStart
     rlPhaseStartTest "Filter by test name"
         plan='plan --name fmf/nourl/noref/nopath'
         discover='discover --how fmf --test discover1'
-        rlRun 'tmt run -dvr $discover $plan finish | tee output'
+        rlRun "tmt run -dvr $discover $plan finish | tee output"
         rlAssertGrep '1 test selected' output
         rlAssertGrep '/tests/discover1' output
         rlAssertNotGrep '/tests/discover2' output
@@ -21,7 +21,7 @@ rlJournalStart
     rlPhaseStartTest "Filter by advanced filter"
         plan='plan --name fmf/nourl/noref/nopath'
         discover='discover --how fmf --filter tier:1,2'
-        rlRun 'tmt run -dvr $discover $plan finish | tee output'
+        rlRun "tmt run -dvr $discover $plan finish | tee output"
         rlAssertGrep '2 tests selected' output
         rlAssertGrep '/tests/discover1' output
         rlAssertGrep '/tests/discover2' output
@@ -32,9 +32,9 @@ rlJournalStart
         rlPhaseStartTest "Exclude tests using $exclude <regex>"
             plan='plan --name fmf/nourl/noref/nopath'
             discover='discover --how fmf'
-            rlRun 'tmt run -dvr $discover $plan | tee output'
+            rlRun "tmt run -dvr $discover $plan | tee output"
             rlAssertGrep '/tests/discover1' output
-            rlRun 'tmt run -dvr $discover --exclude discover1 $plan | tee output'
+            rlRun "tmt run -dvr $discover $exclude discover1 $plan | tee output"
             rlAssertNotGrep '/tests/discover1' output
         rlPhaseEnd
     done
@@ -42,7 +42,7 @@ rlJournalStart
     rlPhaseStartTest "Exclude tests via exclude option within a plan metadata"
         plan='plan --name fmf/exclude'
         discover='discover --how fmf'
-        rlRun 'tmt run -dvr $discover $plan | tee output'
+        rlRun "tmt run -dvr $discover $plan | tee output"
         rlAssertNotGrep '/tests/discover1' output
         rlAssertGrep '/tests/discover2' output
     rlPhaseEnd
@@ -51,7 +51,7 @@ rlJournalStart
         plan='plans --default'
         for link_relation in "" "relates:" "rel.*:"; do
             discover="discover -h fmf --link ${link_relation}/tmp/foo"
-            rlRun 'tmt run -dvr $discover $plan finish | tee output'
+            rlRun "tmt run -dvr $discover $plan finish | tee output"
             rlAssertGrep '1 test selected' output
             rlAssertGrep '/tests/discover1' output
         done
