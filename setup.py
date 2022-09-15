@@ -23,6 +23,7 @@ extras_require = {
     'docs': ['sphinx>3', 'mock', 'sphinx_rtd_theme'],
     'google': ['google-api-python-client', 'oauth2client'],
     'jira': ['requests_gssapi'],
+    'koji': ['koji'],
     'redmine': ['feedparser'],
     'rt': ['gssapi'],
     'tests': ['pytest', 'python-coveralls', 'pre-commit'],

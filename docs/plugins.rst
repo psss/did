@@ -91,6 +91,13 @@ jira
     :members:
     :undoc-members:
 
+koji
+----
+
+.. automodule:: did.plugins.koji
+    :members:
+    :undoc-members:
+
 nitrate
 -------
 
