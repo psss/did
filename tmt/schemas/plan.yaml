@@ -48,7 +48,7 @@ properties:
   # https://tmt.readthedocs.io/en/stable/spec/context.html#spec-context
   context:
     type: object
-    additionalProperties: false
+    additionalProperties: true
 
     properties:
       arch:
