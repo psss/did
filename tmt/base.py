@@ -11,7 +11,7 @@ import shutil
 import subprocess
 import sys
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, ClassVar, Dict, List, Optional, Tuple, Union, cast
 
 import click
 import fmf
@@ -94,11 +94,30 @@ _RawFmfId = TypedDict('_RawFmfId', {
 
 # An internal fmf id representation.
 @dataclasses.dataclass
-class FmfId:
+class FmfId(tmt.utils.SerializableContainer):
+    # The list of valid fmf id keys
+    keys: ClassVar[List[str]] = ['url', 'ref', 'path', 'name']
+
     url: Optional[str] = None
     ref: Optional[str] = None
     path: Optional[str] = None
     name: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """ Return keys and values in the form of a dictionary """
+
+        return dataclasses.asdict(self)
+
+    def to_raw(self) -> Dict[str, Any]:
+        """ Return keys and values as if they originated from fmf node """
+
+        return self.to_dict()
+
+    @classmethod
+    def from_dict(cls, raw: _RawFmfId) -> 'FmfId':
+        """ Construct an :py:class:`FmfId` from given input container """
+
+        return FmfId(**{key: raw.get(key, None) for key in cls.keys})
 
     def validate(self) -> Tuple[bool, str]:
         """
@@ -114,7 +133,7 @@ class FmfId:
             # Simple asdict() is not good enough, fmf does not like keys that exist but are `None`.
             # Don't include those.
             fmf.base.Tree.node({
-                key: value for key, value in dataclasses.asdict(self).items()
+                key: value for key, value in self.to_dict().items()
                 if value is not None
                 })
         except fmf.utils.GeneralError as error:
@@ -139,15 +158,16 @@ class FmfId:
 # into their internal representations.
 #
 
-
+#
 # A type describing the raw form of the core `link` attribute. See
 # https://tmt.readthedocs.io/en/stable/spec/core.html#link for its
-# formal specification. Internally, the data is wrapped with `Link`
-# instances, the type below describes the raw data coming from Fmf
-# nodes.
-# TODO: `*Link._relations` would be much better, DRY, but that's allowed
-# since Python 3.11.
-_RawLinkRelation = Literal[
+# formal specification. Internally, a link is represented by a `Link`
+# class instance, and types below describe the raw data coming from Fmf
+# nodes and CLI options.
+
+
+# Link relations.
+_RawLinkRelationName = Literal[
     'verifies', 'verified-by',
     'implements', 'implemented-by',
     'documents', 'documented-by',
@@ -160,30 +180,25 @@ _RawLinkRelation = Literal[
     'note'
 ]
 
-# A "relation": "link" subtype.
-#
-# An example from TMT docs says:
-#
-# link:
-#   verifies: /stories/cli/init/base
-#
-# link:
-#     blocked-by:
-#         url: https://github.com/teemtee/fmf
-#         name: /stories/select/filter/regexp
-#     note: Need to get the regexp filter working first.
-_RawLinkRelationAware = Dict[_RawLinkRelation, Union[str, _RawFmfId]]
+# Link target - can be either a string (like test case name or URL), or an fmf id.
+_RawLinkTarget = Union[str, _RawFmfId]
 
+# Basic "relation-aware" link - essentialy a mapping with one key/value pair.
+_RawLinkRelation = Dict[_RawLinkRelationName, _RawLinkTarget]
+
+# A single link can be represented as a string or FMF ID (meaning only target is specified),
+# or a "relation-aware" link aka mapping defined above.
 _RawLink = Union[
-    # link: https://github.com/teemtee/tmt/issues/461
     str,
     _RawFmfId,
-    _RawLinkRelationAware,
+    _RawLinkRelation
+]
 
-    # link:
-    # - verifies: /stories/cli/init/base
-    # - verifies: https://bugzilla.redhat.com/show_bug.cgi?id=1234
-    List[Union[str, _RawFmfId, _RawLinkRelationAware]],
+# Collection of links - can be either a single link, or a list of links, and all
+# link forms may be used together.
+_RawLinks = Union[
+    _RawLink,
+    List[_RawLink]
 ]
 
 
@@ -227,7 +242,7 @@ class Core(tmt.utils.Common):
     description: Optional[str] = None
     enabled: bool = True
     order: int = DEFAULT_ORDER
-    link: Optional['Link'] = None
+    link: Optional['Links'] = None
     id: Optional[str] = None
     tag: List[str] = []
     tier: Optional[str] = None
@@ -257,8 +272,8 @@ class Core(tmt.utils.Common):
             return DEFAULT_ORDER
         return int(value)
 
-    def _normalize_link(self, value: _RawLink) -> 'Link':
-        return Link(data=value)
+    def _normalize_link(self, value: _RawLinks) -> 'Links':
+        return Links(data=value)
 
     def _normalize_adjust(
             self, value: Union[_RawAdjustRule, List[_RawAdjustRule]]) -> List[_RawAdjustRule]:
@@ -402,7 +417,11 @@ class Core(tmt.utils.Common):
             value = getattr(self, key)
 
             if key == 'link' and value:
-                data[key] = value.links
+                # TODO: links must be saved in a form that can be than crunched by
+                # Links.__init__() method - it is tempting to use to_serialized()
+                # and from_unserialized(), but we don't use unserialization code
+                # when loading saved data back, so we can't go this way. Yet.
+                data[key] = cast('Links', value).to_raw()
 
             else:
                 data[key] = value
@@ -430,28 +449,13 @@ class Core(tmt.utils.Common):
             verdict(None, "summary should not exceed 50 characters")
         return True
 
-    def has_link(self, link_object):
+    def has_link(self, needle: 'LinkNeedle') -> bool:
         """ Whether object contains specified link """
-        def get_relation(from_link):
-            # keys() = relation and optional note
-            return list(set(from_link.keys()) - set(['note']))[0]
-        if isinstance(link_object, Link):
-            relation = get_relation(link_object)
-            target = link_object[relation]
-        else:
-            # User text input
-            parts = link_object.split(':', maxsplit=1)
-            if len(parts) == 1:
-                relation, target = ".*", parts[0]
-            else:
-                relation, target = parts
-        for candidate in self.link.get():
-            candidate_relation = get_relation(candidate)
-            candidate_target = candidate[candidate_relation]
-            if (re.search(relation, candidate_relation)
-                    and re.search(target, candidate_target)):
-                return True
-        return False
+
+        if self.link is None:
+            return False
+
+        return self.link.has_link(needle)
 
 
 Node = Core
@@ -1510,7 +1514,7 @@ class Tree(tmt.utils.Common):
             return self._custom_context
         return super()._fmf_context()
 
-    def _filters_conditions(self, nodes, filters, conditions, links, excludes):
+    def _filters_conditions(self, nodes, filters, conditions, links: List['LinkNeedle'], excludes):
         """ Apply filters and conditions, return pruned nodes """
         result = []
         for node in nodes:
@@ -1544,7 +1548,7 @@ class Tree(tmt.utils.Common):
             # Links
             try:
                 # Links are in OR relation
-                if links and all(not node.has_link(link_) for link_ in links):
+                if links and all(not node.has_link(needle) for needle in links):
                     continue
             except BaseException:
                 # Handle broken link as not matching
@@ -1581,14 +1585,17 @@ class Tree(tmt.utils.Common):
         return self.tree.root
 
     def tests(self, keys=None, names=None, filters=None, conditions=None,
-              unique=True, links=None, excludes=None):
+              unique=True, links: Optional[List['LinkNeedle']] = None, excludes=None):
         """ Search available tests """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['test']
         names = names or []
         filters = (filters or []) + list(Test._opt('filters', []))
         conditions = (conditions or []) + list(Test._opt('conditions', []))
-        links = (links or []) + list(Test._opt('links', []))
+        links = (links or []) + [
+            LinkNeedle.from_raw(value)
+            for value in cast(List[str], Test._opt('links', []))
+            ]
         excludes = (excludes or []) + list(Test._opt('exclude', []))
         # Used in: tmt run test --name NAME, tmt test ls NAME...
         cmd_line_names = list(Test._opt('names', []))
@@ -1635,14 +1642,17 @@ class Tree(tmt.utils.Common):
             tests, filters, conditions, links, excludes)
 
     def plans(self, keys=None, names=None, filters=None, conditions=None,
-              run=None, links=None, excludes=None):
+              run=None, links: Optional[List['LinkNeedle']] = None, excludes=None):
         """ Search available plans """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['execute']
         names = (names or []) + list(Plan._opt('names', []))
         filters = (filters or []) + list(Plan._opt('filters', []))
         conditions = (conditions or []) + list(Plan._opt('conditions', []))
-        links = (links or []) + list(Plan._opt('links', []))
+        links = (links or []) + [
+            LinkNeedle.from_raw(value)
+            for value in cast(List[str], Plan._opt('links', []))
+            ]
         excludes = (excludes or []) + list(Plan._opt('exclude', []))
 
         # Append post filter to support option --enabled or --disabled
@@ -1667,14 +1677,17 @@ class Tree(tmt.utils.Common):
             filters, conditions, links, excludes)
 
     def stories(self, keys=None, names=None, filters=None, conditions=None,
-                whole=False, links=None, excludes=None):
+                whole=False, links: Optional[List['LinkNeedle']] = None, excludes=None):
         """ Search available stories """
         # Handle defaults, apply possible command line options
         keys = (keys or []) + ['story']
         names = (names or []) + list(Story._opt('names', []))
         filters = (filters or []) + list(Story._opt('filters', []))
         conditions = (conditions or []) + list(Story._opt('conditions', []))
-        links = (links or []) + list(Story._opt('links', []))
+        links = (links or []) + [
+            LinkNeedle.from_raw(value)
+            for value in cast(List[str], Story._opt('links', []))
+            ]
         excludes = (excludes or []) + list(Story._opt('exclude', []))
 
         # Append post filter to support option --enabled or --disabled
@@ -2452,11 +2465,179 @@ class Result:
         return data
 
 
-class Link(tmt.utils.SerializableContainer):
-    """ Core attribute link parsing """
+@dataclasses.dataclass
+class LinkNeedle:
+    """
+    A container to use for searching links.
+
+    ``relation`` and ``target`` fields hold regular expressions that
+    are to be searched for in the corresponding fields of :py:class:`Link`
+    instances.
+    """
+
+    relation: str = r'.*'
+    target: str = r'.*'
+
+    @classmethod
+    def from_raw(cls, value: str) -> 'LinkNeedle':
+        """
+        Create a ``LinkNeedle`` instance from its specification.
+
+        Specification is described in [1], this constructor takes care
+        of parsing it into a corresponding ``LinkNeedle`` instance.
+
+        [1] https://tmt.readthedocs.io/en/stable/spec/plans.html#fmf
+        """
+
+        parts = value.split(':', maxsplit=1)
+
+        if len(parts) == 1:
+            return LinkNeedle(target=parts[0])
+
+        return LinkNeedle(relation=parts[0], target=parts[1])
+
+    def __str__(self) -> str:
+        return f'{self.relation}:{self.target}'
+
+    def matches(self, link: 'Link') -> bool:
+        """ Find out whether a given link matches this needle """
+
+        # Rule out the simple case, mismatching relation.
+        if not re.search(self.relation, link.relation):
+            return False
+
+        # If the target is a string, the test is trivial.
+        if isinstance(link.target, str):
+            return re.search(self.target, link.target) is not None
+
+        # If the target is an fmf id, the current basic implementation will
+        # check just the `name` key, if it's defined. More fields may come
+        # later, pending support for more sophisticated parsing of link
+        # needle on a command line.
+        if link.target.name:
+            return re.search(self.target, link.target.name) is not None
+
+        return False
+
+
+@dataclasses.dataclass
+class Link:
+    """
+    An internal "link" as defined by tmt specification.
+
+    All links, after entering tmt internals, are converted from their raw
+    representation into instances of this class.
+
+    [1] https://tmt.readthedocs.io/en/stable/spec/core.html#link
+    """
+
+    DEFAULT_RELATIONSHIP: ClassVar[_RawLinkRelationName] = 'relates'
+
+    relation: _RawLinkRelationName
+    target: Union[str, FmfId]
+    note: Optional[str] = None
+
+    @classmethod
+    def from_raw(cls, spec: _RawLink) -> 'Link':
+        """
+        Create a ``Link`` instance from its specification.
+
+        Specification is described in [1], this constructor takes care
+        of parsing it into a corresponding ``Link`` instance.
+
+        [1] https://tmt.readthedocs.io/en/stable/spec/core.html#link
+        """
+
+        # `spec` can be either a string, fmf id, or relation:target mapping with
+        # a single key (modulo `note` key, of course).
+
+        # String is simple: if `spec` is a string, it represents a target,
+        # and we use the default relationship.
+        if isinstance(spec, str):
+            return Link(relation=Link.DEFAULT_RELATIONSHIP, target=spec)
+
+        # From now on, `spec` is a mapping, and may contain the optional
+        # `note` key. Extract the key for later.
+        note = cast(Optional[str], spec.get('note', None))
+
+        # Count how many relations are stored in spec.
+        relations = [
+            cast(_RawLinkRelationName, key) for key in spec if key not in (FmfId.keys + ['note'])
+            ]
+
+        # If there are no relations, spec must be an fmf id, representing
+        # a target.
+        if len(relations) == 0:
+            return Link(
+                relation=Link.DEFAULT_RELATIONSHIP,
+                target=FmfId.from_dict(cast(_RawFmfId, spec)),
+                note=note)
+
+        # More relations than 1 are a hard error, only 1 is allowed.
+        if len(relations) > 1:
+            raise tmt.utils.SpecificationError(
+                f"Multiple relations specified for the link "
+                f"({fmf.utils.listed(relations)}).")
+
+        # At this point, we know there's just a single relation, its value is the target,
+        # and note we already put aside.
+        #
+        # NOTE: as far as mypy knows, we did not narrow the type of `spec`, _RawFmfId
+        # is still in play - but we do know it's no longer possible because such a
+        # value we ruled out thanks to `"no relations" check above. At this point,
+        # the right side of relation must be _RawLinkTarget and nothing else. Helping
+        # mypy to realize that.
+        relation = relations[0]
+        raw_target = cast(_RawLinkTarget, spec[relation])
+
+        # TODO: this should not happen with mandatory validation
+        if relation not in Links._relations:
+            raise tmt.utils.SpecificationError(
+                f"Invalid link relation '{relation}' (should be "
+                f"{fmf.utils.listed(Links._relations, join='or')}).")
+
+        if isinstance(raw_target, str):
+            return Link(relation=relation, target=raw_target, note=note)
+
+        return Link(relation=relation, target=FmfId.from_dict(raw_target), note=note)
+
+    def to_raw(self) -> _RawLinkRelation:
+        """
+        Convert this link into a corresponding link specification.
+
+        No matter what the original specification was, every link will
+        generate the very same type of specification, the ``relation: target``
+        one.
+
+        Output of this method is fully compatible with specification, and when
+        given to :py:meth:`from_raw`, it shall create a ``Link`` instance
+        with the same properties as the original one.
+
+        [1] https://tmt.readthedocs.io/en/stable/spec/core.html#link
+        """
+
+        spec = {
+            self.relation: self.target.to_dict() if isinstance(
+                self.target,
+                FmfId) else self.target}
+
+        if self.note is not None:
+            spec['note'] = self.note
+
+        return spec
+
+
+class Links:
+    """
+    Collection of links in tests, plans and stories.
+
+    Provides abstraction over the whole collection of object's links.
+
+    [1] https://tmt.readthedocs.io/en/stable/spec/core.html#link
+    """
 
     # The list of all supported link relations
-    _relations = [
+    _relations: List[_RawLinkRelationName] = [
         'verifies', 'verified-by',
         'implements', 'implemented-by',
         'documents', 'documented-by',
@@ -2466,73 +2647,62 @@ class Link(tmt.utils.SerializableContainer):
         'relates',
         ]
 
-    # The list of valid fmf id keys
-    _fmf_id_keys = ['url', 'ref', 'path', 'name']
+    _links: List[Link]
 
-    def __init__(self, data: Optional[_RawLink] = None):
-        """ Convert link data into canonical form """
+    def __init__(self, data: Optional[_RawLinks] = None):
+        """ Create a collection from raw link data """
+
+        # TODO: this should not happen with mandatory validation
+        if data is not None and not isinstance(data, (str, dict, list)):
+            raise tmt.utils.SpecificationError(
+                "Invalid link specification "
+                "(should be a string, fmf id or list of their combinations), "
+                f"got '{type(data).__name__}'.")
+
         # Nothing to do if no data provided
-        self.links = []
         if data is None:
+            self._links = []
+
             return
-        if not isinstance(data, list):
-            data = [data]
+
+        specs = data if isinstance(data, list) else [data]
 
         # Ensure that each link is in the canonical form
-        for link in data:
+        self._links = [Link.from_raw(spec) for spec in specs]
 
-            # It should be a string
-            if isinstance(link, str):
-                self.links.append(dict(relates=link))
-                continue
+    def to_raw(self) -> List[_RawLinkRelation]:
+        """
+        Convert this collection of links into a corresponding specification.
 
-            # Or a dictionary
-            if not isinstance(link, dict):
-                raise tmt.utils.SpecificationError(
-                    f"Invalid link target (should be 'str' or 'dict', "
-                    f"got '{type(link).__name__}'.")
+        No matter what the original specification was, every link will
+        generate the very same type of specification, the ``relation: target``
+        one.
 
-            # Verify the relation
-            relations = []
-            for key in link:
-                # Skip fmf id keys and optional link note for now
-                if key in self._fmf_id_keys + ['note']:
-                    continue
-                if key in self._relations:
-                    relations.append(key)
-                    continue
-                raise tmt.utils.SpecificationError(
-                    f"Invalid link relation '{key}' (should be "
-                    f"{fmf.utils.listed(self._relations, join='or')}).")
-            # More relations (error)
-            if len(relations) > 1:
-                raise tmt.utils.SpecificationError(
-                    f"Multiple relations specified for the link "
-                    f"({fmf.utils.listed(relations)}).")
-            # No relation (fmf id)
-            if len(relations) == 0:
-                self.links.append(dict(relates=link))
-                continue
-            # The link should contain a relation and an optional note
-            allowed_keys = set(relations + ['note'])
-            extra_keys = set(link.keys()).difference(allowed_keys)
-            if extra_keys:
-                extra_keys = fmf.utils.listed(extra_keys, quote="'")
-                raise tmt.utils.SpecificationError(
-                    f"Unexpected link key {extra_keys}. Store the dictionary "
-                    f"with the fmf id under the '{relations[0]}' key.")
-            # Valid link
-            self.links.append(link)
+        Output of this method is fully compatible with specification, and when
+        used to instantiate :py:meth:`Link` object, it shall create a collection
+        of links with the same properties as the original one.
 
-    def get(self, relation=None):
+        [1] https://tmt.readthedocs.io/en/stable/spec/core.html#link
+        """
+
+        return [
+            link.to_raw()
+            for link in self._links
+            ]
+
+    def get(self, relation: Optional[_RawLinkRelationName] = None) -> List[Link]:
         """ Get links with given relation, all by default """
         return [
-            link for link in self.links
-            if relation in link or relation is None]
+            link for link in self._links
+            if relation is None or link.relation == relation]
 
-    def show(self):
+    def show(self) -> None:
         """ Format a list of links with their relations """
-        for link in self.links:
-            relation = [key for key in link.keys() if key != 'note'][0]
-            echo(tmt.utils.format(
-                relation.rstrip('-by'), f"{link[relation]}", key_color='cyan'))
+        for link in self._links:
+            # TODO: needs a format for fmf id target
+            echo(tmt.utils.format(link.relation.rstrip('-by'), f"{link.target}", key_color='cyan'))
+
+    def has_link(self, needle: LinkNeedle) -> bool:
+        """ Check whether this set of links contains a matching link """
+
+        return any(needle.matches(link) for link in self._links)

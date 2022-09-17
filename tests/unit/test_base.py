@@ -10,7 +10,7 @@ import pytest
 
 import tmt
 import tmt.cli
-from tmt.base import Link
+from tmt.base import FmfId, Link, LinkNeedle, Links
 from tmt.utils import SpecificationError
 
 runner = click.testing.CliRunner()
@@ -81,31 +81,34 @@ def test_test_invalid():
 def test_link():
     """ Test the link attribute parsing """
     # No link should default to an empty list
-    assert Link().get() == []
+    assert Links().get() == []
 
     # Single string (default relation)
-    assert Link('/fmf/id').get() == [dict(relates='/fmf/id')]
+    assert Links('/fmf/id').get() == [Link(relation='relates', target='/fmf/id')]
     # Multiple strings (default relation)
-    assert Link(['one', 'two']).get() == [
-        dict(relates='one'), dict(relates='two')]
+    assert Links(['one', 'two']).get() == [
+        Link(relation='relates', target='one'), Link(relation='relates', target='two')]
     # Multiple string mixed relation
-    assert Link(['implicit', dict(duplicates='explicit')]).get() == [
-        dict(relates='implicit'), dict(duplicates='explicit')]
+    assert Links(['implicit', dict(duplicates='explicit')]).get() == [
+        Link(relation='relates', target='implicit'),
+        Link(relation='duplicates', target='explicit')]
     # Multiple strings (explicit relation)
-    family = [dict(parent='mon'), dict(child='son')]
-    assert Link(family).get() == family
+    assert Links([dict(parent='mom'), dict(child='son')]).get() == [
+        Link(relation='parent', target='mom'), Link(relation='child', target='son')]
 
     # Single dictionary (default relation)
-    assert Link(dict(name='foo')).get() == [dict(relates=dict(name='foo'))]
+    assert Links(dict(name='foo')).get() == [Link(relation='relates', target=FmfId(name='foo'))]
     # Single dictionary (explicit relation)
-    assert Link(dict(verifies='foo')).get() == [dict(verifies='foo')]
+    assert Links(dict(verifies='foo')).get() == [Link(relation='verifies', target='foo')]
     # Multiple dictionaries
     family = [dict(parent='mom', note='foo'), dict(child='son')]
-    assert Link(family).get() == family
+    assert Links(family).get() == [
+        Link(relation='parent', target='mom', note='foo'), Link(relation='child', target='son')
+        ]
 
     # Selected relations
-    assert Link(family).get('parent') == [dict(parent='mom', note='foo')]
-    assert Link(family).get('child') == [dict(child='son')]
+    assert Links(family).get('parent') == [Link(relation='parent', target='mom', note='foo')]
+    assert Links(family).get('child') == [Link(relation='child', target='son')]
 
     # Full fmf id
     fmf_id = tmt.utils.yaml_to_dict("""
@@ -114,15 +117,29 @@ def test_link():
             name: /stories/select/filter/regexp
         note: Need to get the regexp filter working first.
         """)
-    link = Link(fmf_id)
-    assert link.get() == [fmf_id]
+    link = Links(fmf_id)
+    assert link.get() == [
+        Link(
+            relation='blocked-by',
+            target=FmfId(
+                url=fmf_id['blocked-by']['url'],
+                name=fmf_id['blocked-by']['name']),
+            note=fmf_id['note'])]
 
     # Invalid links and relations
     with pytest.raises(SpecificationError, match='Invalid link'):
-        Link(123)
+        Links(123)
     with pytest.raises(SpecificationError, match='Multiple relations'):
-        Link(dict(verifies='one', blocks='another'))
+        Links(dict(verifies='one', blocks='another'))
     with pytest.raises(SpecificationError, match='Invalid link relation'):
-        Link(dict(depends='other'))
-    with pytest.raises(SpecificationError, match='Unexpected link key'):
-        Link(dict(verifies='story', url='https://example.org', ref='devel'))
+        Links(dict(depends='other'))
+
+    # Searching for links
+    links = Links([dict(parent='mom', note='foo'), dict(child='son', note='bar')])
+    assert links.has_link(LinkNeedle())
+    assert links.has_link(LinkNeedle(relation='[a-z]+'))
+    assert links.has_link(LinkNeedle(relation='en'))
+    assert links.has_link(LinkNeedle(target='^mom$'))
+    assert links.has_link(LinkNeedle(target='on'))
+    assert not links.has_link(LinkNeedle(relation='verifies', target='son'))
+    assert not links.has_link(LinkNeedle(relation='parent', target='son'))

@@ -654,16 +654,17 @@ def export_to_nitrate(test: 'tmt.Test') -> None:
 
     # List of bugs test verifies
     verifies_bug_ids = []
-    for link in test.link.get():
-        try:
-            bug_id_search = re.search(RE_BUGZILLA_URL, link['verifies'])
-            if not bug_id_search:
-                log.debug(f"Did not find bugzila URL in {link['verifies']}")
-                continue
-            bug_id = int(bug_id_search.group(1))
-            verifies_bug_ids.append(bug_id)
-        except Exception as err:
-            log.debug(err)
+    if test.link:
+        for link in test.link.get('verifies'):
+            try:
+                bug_id_search = re.search(RE_BUGZILLA_URL, link.target)
+                if not bug_id_search:
+                    log.debug(f"Did not find bugzila URL in '{link.target}'.")
+                    continue
+                bug_id = int(bug_id_search.group(1))
+                verifies_bug_ids.append(bug_id)
+            except Exception as err:
+                log.debug(err)
 
     # Add bugs to the Nitrate case
     if verifies_bug_ids:
@@ -803,20 +804,21 @@ def export_to_polarion(test: 'tmt.Test') -> None:
     # List of bugs test verifies
     bug_ids = []
     requirements = []
-    for link in test.link.get():
-        try:
-            bug_ids_search = re.search(RE_BUGZILLA_URL, link['verifies'])
-            if bug_ids_search:
-                bug_ids.append(int(bug_ids_search.group(1)))
-            else:
-                log.debug('Failed to find bug ID in verifies link')
-            polarion_url_search = re.search(RE_POLARION_URL, link['verifies'])
-            if polarion_url_search:
-                requirements.append(polarion_url_search.group(1))
-            else:
-                log.debug('Failed to find Polarion URL in verifies link')
-        except Exception as err:
-            log.debug(err)
+    if test.link:
+        for link in test.link.get('verifies'):
+            try:
+                bug_ids_search = re.search(RE_BUGZILLA_URL, link.target)
+                if bug_ids_search:
+                    bug_ids.append(int(bug_ids_search.group(1)))
+                else:
+                    log.debug("Failed to find bug ID in the 'verifies' link.")
+                polarion_url_search = re.search(RE_POLARION_URL, link.target)
+                if polarion_url_search:
+                    requirements.append(polarion_url_search.group(1))
+                else:
+                    log.debug("Failed to find Polarion URL in the 'verifies' link.")
+            except Exception as err:
+                log.debug(err)
 
     # Add bugs to the Polarion case
     if not dry_mode:

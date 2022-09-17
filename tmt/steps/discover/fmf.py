@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 import subprocess
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import click
 import fmf
@@ -436,10 +436,14 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         names = self.get('test', [])
         if names:
             self.info('tests', fmf.utils.listed(names), 'green')
+
         # Check the 'test --link' option first, then from discover
-        links = list(tmt.base.Test._opt('link') or self.get('link', []))
-        for link_ in links:
-            self.info('link', link_, 'green')
+        raw_link_needles = cast(List[str], tmt.Test._opt('links', []) or self.get('link', []))
+        link_needles = [tmt.base.LinkNeedle.from_raw(
+            raw_needle) for raw_needle in raw_link_needles]
+
+        for link_needle in link_needles:
+            self.info('link', link_needle, 'green')
 
         excludes = list(tmt.base.Test._opt('exclude')
                         or self.get('exclude', []))
@@ -477,7 +481,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             names=names,
             conditions=["manual is False"],
             unique=False,
-            links=links,
+            links=link_needles,
             excludes=excludes)
 
         # Prefix tests and handle library requires

@@ -45,7 +45,7 @@ class TestDescription(tmt.utils.NormalizeKeysMixin, tmt.utils.SerializableContai
     enabled: bool = True
     # TODO: ugly circular dependency (see tmt.base.DEFAULT_ORDER)
     order: int = 50
-    link: Optional['tmt.base.Link'] = None
+    link: Optional['tmt.base.Links'] = None
     id: Optional[str] = None
     tag: List[str] = dataclasses.field(default_factory=list)
     tier: Optional[str] = None
@@ -77,10 +77,10 @@ class TestDescription(tmt.utils.NormalizeKeysMixin, tmt.utils.SerializableContai
             return 50
         return int(value)
 
-    def _normalize_link(self, value: 'tmt.base._RawLink') -> 'tmt.base.Link':
+    def _normalize_link(self, value: 'tmt.base._RawLinks') -> 'tmt.base.Links':
         import tmt.base
 
-        return tmt.base.Link(data=value)
+        return tmt.base.Links(data=value)
 
     def _normalize_adjust(self,
                           value: Optional[Union[
@@ -115,21 +115,37 @@ class TestDescription(tmt.utils.NormalizeKeysMixin, tmt.utils.SerializableContai
 
         return data
 
+    def to_raw(self) -> Dict[str, Any]:
+        data = super().to_dict()
+        data['link'] = self.link.to_raw() if self.link else None
+        data['require'] = [
+            require if isinstance(require, str) else require.to_raw()
+            for require in self.require
+            ]
+
+        return data
+
     def to_serialized(self) -> Dict[str, Any]:
-        """
-        Return keys and values in the form allowing later reconstruction.
+        data = super().to_serialized()
 
-        Used to transform container into a structure one can save in a
-        YAML file, and restore it later.
+        data['link'] = self.link.to_raw() if self.link else None
+        data['require'] = [
+            require if isinstance(require, str) else require.to_serialized()
+            for require in self.require
+            ]
 
-        See :py:meth:`from_serialized` for its counterpart.
-        """
+        return data
 
-        fields = super().to_serialized()
+    @classmethod
+    def from_serialized(cls, serialized: Dict[str, Any]) -> 'TestDescription':
+        obj = super().from_serialized(serialized)
+        obj.link = tmt.base.Links(serialized['link'])
+        obj.require = [
+            require if isinstance(require, str) else tmt.base.FmfId.from_serialized(require)
+            for require in serialized['require']
+            ]
 
-        fields['link'] = self.link.to_serialized() if self.link else None
-
-        return fields
+        return obj
 
 
 @dataclasses.dataclass
@@ -139,6 +155,22 @@ class DiscoverShellData(tmt.steps.discover.DiscoverStepData):
     def _normalize_tests(self, value: List[Dict[str, Any]]
                          ) -> List[TestDescription]:
         return [TestDescription.from_raw(raw_datum, tmt.utils.Common()) for raw_datum in value]
+
+    def to_serialized(self) -> Dict[str, Any]:
+        serialized = super().to_serialized()
+
+        serialized['tests'] = [test.to_serialized() for test in self.tests]
+
+        return serialized
+
+    @classmethod
+    def from_serialized(cls, serialized: Dict[str, Any]) -> 'DiscoverShellData':
+        obj = super().from_serialized(serialized)
+
+        obj.tests = [TestDescription.from_serialized(
+            serialized_test) for serialized_test in serialized['tests']]
+
+        return obj
 
 
 @tmt.steps.provides_method('shell')
@@ -218,7 +250,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             if dist_git_source:
                 data.environment['TMT_SOURCE_DIR'] = sourcedir
             # Create a simple fmf node, adjust its name
-            tests.child(data.name, data.to_dict())
+            tests.child(data.name, data.to_raw())
 
         # Symlink tests directory to the plan work tree
         testdir = os.path.join(self.workdir, "tests")
