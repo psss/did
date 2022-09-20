@@ -85,7 +85,10 @@ T = TypeVar('T', bound='StepData')
 
 
 @dataclasses.dataclass
-class StepData(tmt.utils.NormalizeKeysMixin, tmt.utils.SerializableContainer):
+class StepData(
+        tmt.utils.SpecBasedContainer,
+        tmt.utils.NormalizeKeysMixin,
+        tmt.utils.SerializableContainer):
     """
     Keys necessary to describe, create, save and restore a step.
 
@@ -110,13 +113,8 @@ class StepData(tmt.utils.NormalizeKeysMixin, tmt.utils.SerializableContainer):
     order: int = tmt.utils.DEFAULT_PLUGIN_ORDER
     summary: Optional[str] = None
 
-    def to_raw(self) -> _RawStepData:
-        """
-        Serialize step data instance to a raw representation.
-
-        The returned value can be used to recreate step data when given
-        to :py:meth:`from_raw`.
-        """
+    def to_spec(self) -> _RawStepData:  # type: ignore[override]
+        """ Convert to a form suitable for saving in a specification file """
 
         return cast(_RawStepData, {
             tmt.utils.key_to_option(key): value
@@ -135,10 +133,12 @@ class StepData(tmt.utils.NormalizeKeysMixin, tmt.utils.SerializableContainer):
         pass
 
     @classmethod
-    def from_raw(cls: Type[T], raw_data: _RawStepData, logger: tmt.utils.Common) -> T:
-        """
-        Unserialize step data instance from its a raw representation.
-        """
+    def from_spec(  # type: ignore[override]
+            cls: Type[T],
+            raw_data: _RawStepData,
+            logger: tmt.utils.Common
+            ) -> T:
+        """ Convert from a specification file or from a CLI option """
 
         cls.pre_normalization(raw_data, logger)
 
@@ -406,7 +406,7 @@ class Step(tmt.utils.Common):
                 # form for _normalize_data().
                 if datum.how == how:
                     self.debug(f'  compatible:   {datum}', level=4)
-                    _raw_data.append(datum.to_raw())
+                    _raw_data.append(datum.to_spec())
 
                 # Mismatch, throwing away, replacing with new `how` - but we can keep the name.
                 else:
@@ -718,7 +718,7 @@ class BasePlugin(Phase, metaclass=PluginIndex):
                 # normalization in the process.
                 if raw_data is not None:
                     try:
-                        data = plugin_data_class.from_raw(raw_data, step)
+                        data = plugin_data_class.from_spec(raw_data, step)
 
                     except Exception as exc:
                         raise tmt.utils.GeneralError(

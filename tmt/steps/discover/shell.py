@@ -21,7 +21,10 @@ T = TypeVar('T', bound='TestDescription')
 
 
 @dataclasses.dataclass
-class TestDescription(tmt.utils.NormalizeKeysMixin, tmt.utils.SerializableContainer):
+class TestDescription(
+        tmt.utils.SpecBasedContainer,
+        tmt.utils.NormalizeKeysMixin,
+        tmt.utils.SerializableContainer):
     """
     Keys necessary to describe a shell-based test.
 
@@ -105,30 +108,40 @@ class TestDescription(tmt.utils.NormalizeKeysMixin, tmt.utils.SerializableContai
 
     # Our own implementation, parent uses `name` and `how`, and tests don't have any `how`.
     @classmethod
-    def from_raw(cls: Type[T], raw_data: Dict[str, Any], logger: tmt.utils.Common) -> T:
-        """
-        Unserialize step data instance from its a raw representation.
-        """
+    def from_spec(  # type: ignore[override]
+            cls: Type[T],
+            raw_data: Dict[str, Any],
+            logger: tmt.utils.Common
+            ) -> T:
+        """ Convert from a specification file or from a CLI option """
 
         data = cls(name=raw_data['name'], test=raw_data['test'])
         data._load_keys(raw_data, cls.__name__, logger)
 
         return data
 
-    def to_raw(self) -> Dict[str, Any]:
-        data = super().to_dict()
-        data['link'] = self.link.to_raw() if self.link else None
+    def to_spec(self) -> Dict[str, Any]:
+        """ Convert to a form suitable for saving in a specification file """
+
+        data = super().to_spec()
+        data['link'] = self.link.to_spec() if self.link else None
         data['require'] = [
-            require if isinstance(require, str) else require.to_raw()
+            require if isinstance(require, str) else require.to_spec()
             for require in self.require
             ]
 
         return data
 
     def to_serialized(self) -> Dict[str, Any]:
+        """ Convert to a form suitable for saving in a file """
+
         data = super().to_serialized()
 
-        data['link'] = self.link.to_raw() if self.link else None
+        # Using `to_spec()` on purpose: `Links` does not provide serialization
+        # methods, because specification of links is already good enough. We
+        # can use existing `to_spec()` method, and undo it with a simple
+        # `Links(...)` call.
+        data['link'] = self.link.to_spec() if self.link else None
         data['require'] = [
             require if isinstance(require, str) else require.to_serialized()
             for require in self.require
@@ -138,6 +151,8 @@ class TestDescription(tmt.utils.NormalizeKeysMixin, tmt.utils.SerializableContai
 
     @classmethod
     def from_serialized(cls, serialized: Dict[str, Any]) -> 'TestDescription':
+        """ Convert from a serialized form loaded from a file """
+
         obj = super().from_serialized(serialized)
         obj.link = tmt.base.Links(serialized['link'])
         obj.require = [
@@ -154,9 +169,11 @@ class DiscoverShellData(tmt.steps.discover.DiscoverStepData):
 
     def _normalize_tests(self, value: List[Dict[str, Any]]
                          ) -> List[TestDescription]:
-        return [TestDescription.from_raw(raw_datum, tmt.utils.Common()) for raw_datum in value]
+        return [TestDescription.from_spec(raw_datum, tmt.utils.Common()) for raw_datum in value]
 
     def to_serialized(self) -> Dict[str, Any]:
+        """ Convert to a form suitable for saving in a file """
+
         serialized = super().to_serialized()
 
         serialized['tests'] = [test.to_serialized() for test in self.tests]
@@ -165,6 +182,8 @@ class DiscoverShellData(tmt.steps.discover.DiscoverStepData):
 
     @classmethod
     def from_serialized(cls, serialized: Dict[str, Any]) -> 'DiscoverShellData':
+        """ Convert from a serialized form loaded from a file """
+
         obj = super().from_serialized(serialized)
 
         obj.tests = [TestDescription.from_serialized(
@@ -250,7 +269,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             if dist_git_source:
                 data.environment['TMT_SOURCE_DIR'] = sourcedir
             # Create a simple fmf node, adjust its name
-            tests.child(data.name, data.to_raw())
+            tests.child(data.name, data.to_spec())
 
         # Symlink tests directory to the plan work tree
         testdir = os.path.join(self.workdir, "tests")

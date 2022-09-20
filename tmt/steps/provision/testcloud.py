@@ -295,7 +295,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                     raise tmt.utils.SpecificationError(
                         f"Value '{value}' cannot be converted to int for '{int_key}' attribute.")
 
-        for key, value in data.to_dict().items():
+        for key, value in data.items():
             if key == 'memory':
                 self.info('memory', f"{value} MB", 'green')
             elif key == 'disk':

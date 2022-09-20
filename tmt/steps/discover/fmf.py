@@ -439,7 +439,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
 
         # Check the 'test --link' option first, then from discover
         raw_link_needles = cast(List[str], tmt.Test._opt('links', []) or self.get('link', []))
-        link_needles = [tmt.base.LinkNeedle.from_raw(
+        link_needles = [tmt.base.LinkNeedle.from_spec(
             raw_needle) for raw_needle in raw_link_needles]
 
         for link_needle in link_needles:

@@ -1328,19 +1328,16 @@ def option_to_key(option: str) -> str:
     return option.replace('-', '_')
 
 
-SerializableContainerDerivedType = TypeVar(
-    'SerializableContainerDerivedType',
-    bound='SerializableContainer')
-
-
 @dataclasses.dataclass
-class SerializableContainer:
-    """
-    A mixin class for objects that may be saved in files and restored later
-    """
+class DataContainer:
+    """ A base class for objects that have keys and values """
 
     def to_dict(self) -> Dict[str, Any]:
-        """ Return keys and values in the form of a dictionary """
+        """
+        Convert to a mapping.
+
+        See :ref:`classes.rst` for more details.
+        """
 
         return dataclasses.asdict(self)
 
@@ -1365,7 +1362,7 @@ class SerializableContainer:
         yield from self.to_dict().items()
 
     @classmethod
-    def default(cls, key: str, default: Any = None) -> Any:
+    def _default(cls, key: str, default: Any = None) -> Any:
         """
         Return a default value for a given key.
 
@@ -1416,6 +1413,48 @@ class SerializableContainer:
 
         return True
 
+
+SpecBasedContainerT = TypeVar('SpecBasedContainerT', bound='SpecBasedContainer')
+
+
+class SpecBasedContainer(DataContainer):
+    @classmethod
+    def from_spec(cls: Type[SpecBasedContainerT], spec: Any) -> SpecBasedContainerT:
+        """
+        Convert from a specification file or from a CLI option
+
+        See :ref:`classes.rst` for more details.
+
+        See :py:meth:`to_spec` for its counterpart.
+        """
+
+        raise NotImplementedError()
+
+    def to_spec(self) -> Dict[str, Any]:
+        """
+        Convert to a form suitable for saving in a specification file
+
+        See :ref:`classes.rst` for more details.
+
+        See :py:meth:`from_spec` for its counterpart.
+        """
+
+        return self.to_dict()
+
+
+SerializableContainerDerivedType = TypeVar(
+    'SerializableContainerDerivedType',
+    bound='SerializableContainer')
+
+
+@dataclasses.dataclass
+class SerializableContainer(DataContainer):
+    """ A mixin class for saving and loading objects """
+
+    @classmethod
+    def default(cls, key: str, default: Any = None) -> Any:
+        return cls._default(key, default=default)
+
     #
     # Moving data between containers and objects owning them
     #
@@ -1449,10 +1488,9 @@ class SerializableContainer:
 
     def to_serialized(self) -> Dict[str, Any]:
         """
-        Return keys and values in the form allowing later reconstruction.
+        Convert to a form suitable for saving in a file.
 
-        Used to transform container into a structure one can save in a
-        YAML file, and restore it later.
+        See :ref:`classes.rst` for more details.
 
         See :py:meth:`from_serialized` for its counterpart.
         """
@@ -1474,10 +1512,9 @@ class SerializableContainer:
             cls: Type[SerializableContainerDerivedType],
             serialized: Dict[str, Any]) -> SerializableContainerDerivedType:
         """
-        Recreate container from its serialized form.
+        Convert from a serialized form loaded from a file.
 
-        Used to transform data read from a YAML file into the original
-        container.
+        See :ref:`classes.rst` for more details.
 
         See :py:meth:`to_serialized` for its counterpart.
         """
@@ -1493,7 +1530,7 @@ class SerializableContainer:
     def unserialize(serialized: Dict[str, Any]
                     ) -> SerializableContainerDerivedType:
         """
-        Recreate container from its serialized form.
+        Convert from a serialized form loaded from a file.
 
         Similar to :py:meth:`from_serialized`, but this method knows
         nothing about container's class, and will locate the correct
@@ -1505,6 +1542,10 @@ class SerializableContainer:
         containers when their classes are not know to the code.
         Restoring such containers requires inspection of serialized data
         and dynamic imports of modules as needed.
+
+        See :ref:`classes.rst` for more details.
+
+        See :py:meth:`to_serialized` for its counterpart.
         """
 
         from tmt.plugins import import_member

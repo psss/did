@@ -94,7 +94,7 @@ _RawFmfId = TypedDict('_RawFmfId', {
 
 # An internal fmf id representation.
 @dataclasses.dataclass
-class FmfId(tmt.utils.SerializableContainer):
+class FmfId(tmt.utils.SpecBasedContainer, tmt.utils.SerializableContainer):
     # The list of valid fmf id keys
     keys: ClassVar[List[str]] = ['url', 'ref', 'path', 'name']
 
@@ -103,19 +103,14 @@ class FmfId(tmt.utils.SerializableContainer):
     path: Optional[str] = None
     name: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, Any]:
-        """ Return keys and values in the form of a dictionary """
-
-        return dataclasses.asdict(self)
-
-    def to_raw(self) -> Dict[str, Any]:
-        """ Return keys and values as if they originated from fmf node """
+    def to_spec(self) -> Dict[str, Any]:
+        """ Convert to a form suitable for saving in a specification file """
 
         return self.to_dict()
 
     @classmethod
-    def from_dict(cls, raw: _RawFmfId) -> 'FmfId':
-        """ Construct an :py:class:`FmfId` from given input container """
+    def from_spec(cls, raw: _RawFmfId) -> 'FmfId':
+        """ Convert from a specification file or from a CLI option """
 
         return FmfId(**{key: raw.get(key, None) for key in cls.keys})
 
@@ -133,7 +128,7 @@ class FmfId(tmt.utils.SerializableContainer):
             # Simple asdict() is not good enough, fmf does not like keys that exist but are `None`.
             # Don't include those.
             fmf.base.Tree.node({
-                key: value for key, value in self.to_dict().items()
+                key: value for key, value in self.items()
                 if value is not None
                 })
         except fmf.utils.GeneralError as error:
@@ -421,7 +416,7 @@ class Core(tmt.utils.Common):
                 # Links.__init__() method - it is tempting to use to_serialized()
                 # and from_unserialized(), but we don't use unserialization code
                 # when loading saved data back, so we can't go this way. Yet.
-                data[key] = cast('Links', value).to_raw()
+                data[key] = cast('Links', value).to_spec()
 
             else:
                 data[key] = value
@@ -1593,7 +1588,7 @@ class Tree(tmt.utils.Common):
         filters = (filters or []) + list(Test._opt('filters', []))
         conditions = (conditions or []) + list(Test._opt('conditions', []))
         links = (links or []) + [
-            LinkNeedle.from_raw(value)
+            LinkNeedle.from_spec(value)
             for value in cast(List[str], Test._opt('links', []))
             ]
         excludes = (excludes or []) + list(Test._opt('exclude', []))
@@ -1650,7 +1645,7 @@ class Tree(tmt.utils.Common):
         filters = (filters or []) + list(Plan._opt('filters', []))
         conditions = (conditions or []) + list(Plan._opt('conditions', []))
         links = (links or []) + [
-            LinkNeedle.from_raw(value)
+            LinkNeedle.from_spec(value)
             for value in cast(List[str], Plan._opt('links', []))
             ]
         excludes = (excludes or []) + list(Plan._opt('exclude', []))
@@ -1685,7 +1680,7 @@ class Tree(tmt.utils.Common):
         filters = (filters or []) + list(Story._opt('filters', []))
         conditions = (conditions or []) + list(Story._opt('conditions', []))
         links = (links or []) + [
-            LinkNeedle.from_raw(value)
+            LinkNeedle.from_spec(value)
             for value in cast(List[str], Story._opt('links', []))
             ]
         excludes = (excludes or []) + list(Story._opt('exclude', []))
@@ -2479,9 +2474,9 @@ class LinkNeedle:
     target: str = r'.*'
 
     @classmethod
-    def from_raw(cls, value: str) -> 'LinkNeedle':
+    def from_spec(cls, value: str) -> 'LinkNeedle':
         """
-        Create a ``LinkNeedle`` instance from its specification.
+        Convert from a specification file or from a CLI option
 
         Specification is described in [1], this constructor takes care
         of parsing it into a corresponding ``LinkNeedle`` instance.
@@ -2521,7 +2516,7 @@ class LinkNeedle:
 
 
 @dataclasses.dataclass
-class Link:
+class Link(tmt.utils.SpecBasedContainer):
     """
     An internal "link" as defined by tmt specification.
 
@@ -2538,9 +2533,9 @@ class Link:
     note: Optional[str] = None
 
     @classmethod
-    def from_raw(cls, spec: _RawLink) -> 'Link':
+    def from_spec(cls, spec: _RawLink) -> 'Link':
         """
-        Create a ``Link`` instance from its specification.
+        Convert from a specification file or from a CLI option
 
         Specification is described in [1], this constructor takes care
         of parsing it into a corresponding ``Link`` instance.
@@ -2570,7 +2565,7 @@ class Link:
         if len(relations) == 0:
             return Link(
                 relation=Link.DEFAULT_RELATIONSHIP,
-                target=FmfId.from_dict(cast(_RawFmfId, spec)),
+                target=FmfId.from_spec(cast(_RawFmfId, spec)),
                 note=note)
 
         # More relations than 1 are a hard error, only 1 is allowed.
@@ -2599,25 +2594,25 @@ class Link:
         if isinstance(raw_target, str):
             return Link(relation=relation, target=raw_target, note=note)
 
-        return Link(relation=relation, target=FmfId.from_dict(raw_target), note=note)
+        return Link(relation=relation, target=FmfId.from_spec(raw_target), note=note)
 
-    def to_raw(self) -> _RawLinkRelation:
+    def to_spec(self) -> _RawLinkRelation:
         """
-        Convert this link into a corresponding link specification.
+        Convert to a form suitable for saving in a specification file
 
         No matter what the original specification was, every link will
         generate the very same type of specification, the ``relation: target``
         one.
 
         Output of this method is fully compatible with specification, and when
-        given to :py:meth:`from_raw`, it shall create a ``Link`` instance
+        given to :py:meth:`from_spec`, it shall create a ``Link`` instance
         with the same properties as the original one.
 
         [1] https://tmt.readthedocs.io/en/stable/spec/core.html#link
         """
 
         spec = {
-            self.relation: self.target.to_dict() if isinstance(
+            self.relation: self.target.to_spec() if isinstance(
                 self.target,
                 FmfId) else self.target}
 
@@ -2627,7 +2622,7 @@ class Link:
         return spec
 
 
-class Links:
+class Links(tmt.utils.SpecBasedContainer):
     """
     Collection of links in tests, plans and stories.
 
@@ -2668,11 +2663,11 @@ class Links:
         specs = data if isinstance(data, list) else [data]
 
         # Ensure that each link is in the canonical form
-        self._links = [Link.from_raw(spec) for spec in specs]
+        self._links = [Link.from_spec(spec) for spec in specs]
 
-    def to_raw(self) -> List[_RawLinkRelation]:
+    def to_spec(self) -> List[_RawLinkRelation]:
         """
-        Convert this collection of links into a corresponding specification.
+        Convert to a form suitable for saving in a specification file
 
         No matter what the original specification was, every link will
         generate the very same type of specification, the ``relation: target``
@@ -2686,7 +2681,7 @@ class Links:
         """
 
         return [
-            link.to_raw()
+            link.to_spec()
             for link in self._links
             ]
 
