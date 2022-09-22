@@ -196,6 +196,13 @@ or pip::
     # sudo required if not in a virtualenv
     pip install pytest coveralls
 
+.. note::
+
+   When adding new unit tests, do not create class-based tests derived from
+   ``unittest.TestCase`` class. Such classes do not play well with Pytest's
+   fixtures, see https://docs.pytest.org/en/7.1.x/how-to/unittest.html for
+   details.
+
 
 Docs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

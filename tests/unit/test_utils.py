@@ -509,54 +509,57 @@ class test_structured_field(unittest.TestCase):
             StructuredFieldError, field.get, "section", "key")
 
 
-class Run(unittest.TestCase):
+def test_run_interactive_not_joined(tmpdir):
+    stdout, stderr = Common()._run(
+        "echo abc; echo def >2", shell=True, interactive=True, cwd=str(tmpdir), env={}, log=None)
+    assert stdout is None
+    assert stderr is None
 
-    def test_interactive_not_joined(self):
-        stdout, stderr = Common()._run(
-            "echo abc; echo def >2", shell=True, interactive=True, cwd=".", env={}, log=None)
-        self.assertEqual(stdout, None)
-        self.assertEqual(stderr, None)
 
-    def test_interactive_joined(self):
-        stdout, _ = Common()._run(
-            "echo abc; echo def >2",
-            shell=True,
-            interactive=True,
-            cwd=".",
-            env={},
-            join=True,
-            log=None)
-        self.assertEqual(stdout, None)
+def test_run_interactive_joined(tmpdir):
+    stdout, _ = Common()._run(
+        "echo abc; echo def >2",
+        shell=True,
+        interactive=True,
+        cwd=str(tmpdir),
+        env={},
+        join=True,
+        log=None)
+    assert stdout is None
 
-    def test_not_joined_stdout(self):
-        stdout, _ = Common()._run("ls /", shell=True, cwd=".", env={}, log=None)
-        self.assertIn("sbin", stdout)
 
-    def test_not_joined_stderr(self):
-        _, stderr = Common()._run("ls non_existing || true", shell=True, cwd=".", env={}, log=None)
-        self.assertIn("ls: cannot access", stderr)
+def test_run_not_joined_stdout():
+    stdout, _ = Common()._run("ls /", shell=True, cwd=".", env={}, log=None)
+    assert "sbin" in stdout
 
-    def test_joined(self):
-        stdout, _ = Common()._run(
-            "ls non_existing / || true",
-            shell=True,
-            cwd=".",
-            env={},
-            log=None,
-            join=True)
-        self.assertIn("ls: cannot access", stdout)
-        self.assertIn("sbin", stdout)
 
-    def test_big(self):
-        stdout, _ = Common()._run(
-            """for NUM in {1..100}; do LINE="$LINE n"; done; for NUM in {1..1000}; do echo $LINE; done""",  # noqa: E501
-            shell=True,
-            cwd=".",
-            env={},
-            log=None,
-            join=True)
-        self.assertIn("n n", stdout)
-        self.assertEqual(len(stdout), 200000)
+def test_run_not_joined_stderr():
+    _, stderr = Common()._run("ls non_existing || true", shell=True, cwd=".", env={}, log=None)
+    assert "ls: cannot access" in stderr
+
+
+def test_run_joined():
+    stdout, _ = Common()._run(
+        "ls non_existing / || true",
+        shell=True,
+        cwd=".",
+        env={},
+        log=None,
+        join=True)
+    assert "ls: cannot access" in stdout
+    assert "sbin" in stdout
+
+
+def test_run_big():
+    stdout, _ = Common()._run(
+        """for NUM in {1..100}; do LINE="$LINE n"; done; for NUM in {1..1000}; do echo $LINE; done""",  # noqa: E501
+        shell=True,
+        cwd=".",
+        env={},
+        log=None,
+        join=True)
+    assert "n n" in stdout
+    assert len(stdout) == 200000
 
 
 def test_get_distgit_handler():
