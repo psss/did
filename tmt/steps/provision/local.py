@@ -82,8 +82,11 @@ class GuestLocal(tmt.Guest):
     def execute(self, command: Union[List[str], str], **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Execute command on localhost """
         # Prepare the environment (plan/cli variables override)
-        environment = dict()
-        environment.update(kwargs.pop('env', dict()))
+        environment: tmt.utils.EnvironmentType = dict()
+        # Beware of using dict() as default: `env` is `Optional[EnvironmentType]`, and may
+        # be set by a caller by perfectly acceptable `None`. In such a case, `pop()` with
+        # a default would return not the default, but existing key, i.e. `None`.
+        environment.update(kwargs.pop('env', None) or {})
         environment.update(self.parent.plan.environment)
         # Run the command under the prepared environment
         return self.run(command, env=environment, shell=True, **kwargs)
