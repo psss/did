@@ -23,7 +23,13 @@ repos:
     hooks:
       - id: flake8
         args:
-          - --max-line-length=99
+          - --config
+          - .flake8
+        # The list of directories and files to check - matches flake8
+        # configuration in setup.cfg, but has a slightly different
+        # purpose. setup.cfg tells flake8 what to check when called e.g.
+        # by pre-commit or IDE linter integration, the list below tells
+        # *pre-commit* to which files to apply flake8 check.
         files: >
           (?x)^(
             examples/.*|

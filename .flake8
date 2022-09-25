@@ -1,0 +1,7 @@
+[flake8]
+max-line-length = 99
+
+# When changing this list, you probably also want to change pre-commit config too.
+filename = examples/,
+           tests/,
+           tmt/
