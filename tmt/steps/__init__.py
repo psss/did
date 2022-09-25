@@ -628,7 +628,7 @@ class BasePlugin(Phase):
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for given method """
         # Include common options supported across all plugins
-        return tmt.options.verbose_debug_quiet + tmt.options.force_dry
+        return tmt.options.VERBOSITY_OPTIONS + tmt.options.FORCE_DRY_OPTIONS
 
     @classmethod
     def command(cls) -> click.Command:

@@ -7,7 +7,7 @@ import dataclasses
 import os
 import subprocess
 import sys
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set, cast
+from typing import TYPE_CHECKING, Any, List, Optional, Set, cast
 
 import click
 import fmf
@@ -24,6 +24,7 @@ import tmt.plugins
 import tmt.steps
 import tmt.templates
 import tmt.utils
+from tmt.options import create_options_decorator
 
 if TYPE_CHECKING:
     import tmt.steps.discover
@@ -82,141 +83,16 @@ class CustomGroup(click.Group):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Common Options
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-def verbose_debug_quiet(function: Callable[..., Any]) -> Callable[..., Any]:
-    """ Verbose, debug and quiet output """
-    for option in reversed(tmt.options.verbose_debug_quiet):
-        function = option(function)
-    return function
-
-
-def force_dry(function: Callable[..., Any]) -> Callable[..., Any]:
-    """ Force and dry actions """
-    for option in reversed(tmt.options.force_dry):
-        function = option(function)
-    return function
-
-
-def fix(function: Callable[..., Any]) -> Callable[..., Any]:
-    """ Fix action """
-    function = tmt.options.fix(function)
-    return function
-
-
-def workdir_root(function: Callable[..., Any]) -> Callable[..., Any]:
-    """ Where tmt workdirs are to be found """
-    return tmt.options.workdir_root(function)
-
-
-def name_filter_condition(function: Callable[..., Any]) -> Callable[..., Any]:
-    """ Common filter options (short & long) """
-    options = [
-        click.argument(
-            'names', nargs=-1, metavar='[REGEXP|.]'),
-        click.option(
-            '-f', '--filter', 'filters', metavar='FILTER', multiple=True,
-            help="Apply advanced filter (see 'pydoc fmf.filter')."),
-        click.option(
-            '-c', '--condition', 'conditions', metavar="EXPR", multiple=True,
-            help="Use arbitrary Python expression for filtering."),
-        click.option(
-            '--enabled', is_flag=True,
-            help="Show only enabled tests, plans or stories."),
-        click.option(
-            '--disabled', is_flag=True,
-            help="Show only disabled tests, plans or stories."),
-        click.option(
-            '--link', 'links', metavar="RELATION:TARGET", multiple=True,
-            help="Filter by linked objects (regular expressions are "
-                 "supported for both relation and target)."),
-        click.option(
-            '-x', '--exclude', 'exclude', metavar='[REGEXP]', multiple=True,
-            help="Exclude a regular expression from search result."),
-        ]
-
-    for option in reversed(options):
-        function = option(function)
-    return function
-
-
-def shallow(function: Callable[..., Any]) -> Callable[..., Any]:
-    return click.option(
-        '-s', '--shallow', is_flag=True,
-        help='Do not clone remote plan.',
-        )(function)
-
-
-def source(function: Callable[..., Any]) -> Callable[..., Any]:
-    """ Option to select fmf objects by their sources """
-    return click.option(
-        '--source', is_flag=True, help="Select by fmf source file names instead of object names."
-        )(function)
-
-
-def name_filter_condition_long(function: Callable[..., Any]) -> Callable[..., Any]:
-    """ Common filter options (long only) """
-    options = [
-        click.argument(
-            'names', nargs=-1, metavar='[REGEXP|.]'),
-        click.option(
-            '--filter', 'filters', metavar='FILTER', multiple=True,
-            help="Apply advanced filter (see 'pydoc fmf.filter')."),
-        click.option(
-            '--condition', 'conditions', metavar="EXPR", multiple=True,
-            help="Use arbitrary Python expression for filtering."),
-        click.option(
-            '--enabled', is_flag=True,
-            help="Show only enabled tests, plans or stories."),
-        click.option(
-            '--disabled', is_flag=True,
-            help="Show only disabled tests, plans or stories."),
-        click.option(
-            '--link', 'links', metavar="RELATION:TARGET", multiple=True,
-            help="Filter by linked objects (regular expressions are "
-                 "supported for both relation and target)."),
-        click.option(
-            '--exclude', 'exclude', metavar='[REGEXP]', multiple=True,
-            help="Exclude a regular expression from search result."),
-        ]
-
-    for option in reversed(options):
-        function = option(function)
-    return function
-
-
-def implemented_verified_documented(function: Callable[..., Any]) -> Callable[..., Any]:
-    """ Common story options """
-
-    options = [
-        click.option(
-            '--implemented', is_flag=True,
-            help='Implemented stories only.'),
-        click.option(
-            '--unimplemented', is_flag=True,
-            help='Unimplemented stories only.'),
-        click.option(
-            '--verified', is_flag=True,
-            help='Stories verified by tests.'),
-        click.option(
-            '--unverified', is_flag=True,
-            help='Stories not verified by tests.'),
-        click.option(
-            '--documented', is_flag=True,
-            help='Documented stories only.'),
-        click.option(
-            '--undocumented', is_flag=True,
-            help='Undocumented stories only.'),
-        click.option(
-            '--covered', is_flag=True,
-            help='Covered stories only.'),
-        click.option(
-            '--uncovered', is_flag=True,
-            help='Uncovered stories only.'),
-        ]
-
-    for option in reversed(options):
-        function = option(function)
-    return function
+verbosity_options = create_options_decorator(tmt.options.VERBOSITY_OPTIONS)
+dry_options = create_options_decorator(tmt.options.DRY_OPTIONS)
+force_dry_options = create_options_decorator(tmt.options.FORCE_DRY_OPTIONS)
+fix_options = create_options_decorator(tmt.options.FIX_OPTIONS)
+workdir_root_options = create_options_decorator(tmt.options.WORKDIR_ROOT_OPTIONS)
+filter_options = create_options_decorator(tmt.options.FILTER_OPTIONS)
+filter_options_long = create_options_decorator(tmt.options.FILTER_OPTIONS_LONG)
+fmf_source_options = create_options_decorator(tmt.options.FMF_SOURCE_OPTIONS)
+story_flags_filter_options = create_options_decorator(tmt.options.STORY_FLAGS_FILTER_OPTIONS)
+remote_plan_options = create_options_decorator(tmt.options.REMOTE_PLAN_OPTIONS)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -233,7 +109,7 @@ def implemented_verified_documented(function: Callable[..., Any]) -> Callable[..
     help='Set the fmf context. Use KEY=VAL or KEY=VAL1,VAL2... format '
          'to define individual dimensions or the @FILE notation to load data '
          'from provided yaml file. Can be specified multiple times. ')
-@verbose_debug_quiet
+@verbosity_options
 @click.option(
     '--version', is_flag=True,
     help='Show tmt version and commit hash.')
@@ -317,8 +193,8 @@ def main(
     '--environment-file', metavar='FILE|URL', multiple=True,
     help='Set environment variables from file or url (yaml or dotenv formats '
          'are supported). Can be specified multiple times.')
-@verbose_debug_quiet
-@force_dry
+@verbosity_options
+@force_dry_options
 def run(context: click.core.Context, id_: str, **kwargs: Any) -> None:
     """ Run test steps. """
     # Initialize
@@ -355,7 +231,7 @@ run.add_command(tmt.steps.Reboot.command())
 @click.option(
     '--default', is_flag=True,
     help="Use default plans even if others are available.")
-@verbose_debug_quiet
+@verbosity_options
 def run_plans(context: click.core.Context, **kwargs: Any) -> None:
     """
     Select plans which should be executed.
@@ -381,7 +257,7 @@ def run_plans(context: click.core.Context, **kwargs: Any) -> None:
     '--link', 'links', metavar="RELATION:TARGET", multiple=True,
     help="Filter by linked objects (regular expressions are "
          "supported for both relation and target).")
-@verbose_debug_quiet
+@verbosity_options
 def run_tests(context: click.core.Context, **kwargs: Any) -> None:
     """
     Select tests which should be executed.
@@ -422,7 +298,7 @@ def finito(
 
 @main.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
-@verbose_debug_quiet
+@verbosity_options
 def tests(context: click.core.Context, **kwargs: Any) -> None:
     """
     Manage tests (L1 metadata).
@@ -438,8 +314,8 @@ def tests(context: click.core.Context, **kwargs: Any) -> None:
 
 @tests.command(name='ls')
 @click.pass_context
-@name_filter_condition
-@verbose_debug_quiet
+@filter_options
+@verbosity_options
 def tests_ls(context: click.core.Context, **kwargs: Any) -> None:
     """
     List available tests.
@@ -454,8 +330,8 @@ def tests_ls(context: click.core.Context, **kwargs: Any) -> None:
 
 @tests.command(name='show')
 @click.pass_context
-@name_filter_condition
-@verbose_debug_quiet
+@filter_options
+@verbosity_options
 def tests_show(context: click.core.Context, **kwargs: Any) -> None:
     """
     Show test details.
@@ -471,10 +347,10 @@ def tests_show(context: click.core.Context, **kwargs: Any) -> None:
 
 @tests.command(name='lint')
 @click.pass_context
-@name_filter_condition
-@source
-@fix
-@verbose_debug_quiet
+@filter_options
+@fmf_source_options
+@fix_options
+@verbosity_options
 def tests_lint(context: click.core.Context, **kwargs: Any) -> None:
     """
     Check tests against the L1 metadata specification.
@@ -503,8 +379,8 @@ _test_templates = listed(tmt.templates.TEST, join='or')
     '-t', '--template', metavar='TEMPLATE',
     help='Test template ({}).'.format(_test_templates),
     prompt='Template ({})'.format(_test_templates))
-@verbose_debug_quiet
-@force_dry
+@verbosity_options
+@force_dry_options
 def tests_create(
         context: click.core.Context,
         name: str,
@@ -569,8 +445,8 @@ def tests_create(
 @click.option(
     '--with-script', default=False, is_flag=True,
     help='Import manual cases with non-empty script field in Nitrate.')
-@verbose_debug_quiet
-@force_dry
+@verbosity_options
+@force_dry_options
 def tests_import(
         context: click.core.Context,
         paths: List[str],
@@ -643,7 +519,7 @@ def tests_import(
 
 @tests.command(name='export')
 @click.pass_context
-@name_filter_condition_long
+@filter_options_long
 @click.option(
     '-h', '--how', metavar='METHOD',
     help='Use specified method for export (nitrate or polarion).')
@@ -736,9 +612,9 @@ def tests_export(
 
 @tests.command(name="id")
 @click.pass_context
-@name_filter_condition
-@verbose_debug_quiet
-@force_dry
+@filter_options
+@verbosity_options
+@force_dry_options
 def tests_id(context: click.core.Context, **kwargs: Any) -> None:
     """
     Generate a unique id for each selected test.
@@ -758,8 +634,8 @@ def tests_id(context: click.core.Context, **kwargs: Any) -> None:
 
 @main.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
-@verbose_debug_quiet
-@shallow
+@verbosity_options
+@remote_plan_options
 def plans(context: click.core.Context, **kwargs: Any) -> None:
     """
     Manage test plans (L2 metadata).
@@ -777,9 +653,9 @@ def plans(context: click.core.Context, **kwargs: Any) -> None:
 
 @plans.command(name='ls')
 @click.pass_context
-@name_filter_condition
-@verbose_debug_quiet
-@shallow
+@filter_options
+@verbosity_options
+@remote_plan_options
 def plans_ls(context: click.core.Context, **kwargs: Any) -> None:
     """
     List available plans.
@@ -794,9 +670,9 @@ def plans_ls(context: click.core.Context, **kwargs: Any) -> None:
 
 @plans.command(name='show')
 @click.pass_context
-@name_filter_condition
-@verbose_debug_quiet
-@shallow
+@filter_options
+@verbosity_options
+@remote_plan_options
 def plans_show(context: click.core.Context, **kwargs: Any) -> None:
     """
     Show plan details.
@@ -812,9 +688,9 @@ def plans_show(context: click.core.Context, **kwargs: Any) -> None:
 
 @plans.command(name='lint')
 @click.pass_context
-@name_filter_condition
-@source
-@verbose_debug_quiet
+@filter_options
+@fmf_source_options
+@verbosity_options
 def plans_lint(context: click.core.Context, **kwargs: Any) -> None:
     """
     Check plans against the L2 metadata specification.
@@ -861,8 +737,8 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
 @click.option(
     '--finish', metavar='YAML', multiple=True,
     help='Finish phase content in yaml format.')
-@verbose_debug_quiet
-@force_dry
+@verbosity_options
+@force_dry_options
 def plans_create(
         context: click.core.Context,
         name: str,
@@ -876,7 +752,7 @@ def plans_create(
 
 @plans.command(name='export')
 @click.pass_context
-@name_filter_condition_long
+@filter_options_long
 @click.option(
     '--format', 'format_', default='yaml', show_default=True, metavar='FORMAT',
     help='Output format.')
@@ -905,9 +781,9 @@ def plans_export(context: click.core.Context, format_: str, **kwargs: Any) -> No
 
 @plans.command(name="id")
 @click.pass_context
-@name_filter_condition
-@verbose_debug_quiet
-@force_dry
+@filter_options
+@verbosity_options
+@force_dry_options
 def plans_id(context: click.core.Context, **kwargs: Any) -> None:
     """
     Generate a unique id for each selected plan.
@@ -927,7 +803,7 @@ def plans_id(context: click.core.Context, **kwargs: Any) -> None:
 
 @main.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
-@verbose_debug_quiet
+@verbosity_options
 def stories(context: click.core.Context, **kwargs: Any) -> None:
     """
     Manage user stories.
@@ -945,9 +821,9 @@ def stories(context: click.core.Context, **kwargs: Any) -> None:
 
 @stories.command(name='ls')
 @click.pass_context
-@name_filter_condition_long
-@implemented_verified_documented
-@verbose_debug_quiet
+@filter_options_long
+@story_flags_filter_options
+@verbosity_options
 def stories_ls(
         context: click.core.Context,
         implemented: bool,
@@ -975,9 +851,9 @@ def stories_ls(
 
 @stories.command(name='show')
 @click.pass_context
-@name_filter_condition_long
-@implemented_verified_documented
-@verbose_debug_quiet
+@filter_options_long
+@story_flags_filter_options
+@verbosity_options
 def stories_show(
         context: click.core.Context,
         implemented: bool,
@@ -1014,8 +890,8 @@ _story_templates = listed(tmt.templates.STORY, join='or')
     '-t', '--template', metavar='TEMPLATE',
     prompt='Template ({})'.format(_story_templates),
     help='Story template ({}).'.format(_story_templates))
-@verbose_debug_quiet
-@force_dry
+@verbosity_options
+@force_dry_options
 def stories_create(
         context: click.core.Context,
         name: str,
@@ -1035,9 +911,9 @@ def stories_create(
 @click.option(
     '--code', is_flag=True, help='Show code coverage.')
 @click.pass_context
-@name_filter_condition_long
-@implemented_verified_documented
-@verbose_debug_quiet
+@filter_options_long
+@story_flags_filter_options
+@verbosity_options
 def stories_coverage(
         context: click.core.Context,
         code: bool,
@@ -1107,8 +983,8 @@ def stories_coverage(
 
 @stories.command(name='export')
 @click.pass_context
-@name_filter_condition_long
-@implemented_verified_documented
+@filter_options_long
+@story_flags_filter_options
 @click.option(
     '--format', 'format_', default='rst', show_default=True, metavar='FORMAT',
     help='Output format.')
@@ -1151,9 +1027,9 @@ def stories_export(
 
 @stories.command(name='lint')
 @click.pass_context
-@name_filter_condition
-@source
-@verbose_debug_quiet
+@filter_options
+@fmf_source_options
+@verbosity_options
 def stories_lint(context: click.core.Context, **kwargs: Any) -> None:
     """
     Check stories against the L3 metadata specification.
@@ -1174,10 +1050,10 @@ def stories_lint(context: click.core.Context, **kwargs: Any) -> None:
 
 @stories.command(name="id")
 @click.pass_context
-@name_filter_condition_long
-@implemented_verified_documented
-@verbose_debug_quiet
-@force_dry
+@filter_options_long
+@story_flags_filter_options
+@verbosity_options
+@force_dry_options
 def stories_id(
         context: click.core.Context,
         implemented: bool,
@@ -1216,8 +1092,8 @@ def stories_id(
     type=click.Choice(['empty'] + tmt.templates.INIT_TEMPLATES),
     help='Template ({}).'.format(
         listed(tmt.templates.INIT_TEMPLATES, join='or')))
-@verbose_debug_quiet
-@force_dry
+@verbosity_options
+@force_dry_options
 def init(
         context: click.core.Context,
         path: str,
@@ -1247,7 +1123,7 @@ def init(
 
 @main.command()
 @click.pass_context
-@workdir_root
+@workdir_root_options
 @click.option(
     '-i', '--id', metavar="ID",
     help='Run id (name or directory path) to show status of.')
@@ -1262,7 +1138,7 @@ def init(
 @click.option(
     '--finished', is_flag=True, default=False,
     help='List all runs which have all enabled steps completed.')
-@verbose_debug_quiet
+@verbosity_options
 def status(
         context: click.core.Context,
         workdir_root: str,
@@ -1297,13 +1173,11 @@ def status(
 #  Clean
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-dry = tmt.options.force_dry[1]
-
 
 @main.group(chain=True, invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
-@verbose_debug_quiet
-@dry
+@verbosity_options
+@dry_options
 def clean(context: click.core.Context, **kwargs: Any) -> None:
     """
     Clean workdirs, guests or images.
@@ -1373,7 +1247,7 @@ def perform_clean(
 
 @clean.command(name='runs')
 @click.pass_context
-@workdir_root
+@workdir_root_options
 @click.option(
     '-l', '--last', is_flag=True, help='Clean the workdir of the last run.')
 @click.option(
@@ -1382,8 +1256,8 @@ def perform_clean(
 @click.option(
     '-k', '--keep', type=int,
     help='The number of latest workdirs to keep, clean the rest.')
-@verbose_debug_quiet
-@dry
+@verbosity_options
+@dry_options
 def clean_runs(
         context: click.core.Context,
         workdir_root: str,
@@ -1410,7 +1284,7 @@ def clean_runs(
 
 @clean.command(name='guests')
 @click.pass_context
-@workdir_root
+@workdir_root_options
 @click.option(
     '-l', '--last', is_flag=True, help='Stop the guest of the last run.')
 @click.option(
@@ -1419,8 +1293,8 @@ def clean_runs(
 @click.option(
     '-h', '--how', metavar='METHOD',
     help='Stop guests of the specified provision method.')
-@verbose_debug_quiet
-@dry
+@verbosity_options
+@dry_options
 def clean_guests(
         context: click.core.Context,
         workdir_root: str,
@@ -1443,8 +1317,8 @@ def clean_guests(
 
 @clean.command(name='images')
 @click.pass_context
-@verbose_debug_quiet
-@dry
+@verbosity_options
+@dry_options
 def clean_images(context: click.core.Context, **kwargs: Any) -> None:
     """
     Remove images of supported provision methods.
@@ -1465,10 +1339,10 @@ def clean_images(context: click.core.Context, **kwargs: Any) -> None:
 
 @main.command(name='lint')
 @click.pass_context
-@name_filter_condition
-@source
-@fix
-@verbose_debug_quiet
+@filter_options
+@fmf_source_options
+@fix_options
+@verbosity_options
 def lint(context: click.core.Context, **kwargs: Any) -> None:
     """
     Check all the present metadata against the specification.

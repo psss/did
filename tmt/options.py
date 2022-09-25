@@ -9,7 +9,7 @@ import click
 
 import tmt.utils
 
-# When deling with older Click packages (I'm looking at you, Python 3.6),
+# When dealing with older Click packages (I'm looking at you, Python 3.6),
 # we need to define FC on our own.
 try:
     from click.decorators import FC  # type: ignore[attr-defined]
@@ -36,7 +36,7 @@ _ClickOptionDecoratorType = Callable[[FC], FC]
 ClickOptionDecoratorType = _ClickOptionDecoratorType[Any]  # type: ignore[misc]
 
 # Verbose, debug and quiet output
-verbose_debug_quiet: List[ClickOptionDecoratorType] = [
+VERBOSITY_OPTIONS: List[ClickOptionDecoratorType] = [
     click.option(
         '-v', '--verbose', count=True, default=0,
         help='Show more details. Use multiple times to raise verbosity.'),
@@ -49,24 +49,128 @@ verbose_debug_quiet: List[ClickOptionDecoratorType] = [
     ]
 
 # Force and dry actions
-force_dry: List[ClickOptionDecoratorType] = [
-    click.option(
-        '-f', '--force', is_flag=True,
-        help='Overwrite existing files and step data.'),
+DRY_OPTIONS: List[ClickOptionDecoratorType] = [
     click.option(
         '-n', '--dry', is_flag=True,
         help='Run in dry mode. No changes, please.'),
     ]
 
-# Fix action
-fix = click.option(
-    '-F', '--fix', is_flag=True,
-    help='Attempt to fix all discovered issues.')
+FORCE_DRY_OPTIONS: List[ClickOptionDecoratorType] = [
+    click.option(
+        '-f', '--force', is_flag=True,
+        help='Overwrite existing files and step data.')
+    ] + DRY_OPTIONS
 
-workdir_root = click.option(
-    '--workdir-root', metavar='PATH', default=tmt.utils.WORKDIR_ROOT,
-    help=f"Path to root directory containing run workdirs. "
-         f"Defaults to '{tmt.utils.WORKDIR_ROOT}'.")
+
+# Fix action
+FIX_OPTIONS: List[ClickOptionDecoratorType] = [
+    click.option('-F', '--fix', is_flag=True, help='Attempt to fix all discovered issues.')
+    ]
+
+WORKDIR_ROOT_OPTIONS: List[ClickOptionDecoratorType] = [
+    click.option(
+        '--workdir-root', metavar='PATH', default=tmt.utils.WORKDIR_ROOT,
+        help=f"Path to root directory containing run workdirs. "
+             f"Defaults to '{tmt.utils.WORKDIR_ROOT}'.")
+    ]
+
+
+FILTER_OPTIONS: List[ClickOptionDecoratorType] = [
+    click.argument(
+        'names', nargs=-1, metavar='[REGEXP|.]'),
+    click.option(
+        '-f', '--filter', 'filters', metavar='FILTER', multiple=True,
+        help="Apply advanced filter (see 'pydoc fmf.filter')."),
+    click.option(
+        '-c', '--condition', 'conditions', metavar="EXPR", multiple=True,
+        help="Use arbitrary Python expression for filtering."),
+    click.option(
+        '--enabled', is_flag=True,
+        help="Show only enabled tests, plans or stories."),
+    click.option(
+        '--disabled', is_flag=True,
+        help="Show only disabled tests, plans or stories."),
+    click.option(
+        '--link', 'links', metavar="RELATION:TARGET", multiple=True,
+        help="Filter by linked objects (regular expressions are "
+             "supported for both relation and target)."),
+    click.option(
+        '-x', '--exclude', 'exclude', metavar='[REGEXP]', multiple=True,
+        help="Exclude a regular expression from search result."),
+    ]
+
+
+FILTER_OPTIONS_LONG: List[ClickOptionDecoratorType] = [
+    click.argument(
+        'names', nargs=-1, metavar='[REGEXP|.]'),
+    click.option(
+        '--filter', 'filters', metavar='FILTER', multiple=True,
+        help="Apply advanced filter (see 'pydoc fmf.filter')."),
+    click.option(
+        '--condition', 'conditions', metavar="EXPR", multiple=True,
+        help="Use arbitrary Python expression for filtering."),
+    click.option(
+        '--enabled', is_flag=True,
+        help="Show only enabled tests, plans or stories."),
+    click.option(
+        '--disabled', is_flag=True,
+        help="Show only disabled tests, plans or stories."),
+    click.option(
+        '--link', 'links', metavar="RELATION:TARGET", multiple=True,
+        help="Filter by linked objects (regular expressions are "
+             "supported for both relation and target)."),
+    click.option(
+        '--exclude', 'exclude', metavar='[REGEXP]', multiple=True,
+        help="Exclude a regular expression from search result."),
+    ]
+
+
+STORY_FLAGS_FILTER_OPTIONS: List[ClickOptionDecoratorType] = [
+    click.option(
+        '--implemented', is_flag=True,
+        help='Implemented stories only.'),
+    click.option(
+        '--unimplemented', is_flag=True,
+        help='Unimplemented stories only.'),
+    click.option(
+        '--verified', is_flag=True,
+        help='Stories verified by tests.'),
+    click.option(
+        '--unverified', is_flag=True,
+        help='Stories not verified by tests.'),
+    click.option(
+        '--documented', is_flag=True,
+        help='Documented stories only.'),
+    click.option(
+        '--undocumented', is_flag=True,
+        help='Undocumented stories only.'),
+    click.option(
+        '--covered', is_flag=True,
+        help='Covered stories only.'),
+    click.option(
+        '--uncovered', is_flag=True,
+        help='Uncovered stories only.'),
+    ]
+
+FMF_SOURCE_OPTIONS: List[ClickOptionDecoratorType] = [
+    click.option(
+        '--source', is_flag=True, help="Select by fmf source file names instead of object names."
+        )
+    ]
+
+REMOTE_PLAN_OPTIONS: List[ClickOptionDecoratorType] = [
+    click.option('-s', '--shallow', is_flag=True, help='Do not clone remote plan.')
+    ]
+
+
+def create_options_decorator(options: List[ClickOptionDecoratorType]) -> Callable[[FC], FC]:
+    def common_decorator(fn: FC) -> FC:
+        for option in reversed(options):
+            fn = option(fn)
+
+        return fn
+
+    return common_decorator
 
 
 def show_step_method_hints(
