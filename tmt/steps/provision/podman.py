@@ -56,8 +56,7 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for connect """
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '-i', '--image', metavar='IMAGE',
                 help='Select image to use. Short name or complete url.'),
@@ -70,8 +69,7 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
             click.option(
                 '-u', '--user', metavar='USER',
                 help='User to use for all container operations.')
-            ]
-        return options
+            ] + super().options(how)
 
     def default(self, option: str, default: Any = None) -> Any:
         """ Return default data for given option """

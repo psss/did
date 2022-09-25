@@ -416,8 +416,7 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options """
-        # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
-        return cast(List[tmt.options.ClickOptionDecoratorType], [
+        return [
             click.option(
                 '-p', '--package', metavar='PACKAGE', multiple=True,
                 help='Package name or path to rpm to be installed.'),
@@ -434,7 +433,7 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
                 '-m', '--missing', metavar='ACTION',
                 type=click.Choice(['fail', 'skip']),
                 help='Action on missing packages, fail (default) or skip.'),
-            ]) + super().options(how)
+            ] + super().options(how)
 
     def go(self, guest: Guest) -> None:
         """ Perform preparation for the guests """

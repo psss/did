@@ -55,13 +55,11 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for the html report """
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '-o', '--open', is_flag=True,
                 help='Open results in your preferred web browser.'),
-            ]
-        return options
+            ] + super().options(how)
 
     def go(self) -> None:
         """ Process results """

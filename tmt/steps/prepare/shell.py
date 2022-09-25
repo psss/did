@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Optional, cast
+from typing import List, Optional
 
 import click
 import fmf
@@ -45,13 +45,12 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options """
-        # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
-        return cast(List[tmt.options.ClickOptionDecoratorType], [
+        return [
             click.option(
                 '-s', '--script', metavar='SCRIPT',
                 multiple=True,
                 help='Shell script to be executed, can be used multiple times.')
-            ]) + super().options(how)
+            ] + super().options(how)
 
     def go(self, guest: Guest) -> None:
         """ Prepare the guests """

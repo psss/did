@@ -39,14 +39,12 @@ class FinishShell(tmt.steps.finish.FinishPlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Finish command line options """
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '-s', '--script', metavar='SCRIPT',
                 multiple=True,
                 help='Shell script to be executed, can be used multiple times.')
-            ]
-        return options
+            ] + super().options(how)
 
     def go(self, guest: Guest) -> None:
         """ Perform finishing tasks on given guest """

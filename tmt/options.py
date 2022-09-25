@@ -9,11 +9,31 @@ import click
 
 import tmt.utils
 
+# When deling with older Click packages (I'm looking at you, Python 3.6),
+# we need to define FC on our own.
+try:
+    from click.decorators import FC  # type: ignore[attr-defined]
+
+except ImportError:
+    from typing import TypeVar, Union
+
+    FC = TypeVar('FC', bound=Union[Callable[..., Any], click.Command])  # type: ignore[misc]
+
+
 MethodDictType = Dict[str, click.core.Command]
+
 # Originating in click.decorators, an opaque type describing "decorator" functions
-# produced by click.option() calls: not options, but rather functions that attach
+# produced by click.option() calls: not options, but decorators, functions that attach
 # options to a given command.
-ClickOptionDecoratorType = Callable[[Callable[..., Any]], Any]
+# Since click.decorators does not have a dedicated type for this purpose, we need
+# to construct it on our own, but we can re-use a typevar click.decorators has.
+_ClickOptionDecoratorType = Callable[[FC], FC]
+# The type above is a generic type, `FC` being a typevar, so we have two options:
+# * each place using the type would need to fill the variable, i.e. add [foo]`, or
+# * we could do that right here, because right now, we don't care too much about
+# what this `foo` type actually is - what's important is the identity, return type
+# matches the type of the argument.
+ClickOptionDecoratorType = _ClickOptionDecoratorType[Any]  # type: ignore[misc]
 
 # Verbose, debug and quiet output
 verbose_debug_quiet: List[ClickOptionDecoratorType] = [

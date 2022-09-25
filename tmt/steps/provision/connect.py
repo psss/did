@@ -59,8 +59,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for connect """
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '-g', '--guest', metavar='GUEST',
                 help='Select remote host to connect to (hostname or ip).'),
@@ -76,8 +75,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
             click.option(
                 '-p', '--password', metavar='PASSWORD',
                 help='Password for login into the guest system.'),
-            ]
-        return options
+            ] + super().options(how)
 
     def wake(self, data: Optional[GuestSshData] = None) -> None:  # type: ignore[override]
         """ Wake up the plugin, process data, apply options """

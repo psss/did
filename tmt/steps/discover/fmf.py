@@ -155,8 +155,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for given method """
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '-u', '--url', metavar='REPOSITORY',
                 help='URL of the git repository with fmf metadata.'),
@@ -207,8 +206,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                      'supported. Defaults to the top fmf root if it is '
                      'present, otherwise top directory (shortcut "/").'
                 ),
-            ]
-        return options
+            ] + super().options(how)
 
     @property
     def is_in_standalone_mode(self) -> bool:

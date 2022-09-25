@@ -51,8 +51,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for given method """
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '-s', '--script', metavar='SCRIPT', multiple=True,
                 help='Shell script to be executed as a test.'),
@@ -64,8 +63,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             click.option(
                 '--no-progress-bar', is_flag=True,
                 help='Disable interactive progress bar showing the current test.')
-            ]
-        return options
+            ] + super().options(how)
 
     # TODO: consider switching to utils.updatable_message() - might need more
     # work, since use of _show_progress is split over several methods.

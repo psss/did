@@ -35,8 +35,7 @@ class ReportPolarion(tmt.steps.report.ReportPlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options """
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '--file', metavar='FILE', help='Path to the file to store xUnit in'),
             click.option(
@@ -46,8 +45,7 @@ class ReportPolarion(tmt.steps.report.ReportPlugin):
                 '--project-id', required=True, help='Use specific Polarion project ID'),
             click.option(
                 '--testrun-title', help='Use specific TestRun title')
-            ]
-        return options
+            ] + super().options(how)
 
     def go(self) -> None:
         """ Go through executed tests and report into Polarion """

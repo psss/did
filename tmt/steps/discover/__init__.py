@@ -67,8 +67,7 @@ class DiscoverPlugin(tmt.steps.GuestlessPlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for given method """
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '--dist-git-source',
                 is_flag=True,
@@ -78,8 +77,7 @@ class DiscoverPlugin(tmt.steps.GuestlessPlugin):
                 type=click.Choice(tmt.utils.get_distgit_handler_names()),
                 help='Use the provided DistGit handler '
                      'instead of the auto detection.'),
-            ]
-        return options
+            ] + super().options(how)
 
     def tests(self) -> List['tmt.Test']:
         """

@@ -239,8 +239,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for testcloud """
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '-i', '--image', metavar='IMAGE',
                 help='Select image to be used. Provide a short name, '
@@ -262,8 +261,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 '-a', '--arch',
                 type=click.Choice(['x86_64', 'aarch64', 's390x', 'ppc64le']),
                 help="What architecture to virtualize, host arch by default."),
-            ]
-        return options
+            ] + super().options(how)
 
     # TODO: Revisit this `type: ignore` once `Guest` becomes a generic type
     def wake(self, data: Optional[TestcloudGuestData] = None) -> None:  # type: ignore[override]

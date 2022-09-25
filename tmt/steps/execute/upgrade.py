@@ -116,8 +116,7 @@ class ExecuteUpgrade(ExecuteInternal):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for given method """
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '--url', '-u', metavar='REPOSITORY',
                 help='URL of the git repository with upgrade tasks.'),
@@ -129,8 +128,7 @@ class ExecuteUpgrade(ExecuteInternal):
             DiscoverFmf.TEST_OPTION,
             DiscoverFmf.FILTER_OPTION,
             DiscoverFmf.EXCLUDE_OPTION
-            ]
-        return options
+            ] + super().options(how)
 
     @property
     def discover(self) -> Union[tmt.steps.discover.Discover, DiscoverFmf]:  # type:ignore[override]

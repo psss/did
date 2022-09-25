@@ -148,13 +148,11 @@ class ExecutePlugin(tmt.steps.Plugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         # Add option to exit after the first test failure
-        options = super().options(how)
-        options[:0] = [
+        return [
             click.option(
                 '-x', '--exit-first', is_flag=True,
                 help='Stop execution after the first test failure.'),
-            ]
-        return options
+            ] + super().options(how)
 
     def go(self, guest: Guest) -> None:
         super().go(guest)

@@ -283,8 +283,7 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for Artemis """
-        # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
-        return cast(List[tmt.options.ClickOptionDecoratorType], [
+        return [
             click.option(
                 '--api-url', metavar='URL',
                 help="Artemis API URL.",
@@ -348,7 +347,7 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
                 help=f'A factor for exponential API retry backoff, '
                      f'{DEFAULT_RETRY_BACKOFF_FACTOR} by default.',
                 ),
-            ]) + super().options(how)
+            ] + super().options(how)
 
     # More specific type is a violation of Liskov substitution principle, and mypy
     # complains about it - rightfully so. Ignoring the issue which should be resolved

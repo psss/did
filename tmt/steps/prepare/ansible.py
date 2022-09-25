@@ -1,7 +1,7 @@
 import dataclasses
 import os.path
 import tempfile
-from typing import List, Optional, Union, cast
+from typing import List, Optional, Union
 
 import click
 import requests
@@ -82,19 +82,17 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
 
     _data_class = PrepareAnsibleData
 
-    # TODO: fix types once superclass gains its annotations
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options """
-        # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
-        return cast(List[tmt.options.ClickOptionDecoratorType], [
+        return [
             click.option(
                 '-p', '--playbook', metavar='PLAYBOOK', multiple=True,
                 help='Path or URL of an ansible playbook to run.'),
             click.option(
                 '--extra-args', metavar='EXTRA-ARGS',
                 help='Optional arguments for ansible-playbook.')
-            ]) + super().options(how)
+            ] + super().options(how)
 
     def go(self, guest: Guest) -> None:
         """ Prepare the guests """
