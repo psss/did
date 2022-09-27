@@ -18,7 +18,7 @@ DEFAULT_NAME = 'xunit.xml'
 @dataclasses.dataclass
 class ReportPolarionData(tmt.steps.StepData):
     file: Optional[str] = None
-    no_upload: bool = False
+    upload: bool = True
     project_id: Optional[str] = None
     testrun_title: Optional[str] = None
 
