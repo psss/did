@@ -174,7 +174,14 @@ class ExecuteUpgrade(ExecuteInternal):
     def _get_plan(self, upgrades_repo):
         """ Get plan based on upgrade path """
         tree = tmt.base.Tree(upgrades_repo)
-        plans = tree.plans(names=[self.upgrade_path])
+        try:
+            # We do not want to consider plan -n provided on the command line
+            # in the remote repo for finding upgrade path.
+            tmt.base.Plan.ignore_class_options = True
+            plans = tree.plans(names=[self.upgrade_path])
+        finally:
+            tmt.base.Plan.ignore_class_options = False
+
         if len(plans) == 0:
             raise tmt.utils.ExecuteError(
                 f"No matching upgrade path found for '{self.upgrade_path}'.")
