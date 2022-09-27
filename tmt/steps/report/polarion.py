@@ -9,6 +9,7 @@ from requests import post
 
 import tmt
 import tmt.steps
+import tmt.steps.report
 
 from .junit import make_junit_xml
 
