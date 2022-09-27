@@ -4,11 +4,11 @@ prepare:
   - name: debuginfo
     how: install
     package:
-      - bash-debuginfo
+      - grep-debuginfo
       - elfutils-debuginfod-debuginfo
 execute:
     script:
-      - rpm -q bash-debuginfo bash-debugsource
+      - rpm -q grep-debuginfo grep-debugsource
       - rpm -q elfutils-debuginfo elfutils-debugsource
 
 /fedora:
@@ -34,6 +34,6 @@ execute:
         image: centos:7
     prepare:
         how: install
-        package: bash-debuginfo
+        package: grep-debuginfo
     execute:
-        script: rpm -q bash-debuginfo
+        script: rpm -q grep-debuginfo
