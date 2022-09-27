@@ -120,7 +120,12 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
         else:
             self.info('key', key or 'not provided', 'green')
             self.debug('Using private key authentication.')
-            data.key = [key]
+            # TODO: something to fix in the future, multiple --key options would help.
+            # Right now, the default value is List[str], while the option is just str.
+            if isinstance(key, list):
+                data.key = key
+            else:
+                data.key = [key]
 
         # And finally create the guest
         self._guest = tmt.GuestSsh(data, name=self.name, parent=self.step)
