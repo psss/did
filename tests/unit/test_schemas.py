@@ -61,10 +61,13 @@ PLANS = itertools.chain.from_iterable(_iter_plans_in_tree(tree) for tree in _ite
 STORIES = itertools.chain.from_iterable(_iter_stories_in_tree(tree) for tree in _iter_trees())
 
 
-def validate_node(node, schema, label, name):
+def validate_node(tree, node, schema, label, name):
     errors = tmt.utils.validate_fmf_node(node, schema)
 
     if errors:
+        print(f"""A node in tree loaded from {str(_tree_path(tree))} failed validation
+""")
+
         for error, message in errors:
             print(f"""* {message}
 
@@ -76,23 +79,27 @@ Detailed validation error:
         assert False, f'{label} {name} fails validation'
 
 
+def _tree_path(tree):
+    return os.path.relpath(os.path.abspath(tree._path))
+
+
 def extract_testcase_id(arg):
     if isinstance(arg, tmt.Tree):
-        return os.path.relpath(os.path.abspath(arg._path))
+        return _tree_path(arg)
 
     return arg.name
 
 
 @pytest.mark.parametrize(('tree', 'test'), TESTS, ids=extract_testcase_id)
 def test_tests_schema(tree, test):
-    validate_node(test, 'test.yaml', 'Test', test.name)
+    validate_node(tree, test, 'test.yaml', 'Test', test.name)
 
 
 @pytest.mark.parametrize(('tree', 'story'), STORIES, ids=extract_testcase_id)
 def test_stories_schema(tree, story):
-    validate_node(story, 'story.yaml', 'Story', story.name)
+    validate_node(tree, story, 'story.yaml', 'Story', story.name)
 
 
 @pytest.mark.parametrize(('tree', 'plan'), PLANS, ids=extract_testcase_id)
 def test_plans_schema(tree, plan):
-    validate_node(plan, 'plan.yaml', 'Plan', plan.name)
+    validate_node(tree, plan, 'plan.yaml', 'Plan', plan.name)
