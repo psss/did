@@ -115,11 +115,6 @@ class Prepare(tmt.steps.Step):
             self.status('todo')
             self.save()
 
-    def show(self) -> None:
-        """ Show discover details """
-        for data in self.data:
-            PreparePlugin.delegate(self, data=data).show()
-
     def summary(self) -> None:
         """ Give a concise summary of the preparation """
         preparations = fmf.utils.listed(

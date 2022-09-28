@@ -90,11 +90,6 @@ class Finish(tmt.steps.Step):
             self.status('todo')
             self.save()
 
-    def show(self) -> None:
-        """ Show finish details """
-        for data in self.data:
-            FinishPlugin.delegate(self, data=data).show()
-
     def summary(self) -> None:
         """ Give a concise summary """
         tasks = fmf.utils.listed(self.phases(), 'task')

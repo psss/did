@@ -69,11 +69,6 @@ class Report(tmt.steps.Step):
             self.status('todo')
             self.save()
 
-    def show(self) -> None:
-        """ Show discover details """
-        for data in self.data:
-            ReportPlugin.delegate(self, data=data).show()
-
     def summary(self) -> None:
         """ Give a concise report summary """
         summary = tmt.base.Result.summary(self.plan.execute.results())

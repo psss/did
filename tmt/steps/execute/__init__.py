@@ -497,10 +497,6 @@ class Execute(tmt.steps.Step):
             self.status('todo')
             self.save()
 
-    def show(self) -> None:
-        """ Show execute details """
-        ExecutePlugin.delegate(self, data=self.data[0]).show()
-
     def summary(self) -> None:
         """ Give a concise summary of the execution """
         tests = fmf.utils.listed(self.results(), 'test')

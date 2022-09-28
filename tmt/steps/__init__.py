@@ -330,6 +330,12 @@ class Step(tmt.utils.Common):
         # Return status
         return self._status
 
+    def show(self) -> None:
+        """ Show step details """
+
+        for data in self.data:
+            self._plugin_base_class.delegate(self, data=data).show()
+
     def load(self) -> None:
         """ Load status and step data from the workdir """
         try:
