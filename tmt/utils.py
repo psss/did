@@ -1633,7 +1633,7 @@ def format(
         # Make sure everything is string, prepare list, check for spaces
         value = [str(item) for item in value]
         listed_text = fmf.utils.listed(value)
-        has_spaces = any([item.find(' ') > -1 for item in value])
+        has_spaces = any(item.find(' ') > -1 for item in value)
         # Use listed output only for short lists without spaces
         if len(listed_text) < width - indent and not has_spaces:
             output += listed_text
@@ -1649,9 +1649,7 @@ def format(
     elif isinstance(value, str):
         # In 'auto' mode enable wrapping when long lines present
         if wrap == 'auto':
-            wrap = any(
-                [len(line) + indent - 7 > width
-                 for line in value.split('\n')])
+            wrap = any(len(line) + indent - 7 > width for line in value.split('\n'))
         if wrap:
             output += (wrap_text(
                 value, width=width,
@@ -2541,7 +2539,7 @@ class DistGitHandler:
 
     def its_me(self, remotes: List[str]) -> bool:
         """ True if self can work with remotes """
-        return any([self.remote_substring.search(item) for item in remotes])
+        return any(self.remote_substring.search(item) for item in remotes)
 
 
 class FedoraDistGit(DistGitHandler):

@@ -1524,8 +1524,8 @@ class Tree(tmt.utils.Common):
             filter_vars.update(bool_vars)
             # Conditions
             try:
-                if not all([fmf.utils.evaluate(condition, cond_vars, node)
-                            for condition in conditions]):
+                if not all(fmf.utils.evaluate(condition, cond_vars, node)
+                           for condition in conditions):
                     continue
             except fmf.utils.FilterError:
                 # Handle missing attributes as if condition failed
@@ -1535,8 +1535,8 @@ class Tree(tmt.utils.Common):
                     f"Invalid --condition raised exception: {error}")
             # Filters
             try:
-                if not all([fmf.utils.filter(filter_, filter_vars, regexp=True)
-                            for filter_ in filters]):
+                if not all(fmf.utils.filter(filter_, filter_vars, regexp=True)
+                           for filter_ in filters):
                     continue
             except fmf.utils.FilterError:
                 # Handle missing attributes as if filter failed
@@ -1544,14 +1544,13 @@ class Tree(tmt.utils.Common):
             # Links
             try:
                 # Links are in OR relation
-                if links and all([not node.has_link(link_)
-                                 for link_ in links]):
+                if links and all(not node.has_link(link_) for link_ in links):
                     continue
             except BaseException:
                 # Handle broken link as not matching
                 continue
             # Exclude
-            if any([node for expr in excludes if re.search(expr, node.name)]):
+            if any(node for expr in excludes if re.search(expr, node.name)):
                 continue
             result.append(node)
         return result
@@ -1600,7 +1599,7 @@ class Tree(tmt.utils.Common):
                 return nodes
             return [
                 node for node in nodes
-                if any([re.search(name, node.name) for name in cmd_line_names])]
+                if any(re.search(name, node.name) for name in cmd_line_names)]
 
         # Append post filter to support option --enabled or --disabled
         if Test._opt('enabled'):
@@ -1892,14 +1891,14 @@ class Run(tmt.utils.Common):
 
         # Filter plans by name unless specified on the command line
         plan_options = ['names', 'filters', 'conditions', 'links', 'default']
-        if not any([Plan._opt(option) for option in plan_options]):
+        if not any(Plan._opt(option) for option in plan_options):
             self._plans = [
                 plan for plan in self.tree.plans(run=self)
                 if plan.name in data['plans']]
 
         # Initialize steps only if not selected on the command line
         step_options = 'all since until after before skip'.split()
-        selected = any([self.opt(option) for option in step_options])
+        selected = any(self.opt(option) for option in step_options)
         if not selected and not self._context.obj.steps:
             self._context.obj.steps = set(data['steps'])
 
