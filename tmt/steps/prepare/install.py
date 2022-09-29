@@ -58,24 +58,17 @@ class InstallBase(tmt.utils.Common):
 
         # Detect local, debuginfo and repository packages
         for package in self.packages:
-            if re.match(r'^http(s)?://', package):
-                if re.search(r"-debug(info|source)(\.|$)", package):
-                    # Strip the '-debuginfo' string from package name
-                    # (installing with it doesn't work on RHEL7)
-                    package = re.sub(r"-debuginfo((?=\.)|$)", "", package)
-                    self.debuginfo_packages.append(package)
-                else:
-                    self.remote_packages.append(package)
+            if re.match(r"^http(s)?://", package):
+                self.remote_packages.append(package)
+            elif package.endswith(".rpm"):
+                self.local_packages.append(package)
+            elif re.search(r"-debug(info|source)(\.|$)", package):
+                # Strip the '-debuginfo' string from package name
+                # (installing with it doesn't work on RHEL7)
+                package = re.sub(r"-debuginfo((?=\.)|$)", "", package)
+                self.debuginfo_packages.append(package)
             else:
-                if package.endswith('.rpm'):
-                    self.local_packages.append(package)
-                elif re.search(r"-debug(info|source)(\.|$)", package):
-                    # Strip the '-debuginfo' string from package name
-                    # (installing with it doesn't work on RHEL7)
-                    package = re.sub(r"-debuginfo((?=\.)|$)", "", package)
-                    self.debuginfo_packages.append(package)
-                else:
-                    self.repository_packages.append(package)
+                self.repository_packages.append(package)
 
         # Check rpm packages in local directories
         for directory in self.directories:

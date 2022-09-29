@@ -85,8 +85,7 @@ example: |
         One or more RPM packages can be specified under the
         ``package`` attribute. The packages will be installed
         on the guest. They can either be specified using their
-        names or paths to local rpm files or paths to remote
-        rpm files.
+        names, paths to local rpm files or urls to remote rpms.
 
         Additionaly, the ``directory`` attribute can be used to
         install all packages from the given directory. Copr
@@ -100,32 +99,40 @@ example: |
         preparation error is thrown ('fail'), which is the default
         behaviour.
 
-    example: |
+    example:
+      - |
+        # Install local rpms using file path
         prepare:
             how: install
             package:
-                - tmp/RPMS/noarch/tmt-0.15-1.fc31.noarch.rpm
-                - tmp/RPMS/noarch/python3-tmt-0.15-1.fc31.noarch.rpm
+              - tmp/RPMS/noarch/tmt-0.15-1.fc31.noarch.rpm
+              - tmp/RPMS/noarch/python3-tmt-0.15-1.fc31.noarch.rpm
 
+      - |
+        # Install remote packages using url
         prepare:
             how: install
             package:
-                - https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-                - https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-8.noarch.rpm
+              - https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+              - https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-8.noarch.rpm
 
+      - |
+        # Install the whole directory, exclude selected packages
         prepare:
             how: install
             directory:
-                - tmp/RPMS/noarch
+              - tmp/RPMS/noarch
             exclude:
-                - tmt-all
-                - tmt-provision-virtual
+              - tmt-all
+              - tmt-provision-virtual
 
+      - |
+        # Enable copr repository, skip missing packages
         prepare:
             how: install
             copr: psss/tmt
             package: tmt-all
-            missing: fail
+            missing: skip
 
     link:
       - implemented-by: /tmt/steps/provision

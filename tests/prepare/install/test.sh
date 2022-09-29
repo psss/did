@@ -48,7 +48,7 @@ rlJournalStart
         rlRun "tmt run -adddvvvr plan --name epel7"
     rlPhaseEnd
 
-    rlPhaseStartTest "Install from remote packages"
+    rlPhaseStartTest "Install remote packages"
         rlRun "tmt run -adddvvvr plan --name epel8-remote"
     rlPhaseEnd
 
