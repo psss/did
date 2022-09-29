@@ -268,8 +268,18 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             # Add source dir path variable
             if dist_git_source:
                 data.environment['TMT_SOURCE_DIR'] = sourcedir
-            # Create a simple fmf node, adjust its name
-            tests.child(data.name, data.to_spec())
+
+            # Create a simple fmf node, with correct name. Emit only keys and values
+            # that are no longer default. Do not add `name` itself into the node,
+            # it's not a supported test key, and it's given to the node itself anyway.
+            # Note the exception for `duration` key - it's expected in the output
+            # even if it still has its default value.
+            test_fmf_keys: Dict[str, Any] = {
+                key: value
+                for key, value in data.to_spec().items()
+                if key != 'name' and (key == 'duration' or value != data.default(key))
+                }
+            tests.child(data.name, test_fmf_keys)
 
         # Symlink tests directory to the plan work tree
         testdir = os.path.join(self.workdir, "tests")
