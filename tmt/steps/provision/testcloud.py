@@ -10,6 +10,7 @@ import types
 from typing import Any, List, Optional, cast
 
 import click
+import fmf
 import requests
 
 import tmt
@@ -301,6 +302,9 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 self.info('disk', f"{value} GB", 'green')
             elif key == 'connection':
                 self.verbose('connection', value, 'green')
+            elif key == 'key':
+                if value:
+                    self.info('key', fmf.utils.listed(value), 'green')
             elif value is not None:
                 self.info(key, value, 'green')
 
@@ -484,6 +488,7 @@ class GuestTestcloud(tmt.GuestSsh):
         if key_type is not None:
             command.extend(["-t", key_type])
         self.run(command)
+        self.verbose('key', self.key[0], 'green')
         with open(self.pubkey, 'r') as pubkey:
             self.config.USER_DATA = USER_DATA.format(
                 user_name=self.user, public_key=pubkey.read())
