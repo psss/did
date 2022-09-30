@@ -327,6 +327,11 @@ class Common:
         self.name = name or self.__class__.__name__.lower()
         self.parent = parent
 
+        # Prepare a safe variant of the name which does not contain
+        # spaces or other special characters to prevent problems with
+        # tools which do not expect them (e.g. in directory names).
+        self.safe_name = re.sub(r"[^\w/-]+", "-", self.name).strip("-")
+
         # Relative log indent level shift against the parent
         self._relative_indent = relative_indent
 
@@ -766,7 +771,7 @@ class Common:
         if self.parent is None or self.parent.workdir is None:
             return None
         # Join parent name with self
-        return os.path.join(self.parent.workdir, self.name.lstrip('/'))
+        return os.path.join(self.parent.workdir, self.safe_name.lstrip("/"))
 
     def _workdir_load(self, workdir: WorkdirArgumentType) -> None:
         """

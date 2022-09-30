@@ -272,7 +272,7 @@ class Discover(tmt.steps.Step):
                 # Check discovered tests, modify test name/path
                 for test in phase.tests():
                     test.name = f"{prefix}{test.name}"
-                    test.path = f"/{phase.name}{test.path}"
+                    test.path = f"/{phase.safe_name}{test.path}"
                     # Use the default test framework if not defined in L1
                     # FIXME remove when we drop the old execution methods
                     if not test.framework:
