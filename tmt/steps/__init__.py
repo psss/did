@@ -76,7 +76,7 @@ PhaseT = TypeVar('PhaseT', bound=Phase)
 _RawStepData = TypedDict('_RawStepData', {
     'how': str,
     'name': str
-}, total=False)
+    }, total=False)
 
 RawStepDataArgument = Union[_RawStepData, List[_RawStepData]]
 

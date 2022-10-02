@@ -13,7 +13,7 @@ env_vars_parametrization = (
         ("YAML_INT", "1"),
         ("SPECIAL", "/=(;-)"),
         ),
-)
+    )
 
 
 @pytest.mark.parametrize(*env_vars_parametrization)

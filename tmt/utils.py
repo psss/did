@@ -1547,8 +1547,9 @@ class SerializableContainer(DataContainer):
         return cls(**serialized)
 
     @staticmethod
-    def unserialize(serialized: Dict[str, Any]
-                    ) -> SerializableContainerDerivedType:
+    def unserialize(
+            serialized: Dict[str, Any]
+            ) -> SerializableContainerDerivedType:  # type: ignore[misc,type-var]
         """
         Convert from a serialized form loaded from a file.
 
@@ -2633,7 +2634,7 @@ class StructuredField:
         else:
             try:
                 dictionary = self._read_section(self._sections[section])
-                del(dictionary[item])
+                del (dictionary[item])
             except KeyError:
                 raise StructuredFieldError(
                     "Unable to remove '{0!r}' from section '{1!r}'".format(
@@ -3131,12 +3132,12 @@ WaitCheckType = Callable[[], T]
 
 
 def wait(
-    parent: Common,
-    check: WaitCheckType[T],
-    timeout: datetime.timedelta,
-    tick: float = DEFAULT_WAIT_TICK,
-    tick_increase: float = DEFAULT_WAIT_TICK_INCREASE
-) -> T:
+        parent: Common,
+        check: WaitCheckType[T],
+        timeout: datetime.timedelta,
+        tick: float = DEFAULT_WAIT_TICK,
+        tick_increase: float = DEFAULT_WAIT_TICK_INCREASE
+        ) -> T:
     """
     Wait for a condition to become true.
 

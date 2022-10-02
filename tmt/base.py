@@ -106,9 +106,8 @@ class _RawFmfId(TypedDict):
     path: Optional[str]
     name: Optional[str]
 
+
 # An internal fmf id representation.
-
-
 @dataclasses.dataclass
 class FmfId(tmt.utils.SpecBasedContainer, tmt.utils.SerializableContainer):
     # The list of valid fmf id keys
@@ -199,7 +198,7 @@ _RawLinkRelationName = Literal[
     # Special case: not a relation, but it can appear where relations appear in
     # link data structures.
     'note'
-]
+    ]
 
 # Link target - can be either a string (like test case name or URL), or an fmf id.
 _RawLinkTarget = Union[str, _RawFmfId]
@@ -213,14 +212,14 @@ _RawLink = Union[
     str,
     _RawFmfId,
     _RawLinkRelation
-]
+    ]
 
 # Collection of links - can be either a single link, or a list of links, and all
 # link forms may be used together.
 _RawLinks = Union[
     _RawLink,
     List[_RawLink]
-]
+    ]
 
 
 # A type describing `adjust` content. See
@@ -236,7 +235,8 @@ _RawAdjustRule = TypedDict(
         'continue': Optional[bool],
         'because': Optional[str]
         }
-)
+    )
+
 
 # A type describing content accepted by various require-like keys: - a string, fmf id,
 # or a list with a mixture of these two types.
@@ -245,8 +245,6 @@ _RawAdjustRule = TypedDict(
 # but allows several extra keys that must be stored.
 #
 # See https://tmt.readthedocs.io/en/latest/spec/tests.html#require
-
-
 class _RawRequireFmfId(_RawFmfId):
     destination: Optional[str]
     nick: Optional[str]
@@ -2760,7 +2758,7 @@ RESULT_OUTCOME_COLORS: Dict[ResultOutcome, str] = {
     ResultOutcome.INFO: 'blue',
     ResultOutcome.WARN: 'yellow',
     ResultOutcome.ERROR: 'magenta'
-}
+    }
 
 
 ResultData = Dict[str, Any]

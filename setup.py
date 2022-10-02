@@ -22,7 +22,7 @@ __pkgdata__ = {
         'steps/execute/scripts/*',
         'steps/report/html/*'
         ]
-}
+    }
 __pkgdir__ = {}
 __pkgs__ = [
     'tmt',
@@ -80,7 +80,7 @@ extras_require = {
     'report-junit': ['junit_xml'],
     'report-polarion': ['junit_xml', 'pylero'],
     'export-polarion': ['pylero'],
-}
+    }
 extras_require['all'] = [
     dependency
     for extra in extras_require.values()

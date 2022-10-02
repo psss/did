@@ -48,7 +48,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-]
+    ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -237,7 +237,7 @@ htmlhelp_basename = 'doc'
 man_pages = [
     (master_man, '', u'tmt Documentation',
      [author], 1)
-]
+    ]
 
 # If true, show URL addresses after external links.
 #man_show_urls = False

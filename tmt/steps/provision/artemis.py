@@ -99,7 +99,7 @@ GUEST_STATE_COLORS = {
     'preparing': 'cyan',
     'cancelled': 'red',
     'error': 'red'
-}
+    }
 
 
 # Type annotation for Artemis API `GET /guests/$guestname` response.

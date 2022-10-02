@@ -10,4 +10,4 @@ setup(
             'DiscoverExample = discover:DiscoverExample',
             ]
         }
-)
+    )
