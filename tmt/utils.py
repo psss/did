@@ -22,9 +22,9 @@ from collections import OrderedDict
 from functools import lru_cache
 from pathlib import Path
 from threading import Thread
-from typing import (IO, TYPE_CHECKING, Any, Callable, Dict, Generator,
-                    Iterable, List, NamedTuple, Optional, Pattern, Tuple, Type,
-                    TypeVar, Union, cast, overload)
+from typing import (IO, TYPE_CHECKING, Any, Callable, Dict, Generator, Generic,
+                    Iterable, List, NamedTuple, Optional, Pattern, Sequence,
+                    Tuple, Type, TypeVar, Union, cast, overload)
 
 import click
 import fmf
@@ -1447,6 +1447,83 @@ def option_to_key(option: str) -> str:
     """ Convert an option name to corresponding key name """
 
     return option.replace('-', '_')
+
+
+@dataclasses.dataclass
+class FieldMetadata(Generic[T]):
+    """
+    A dataclass metadata container used by our custom dataclass field management.
+
+    Attached to fields defined with :py:func:`field`
+    """
+
+    #: CLI option parameters, for lazy option creation.
+    option_args: Optional['FieldCLIOption'] = None
+    option_kwargs: Optional[Dict[str, Any]] = None
+    option_choices: Union[None, Sequence[str], Callable[[], Sequence[str]]] = None
+
+    #: A :py:func:`click.option` decorator defining a corresponding CLI option.
+    _option: Optional['tmt.options.ClickOptionDecoratorType'] = None
+
+    #: A normalization callback to call when loading the value from key source
+    #: (performed by :py:class:`NormalizeKeysMixin`).
+    normalize_callback: Optional['NormalizeCallback[T]'] = None
+
+    @property
+    def option(self) -> Optional['tmt.options.ClickOptionDecoratorType']:
+        if self._option is None and self.option_args and self.option_kwargs:
+            if isinstance(self.option_choices, (list, tuple)):
+                self.option_kwargs['type'] = click.Choice(self.option_choices)
+
+            elif callable(self.option_choices):
+                self.option_kwargs['type'] = click.Choice(self.option_choices())
+
+            if self.normalize_callback is not None:
+                self.option_kwargs['type'] = self.normalize_callback
+
+            self._option = click.option(
+                *self.option_args,
+                **self.option_kwargs
+                )
+
+        return self._option
+
+
+def dataclass_field_by_name(cls: Any, name: str) -> 'dataclasses.Field[T]':
+    """
+    Return a dataclass/data container field info by the field's name.
+
+    Surprisingly, :py:mod:`dataclasses` package does not have a helper for
+    this. One can iterate over fields, but there's no *public* API for
+    retrieving a field when one knows its name.
+
+    :param cls: a dataclass/data container class whose fields to search.
+    :param name: field name to retrieve.
+    :raises GeneralError: when the field does not exist.
+    """
+
+    for field in dataclasses.fields(cls):
+        if field.name == name:
+            return field
+
+    else:
+        raise GeneralError(f"Could not find field '{name}' in class '{cls.__name__}'.")
+
+
+def dataclass_field_metadata(field: 'dataclasses.Field[T]') -> 'FieldMetadata[T]':
+    """
+    Return a dataclass/data container field metadata.
+
+    Dataclass fields have a mapping to hold fields' key/value metadata, and to
+    support linters in their job, instead of storing tmt's custom data directly
+    in the mapping, we use a special container to hold metadata we need.
+
+    :param field: a dataclass/container field to retrieve metadata for.
+    :returns: metadata container, either the one attached to the given field
+        or an empty one when field has no metadata.
+    """
+
+    return field.metadata.get('tmt', FieldMetadata())
 
 
 @dataclasses.dataclass
@@ -3410,6 +3487,35 @@ class ValidateFmfMixin:
 # A type representing compatible sources of keys and values.
 KeySource = Union[Dict[str, Any], fmf.Tree]
 
+NormalizeCallback = Callable[[Any], T]
+
+
+def normalize_string_list(value: Union[None, str, List[str]]) -> List[str]:
+    """
+    Normalize a string-or-list-of-strings input value.
+
+    This is a fairly common input format present mostly in fmf nodes where
+    tmt, to make things easier for humans, allows this:
+
+    .. code-block:: yaml
+
+       foo: bar
+
+       foo:
+         - bar
+         - baz
+
+    Internally, we should stick to one type only, and make sure whatever we get
+    on the input, a list of strings would be the output.
+
+    :param value: input value from key source.
+    """
+
+    if value is None:
+        return []
+
+    return [value] if isinstance(value, str) else value
+
 
 class NormalizeKeysMixin:
     """
@@ -3587,7 +3693,15 @@ class NormalizeKeysMixin:
                 debug('raw value', str(value))
                 debug('raw value type', str(type(value)))
 
-            normalize_callback = getattr(self, f'_normalize_{keyname}', None)
+            # First try new-style fields, i.e. normalize callback stored in field metadata
+            normalize_callback: Optional[NormalizeCallback[Any]] = None
+
+            if dataclasses.is_dataclass(self):
+                field: dataclasses.Field[Any] = dataclass_field_by_name(self, keyname)
+                normalize_callback = dataclass_field_metadata(field).normalize_callback
+
+            if not normalize_callback:
+                normalize_callback = getattr(self, f'_normalize_{keyname}', None)
 
             if normalize_callback:
                 value = normalize_callback(value)
@@ -3628,3 +3742,136 @@ class LoadFmfKeysMixin(NormalizeKeysMixin):
 
         kwargs.setdefault('logger', logger)
         super().__init__(node=node, **kwargs)
+
+
+FieldCLIOption = Union[str, Sequence[str]]
+
+
+@overload
+def field(
+        *,
+        default: bool,
+        # Options
+        option: Optional[FieldCLIOption] = None,
+        is_flag: bool = True,
+        choices: Union[None, Sequence[str], Callable[[], Sequence[str]]] = None,
+        multiple: bool = False,
+        metavar: Optional[str] = None,
+        help: Optional[str] = None,
+        # Input data normalization - not needed, the field is a boolean
+        # flag.
+        # normalize: Optional[NormalizeCallback[T]] = None
+        ) -> bool:
+    pass
+
+
+@overload
+def field(
+        *,
+        default: T,
+        # Options
+        option: Optional[FieldCLIOption] = None,
+        is_flag: bool = False,
+        choices: Union[None, Sequence[str], Callable[[], Sequence[str]]] = None,
+        multiple: bool = False,
+        metavar: Optional[str] = None,
+        help: Optional[str] = None,
+        # Input data normalization
+        normalize: Optional[NormalizeCallback[T]] = None
+        ) -> T:
+    pass
+
+
+@overload
+def field(
+        *,
+        default_factory: Callable[[], T],
+        # Options
+        option: Optional[FieldCLIOption] = None,
+        is_flag: bool = False,
+        choices: Union[None, Sequence[str], Callable[[], Sequence[str]]] = None,
+        multiple: bool = False,
+        metavar: Optional[str] = None,
+        help: Optional[str] = None,
+        # Input data normalization
+        normalize: Optional[NormalizeCallback[T]] = None
+        ) -> T:
+    pass
+
+
+# TODO: ignore[misc]: mypy reports implementation cannot handle all possible arguments of
+# signatures 2 and 3, but I can't find the issue :/
+def field(  # type: ignore[misc]
+        *,
+        default: Any = dataclasses.MISSING,
+        default_factory: Any = dataclasses.MISSING,
+        # Options
+        option: Optional[FieldCLIOption] = None,
+        is_flag: bool = False,
+        choices: Union[None, Sequence[str], Callable[[], Sequence[str]]] = None,
+        multiple: bool = False,
+        metavar: Optional[str] = None,
+        help: Optional[str] = None,
+        # Input data normalization
+        normalize: Optional[NormalizeCallback[T]] = None
+        ) -> Any:
+    """
+    Define a :py:class:`DataContainer` field.
+
+    Effectively a fancy wrapper over :py:func:`dataclasses.field`, tailored for
+    tmt code needs and simplification of various common tasks.
+
+    :param default: if provided, this will be the default value for this field.
+        Passed directly to :py:func:`dataclass.field`.
+        It is an error to specify both ``default`` and ``default_factory``.
+    :param default_factory: if provided, it must be a zero-argument callable
+        that will be called when a default value is needed for this field.
+        Passed directly to :py:func:`dataclass.field`.
+        It is an error to specify both ``default`` and ``default_factory``.
+    :param option: one or more command-line option names.
+        Passed directly to :py:func:`click.option`.
+    :param is_flag: marks this option as a flag.
+        Passed directly to :py:func:`click.option`.
+    :param choices: if provided, the command-line option would accept only
+        the listed input values.
+        Passed to :py:func:`click.option` as a :py:class:`click.Choice` instance.
+    :param metavar: how the input value is represented in the help page.
+        Passed directly to :py:func:`click.option`.
+    :param help: the help string for the command-line option.
+        Passed directly to :py:func:`click.option`.
+    :param normalize: a callback for normalizing the input value. Consumed by
+        :py:class:`NormalizeKeysMixin`.
+    """
+
+    if default is dataclasses.MISSING and default_factory is dataclasses.MISSING:
+        raise GeneralError("Container field must define one of 'default' or 'default_factory'.")
+
+    metadata: FieldMetadata[T] = FieldMetadata()
+
+    if option:
+        assert is_flag is False or isinstance(default, bool)
+
+        metadata.option_args = (option,) if isinstance(option, str) else option
+        metadata.option_kwargs = {
+            'is_flag': is_flag,
+            'multiple': multiple,
+            'metavar': metavar,
+            'help': help
+            }
+        metadata.option_choices = choices
+
+        if default is not dataclasses.MISSING and not is_flag:
+            metadata.option_kwargs['default'] = default
+
+    if normalize:
+        metadata.normalize_callback = normalize
+
+    # ignore[call-overload]: returning "wrong" type on purpose. field() must be annotated
+    # as if returning the value of type matching the field declaration, and the original
+    # field() is called with wider argument types than expected, because we use our own
+    # overloading to narrow types *our* custom field() accepts.
+    return dataclasses.field(  # type: ignore[call-overload]
+        default=default,
+        default_factory=default_factory,
+        metadata={'tmt': metadata}
+        )

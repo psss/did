@@ -21,9 +21,20 @@ from tmt.utils import GeneralError
 
 @dataclasses.dataclass
 class DiscoverStepData(tmt.steps.StepData):
-    dist_git_source: bool = False
+    dist_git_source: bool = tmt.utils.field(
+        default=False,
+        option='--dist-git-source',
+        is_flag=True,
+        help='Extract DistGit sources.'
+        )
+
     # TODO: use enum!
-    dist_git_type: Optional[str] = None
+    dist_git_type: Optional[str] = tmt.utils.field(
+        default=None,
+        option='--dist-git-type',
+        choices=tmt.utils.get_distgit_handler_names,
+        help='Use the provided DistGit handler instead of the auto detection.'
+        )
 
 
 class DiscoverPlugin(tmt.steps.GuestlessPlugin):
@@ -64,21 +75,6 @@ class DiscoverPlugin(tmt.steps.GuestlessPlugin):
             Discover._save_context(context)
 
         return discover
-
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options for given method """
-        return [
-            click.option(
-                '--dist-git-source',
-                is_flag=True,
-                help='Extract DistGit sources.'),
-            click.option(
-                '--dist-git-type',
-                type=click.Choice(tmt.utils.get_distgit_handler_names()),
-                help='Use the provided DistGit handler '
-                     'instead of the auto detection.'),
-            ] + super().options(how)
 
     def tests(self) -> List['tmt.Test']:
         """

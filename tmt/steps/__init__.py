@@ -658,7 +658,14 @@ class BasePlugin(Phase):
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for given method """
         # Include common options supported across all plugins
-        return tmt.options.VERBOSITY_OPTIONS + tmt.options.FORCE_DRY_OPTIONS
+        return [
+            metadata.option
+            for metadata in (
+                tmt.utils.dataclass_field_metadata(field)
+                for field in dataclasses.fields(cls._data_class)
+                )
+            if metadata.option is not None
+            ] + tmt.options.VERBOSITY_OPTIONS + tmt.options.FORCE_DRY_OPTIONS
 
     @classmethod
     def command(cls) -> click.Command:
