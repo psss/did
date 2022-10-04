@@ -1,0 +1,5 @@
+provision:
+    how: container
+execute:
+    how: tmt
+    script: test -e /tmp/first && test -e /tmp/second

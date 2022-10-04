@@ -47,7 +47,8 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
         return cast(List[tmt.options.ClickOptionDecoratorType], [
             click.option(
                 '-s', '--script', metavar='SCRIPT',
-                help='Shell script to be executed.')
+                multiple=True,
+                help='Shell script to be executed, can be used multiple times.')
             ]) + super().options(how)
 
     def go(self, guest: Guest) -> None:

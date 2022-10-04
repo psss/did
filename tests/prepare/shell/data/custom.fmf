@@ -1,9 +1,6 @@
 provision:
     how: container
 prepare:
-  - name: Install package
-    how: install
-    package: tmt
   - name: Run preparation script
     how: shell
     script: ./prepare.sh
