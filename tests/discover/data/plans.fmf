@@ -7,6 +7,44 @@ execute:
     execute:
         script: tmt --help
 
+/tests:
+    provision:
+        how: local
+    discover:
+        how: shell
+        tests:
+          - name: second
+            order: 15
+            test: echo
+          - name: first
+            test: 'false'
+            order: 10
+            recommend:
+              - tmt
+            # fmf-id in require/recommend doesn't work
+            #require:
+            #- url: https://github.com/teemtee/tmt
+            adjust:
+              - when: some_dimension is defined
+                enabled: false
+            description: This is a description
+            id: "0000-0000-0000-0000"
+            link:
+              - https://github.com/teemtee/tmt/pull/1461
+            tag:
+              - yes
+            tier: 3
+            component:
+              - tmt
+            contact: me@localhost.localdomain
+            duration: 10h
+            environment:
+                FOO: bar
+            framework: shell
+            path: /
+            result: xfail
+            summary: Concise summary
+
 /fmf:
     /url:
         /ref:

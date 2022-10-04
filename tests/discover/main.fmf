@@ -37,3 +37,7 @@
 /dynamic-ref:
     summary: Check that dynamic ref evaluation works
     test: ./dynamic-ref.sh
+
+/tests:
+    summary: Tests defined under discover can use all metadata
+    test: ./tests.sh

@@ -4,30 +4,28 @@
 
 rlJournalStart
     rlPhaseStartSetup
-        rlRun 'set -o pipefail'
         rlRun 'pushd data'
     rlPhaseEnd
 
     plan='plan --name /smoke'
 
     rlPhaseStartTest 'Discover only'
-        rlRun "tmt run -r discover finish $plan | tee output"
-        rlAssertGrep '1 test selected' 'output'
+        rlRun -s "tmt run --id XXX --scratch --remove $plan"
+        rlAssertGrep '1 test selected' $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest 'Selected steps'
-        rlRun "tmt run -r discover provision execute finish $plan | tee output"
-        rlAssertGrep '1 test selected' 'output'
-        rlAssertGrep 'discover' 'output'
-        rlAssertGrep 'provision' 'output'
-        rlAssertGrep 'execute' 'output'
-        rlAssertGrep 'finish' 'output'
-        rlAssertNotGrep 'prepare' 'output'
-        rlAssertNotGrep 'report' 'output'
+        rlRun -s "tmt run -r discover provision execute finish $plan"
+        rlAssertGrep '1 test selected' $rlRun_LOG
+        rlAssertGrep 'discover' $rlRun_LOG
+        rlAssertGrep 'provision' $rlRun_LOG
+        rlAssertGrep 'execute' $rlRun_LOG
+        rlAssertGrep 'finish' $rlRun_LOG
+        rlAssertNotGrep 'prepare' $rlRun_LOG
+        rlAssertNotGrep 'report' $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartCleanup
         rlRun 'popd'
-        rlRun 'rm -f output' 0 'Removing tmp file'
     rlPhaseEnd
 rlJournalEnd
