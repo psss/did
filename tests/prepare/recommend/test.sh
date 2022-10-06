@@ -6,10 +6,29 @@ rlJournalStart
         rlRun "pushd data"
     rlPhaseEnd
 
-    for image in centos:7 centos:stream8 fedora; do
-        rlPhaseStartTest "Test $image"
-            rlRun "tmt run -ar provision -h container -i $image"
+    for method in ${METHODS:-container}; do
+        tmt="tmt run --all --remove provision --how $method"
+
+        # Verify against the default provision image
+        rlPhaseStartTest "Test the default image ($method)"
+            rlRun "$tmt"
         rlPhaseEnd
+
+        # Check CentOS images for container provision
+        if [[ "$method" == "container" ]]; then
+            for image in centos:7 centos:stream8; do
+                rlPhaseStartTest "Test $image ($method)"
+                    rlRun "$tmt --image $image"
+                rlPhaseEnd
+            done
+        fi
+
+        # Add one extra CoreOS run for virtual provision
+        if [[ "$method" == "virtual" ]]; then
+            rlPhaseStartTest "Test fedora-coreos ($method)"
+                rlRun "$tmt --image fedora-coreos"
+            rlPhaseEnd
+        fi
     done
 
     rlPhaseStartCleanup

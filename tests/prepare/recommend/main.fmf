@@ -3,3 +3,14 @@ description:
     Run a simple test which recommends two packages. Check that
     the existing one is installed and the other one is ignored. No
     error should be reported.
+environment:
+    METHODS: container
+adjust:
+  - when: trigger == commit
+    environment:
+        METHODS: container local
+    because: the pipeline does not support nested virtualization
+  - when: how == full
+    environment:
+        METHODS: container virtual local
+    because: local/virtual provision needs root/full virtualization

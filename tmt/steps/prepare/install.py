@@ -292,7 +292,7 @@ class InstallRpmOstree(InstallBase):
 
     def prepare_command(self) -> None:
         """ Prepare installation command for rpm-ostree"""
-        missing = cast(tmt.steps.prepare.PreparePlugin, self.parent).get("package")
+        missing = cast(tmt.steps.prepare.PreparePlugin, self.parent).get("missing")
         self.skip = True if missing == 'skip' else False
         self.command = f"{self.sudo}rpm-ostree"
         self.options = '--apply-live --idempotent --allow-inactive'
