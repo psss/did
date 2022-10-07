@@ -61,8 +61,9 @@ rlJournalEnd
 #  Plan Templates
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-DEFAULT_PLAN = """
-/plans/default:
+DEFAULT_PLAN_NAME = "/plans/default"
+DEFAULT_PLAN = f"""
+{DEFAULT_PLAN_NAME}:
     discover:
         how: fmf
     execute:

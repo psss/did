@@ -906,8 +906,11 @@ class Plan(Core):
     _normalize_context = tmt.utils.LoadFmfKeysMixin._normalize_environment
     _normalize_gate = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
+    # When fetching remote plans we store links between the original
+    # plan with the fmf id and the imported plan with the content.
     _imported_plan: Optional['Plan'] = None
-    _origin_plan: Optional['Plan'] = None
+    _original_plan: Optional['Plan'] = None
+    _remote_plan_fmf_id: Optional[FmfId] = None
 
     extra_L2_keys = [
         'context',
@@ -933,6 +936,11 @@ class Plan(Core):
             skip_validation=skip_validation,
             raise_on_validation_error=raise_on_validation_error,
             **kwargs)
+
+        # Check for possible remote plan reference first
+        reference = self.node.get(['plan', 'import'])
+        if reference is not None:
+            self._remote_plan_fmf_id = FmfId(**reference)
 
         # Save the run, prepare worktree and plan data directory
         self.my_run = run
@@ -964,8 +972,6 @@ class Plan(Core):
             plan=self, data=self.node.get('report'))
         self.finish = tmt.steps.finish.Finish(
             plan=self, data=self.node.get('finish'))
-
-        self._import_plan_node = self.node.get(['plan', 'import'])
 
         # Test execution context defined in the plan
         self._plan_context: FmfContextType = self.node.get('context', dict())
@@ -1025,11 +1031,15 @@ class Plan(Core):
 
         Used as cwd in prepare, execute and finish steps.
         """
-        assert self.my_run is not None  # narrow type
+
+        # Do nothing for remote plan reference
+        if self.is_remote_plan_reference:
+            return
+
+        # Prepare worktree path and detect the source tree root
         assert self.workdir is not None  # narrow type
         self.worktree = os.path.join(self.workdir, 'tree')
-        assert self.my_run.tree is not None  # narrow type
-        tree_root = self.my_run.tree.root
+        tree_root = self.node.root
 
         # Create an empty directory if there's no metadata tree
         if not tree_root:
@@ -1233,12 +1243,19 @@ class Plan(Core):
         if self.opt('verbose'):
             self._show_additional_keys()
 
-        if self._origin_plan and self.opt('verbose'):
-            echo(tmt.utils.format(
-                'imported plan', '', key_color='blue'))
-            for k, v in self._origin_plan._import_plan_node.items():
-                echo(tmt.utils.format(
-                    k, v, key_color='green'))
+        # Show fmf id of the remote plan in verbose mode
+        if (self._original_plan or self._remote_plan_fmf_id) and self.opt('verbose'):
+            # Pick fmf id from the original plan by default, use the
+            # current plan in shallow mode when no plans are fetched.
+            if self._original_plan is not None:
+                fmf_id = self._original_plan._remote_plan_fmf_id
+            else:
+                fmf_id = self._remote_plan_fmf_id
+
+            echo(tmt.utils.format('import', '', key_color='blue'))
+            assert fmf_id is not None  # narrow type
+            for key, value in fmf_id.items():
+                echo(tmt.utils.format(key, value, key_color='green'))
 
     def _lint_execute(self) -> Optional[bool]:
         """ Lint execute step """
@@ -1469,27 +1486,48 @@ class Plan(Core):
 
     @property
     def is_remote_plan_reference(self) -> bool:
-        return self._import_plan_node is not None
+        """ Check whether the plan is a remote plan reference """
+        return self._remote_plan_fmf_id is not None
 
-    @property
-    def imported_plan(self) -> Optional['Plan']:
+    def import_plan(self) -> Optional['Plan']:
+        """ Import plan from a remote repository, return a Plan instance """
         if not self.is_remote_plan_reference:
             return None
+
         if not self._imported_plan:
-            if self.parent:  # check whether the run obj is set
-                plan_id = tmt.base.FmfId(**self._import_plan_node)
+            assert self._remote_plan_fmf_id is not None  # narrow type
+            plan_id = self._remote_plan_fmf_id
+            self.debug(f"Import remote plan '{plan_id.name}' from '{plan_id.url}'.", level=3)
+
+            # Clone the whole git repository if executing tests (run is attached)
+            if self.my_run:
+                assert self.parent is not None  # narrow type
+                assert self.parent.workdir is not None  # narrow type
                 destination = os.path.join(self.parent.workdir, "import", self.name.lstrip("/"))
-                tmt.utils.git_clone(plan_id.url, destination, self)
+                if plan_id.url is None:
+                    raise tmt.utils.SpecificationError(
+                        f"No url provided for remote plan '{self.name}'.")
+                if os.path.exists(destination):
+                    self.debug(f"Seems that '{destination}' has been already cloned.", level=3)
+                else:
+                    tmt.utils.git_clone(plan_id.url, destination, self)
                 if plan_id.ref:
                     self.run(['git', 'checkout', plan_id.ref], cwd=destination)
                 if plan_id.path:
-                    destination = os.path.join(destination, plan_id.path)
-                node = fmf.Tree(destination).find(self._import_plan_node['name'])
+                    destination = os.path.join(destination, plan_id.path.lstrip("/"))
+                node = fmf.Tree(destination).find(plan_id.name)
+
+            # Use fmf cache for exploring plans (the whole git repo is not needed)
             else:
-                node = fmf.Tree.node(self._import_plan_node)
-            self._imported_plan = Plan(node=node, run=self.parent, logger=self)
-            self._imported_plan.name = self.name
-            self._imported_plan._origin_plan = self
+                node = fmf.Tree.node(
+                    {key: value for key, value in plan_id.items() if value is not None})
+
+            # Override the plan name with the local one to ensure unique names
+            node.name = self.name
+            # Create the plan object, save links between both plans
+            self._imported_plan = Plan(node=node, run=self.my_run, logger=self)
+            self._imported_plan._original_plan = self
+
         return self._imported_plan
 
 
@@ -1974,7 +2012,7 @@ class Tree(tmt.utils.Common):
         if Plan._opt('shallow'):
             return plans
         else:
-            return [plan.imported_plan or plan for plan in plans]
+            return [plan.import_plan() or plan for plan in plans]
 
     def stories(
             self,
@@ -2125,7 +2163,7 @@ class Run(tmt.utils.Common):
         """ Prepare metadata tree with only the default plan """
         default_plan = tmt.utils.yaml_to_dict(tmt.templates.DEFAULT_PLAN)
         # The default discover method for this case is 'shell'
-        default_plan['/plans/default']['discover']['how'] = 'shell'
+        default_plan[tmt.templates.DEFAULT_PLAN_NAME]['discover']['how'] = 'shell'
         self.tree = tmt.Tree(tree=fmf.Tree(default_plan))
         self.debug("No metadata found, using the default plan.")
 
@@ -2138,11 +2176,16 @@ class Run(tmt.utils.Common):
             # Clear the tree and insert default plan if requested
             if Plan._opt("default"):
                 new_tree = fmf.Tree(default_plan)
-                new_tree.root = self.tree.root
+                # Make sure the fmf root is set for the default plan
+                new_tree.find(tmt.templates.DEFAULT_PLAN_NAME).root = self.tree.root
                 self.tree.tree = new_tree
-                self.debug("Enforcing use of default plan")
-            # Insert default plan if no plan detected
-            if not list(self.tree.tree.prune(keys=['execute'])):
+                self.debug("Enforcing use of the default plan.")
+            # Insert default plan if no plan detected. Check using
+            # tree.prune() instead of self.tree.plans() to prevent
+            # creating plan objects which leads to wrong expansion of
+            # environment variables from the command line.
+            if not (list(self.tree.tree.prune(keys=['execute'])) or
+                    list(self.tree.tree.prune(keys=['plan']))):
                 self.tree.tree.update(default_plan)
                 self.debug("No plan found, adding the default plan.")
         # Create an empty default plan if no fmf metadata found

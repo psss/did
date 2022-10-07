@@ -298,9 +298,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             if path is not None:
                 fmf_root: Optional[str] = path
             else:
-                assert self.step.plan.my_run is not None  # narrow type
-                assert self.step.plan.my_run.tree is not None  # narrow type
-                fmf_root = self.step.plan.my_run.tree.root
+                fmf_root = self.step.plan.node.root
             requires_git = self.opt('sync-repo') or any(
                 self.get(opt) for opt in self._REQUIRES_GIT)
             # Path for distgit sources cannot be checked until the
@@ -311,15 +309,12 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             if dist_git_source:
                 # Ensure we're in a git repo when extracting dist-git sources
                 try:
-                    assert self.step.plan.my_run is not None  # narrow type
-                    assert self.step.plan.my_run.tree is not None  # narrow type
-                    assert self.step.plan.my_run.tree.root is not None  # narrow type
-                    git_root = get_git_root(self.step.plan.my_run.tree.root)
+                    git_root = get_git_root(self.step.plan.node.root)
                 except tmt.utils.RunError:
                     assert self.step.plan.my_run is not None  # narrow type
                     assert self.step.plan.my_run.tree is not None  # narrow type
                     raise tmt.utils.DiscoverError(
-                        f"{self.step.plan.my_run.tree.root} is not a git repo")
+                        f"{self.step.plan.node.root} is not a git repo")
             else:
                 if fmf_root is None:
                     raise tmt.utils.DiscoverError(

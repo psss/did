@@ -1,0 +1,22 @@
+/minimal:
+    summary: Just url and name
+    plan:
+        import:
+            url: https://github.com/teemtee/tmt
+            name: /plans/sanity/lint
+
+/ref-and-path:
+    summary: Git ref and custom path
+    plan:
+        import:
+            url: https://github.com/teemtee/tmt
+            path: /tests/run/worktree/data/prepare
+            name: /plan
+            ref: 1.16.0
+
+/full:
+    summary: Full plan with test scripts
+    plan:
+        import:
+            url: https://github.com/teemtee/fmf
+            name: /plans/features
