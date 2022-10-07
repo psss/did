@@ -29,6 +29,14 @@ rlJournalStart
         fi
     rlPhaseEnd
 
+    rlPhaseStartTest "Boots fedora-coreos image"
+      if ! rlRun "tmt run -i $run --scratch \
+          plans --default finish login -c echo \
+          provision -h virtual.testcloud --image fedora-coreos"; then
+         rlRun "cat $run/log.txt" 0 "Dump log.txt"
+      fi
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "popd"
         rlRun "rm -r $tmp" 0 "Remove tmp directory"

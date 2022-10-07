@@ -582,7 +582,8 @@ class GuestTestcloud(tmt.GuestSsh):
         # TODO: Maybe... some better way to do this?
         if "coreos" in self.image.lower():
             self._instance.coreos = True
-            self._instance.ssh_path = self.key[0]
+            # prepare_ssh_key() writes key directly to COREOS_DATA
+            self._instance.ssh_path = []
         self.prepare_ssh_key(SSH_KEYGEN_TYPE)
 
         # Boot the virtual machine
