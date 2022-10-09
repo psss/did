@@ -121,7 +121,7 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
 
                 except requests.RequestException as exc:
                     raise PrepareError(
-                        f"Failed to fetch remote playbook '{playbook}'.", original=exc)
+                        f"Failed to fetch remote playbook '{playbook}'.") from exc
 
                 with tempfile.NamedTemporaryFile(
                         mode='w+b',

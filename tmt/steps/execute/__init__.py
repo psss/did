@@ -304,7 +304,7 @@ class ExecutePlugin(tmt.steps.Plugin):
 
         # Nothing to do if there's no result file
         if not os.path.exists(report_result_path):
-            raise tmt.utils.FileError
+            raise tmt.utils.FileError(f"Results file '{report_result_path}' does not exist.")
 
         # Prepare the log path and duration
         data = {'log': self.data_path(test, TEST_OUTPUT_FILENAME),

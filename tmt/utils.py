@@ -819,9 +819,10 @@ class Common:
 class GeneralError(Exception):
     """ General error """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        # Store the original exception for future use
-        self.original = kwargs.get('original')
+    def __init__(self, message: str, *args: Any, **kwargs: Any) -> None:
+        super().__init__(message, *args, **kwargs)
+
+        self.message = message
 
 
 class GitUrlError(GeneralError):
@@ -844,8 +845,7 @@ class RunError(GeneralError):
             stderr: Optional[str] = None,
             *args: Any,
             **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-        self.message = message
+        super().__init__(message, *args, **kwargs)
         self.command = command
         self.returncode = returncode
         self.stdout = stdout
@@ -865,9 +865,7 @@ class SpecificationError(MetadataError):
             validation_errors: Optional[List[Tuple[jsonschema.ValidationError, str]]] = None,
             *args: Any,
             **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.message = message
+        super().__init__(message, *args, **kwargs)
         self.validation_errors = validation_errors
 
 
@@ -882,9 +880,33 @@ class StructuredFieldError(GeneralError):
 class WaitingIncomplete(GeneralError):
     """ Waiting incomplete """
 
+    def __init__(self) -> None:
+        super().__init__('Waiting incomplete')
+
 
 class WaitingTimedOutError(GeneralError):
     """ Waiting ran out of time """
+
+    def __init__(
+            self,
+            check: 'WaitCheckType[T]',
+            timeout: datetime.timedelta,
+            check_success: bool = False) -> None:
+        if check_success:
+            super().__init__(
+                f"Waiting for condition '{check.__name__}' succeeded but took too much time "
+                f"after waiting {timeout}."
+                )
+
+        else:
+            super().__init__(
+                f"Waiting for condition '{check.__name__}' timed out "
+                f"after waiting {timeout}."
+                )
+
+        self.check = check
+        self.timeout = timeout
+        self.check_success = check_success
 
 
 # Step exceptions
@@ -1969,7 +1991,7 @@ class RetryStrategy(requests.packages.urllib3.util.retry.Retry):  # type: ignore
                 else:
                     message = 'Certificate verify failed.'
 
-                raise GeneralError(message, original=error) from error
+                raise GeneralError(message) from error
 
         return super().increment(*args, **kwargs)
 
@@ -2681,9 +2703,7 @@ class DistGitHandler:
                         hashtype=used_hash.lower()
                         ), source_name))
         except Exception as error:
-            raise GeneralError(
-                f"Couldn't read '{self.sources_file_name}' file.",
-                original=error)
+            raise GeneralError(f"Couldn't read '{self.sources_file_name}' file.") from error
         if not ret_values:
             raise GeneralError(
                 "No sources found in '{self.sources_file_name}' file.")
@@ -3183,7 +3203,7 @@ def wait(
         now = NOW()
 
         if now > deadline:
-            raise WaitingTimedOutError()
+            raise WaitingTimedOutError(check, timeout)
 
         try:
             ret = check()
@@ -3198,7 +3218,7 @@ def wait(
                     f"'{check.__name__}' finished successfully but took too much time,"
                     f"{now - deadline} over quota")
 
-                raise WaitingTimedOutError()
+                raise WaitingTimedOutError(check, timeout, check_success=True)
 
             parent.debug(
                 'wait',

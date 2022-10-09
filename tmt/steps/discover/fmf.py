@@ -367,7 +367,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                     git_root, sourcedir, self.get('dist-git-type'))
             except Exception as error:
                 raise tmt.utils.DiscoverError(
-                    "Failed to process 'dist-git-source'.", original=error)
+                    "Failed to process 'dist-git-source'.") from error
 
             # Check what should be extracted from the sources
             if dist_git_extract:

@@ -307,7 +307,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
                     git_root, sourcedir, self.get('dist-git-type'))
             except Exception as error:
                 raise tmt.utils.DiscoverError(
-                    "Failed to process 'dist-git-source'.", original=error)
+                    "Failed to process 'dist-git-source'.") from error
 
         # Use a tmt.Tree to apply possible command line filters
         tests = tmt.Tree(tree=tests).tests(conditions=["manual is False"])

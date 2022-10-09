@@ -62,8 +62,7 @@ def test_test_invalid():
         exc = exc_context.value
 
         assert isinstance(exc, SpecificationError)
-        assert exc.args[0] \
-            == 'fmf node /smoke failed validation'
+        assert exc.message == 'fmf node /smoke failed validation'
 
         validation_error, error_message = exc.validation_errors[0]
 

@@ -85,7 +85,7 @@ def import_polarion() -> None:
         from pylero.work_item import _WorkItem as PolarionWorkItem
     except PolarionException as exc:
         log.debug(traceback.format_exc())
-        raise ConvertError("Failed to login with pylero", original=exc)
+        raise ConvertError("Failed to login with pylero") from exc
 
 
 def get_bz_instance() -> Any:
@@ -100,8 +100,7 @@ def get_bz_instance() -> Any:
         bz_instance = bugzilla.Bugzilla(url=BUGZILLA_XMLRPC_URL)
     except Exception as exc:
         log.debug(traceback.format_exc())
-        raise ConvertError(
-            "Couldn't initialize the Bugzilla client.", original=exc)
+        raise ConvertError("Couldn't initialize the Bugzilla client.") from exc
 
     if not bz_instance.logged_in:
         raise ConvertError(

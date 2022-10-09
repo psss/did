@@ -27,6 +27,6 @@ except tmt.utils.RunError as error:
 except tmt.utils.GeneralError as error:
     click.echo(click.style(str(error), fg='red'), err=True)
     # Mention also the original exception if provided
-    if error.original:
-        click.echo(f"The exception was: {error.original}", err=True)
+    if error.__cause__:
+        click.echo(f"The exception was: {error.__cause__}", err=True)
     raise SystemExit(2)

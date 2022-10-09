@@ -728,8 +728,8 @@ class BasePlugin(Phase, metaclass=PluginIndex):
 
                     except Exception as exc:
                         raise tmt.utils.GeneralError(
-                            f'Failed to load step data for {plugin_data_class.__name__}: {exc}',
-                            original=exc)
+                            f'Failed to load step data for {plugin_data_class.__name__}: {exc}') \
+                            from exc
 
                 assert data is not None
                 assert data.__class__ is plugin_data_class, \

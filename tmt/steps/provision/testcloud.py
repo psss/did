@@ -546,12 +546,12 @@ class GuestTestcloud(tmt.GuestSsh):
             self._image.prepare()
         except FileNotFoundError as error:
             raise ProvisionError(
-                f"Image '{self._image.local_path}' not found.", original=error)
+                f"Image '{self._image.local_path}' not found.") from error
         except (testcloud.exceptions.TestcloudPermissionsError,
                 PermissionError) as error:
             raise ProvisionError(
                 f"Failed to prepare the image. Check the '{TESTCLOUD_IMAGES}' "
-                f"directory permissions.", original=error)
+                f"directory permissions.") from error
 
         # Create instance
         self.instance_name = self._tmt_name()

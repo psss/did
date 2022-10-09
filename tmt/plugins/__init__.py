@@ -80,7 +80,7 @@ def import_member(module_name: str, member_name: str) -> Any:
     try:
         import_(module_name)
     except SystemExit as exc:
-        raise tmt.utils.GeneralError(f"Failed to import module '{module_name}'.", original=exc)
+        raise tmt.utils.GeneralError(f"Failed to import module '{module_name}'.") from exc
 
     # Now the module should be available in `sys.modules` like any
     # other, and we can go and grab the class we need from it.
