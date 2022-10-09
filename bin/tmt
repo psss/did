@@ -3,6 +3,7 @@
 import click
 
 import tmt.cli
+import tmt.utils
 
 try:
     tmt.cli.main()
