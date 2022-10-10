@@ -84,6 +84,18 @@ description:
     link:
         - implemented-by: /tmt/steps/report/polarion.py
 
+/reportportal:
+    summary: Send a JUnit report file to a ReportPortal instance
+    story:
+        As a tester I want to review results in a nicely arranged
+        web page with links to detailed test output.
+    description:
+        Send a JUnit report with test results to a ReportPortal instance.
+    example: |
+        tmt run --all report --how reportportal --url URL --token TOKEN
+    link:
+        - implemented-by: /tmt/steps/report/reportportal.py
+
 /file:
     description: |
 

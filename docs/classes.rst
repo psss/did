@@ -61,7 +61,8 @@ step::
         │       ├── ReportDisplay
         │       ├── ReportHtml
         │       ├── ReportJUnit
-        │       └── ReportPolarion
+        │       ├── ReportPolarion
+        │       └── ReportReportPortal
         └── Plugin
             ├── ExecutePlugin
             │   └── ExecuteInternal
@@ -122,7 +123,8 @@ plugins::
             └── ReportStepData
                 ├── ReportHtmlData
                 ├── ReportJUnitData
-                └── ReportPolarionData
+                ├── ReportPolarionData
+                └── ReportReportPortalData
 
 
 Guests
