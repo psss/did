@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.17.0
+Version: 1.18.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -200,6 +200,47 @@ chmod 1777 %{buildroot}%{workdir_root}
 
 
 %changelog
+* Mon Oct 10 2022 Petr Šplíchal <psplicha@redhat.com> - 1.18.0-1
+- Fix recommended packages handling for rpm-ostree
+- Add EFI configuration to the `tmt-reboot` script
+- Fix adjust for precommit test
+- Fix provision for coreos image
+- Emit only non-default keys when constructing a test from `execute`
+- Add flake8 config file for easier integration with IDEs
+- Multiple scripts for CLI prepare -h shell
+- Allow mypy to cover the whole tmt.plugins and tmt.steps
+- Add typing for `steps/execute/upgrade.py`
+- Fix name & default value of polarion's upload field
+- Fixes enhancing of environment by local's guest implementation
+- Ignore plan -n when searching for upgrade path
+- Document & correct use of class conversion methods
+- Print fmf tree location when schema unit test fails
+- Custom results implementation
+- Refactors internal link handling and storage
+- Allow mypy to cover whole tmt.steps.prepare
+- Add typing for `steps/execute/internal.py`
+- Use workdir with safe names without special chars
+- Adjust support for installing remote packages
+- Support to install package from URL
+- Make sure short option '-x' is covered
+- Add Polarion as a source for test case import
+- Print path to the used ssh identity
+- Add typing for `steps/prepare/__init__.py`
+- Use generator instead of list comprehension with any/all
+- Fixes handling of default of --key in connect plugin
+- Update test data for the debuginfo install test
+- Add a helper for importing a member from a module
+- Fix plan schema to allow custom context dimensions
+- Allow mypy to cover whole tmt.steps.discover
+- Remove support for the obsoleted `detach` executor
+- Add typing for `steps/discover/fmf.py`
+- Fix importing for pylero
+- Allow mypy to cover whole tmt.steps.provision
+- Replace blank "type: ignore" with more specific waivers
+- Use the `SerializableContainer` for plugins' data
+- Enhance SerializableContainer with default key value inspection
+- Moves validation and normalization mixins to utils
+
 * Mon Sep 05 2022 Lukáš Zachar <lzachar@redhat.com> - 1.17.0-1
 - Unify Polarion case searching
 - Error out if reboot timeout is exceeded
