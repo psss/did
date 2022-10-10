@@ -5,7 +5,10 @@ require:
 - tmt
 tier: 3
 adjust:
--   when: distro == centos-stream
+-   when: distro is not defined
+    enabled: false
+    because: Cannot adjust properly
+-   when: distro == centos-stream, rhel
     require-:
     -   pre-commit
     because: pre-commit has to be installed from PyPI (is missing in EPEL)
