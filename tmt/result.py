@@ -1,5 +1,6 @@
 import dataclasses
 import enum
+import re
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, cast
 
 import click
@@ -204,3 +205,26 @@ class Result(tmt.utils.SerializableContainer):
     @classmethod
     def from_serialized(cls, serialized: Dict[str, Any]) -> 'Result':
         return cls(serialized, name=serialized.pop('name'))
+
+    @staticmethod
+    def failures(log: Optional[str], msg_type: str = 'FAIL') -> str:
+        """ Filter stdout and get only messages with certain type """
+        if not log:
+            return ''
+        filtered = ''
+
+        # Filter beakerlib style logs, reverse the log string by lines, search for each FAIL
+        # and every associated line, then reverse the picked lines back into correct order
+        for m in re.findall(
+                fr'(^.*\[\s*{msg_type}\s*\][\S\s]*?)(?:^::\s+\[[0-9: ]+|:{{80}})',
+                '\n'.join(log.split('\n')[::-1]), re.MULTILINE):
+            filtered += m.strip() + '\n'
+        if filtered:
+            return '\n'.join(filtered.strip().split('\n')[::-1])
+
+        # Check for other failures and errors when not using beakerlib
+        for m in re.findall(
+                fr'.*\b(?=error|fail|{msg_type})\b.*', log, re.IGNORECASE | re.MULTILINE):
+            filtered += m + '\n'
+
+        return filtered or log

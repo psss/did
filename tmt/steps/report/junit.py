@@ -75,13 +75,13 @@ def make_junit_xml(report: "tmt.steps.report.ReportPlugin") -> JunitTestSuite:
             stdout=main_log)
         # Map tmt OUTCOME to JUnit states
         if result.result == tmt.result.ResultOutcome.ERROR:
-            case.add_error_info(result.result.value)
+            case.add_error_info(result.result.value, output=result.failures(main_log))
         elif result.result == tmt.result.ResultOutcome.FAIL:
-            case.add_failure_info(result.result.value)
+            case.add_failure_info(result.result.value, output=result.failures(main_log))
         elif result.result == tmt.result.ResultOutcome.INFO:
-            case.add_skipped_info(result.result.value)
+            case.add_skipped_info(result.result.value, output=result.failures(main_log))
         elif result.result == tmt.result.ResultOutcome.WARN:
-            case.add_error_info(result.result.value)
+            case.add_error_info(result.result.value, output=result.failures(main_log))
         # Passed state is the default
         suite.test_cases.append(case)
 
