@@ -89,3 +89,4 @@ clean:
 	find . -type d -name .pytest_cache -exec rm -rv {} +
 	rm -f .coverage tags
 	rm -rf examples/convert/{main.fmf,test.md,Manual}
+	rm -f tests/full/repo_copy.tgz
