@@ -8,51 +8,143 @@
 Class Structure
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Here's the overview of core classes::
+Here's the overview of the essential classes used in the `tmt`
+project. It should help you to get quickly started and better
+understand the relation between the individual classes.
+
+
+Basic
+------------------------------------------------------------------
+
+The ``Common`` class is the parent of most of the available
+classes, it provides common methods for logging, running commands
+and workdir handling. The ``Core`` class together with its child
+classes ``Test``, ``Plan`` and ``Story`` cover the
+:ref:`specification`::
 
     Common
-    ├── Tree
     ├── Core
     │   ├── Plan
     │   ├── Story
     │   └── Test
-    ├── Step
-    │   ├── Discover
-    │   ├── Execute
-    │   ├── Finish
-    │   ├── Prepare
-    │   ├── Provision
-    │   └── Report
-    ├── Plugin
-    │   ├── DiscoverPlugin
-    │   │   ├── DiscoverFmf
-    │   │   └── DiscoverShell
-    │   ├── ExecutePlugin
-    │   │   ├── ExecuteDetach
-    │   │   └── ExecuteInternal
-    │   ├── FinishPlugin
-    │   │   └── FinishShell
-    │   ├── PreparePlugin
-    │   │   ├── PrepareAnsible
-    │   │   ├── PrepareInstall
-    │   │   └── PrepareShell
-    │   ├── ProvisionPlugin
-    │   │   ├── ProvisionConnect
-    │   │   ├── ProvisionLocal
-    │   │   ├── ProvisionMinute
-    │   │   ├── ProvisionPodman
-    │   │   └── ProvisionTestcloud
-    │   └── ReportPlugin
-    │       ├── ReportDisplay
-    │       └── ReportHtml
+    ├── Clean
     ├── Guest
-    │   ├── GuestContainer
-    │   ├── GuestLocal
-    │   ├── GuestMinute
-    │   └── GuestTestcloud
+    ├── Phase
     ├── Run
     ├── Status
-    └── Clean
+    ├── Step
+    └── Tree
+
+
+Phases
+------------------------------------------------------------------
+
+Actions performed during a normal step and plugins for individual
+step::
+
+    Phase
+    ├── Action
+    │   ├── Login
+    │   └── Reboot
+    └── BasePlugin
+        ├── GuestlessPlugin
+        │   ├── DiscoverPlugin
+        │   │   ├── DiscoverFmf
+        │   │   └── DiscoverShell
+        │   ├── ProvisionPlugin
+        │   │   ├── ProvisionArtemis
+        │   │   ├── ProvisionConnect
+        │   │   ├── ProvisionLocal
+        │   │   ├── ProvisionPodman
+        │   │   └── ProvisionTestcloud
+        │   └── ReportPlugin
+        │       ├── ReportDisplay
+        │       ├── ReportHtml
+        │       ├── ReportJUnit
+        │       └── ReportPolarion
+        └── Plugin
+            ├── ExecutePlugin
+            │   └── ExecuteInternal
+            │       └── ExecuteUpgrade
+            ├── FinishPlugin
+            │   ├── FinishAnsible
+            │   └── FinishShell
+            └── PreparePlugin
+                ├── PrepareAnsible
+                │   └── FinishAnsible
+                ├── PrepareInstall
+                ├── PrepareMultihost
+                └── PrepareShell
+
+
+Steps
+------------------------------------------------------------------
+
+A brief overview of all test steps::
+
+    Step
+    ├── Discover
+    ├── Provision
+    ├── Prepare
+    ├── Execute
+    ├── Finish
+    └── Report
+
+Containers used for storing configuration data for individual step
+plugins::
+
+    DataContainer
+    └── SpecBasedContainer, SerializableContainer
+        ├── FmfId
+        │   └── RequireFmfId
+        ├── Link
+        ├── Links
+        └── StepData
+            ├── DiscoverStepData
+            │   ├── DiscoverFmfStepData
+            │   └── DiscoverShellData
+            ├── ExecuteStepData
+            │   ├── ExecuteInternalData
+            │   └── ExecuteUpgradeData
+            ├── FinishStepData
+            │   └── FinishShellData
+            ├── PrepareStepData
+            │   ├── PrepareAnsibleData
+            │   ├── PrepareInstallData
+            │   ├── PrepareMultihostData
+            │   └── PrepareShellData
+            ├── ProvisionStepData
+            │   ├── ProvisionArtemisData
+            │   ├── ProvisionConnectData
+            │   ├── ProvisionLocalData
+            │   ├── ProvisionPodmanData
+            │   └── ProvisionTestcloudData
+            └── ReportStepData
+                ├── ReportHtmlData
+                ├── ReportJUnitData
+                └── ReportPolarionData
+
+
+Guests
+------------------------------------------------------------------
+
+Guests provisioned for test execution::
+
+    Guest
+    ├── GuestContainer
+    ├── GuestLocal
+    └── GuestSsh
+        ├── GuestArtemis
+        └── GuestTestcloud
+
+Data related to provisioned guests::
+
+    GuestData
+    ├── GuestSshData
+    │   ├── ArtemisGuestData
+    │   ├── ConnectGuestData
+    │   └── TestcloudGuestData
+    └── PodmanGuestData
 
 
 Attributes
