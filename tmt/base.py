@@ -901,7 +901,6 @@ class Plan(Core):
     context: FmfContextType = {}
     gate: List[str] = []
 
-    _normalize_context = tmt.utils.LoadFmfKeysMixin._normalize_environment
     _normalize_gate = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
     # When fetching remote plans we store links between the original
@@ -916,6 +915,20 @@ class Plan(Core):
         'environment-file',
         'gate',
         ]
+
+    def _normalize_context(self, value: Optional[Dict[str, Any]]) -> FmfContextType:
+        if value is None:
+            return {}
+
+        normalized: FmfContextType = {}
+
+        for dimension, values in value.items():
+            if isinstance(values, list):
+                normalized[str(dimension)] = [str(v) for v in values]
+            else:
+                normalized[str(dimension)] = [str(values)]
+
+        return normalized
 
     def __init__(
             self,
@@ -970,9 +983,6 @@ class Plan(Core):
             plan=self, data=self.node.get('report'))
         self.finish = tmt.steps.finish.Finish(
             plan=self, data=self.node.get('finish'))
-
-        # Test execution context defined in the plan
-        self._plan_context: FmfContextType = self.node.get('context', dict())
 
         self._update_metadata()
 
@@ -1067,7 +1077,7 @@ class Plan(Core):
 
     def _fmf_context(self) -> tmt.utils.FmfContextType:
         """ Return combined context from plan data and command line """
-        combined = self._plan_context.copy()
+        combined = self.context.copy()
         assert self._context_object is not None  # narrow type
         combined.update(self._context_object.fmf_context)
         return combined

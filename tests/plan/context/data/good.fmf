@@ -1,0 +1,8 @@
+summary: Basic plan with a sane context
+execute:
+    how: tmt
+context:
+    foo: bar
+    baz:
+      - qux
+      - fred
