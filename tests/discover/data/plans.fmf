@@ -81,3 +81,13 @@ execute:
         discover:
             how: fmf
             exclude: /tests/discover1
+    /dynamic_ref_noctx:
+        discover:
+            how: fmf
+            ref: "@tests/discover/data/dynamic_ref"
+    /dynamic_ref_ctx:
+        context:
+            branch: fedora
+        discover:
+            how: fmf
+            ref: "@tests/discover/data/dynamic_ref"

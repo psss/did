@@ -1,0 +1,7 @@
+ref: main
+
+adjust:
+  - when: "branch == fedora"
+    ref: fedora
+  - when: "branch == rhel"
+    ref: rhel
