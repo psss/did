@@ -81,6 +81,33 @@ execute:
                 discover:
                     how: fmf
                     url: https://github.com/teemtee/${REPO}
+            /context:
+                context:
+                    repo: tmt
+                discover:
+                    how: fmf
+                    url: https://github.com/teemtee/$@repo
+            /nocontext:
+                discover:
+                    how: fmf
+                    url: https://github.com/teemtee/$@{repo}
+            /combined:
+                context:
+                    prefix: tee
+                environment:
+                    SUFFIX: mtee
+                discover:
+                    how: fmf
+                    url: https://github.com/teemtee/$@prefix$SUFFIX
+            /conflict:
+                context:
+                    VAR: foo
+                environment:
+                    VAR: bar
+                discover:
+                    how: fmf
+                    url: https://github.com/teemtee/$@{VAR}${VAR}
+
     /nourl:
         /ref:
             /path:

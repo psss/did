@@ -995,9 +995,11 @@ class Plan(Core):
 
         # Store 'environment' and 'environment-file' keys content
         self._environment = self._get_environment_vars(node)
-        # Expand all environment variables in the node
+        # Expand all environment and context variables in the node
         with tmt.utils.modify_environ(self.environment):
-            self._expand_node_data(node.data)
+            self._expand_node_data(node.data, {
+                key: ','.join(value)
+                for (key, value) in self._fmf_context().items()})
 
         # Initialize test steps
         self.discover = tmt.steps.discover.Discover(
@@ -1015,18 +1017,49 @@ class Plan(Core):
 
         self._update_metadata()
 
-    def _expand_node_data(self, data: T) -> T:
+    def _expand_node_data(self, data: T, fmf_context: Dict[str, str]) -> T:
         """ Recursively expand variables in node data """
         if isinstance(data, str):
-            # This cast is tricky: we get a string, and we return a string, so T -> T hold,
-            # yet mypy does not recognize this, and we need to help with an explicit cast().
-            return cast(T, os.path.expandvars(data))
+            # Expand environment and context variables. This is a bit
+            # tricky as we do need to process each type individually and
+            # also properly handle variable/context name conflicts and
+            # situations when some variable is now known.
+
+            # First split data per $ which to avoid conflicts.
+            split_data = data.split('$')
+
+            # Don't process the first item as that was not a variable.
+            first_item = split_data.pop(0)
+
+            # Do the environment variable expansion for items not
+            # starting with @.
+            expanded_env = [item if item.startswith('@')
+                            else os.path.expandvars(f'${item}')
+                            for item in split_data]
+
+            # Do context expansion for items starting with $@ defining
+            # environment variables using the fmf context dictionary.
+            expanded_ctx = [first_item]
+            with tmt.utils.modify_environ(fmf_context):
+                for item in expanded_env:
+                    if item.startswith('@'):
+                        expanded = os.path.expandvars(f'${item[1:]}')
+                        result = f'${item}' if expanded.startswith('$') else expanded
+                    else:
+                        result = item
+                    expanded_ctx.append(result)
+
+            # This cast is tricky: we get a string, and we return a
+            # string, so T -> T hold, yet mypy does not recognize this,
+            # and we need to help with an explicit cast().
+            return cast(T, ''.join(expanded_ctx))
+
         elif isinstance(data, dict):
             for key, value in data.items():
-                data[key] = self._expand_node_data(value)
+                data[key] = self._expand_node_data(value, fmf_context)
         elif isinstance(data, list):
             for i, item in enumerate(data):
-                data[i] = self._expand_node_data(item)
+                data[i] = self._expand_node_data(item, fmf_context)
         return data
 
     @property
