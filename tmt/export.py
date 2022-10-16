@@ -236,8 +236,8 @@ def bz_set_coverage(bug_ids: List[int], case_id: str, tracker_id: int) -> None:
     for bug in bugs_data['bugs']:
         # Process flag (might fail for some types)
         bug_id = bug['id']
-        if 'qe_test_coverage+' not in set(
-                [x['name'] + x['status'] for x in bug['flags']]):
+        if 'qe_test_coverage+' not in {
+                x['name'] + x['status'] for x in bug['flags']}:
             try:
                 bz_instance._proxy.Flag.update({
                     'ids': [bug_id],
@@ -256,9 +256,9 @@ def bz_set_coverage(bug_ids: List[int], case_id: str, tracker_id: int) -> None:
                     f"Failed to set qe_test_coverage+ flag for BZ#{bug_id}",
                     fg='red'))
         # Process external tracker - should succeed
-        current = set(
-            [b['ext_bz_bug_id'] for b in bug['external_bugs']
-             if b['ext_bz_id'] == tracker_id])
+        current = {
+            b['ext_bz_bug_id'] for b in bug['external_bugs']
+            if b['ext_bz_id'] == tracker_id}
         if case_id not in current:
             query = {
                 'bug_ids': [bug_id],
