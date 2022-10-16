@@ -116,24 +116,24 @@ def create_method_class(methods: MethodDictType) -> Type[click.Command]:
             subcommands = (
                 tmt.steps.STEPS + tmt.steps.ACTIONS + ['tests', 'plans'])
 
-            for index in range(len(args)):
+            for index, arg in enumerate(args):
                 # Handle '--how method' or '-h method'
-                if args[index] in ['--how', '-h']:
+                if arg in ['--how', '-h']:
                     try:
                         how = args[index + 1]
                     except IndexError:
                         pass
                     break
                 # Handle '--how=method'
-                elif args[index].startswith('--how='):
-                    how = re.sub('^--how=', '', args[index])
+                elif arg.startswith('--how='):
+                    how = re.sub('^--how=', '', arg)
                     break
                 # Handle '-hmethod'
-                elif args[index].startswith('-h'):
-                    how = re.sub('^-h ?', '', args[index])
+                elif arg.startswith('-h'):
+                    how = re.sub('^-h ?', '', arg)
                     break
                 # Stop search at the first argument looking like a subcommand
-                elif args[index] in subcommands:
+                elif arg in subcommands:
                     break
 
             # Find method with the first matching prefix

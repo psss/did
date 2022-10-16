@@ -191,8 +191,9 @@ def convert_manual_to_nitrate(test_md: str) -> SectionsReturnType:
     def enumerate_content(content: HeadingsType) -> HeadingsType:
         # for sorting convert the index to integer, but keep whole list as list of strings
         content.sort(key=lambda a: int(a[0]))
-        for c in range(len(content)):
-            content[c][1] = f"<p>Step {c + 1}.</p>" + str(content[c][1])
+        for i, entry in enumerate(content):
+            entry[1] = f"<p>Step {i + 1}.</p>" + str(entry[1])
+
         return content
 
     sorted_test = sorted(concatenate_headings_content((

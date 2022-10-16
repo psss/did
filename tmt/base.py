@@ -996,8 +996,8 @@ class Plan(Core):
             for key, value in data.items():
                 data[key] = self._expand_node_data(value)
         elif isinstance(data, list):
-            for i in range(len(data)):
-                data[i] = self._expand_node_data(data[i])
+            for i, item in enumerate(data):
+                data[i] = self._expand_node_data(item)
         return data
 
     @property
