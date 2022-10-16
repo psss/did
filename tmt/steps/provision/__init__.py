@@ -209,8 +209,7 @@ class Provision(tmt.steps.Step):
         # Provision guests
         self._guests = []
         save = True
-        self.is_multihost = sum([isinstance(phase, ProvisionPlugin)
-                                for phase in self.phases()]) > 1
+        self.is_multihost = sum(isinstance(phase, ProvisionPlugin) for phase in self.phases()) > 1
         try:
             for phase in self.phases(classes=(Action, ProvisionPlugin)):
                 try:

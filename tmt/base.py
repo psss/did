@@ -442,8 +442,8 @@ class Core(
                 # Prevent matching common prefix from other directories
                 pattern = f"{pattern}(/|$)"
             assert cls._context is not None  # narrow type
-            cls._context.params['names'] = tuple([
-                pattern if name == '.' else name for name in names])
+            cls._context.params['names'] = tuple(
+                pattern if name == '.' else name for name in names)
 
     def name_and_summary(self) -> str:
         """ Node name and optional summary """
