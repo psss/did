@@ -1025,9 +1025,9 @@ class Plan(Core):
             environment_files, root=node.root)
 
         # Environment variables from key, make sure that values are string
-        environment = dict([
-            (key, str(value)) for key, value
-            in node.get('environment', dict()).items()])
+        environment = {
+            key: str(value) for key, value
+            in node.get('environment', dict()).items()}
 
         # Combine both sources into one ('environment' key takes precendence)
         combined.update(environment)
@@ -2873,7 +2873,7 @@ class Result(tmt.utils.SerializableContainer):
     @staticmethod
     def total(results: List['Result']) -> Dict[ResultOutcome, int]:
         """ Return dictionary with total stats for given results """
-        stats = dict([(result, 0) for result in RESULT_OUTCOME_COLORS])
+        stats = {result: 0 for result in RESULT_OUTCOME_COLORS}
         for result in results:
             stats[result.result] += 1
         return stats
