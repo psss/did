@@ -33,7 +33,7 @@ definitions:
     type: object
 
     properties:
-      processors:
+      sockets:
         anyOf:
           - type: string
           - type: integer
@@ -41,10 +41,28 @@ definitions:
         anyOf:
           - type: string
           - type: integer
+      threads:
+        anyOf:
+          - type: string
+          - type: integer
+      cores-per-socket:
+        anyOf:
+          - type: string
+          - type: integer
+      threads-per-core:
+        anyOf:
+          - type: string
+          - type: integer
+      processors:
+        anyOf:
+          - type: string
+          - type: integer
       family:
         anyOf:
           - type: string
           - type: integer
+      family-name:
+        type: string
       model:
         anyOf:
           - type: string
