@@ -483,8 +483,7 @@ class Execute(tmt.steps.Step):
                 "Multiple execute steps defined in '{}'.".format(self.plan))
 
         # Choose the right plugin and wake it up
-        # TODO: with generic BasePlugin, delegate() should return more fitting type,
-        # not the base class.
+        # FIXME: cast() - see https://github.com/teemtee/tmt/issues/1599
         executor = cast(ExecutePlugin, ExecutePlugin.delegate(self, data=self.data[0]))
         executor.wake()
         self._phases.append(executor)

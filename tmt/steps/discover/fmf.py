@@ -223,6 +223,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
 
         # Check url and path, prepare test directory
         url = self.get('url')
+        # FIXME: cast() - typeless "dispatcher" method
         path = cast(Optional[str], self.get('path'))
         # Save the test directory so that others can reference it
         ref = self.get('ref')
@@ -447,6 +448,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.info('tests', fmf.utils.listed(names), 'green')
 
         # Check the 'test --link' option first, then from discover
+        # FIXME: cast() - typeless "dispatcher" method
         raw_link_needles = cast(List[str], tmt.Test._opt('links', []) or self.get('link', []))
         link_needles = [tmt.base.LinkNeedle.from_spec(
             raw_needle) for raw_needle in raw_link_needles]

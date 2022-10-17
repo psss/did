@@ -230,6 +230,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
     def show(self, keys: Optional[List[str]] = None) -> None:
         """ Show config details """
         super().show([])
+        # FIXME: cast() - typeless "dispatcher" method
         tests = cast(List[TestDescription], self.get('tests'))
         if tests:
             test_names = [test.name for test in tests]
@@ -246,6 +247,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         dist_git_source = self.get('dist-git-source', False)
 
         # Check and process each defined shell test
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1540
         for data in cast(DiscoverShellData, self.data).tests:
             # Create data copy (we want to keep original data for save()
             data = copy.deepcopy(data)

@@ -283,6 +283,7 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
     @classmethod
     def options(cls, how: Any = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for Artemis """
+        # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
         return cast(List[tmt.options.ClickOptionDecoratorType], [
             click.option(
                 '--api-url', metavar='URL',

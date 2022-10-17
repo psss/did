@@ -38,6 +38,7 @@ class InstallBase(tmt.utils.Common):
 
         # Get package related data from the plugin
         assert self.parent is not None
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         self.packages = cast(tmt.steps.prepare.PreparePlugin, self.parent).get("package", [])
         self.directories = cast(tmt.steps.prepare.PreparePlugin, self.parent).get("directory", [])
         self.exclude = cast(tmt.steps.prepare.PreparePlugin, self.parent).get("exclude", [])
@@ -141,6 +142,7 @@ class InstallBase(tmt.utils.Common):
 
     def enable_copr(self) -> None:
         """ Enable requested copr repositories """
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         coprs = cast(tmt.steps.prepare.PreparePlugin, self.parent).get('copr')
         if not coprs:
             return
@@ -163,6 +165,7 @@ class InstallBase(tmt.utils.Common):
     def prepare_install_local(self) -> None:
         """ Copy packages to the test system """
         assert self.parent is not None
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         workdir = cast(tmt.steps.prepare.PreparePlugin, self.parent).step.workdir
         if not workdir:
             raise tmt.utils.GeneralError('workdir should not be empty')
@@ -213,6 +216,7 @@ class InstallDnf(InstallBase):
 
     def prepare_command(self) -> None:
         """ Prepare installation command """
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         parent = cast(tmt.steps.prepare.PreparePlugin, self.parent)
         self.options = '-y'
         self.skip = ' --skip-broken' if parent.get('missing') == 'skip' else ''
@@ -292,6 +296,7 @@ class InstallRpmOstree(InstallBase):
 
     def prepare_command(self) -> None:
         """ Prepare installation command for rpm-ostree"""
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         missing = cast(tmt.steps.prepare.PreparePlugin, self.parent).get("missing")
         self.skip = True if missing == 'skip' else False
         self.command = f"{self.sudo}rpm-ostree"
@@ -410,6 +415,7 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> Any:
         """ Prepare command line options """
+        # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
         return cast(List[tmt.options.ClickOptionDecoratorType], [
             click.option(
                 '-p', '--package', metavar='PACKAGE', multiple=True,

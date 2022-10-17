@@ -7,7 +7,7 @@ import platform
 import re
 import time
 import types
-from typing import Any, List, Optional, cast
+from typing import Any, List, Optional
 
 import click
 import fmf
@@ -402,7 +402,7 @@ class GuestTestcloud(tmt.GuestSsh):
             return f'file://{name}'
 
         name = name.lower().strip()
-        url = None
+        url: Optional[str] = None
 
         # Map fedora aliases (e.g. rawhide, fedora, fedora-32, f-32, f32)
         matched_fedora = re.match(r'^f(edora)?-?(\d+)$', name)
@@ -453,7 +453,7 @@ class GuestTestcloud(tmt.GuestSsh):
 
         if not url:
             raise ProvisionError(f"Could not map '{name}' to compose.")
-        return cast(str, url)
+        return url
 
     @staticmethod
     def _create_template() -> None:

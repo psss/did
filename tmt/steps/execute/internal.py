@@ -358,7 +358,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
     def requires(self) -> List[str]:
         """ Return list of required packages """
         # FIXME Remove when we drop support for the old execution methods
-        # FIXME Remove casting once https://github.com/teemtee/tmt/issues/1373 is resolved.
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1373
         return ['beakerlib'] if cast(
             tmt.steps.execute.Execute,
             self.step)._framework == 'beakerlib' else []

@@ -194,6 +194,7 @@ class Discover(tmt.steps.Step):
         discover_step_data = self.data[0]
 
         # Check the execute step for possible custom duration limit
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1540
         duration = cast(
             str,
             getattr(
@@ -218,8 +219,7 @@ class Discover(tmt.steps.Step):
 
         # Choose the right plugin and wake it up
         for data in self.data:
-            # TODO: with generic BasePlugin, delegate() should return more fitting type,
-            # not the base class.
+            # FIXME: cast() - see https://github.com/teemtee/tmt/issues/1599
             plugin = cast(DiscoverPlugin, DiscoverPlugin.delegate(self, data=data))
             self._phases.append(plugin)
             plugin.wake()

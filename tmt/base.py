@@ -427,6 +427,7 @@ class Core(
         # Handle '.' as an alias for the current working directory
         names = cls._opt('names')
         if names is not None and '.' in names:
+            # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
             obj = cast(Optional['tmt.cli.ContextObject'], context.obj)
             assert obj is not None  # narrow type
             root = obj.tree.root
@@ -1292,6 +1293,7 @@ class Plan(Core):
         # by schema-based validation already.
 
         # The discover step is optional
+        # FIXME: cast() - typeless "dispatcher" method
         discover_data = cast(Optional[tmt.steps.RawStepDataArgument], self.node.get('discover'))
         if not discover_data:
             return True
@@ -1900,7 +1902,7 @@ class Tree(tmt.utils.Common):
     @property
     def root(self) -> Optional[str]:
         """ Metadata root """
-        # TODO: drop cast() when fmf becomes annotated
+        # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
         return cast(Optional[str], self.tree.root)
 
     def tests(
@@ -1919,6 +1921,7 @@ class Tree(tmt.utils.Common):
         names = names or []
         filters = (filters or []) + list(Test._opt('filters', []))
         conditions = (conditions or []) + list(Test._opt('conditions', []))
+        # FIXME: cast() - typeless "dispatcher" method
         links = (links or []) + [
             LinkNeedle.from_spec(value)
             for value in cast(List[str], Test._opt('links', []))
@@ -1986,6 +1989,7 @@ class Tree(tmt.utils.Common):
         names = (names or []) + list(Plan._opt('names', []))
         filters = (filters or []) + list(Plan._opt('filters', []))
         conditions = (conditions or []) + list(Plan._opt('conditions', []))
+        # FIXME: cast() - typeless "dispatcher" method
         links = (links or []) + [
             LinkNeedle.from_spec(value)
             for value in cast(List[str], Plan._opt('links', []))
@@ -2036,6 +2040,7 @@ class Tree(tmt.utils.Common):
         names = (names or []) + list(Story._opt('names', []))
         filters = (filters or []) + list(Story._opt('filters', []))
         conditions = (conditions or []) + list(Story._opt('conditions', []))
+        # FIXME: cast() - typeless "dispatcher" method
         links = (links or []) + [
             LinkNeedle.from_spec(value)
             for value in cast(List[str], Story._opt('links', []))
@@ -2629,6 +2634,7 @@ class Clean(tmt.utils.Common):
     def _matches_how(self, plan: Plan) -> bool:
         """ Check if the given plan matches options """
         how = plan.provision.data[0].how
+        # FIXME: cast() - typeless "dispatcher" method
         target_how = cast(Optional[str], self.opt('how'))
         if target_how:
             return how == target_how
@@ -2822,6 +2828,7 @@ class Link(tmt.utils.SpecBasedContainer):
 
         # From now on, `spec` is a mapping, and may contain the optional
         # `note` key. Extract the key for later.
+        # FIXME: cast() - typeless "dispatcher" method
         note = cast(Optional[str], spec.get('note', None))
 
         # Count how many relations are stored in spec.

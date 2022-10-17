@@ -54,8 +54,7 @@ class Report(tmt.steps.Step):
 
         # Choose the right plugin and wake it up
         for data in self.data:
-            # TODO: with generic BasePlugin, delegate() should return more fitting type,
-            # not the base class.
+            # FIXME: cast() - see https://github.com/teemtee/tmt/issues/1599
             plugin = cast(ReportPlugin, ReportPlugin.delegate(self, data=data))
             plugin.wake()
             self._phases.append(plugin)

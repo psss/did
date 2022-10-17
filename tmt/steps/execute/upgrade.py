@@ -269,6 +269,7 @@ class ExecuteUpgrade(ExecuteInternal):
                 # Instead, we want it to re-use existing, already cloned path.
                 data['url'] = None  # type: ignore[typeddict-item]
                 data['path'] = self._discover_upgrade.testdir  # type: ignore[typeddict-item]
+                # FIXME: cast() - https://github.com/teemtee/tmt/issues/1599
                 self._discover_upgrade = cast(DiscoverFmf, DiscoverPlugin.delegate(
                     self.step, raw_data=data))
                 self._run_discover_upgrade()

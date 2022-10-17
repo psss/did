@@ -381,6 +381,7 @@ class Common:
         if self._context is None:
             return None
 
+        # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
         return cast(Optional['tmt.cli.ContextObject'], self._context.obj)
 
     def _fmf_context(self) -> FmfContextType:
@@ -1607,9 +1608,7 @@ class SerializableContainer(DataContainer):
         assert issubclass(klass, SerializableContainer)
 
         # Apparently, the issubclass() check above is not good enough for mypy.
-        return cast(
-            SerializableContainerDerivedType,
-            klass.from_serialized(serialized))
+        return cast(SerializableContainerDerivedType, klass.from_serialized(serialized))
 
 
 def markdown_to_html(filename: str) -> str:

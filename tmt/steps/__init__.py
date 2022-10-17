@@ -562,6 +562,7 @@ def provides_method(
     def _method(cls: Type['BasePlugin']) -> Any:
         plugin_method = Method(name, class_=cls, doc=doc, order=order)
 
+        # FIXME: make sure cls.__bases__[0] is really BasePlugin class
         cast('BasePlugin', cls.__bases__[0])._supported_methods.append(plugin_method)
 
         return cls
@@ -585,6 +586,7 @@ class PluginIndex(type):
             attributes: Any) -> None:
         """ Store all defined methods in the parent class """
 
+        # FIXME: cast() - will be removed with the whole class
         plugin_methods = cast(Optional[List[Method]], getattr(cls, '_methods'))
 
         if not plugin_methods:
@@ -597,6 +599,7 @@ class PluginIndex(type):
             stacklevel=2)
 
         for plugin_method in plugin_methods:
+            # FIXME: cast() - will be removed with the whole class
             plugin_method.class_ = cast(Type['BasePlugin'], cls)
             # Add to the list of supported methods in parent class
             bases[0]._supported_methods.append(plugin_method)

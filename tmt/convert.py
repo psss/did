@@ -9,7 +9,7 @@ import re
 import shlex
 import subprocess
 from io import open
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 from uuid import UUID, uuid4
 
 import fmf.utils
@@ -143,9 +143,9 @@ def html_to_markdown(html: str) -> str:
         raise ConvertError("Install tmt-test-convert to import tests.")
 
     if html is None:
-        markdown = ""
+        markdown: str = ""
     else:
-        markdown = cast(str, md_handler.handle(html)).strip()
+        markdown = md_handler.handle(html).strip()
     return markdown
 
 

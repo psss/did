@@ -964,6 +964,7 @@ def stories_ls(
     Use '.' to select stories under the current working directory.
     """
     tmt.Story._save_context(context)
+    # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
     for story in cast(tmt.Tree, context.obj.tree).stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):
@@ -993,6 +994,7 @@ def stories_show(
     Use '.' to select stories under the current working directory.
     """
     tmt.Story._save_context(context)
+    # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
     for story in cast(tmt.Tree, context.obj.tree).stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):
@@ -1064,6 +1066,7 @@ def stories_coverage(
     total = code_coverage = test_coverage = docs_coverage = 0
     if not any([code, test, docs]):
         code = test = docs = True
+    # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
     for story in cast(tmt.Tree, context.obj.tree).stories():
         # Check conditions
         if not story._match(
@@ -1130,6 +1133,7 @@ def stories_export(
     """
     tmt.Story._save_context(context)
 
+    # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
     for story in cast(tmt.Tree, context.obj.tree).stories(whole=True):
         if not story._match(implemented, verified, documented, covered,
                             unimplemented, unverified, undocumented, uncovered):
@@ -1186,6 +1190,7 @@ def stories_id(
     are kept intact.
     """
     tmt.Story._save_context(context)
+    # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
     for story in cast(tmt.Tree, context.obj.tree).stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):

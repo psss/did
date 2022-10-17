@@ -171,6 +171,7 @@ class Library:
     @property
     def _library_cache(self) -> Dict[str, 'Library']:
         # Initialize library cache (indexed by the repository name)
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         if not hasattr(self.parent, '_library_cache'):
             cast(CommonWithLibraryCache, self.parent)._library_cache = dict()
 

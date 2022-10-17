@@ -44,6 +44,7 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
     @classmethod
     def options(cls, how: Optional[str] = None) -> Any:
         """ Prepare command line options """
+        # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
         return cast(List[tmt.options.ClickOptionDecoratorType], [
             click.option(
                 '-s', '--script', metavar='SCRIPT',

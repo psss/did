@@ -1141,7 +1141,7 @@ def prepare_extra_summary(test: 'tmt.Test') -> str:
     generated = f"{remote_dirname} {test.name}"
     if test.summary:
         generated += f" - {test.summary}"
-    # TODO: remove cast later
+    # FIXME: cast() - no issue, type-less "dispatcher" method
     return cast(str, test.node.get('extra-summary', generated))
 
 

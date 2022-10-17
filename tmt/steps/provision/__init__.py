@@ -165,8 +165,7 @@ class Provision(tmt.steps.Step):
 
         # Choose the right plugin and wake it up
         for data in self.data:
-            # TODO: with generic BasePlugin, delegate() should return more fitting type,
-            # not the base class.
+            # FIXME: cast() - see https://github.com/teemtee/tmt/issues/1599
             plugin = cast(ProvisionPlugin, ProvisionPlugin.delegate(self, data=data))
             self._phases.append(plugin)
             # If guest data loaded, perform a complete wake up
@@ -331,7 +330,7 @@ class Guest(tmt.utils.Common):
 
     def _tmt_name(self) -> str:
         """ Generate a name prefixed with tmt run id """
-        # TODO: with generic Step and Common, this should not be needed
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         parent = cast(Provision, self.parent)
 
         assert parent.plan.my_run is not None  # narrow type
@@ -477,7 +476,7 @@ class Guest(tmt.utils.Common):
         """ Prepare full ansible playbook path """
         # Playbook paths should be relative to the metadata tree root
         self.debug(f"Applying playbook '{playbook}' on guest '{self.guest}'.")
-        # TODO: with generic Step and Common, this should not be needed
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         parent = cast(Provision, self.parent)
         assert parent.plan.my_run is not None  # narrow type
         assert parent.plan.my_run.tree is not None  # narrow type
@@ -497,7 +496,7 @@ class Guest(tmt.utils.Common):
         environment.update(execute_environment or dict())
         # Plan environment and variables provided on the command line
         # override environment provided to execute().
-        # TODO: with generic Step and Common, this should not be needed
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         parent = cast(Provision, self.parent)
         environment.update(parent.plan.environment)
         return environment
@@ -825,7 +824,7 @@ class GuestSsh(Guest):
             playbook
             ]
 
-        # TODO: with generic Step and Common, this should not be needed
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         parent = cast(Provision, self.parent)
 
         stdout, stderr = self.run(
@@ -898,7 +897,7 @@ class GuestSsh(Guest):
         if destination is None:
             destination = "/"
         if source is None:
-            # TODO: with generic Step and Common, this should not be needed
+            # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
             parent = cast(Provision, self.parent)
 
             assert parent.plan.workdir is not None
@@ -965,7 +964,7 @@ class GuestSsh(Guest):
         if destination is None:
             destination = "/"
         if source is None:
-            # TODO: with generic Step and Common, this should not be needed
+            # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
             parent = cast(Provision, self.parent)
 
             assert parent.plan.workdir is not None
