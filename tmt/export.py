@@ -26,6 +26,16 @@ bugzilla: Optional[types.ModuleType] = None
 gssapi: Optional[types.ModuleType] = None
 nitrate: Optional[types.ModuleType] = None
 
+# FIXME: Any - https://github.com/teemtee/tmt/issues/1602
+
+# Until nitrate gets its own annotations and recognizable imports...
+Nitrate = Any
+NitrateTestPlan = Any
+NitrateTestCase = Any
+
+# Until Bugzilla gets its own annotations and recognizable imports...
+BugzillaInstance = Any
+
 PolarionException: Any = None
 PolarionTestCase: Any = None
 PolarionWorkItem: Any = None
@@ -52,7 +62,7 @@ RE_POLARION_URL = r'.*/polarion/#/project/.*/workitem\?id=(.*)'
 LEGACY_POLARION_PROJECTS = set(['RedHatEnterpriseLinux7'])
 
 
-def import_nitrate() -> Any:
+def import_nitrate() -> Nitrate:
     """ Conditionally import the nitrate module """
     # Need to import nitrate only when really needed. Otherwise we get
     # traceback when nitrate not installed or config file not available.
@@ -88,7 +98,7 @@ def import_polarion() -> None:
         raise ConvertError("Failed to login with pylero") from exc
 
 
-def get_bz_instance() -> Any:
+def get_bz_instance() -> BugzillaInstance:
     """ Import the bugzilla module and return BZ instance """
     try:
         import bugzilla
@@ -97,7 +107,7 @@ def get_bz_instance() -> Any:
             "Install 'tmt-test-convert' to link test to the bugzilla.")
 
     try:
-        bz_instance = bugzilla.Bugzilla(url=BUGZILLA_XMLRPC_URL)
+        bz_instance: BugzillaInstance = bugzilla.Bugzilla(url=BUGZILLA_XMLRPC_URL)
     except Exception as exc:
         log.debug(traceback.format_exc())
         raise ConvertError("Couldn't initialize the Bugzilla client.") from exc
@@ -354,7 +364,7 @@ def find_polarion_case_ids(
 def get_polarion_case(
         data: Dict[str, Optional[str]],
         preferred_project: Optional[str] = None,
-        polarion_case_id: Optional[str] = None) -> Any:
+        polarion_case_id: Optional[str] = None) -> Optional[PolarionTestCase]:
     """ Get Polarion case through couple different methods """
     import_polarion()
 
@@ -433,7 +443,7 @@ def export_to_nitrate(test: 'tmt.Test') -> None:
     # Check nitrate test case
     try:
         nitrate_id = test.node.get('extra-nitrate')[3:]
-        nitrate_case = nitrate.TestCase(int(nitrate_id))
+        nitrate_case: NitrateTestCase = nitrate.TestCase(int(nitrate_id))
         nitrate_case.summary  # Make sure we connect to the server now
         echo(style(f"Test case '{nitrate_case.identifier}' found.", fg='blue'))
     except TypeError:
@@ -872,8 +882,8 @@ def export_to_polarion(test: 'tmt.Test') -> None:
 
 
 def add_to_nitrate_runs(
-        nitrate_case: Any,
-        general_plan: Any,
+        nitrate_case: NitrateTestCase,
+        general_plan: NitrateTestPlan,
         test: 'tmt.Test',
         dry_mode: bool) -> None:
     """
@@ -1112,17 +1122,17 @@ def get_category() -> str:
     return category
 
 
-def create_nitrate_case(summary: str) -> Any:
+def create_nitrate_case(summary: str) -> NitrateTestCase:
     """ Create new nitrate case """
     # Create the new test case
     assert nitrate
     category = nitrate.Category(name=get_category(), product=DEFAULT_PRODUCT)
-    testcase = nitrate.TestCase(summary=summary, category=category)
+    testcase: NitrateTestCase = nitrate.TestCase(summary=summary, category=category)
     echo(style(f"Test case '{testcase.identifier}' created.", fg='blue'))
     return testcase
 
 
-def create_polarion_case(summary: str, project_id: str) -> Any:
+def create_polarion_case(summary: str, project_id: str) -> PolarionTestCase:
     """ Create new polarion case """
     # Create the new test case
     testcase = PolarionTestCase.create(project_id, summary, summary)
@@ -1147,11 +1157,11 @@ def prepare_extra_summary(test: 'tmt.Test') -> str:
 
 # avoid multiple searching for general plans (it is expensive)
 @lru_cache(maxsize=None)
-def find_general_plan(component: str) -> Any:
+def find_general_plan(component: str) -> NitrateTestPlan:
     """ Return single General Test Plan or raise an error """
     assert nitrate
     # At first find by linked components
-    found = nitrate.TestPlan.search(
+    found: List[NitrateTestPlan] = nitrate.TestPlan.search(
         type__name="General",
         is_active=True,
         component__name=f"{component}")

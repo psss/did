@@ -3,12 +3,13 @@ import os
 import re
 import shutil
 import sys
-from typing import Any, List, Optional, cast
+from typing import List, Optional, cast
 
 import click
 import fmf
 
 import tmt
+import tmt.options
 import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
@@ -99,7 +100,7 @@ class InstallBase(tmt.utils.Common):
         """ Prepare installation command"""
         raise NotImplementedError
 
-    def prepare_repository(self, **kwargs: Any) -> None:
+    def prepare_repository(self) -> None:
         """ Configure additional repository """
         raise NotImplementedError
 
@@ -413,7 +414,7 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
     _data_class = PrepareInstallData
 
     @classmethod
-    def options(cls, how: Optional[str] = None) -> Any:
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options """
         # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
         return cast(List[tmt.options.ClickOptionDecoratorType], [

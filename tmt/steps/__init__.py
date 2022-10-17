@@ -6,8 +6,8 @@ import re
 import sys
 import textwrap
 import warnings
-from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type,
-                    TypeVar, Union, cast, overload)
+from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple,
+                    Type, TypeVar, Union, cast, overload)
 
 if sys.version_info >= (3, 8):
     from typing import TypedDict
@@ -72,6 +72,8 @@ class Phase(tmt.utils.Common):
 # A variable used to describe a generic type for all classes derived from Phase
 PhaseT = TypeVar('PhaseT', bound=Phase)
 
+# A type alias for plugin classes
+PluginClass = Type['BasePlugin']
 
 _RawStepData = TypedDict('_RawStepData', {
     'how': str,
@@ -175,7 +177,7 @@ class Step(tmt.utils.Common):
     DEFAULT_HOW: str = 'shell'
 
     # Refers to a base class for all plugins registered with this step.
-    _plugin_base_class: Type['BasePlugin']
+    _plugin_base_class: PluginClass
 
     #: Stores the normalized step data. Initialized first time step's `data`
     #: is accessed.
@@ -498,7 +500,7 @@ class Method:
     def __init__(
             self,
             name: str,
-            class_: Optional[Type['BasePlugin']] = None,
+            class_: Optional[PluginClass] = None,
             doc: Optional[str] = None,
             order: int = DEFAULT_PLUGIN_METHOD_ORDER
             ) -> None:
@@ -540,7 +542,7 @@ class Method:
 def provides_method(
         name: str,
         doc: Optional[str] = None,
-        order: int = DEFAULT_PLUGIN_METHOD_ORDER) -> Any:
+        order: int = DEFAULT_PLUGIN_METHOD_ORDER) -> Callable[[PluginClass], PluginClass]:
     """
     A plugin class decorator to register plugin's method with tmt steps.
 
@@ -559,7 +561,7 @@ def provides_method(
     :param order: order of the method among other step methods.
     """
 
-    def _method(cls: Type['BasePlugin']) -> Any:
+    def _method(cls: PluginClass) -> PluginClass:
         plugin_method = Method(name, class_=cls, doc=doc, order=order)
 
         # FIXME: make sure cls.__bases__[0] is really BasePlugin class
@@ -583,7 +585,7 @@ class PluginIndex(type):
             cls,
             name: str,
             bases: List['BasePlugin'],
-            attributes: Any) -> None:
+            attributes: Dict[str, Any]) -> None:
         """ Store all defined methods in the parent class """
 
         # FIXME: cast() - will be removed with the whole class
@@ -600,7 +602,7 @@ class PluginIndex(type):
 
         for plugin_method in plugin_methods:
             # FIXME: cast() - will be removed with the whole class
-            plugin_method.class_ = cast(Type['BasePlugin'], cls)
+            plugin_method.class_ = cast(PluginClass, cls)
             # Add to the list of supported methods in parent class
             bases[0]._supported_methods.append(plugin_method)
 
@@ -1047,7 +1049,7 @@ class Reboot(Action):
         @click.option(
             '--hard', is_flag=True,
             help='Hard reboot of the machine. Unsaved data may be lost.')
-        def reboot(context: Any, **kwargs: Any) -> None:
+        def reboot(context: click.Context, **kwargs: Any) -> None:
             """ Reboot the guest. """
             Reboot._save_context(context)
             Reboot._enabled = True
@@ -1103,7 +1105,7 @@ class Login(Action):
             '-c', '--command', metavar='COMMAND',
             multiple=True, default=['bash'],
             help="Run given command(s). Default is 'bash'.")
-        def login(context: Any, **kwargs: Any) -> None:
+        def login(context: click.Context, **kwargs: Any) -> None:
             """
             Provide user with an interactive shell on the guest.
 

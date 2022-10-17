@@ -7,7 +7,7 @@ import platform
 import re
 import time
 import types
-from typing import Any, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 import click
 import fmf
@@ -18,6 +18,10 @@ import tmt.steps
 import tmt.steps.provision
 import tmt.utils
 from tmt.utils import WORKDIR_ROOT, ProvisionError, retry_session
+
+if TYPE_CHECKING:
+    import tmt.base
+
 
 libvirt: Optional[types.ModuleType] = None
 testcloud: Optional[types.ModuleType] = None
@@ -317,7 +321,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
         return self._guest
 
     @classmethod
-    def clean_images(cls, clean: Any, dry: Any) -> bool:
+    def clean_images(cls, clean: 'tmt.base.Clean', dry: bool) -> bool:
         """ Remove the testcloud images """
         clean.info('testcloud', shift=1, color='green')
         if not os.path.exists(TESTCLOUD_IMAGES):
@@ -334,7 +338,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 try:
                     os.remove(image)
                 except OSError:
-                    clean.error(f"Failed to remove '{image}'.", shift=2)
+                    clean.fail(f"Failed to remove '{image}'.", shift=2)
                     successful = False
         return successful
 
@@ -649,7 +653,7 @@ class GuestTestcloud(tmt.GuestSsh):
                command: Optional[str] = None,
                timeout: Optional[int] = None,
                tick: float = tmt.utils.DEFAULT_WAIT_TICK,
-               tick_increase: float = tmt.utils.DEFAULT_WAIT_TICK_INCREASE) -> Any:
+               tick_increase: float = tmt.utils.DEFAULT_WAIT_TICK_INCREASE) -> bool:
         """ Reboot the guest, return True if successful """
         # Use custom reboot command if provided
         if command:

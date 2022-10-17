@@ -281,7 +281,7 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
 
     # TODO: fix types once superclass gains its annotations
     @classmethod
-    def options(cls, how: Any = None) -> List[tmt.options.ClickOptionDecoratorType]:
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options for Artemis """
         # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
         return cast(List[tmt.options.ClickOptionDecoratorType], [

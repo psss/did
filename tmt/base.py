@@ -2069,7 +2069,7 @@ class Tree(tmt.utils.Common):
             filters, conditions, links, excludes)
 
     @staticmethod
-    def init(path: str, template: str, force: bool, **kwargs: Any) -> None:
+    def init(path: str, template: str, force: bool) -> None:
         """ Initialize a new tmt tree, optionally with a template """
         path = os.path.realpath(path)
         dry = Tree._opt('dry')

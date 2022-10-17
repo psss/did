@@ -1,10 +1,11 @@
 import dataclasses
-from typing import Any, List, Optional, cast
+from typing import List, Optional, cast
 
 import click
 import fmf
 
 import tmt
+import tmt.options
 import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
@@ -42,7 +43,7 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
     _data_class = PrepareShellData
 
     @classmethod
-    def options(cls, how: Optional[str] = None) -> Any:
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options """
         # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
         return cast(List[tmt.options.ClickOptionDecoratorType], [

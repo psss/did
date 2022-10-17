@@ -1,12 +1,13 @@
 import dataclasses
 import os.path
 import tempfile
-from typing import Any, List, Optional, Union, cast
+from typing import List, Optional, Union, cast
 
 import click
 import requests
 
 import tmt
+import tmt.options
 import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
@@ -83,7 +84,7 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
 
     # TODO: fix types once superclass gains its annotations
     @classmethod
-    def options(cls, how: Optional[str] = None) -> Any:
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options """
         # FIXME: cast() - https://github.com/teemtee/tmt/pull/1529
         return cast(List[tmt.options.ClickOptionDecoratorType], [

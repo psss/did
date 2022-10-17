@@ -1231,7 +1231,7 @@ def init(
     """
 
     tmt.Tree._save_context(context)
-    tmt.Tree.init(path, template, force, **kwargs)
+    tmt.Tree.init(path, template, force)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

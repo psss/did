@@ -2,7 +2,7 @@ import dataclasses
 import datetime
 import os
 import xml.etree.ElementTree as ET
-from typing import Any, List, Optional
+from typing import List, Optional
 
 import click
 from requests import post
@@ -49,7 +49,7 @@ class ReportPolarion(tmt.steps.report.ReportPlugin):
             ]
         return options
 
-    def go(self, *args: Any, **kwargs: Any) -> None:
+    def go(self) -> None:
         """ Go through executed tests and report into Polarion """
         super().go()
 

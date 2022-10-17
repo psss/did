@@ -696,7 +696,7 @@ class Common:
     def write(
             self,
             path: str,
-            data: Any,
+            data: str,
             mode: str = 'w',
             level: int = 2) -> None:
         """ Write a file to the workdir """
@@ -986,12 +986,13 @@ def copytree(
         dst: str,
         symlinks: bool = False,
         dirs_exist_ok: bool = False,
-        ) -> Any:
+        ) -> str:
     """ Similar to shutil.copytree but with dirs_exist_ok for Python < 3.8 """
     # No need to reimplement for newer python or if argument is not requested
     if not dirs_exist_ok or sys.version_info >= (3, 8):
-        return shutil.copytree(
-            src=src, dst=dst, symlinks=symlinks, dirs_exist_ok=dirs_exist_ok)
+        return cast(
+            str,
+            shutil.copytree(src=src, dst=dst, symlinks=symlinks, dirs_exist_ok=dirs_exist_ok))
     # Choice was to either copy python implementation and change ONE line
     # or use rsync (or cp with shell)
     # We need to copy CONTENT of src into dst
