@@ -1085,7 +1085,7 @@ class Login(Action):
             usage: Optional[str] = None) -> click.Command:
         """ Create the login command """
         # Avoid circular imports
-        from tmt.base import ResultOutcome
+        from tmt.result import ResultOutcome
 
         @click.command()
         @click.pass_context
@@ -1145,7 +1145,7 @@ class Login(Action):
         assert hasattr(self.parent, 'plan') and self.parent.plan is not None
 
         # Avoid circular imports
-        from tmt.base import ResultOutcome
+        from tmt.result import ResultOutcome
 
         # Verify possible test result condition
         expected_results: Optional[List[ResultOutcome]] = [

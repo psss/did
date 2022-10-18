@@ -71,7 +71,7 @@ class Report(tmt.steps.Step):
 
     def summary(self) -> None:
         """ Give a concise report summary """
-        summary = tmt.base.Result.summary(self.plan.execute.results())
+        summary = tmt.result.Result.summary(self.plan.execute.results())
         self.info('summary', summary, 'green', shift=1)
 
     def go(self) -> None:

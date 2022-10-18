@@ -8,6 +8,7 @@ import click
 import tmt
 import tmt.base
 import tmt.options
+import tmt.result
 import tmt.steps
 import tmt.steps.report
 
@@ -73,13 +74,13 @@ def make_junit_xml(report: "tmt.steps.report.ReportPlugin") -> JunitTestSuite:
             elapsed_sec=duration_to_seconds(result.duration),
             stdout=main_log)
         # Map tmt OUTCOME to JUnit states
-        if result.result == tmt.base.ResultOutcome.ERROR:
+        if result.result == tmt.result.ResultOutcome.ERROR:
             case.add_error_info(result.result.value)
-        elif result.result == tmt.base.ResultOutcome.FAIL:
+        elif result.result == tmt.result.ResultOutcome.FAIL:
             case.add_failure_info(result.result.value)
-        elif result.result == tmt.base.ResultOutcome.INFO:
+        elif result.result == tmt.result.ResultOutcome.INFO:
             case.add_skipped_info(result.result.value)
-        elif result.result == tmt.base.ResultOutcome.WARN:
+        elif result.result == tmt.result.ResultOutcome.WARN:
             case.add_error_info(result.result.value)
         # Passed state is the default
         suite.test_cases.append(case)

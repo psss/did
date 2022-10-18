@@ -12,7 +12,8 @@ import tmt.options
 import tmt.steps
 import tmt.steps.execute
 import tmt.utils
-from tmt.base import Result, ResultOutcome, Test
+from tmt.base import Test
+from tmt.result import Result, ResultOutcome
 from tmt.steps.execute import (SCRIPTS, TEST_OUTPUT_FILENAME,
                                TMT_FILE_SUBMIT_SCRIPT, TMT_REBOOT_SCRIPT)
 from tmt.steps.provision import Guest

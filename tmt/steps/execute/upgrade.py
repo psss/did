@@ -5,6 +5,7 @@ import click
 import fmf.utils
 
 import tmt.base
+import tmt.result
 import tmt.steps
 import tmt.steps.execute
 import tmt.utils
@@ -143,7 +144,7 @@ class ExecuteUpgrade(ExecuteInternal):
 
     def go(self, guest: tmt.steps.provision.Guest) -> None:
         """ Execute available tests """
-        self._results: List[tmt.base.Result] = []
+        self._results: List[tmt.result.Result] = []
         # Inform about the how, skip the actual execution
         ExecutePlugin.go(self, guest)
 

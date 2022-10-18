@@ -11,6 +11,7 @@ import pkg_resources
 
 import tmt
 import tmt.base
+import tmt.result
 import tmt.steps
 from tmt.steps import Action
 from tmt.steps.provision import Guest
@@ -244,9 +245,9 @@ class ExecutePlugin(tmt.steps.Plugin):
     def check_beakerlib(self, test: "tmt.Test") -> List["tmt.Result"]:
         """ Check result of a beakerlib test """
         # Initialize data, prepare log paths
-        data: tmt.base.ResultData = {'result': 'error',
-                                     'log': [],
-                                     'duration': test.real_duration}
+        data: tmt.result.ResultData = {'result': 'error',
+                                       'log': [],
+                                       'duration': test.real_duration}
         for log in [TEST_OUTPUT_FILENAME, 'journal.txt']:
             if os.path.isfile(self.data_path(test, log, full=True)):
                 data['log'].append(self.data_path(test, log))
@@ -460,7 +461,7 @@ class Execute(tmt.steps.Step):
         super().load()
         try:
             results = tmt.utils.yaml_to_dict(self.read('results.yaml'))
-            self._results = [tmt.base.Result.from_serialized(data) for data in results.values()]
+            self._results = [tmt.result.Result.from_serialized(data) for data in results.values()]
         except tmt.utils.FileError:
             self.debug('Test results not found.', level=2)
 
@@ -551,7 +552,7 @@ class Execute(tmt.steps.Step):
             requires.update(plugin.requires())
         return list(requires)
 
-    def results(self) -> List["tmt.base.Result"]:
+    def results(self) -> List["tmt.result.Result"]:
         """
         Results from executed tests
 
