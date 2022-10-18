@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+
+# Run command under pty and in bash. All parameters represent the command to run.
+# Usage: ptty-wrappter COMMAND...
+
+import os
+import pty
+import sys
+
+os.environ["TERM"] = "vt100"
+pty.spawn(("/bin/bash", "-c", " ".join(sys.argv[1:])))

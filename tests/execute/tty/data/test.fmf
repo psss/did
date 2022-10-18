@@ -1,0 +1,5 @@
+/shell:
+  test: ./shell.sh
+
+/python:
+  test: ./python.py

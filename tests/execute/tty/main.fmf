@@ -1,0 +1,8 @@
+summary: Verify TTY handling in test environment
+
+environment:
+    METHODS: local container
+adjust:
+  - when: how == full
+    environment:
+        METHODS: local container virtual
