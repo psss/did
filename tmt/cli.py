@@ -402,6 +402,8 @@ if run_callback is None:
 
 
 # TODO: commands is unknown, needs revisit
+# ignore[misc]: untyped decorator. This might be a click issue, but it's
+# probably caused by how we initialize clean_callback.
 @run_callback()  # type: ignore[misc]
 @click.pass_context
 def finito(
@@ -1139,6 +1141,11 @@ def stories_export(
                             unimplemented, unverified, undocumented, uncovered):
             continue
 
+        # ignore[call-overload]: overladed superclass methods allow only
+        # literal types, and format_ is not a literal. Even when it's a
+        # member of ExportFormat enum, it's still a variable.
+        # Unfortunately, there's no way to amend this and different
+        # return value types depending on input parameter type.
         echo(story.export(format_=tmt.base.ExportFormat(format_)))  # type: ignore[call-overload]
 
 
@@ -1340,7 +1347,8 @@ if clean_callback is None:
     clean_callback = clean.resultcallback
 
 
-# TODO: commands is unknown, needs revisit
+# ignore[misc]: untyped decorator. This might be a click issue, but it's
+# probably caused by how we initialize clean_callback.
 @clean_callback()  # type: ignore[misc]
 @click.pass_context
 def perform_clean(

@@ -115,6 +115,8 @@ class StepData(
     order: int = tmt.utils.DEFAULT_PLUGIN_ORDER
     summary: Optional[str] = None
 
+    # ignore[override]: expected, we do want to return more specific
+    # type than the one declared in superclass.
     def to_spec(self) -> _RawStepData:  # type: ignore[override]
         """ Convert to a form suitable for saving in a specification file """
 
@@ -134,6 +136,8 @@ class StepData(
 
         pass
 
+    # ignore[override]: expected, we do want to accept more specific
+    # type than the one declared in superclass.
     @classmethod
     def from_spec(  # type: ignore[override]
             cls: Type[T],

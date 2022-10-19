@@ -105,7 +105,8 @@ class TestDescription(
 
         return normalize_require(value)
 
-    # Our own implementation, parent uses `name` and `how`, and tests don't have any `how`.
+    # ignore[override]: expected, we do want to accept more specific
+    # type than the one declared in superclass.
     @classmethod
     def from_spec(  # type: ignore[override]
             cls: Type[T],

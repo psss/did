@@ -107,6 +107,7 @@ class ExecuteUpgrade(ExecuteInternal):
             filter: "tag:fedora"
     """
 
+    # FIXME: ignore[assignment]: https://github.com/teemtee/tmt/issues/1540
     _data_class = ExecuteUpgradeData  # type: ignore[assignment]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -265,6 +266,8 @@ class ExecuteUpgrade(ExecuteInternal):
                 data = self._prepare_remote_discover_data(plan)
                 # Unset `url` because we don't want discover step to perform clone.
                 # Instead, we want it to re-use existing, already cloned path.
+                # ignore[typeddict-item]: data is _RwStepData, we do not have more detailed type
+                # for raw step data of internal/upgrade plugins, it would be pretty verbose.
                 data['url'] = None  # type: ignore[typeddict-item]
                 data['path'] = self._discover_upgrade.testdir  # type: ignore[typeddict-item]
                 # FIXME: cast() - https://github.com/teemtee/tmt/issues/1599

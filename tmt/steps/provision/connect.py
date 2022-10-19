@@ -77,6 +77,7 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
                 help='Password for login into the guest system.'),
             ] + super().options(how)
 
+    # FIXME: ignore - https://github.com/teemtee/tmt/issues/1437
     def wake(self, data: Optional[GuestSshData] = None) -> None:  # type: ignore[override]
         """ Wake up the plugin, process data, apply options """
         super().wake(data=data)

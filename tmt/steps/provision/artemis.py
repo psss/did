@@ -349,9 +349,7 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
                 ),
             ] + super().options(how)
 
-    # More specific type is a violation of Liskov substitution principle, and mypy
-    # complains about it - rightfully so. Ignoring the issue which should be resolved
-    # with https://github.com/teemtee/tmt/pull/1439.
+    # FIXME: ignore - https://github.com/teemtee/tmt/issues/1437
     def wake(self, data: Optional[ArtemisGuestData] = None) -> None:  # type: ignore[override]
         """ Wake up the plugin, process data, apply options """
 
@@ -414,8 +412,7 @@ class GuestArtemis(tmt.GuestSsh):
     The following keys are expected in the 'data' dictionary:
     """
 
-    # TODO: Revisit this `type: ignore` once `Guest` becomes a generic type
-    _data_class = ArtemisGuestData  # type: ignore[assignment]
+    _data_class = ArtemisGuestData
 
     # API
     api_url: str

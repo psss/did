@@ -77,7 +77,8 @@ def import_nitrate() -> Nitrate:
     except ImportError:
         raise ConvertError(
             "Install tmt-test-convert to export tests to nitrate.")
-    except nitrate.NitrateError as error:  # type: ignore[union-attr]  # nitrate is no longer None
+    # FIXME: ignore[union-attr]: https://github.com/teemtee/tmt/issues/1616
+    except nitrate.NitrateError as error:  # type: ignore[union-attr]
         raise ConvertError(error)
 
 

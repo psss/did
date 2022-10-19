@@ -263,7 +263,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 help="What architecture to virtualize, host arch by default."),
             ] + super().options(how)
 
-    # TODO: Revisit this `type: ignore` once `Guest` becomes a generic type
+    # FIXME: ignore - https://github.com/teemtee/tmt/issues/1437
     def wake(self, data: Optional[TestcloudGuestData] = None) -> None:  # type: ignore[override]
         """ Wake up the plugin, process data, apply options """
         super().wake(data=data)
@@ -355,8 +355,7 @@ class GuestTestcloud(tmt.GuestSsh):
         arch ....... architecture for the VM, host arch is the default
     """
 
-    # TODO: Revisit this `type: ignore` once `Guest` becomes a generic type
-    _data_class = TestcloudGuestData  # type: ignore[assignment]
+    _data_class = TestcloudGuestData
 
     image: str
     image_url: Optional[str]
@@ -368,6 +367,7 @@ class GuestTestcloud(tmt.GuestSsh):
 
     # Not to be saved, recreated from image_url/instance_name/... every
     # time guest is instantiated.
+    # FIXME: ignore[name-defined]: https://github.com/teemtee/tmt/issues/1616
     _image: Optional['testcloud.image.Image'] = None  # type: ignore[name-defined]
     _instance: Optional['testcloud.instance.Instance'] = None  # type: ignore[name-defined]
 

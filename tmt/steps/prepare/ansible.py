@@ -25,9 +25,10 @@ class PrepareAnsibleData(tmt.steps.prepare.PrepareStepData):
     playbook: List[str] = dataclasses.field(default_factory=list)
     extra_args: Optional[str] = None
 
-    # The method violates a liskov substitution principle, but it's fine
-    # Thanks to how tmt initializes module, we can assume PrepareAnsibleData.pre_normalization()
-    # would be called with source data matching _RawAnsibleStepData
+    # ignore[override]: method violates a liskov substitution principle,
+    # but only apparently.  Thanks to how tmt initializes module, we can
+    # safely assume PrepareAnsibleData.pre_normalization() would be
+    # called with source data matching _RawAnsibleStepData.
     @classmethod
     def pre_normalization(  # type: ignore[override]
             cls,

@@ -31,8 +31,10 @@ class FinishAnsible(tmt.steps.finish.FinishPlugin, PrepareAnsible):
 
     # We are re-using "prepare" step for "finish",
     # and they both have different expectations
+    # FIXME: ignore[assignment]: https://github.com/teemtee/tmt/issues/1540
     _data_class = tmt.steps.prepare.ansible.PrepareAnsibleData  # type: ignore[assignment]
 
-    # Assigning class methods seems to cause trouble to mypy
-    # See also: https://github.com/python/mypy/issues/6700
+    # FIXME: ignore[assignment]: https://github.com/teemtee/tmt/issues/1540
+    # Also, assigning class methods seems to cause trouble to mypy
+    # See https://github.com/python/mypy/issues/6700
     base_command = tmt.steps.finish.FinishPlugin.base_command  # type: ignore[assignment]

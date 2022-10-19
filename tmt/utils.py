@@ -1308,6 +1308,10 @@ def dict_to_yaml(
         # Sort the data https://stackoverflow.com/a/40227545
         sorted_data = CommentedMap()
         for key in sorted(data):
+            # ignore[literal-required]: `data` may be either a generic
+            # dictionary, or _RawFmfId which allows only a limited set
+            # of keys. That spooks mypy, but we do not add any keys,
+            # therefore we will not escape TypedDict constraints.
             sorted_data[key] = data[key]  # type: ignore[literal-required]
         data = sorted_data
     yaml.dump(data, output)
@@ -1570,6 +1574,13 @@ class SerializableContainer(DataContainer):
 
         return cls(**serialized)
 
+    # ignore[misc,type-var]: mypy is correct here, method does return a
+    # TypeVar, but there is no way to deduce the actual type, because
+    # the method is static. That's on purpose, method tries to find the
+    # class to unserialize, therefore it's simply unknown. Returning Any
+    # would make mypy happy, but we do know the return value will be
+    # derived from SerializableContainer. We can mention that, and
+    # silence mypy about the missing actual type.
     @staticmethod
     def unserialize(
             serialized: Dict[str, Any]
@@ -1955,7 +1966,9 @@ class TimeoutHTTPAdapter(requests.adapters.HTTPAdapter):
 
         super().__init__(*args, **kwargs)
 
-    def send(  # type: ignore[override] # does not match superclass type on purpose
+    # ignore[override]: signature does not match superclass on purpose.
+    # send() does declare plenty of parameters we do not care about.
+    def send(  # type: ignore[override]
             self,
             request: requests.PreparedRequest,
             **kwargs: Any) -> requests.Response:
@@ -1964,6 +1977,8 @@ class TimeoutHTTPAdapter(requests.adapters.HTTPAdapter):
         return super().send(request, **kwargs)
 
 
+# ignore[misc]: the package *does* exist, and Retry class as well, it's
+# somehow opaque to mypy.
 class RetryStrategy(requests.packages.urllib3.util.retry.Retry):  # type: ignore[misc]
     def increment(
             self,
@@ -1996,6 +2011,8 @@ class RetryStrategy(requests.packages.urllib3.util.retry.Retry):  # type: ignore
         return super().increment(*args, **kwargs)
 
 
+# ignore[type-arg]: base class is a generic class, but we cannot list
+# its parameter type, because in Python 3.6 the class "is not subscriptable".
 class retry_session(contextlib.AbstractContextManager):  # type: ignore[type-arg]
     """
     Context manager for requests.Session() with retries and timeout
@@ -2782,6 +2799,8 @@ def git_clone(
         return git_clone(url, destination, common, env, shallow=False)
 
 
+# ignore[type-arg]: base class is a generic class, but we cannot list its parameter type, because
+# in Python 3.6 the class "is not subscriptable".
 class updatable_message(contextlib.AbstractContextManager):  # type: ignore[type-arg]
     """ Updatable message suitable for progress-bar-like reporting """
 
@@ -3275,6 +3294,11 @@ class ValidateFmfMixin:
             self._validate_fmf_node(node, logger, raise_on_validation_error)
 
         kwargs.setdefault('logger', self)
+
+        # ignore[call-arg]: pypy is not aware of this class being a
+        # mixin, therefore it cannot allow keyword arguments, because
+        # object.__init__() allows none. But it's fine, as we will never
+        # instantiate this class itself.
         super().__init__(node=node, **kwargs)  # type: ignore[call-arg]
 
 

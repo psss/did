@@ -295,7 +295,7 @@ class Guest(tmt.utils.Common):
     """
 
     # Used by save() to construct the correct container for keys.
-    _data_class = GuestData
+    _data_class: Type[GuestData] = GuestData
 
     role: Optional[str]
     guest: Optional[str]
@@ -711,7 +711,7 @@ class GuestSsh(Guest):
     These are by default imported into instance attributes.
     """
 
-    _data_class = GuestSshData
+    _data_class: Type[GuestData] = GuestSshData
 
     port: Optional[int]
     user: Optional[str]

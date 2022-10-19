@@ -97,7 +97,10 @@ class Result(tmt.utils.SerializableContainer):
             raise tmt.utils.SpecificationError(f"Invalid test '{test}'.")
         if name and not isinstance(name, str):
             raise tmt.utils.SpecificationError(f"Invalid test name '{name}'.")
-        self.name = name or test.name  # type: ignore[union-attr]  # either `name` or `test` is set
+
+        # ignore[union-attr]: either `name` or `test` is set, we just
+        # made sure of it above, but mypy won't realize that.
+        self.name = name or test.name  # type: ignore[union-attr]
         self.note = data.get('note')
         self.duration = data.get('duration')
         if test:

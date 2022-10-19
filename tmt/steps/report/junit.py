@@ -124,9 +124,11 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
         try:
             with open(f_path, 'w') as fw:
                 if hasattr(junit_xml, 'to_xml_report_file'):
+                    # FIXME: ignore[union-attr]: https://github.com/teemtee/tmt/issues/1616
                     junit_xml.to_xml_report_file(fw, [suite])  # type: ignore[union-attr]
                 else:
                     # For older junit-xml
+                    # FIXME: ignore[union-attr]: https://github.com/teemtee/tmt/issues/1616
                     junit_xml.TestSuite.to_file(fw, [suite])  # type: ignore[union-attr]
             self.info("output", f_path, 'yellow')
         except Exception as error:

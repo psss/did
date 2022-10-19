@@ -116,16 +116,22 @@ class FmfId(tmt.utils.SpecBasedContainer, tmt.utils.SerializableContainer):
     path: Optional[str] = None
     name: Optional[str] = None
 
+    # ignore[override]: expected, we do want to return more specific
+    # type than the one declared in superclass.
     def to_dict(self) -> _RawFmfId:  # type: ignore[override]
         """ Return keys and values in the form of a dictionary """
 
         return cast(_RawFmfId, super().to_dict())
 
+    # ignore[override]: expected, we do want to return more specific
+    # type than the one declared in superclass.
     def to_minimal_dict(self) -> _RawFmfId:  # type: ignore[override]
         """ Convert to a mapping with unset keys omitted """
 
         return cast(_RawFmfId, super().to_minimal_dict())
 
+    # ignore[override]: expected, we do want to return more specific
+    # type than the one declared in superclass.
     def to_spec(self) -> _RawFmfId:  # type: ignore[override]
         """ Convert to a form suitable for saving in a specification file """
 
@@ -255,6 +261,8 @@ class RequireFmfId(FmfId):
     destination: Optional[str] = None
     nick: Optional[str] = None
 
+    # ignore[override]: expected, we do want to accept and return more
+    # specific types than those declared in superclass.
     @classmethod
     def from_spec(cls, raw: _RawRequireFmfId) -> 'RequireFmfId':  # type: ignore[override]
         """ Convert from a specification file or from a CLI option """
@@ -890,6 +898,11 @@ class Test(Core):
             raise tmt.utils.GeneralError(f"Invalid test export format '{format_}'.")
 
         # Common node export otherwise
+        # ignore[call-overload]: overloaded superclass methods allow only
+        # literal types, and format_ is not a literal. Even when it's a
+        # member of ExportFormat enum, it's still a variable.
+        # Unfortunately, there's no way to amend this and different
+        # return value types depending on input parameter type.
         return super().export(format_=format_, keys=keys)  # type: ignore[call-overload]
 
 
@@ -1706,6 +1719,9 @@ class Story(Core):
         echo(self)
         return (code, test, docs)
 
+    # ignore[override]: mypy is correct here, subclass signature is
+    # different, there's an extra parameter include_title. It is
+    # expected and acceptable, for now.
     @overload  # type: ignore[override]
     def export(self, *, format_: Literal[ExportFormat.RST,
                ExportFormat.YAML], include_title: bool = True) -> str:
@@ -1732,6 +1748,12 @@ class Story(Core):
 
         # Use common Core export unless 'rst' requested
         if format_ != ExportFormat.RST:
+            # ignore[call-overload]: overladed superclass methods allow
+            # only literal types, and format_ is not a literal. Even
+            # when it's a member of ExportFormat enum, it's still a
+            # variable. Unfortunately, there's no way to amend this and
+            # different return value types depending on input parameter
+            # type.
             return super().export(format_=format_)  # type: ignore[call-overload]
 
         output = ''
@@ -2625,8 +2647,7 @@ class Clean(tmt.utils.Common):
         self.info('images', color='blue')
         successful = True
         for method in tmt.steps.provision.ProvisionPlugin.methods():
-            # TODO: when generic, there would be no doubt about whether `clean_images`
-            # is allowed or not.
+            # FIXME: ignore[union-attr]: https://github.com/teemtee/tmt/issues/1599
             if not method.class_.clean_images(self, self.opt('dry')):  # type: ignore[union-attr]
                 successful = False
         return successful
@@ -2852,8 +2873,8 @@ class Link(tmt.utils.SpecBasedContainer):
         # At this point, we know there's just a single relation, its value is the target,
         # and note we already put aside.
         #
-        # NOTE: as far as mypy knows, we did not narrow the type of `spec`, _RawFmfId
-        # is still in play - but we do know it's no longer possible because such a
+        # ignore[typeddict-item]: as far as mypy knows, we did not narrow the type of `spec`,
+        # _RawFmfId is still in play - but we do know it's no longer possible because such a
         # value we ruled out thanks to `"no relations" check above. At this point,
         # the right side of relation must be _RawLinkTarget and nothing else. Helping
         # mypy to realize that.
@@ -2871,6 +2892,8 @@ class Link(tmt.utils.SpecBasedContainer):
 
         return Link(relation=relation, target=FmfId.from_spec(raw_target), note=note)
 
+    # ignore[override]: expected, we do want to return more specific
+    # type than the one declared in superclass.
     def to_spec(self) -> _RawLinkRelation:  # type: ignore[override]
         """
         Convert to a form suitable for saving in a specification file
@@ -2940,6 +2963,8 @@ class Links(tmt.utils.SpecBasedContainer):
         # Ensure that each link is in the canonical form
         self._links = [Link.from_spec(spec) for spec in specs]
 
+    # ignore[override]: expected, we do want to return more specific
+    # type than the one declared in superclass.
     def to_spec(self) -> List[_RawLinkRelation]:  # type: ignore[override]
         """
         Convert to a form suitable for saving in a specification file
