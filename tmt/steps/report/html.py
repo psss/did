@@ -68,9 +68,13 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
         import_jinja2()
         assert jinja2
 
+        # Links used in html should be relative to this path
+        report_dir = self.workdir
+
         # Prepare the template
         environment = jinja2.Environment()
         environment.filters["basename"] = lambda x: os.path.basename(x)
+        environment.filters["relpath"] = lambda x: os.path.relpath(x, report_dir)
         environment.trim_blocks = True
         environment.lstrip_blocks = True
         with open(HTML_TEMPLATE_PATH) as file:

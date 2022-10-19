@@ -107,7 +107,7 @@
         <td class="name">{{ result.name|e }}</td>
         <td class="log">
         {% for log in result.log %}
-            <a href="{{ base_dir | urlencode }}/{{ log | urlencode }}">{{ log | basename }}</a>
+            <a href="{{ base_dir | relpath | urlencode }}/{{ log | urlencode }}">{{ log | basename }}</a>
         {% endfor %}
         </td>
         {% if result.note %}
@@ -120,7 +120,7 @@
 <b>No test results found.</b>
 {% endif %}
 <p class="footer">
-    Links: <a href="{{ plan.my_run.workdir | urlencode }}/log.txt">full debug log</a>
+    Links: <a href="{{ plan.my_run.workdir | relpath | urlencode }}/log.txt">full debug log</a>
 </p>
 </div>
 </body>

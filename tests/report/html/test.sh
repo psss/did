@@ -1,6 +1,8 @@
 #!/bin/bash
 . /usr/share/beakerlib/beakerlib.sh || exit 1
 
+PATH_INDEX="/plan/report/default-0/index.html"
+
 rlJournalStart
     rlPhaseStartSetup
         rlRun "pushd data"
@@ -17,7 +19,7 @@ rlJournalStart
             rlRun "tmt run -av --scratch --id $run_dir execute -h $method report -h html | tee output" 2
             rlAssertGrep "summary: 2 tests passed, 1 test failed and 2 errors" output -F
 
-            HTML="$run_dir/plan/report/default-0/index.html"
+            HTML="${run_dir}${PATH_INDEX}"
 
             test_name_suffix=error
             grep -B 1 "/test/$test_name_suffix</td>" $HTML | tee $tmp/$test_name_suffix
@@ -42,7 +44,16 @@ rlJournalStart
             rlAssertGrep 'class="result pass">pass</td>' $tmp/$test_name_suffix -F
             sed -e "/name\">\/test\/$test_name_suffix/,/\/tr/!d" $HTML | tee $tmp/$test_name_suffix-note
             rlAssertGrep '<td class="note">original result: fail</td>' $tmp/$test_name_suffix-note -F
+        rlPhaseEnd
 
+        rlPhaseStartTest "$method - valid links"
+            moved_dir="$tmp/moved"
+            rlRun "mv $run_dir $moved_dir"
+            rlRun "pushd $(dirname ${moved_dir}${PATH_INDEX})"
+            grep -Po '(?<=href=")[^"]+' "index.html" | while read f_path; do
+                rlAssertExists $f_path
+            done
+            rlRun "popd"
         rlPhaseEnd
     done
 
