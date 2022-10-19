@@ -17,6 +17,7 @@
 /override:
     summary: Override the filter in remote upgrade path
     test: ./override.sh
+    duration: 10m
 
 /ignore_test:
     summary: Ignore test -n run subcommand in remote repo
