@@ -70,12 +70,6 @@ execute:
             modified-only: true
             modified-ref: 8329db0^
 
-    /integer:
-        summary: Integer reference
-        discover:
-            how: fmf
-            ref: 21962777
-
     /distgit:
         summary: Extract distgit sources
         discover:

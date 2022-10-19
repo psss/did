@@ -141,6 +141,12 @@ class FmfId(tmt.utils.SpecBasedContainer, tmt.utils.SerializableContainer):
     def from_spec(cls, raw: _RawFmfId) -> 'FmfId':
         """ Convert from a specification file or from a CLI option """
 
+        # TODO: with mandatory validation, this can go away.
+        ref = raw.get('ref', None)
+        if not isinstance(ref, (type(None), str)):
+            raise tmt.utils.SpecificationError(
+                f"The 'ref' field must be a string, got '{type(ref).__name__}'.")
+
         return FmfId(**{key: cast(Optional[str], raw.get(key, None)) for key in cls.VALID_KEYS})
 
     def validate(self) -> Tuple[bool, str]:
@@ -266,6 +272,12 @@ class RequireFmfId(FmfId):
     @classmethod
     def from_spec(cls, raw: _RawRequireFmfId) -> 'RequireFmfId':  # type: ignore[override]
         """ Convert from a specification file or from a CLI option """
+
+        # TODO: with mandatory validation, this can go away.
+        ref = raw.get('ref', None)
+        if not isinstance(ref, (type(None), str)):
+            raise tmt.utils.SpecificationError(
+                f"The 'ref' field must be a string, got '{type(ref).__name__}'.")
 
         return RequireFmfId(
             **{key: cast(Optional[str], raw.get(key, None)) for key in cls.VALID_KEYS})
@@ -753,6 +765,11 @@ class Test(Core):
             # No need to show the default order
             if key == 'order' and value == DEFAULT_ORDER:
                 continue
+            if key == 'require':
+                value = [
+                    require if isinstance(require, str) else require.to_minimal_dict()
+                    for require in self.require
+                    ]
             if value not in [None, list(), dict()]:
                 echo(tmt.utils.format(key, value))
         if self.opt('verbose'):
@@ -963,7 +980,7 @@ class Plan(Core):
         # Check for possible remote plan reference first
         reference = self.node.get(['plan', 'import'])
         if reference is not None:
-            self._remote_plan_fmf_id = FmfId(**reference)
+            self._remote_plan_fmf_id = FmfId.from_spec(reference)
 
         # Save the run, prepare worktree and plan data directory
         self.my_run = run

@@ -1,0 +1,3 @@
+plan:
+    import:
+        ref: branch-or-tag-ref

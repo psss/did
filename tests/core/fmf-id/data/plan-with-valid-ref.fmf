@@ -1,0 +1,10 @@
+execute:
+  how: tmt
+
+discover:
+  - how: fmf
+    ref: branch-or-tag-ref
+
+  - how: fmf
+    # commit, an obviously hexadecimal one
+    ref: 8deadbeaf8

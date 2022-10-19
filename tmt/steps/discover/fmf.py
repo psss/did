@@ -4,7 +4,7 @@ import os
 import re
 import shutil
 import subprocess
-from typing import List, Optional, cast
+from typing import Any, List, Optional, cast
 
 import click
 import fmf
@@ -44,6 +44,17 @@ class DiscoverFmfStepData(tmt.steps.discover.DiscoverStepData):
     _normalize_link = tmt.utils.NormalizeKeysMixin._normalize_string_list
     _normalize_filter = tmt.utils.NormalizeKeysMixin._normalize_string_list
     _normalize_exclude = tmt.utils.NormalizeKeysMixin._normalize_string_list
+
+    # TODO: with mandatory validation, this can go away.
+    def _normalize_ref(self, value: Optional[Any]) -> Optional[str]:
+        if value is None:
+            return None
+
+        if not isinstance(value, str):
+            raise tmt.utils.SpecificationError(
+                f"The 'ref' field must be a string, got '{type(value).__name__}'.")
+
+        return value
 
     def post_normalization(self, raw_data: tmt.steps._RawStepData,
                            logger: tmt.utils.Common) -> None:

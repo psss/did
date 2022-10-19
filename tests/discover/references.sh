@@ -103,10 +103,6 @@ rlJournalStart
         rlAssertGrep 'Metadata tree path .* not found.' output
     rlPhaseEnd
 
-    rlPhaseStartTest "Integer reference"
-        rlRun "tmt run -r discover plan --name integer finish"
-    rlPhaseEnd
-
     rlPhaseStartCleanup
         rlRun "rm -r $tmp" 0 "Removing tmp directory"
         rlRun 'rm -f output' 0 'Removing tmp file'
