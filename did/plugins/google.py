@@ -132,7 +132,7 @@ class GoogleCalendar(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Event(object):
-    """ Googe Calendar Event """
+    """ Google Calendar Event """
 
     def __init__(self, dict):
         """ Create Event object from dictionary returned by Google API """
