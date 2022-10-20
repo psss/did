@@ -15,3 +15,6 @@ result: custom
 /invalid-yaml-results-file:
     summary: results.yaml is invalid YAML
     test: echo ":" > ${TMT_TEST_DATA}/results.yaml
+/wrong-yaml-content:
+    summary: results.yaml with wrong key in results YAML
+    test: cp wrong_results.yaml ${TMT_TEST_DATA}/results.yaml

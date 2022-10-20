@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, PropertyMock
 
 import pytest
 
-from tmt import Result
+from tmt.result import Result, ResultData, ResultOutcome
 from tmt.steps.report.junit import ReportJUnit, ReportJUnitData
 
 
@@ -128,9 +128,9 @@ class TestStateMapping:
         report, results, out_file_path = report_fix
         results.extend(
             [
-                Result({
-                    'result': 'pass',
-                    }, "/pass")
+                Result(
+                    ResultData(result=ResultOutcome.PASS),
+                    "/pass")
                 ]
             )
 
@@ -148,9 +148,9 @@ class TestStateMapping:
         report, results, out_file_path = report_fix
         results.extend(
             [
-                Result({
-                    'result': 'info',
-                    }, "/info")
+                Result(
+                    ResultData(result=ResultOutcome.INFO),
+                    "/info")
                 ]
             )
         report.go()
@@ -169,9 +169,9 @@ class TestStateMapping:
         report, results, out_file_path = report_fix
         results.extend(
             [
-                Result({
-                    'result': 'warn',
-                    }, "/warn")
+                Result(
+                    ResultData(result=ResultOutcome.WARN),
+                    "/warn")
                 ]
             )
         report.go()
@@ -190,9 +190,9 @@ class TestStateMapping:
         report, results, out_file_path = report_fix
         results.extend(
             [
-                Result({
-                    'result': 'error',
-                    }, "/error")
+                Result(
+                    ResultData(result=ResultOutcome.ERROR),
+                    "/error")
                 ]
             )
         report.go()
@@ -211,9 +211,9 @@ class TestStateMapping:
         report, results, out_file_path = report_fix
         results.extend(
             [
-                Result({
-                    'result': 'fail',
-                    }, "/fail")
+                Result(
+                    ResultData(result=ResultOutcome.FAIL),
+                    "/fail")
                 ]
             )
         report.go()

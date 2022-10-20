@@ -44,6 +44,12 @@ rlJournalStart
         rlAssertGrep "Invalid yaml syntax:" $rlRun_LOG
     rlPhaseEnd
 
+    testName="/test/wrong-yaml-content"
+    rlPhaseStartTest "${testName}"
+        rlRun -s "${tmt_command} ${testName}" 2 "Test provides partial result with wrong value"
+        rlAssertGrep "Invalid partial custom result 'errrrrr'." $rlRun_LOG
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun "rm -r ${run}" 0 "Remove run directory"
         rlRun "popd"

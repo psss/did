@@ -25,6 +25,13 @@ class ResultOutcome(enum.Enum):
     WARN = 'warn'
     ERROR = 'error'
 
+    @classmethod
+    def from_spec(cls, spec: str) -> 'ResultOutcome':
+        try:
+            return ResultOutcome(spec)
+        except ValueError:
+            raise tmt.utils.SpecificationError(f"Invalid partial custom result '{spec}'.")
+
 
 # Cannot subclass enums :/
 # https://docs.python.org/3/library/enum.html#restricted-enum-subclassing
@@ -55,7 +62,16 @@ RESULT_OUTCOME_COLORS: Dict[ResultOutcome, str] = {
     }
 
 
-ResultData = Dict[str, Any]
+@dataclasses.dataclass
+class ResultData:
+    """
+    Formal data class containing information about result of the test
+    """
+    result: ResultOutcome
+    log: List[str] = dataclasses.field(default_factory=list)
+    note: Optional[str] = None
+    duration: Optional[str] = None
+    ids: Dict[str, Optional[str]] = dataclasses.field(default_factory=dict)
 
 
 @dataclasses.dataclass(init=False)
@@ -63,13 +79,7 @@ class Result(tmt.utils.SerializableContainer):
     """
     Test result
 
-    The following keys are expected in the 'data' dictionary::
-
-        result ........... test execution result
-        log .............. one or more log files
-        note ............. additional result details
-        duration ......... test execution time (hh:mm:ss)
-
+    Required parameter 'data' needs to be type of ResultData.
     Required parameter 'test' or 'name' should contain a test reference.
     """
 
@@ -79,6 +89,10 @@ class Result(tmt.utils.SerializableContainer):
     duration: Optional[str] = None
     ids: Dict[str, Optional[str]] = dataclasses.field(default_factory=dict)
     log: Union[List[Any], Dict[Any, Any]] = dataclasses.field(default_factory=list)
+    # TODO: Check why log can be also a Dictionary.
+    # Check if we can safely get rid of Union.
+    # Should be the same type as in ResultData class.
+    # Check why there is a List[Any] and not a List[str]
 
     def __init__(
             self,
@@ -102,8 +116,8 @@ class Result(tmt.utils.SerializableContainer):
         # ignore[union-attr]: either `name` or `test` is set, we just
         # made sure of it above, but mypy won't realize that.
         self.name = name or test.name  # type: ignore[union-attr]
-        self.note = data.get('note')
-        self.duration = data.get('duration')
+        self.note = data.note
+        self.duration = data.duration
         if test:
             # Saving identifiable information for each test case so we can match them
             # to Polarion/Nitrate/other cases and report run results there
@@ -113,26 +127,11 @@ class Result(tmt.utils.SerializableContainer):
                 self.ids[key] = test.node.get(key)
             interpret = ResultInterpret(test.result) if test.result else ResultInterpret.RESPECT
         else:
-            try:
-                self.ids = data['ids']
-            except KeyError:
-                self.ids = {}
+            self.ids = data.ids
             interpret = ResultInterpret.RESPECT
 
-        # Check for valid results
-        try:
-            self.result = ResultOutcome(data['result'])
-        except KeyError:
-            raise tmt.utils.SpecificationError("Missing test result.")
-        except ValueError:
-            raise tmt.utils.SpecificationError(
-                f"Invalid result '{data['result']}'.")
-
-        # Convert log into list if necessary
-        try:
-            self.log = tmt.utils.listify(data['log'])
-        except KeyError:
-            self.log = []
+        self.result = data.result
+        self.log = data.log
 
         # Handle alternative result interpretation
         if interpret not in (ResultInterpret.RESPECT, ResultInterpret.CUSTOM):
@@ -204,7 +203,19 @@ class Result(tmt.utils.SerializableContainer):
 
     @classmethod
     def from_serialized(cls, serialized: Dict[str, Any]) -> 'Result':
-        return cls(serialized, name=serialized.pop('name'))
+        # TODO: from_serialized() should trust the input. We should add its
+        # clone to read serialized-but-from-possibly-untrustworthy-source data -
+        # that's the place where the schema validation would happen in the
+        # future.
+
+        # Our special key may or may not be present, depending on who
+        # calls this method.  In any case, it is not needed, because we
+        # already know what class to restore: this one.
+        serialized.pop('__class__', None)
+
+        name = serialized.pop('name')
+        serialized['result'] = ResultOutcome.from_spec(serialized['result'])
+        return cls(ResultData(**serialized), name=name)
 
     @staticmethod
     def failures(log: Optional[str], msg_type: str = 'FAIL') -> str:

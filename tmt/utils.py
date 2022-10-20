@@ -1372,7 +1372,7 @@ def yaml_to_list(data: Any,
         raise GeneralError(
             f"Expected list in yaml data, "
             f"got '{type(loaded_data).__name__}'.")
-    return list(loaded_data)
+    return loaded_data
 
 
 def key_to_option(key: str) -> str:

@@ -1135,8 +1135,8 @@ class Login(Action):
         """ Verify possible test result condition """
         # Avoid circular imports
         from tmt.result import ResultOutcome
-        expected_results: Optional[List[ResultOutcome]] = [
-            ResultOutcome(raw_expected_result) for raw_expected_result in self.opt('when', [])]
+        expected_results: Optional[List[ResultOutcome]] = [ResultOutcome.from_spec(
+            raw_expected_result) for raw_expected_result in self.opt('when', [])]
 
         # Return True by default -> no expected results
         if not expected_results:
