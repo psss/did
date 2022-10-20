@@ -170,7 +170,6 @@ class Discover(tmt.steps.Step):
             scripts = [scripts]
 
         # Avoid circular imports
-        import tmt.base
         from tmt.steps.discover.shell import DiscoverShellData, TestDescription
 
         # Give a warning when discover step defined as well

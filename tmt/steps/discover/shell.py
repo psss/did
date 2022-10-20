@@ -1,8 +1,7 @@
 import copy
 import dataclasses
 import os
-from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Type, TypeVar,
-                    Union, cast)
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import click
 import fmf
@@ -12,10 +11,6 @@ import tmt.base
 import tmt.steps
 import tmt.steps.discover
 import tmt.utils
-
-if TYPE_CHECKING:
-    import tmt.base
-
 
 T = TypeVar('T', bound='TestDescription')
 
@@ -48,11 +43,11 @@ class TestDescription(
     enabled: bool = True
     # TODO: ugly circular dependency (see tmt.base.DEFAULT_ORDER)
     order: int = 50
-    link: Optional['tmt.base.Links'] = None
+    link: Optional[tmt.base.Links] = None
     id: Optional[str] = None
     tag: List[str] = dataclasses.field(default_factory=list)
     tier: Optional[str] = None
-    adjust: Optional[List['tmt.base._RawAdjustRule']] = None
+    adjust: Optional[List[tmt.base._RawAdjustRule]] = None
 
     # Basic test information
     contact: List[str] = dataclasses.field(default_factory=list)
@@ -62,13 +57,12 @@ class TestDescription(
     path: Optional[str] = None
     framework: Optional[str] = None
     manual: bool = False
-    require: List['tmt.base.Require'] = dataclasses.field(default_factory=list)
+    require: List[tmt.base.Require] = dataclasses.field(default_factory=list)
     recommend: List[str] = dataclasses.field(default_factory=list)
     environment: tmt.utils.EnvironmentType = dataclasses.field(default_factory=dict)
     duration: str = '1h'
     result: str = 'respect'
 
-    # We can't even re-use normalization callbacks from tmt.base because of the cyclic import :/
     _normalize_tag = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_contact = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_component = tmt.utils.LoadFmfKeysMixin._normalize_string_list
@@ -80,16 +74,14 @@ class TestDescription(
             return 50
         return int(value)
 
-    def _normalize_link(self, value: 'tmt.base._RawLinks') -> 'tmt.base.Links':
-        import tmt.base
-
+    def _normalize_link(self, value: tmt.base._RawLinks) -> tmt.base.Links:
         return tmt.base.Links(data=value)
 
     def _normalize_adjust(self,
                           value: Optional[Union[
-                              'tmt.base._RawAdjustRule',
-                              List['tmt.base._RawAdjustRule']]]
-                          ) -> List['tmt.base._RawAdjustRule']:
+                              tmt.base._RawAdjustRule,
+                              List[tmt.base._RawAdjustRule]]]
+                          ) -> List[tmt.base._RawAdjustRule]:
         if value is None:
             return []
         return [value] if not isinstance(value, list) else value
@@ -99,11 +91,8 @@ class TestDescription(
             return None
         return str(value)
 
-    def _normalize_require(
-            self, value: Optional['tmt.base._RawRequire']) -> List['tmt.base.Require']:
-        from tmt.base import normalize_require
-
-        return normalize_require(value)
+    def _normalize_require(self, value: Optional[tmt.base._RawRequire]) -> List[tmt.base.Require]:
+        return tmt.base.normalize_require(value)
 
     # ignore[override]: expected, we do want to accept more specific
     # type than the one declared in superclass.
