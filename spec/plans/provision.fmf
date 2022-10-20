@@ -167,7 +167,7 @@ example: |
         # Processor-related stuff grouped together
         cpu:
             # The total number of various CPU components in the system.
-            socket: 1
+            sockets: 1
             cores: 4
             threads: 8
 
