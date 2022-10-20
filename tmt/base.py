@@ -1435,8 +1435,8 @@ class Plan(Core):
 
         # Run enabled steps except 'finish'
         self.debug('go', color='cyan', shift=0, level=2)
+        abort = False
         try:
-            abort = False
             for step in self.steps(skip=['finish']):
                 step.go()
                 # Finish plan if no tests found (except dry mode)
