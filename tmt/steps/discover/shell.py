@@ -313,8 +313,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
                     "Failed to process 'dist-git-source'.") from error
 
         # Use a tmt.Tree to apply possible command line filters
-        tests = tmt.Tree(tree=tests).tests(conditions=["manual is False"])
-        self._tests = tests
+        self._tests = tmt.Tree(tree=tests).tests(conditions=["manual is False"])
 
     def tests(self) -> List[tmt.base.Test]:
         return self._tests
