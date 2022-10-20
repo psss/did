@@ -942,13 +942,13 @@ class GuestSsh(Guest):
              destination: Optional[str] = None,
              options: Optional[List[str]] = None,
              extend_options: Optional[List[str]] = None) -> None:
-        f"""
+        """
         Pull files from the guest
 
         By default the whole plan workdir is synced from the same
         location on the guest. Use the 'source' and 'destination' to
         sync custom location, the 'options' parameter to modify
-        default options '{" ".join(DEFAULT_RSYNC_PULL_OPTIONS)}'
+        default options :py:data:`DEFAULT_RSYNC_PULL_OPTIONS`
         and 'extend_options' to extend them (e.g. by exclude).
         """
         # Abort if guest is unavailable
