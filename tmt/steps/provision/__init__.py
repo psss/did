@@ -416,7 +416,7 @@ class Guest(tmt.utils.Common):
 
         # Distro
         distro_commands = [
-            # check os-release first)
+            # Check os-release first
             ('cat /etc/os-release', r'PRETTY_NAME="(.*)"'),
             # Check for lsb-release
             ('cat /etc/lsb-release', r'DISTRIB_DESCRIPTION="(.*)"'),
@@ -426,11 +426,10 @@ class Guest(tmt.utils.Common):
 
         for command, pattern in distro_commands:
             try:
-                distro = _fetch_detail(command, pattern)
-
+                distro: Optional[str] = _fetch_detail(command, pattern)
+                break
             except tmt.utils.RunError:
                 continue
-
         else:
             distro = None
 
