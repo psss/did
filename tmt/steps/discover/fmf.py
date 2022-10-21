@@ -17,7 +17,7 @@ import tmt.steps
 import tmt.steps.discover
 import tmt.utils
 
-default_dynamic_ref_filepath: str = ".tmt/ref.fmf"
+DEFAULT_DYNAMIC_REF_FILEPATH: str = ".tmt/ref.fmf"
 
 
 @dataclasses.dataclass
@@ -354,39 +354,30 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 if not self.opt('dry'):
                     shutil.copytree(directory, self.testdir, symlinks=True)
 
-        # Check for a presense of a file with rules for ref
-        # either following special syntax ref: @filepath
-        if ref and str(ref)[0] == '@':
+        # Prepare path of the dynamic reference file either following
+        # special syntax ref: @filepath or using the default location
+        if ref and ref.startswith("@"):
             ref_filepath = os.path.join(self.testdir, ref[1:])
-        # or using the default location
+            if not os.path.exists(ref_filepath):
+                raise tmt.utils.DiscoverError(
+                    f"Dynamic 'ref' definition file '{ref_filepath}' does not exist.")
         else:
-            ref_filepath = os.path.join(self.testdir, default_dynamic_ref_filepath)
-        # dynamic ref check is enabled when ref is not defined or when it starts with @
-        if (not ref or str(ref)[0] == '@'):
-            if os.path.exists(ref_filepath):
-                self.debug(f"Dynamic 'ref' definition file '{ref_filepath}' exists")
-                # there is a file with rules
-                # read it, process it and get the value of the attribute 'ref'
-                try:
-                    with open(ref_filepath, encoding='utf-8') as datafile:
-                        data = tmt.utils.yaml_to_dict(datafile.read())
-                except OSError as error:
-                    raise tmt.utils.FileError(f"Failed to read '{ref_filepath}'.\n{error}")
-                # we need to built a dummy tree so we can evaluate fmf data
-                dummy_node = fmf.Tree(data=data)
-                dummy_node.adjust(fmf.context.Context(**self.step.plan._fmf_context()))
-                # and also a dummy plan to expand environment variables and context variables
-                dummy_plan = tmt.Plan(node=dummy_node, run=None, skip_validation=True)
-                dummy_plan._expand_node_data(dummy_node.data)
-                ref = dummy_node.get("ref", '')
-            # there is no dynamic ref file
-            else:
-                # if dynamic ref file was specified using @ but not found raise an exception
-                if ref and str(ref)[0] == '@':
-                    raise tmt.utils.DiscoverError(
-                        f"Dynamic 'ref' definition file '{ref_filepath}' does not exist.")
-                else:
-                    self.debug(f"Dynamic 'ref' definiton file '{ref_filepath}' does not exist.")
+            ref_filepath = os.path.join(self.testdir, DEFAULT_DYNAMIC_REF_FILEPATH)
+
+        # Apply dynamic referencing if the definition file exists and
+        # no custom standard ref (without the '@' prefix) is provided
+        if os.path.exists(ref_filepath) and (not ref or ref.startswith("@")):
+            self.debug(f"Dynamic 'ref' definition file '{ref_filepath}' detected.")
+            # Read it, process it and get the value of the attribute 'ref'
+            try:
+                with open(ref_filepath, encoding='utf-8') as datafile:
+                    data = tmt.utils.yaml_to_dict(datafile.read())
+            except OSError as error:
+                raise tmt.utils.FileError(f"Failed to read '{ref_filepath}'.") from error
+            # Build a dynamic reference tree, adjust ref based on the context
+            reference_tree = fmf.Tree(data=data)
+            reference_tree.adjust(fmf.context.Context(**self.step.plan._fmf_context()))
+            ref = reference_tree.get("ref")
 
         # Checkout revision if requested
         if ref:

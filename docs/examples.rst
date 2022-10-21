@@ -653,30 +653,33 @@ Dynamic ``ref`` Evaluation
 ------------------------------------------------------------------
 
 When using test branching for test maintenance it becomes handy to
-be able to set ``ref`` dynamically depending on the provided tmt run
-``--context``. This is possible using a special file in tmt format
+be able to set ``ref`` dynamically depending on the provided
+:ref:`/spec/context`. This is possible using a special file in tmt format
 stored in a default branch of a tests repository. That special file
 should contain rules assigning attribute ``ref`` in an ``adjust``
-block depending on a test run context.
+block depending on the context.
+
 Dynamic ``ref`` assignment is enabled whenever ``.tmt/ref.fmf`` file
 exists in a test repository or the actual test plan reference has
 a format ``ref: @FILEPATH``.
 
 Example of a test plan::
+
     discover:
         how: fmf
         url: https://github.com/teemtee/repo
         ref: "@.tmtref"
 
 Example of a dynamic ``ref`` definition file in ``repo/.tmtref``::
+
     ref: main
     adjust:
-        - when: "distro == centos-stream-9"
-          ref: rhel-9
-        - when: "distro == fedora"
-          ref: fedora
-        - when: "distro == rhel-9"
-          ref: rhel-9
+      - when: distro == centos-stream-9
+        ref: rhel-9
+      - when: distro == fedora
+        ref: fedora
+      - when: distro == rhel-9
+        ref: rhel-9
 
 
 Stories

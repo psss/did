@@ -34,6 +34,6 @@
     - enabled: true
       when: how == full or trigger == commit
 
-/dynamic_ref:
+/dynamic-ref:
     summary: Check that dynamic ref evaluation works
-    test: ./dynamic_ref.sh
+    test: ./dynamic-ref.sh

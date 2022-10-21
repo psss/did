@@ -77,17 +77,20 @@ execute:
             dist-git-source: true
             dist-git-init: false
             test: tests/prepare/install$
+
     /exclude:
         discover:
             how: fmf
             exclude: /tests/discover1
-    /dynamic_ref_noctx:
-        discover:
-            how: fmf
-            ref: "@tests/discover/data/dynamic_ref"
-    /dynamic_ref_ctx:
-        context:
-            branch: fedora
-        discover:
-            how: fmf
-            ref: "@tests/discover/data/dynamic_ref"
+
+    /dynamic-ref:
+        /no-context:
+            discover:
+                how: fmf
+                ref: "@tests/discover/data/dynamic-ref.fmf"
+        /with-context:
+            context:
+                branch: fedora
+            discover:
+                how: fmf
+                ref: "@tests/discover/data/dynamic-ref.fmf"
