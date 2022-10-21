@@ -3,7 +3,6 @@
 . /usr/share/beakerlib/beakerlib.sh || exit 1
 
 USER=test_user$$
-TEST_DIR="$(pwd)"
 
 rlJournalStart
     rlPhaseStartSetup
@@ -12,6 +11,11 @@ rlJournalStart
 
         rlRun "set -o pipefail"
         rlRun "useradd -s $(which zsh) $USER"
+
+        # Copy data and change ownership
+        rlRun "cp -rv data /home/$USER"
+        rlRun "chown $USER:$USER -R /home/$USER"
+
         rlRun "rlFileBackup \"/bin/sh\""
         # Defaults to /bin/sh so we need to change that to not bash
         rlRun "ln -sf $(which zsh) /bin/sh"
@@ -21,7 +25,7 @@ rlJournalStart
         # BASH_VERSION is not set unless in running in BASH
         # Reproducer plan uses 'local' provisioner.
         # as of now support for 'user' in virtual is not always working
-        rlRun "su -l -c 'cd $TEST_DIR/data && tmt run -v --id /home/$USER/run_id plan --name /reproducer' $USER"
+        rlRun "su -l -c 'cd data && tmt run -v --id /home/$USER/run_id plan --name /reproducer' $USER"
         rlBundleLogs "log_txt" "/home/$USER/run_id/log.txt"
     rlPhaseEnd
 
