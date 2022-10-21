@@ -271,7 +271,8 @@ easily inside a container::
 When installing using ``pip`` you might need to install additional
 packages on your system::
 
-    sudo dnf install gcc {python3,libvirt,krb5,libpq}-devel
+    sudo dnf install gcc redhat-rpm-config
+    sudo dnf install {python3,libvirt,krb5,libpq}-devel
     pip install --user tmt
 
 Note: You can omit the ``--user`` flag if in a virtual environment.

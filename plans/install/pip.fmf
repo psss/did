@@ -1,14 +1,38 @@
 summary: Verify that the pip install works
 prepare:
-  - summary: Remove tmt if it is present
-    name: remove
+  - summary: Remove any rpm packages if present
     script: rpm -q tmt && dnf remove -y tmt* || true
-  - summary: Install requirements
-    name: install
-    how: install
-    package: [gcc, python3]
+  - summary: Prepare the virtual environment
+    script: python3 -m venv /tmp/venv
 execute:
-    script:
-        - python3 -m venv /tmp/venv
-        - /tmp/venv/bin/pip install .
-        - /tmp/venv/bin/tmt --help
+    how: tmt
+
+/mini:
+    summary+: " (mini)"
+    discover:
+        tests:
+          - name: /install
+            test: /tmp/venv/bin/pip install .
+            require:
+              - gcc
+              - python3
+              - python3-devel
+          - name: /help
+            test: /tmp/venv/bin/tmt --help
+
+/full:
+    summary+: " (full)"
+    discover:
+        tests:
+          - name: /install
+            test: /tmp/venv/bin/pip install .[all]
+            require:
+              - gcc
+              - python3
+              - python3-devel
+              - libvirt-devel
+              - krb5-devel
+              - libpq-devel
+              - redhat-rpm-config
+          - name: /help
+            test: /tmp/venv/bin/tmt run --help
