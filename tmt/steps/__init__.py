@@ -5,7 +5,6 @@ import dataclasses
 import re
 import sys
 import textwrap
-import warnings
 from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple,
                     Type, TypeVar, Union, cast, overload)
 
@@ -576,42 +575,7 @@ def provides_method(
     return _method
 
 
-class PluginIndex(type):
-    """
-    Plugin metaclass used to register all available plugins.
-
-    .. deprecated:: 1.17
-       Instead of declaring `_methods` list, use :py:func:`provides_method` decorator
-       to announce provided methods.
-    """
-
-    def __init__(
-            cls,
-            name: str,
-            bases: List['BasePlugin'],
-            attributes: Dict[str, Any]) -> None:
-        """ Store all defined methods in the parent class """
-
-        # FIXME: cast() - will be removed with the whole class
-        plugin_methods = cast(Optional[List[Method]], getattr(cls, '_methods'))
-
-        if not plugin_methods:
-            return
-
-        warnings.warn(
-            'Use of _methods to declare plugin methods is deprecated.'
-            'Use tmt.steps.provides_method decorator instead.',
-            DeprecationWarning,
-            stacklevel=2)
-
-        for plugin_method in plugin_methods:
-            # FIXME: cast() - will be removed with the whole class
-            plugin_method.class_ = cast(PluginClass, cls)
-            # Add to the list of supported methods in parent class
-            bases[0]._supported_methods.append(plugin_method)
-
-
-class BasePlugin(Phase, metaclass=PluginIndex):
+class BasePlugin(Phase):
     """ Common parent of all step plugins """
 
     # Deprecated, use @provides_method(...) instead. left for backward
