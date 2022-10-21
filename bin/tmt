@@ -5,6 +5,17 @@ import click
 import tmt.cli
 import tmt.utils
 
+
+def show_exception(exception: BaseException) -> None:
+    """ Show exception in red, handle exception chain """
+    click.echo(click.style(str(exception), fg='red'), err=True)
+
+    # Mention also the original exception if provided
+    if exception.__cause__:
+        click.echo("The exception was caused by the previous exception:", err=True)
+        show_exception(exception.__cause__)
+
+
 try:
     tmt.cli.main()
 
@@ -20,13 +31,10 @@ except tmt.utils.RunError as error:
             f"\n{tmt.utils.OUTPUT_WIDTH * '~'}\n" +
             '\n'.join(lines[-tmt.utils.OUTPUT_LINES:]))
     print()
-    click.echo(click.style(error.message, fg='red'), err=True)
+    show_exception(error)
     raise SystemExit(2)
 
 # Basic error message for general errors
 except tmt.utils.GeneralError as error:
-    click.echo(click.style(str(error), fg='red'), err=True)
-    # Mention also the original exception if provided
-    if error.__cause__:
-        click.echo(f"The exception was: {error.__cause__}", err=True)
+    show_exception(error)
     raise SystemExit(2)
