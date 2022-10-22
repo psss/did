@@ -1,3 +1,4 @@
+import dataclasses
 from typing import Any, List, Optional, Type, Union, cast
 
 import click
@@ -7,8 +8,15 @@ import tmt.steps
 from tmt.steps import Action
 
 
+@dataclasses.dataclass
+class ReportStepData(tmt.steps.StepData):
+    pass
+
+
 class ReportPlugin(tmt.steps.GuestlessPlugin):
     """ Common parent of report plugins """
+
+    _data_class = ReportStepData
 
     # Default implementation for report is display
     how = 'display'

@@ -184,7 +184,7 @@ class TestcloudGuestData(tmt.steps.provision.GuestSshData):
 
 
 @dataclasses.dataclass
-class ProvisionTestcloudData(TestcloudGuestData, tmt.steps.StepData):
+class ProvisionTestcloudData(TestcloudGuestData, tmt.steps.provision.ProvisionStepData):
     pass
 
 

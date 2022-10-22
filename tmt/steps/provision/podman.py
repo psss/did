@@ -27,7 +27,7 @@ class PodmanGuestData(tmt.steps.provision.GuestData):
 
 
 @dataclasses.dataclass
-class ProvisionPodmanData(PodmanGuestData, tmt.steps.StepData):
+class ProvisionPodmanData(PodmanGuestData, tmt.steps.provision.ProvisionStepData):
     pass
 
 

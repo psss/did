@@ -42,8 +42,15 @@ class CheckRsyncOutcome(enum.Enum):
     INSTALLED = 'installed'
 
 
+@dataclasses.dataclass
+class ProvisionStepData(tmt.steps.StepData):
+    pass
+
+
 class ProvisionPlugin(tmt.steps.GuestlessPlugin):
     """ Common parent of provision plugins """
+
+    _data_class = ProvisionStepData
 
     # Default implementation for provision is a virtual machine
     how = 'virtual'

@@ -8,7 +8,7 @@ import tmt.utils
 
 
 @dataclasses.dataclass
-class ProvisionLocalData(tmt.steps.provision.GuestData, tmt.steps.StepData):
+class ProvisionLocalData(tmt.steps.provision.GuestData, tmt.steps.provision.ProvisionStepData):
     pass
 
 

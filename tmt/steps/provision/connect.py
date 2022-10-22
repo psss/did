@@ -18,7 +18,7 @@ class ConnectGuestData(tmt.steps.provision.GuestSshData):
 
 
 @dataclasses.dataclass
-class ProvisionConnectData(ConnectGuestData, tmt.steps.StepData):
+class ProvisionConnectData(ConnectGuestData, tmt.steps.provision.ProvisionStepData):
     pass
 
 

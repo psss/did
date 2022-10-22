@@ -89,7 +89,7 @@ def make_junit_xml(report: "tmt.steps.report.ReportPlugin") -> JunitTestSuite:
 
 
 @dataclasses.dataclass
-class ReportJUnitData(tmt.steps.StepData):
+class ReportJUnitData(tmt.steps.report.ReportStepData):
     file: Optional[str] = None
 
 

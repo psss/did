@@ -34,7 +34,7 @@ def import_jinja2() -> None:
 
 
 @dataclasses.dataclass
-class ReportHtmlData(tmt.steps.StepData):
+class ReportHtmlData(tmt.steps.report.ReportStepData):
     open: bool = False
 
 

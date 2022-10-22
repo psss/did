@@ -86,7 +86,7 @@ class ArtemisGuestData(tmt.steps.provision.GuestSshData):
 
 
 @dataclasses.dataclass
-class ProvisionArtemisData(ArtemisGuestData, tmt.steps.StepData):
+class ProvisionArtemisData(ArtemisGuestData, tmt.steps.provision.ProvisionStepData):
     pass
 
 
