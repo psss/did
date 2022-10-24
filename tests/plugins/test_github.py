@@ -1,7 +1,9 @@
 # coding: utf-8
 """ Tests for the GitHub plugin """
 
+import os
 import time
+from tempfile import NamedTemporaryFile
 
 import pytest
 
@@ -113,3 +115,18 @@ def test_github_unicode():
     assert any([
         "Boundary events lose it’s documentation" in str(stat)
         for stat in stats])
+
+
+@pytest.mark.skipif("GITHUB_TOKEN" not in os.environ, reason="No GITHUB_TOKEN environment variable found")
+def test_github_issues_created_with_token_file():
+    """ Created issues (config with token_file)"""
+    token = os.getenv(key="GITHUB_TOKEN")
+    file_handle = NamedTemporaryFile(mode="w+", encoding="utf-8")
+    file_handle.writelines(token)
+    file_handle.flush()
+    config = CONFIG + f"\ntoken_file = {file_handle.name}"
+    did.base.Config(config)
+    option = "--gh-issues-created "
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
+    assert any([
+        "psss/did#017 - What did you do" in str(stat) for stat in stats])

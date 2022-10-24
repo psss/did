@@ -15,12 +15,16 @@ queries are limited. For more details see `GitHub API`__ docs.
 Use ``login`` to override the default email address for searching.
 See the :doc:`config` documentation for details on using aliases.
 
+Alternatively to `token` you can use `token_file` to have the
+token stored in a file rather than in your did config file.
+
 __ https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
 
 """
 
 import json
 import re
+import os
 
 import requests
 
@@ -209,9 +213,13 @@ class GitHubStats(StatsGroup):
             raise ReportError(
                 "No github url set in the [{0}] section".format(option))
         # Check authorization token
-        try:
+        if "token" in config:
             self.token = config["token"]
-        except KeyError:
+        elif "token_file" in config:
+            file_path = os.path.expanduser(config["token_file"])
+            with open(file_path) as token_file:
+                self.token = token_file.read().strip()
+        else:
             self.token = None
         self.github = GitHub(self.url, self.token)
         # Create the list of stats
