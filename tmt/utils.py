@@ -230,6 +230,17 @@ class Config:
         return None
 
 
+# TODO: `StreamLogger` is a dedicated thread fillowing given stream, passing their content to
+# tmt's logging methods. Thread is needed because of some amount of blocking involved in the
+# process, but it has a side effect of `NO_COLOR` envvar being ignored. When tmt spots `NO_COLOR`
+# envvar, it flips a `color` flag in its Click context. But since contexts are thread-local,
+# thread powering `StreamLogger` is not aware of this change, and all Click methods it calls
+# - namely `echo` and `style` in depths of logging code - would still apply colors depending on
+# tty setup.
+#
+# Passing Click context from the main thread to `StreamLogger` instances to replace their context
+# is one way to solve it, another might be logging being more explicit and transparent, e.g. with
+# https://github.com/teemtee/tmt/issues/1565.
 class StreamLogger(Thread):
     """
     Reading pipes of running process in threads.
@@ -241,16 +252,21 @@ class StreamLogger(Thread):
     def __init__(self,
                  stream: Optional[IO[bytes]],
                  log_header: str,
-                 logger: BaseLoggerFnType) -> None:
+                 logger: BaseLoggerFnType,
+                 click_context: Optional[click.Context]) -> None:
         super().__init__(daemon=True)
         self.stream = stream
         self.output: List[str] = []
         self.log_header = log_header
         self.logger = logger
+        self.click_context = click_context
 
     def run(self) -> None:
         if self.stream is None:
             return
+
+        if self.click_context is not None:
+            click.globals.push_context(self.click_context)
 
         for _line in self.stream:
             line = _line.decode('utf-8', errors='replace')
@@ -596,11 +612,17 @@ class Common:
                 f"File '{error.filename}' not found.", command, 127)
 
         stdout_thread = StreamLogger(
-            process.stdout, log_header='out', logger=log)
+            process.stdout,
+            log_header='out',
+            logger=log,
+            click_context=click.get_current_context(silent=True))
         stderr_thread = stdout_thread
         if not join:
             stderr_thread = StreamLogger(
-                process.stderr, log_header='err', logger=log)
+                process.stderr,
+                log_header='err',
+                logger=log,
+                click_context=click.get_current_context(silent=True))
         stdout_thread.start()
         if not join:
             stderr_thread.start()
