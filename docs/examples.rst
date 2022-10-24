@@ -697,6 +697,14 @@ Example of a dynamic ``ref`` definition file in ``repo/.tmtref``::
       - when: distro == rhel-9
         ref: rhel-9
 
+The definition file can also be parametrized using environment
+variables or context dimensions::
+
+    ref: main
+    adjust:
+      - when: distro == fedora or distro == rhel
+        ref: $@distro
+
 
 Stories
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

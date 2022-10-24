@@ -377,6 +377,8 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             # Build a dynamic reference tree, adjust ref based on the context
             reference_tree = fmf.Tree(data=data)
             reference_tree.adjust(fmf.context.Context(**self.step.plan._fmf_context()))
+            # Also temporarily build a plan so that env and context variables are expanded
+            tmt.Plan(node=reference_tree, run=self.step.plan.my_run, skip_validation=True)
             ref = reference_tree.get("ref")
 
         # Checkout revision if requested

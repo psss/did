@@ -30,6 +30,16 @@ rlJournalStart
         rlAssertGrep 'ref: rhel' $rlRun_LOG
     rlPhaseEnd
 
+    rlPhaseStartTest 'Check dynamic ref combined with test plan context parametrization"'
+        rlRun "tmt -c branch=ubuntu run -r $plan_ctx $steps | tee output" 0,2
+        rlAssertGrep 'ref: ubuntu' 'output'
+    rlPhaseEnd
+
+    rlPhaseStartTest 'Check dynamic ref combined with test plan envvar parametrization"'
+        rlRun "tmt -c branch=envvar run --environment BRANCH=debian -r $plan_ctx $steps | tee output" 0,2
+        rlAssertGrep 'ref: debian' 'output'
+    rlPhaseEnd
+
     rlPhaseStartCleanup
         rlRun 'popd'
     rlPhaseEnd

@@ -5,3 +5,7 @@ adjust:
     ref: fedora
   - when: "branch == rhel"
     ref: rhel
+  - when: "branch == debian or branch == ubuntu"
+    ref: $@{branch}
+  - when: "branch == envvar"
+    ref: ${BRANCH}
