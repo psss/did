@@ -15,6 +15,9 @@ queries are limited. For more details see `GitHub API`__ docs.
 Use ``login`` to override the default email address for searching.
 See the :doc:`config` documentation for details on using aliases.
 
+Alternatively to ``token`` you can use ``token_file`` to have the
+token stored in a file rather than in your did config file.
+
 __ https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
 
 """
@@ -24,7 +27,7 @@ import re
 
 import requests
 
-from did.base import Config, ReportError
+from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
@@ -209,10 +212,7 @@ class GitHubStats(StatsGroup):
             raise ReportError(
                 "No github url set in the [{0}] section".format(option))
         # Check authorization token
-        try:
-            self.token = config["token"]
-        except KeyError:
-            self.token = None
+        self.token = get_token(config)
         self.github = GitHub(self.url, self.token)
         # Create the list of stats
         self.stats = [

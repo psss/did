@@ -88,7 +88,7 @@ import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
 
-from did.base import Config, ReportError
+from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
@@ -301,13 +301,8 @@ class JiraStats(StatsGroup):
                     "in the [{0}] section.".format(option))
         # Token
         elif self.auth_type == "token":
-            if "token" in config:
-                self.token = config["token"]
-            elif "token_file" in config:
-                file_path = os.path.expanduser(config["token_file"])
-                with open(file_path) as token_file:
-                    self.token = token_file.read().strip()
-            else:
+            self.token = get_token(config)
+            if self.token is None:
                 raise ReportError(
                     "The `token` or `token_file` key must be set "
                     "in the [{0}] section.".format(option))

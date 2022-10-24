@@ -9,6 +9,9 @@ Config example::
     url = https://zammad.example.com/api/v1/
     token = <authentication-token>
 
+Optionally use ``token_file`` to store the token in a file instead
+of plain in the config file.
+
 """
 
 import json
@@ -16,7 +19,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from did.base import Config, ReportError
+from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
@@ -119,10 +122,7 @@ class ZammadStats(StatsGroup):
             raise ReportError(
                 "No zammad url set in the [{0}] section".format(option))
         # Check authorization token
-        try:
-            self.token = config["token"]
-        except KeyError:
-            self.token = None
+        self.token = get_token(config)
         self.zammad = Zammad(self.url, self.token)
         # Create the list of stats
         self.stats = [

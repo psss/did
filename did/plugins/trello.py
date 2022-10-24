@@ -22,17 +22,20 @@ Optional arguments::
         updateCard:idList, updateCard:closed,
         updateCheckItemStateOnCard
 
-apikey
-    https://trello.com/app-key
+    apikey
+        https://trello.com/app-key
 
-token
-    http://stackoverflow.com/questions/17178907
+    token
+        http://stackoverflow.com/questions/17178907
 
-boards
-    default: all
+    token_file
+        the token stored in a file
 
-filters
-    default: all
+    boards
+        default: all
+
+    filters
+        default: all
 """
 
 # Possible API methods to add:
@@ -42,7 +45,7 @@ import json
 import urllib.parse
 import urllib.request
 
-from did.base import Config, ReportError
+from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty, split
 
@@ -282,6 +285,7 @@ class TrelloStatsGroup(StatsGroup):
         self.url = "https://trello.com/1"
         config = dict(Config().section(option))
 
+        config["token"] = get_token(config)
         positional_args = ['apikey', 'token']
         if (not set(positional_args).issubset(set(config.keys()))
                 and "user" not in config):
@@ -289,7 +293,7 @@ class TrelloStatsGroup(StatsGroup):
                 "No ({0}) or 'user' set in the [{1}] section".format(
                     listed(positional_args, quote="'"), option))
 
-        optional_args = ["board_links", "apikey", "token"]
+        optional_args = ["board_links", "apikey"]
         for arg in optional_args:
             if arg not in config:
                 config[arg] = ""

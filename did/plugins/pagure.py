@@ -12,14 +12,15 @@ Config example::
 
 Use ``login`` to override the default email address for searching.
 See the :doc:`config` documentation for details on using aliases.
-The authentication token is optional.
+The authentication token is optional and can be stored in a file
+pointed to by ``token_file`` instead of ``token``.
 """
 
 import datetime
 
 import requests
 
-from did.base import Config, ReportError
+from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
@@ -175,10 +176,7 @@ class PagureStats(StatsGroup):
             raise ReportError(
                 'No Pagure url set in the [{0}] section'.format(option))
         # Check authorization token
-        try:
-            self.token = config['token']
-        except KeyError:
-            self.token = None
+        self.token = get_token(config)
         self.pagure = Pagure(self.url, self.token)
         # Create the list of stats
         self.stats = [

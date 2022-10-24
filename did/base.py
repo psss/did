@@ -457,3 +457,45 @@ class User(object):
         if login is not None:
             self.login = login
             log.info("Using login alias '{0}' for '{1}'".format(login, stats))
+
+
+def get_token(
+        config: dict,
+        token_key: str = "token",
+        token_file_key: str = "token_file") -> str:
+    """
+    Extract the authentication token from config or token file
+
+    Returns the contents of `config[token_key]`, or the file contents of
+    `config[token_file_key]` if no `config[token]` exists. If neither
+    keys exist, `None` is returned.
+
+    Sometimes you want to be able to store a token in a file rather than
+    in the your plain config file. Use this function to support a system
+    wide mechanism to retrieve tokens or secrets either directly from
+    the config file as plain text or from an outsourced file.
+
+    Returns:
+        str: The stripped token or `None` if no or only empty entries were
+            found in the `config` dict.
+
+    Keyword Args:
+        config (dict): A configuration dictionary
+        token_key (str): The dict entry to look for when the token is stored
+            as plain text in the config
+        token_file_key (str): The dict entry to look for when the token is
+            supposed to be read from file
+    """
+    token = None
+
+    if token_key in config:
+        token = str(config[token_key]).strip()
+    elif token_file_key in config:
+        file_path = os.path.expanduser(config[token_file_key])
+        with open(file_path, encoding="utf-8") as token_file:
+            token = token_file.read().strip()
+
+    if token == "":
+        token = None
+
+    return token

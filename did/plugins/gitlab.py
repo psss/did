@@ -8,6 +8,7 @@ Config example::
     type = gitlab
     url = https://gitlab.com/
     token = <authentication-token>
+    token_file = <authentication-token-file>
     login = <username>
     ssl_verify = true
 
@@ -29,7 +30,7 @@ import dateutil
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-from did.base import Config, ReportError
+from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
@@ -326,9 +327,8 @@ class GitLabStats(StatsGroup):
             raise ReportError(
                 "No GitLab url set in the [{0}] section".format(option))
         # Check authorization token
-        try:
-            self.token = config["token"]
-        except KeyError:
+        self.token = get_token(config)
+        if self.token is None:
             raise ReportError(
                 "No GitLab token set in the [{0}] section".format(option))
         # Check SSL verification

@@ -42,6 +42,10 @@ During the first run, user will be asked to grant the plugin access rights to
 selected apps. If the user approves the request, this decision is remembered by
 creating a *credential storage* file. The path to the storage can be customized
 by configuring the ``storage`` option.
+
+If you want to store the ``client_id`` and ``client_secret`` not as plain text
+within your config file, use ``client_id_file`` and ``client_secret_file`` to
+point to files with the corresponding files.
 """
 
 import os
@@ -52,7 +56,7 @@ from oauth2client import tools
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 
-from did.base import CONFIG, Config, ReportError
+from did.base import CONFIG, Config, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import log, split
 
@@ -278,8 +282,12 @@ class GoogleStatsGroup(StatsGroup):
     def __init__(self, option, name=None, parent=None, user=None):
         super(GoogleStatsGroup, self).__init__(option, name, parent, user)
         config = dict(Config().section(option))
-        client_id = config["client_id"]
-        client_secret = config["client_secret"]
+        client_id = get_token(
+            config, token_key="client_id", token_file_key="client_id_file")
+        client_secret = get_token(
+            config,
+            token_key="client_secret",
+            token_file_key="client_secret_file")
         storage = config.get("storage")
         if storage is not None:
             storage = os.path.expanduser(storage)

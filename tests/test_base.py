@@ -1,11 +1,15 @@
 # coding: utf-8
 
 import datetime
+import unittest
+from contextlib import contextmanager
+from tempfile import NamedTemporaryFile
+from uuid import uuid4
 
 import pytest
 
 import did.base
-from did.base import Config, ConfigError
+from did.base import Config, ConfigError, get_token
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Config
@@ -217,3 +221,83 @@ def test_ReportError():
         pass
     else:
         raise RuntimeError("ReportError exception failing!")
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Token handling
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class TestGetToken(unittest.TestCase):
+    """ Tests for the `get_token` function """
+
+    @contextmanager
+    def get_token_as_file(self, token: str) -> str:
+        """
+        Returns a temporary filename with the given token written to it.
+        Use this as a context manager:
+
+            with self.get_token_as_file(token="foobar") as filename:
+                config = {"token_file": filename.name}
+        """
+        file_handle = NamedTemporaryFile(mode="w+", encoding="utf-8")
+        file_handle.writelines(token)
+        file_handle.flush()
+        try:
+            yield file_handle.name
+        finally:
+            file_handle.close()
+
+    def test_get_token_none(self):
+        """ Test getting a token when none is specified """
+        self.assertIsNone(get_token({}))
+
+    def test_get_token_plain(self):
+        """ Test getting a token when specified in plain config file """
+        token = str(uuid4())
+        config = {"token": token}
+        self.assertEqual(get_token(config), token)
+
+    def test_get_token_plain_empty(self):
+        """ Test getting a token when it is empty or just whitespace """
+        config = {"token": "   "}
+        self.assertIsNone(get_token(config))
+
+    def test_get_token_plain_different_name(self):
+        """ Test getting a plain token under a different name """
+        token = str(uuid4())
+        config = {"mytoken": token}
+        self.assertIsNone(get_token(config))
+        self.assertEqual(get_token(config, token_key="mytoken"), token)
+
+    def test_get_token_file(self):
+        """ Test getting a token from a file """
+        token_in_file = str(uuid4())
+        with self.get_token_as_file(token_in_file) as filename:
+            config = {"token_file": filename}
+            self.assertEqual(get_token(config), token_in_file)
+
+    def test_get_token_file_empty(self):
+        """ Test getting a token from a file with just whitespace. """
+        token_in_file = "   "
+        with self.get_token_as_file(token_in_file) as filename:
+            config = {"token_file": filename}
+            self.assertIsNone(get_token(config))
+
+    def test_get_token_precedence(self):
+        """ Test plain token precedence over file one """
+        token_plain = str(uuid4())
+        token_in_file = str(uuid4())
+        with self.get_token_as_file(token_in_file) as filename:
+            config = {"token_file": filename, "token": token_plain}
+            self.assertEqual(get_token(config), token_plain)
+
+    def test_get_token_file_different_name(self):
+        """ Test getting a token from a file under different name """
+        token_in_file = str(uuid4())
+        with self.get_token_as_file(token_in_file) as filename:
+            config = {"mytoken_file": filename}
+            self.assertEqual(
+                get_token(
+                    config,
+                    token_file_key="mytoken_file"),
+                token_in_file)
