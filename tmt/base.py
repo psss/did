@@ -261,6 +261,20 @@ _RawAdjustRule = TypedDict(
 # but allows several extra keys that must be stored.
 #
 # See https://tmt.readthedocs.io/en/latest/spec/tests.html#require
+class RequireSimple(str):
+    # ignore[override]: expected, we do want to accept and return more
+    # specific types than those declared in superclass.
+    @classmethod
+    def from_spec(cls, spec: str) -> 'RequireSimple':
+        return RequireSimple(spec)
+
+    def to_spec(self) -> str:
+        return str(self)
+
+    def to_minimal_spec(self) -> str:
+        return self.to_spec()
+
+
 class _RawRequireFmfId(_RawFmfId):
     destination: Optional[str]
     nick: Optional[str]
@@ -272,6 +286,13 @@ class RequireFmfId(FmfId):
 
     destination: Optional[str] = None
     nick: Optional[str] = None
+
+    # ignore[override]: expected, we do want to return more specific
+    # type than the one declared in superclass.
+    def to_minimal_dict(self) -> _RawRequireFmfId:  # type: ignore[override]
+        """ Convert to a mapping with unset keys omitted """
+
+        return cast(_RawRequireFmfId, super().to_minimal_dict())
 
     # ignore[override]: expected, we do want to accept and return more
     # specific types than those declared in superclass.
@@ -292,7 +313,7 @@ class RequireFmfId(FmfId):
 _RawRequireItem = Union[str, _RawRequireFmfId]
 _RawRequire = Union[_RawRequireItem, List[_RawRequireItem]]
 
-Require = Union[str, RequireFmfId]
+Require = Union[RequireSimple, RequireFmfId]
 
 
 def normalize_require(raw_require: Optional[_RawRequire]) -> List[Require]:
@@ -309,22 +330,16 @@ def normalize_require(raw_require: Optional[_RawRequire]) -> List[Require]:
         return []
 
     if isinstance(raw_require, str):
-        return [raw_require]
+        return [RequireSimple.from_spec(raw_require)]
 
     if isinstance(raw_require, dict):
         return [RequireFmfId.from_spec(raw_require)]
 
     return [
-        require if isinstance(require, str) else RequireFmfId.from_spec(require)
+        RequireSimple.from_spec(require)
+        if isinstance(require, str) else RequireFmfId.from_spec(require)
         for require in raw_require
         ]
-
-
-def normalize_recommend(raw_recommend: Optional[Union[str, List[str]]]) -> List[str]:
-    if raw_recommend is None:
-        return []
-
-    return [raw_recommend] if isinstance(raw_recommend, str) else raw_recommend
 
 
 CoreT = TypeVar('CoreT', bound='Core')
@@ -534,11 +549,10 @@ class Core(
 
             # TODO: this belongs to Test.export, and it will be moved when the time
             # of export() cleanup comes.
-            elif key == 'require' and value:
+            elif key in ('require', 'recommend') and value:
                 data[key] = [
-                    require.to_minimal_spec() if isinstance(
-                        require, RequireFmfId) else require for require in cast(
-                        List[Require], value)]
+                    require.to_minimal_spec() for require in cast(List[Require], value)
+                    ]
 
             else:
                 data[key] = value
@@ -591,7 +605,7 @@ class Test(Core):
     framework: Optional[str] = None
     manual: bool = False
     require: List[Require] = []
-    recommend: List[str] = []
+    recommend: List[Require] = []
     environment: tmt.utils.EnvironmentType = {}
     duration: str = DEFAULT_TEST_DURATION_L1
     result: str = 'respect'
@@ -602,9 +616,11 @@ class Test(Core):
 
     _normalize_contact = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_component = tmt.utils.LoadFmfKeysMixin._normalize_string_list
-    _normalize_recommend = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
     def _normalize_require(self, value: Optional[_RawRequire]) -> List[Require]:
+        return normalize_require(value)
+
+    def _normalize_recommend(self, value: Optional[_RawRequire]) -> List[Require]:
         return normalize_require(value)
 
     KEYS_SHOW_ORDER = [
@@ -703,7 +719,7 @@ class Test(Core):
                 f"The 'test' attribute in '{self.name}' must be defined.")
 
         if self.framework == 'beakerlib':
-            self.require.append('beakerlib')
+            self.require.append(RequireSimple('beakerlib'))
 
         self._update_metadata()
 
@@ -771,11 +787,12 @@ class Test(Core):
             # No need to show the default order
             if key == 'order' and value == DEFAULT_ORDER:
                 continue
-            if key == 'require':
-                value = [
-                    require if isinstance(require, str) else require.to_minimal_spec()
-                    for require in self.require
-                    ]
+            if key in ('require', 'recommend') and value:
+                echo(tmt.utils.format(
+                    key,
+                    [require.to_minimal_spec() for require in cast(List[Require], value)]
+                    ))
+                continue
             if value not in [None, list(), dict()]:
                 echo(tmt.utils.format(key, value))
         if self.opt('verbose'):

@@ -58,7 +58,7 @@ class TestDescription(
     framework: Optional[str] = None
     manual: bool = False
     require: List[tmt.base.Require] = dataclasses.field(default_factory=list)
-    recommend: List[str] = dataclasses.field(default_factory=list)
+    recommend: List[tmt.base.Require] = dataclasses.field(default_factory=list)
     environment: tmt.utils.EnvironmentType = dataclasses.field(default_factory=dict)
     duration: str = '1h'
     result: str = 'respect'
@@ -66,7 +66,6 @@ class TestDescription(
     _normalize_tag = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_contact = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_component = tmt.utils.LoadFmfKeysMixin._normalize_string_list
-    _normalize_recommend = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
     def _normalize_order(self, value: Optional[int]) -> int:
         if value is None:
@@ -94,6 +93,11 @@ class TestDescription(
     def _normalize_require(self, value: Optional[tmt.base._RawRequire]) -> List[tmt.base.Require]:
         return tmt.base.normalize_require(value)
 
+    def _normalize_recommend(
+            self,
+            value: Optional[tmt.base._RawRequire]) -> List[tmt.base.Require]:
+        return tmt.base.normalize_require(value)
+
     # ignore[override]: expected, we do want to accept more specific
     # type than the one declared in superclass.
     @classmethod
@@ -114,10 +118,8 @@ class TestDescription(
 
         data = super().to_spec()
         data['link'] = self.link.to_spec() if self.link else None
-        data['require'] = [
-            require if isinstance(require, str) else require.to_spec()
-            for require in self.require
-            ]
+        data['require'] = [require.to_spec() for require in self.require]
+        data['recommend'] = [recommend.to_spec() for recommend in self.recommend]
 
         return data
 
@@ -131,10 +133,8 @@ class TestDescription(
         # can use existing `to_spec()` method, and undo it with a simple
         # `Links(...)` call.
         data['link'] = self.link.to_spec() if self.link else None
-        data['require'] = [
-            require if isinstance(require, str) else require.to_serialized()
-            for require in self.require
-            ]
+        data['require'] = [require.to_spec() for require in self.require]
+        data['recommend'] = [recommend.to_spec() for recommend in self.recommend]
 
         return data
 
@@ -145,8 +145,14 @@ class TestDescription(
         obj = super().from_serialized(serialized)
         obj.link = tmt.base.Links(serialized['link'])
         obj.require = [
-            require if isinstance(require, str) else tmt.base.RequireFmfId.from_serialized(require)
+            tmt.base.RequireSimple.from_spec(require)
+            if isinstance(require, str) else tmt.base.RequireFmfId.from_spec(require)
             for require in serialized['require']
+            ]
+        obj.recommend = [
+            tmt.base.RequireSimple.from_spec(recommend)
+            if isinstance(recommend, str) else tmt.base.RequireFmfId.from_spec(recommend)
+            for recommend in serialized['recommend']
             ]
 
         return obj

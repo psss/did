@@ -12,9 +12,9 @@ def test_library():
     """ Fetch a beakerlib library with/without providing a parent """
     parent = tmt.utils.Common(workdir=True)
     library_with_parent = tmt.beakerlib.Library(
-        'library(openssl/certgen)', parent=parent)
+        tmt.base.RequireSimple('library(openssl/certgen)'), parent=parent)
     library_without_parent = tmt.beakerlib.Library(
-        'library(openssl/certgen)')
+        tmt.base.RequireSimple('library(openssl/certgen)'))
 
     for library in [library_with_parent, library_without_parent]:
         assert library.format == 'rpm'
@@ -67,7 +67,9 @@ def test_dependencies():
     """ Check requires for possible libraries """
     parent = tmt.utils.Common(workdir=True)
     requires, recommends, libraries = tmt.beakerlib.dependencies(
-        ['library(httpd/http)', 'wget'], ['forest'], parent=parent)
+        [tmt.base.RequireSimple('library(httpd/http)'), tmt.base.RequireSimple('wget')],
+        [tmt.base.RequireSimple('forest')],
+        parent=parent)
     # Check for correct requires and recommends
     for require in ['httpd', 'lsof', 'mod_ssl']:
         assert require in requires

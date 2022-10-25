@@ -13,12 +13,12 @@ import tmt.base
 import tmt.utils
 
 # A beakerlib identifier type, can be a string or a fmf id (with extra beakerlib keys)
-BeakerlibIdentifierType = Union[str, tmt.base.RequireFmfId]
+BeakerlibIdentifierType = Union[tmt.base.RequireSimple, tmt.base.RequireFmfId]
 ImportedIdentifiersType = Optional[List[BeakerlibIdentifierType]]
 
 # A type for Beakerlib dependencies
 LibraryDependenciesType = Tuple[
-    List[tmt.base.Require], List[str], List['Library']
+    List[tmt.base.Require], List[tmt.base.Require], List['Library']
     ]
 
 # Regular expressions for beakerlib libraries
@@ -86,13 +86,14 @@ class Library:
 
         self.identifier: BeakerlibIdentifierType
         # The 'library(repo/lib)' format
-        if isinstance(identifier, str):
-            identifier = identifier.strip()
+        if isinstance(identifier, tmt.base.RequireSimple):
+            identifier = tmt.base.RequireSimple(identifier.strip())
             self.identifier = identifier
             matched = LIBRARY_REGEXP.search(identifier)
             if not matched:
                 raise LibraryError
-            self.parent.debug(f"Detected library '{identifier}'.", level=3)
+            self.parent.debug(
+                f"Detected library '{identifier.to_minimal_spec()}'.", level=3)
             self.format: str = 'rpm'
             self.repo: str = matched.groups()[0]
             self.name: str = matched.groups()[1]
@@ -105,7 +106,8 @@ class Library:
         # The fmf identifier
         elif isinstance(identifier, tmt.base.RequireFmfId):
             self.identifier = identifier
-            self.parent.debug(f"Detected library '{identifier}'.", level=3)
+            self.parent.debug(
+                f"Detected library '{identifier.to_minimal_spec()}'.", level=3)
             self.format = 'fmf'
             self.url = identifier.url
             self.path = identifier.path
@@ -275,7 +277,7 @@ class Library:
             raise tmt.utils.GeneralError(
                 f"Library '{self.name}' not found in '{self.repo}'.")
         self.require = tmt.base.normalize_require(library_node.get('require', []))
-        self.recommend = tmt.base.normalize_recommend(library_node.get('recommend', []))
+        self.recommend = tmt.base.normalize_require(library_node.get('recommend', []))
 
         # Create a symlink if the library is deep in the structure
         # FIXME: hot fix for https://github.com/beakerlib/beakerlib/pull/72
@@ -296,7 +298,7 @@ class Library:
 
 def dependencies(
     original_require: List[tmt.base.Require],
-    original_recommend: Optional[List[str]] = None,
+    original_recommend: Optional[List[tmt.base.Require]] = None,
     parent: Optional[tmt.utils.Common] = None,
     imported_lib_ids: ImportedIdentifiersType = None,
         ) -> LibraryDependenciesType:
@@ -326,7 +328,7 @@ def dependencies(
             return True
         return lib not in imported_lib_ids
 
-    to_fetch = original_require + cast(List[tmt.base.Require], original_recommend)
+    to_fetch = original_require + original_recommend
     for dependency in filter(already_fetched, to_fetch):
         # Library require/recommend
         try:
@@ -343,7 +345,7 @@ def dependencies(
         except LibraryError:
             if dependency in original_require:
                 processed_require.add(dependency)
-            if isinstance(dependency, str) and dependency in original_recommend:
+            if dependency in original_recommend:
                 processed_recommend.add(dependency)
 
     # Convert to list and return the results
