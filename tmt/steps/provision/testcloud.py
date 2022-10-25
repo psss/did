@@ -472,6 +472,8 @@ class GuestTestcloud(tmt.GuestSsh):
         self.prepare_config()
         assert testcloud is not None
         self._image = testcloud.image.Image(self.image_url)
+        if self.instance_name is None:
+            raise ProvisionError(f"The instance name '{self.instance_name}' is invalid.")
         self._instance = testcloud.instance.Instance(
             self.instance_name, image=self._image,
             connection=f"qemu:///{self.connection}", desired_arch=self.arch)
@@ -554,6 +556,9 @@ class GuestTestcloud(tmt.GuestSsh):
             raise ProvisionError(
                 f"Failed to prepare the image. Check the '{TESTCLOUD_IMAGES}' "
                 f"directory permissions.") from error
+        except KeyError as error:
+            raise ProvisionError(
+                f"Failed to prepare image '{self.image_url}'.") from error
 
         # Create instance
         self.instance_name = self._tmt_name()
