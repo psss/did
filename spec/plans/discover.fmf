@@ -38,7 +38,7 @@ description: |
 
 /shell:
     summary: Provide a manual list of shell test cases
-    description:
+    description: |
         List of test cases to be executed can be defined manually
         directly in the plan as a list of dictionaries containing
         test ``name`` and actual ``test`` script. Optionally it is
@@ -46,18 +46,46 @@ description: |
         such as ``path`` or ``duration`` here as well. The default
         :ref:`/spec/tests/duration` for tests defined directly in
         the discover step is ``1h``.
-    example: |
+
+        It is possible to fetch code from a remote git repository
+        using ``url``. In that case repository is cloned and all
+        paths are relative to the remote git root. Using remote
+        repo and local test code at the same time is not possible
+        within the same discover config, use
+        :ref:`multiple-configs` instead.
+
+        url
+            Git repository, used directly as a git clone argument.
+
+        ref
+            Branch, tag or commit specifying the desired git
+            revision. Defaults to the remote repository's default
+            branch.
+
+    example:
+      - |
+        # Define several local tests
         discover:
             how: shell
             tests:
-            - name: /help/main
-              test: tmt --help
-            - name: /help/test
-              test: tmt test --help
-            - name: /help/smoke
-              test: ./smoke.sh
-              path: /tests/shell
-              duration: 1m
+              - name: /help/main
+                test: tmt --help
+              - name: /help/test
+                test: tmt test --help
+              - name: /help/smoke
+                test: ./smoke.sh
+                path: /tests/shell
+                duration: 1m
+      - |
+        # Fetch tests from a remote repository
+        discover:
+            how: shell
+            url: https://github.com/teemtee/tmt
+            tests:
+              - name: Use tests/full/test.sh from the remote repo
+                path: /tests/full
+                test: ./test.sh
+
     link:
       - implemented-by: /tmt/steps/discover/shell.py
 

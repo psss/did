@@ -1,13 +1,15 @@
 #!/bin/bash
 . /usr/share/beakerlib/beakerlib.sh || exit 1
 
+PLAN_PREFIX="${1:-/fmf}"
+
 rlJournalStart
     rlPhaseStartSetup
         rlRun 'pushd data'
     rlPhaseEnd
 
-    plan_noctx='plan -n dynamic-ref/no-context'
-    plan_ctx='plan -n dynamic-ref/with-context'
+    plan_noctx="plan -n $PLAN_PREFIX/dynamic-ref/no-context"
+    plan_ctx="plan -n $PLAN_PREFIX/dynamic-ref/with-context"
     steps='discover finish'
 
     rlPhaseStartTest 'Check dynamic ref without "branch" context'

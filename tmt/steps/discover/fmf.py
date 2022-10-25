@@ -17,8 +17,6 @@ import tmt.steps
 import tmt.steps.discover
 import tmt.utils
 
-DEFAULT_DYNAMIC_REF_FILEPATH: str = ".tmt/ref.fmf"
-
 
 @dataclasses.dataclass
 class DiscoverFmfStepData(tmt.steps.discover.DiscoverStepData):
@@ -354,32 +352,16 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 if not self.opt('dry'):
                     shutil.copytree(directory, self.testdir, symlinks=True)
 
-        # Prepare path of the dynamic reference file either following
-        # special syntax ref: @filepath or using the default location
-        if ref and ref.startswith("@"):
-            ref_filepath = os.path.join(self.testdir, ref[1:])
-            if not os.path.exists(ref_filepath):
-                raise tmt.utils.DiscoverError(
-                    f"Dynamic 'ref' definition file '{ref_filepath}' does not exist.")
-        else:
-            ref_filepath = os.path.join(self.testdir, DEFAULT_DYNAMIC_REF_FILEPATH)
-
-        # Apply dynamic referencing if the definition file exists and
-        # no custom standard ref (without the '@' prefix) is provided
-        if os.path.exists(ref_filepath) and (not ref or ref.startswith("@")):
-            self.debug(f"Dynamic 'ref' definition file '{ref_filepath}' detected.")
-            # Read it, process it and get the value of the attribute 'ref'
-            try:
-                with open(ref_filepath, encoding='utf-8') as datafile:
-                    data = tmt.utils.yaml_to_dict(datafile.read())
-            except OSError as error:
-                raise tmt.utils.FileError(f"Failed to read '{ref_filepath}'.") from error
-            # Build a dynamic reference tree, adjust ref based on the context
-            reference_tree = fmf.Tree(data=data)
-            reference_tree.adjust(fmf.context.Context(**self.step.plan._fmf_context()))
-            # Also temporarily build a plan so that env and context variables are expanded
-            tmt.Plan(node=reference_tree, run=self.step.plan.my_run, skip_validation=True)
-            ref = reference_tree.get("ref")
+        # Prepare path of the dynamic reference
+        try:
+            ref = tmt.base.resolve_dynamic_ref(
+                workdir=self.testdir,
+                ref=ref,
+                plan=self.step.plan,
+                common=self
+                )
+        except tmt.utils.FileError as error:
+            raise tmt.utils.DiscoverError(str(error))
 
         # Checkout revision if requested
         if ref:

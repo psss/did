@@ -581,6 +581,8 @@ inheritance and merging attributes.
 .. _fmf features: https://fmf.readthedocs.io/en/latest/features.html
 
 
+.. _multiple-configs:
+
 Multiple Configs
 ------------------------------------------------------------------
 

@@ -1,6 +1,7 @@
 import copy
 import dataclasses
 import os
+import shutil
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import click
@@ -162,6 +163,9 @@ class TestDescription(
 class DiscoverShellData(tmt.steps.discover.DiscoverStepData):
     tests: List[TestDescription] = dataclasses.field(default_factory=list)
 
+    url: Optional[str] = None
+    ref: Optional[str] = None
+
     def _normalize_tests(self, value: List[Dict[str, Any]]
                          ) -> List[TestDescription]:
         return [TestDescription.from_spec(raw_datum, tmt.utils.Common()) for raw_datum in value]
@@ -217,6 +221,18 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         tests:
         - name: /upstream
           test: cd $TMT_SOURCE_DIR/*/tests && make test
+
+    To clone a remote repository and use it as a source specify `url`.
+    It accepts also `ref` to checkout provided reference. Dynamic
+    reference feature is supported as well.
+
+    discover:
+        how: shell
+        url: https://github.com/teemtee/tmt.git
+        ref: "1.18.0"
+        tests:
+        - name: first test
+          test: ./script-from-the-repo.sh
     """
 
     _data_class = DiscoverShellData
@@ -232,13 +248,55 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             test_names = [test.name for test in tests]
             click.echo(tmt.utils.format('tests', test_names))
 
+    def fetch_remote_repository(
+            self, url: Optional[str], ref: Optional[str], testdir: str) -> None:
+        """ Fetch remote git repo from given url to testdir """
+        # Nothing to do if no url provided
+        if not url:
+            return
+
+        # Clone first - it might clone dist git
+        self.info('url', url, 'green')
+        tmt.utils.git_clone(
+            url=url,
+            destination=testdir,
+            common=self,
+            env={"GIT_ASKPASS": "echo"},
+            shallow=ref is None)
+
+        # Resolve possible dynamic references
+        try:
+            ref = tmt.base.resolve_dynamic_ref(
+                workdir=testdir,
+                ref=ref,
+                plan=self.step.plan,
+                common=self)
+        except tmt.utils.FileError as error:
+            raise tmt.utils.DiscoverError(str(error))
+
+        # Checkout revision if requested
+        if ref:
+            self.info('ref', ref, 'green')
+            self.debug(f"Checkout ref '{ref}'.")
+            self.run(['git', 'checkout', '-f', str(ref)], cwd=testdir)
+
+        # Remove .git so that it's not copied to the SUT
+        shutil.rmtree(os.path.join(testdir, '.git'))
+
     def go(self) -> None:
         """ Discover available tests """
         super(DiscoverShell, self).go()
         tests = fmf.Tree(dict(summary='tests'))
 
-        # dist-git related
         assert self.workdir is not None
+        testdir = os.path.join(self.workdir, "tests")
+
+        # Fetch remote repository
+        url = self.get('url', None)
+        ref = self.get('ref', None)
+        self.fetch_remote_repository(url, ref, testdir)
+
+        # dist-git related
         sourcedir = os.path.join(self.workdir, 'source')
         dist_git_source = self.get('dist-git-source', False)
 
@@ -279,9 +337,10 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             tests.child(data.name, test_fmf_keys)
 
         # Symlink tests directory to the plan work tree
-        testdir = os.path.join(self.workdir, "tests")
-        relative_path = os.path.relpath(self.step.plan.worktree, self.workdir)
-        os.symlink(relative_path, testdir)
+        # (unless remote repository is provided using 'url')
+        if not url:
+            relative_path = os.path.relpath(self.step.plan.worktree, self.workdir)
+            os.symlink(relative_path, testdir)
 
         if dist_git_source:
             assert self.step.plan.my_run is not None  # narrow type

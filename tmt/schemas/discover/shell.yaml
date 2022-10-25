@@ -22,6 +22,12 @@ properties:
   name:
     type: string
 
+  url:
+    type: string
+
+  ref:
+    type: string
+
   dist-git-source:
     $ref: "/schemas/common#/definitions/dist-git-source"
 

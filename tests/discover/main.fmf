@@ -7,8 +7,11 @@
     description:
         Make sure that all combinations of 'url', 'ref' and 'path'
         parameters work as expected.
-    test: ./references.sh
     tier: 2
+    /fmf:
+        test: ./references.sh
+    /shell:
+        test: ./references-shell.sh
 
 /modified:
     summary: Check filtering for tests modified since a given ref
@@ -35,8 +38,12 @@
       when: how == full or trigger == commit
 
 /dynamic-ref:
-    summary: Check that dynamic ref evaluation works
-    test: ./dynamic-ref.sh
+    /fmf:
+        summary: Check that dynamic ref evaluation works (fmf)
+        test: ./dynamic-ref.sh "/fmf"
+    /shell:
+        summary: Check that dynamic ref evaluation works (shell)
+        test: ./dynamic-ref.sh "/shell/url"
 
 /tests:
     summary: Tests defined under discover can use all metadata
