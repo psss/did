@@ -81,7 +81,7 @@ exported in different form. To facilitate these conversions, three
 families of helper methods are provided, each with its own set of
 use cases.
 
-``to_spec``/``from_spec``
+``to_spec``/``to_minimal_spec``/``from_spec``
 ------------------------------------------------------------------
 
 This family of methods works with tmt *specification*, i.e. raw
@@ -93,6 +93,11 @@ called to spawn objects representing the user input, while
 The default implementation comes from ``tmt.utils.SpecBasedContainer``
 class, all classes based on user input data should include this
 class among their bases.
+
+``to_minimal_spec`` performs the identical operation as ``to_spec``,
+but its result should not include keys that are optional and not set,
+while ``to_spec`` should always include all keys, even when set to
+default values or not set at all.
 
 .. code-block:: python
 

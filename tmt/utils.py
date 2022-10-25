@@ -1511,6 +1511,17 @@ class SpecBasedContainer(DataContainer):
 
         return self.to_dict()
 
+    def to_minimal_spec(self) -> Dict[str, Any]:
+        """
+        Convert to specification, skip default values
+
+        See https://tmt.readthedocs.io/en/stable/classes.html#class-conversions for more details.
+
+        See :py:meth:`from_spec` for its counterpart.
+        """
+
+        return self.to_minimal_dict()
+
 
 SerializableContainerDerivedType = TypeVar(
     'SerializableContainerDerivedType',

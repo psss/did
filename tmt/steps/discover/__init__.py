@@ -283,7 +283,7 @@ class Discover(tmt.steps.Step):
             if self.tests():
                 fmf_id_list = [
                     tmt.utils.dict_to_yaml(
-                        test.fmf_id.to_minimal_dict(),
+                        test.fmf_id.to_minimal_spec(),
                         start=True) for test in self.tests() if test.fmf_id.url]
                 click.echo(''.join(fmf_id_list), nl=False)
             return

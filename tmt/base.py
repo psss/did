@@ -137,6 +137,12 @@ class FmfId(tmt.utils.SpecBasedContainer, tmt.utils.SerializableContainer):
 
         return self.to_dict()
 
+    # ignore[override]: expected, we do want to return more specific
+    # type than the one declared in superclass.
+    def to_minimal_spec(self) -> _RawFmfId:  # type: ignore[override]
+        """ Convert to specification, skip default values """
+        return cast(_RawFmfId, super().to_minimal_spec())
+
     @classmethod
     def from_spec(cls, raw: _RawFmfId) -> 'FmfId':
         """ Convert from a specification file or from a CLI option """
@@ -530,7 +536,7 @@ class Core(
             # of export() cleanup comes.
             elif key == 'require' and value:
                 data[key] = [
-                    require.to_minimal_dict() if isinstance(
+                    require.to_minimal_spec() if isinstance(
                         require, RequireFmfId) else require for require in cast(
                         List[Require], value)]
 
@@ -767,7 +773,7 @@ class Test(Core):
                 continue
             if key == 'require':
                 value = [
-                    require if isinstance(require, str) else require.to_minimal_dict()
+                    require if isinstance(require, str) else require.to_minimal_spec()
                     for require in self.require
                     ]
             if value not in [None, list(), dict()]:
@@ -907,10 +913,10 @@ class Test(Core):
         # Export the fmf identifier
         if keys == ['fmf-id']:
             if format_ == ExportFormat.DICT:
-                return self.fmf_id.to_minimal_dict()
+                return self.fmf_id.to_minimal_spec()
 
             if format_ == ExportFormat.YAML:
-                return tmt.utils.dict_to_yaml(self.fmf_id.to_minimal_dict())
+                return tmt.utils.dict_to_yaml(self.fmf_id.to_minimal_spec())
 
             raise tmt.utils.GeneralError(f"Invalid test export format '{format_}'.")
 
