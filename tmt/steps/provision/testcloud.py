@@ -423,10 +423,9 @@ class GuestTestcloud(tmt.GuestSsh):
         elif name == 'fedora-coreos':
             url = testcloud.util.get_fedora_image_url("stable", self.arch)
         elif name == 'centos':
-            url = testcloud.util.get_centos_image_url("latest", self.arch)
+            url = testcloud.util.get_centos_image_url("latest", stream=False, arch=self.arch)
         elif name == 'centos-stream':
-            url = testcloud.util.get_centos_image_url(
-                "latest", stream=True, arch=self.arch)
+            url = testcloud.util.get_centos_image_url("latest", stream=True, arch=self.arch)
         elif name == 'ubuntu':
             url = testcloud.util.get_ubuntu_image_url("latest", self.arch)
         elif name == 'debian':
@@ -440,7 +439,7 @@ class GuestTestcloud(tmt.GuestSsh):
                 matched_fedora_coreos.group(2), self.arch)
         elif matched_centos[0]:
             url = testcloud.util.get_centos_image_url(
-                matched_centos[0].group(2), self.arch)
+                matched_centos[0].group(2), stream=False, arch=self.arch)
         elif matched_centos[1]:
             url = testcloud.util.get_centos_image_url(
                 matched_centos[1].group(2), stream=True, arch=self.arch)
