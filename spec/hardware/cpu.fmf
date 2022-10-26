@@ -1,0 +1,28 @@
+summary:
+    Choose system according to the processor features
+example:
+  - |
+    # Processor-related stuff grouped together
+    cpu:
+        # The total number of various CPU components in the system.
+        sockets: 1
+        cores: 4
+        threads: 8
+
+        # Ther number of various CPU components per their parent.
+        cores-per-socket: 4
+        threads-per-core: 2
+
+        # The total number of logical CPUs.
+        processors: 8
+
+        # CPU model name. Usually reported as such by /proc/cpuinfo or lscpu.
+        model-name: Intel(R) Core(TM) i7-10610U CPU @ 1.80GHz
+        # CPU model number.
+        model: 142
+        # CPU family name.
+        family-name: Comet Lake
+        # CPU family number.
+        family: 6
+link:
+  - implemented-by: /tmt/steps/provision/artemis.py

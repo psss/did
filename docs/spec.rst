@@ -53,3 +53,4 @@ Level 3: Stories
     spec/plans
     spec/stories
     spec/context
+    spec/hardware

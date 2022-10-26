@@ -1,0 +1,9 @@
+summary:
+    Select guests with given network devices
+example:
+  - |
+    # Select by vendor and device name
+    network:
+      - type: eth
+        vendor-name: ~ ^Broadcom
+        device-name: ~ ^NetXtreme II BCM

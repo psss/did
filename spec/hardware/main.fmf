@@ -1,0 +1,127 @@
+story:
+    As a tester I want to specify detailed hardware requirements
+    for the guest on which the tests will be executed.
+
+description: |
+    As part of the :ref:`/spec/plans/provision` step it is
+    possible to use the ``hardware`` key to specify additional
+    requirements for the testing environment. This provides a
+    generic and an extensible way to write down essential hardware
+    requirements. For example one consistent way how to specify
+    `at least 2 GB of RAM` for all supported provisioners.
+
+    Introduction
+    ^^^^^^^^^^^^
+
+    Individual requirements are provided as a simple ``key:
+    value`` pairs, for example the minimum amount of
+    :ref:`/spec/hardware/memory`, or the related information is
+    grouped under a common parent, for example ``cores`` or
+    ``model`` under the :ref:`/spec/hardware/cpu` key.
+
+    Search
+    ------
+
+    Regular expressions can be used for selected fields such as
+    the :ref:`/spec/hardware/cpu` model name or
+    :ref:`/spec/hardware/hostname`. Use ``~`` for positive and
+    ``!~`` for negative regular expressions at the beginning of
+    the string. Any leading or trailing white space from the
+    search string is removed.
+
+    Please note, that the full extent of regular expressions might
+    not be supported across all provision implementations. The
+    ``.*`` notation, however, should be supported everywhere::
+
+        # Search for processors using a cpu model name
+        cpu:
+            model-name: "~ AMD"
+
+        # Select guests with a non-matching hostname
+        hostname: "!~ kvm-01.*"
+
+    Operators
+    ---------
+
+    When multiple environment requirements are provided the
+    provision implementation should attempt to satisfy all of
+    them. It is also possible to write this explicitly using the
+    ``and`` operator containing a list of dictionaries with
+    individual requirements. When the ``or`` operator is used, any
+    of the alternatives provided in the list should be
+    sufficient::
+
+        # Optional operators at the start of the value
+        memory: '> 8 GB'
+        memory: '>= 8 GB'
+        memory: '< 8 GB'
+        memory: '<= 8 GB'
+
+        # By default exact value expected, these are equivalent:
+        cpu:
+            model: 37
+        cpu:
+            model: '= 37'
+
+        # Using advanced logic operators
+        and:
+          - cpu:
+                family: 15
+          - or:
+              - cpu:
+                    model: 65
+              - cpu:
+                    model: 67
+              - cpu:
+                    model: 69
+
+    Units
+    -----
+
+    The `pint`__ library is used for processing various units,
+    both decimal and binary prefixes can be used::
+
+        1 MB = 1 000 000 B
+        1 MiB = 1 048 576 B
+
+    __ https://pint.readthedocs.io/
+
+    Notes
+    -----
+
+    The implementation for this common ``hardware`` key is in
+    progress. Features under this section marked as implemented
+    are already supported by the ``artemis`` plugin. Support in
+    other provision plugins is on the way.  Check individual
+    plugin documentation for additional information on the
+    hardware requirement support.
+
+    .. note::
+
+        Some plugins may require additional configuration. For
+        example, Artemis can provision machines with disks of a
+        particular size, but to do so, Artemis maintainers must
+        configure disk sizes for various AWS / OpenStack / Azure
+        flavors. The constraint is supported and implemented, but
+        it will not deliver the required virtual machine when the
+        plugin's backend, the Artemis deployment, isn't configured
+        correctly.
+
+    .. note::
+
+        Some plugins may support requirements that are impossible
+        to satisfy, e.g. the :ref:`/spec/plans/provision/local`
+        plugin can support the ``cpu.family`` requirement, but it
+        is hard-locked to the CPU of one's own machine.
+
+
+example:
+  - |
+    # Use the artemis plugin to provision the latest Fedora on
+    # a guest with the x86_64 architecture and 8 GB of memory
+    provision:
+        how: artemis
+        image: fedora
+        hardware:
+            arch: x86_64
+            memory: 8 GB

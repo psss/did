@@ -1,0 +1,15 @@
+summary:
+    Choose the disk size
+example:
+  - |
+    # Disk group used to allow possible future extensions
+    disk:
+      - size: 500 GB
+
+  - |
+    # Multiple disks can be requested as well
+    disk:
+      - size: '>= 2 GB'
+      - size: '>= 20 GB'
+link:
+  - implemented-by: /tmt/steps/provision/artemis.py

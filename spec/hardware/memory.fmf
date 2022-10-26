@@ -1,0 +1,11 @@
+summary:
+    Select the desired amount of memory
+example:
+  - |
+    # Require an exact amount of memory
+    memory: 8 GB
+  - |
+    # Pick a guest with at least 8 GB
+    memory: ">= 8 GB"
+link:
+  - implemented-by: /tmt/steps/provision/artemis.py

@@ -1,0 +1,14 @@
+summary:
+    Features related to machine boot
+example:
+  - |
+    # Guest with BIOS
+    boot:
+        method: bios
+
+  - |
+    # Guest with UEFI
+    boot:
+        method: uefi
+link:
+  - implemented-by: /tmt/steps/provision/artemis.py

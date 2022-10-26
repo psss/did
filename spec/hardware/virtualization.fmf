@@ -1,0 +1,19 @@
+summary:
+    Features related to virtualization
+description:
+    This section allows to select guests which are virtualized or
+    support virtualization. Use the ``hypervisor`` key to select
+    specific implementation, for example ``hyperv``, ``kvm``,
+    ``nitro``, ``powerkvm``, ``powervm``, ``vmware`` or ``xen``.
+example:
+  - |
+    # Require a guest which supports virtualization
+    virtualization:
+        is-supported: true
+  - |
+    # Ask for a virtualized guest using kvm hypervisor
+    virtualization:
+        is-virtualized: true
+        hypervisor: kvm
+link:
+  - implemented-by: /tmt/steps/provision/artemis.py

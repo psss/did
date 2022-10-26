@@ -1,0 +1,9 @@
+summary:
+    Select the desired architecture
+example:
+  - |
+    # Architecture (any of well-known short architecture names,
+    # for example aarch64, i386, ppc64, ppc64le, s390x, x86_64)
+    arch: x86_64
+link:
+  - implemented-by: /tmt/steps/provision/artemis.py

@@ -2,17 +2,26 @@ summary: Provision a system for testing
 
 description: |
     Describes what environment is needed for testing and how it
-    should be provisioned. Provides a generic and an extensible
-    way to write down essential hardware requirements. For example
-    one consistent way how to specify "at least 2 GB of RAM" for
-    all supported provisioners. Might fail if it cannot provision
-    according to the constraints.
+    should be provisioned. There are several provision plugins
+    supporting multiple ways to provision the environment for
+    testing, for example
+    :ref:`/spec/plans/provision/virtual`,
+    :ref:`/spec/plans/provision/container`,
+    :ref:`/spec/plans/provision/connect` or
+    :ref:`/spec/plans/provision/local`.
+    See individual plugin documentation for details about
+    supported options.
+
+    As part of the provision step it is also possible to specify
+    detailed hardware requirements for the testing environment.
+    See the :ref:`/spec/hardware` specification section for
+    details.
 
 example: |
+    # Provision a local virtual machine with the latest Fedora
     provision:
         how: virtual
         image: fedora
-        memory: 8 GB
 
 /virtual:
     summary: Provision a virtual machine (default)
@@ -104,162 +113,6 @@ example: |
             guest: hostname or ip address
             key: private-key-path
 
-
-/hardware:
-    summary: Hardware specification
-
-    description: |
-        As part of the provision step it is possible to specify
-        additional requirements for the testing environment.
-        Individual requirements are provided as a simple ``key:
-        value`` pairs, for example the minimum amount of
-        ``memory`` or the related information is grouped under a
-        common parent, for example ``cores`` or ``model`` under
-        the ``cpu`` key.
-
-        When multiple environment requirements are provided the
-        provision implementation should attempt to satisfy all of
-        them. It is also possible to write this explicitly using
-        the ``and`` operator containing a list of dictionaries
-        with individual requirements. When the ``or`` operator is
-        used, any of the alternatives provided in the list should
-        be sufficient.
-
-        Regular expressions can be used for selected fields such
-        as the ``model-name``. Please note, that the full extent
-        of regular expressions might not be supported across all
-        provision implementations. The ``.*`` notation, however,
-        should be supported everywhere.
-
-        The `pint`__ library is used for processing various units,
-        both decimal and binary prefixes can be used::
-
-            1 MB = 1 000 000 B
-            1 MiB = 1 048 576 B
-
-        __ https://pint.readthedocs.io/
-
-        .. note::
-
-            Although the hardware specification is not implemented
-            yet we do not expect any significant changes to the
-            currently proposed format.
-
-    example:
-      - |
-        # Here's a full provision step example
-        provision:
-            how: virtual
-            image: fedora-35
-            hardware:
-                arch: x86_64
-                memory: 8 GB
-      - |
-        # Basic key-value format used to specify the memory size
-        memory: 8 GB
-
-      - |
-        # Architecture (any of well-known short architecture names,
-        # for example aarch64, i386, ppc64, ppc64le, s390x, x86_64)
-        arch: x86_64
-
-      - |
-        # Processor-related stuff grouped together
-        cpu:
-            # The total number of various CPU components in the system.
-            sockets: 1
-            cores: 4
-            threads: 8
-
-            # Ther number of various CPU components per their parent.
-            cores-per-socket: 4
-            threads-per-core: 2
-
-            # The total number of logical CPUs.
-            processors: 8
-
-            # CPU model name. Usually reported as such by /proc/cpuinfo or lscpu.
-            model-name: Intel(R) Core(TM) i7-10610U CPU @ 1.80GHz
-            # CPU model number.
-            model: 142
-            # CPU family name.
-            family-name: Comet Lake
-            # CPU family number.
-            family: 6
-
-      - |
-        # Disk group used to allow possible future extensions
-        disk:
-          - size: 500 GB
-
-        # Multiple disks can be requested as well
-        disk:
-          - size: '>= 2 GB'
-          - size: '>= 20 GB'
-
-      - |
-        # Optional operators at the start of the value
-        memory: '> 8 GB'
-        memory: '>= 8 GB'
-        memory: '< 8 GB'
-        memory: '<= 8 GB'
-
-      - |
-        # By default exact value expected, these are equivalent:
-        cpu:
-            model: 37
-        cpu:
-            model: '= 37'
-
-      - |
-        # Enable regular expression search
-        cpu:
-            model-name: =~ .*AMD.*
-
-      - |
-        # Network interface
-        network:
-          - type: eth
-            vendor-name: =~ Broadcom.*
-            device-name: =~ NetXtreme II BCM.*
-
-      - |
-        # Features related to virtualization
-        virtualization:
-            is-virtualized: true
-            is-supported: false
-            hypervisor: kvm
-
-      - |
-        # Features related to machine boot modes
-        boot:
-            method: bios
-
-        boot:
-            method: uefi
-
-      - |
-        # Choose machine with given hostname
-        hostname: kvm-01.lab.us-east-2.company.com
-
-        # Hostname matching a regular expression
-        hostname: "~ kvm-01.*"
-
-        # Hostname not matching a regular expression
-        hostname: "!~ kvm-01.*"
-
-      - |
-        # Using advanced logic operators
-        and:
-          - cpu:
-                family: 15
-          - or:
-              - cpu:
-                    model: 65
-              - cpu:
-                    model: 67
-              - cpu:
-                    model: 69
 
 /multihost:
     summary: Multihost testing specification
