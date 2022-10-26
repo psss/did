@@ -412,18 +412,25 @@ class Step(tmt.utils.Common):
 
             _raw_data: List[_RawStepData] = []
 
-            for datum in self.data:
+            # Do NOT iterate over `self.data`: reading `self.data` would trigger materialization
+            # of its content, calling plugins owning various raw step data to create corresponding
+            # `StepData` instances. That is actually harmful, as plugins that might be explicitly
+            # overriden by `--how` option, would run, with unexpected side-effects.
+            # Instead, iterate over raw data, and replace incompatible plugins with the one given
+            # on command line. There is no reason to ever let dropped plugin's `StepData` to
+            # materialize when it's going to be thrown away anyway.
+            for raw_datum in self._raw_data:
                 # We can re-use this one - to make handling easier, just dump it to "raw"
                 # form for _normalize_data().
-                if datum.how == how:
-                    self.debug(f'  compatible:   {datum}', level=4)
-                    _raw_data.append(datum.to_spec())
+                if raw_datum['how'] == how:
+                    self.debug(f'  compatible step data:   {raw_datum}', level=4)
+                    _raw_data.append(raw_datum)
 
                 # Mismatch, throwing away, replacing with new `how` - but we can keep the name.
                 else:
-                    self.debug(f'  incompatible: {datum}', level=4)
+                    self.debug(f'  incompatible step data: {raw_datum}', level=4)
                     _raw_data.append({
-                        'name': datum.name,
+                        'name': raw_datum['name'],
                         'how': how
                         })
 
