@@ -577,6 +577,16 @@ def test_get_distgit_handler():
         remote.origin.url git+ssh://git@gitlab.com/redhat/centos-stream/rpms/ruby.git
         """.split('\n'))
     assert isinstance(returned_object, tmt.utils.CentOSDistGit)
+    # RH Gitlab detection
+    returned_object = tmt.utils.get_distgit_handler([
+        "remote.origin.url https://<redacted_credentials>@gitlab.com/redhat/rhel/rpms/osbuild.git",  # noqa: E501
+    ])
+    assert isinstance(returned_object, tmt.utils.RedHatGitlab)
+
+
+def test_get_distgit_handler_explicit():
+    instance = tmt.utils.get_distgit_handler(usage_name='redhatgitlab')
+    assert instance.__class__.__name__ == 'RedHatGitlab'
 
 
 def test_FedoraDistGit(tmpdir):
