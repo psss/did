@@ -228,7 +228,7 @@ Christopher Sams, Thomas Heute, Giulio Fidente, Han Han, Qiao
 Zhao, Henrique Ferreiro, Jakub Vávra, Luigi Toscano, Lukáš
 Zapletal, Maryna Nalbandian, Dominika Hoďovská, Jakub Haruda,
 Han Han, Štěpán Němec, Evgeny Fedin, Mikel Olasagasti Uranga,
-Miloš Malík, Jeffrey Bastian and Côme Chilliet.
+Miloš Malík, Jeffrey Bastian, Côme Chilliet and Konrad Kleine.
 
 
 Copyright

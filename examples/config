@@ -44,6 +44,13 @@ url = https://pagure.io/api/0/
 login = <username>
 token = <authentication-token>
 
+[phabricator]
+type = phabricator
+url = https://reviews.llvm.org/api/
+token = <authentication-token>
+token_file = <file-with-authentication-token>
+login = <username1>,<username2>
+
 [trac]
 type = trac
 prefix = TT

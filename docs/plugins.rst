@@ -112,6 +112,13 @@ pagure
     :members:
     :undoc-members:
 
+phabricator
+-----------
+
+.. automodule:: did.plugins.phabricator
+    :members:
+    :undoc-members:
+
 redmine
 -------
 
