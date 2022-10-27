@@ -28,6 +28,19 @@ definitions:
     # empty `boot`.
     minProperties: 1
 
+  # HW requirements: `compatible` block
+  compatible:
+    type: object
+
+    properties:
+      distro:
+        type: array
+        items:
+          type: string
+
+    additionalProperties: false
+    minProperties: 1
+
   # HW requirements: `cpu` block
   cpu:
     type: object
@@ -175,6 +188,9 @@ definitions:
       boot:
         "$ref": "#/definitions/boot"
 
+      compatible:
+        "$ref": "#/definitions/compatible"
+
       cpu:
         "$ref": "#/definitions/cpu"
 
@@ -211,6 +227,7 @@ definitions:
         items:
           anyOf:
             - "$ref": "#/definitions/boot"
+            - "$ref": "#/definitions/compatible"
             - "$ref": "#/definitions/cpu"
             - "$ref": "#/definitions/disks"
             - "$ref": "#/definitions/networks"
@@ -231,6 +248,7 @@ definitions:
         items:
           anyOf:
             - "$ref": "#/definitions/boot"
+            - "$ref": "#/definitions/compatible"
             - "$ref": "#/definitions/cpu"
             - "$ref": "#/definitions/disks"
             - "$ref": "#/definitions/networks"
@@ -246,6 +264,7 @@ definitions:
   hardware:
     anyOf:
       - "$ref": "#/definitions/boot"
+      - "$ref": "#/definitions/compatible"
       - "$ref": "#/definitions/cpu"
       - "$ref": "#/definitions/disks"
       - "$ref": "#/definitions/networks"
