@@ -16,11 +16,11 @@ rlJournalStart
             rlPhaseEnd
 
             rlPhaseStartTest "Test provision $provision_method, execute $execute_method, long tests"
-                rlRun -s "tmt run --scratch -vfi $tmp -a provision -h $provision_method execute -h $execute_method test --name long" 2
+                rlRun -s "tmt run --scratch -vfi $tmp -a provision -h $provision_method execute -h $execute_method test --name long 2>&1" 2
                 rlAssertNotGrep "00:02:.. errr /test/long/beakerlib (timeout)" $rlRun_LOG
                 rlAssertNotGrep "00:02:.. errr /test/long/shell (timeout)" $rlRun_LOG
 
-                rlRun -s "tmt run --last report -fvvvv" 2
+                rlRun -s "tmt run --last report -fvvvv 2>&1" 2
                 rlAssertGrep "Maximum test time '5s' exceeded." $rlRun_LOG
                 rlAssertGrep "Adjust the test 'duration' attribute" $rlRun_LOG
                 rlAssertGrep "spec/tests.html#duration" $rlRun_LOG

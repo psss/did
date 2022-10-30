@@ -19,7 +19,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Dry mode"
-        rlRun "tmt clean runs --dry -v --workdir-root $tmprun | tee output"
+        rlRun "tmt clean runs --dry -v --workdir-root $tmprun 2>&1 >/dev/null | tee output"
         rlAssertGrep "Would remove workdir '$run1'" "output"
         rlAssertGrep "Would remove workdir '$run2'" "output"
         rlRun "tmt status --workdir-root $tmprun -vv | tee output"
@@ -28,13 +28,13 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Specify ID"
-        rlRun "tmt clean runs -v -i $run1 | tee output"
+        rlRun "tmt clean runs -v -i $run1 2>&1 >/dev/null | tee output"
         rlAssertGrep "Removing workdir '$run1'" "output"
         rlRun "tmt status --workdir-root $tmprun -vv | tee output"
         rlAssertNotGrep "(done\s+){1}(todo\s+){5}$run1\s+/plan1" "output" -E
         rlAssertGrep "(done\s+){1}(todo\s+){5}$run2\s+/plan1" "output" -E
 
-        rlRun "tmt clean runs -v -l | tee output"
+        rlRun "tmt clean runs -v -l 2>&1 >/dev/null | tee output"
         rlAssertGrep "Removing workdir '$run2'" "output"
         rlRun "tmt status --workdir-root $tmprun -vv | tee output"
         rlAssertNotGrep "(done\s+){1}(todo\s+){5}$run2\s+/plan1" "output" -E

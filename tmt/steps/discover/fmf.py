@@ -12,6 +12,7 @@ import fmf
 import tmt
 import tmt.base
 import tmt.beakerlib
+import tmt.log
 import tmt.options
 import tmt.steps
 import tmt.steps.discover
@@ -47,7 +48,10 @@ class DiscoverFmfStepData(tmt.steps.discover.DiscoverStepData):
     _normalize_exclude = tmt.utils.NormalizeKeysMixin._normalize_string_list
 
     # TODO: with mandatory validation, this can go away.
-    def _normalize_ref(self, value: Optional[Any]) -> Optional[str]:
+    def _normalize_ref(
+            self,
+            value: Optional[Any],
+            logger: tmt.log.Logger) -> Optional[str]:
         if value is None:
             return None
 
@@ -57,8 +61,10 @@ class DiscoverFmfStepData(tmt.steps.discover.DiscoverStepData):
 
         return value
 
-    def post_normalization(self, raw_data: tmt.steps._RawStepData,
-                           logger: tmt.utils.Common) -> None:
+    def post_normalization(
+            self,
+            raw_data: tmt.steps._RawStepData,
+            logger: tmt.log.Logger) -> None:
         super().post_normalization(raw_data, logger)
 
         if self.repository:
@@ -356,11 +362,10 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         # Prepare path of the dynamic reference
         try:
             ref = tmt.base.resolve_dynamic_ref(
+                logger=self._logger,
                 workdir=self.testdir,
                 ref=ref,
-                plan=self.step.plan,
-                common=self
-                )
+                plan=self.step.plan)
         except tmt.utils.FileError as error:
             raise tmt.utils.DiscoverError(str(error))
 
@@ -509,7 +514,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if self.opt('dry'):
             self._tests = []
             return
-        tree = tmt.Tree(path=tree_path, context=self.step.plan._fmf_context())
+        tree = tmt.Tree(logger=self._logger, path=tree_path, context=self.step.plan._fmf_context())
         self._tests = tree.tests(
             filters=filters,
             names=names,
@@ -527,7 +532,10 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             # Check for possible required beakerlib libraries
             if test.require or test.recommend:
                 test.require, test.recommend, _ = tmt.beakerlib.dependencies(
-                    test.require, test.recommend, parent=self)
+                    original_require=test.require,
+                    original_recommend=test.recommend,
+                    parent=self,
+                    logger=self._logger)
 
         # Add TMT_SOURCE_DIR variable for each test
         if dist_git_source:

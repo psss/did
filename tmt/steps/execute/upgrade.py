@@ -177,7 +177,7 @@ class ExecuteUpgrade(ExecuteInternal):
 
     def _get_plan(self, upgrades_repo: str) -> tmt.base.Plan:
         """ Get plan based on upgrade path """
-        tree = tmt.base.Tree(path=upgrades_repo)
+        tree = tmt.base.Tree(logger=self._logger, path=upgrades_repo)
         try:
             # We do not want to consider plan -n provided on the command line
             # in the remote repo for finding upgrade path.
@@ -207,7 +207,7 @@ class ExecuteUpgrade(ExecuteInternal):
                 }
             )
 
-        self._discover_upgrade = DiscoverFmf(step=self.step, data=data)
+        self._discover_upgrade = DiscoverFmf(logger=self._logger, step=self.step, data=data)
         self._run_discover_upgrade()
 
     def _run_discover_upgrade(self) -> None:

@@ -11,38 +11,38 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "No login"
-        rlRun "$tmt | tee output"
+        rlRun "$tmt 2>&1 >/dev/null | tee output"
         rlAssertNotGrep "interactive" "output"
     rlPhaseEnd
 
     rlPhaseStartTest "Last step"
-        rlRun "$tmt login -c true | tee output"
+        rlRun "$tmt login -c true 2>&1 >/dev/null | tee output"
         rlAssertGrep "interactive" "output"
         rlRun "grep '^    finish$' -A4 output | grep -i interactive"
     rlPhaseEnd
 
     for step in discover provision prepare execute report finish; do
         rlPhaseStartTest "Selected step ($step)"
-            rlRun "$tmt login -c true -s $step | tee output"
+            rlRun "$tmt login -c true -s $step 2>&1 >/dev/null | tee output"
             rlAssertGrep "interactive" "output"
             rlRun "grep '^    $step$' -A4 output | grep -i interactive"
         rlPhaseEnd
     done
 
     rlPhaseStartTest "Failed command"
-        rlRun "$tmt login -c false | tee output"
+        rlRun "$tmt login -c false 2>&1 >/dev/null | tee output"
         rlAssertGrep "interactive" "output"
     rlPhaseEnd
 
     rlPhaseStartTest "Last run"
         rlRun "tmt run -a provision -h local"
-        rlRun "tmt run -rl login -c true | tee output"
+        rlRun "tmt run -rl login -c true 2>&1 >/dev/null | tee output"
         rlAssertGrep "interactive" "output"
     rlPhaseEnd
 
     rlPhaseStartTest "Last run failed"
         rlRun "tmt run provision -h local prepare --how shell --script false" 2
-        rlRun "tmt run -rl login -c true | tee output" 2
+        rlRun "tmt run -rl login -c true 2>&1 >/dev/null | tee output" 2
         rlAssertGrep "interactive" "output"
     rlPhaseEnd
 

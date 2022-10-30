@@ -126,7 +126,11 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
             self.info('ssh options', fmf.utils.listed(data.ssh_option), 'green')
 
         # And finally create the guest
-        self._guest = tmt.GuestSsh(data=data, name=self.name, parent=self.step)
+        self._guest = tmt.GuestSsh(
+            logger=self._logger,
+            data=data,
+            name=self.name,
+            parent=self.step)
 
     def guest(self) -> Optional[tmt.GuestSsh]:
         """ Return the provisioned guest """

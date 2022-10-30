@@ -13,8 +13,10 @@ __all__ = [
     'GuestSsh',
     'Result',
     'Status',
-    'Clean']
+    'Clean',
+    'Logger']
 
 from tmt.base import Clean, Plan, Run, Status, Story, Test, Tree
+from tmt.log import Logger
 from tmt.result import Result
 from tmt.steps.provision import Guest, GuestSsh

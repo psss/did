@@ -11,7 +11,7 @@ rlJournalStart
 
     plan=fmf/nourl/noref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dvr discover plan --name $plan finish | tee output'
+        rlRun 'tmt run -dvr discover plan --name $plan finish 2>&1 >/dev/null | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertNotGrep 'Checkout ref' output
         rlAssertGrep '3 tests selected' output
@@ -24,7 +24,7 @@ rlJournalStart
     path=$(realpath .)
     rlPhaseStartTest $plan
         rlRun 'tmt run -dvr discover --how fmf --path $path plan --name $plan \
-            finish | tee output'
+            finish 2>&1 >/dev/null | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertNotGrep 'Checkout ref' output
         rlAssertGrep '3 tests selected' output
@@ -35,7 +35,7 @@ rlJournalStart
 
     plan=fmf/nourl/ref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dvr discover plan --name $plan finish | tee output'
+        rlRun 'tmt run -dvr discover plan --name $plan finish 2>&1 >/dev/null | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*5407fe5' output
         rlAssertGrep /tests/docs output
@@ -48,7 +48,7 @@ rlJournalStart
     echo $path
     rlPhaseStartTest $plan
         rlRun 'tmt run -dddvr discover --how fmf --path $path \
-            plan --name $plan finish | tee output'
+            plan --name $plan finish 2>&1 >/dev/null | tee output'
         rlAssertNotGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*eae4d52' output
         rlAssertGrep '2 tests selected' output
@@ -58,7 +58,7 @@ rlJournalStart
 
     plan=fmf/url/noref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dddvr discover plan --name $plan finish | tee output'
+        rlRun 'tmt run -dddvr discover plan --name $plan finish 2>&1 >/dev/null | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertNotGrep 'Checkout ref.*main' output
         rlAssertGrep /tests/core/docs output
@@ -68,7 +68,7 @@ rlJournalStart
 
     plan=fmf/url/noref/path
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dddvr discover plan --name $plan finish | tee output'
+        rlRun 'tmt run -dddvr discover plan --name $plan finish 2>&1 >/dev/null | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertNotGrep 'Checkout ref.*main' output
         rlAssertGrep '2 tests selected' output
@@ -78,7 +78,7 @@ rlJournalStart
 
     plan=fmf/url/ref/nopath
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dddvr discover plan --name $plan finish | tee output'
+        rlRun 'tmt run -dddvr discover plan --name $plan finish 2>&1 >/dev/null | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*5407fe5' output
         rlAssertGrep 'hash.*5407fe5' output
@@ -90,7 +90,7 @@ rlJournalStart
 
     plan=fmf/url/ref/path
     rlPhaseStartTest $plan
-        rlRun 'tmt run -dddvr discover plan --name $plan finish | tee output'
+        rlRun 'tmt run -dddvr discover plan --name $plan finish 2>&1 >/dev/null | tee output'
         rlAssertGrep 'Cloning into' output
         rlAssertGrep 'Checkout ref.*eae4d52' output
         rlAssertGrep 'hash.*eae4d52' output
@@ -99,7 +99,7 @@ rlJournalStart
         rlAssertGrep /tests/smoke output
         # Before the change was committed
         rlRun "tmt run -i $tmp -d discover --how fmf --ref eae4d52^ plan \
-            --name $plan 2>&1 | tee output" 2
+            --name $plan 2>&1 >/dev/null | tee output" 2
         rlAssertGrep 'Metadata tree path .* not found.' output
     rlPhaseEnd
 

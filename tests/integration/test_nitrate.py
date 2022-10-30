@@ -11,6 +11,7 @@ from ruamel.yaml import YAML
 
 import tmt.base
 import tmt.cli
+import tmt.log
 from tmt.utils import ConvertError
 
 # Prepare path to examples
@@ -325,6 +326,7 @@ extra-task: /tmt/integration
         self.assertEqual(self.runner_output.exit_code, 0)
 
         tree_f36_intel = tmt.Tree(
+            logger=tmt.log.Logger.create(),
             path='.',
             context={
                 'distro': ['fedora-36'],
@@ -338,6 +340,7 @@ extra-task: /tmt/integration
         self.assertEquals(test.node.get('extra-nitrate'), 'TC#0545993')
 
         tree_f35_intel = tmt.Tree(
+            logger=tmt.log.Logger.create(),
             path='.',
             context={
                 'distro': ['fedora-35'],

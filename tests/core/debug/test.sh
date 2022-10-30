@@ -8,12 +8,11 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "tmt run -ar prepare -ddd | tee output"
-        rlAssertGrep "Debug message from prepare" "output"
+        rlRun -s "tmt run -ar prepare -ddd"
+        rlAssertGrep "Debug message from prepare" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartCleanup
-        rlRun "rm -f output"
         rlRun "popd"
     rlPhaseEnd
 rlJournalEnd

@@ -12,6 +12,7 @@ import unittest.mock
 import pytest
 
 import tmt
+import tmt.log
 import tmt.plugins
 import tmt.steps.discover
 from tmt.utils import (Command, Common, GeneralError, ShellScript,
@@ -20,7 +21,7 @@ from tmt.utils import (Command, Common, GeneralError, ShellScript,
                        duration_to_seconds, listify, public_git_url,
                        validate_git_status, wait)
 
-run = Common().run
+run = Common(logger=tmt.log.Logger.create(verbose=0, debug=0, quiet=False)).run
 
 
 @pytest.fixture
@@ -148,37 +149,37 @@ def test_last_run_race(tmpdir, monkeypatch):
     assert config.last_run(), "Some run was stored as last run"
 
 
-def test_workdir_env_var(tmpdir, monkeypatch):
+def test_workdir_env_var(tmpdir, monkeypatch, root_logger):
     """ Test TMT_WORKDIR_ROOT environment variable """
     # Cannot use monkeypatch.context() as it is not present for CentOS Stream 8
     monkeypatch.setenv('TMT_WORKDIR_ROOT', tmpdir)
-    common = Common()
+    common = Common(logger=root_logger)
     common._workdir_init()
     monkeypatch.delenv('TMT_WORKDIR_ROOT')
     assert common.workdir == f'{tmpdir}/run-001'
 
 
-def test_workdir_root_full(tmpdir, monkeypatch):
+def test_workdir_root_full(tmpdir, monkeypatch, root_logger):
     """ Raise if all ids lower than WORKDIR_MAX are exceeded """
     monkeypatch.setattr(tmt.utils, 'WORKDIR_ROOT', tmpdir)
     monkeypatch.setattr(tmt.utils, 'WORKDIR_MAX', 1)
     possible_workdir = str(tmpdir.join('run-001'))
     # First call success
-    common1 = Common()
+    common1 = Common(logger=root_logger)
     common1._workdir_init()
     assert common1.workdir == possible_workdir
     # Second call has no id to try
     with pytest.raises(GeneralError):
-        Common()._workdir_init()
+        Common(logger=root_logger)._workdir_init()
     # Removed run-001 should be used again
     common1._workdir_cleanup(common1.workdir)
     assert not os.path.exists(possible_workdir)
-    common2 = Common()
+    common2 = Common(logger=root_logger)
     common2._workdir_init()
     assert common2.workdir == possible_workdir
 
 
-def test_workdir_root_race(tmpdir, monkeypatch):
+def test_workdir_root_race(tmpdir, monkeypatch, root_logger):
     """ Avoid race in workdir creation """
     monkeypatch.setattr(tmt.utils, 'WORKDIR_ROOT', str(tmpdir))
     results = queue.Queue()
@@ -186,7 +187,7 @@ def test_workdir_root_race(tmpdir, monkeypatch):
 
     def create_workdir():
         try:
-            common = Common()
+            common = Common(logger=root_logger)
             common._workdir_init()
             results.put(common.workdir)
         except Exception as err:
@@ -517,15 +518,15 @@ class test_structured_field(unittest.TestCase):
             StructuredFieldError, field.get, "section", "key")
 
 
-def test_run_interactive_not_joined(tmpdir):
-    stdout, stderr = Common()._run(
+def test_run_interactive_not_joined(tmpdir, root_logger):
+    stdout, stderr = Common(logger=root_logger)._run(
         "echo abc; echo def >2", shell=True, interactive=True, cwd=str(tmpdir), env={}, log=None)
     assert stdout is None
     assert stderr is None
 
 
-def test_run_interactive_joined(tmpdir):
-    stdout, _ = Common()._run(
+def test_run_interactive_joined(tmpdir, root_logger):
+    stdout, _ = Common(logger=root_logger)._run(
         "echo abc; echo def >2",
         shell=True,
         interactive=True,
@@ -536,13 +537,16 @@ def test_run_interactive_joined(tmpdir):
     assert stdout is None
 
 
-def test_run_not_joined_stdout():
-    stdout, _ = Common()._run(Command("ls", "/"), shell=False, cwd=".", env={}, log=None)
+def test_run_not_joined_stdout(root_logger):
+    stdout, _ = Common(
+        logger=root_logger)._run(
+        Command(
+            "ls", "/"), shell=False, cwd=".", env={}, log=None)
     assert "sbin" in stdout
 
 
-def test_run_not_joined_stderr():
-    _, stderr = Common()._run(
+def test_run_not_joined_stderr(root_logger):
+    _, stderr = Common(logger=root_logger)._run(
         ShellScript("ls non_existing || true").to_shell_command(),
         shell=False,
         cwd=".",
@@ -551,8 +555,8 @@ def test_run_not_joined_stderr():
     assert "ls: cannot access" in stderr
 
 
-def test_run_joined():
-    stdout, _ = Common()._run(
+def test_run_joined(root_logger):
+    stdout, _ = Common(logger=root_logger)._run(
         ShellScript("ls non_existing / || true").to_shell_command(),
         shell=False,
         cwd=".",
@@ -563,8 +567,8 @@ def test_run_joined():
     assert "sbin" in stdout
 
 
-def test_run_big():
-    stdout, _ = Common()._run(
+def test_run_big(root_logger):
+    stdout, _ = Common(logger=root_logger)._run(
         ShellScript("""for NUM in {1..100}; do LINE="$LINE n"; done; for NUM in {1..1000}; do echo $LINE; done""").to_shell_command(),  # noqa: E501
         shell=False,
         cwd=".",
@@ -615,7 +619,7 @@ def test_FedoraDistGit(tmpdir):
 class Test_validate_git_status:
     @pytest.mark.parametrize("use_path",
                              [False, True], ids=["without path", "with path"])
-    def test_all_good(cls, origin_and_local_git_repo, use_path):
+    def test_all_good(cls, origin_and_local_git_repo, use_path, root_logger):
         # No need to modify origin, ignoring it
         mine = origin_and_local_git_repo[1]
 
@@ -625,7 +629,7 @@ class Test_validate_git_status:
             fmf_root = mine.join('fmf_root')
         else:
             fmf_root = mine
-        tmt.Tree.init(str(fmf_root), None, None)
+        tmt.Tree.init(logger=root_logger, path=str(fmf_root), template=None, force=None)
         fmf_root.join('main.fmf').write('test: echo')
         run(ShellScript(f'git add {fmf_root} {fmf_root.join("main.fmf")}').to_shell_command(),
             cwd=mine)
@@ -633,27 +637,27 @@ class Test_validate_git_status:
             cwd=mine)
         run(ShellScript('git push').to_shell_command(),
             cwd=mine)
-        test = tmt.Tree(path=str(fmf_root)).tests()[0]
+        test = tmt.Tree(logger=root_logger, path=str(fmf_root)).tests()[0]
         validation = validate_git_status(test)
         assert validation == (True, '')
 
-    def test_no_remote(cls, local_git_repo):
+    def test_no_remote(cls, local_git_repo, root_logger):
         tmpdir = local_git_repo
-        tmt.Tree.init(str(tmpdir), None, None)
+        tmt.Tree.init(logger=root_logger, path=str(tmpdir), template=None, force=None)
         tmpdir.join('main.fmf').write('test: echo')
         run(ShellScript('git add main.fmf .fmf/version').to_shell_command(),
             cwd=tmpdir)
         run(ShellScript('git commit -m initial_commit').to_shell_command(),
             cwd=tmpdir)
 
-        test = tmt.Tree(path=str(tmpdir)).tests()[0]
+        test = tmt.Tree(logger=root_logger, path=str(tmpdir)).tests()[0]
         val, msg = validate_git_status(test)
         assert not val
         assert "Failed to get remote branch" in msg
 
-    def test_untracked_fmf_root(cls, local_git_repo):
+    def test_untracked_fmf_root(cls, local_git_repo, root_logger):
         # local repo is enough since this can't get passed 'is pushed' check
-        tmt.Tree.init(str(local_git_repo), None, None)
+        tmt.Tree.init(logger=root_logger, path=str(local_git_repo), template=None, force=None)
         local_git_repo.join('main.fmf').write('test: echo')
         run(
             ShellScript('git add main.fmf').to_shell_command(),
@@ -662,12 +666,12 @@ class Test_validate_git_status:
             ShellScript('git commit -m missing_fmf_root').to_shell_command(),
             cwd=local_git_repo)
 
-        test = tmt.Tree(path=str(local_git_repo)).tests()[0]
+        test = tmt.Tree(logger=root_logger, path=str(local_git_repo)).tests()[0]
         validate = validate_git_status(test)
         assert validate == (False, 'Uncommitted changes in .fmf/version')
 
-    def test_untracked_sources(cls, local_git_repo):
-        tmt.Tree.init(str(local_git_repo), None, None)
+    def test_untracked_sources(cls, local_git_repo, root_logger):
+        tmt.Tree.init(logger=root_logger, path=str(local_git_repo), template=None, force=None)
         local_git_repo.join('main.fmf').write('test: echo')
         local_git_repo.join('test.fmf').write('tag: []')
         run(ShellScript('git add .fmf/version test.fmf').to_shell_command(),
@@ -676,20 +680,20 @@ class Test_validate_git_status:
             ShellScript('git commit -m main.fmf').to_shell_command(),
             cwd=local_git_repo)
 
-        test = tmt.Tree(path=str(local_git_repo)).tests()[0]
+        test = tmt.Tree(logger=root_logger, path=str(local_git_repo)).tests()[0]
         validate = validate_git_status(test)
         assert validate == (False, 'Uncommitted changes in main.fmf')
 
     @pytest.mark.parametrize("use_path",
                              [False, True], ids=["without path", "with path"])
-    def test_local_changes(cls, origin_and_local_git_repo, use_path):
+    def test_local_changes(cls, origin_and_local_git_repo, use_path, root_logger):
         origin, mine = origin_and_local_git_repo
 
         if use_path:
             fmf_root = origin.join('fmf_root')
         else:
             fmf_root = origin
-        tmt.Tree.init(str(fmf_root), None, None)
+        tmt.Tree.init(logger=root_logger, path=str(fmf_root), template=None, force=None)
         fmf_root.join('main.fmf').write('test: echo')
         run(ShellScript('git add -A').to_shell_command(), cwd=origin)
         run(ShellScript('git commit -m added_test').to_shell_command(),
@@ -707,19 +711,19 @@ class Test_validate_git_status:
         # Change README but since it is not part of metadata we do not check it
         mine.join("README").write('changed')
 
-        test = tmt.Tree(path=str(mine_fmf_root)).tests()[0]
+        test = tmt.Tree(logger=root_logger, path=str(mine_fmf_root)).tests()[0]
         validation_result = validate_git_status(test)
 
         assert validation_result == (
             False, "Uncommitted changes in " + ('fmf_root/' if use_path else '') + "main.fmf")
 
-    def test_not_pushed(cls, origin_and_local_git_repo):
+    def test_not_pushed(cls, origin_and_local_git_repo, root_logger):
         # No need for original repo (it is required just to have remote in
         # local clone)
         mine = origin_and_local_git_repo[1]
         fmf_root = mine
 
-        tmt.Tree.init(str(fmf_root), None, None)
+        tmt.Tree.init(logger=root_logger, path=str(fmf_root), template=None, force=None)
 
         fmf_root.join('main.fmf').write('test: echo')
         run(ShellScript('git add main.fmf .fmf/version').to_shell_command(),
@@ -727,7 +731,7 @@ class Test_validate_git_status:
         run(ShellScript('git commit -m changes').to_shell_command(),
             cwd=mine)
 
-        test = tmt.Tree(path=str(fmf_root)).tests()[0]
+        test = tmt.Tree(logger=root_logger, path=str(fmf_root)).tests()[0]
         validation_result = validate_git_status(test)
 
         assert validation_result == (
@@ -737,16 +741,16 @@ class Test_validate_git_status:
 #
 # tmt.utils.wait() & waiting for things to happen
 #
-def test_wait_bad_tick():
+def test_wait_bad_tick(root_logger):
     """
     :py:func:`wait` shall raise an exception when invalid ``tick`` is given.
     """
 
     with pytest.raises(GeneralError, match='Tick must be a positive integer'):
-        wait(Common(), lambda: False, datetime.timedelta(seconds=1), tick=-1)
+        wait(Common(logger=root_logger), lambda: False, datetime.timedelta(seconds=1), tick=-1)
 
 
-def test_wait_deadline_already_passed():
+def test_wait_deadline_already_passed(root_logger):
     """
     :py:func:`wait` shall not call ``check`` if the given timeout leads to
     already expired deadline.
@@ -755,13 +759,16 @@ def test_wait_deadline_already_passed():
     ticks = []
 
     with pytest.raises(WaitingTimedOutError):
-        wait(Common(), lambda: ticks.append(1), datetime.timedelta(seconds=-86400))
+        wait(
+            Common(logger=root_logger),
+            lambda: ticks.append(1),
+            datetime.timedelta(seconds=-86400))
 
     # our callback should not have been called at all
     assert not ticks
 
 
-def test_wait():
+def test_wait(root_logger):
     """
     :py:func:`wait` shall call ``check`` multiple times until ``check`` returns
     successfully.
@@ -783,13 +790,13 @@ def test_wait():
         raise WaitingIncomplete()
 
     # We want to reach end of our list, give enough time budget.
-    r = wait(Common(), check, datetime.timedelta(seconds=3600), tick=0.01)
+    r = wait(Common(logger=root_logger), check, datetime.timedelta(seconds=3600), tick=0.01)
 
     assert r is return_value
     assert not ticks
 
 
-def test_wait_timeout():
+def test_wait_timeout(root_logger):
     """
     :py:func:`wait` shall call ``check`` multiple times until ``check`` running
     out of time.
@@ -801,7 +808,7 @@ def test_wait_timeout():
 
     # We want to reach end of time budget before reaching end of the list.
     with pytest.raises(WaitingTimedOutError):
-        wait(Common(), check, datetime.timedelta(seconds=1), tick=0.1)
+        wait(Common(logger=root_logger), check, datetime.timedelta(seconds=1), tick=0.1)
 
     # Verify our callback has been called. It's hard to predict how often it
     # should have been called, hopefully 10 times (1 / 0.1), but timing things
@@ -812,7 +819,7 @@ def test_wait_timeout():
     assert len(check.mock_calls) <= 10
 
 
-def test_wait_success_but_too_late():
+def test_wait_success_but_too_late(root_logger):
     """
     :py:func:`wait` shall report failure even when ``check`` succeeds but runs
     out of time.
@@ -822,7 +829,7 @@ def test_wait_success_but_too_late():
         time.sleep(5)
 
     with pytest.raises(WaitingTimedOutError):
-        wait(Common(), check, datetime.timedelta(seconds=1))
+        wait(Common(logger=root_logger), check, datetime.timedelta(seconds=1))
 
 
 def test_import_member():

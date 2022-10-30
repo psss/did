@@ -13,7 +13,7 @@ rlJournalStart
 
     for option in "" "--absolute-paths"; do
         rlPhaseStartTest "Check status (${option:-relative paths})"
-            rlRun -s "tmt run -av --scratch --id $run_dir report -h html $option" 2
+            rlRun -s "tmt run -av --scratch --id $run_dir report -h html $option 2>&1 >/dev/null | tee output" 2
             rlAssertGrep "summary: 2 tests passed, 1 test failed and 2 errors" $rlRun_LOG -F
 
             # Path of the generated file should be shown and the page should exist

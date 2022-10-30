@@ -110,6 +110,7 @@ class Finish(tmt.steps.Step):
             # operations inside finish plugins on the guest use the
             # finish step config rather than provision step config.
             guest_copy = copy.copy(guest)
+            guest_copy._logger = guest._logger.clone().apply_verbosity_options(**self._options)
             guest_copy.parent = self
             for phase in self.phases(classes=(Action, FinishPlugin)):
                 if isinstance(phase, Action):

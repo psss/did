@@ -16,7 +16,7 @@ rlJournalStart
             exitcode=0
             [[ $selected_step == execute ]] && exitcode=2
             [[ $selected_step == report ]] && exitcode=3
-            rlRun "tmt run $options $selected_step | tee output" $exitcode
+            rlRun "tmt run $options $selected_step 2>&1 >/dev/null | tee output" $exitcode
             for step in $steps; do
                 if [[ $step == $selected_step ]]; then
                     rlAssertGrep $step output
@@ -28,14 +28,14 @@ rlJournalStart
     done
 
     rlPhaseStartTest "All steps"
-        rlRun "tmt run $options --all provision -h local | tee output"
+        rlRun "tmt run $options --all provision -h local 2>&1 >/dev/null | tee output"
         for step in $steps; do
             rlAssertGrep $step output
         done
     rlPhaseEnd
 
     rlPhaseStartTest "Skip steps"
-        rlRun "tmt run $options --skip prepare | tee output"
+        rlRun "tmt run $options --skip prepare 2>&1 >/dev/null | tee output"
         for step in $steps; do
             if [[ $step == prepare ]]; then
                 rlAssertNotGrep $step output
@@ -46,7 +46,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Until"
-        rlRun "tmt run $options --until execute discover -h shell | tee output"
+        rlRun "tmt run $options --until execute discover -h shell 2>&1 >/dev/null | tee output"
         for step in discover provision prepare execute; do
             rlAssertGrep $step output
         done
@@ -57,7 +57,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Since"
-        rlRun "tmt run --last --since report finish -h shell | tee output"
+        rlRun "tmt run --last --since report finish -h shell 2>&1 >/dev/null | tee output"
         for step in discover provision prepare execute; do
             rlAssertNotGrep $step output
         done
@@ -68,7 +68,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Before"
-        rlRun "tmt run $options --before report discover -h shell | tee output"
+        rlRun "tmt run $options --before report discover -h shell 2>&1 >/dev/null | tee output"
         for step in discover provision prepare execute; do
             rlAssertGrep $step output
         done
@@ -79,7 +79,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "After"
-        rlRun "tmt run --last --after execute finish -h shell | tee output"
+        rlRun "tmt run --last --after execute finish -h shell 2>&1 >/dev/null | tee output"
         for step in discover provision prepare execute; do
             rlAssertNotGrep $step output
         done
@@ -91,7 +91,7 @@ rlJournalStart
 
     rlPhaseStartTest "Invalid"
         for option in 'since' 'until' 'skip'; do
-            rlRun "tmt run $options --$option invalid 2>&1 | tee output" 2
+            rlRun "tmt run $options --$option invalid 2>&1 >/dev/null | tee output" 2
             rlAssertGrep "Invalid value" output
         done
     rlPhaseEnd

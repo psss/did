@@ -254,7 +254,7 @@ MOCK_MODULES = ['testcloud', 'testcloud.image', 'testcloud.instance']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # Generate stories
-tree = tmt.Tree(path='.')
+tree = tmt.Tree(logger=tmt.Logger.create(), path='.')
 
 areas = {
     '/stories/docs': 'Documentation',

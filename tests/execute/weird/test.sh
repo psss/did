@@ -12,7 +12,7 @@ rlJournalStart
         rlPhaseStartTest "Test with the $executor executor"
             rlRun "tmt run -i $tmp/$executor -avvvddd \
                 provision -h local \
-                execute -h $executor | tee output"
+                execute -h $executor 2>&1 >/dev/null | tee output"
             rlAssertGrep 'Before: This text is fine.' output
             rlAssertGrep 'Weird: That is the b.*d one!' output
             rlAssertGrep 'After: This text is fine as well.' output

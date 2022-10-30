@@ -1,7 +1,10 @@
 
 import tmt
+import tmt.log
 
-tree = tmt.Tree(path='data')
+logger = tmt.log.Logger.create()
+
+tree = tmt.Tree(logger=logger, path='data')
 
 
 def test_root():

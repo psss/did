@@ -13,7 +13,7 @@ rlJournalStart
 
     testName="/test/custom-results"
     rlPhaseStartTest "${testName}"
-        rlRun -s "${tmt_command} ${testName}" 1 "Test provides 'results.yaml' file by itself"
+        rlRun -s "${tmt_command} ${testName} 2>&1 >/dev/null" 1 "Test provides 'results.yaml' file by itself"
         rlAssertGrep "00:11:22 pass /test/custom-results/test/passing" $rlRun_LOG
         rlAssertGrep "00:22:33 fail /test/custom-results/test/failing" $rlRun_LOG
         rlAssertGrep "         pass /test/custom-results/test/no_keys \[1/1\]" $rlRun_LOG
@@ -22,31 +22,31 @@ rlJournalStart
 
     testName="/test/missing-custom-results"
     rlPhaseStartTest "${testName}"
-        rlRun -s "${tmt_command} ${testName}" 2 "Test does not provide 'results.yaml' file"
+        rlRun -s "${tmt_command} ${testName} 2>&1 >/dev/null" 2 "Test does not provide 'results.yaml' file"
         rlAssertGrep "custom results file '/tmp/.*/plans/default/execute/data/test/missing-custom-results/data/results.yaml' not found" $rlRun_LOG
     rlPhaseEnd
 
     testName="/test/empty-custom-results-file"
     rlPhaseStartTest "${testName}"
-        rlRun -s "${tmt_command} ${testName}" 3 "Test provides empty 'results.yaml' file"
+        rlRun -s "${tmt_command} ${testName} 2>&1 >/dev/null" 3 "Test provides empty 'results.yaml' file"
         rlAssertGrep "total: no results found" $rlRun_LOG
     rlPhaseEnd
 
     testName="/test/wrong-yaml-results-file"
     rlPhaseStartTest "${testName}"
-        rlRun -s "${tmt_command} ${testName}" 2 "Test provides 'results.yaml' in valid YAML but wrong results format"
+        rlRun -s "${tmt_command} ${testName} 2>&1 >/dev/null" 2 "Test provides 'results.yaml' in valid YAML but wrong results format"
         rlAssertGrep "Expected list in yaml data, got 'dict'." $rlRun_LOG
     rlPhaseEnd
 
     testName="/test/invalid-yaml-results-file"
     rlPhaseStartTest "${testName}"
-        rlRun -s "${tmt_command} ${testName}" 2 "Test provides 'results.yaml' not in YAML format"
+        rlRun -s "${tmt_command} ${testName} 2>&1 >/dev/null" 2 "Test provides 'results.yaml' not in YAML format"
         rlAssertGrep "Invalid yaml syntax:" $rlRun_LOG
     rlPhaseEnd
 
     testName="/test/wrong-yaml-content"
     rlPhaseStartTest "${testName}"
-        rlRun -s "${tmt_command} ${testName}" 2 "Test provides partial result with wrong value"
+        rlRun -s "${tmt_command} ${testName} 2>&1 >/dev/null" 2 "Test provides partial result with wrong value"
         rlAssertGrep "Invalid partial custom result 'errrrrr'." $rlRun_LOG
     rlPhaseEnd
 

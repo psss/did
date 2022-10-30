@@ -17,7 +17,7 @@ rlJournalStart
         fi
 
         rlPhaseStartTest "Require an available package ($image)"
-            rlRun "$tmt plan --name available | tee output"
+            rlRun "$tmt plan --name available 2>&1 >/dev/null | tee output"
             rlAssertGrep '1 preparation applied' output
         rlPhaseEnd
 

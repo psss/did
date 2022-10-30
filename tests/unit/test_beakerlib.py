@@ -8,12 +8,14 @@ import tmt.beakerlib
 
 
 @pytest.mark.web
-def test_library():
+def test_library(root_logger):
     """ Fetch a beakerlib library with/without providing a parent """
-    parent = tmt.utils.Common(workdir=True)
+    parent = tmt.utils.Common(logger=root_logger, workdir=True)
     library_with_parent = tmt.beakerlib.Library(
+        logger=root_logger,
         identifier=tmt.base.RequireSimple('library(openssl/certgen)'), parent=parent)
     library_without_parent = tmt.beakerlib.Library(
+        logger=root_logger,
         identifier=tmt.base.RequireSimple('library(openssl/certgen)'))
 
     for library in [library_with_parent, library_without_parent]:
@@ -31,9 +33,13 @@ def test_library():
         ('https://github.com/beakerlib/httpd', '/http', 'master'),
         ('https://github.com/beakerlib/example', '/file', 'main')
         ])
-def test_library_from_fmf(url, name, default_branch):
+def test_library_from_fmf(url, name, default_branch, root_logger):
     """ Fetch beakerlib library referenced by fmf identifier """
-    library = tmt.beakerlib.Library(identifier=tmt.base.RequireFmfId(url=url, name=name))
+    library = tmt.beakerlib.Library(
+        logger=root_logger,
+        identifier=tmt.base.RequireFmfId(
+            url=url,
+            name=name))
     assert library.format == 'fmf'
     assert library.ref == default_branch
     assert library.url == url
@@ -44,11 +50,12 @@ def test_library_from_fmf(url, name, default_branch):
 
 
 @pytest.mark.web
-def test_invalid_url_conflict():
+def test_invalid_url_conflict(root_logger):
     """ Saner check if url mismatched for translated library """
-    parent = tmt.utils.Common(workdir=True)
+    parent = tmt.utils.Common(logger=root_logger, workdir=True)
     # Fetch to cache 'tmt' repo
     tmt.beakerlib.Library(
+        logger=root_logger,
         identifier=tmt.base.RequireFmfId(
             url='https://github.com/teemtee/tmt',
             name='/',
@@ -58,18 +65,20 @@ def test_invalid_url_conflict():
     # however upstream (gh.com/beakerlib/tmt) repo does not exist,
     # so there can't be "already fetched" error
     with pytest.raises(tmt.beakerlib.LibraryError):
-        tmt.beakerlib.Library(identifier='library(tmt/foo)', parent=parent)
+        tmt.beakerlib.Library(logger=root_logger, identifier='library(tmt/foo)', parent=parent)
     shutil.rmtree(parent.workdir)
 
 
 @pytest.mark.web
-def test_dependencies():
+def test_dependencies(root_logger):
     """ Check requires for possible libraries """
-    parent = tmt.utils.Common(workdir=True)
+    parent = tmt.utils.Common(logger=root_logger, workdir=True)
     requires, recommends, libraries = tmt.beakerlib.dependencies(
-        [tmt.base.RequireSimple('library(httpd/http)'), tmt.base.RequireSimple('wget')],
-        [tmt.base.RequireSimple('forest')],
-        parent=parent)
+        original_require=[
+            tmt.base.RequireSimple('library(httpd/http)'), tmt.base.RequireSimple('wget')],
+        original_recommend=[tmt.base.RequireSimple('forest')],
+        parent=parent,
+        logger=root_logger)
     # Check for correct requires and recommends
     for require in ['httpd', 'lsof', 'mod_ssl']:
         assert require in requires

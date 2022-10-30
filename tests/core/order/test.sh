@@ -62,24 +62,22 @@ rlJournalStart
 
     rlPhaseStartTest "Tests order with tmt run discover plan"
         order=(negative_2 one two three fourth negative_2 one two three)
-        rlRun "$discover -v plan -n third | grep ' /tests/' | tee $output"
+        rlRun "$discover -v plan -n third 2>&1 >/dev/null | grep ' /tests/' | tee $output"
         check_correct_order order "$output"
     rlPhaseEnd
 
     rlPhaseStartTest "Tests order with tmt run discover plan and test"
         order=(negative_2 one two three negative_2 one two three)
-        rlRun "$discover -v plan -n third test -n third | grep ' /tests/' \
-          | tee $output"
+        rlRun "$discover -v plan -n third test -n third 2>&1 >/dev/null | grep ' /tests/' | tee $output"
         check_correct_order order "$output"
         order=(fourth)
-        rlRun "$discover -v plan -n third test -n fourth | grep ' /tests/' \
-          | tee $output"
+        rlRun "$discover -v plan -n third test -n fourth 2>&1 >/dev/null | grep ' /tests/' | tee $output"
         check_correct_order order "$output"
     rlPhaseEnd
 
     rlPhaseStartTest "Plans order with tmt run discover"
         order=(negative_1 zero third fourth no_order none)
-        rlRun "tmt run -r finish discover -q | grep plan | tee $output"
+        rlRun "tmt run -r finish discover -q 2>&1 >/dev/null | grep -v 'warn:' | grep plan | tee $output"
         check_correct_order order "$output"
     rlPhaseEnd
 

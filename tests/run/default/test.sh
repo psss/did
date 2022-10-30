@@ -25,7 +25,7 @@ rlJournalStart
 
     rlPhaseStartTest "Explicit default"
         rlRun "tmt plan create -t mini plans/plan"
-        rlRun "tmt run $options plan --default | tee output"
+        rlRun "tmt run $options plan --default 2>&1 >/dev/null | tee output"
         rlAssertGrep "/plans/default" "output"
         rlAssertNotgrep "/plans/plan" "output"
     rlPhaseEnd

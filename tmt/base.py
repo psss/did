@@ -21,6 +21,7 @@ from ruamel.yaml.error import MarkedYAMLError
 
 import tmt.export
 import tmt.identifier
+import tmt.log
 import tmt.steps
 import tmt.steps.discover
 import tmt.steps.execute
@@ -320,7 +321,7 @@ _RawRequire = Union[_RawRequireItem, List[_RawRequireItem]]
 Require = Union[RequireSimple, RequireFmfId]
 
 
-def normalize_require(raw_require: Optional[_RawRequire]) -> List[Require]:
+def normalize_require(raw_require: Optional[_RawRequire], logger: tmt.log.Logger) -> List[Require]:
     """
     Normalize content of ``require`` key.
 
@@ -391,21 +392,32 @@ class Core(
     _normalize_tag = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
     # TODO: remove when schema becomes mandatory, `order` shall never be `null`
-    def _normalize_order(self, value: Optional[int]) -> int:
+    def _normalize_order(
+            self,
+            value: Optional[int],
+            logger: tmt.log.Logger) -> int:
         if value is None:
             return DEFAULT_ORDER
         return int(value)
 
-    def _normalize_link(self, value: _RawLinks) -> 'Links':
+    def _normalize_link(
+            self,
+            value: _RawLinks,
+            logger: tmt.log.Logger) -> 'Links':
         return Links(data=value)
 
     def _normalize_adjust(
-            self, value: Union[_RawAdjustRule, List[_RawAdjustRule]]) -> List[_RawAdjustRule]:
+            self,
+            value: Union[_RawAdjustRule, List[_RawAdjustRule]],
+            logger: tmt.log.Logger) -> List[_RawAdjustRule]:
         if value is None:
             return []
         return [value] if not isinstance(value, list) else value
 
-    def _normalize_tier(self, value: Optional[Union[int, str]]) -> Optional[str]:
+    def _normalize_tier(
+            self,
+            value: Optional[Union[int, str]],
+            logger: tmt.log.Logger) -> Optional[str]:
         if value is None:
             return None
         return str(value)
@@ -414,10 +426,10 @@ class Core(
                  *,
                  node: fmf.Tree,
                  parent: Optional[tmt.utils.Common] = None,
+                 logger: tmt.log.Logger,
                  **kwargs: Any) -> None:
         """ Initialize the node """
-        kwargs.setdefault('logger', self)
-        super().__init__(node=node, parent=parent, name=node.name, **kwargs)
+        super().__init__(node=node, logger=logger, parent=parent, name=node.name, **kwargs)
 
         self.node = node
 
@@ -662,7 +674,10 @@ class Test(Core):
     _normalize_contact = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_component = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
-    def _normalize_test(self, value: Optional[str]) -> ShellScript:
+    def _normalize_test(
+            self,
+            value: Optional[str],
+            logger: tmt.log.Logger) -> ShellScript:
         # TODO: mandatory schema validation would remove the need for Optional...
         # `test` is mandatory, must exist, so how to initialize if it's missing :(
         if value is None:
@@ -670,11 +685,17 @@ class Test(Core):
 
         return ShellScript(value)
 
-    def _normalize_require(self, value: Optional[_RawRequire]) -> List[Require]:
-        return normalize_require(value)
+    def _normalize_require(
+            self,
+            value: Optional[_RawRequire],
+            logger: tmt.log.Logger) -> List[Require]:
+        return normalize_require(value, logger)
 
-    def _normalize_recommend(self, value: Optional[_RawRequire]) -> List[Require]:
-        return normalize_require(value)
+    def _normalize_recommend(
+            self,
+            value: Optional[_RawRequire],
+            logger: tmt.log.Logger) -> List[Require]:
+        return normalize_require(value, logger)
 
     KEYS_SHOW_ORDER = [
         # Basic test information
@@ -704,8 +725,15 @@ class Test(Core):
         ]
 
     @classmethod
-    def from_dict(cls, mapping: Dict[str, Any], name: str, skip_validation: bool = False,
-                  raise_on_validation_error: bool = False, **kwargs: Any) -> 'Test':
+    def from_dict(
+            cls,
+            *,
+            mapping: Dict[str, Any],
+            name: str,
+            skip_validation: bool = False,
+            raise_on_validation_error: bool = False,
+            logger: tmt.log.Logger,
+            **kwargs: Any) -> 'Test':
         """
         Initialize test data from a dictionary.
 
@@ -719,6 +747,7 @@ class Test(Core):
         node.name = name
 
         return cls(
+            logger=logger,
             node=node,
             skip_validation=skip_validation,
             raise_on_validation_error=raise_on_validation_error,
@@ -730,6 +759,7 @@ class Test(Core):
             node: fmf.Tree,
             skip_validation: bool = False,
             raise_on_validation_error: bool = False,
+            logger: tmt.log.Logger,
             **kwargs: Any) -> None:
         """
         Initialize test data from an fmf node or a dictionary
@@ -758,9 +788,9 @@ class Test(Core):
 
         self.path = default_path
 
-        kwargs.setdefault('logger', self)
         super().__init__(
             node=node,
+            logger=logger,
             skip_validation=skip_validation,
             raise_on_validation_error=raise_on_validation_error,
             **kwargs)
@@ -1020,7 +1050,10 @@ class Plan(Core):
         'gate',
         ]
 
-    def _normalize_context(self, value: Optional[Dict[str, Any]]) -> FmfContextType:
+    def _normalize_context(
+            self,
+            value: Optional[Dict[str, Any]],
+            logger: tmt.log.Logger) -> FmfContextType:
         if value is None:
             return {}
 
@@ -1041,12 +1074,13 @@ class Plan(Core):
             run: Optional['Run'] = None,
             skip_validation: bool = False,
             raise_on_validation_error: bool = False,
+            logger: tmt.log.Logger,
             **kwargs: Any) -> None:
         """ Initialize the plan """
-        kwargs.setdefault('logger', self)
         kwargs.setdefault('run', run)
         super().__init__(
             node=node,
+            logger=logger,
             parent=run,
             skip_validation=skip_validation,
             raise_on_validation_error=raise_on_validation_error,
@@ -1079,17 +1113,35 @@ class Plan(Core):
 
         # Initialize test steps
         self.discover = tmt.steps.discover.Discover(
-            plan=self, data=self.node.get('discover'))
+            logger=logger.descend(logger_name='discover'),
+            plan=self,
+            data=self.node.get('discover')
+            )
         self.provision = tmt.steps.provision.Provision(
-            plan=self, data=self.node.get('provision'))
+            logger=logger.descend(logger_name='provision'),
+            plan=self,
+            data=self.node.get('provision')
+            )
         self.prepare = tmt.steps.prepare.Prepare(
-            plan=self, data=self.node.get('prepare'))
+            logger=logger.descend(logger_name='prepare'),
+            plan=self,
+            data=self.node.get('prepare')
+            )
         self.execute = tmt.steps.execute.Execute(
-            plan=self, data=self.node.get('execute'))
+            logger=logger.descend(logger_name='execute'),
+            plan=self,
+            data=self.node.get('execute')
+            )
         self.report = tmt.steps.report.Report(
-            plan=self, data=self.node.get('report'))
+            logger=logger.descend(logger_name='report'),
+            plan=self,
+            data=self.node.get('report')
+            )
         self.finish = tmt.steps.finish.Finish(
-            plan=self, data=self.node.get('finish'))
+            logger=logger.descend(logger_name='finish'),
+            plan=self,
+            data=self.node.get('finish')
+            )
 
         self._update_metadata()
 
@@ -1163,7 +1215,9 @@ class Plan(Core):
                 f"The 'environment-file' should be a list. "
                 f"Received '{type(environment_files).__name__}'.")
         combined = tmt.utils.environment_files_to_dict(
-            environment_files, root=node.root)
+            env_files=environment_files,
+            root=node.root,
+            logger=self._logger)
 
         # Environment variables from key, make sure that values are string
         environment = {
@@ -1679,7 +1733,7 @@ class Plan(Core):
             # Override the plan name with the local one to ensure unique names
             node.name = self.name
             # Create the plan object, save links between both plans
-            self._imported_plan = Plan(node=node, run=self.my_run, logger=self)
+            self._imported_plan = Plan(node=node, run=self.my_run, logger=self._logger.descend())
             self._imported_plan._original_plan = self
 
         return self._imported_plan
@@ -1716,7 +1770,10 @@ class Story(Core):
 
     _normalize_example = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
-    def _normalize_priority(self, value: Optional[str]) -> Optional[StoryPriority]:
+    def _normalize_priority(
+            self,
+            value: Optional[str],
+            logger: tmt.log.Logger) -> Optional[StoryPriority]:
         if value is None:
             return None
         return StoryPriority(value)
@@ -1742,10 +1799,10 @@ class Story(Core):
             node: fmf.Tree,
             skip_validation: bool = False,
             raise_on_validation_error: bool = False,
+            logger: tmt.log.Logger,
             **kwargs: Any) -> None:
         """ Initialize the story """
-        kwargs.setdefault('logger', self)
-        super().__init__(node=node, skip_validation=skip_validation,
+        super().__init__(node=node, logger=logger, skip_validation=skip_validation,
                          raise_on_validation_error=raise_on_validation_error, **kwargs)
         self._update_metadata()
 
@@ -1982,8 +2039,13 @@ class Tree(tmt.utils.Common):
                  *,
                  path: str = '.',
                  tree: Optional[fmf.Tree] = None,
-                 context: Optional[tmt.utils.FmfContextType] = None) -> None:
+                 context: Optional[tmt.utils.FmfContextType] = None,
+                 logger: tmt.log.Logger) -> None:
         """ Initialize tmt tree from directory path or given fmf tree """
+
+        # TODO: not calling parent __init__ on purpose?
+        self.inject_logger(logger)
+
         self._path = path
         self._tree = tree
         self._custom_context = context
@@ -2073,6 +2135,7 @@ class Tree(tmt.utils.Common):
 
     def tests(
             self,
+            logger: Optional[tmt.log.Logger] = None,
             keys: Optional[List[str]] = None,
             names: Optional[List[str]] = None,
             filters: Optional[List[str]] = None,
@@ -2083,6 +2146,7 @@ class Tree(tmt.utils.Common):
             ) -> List[Test]:
         """ Search available tests """
         # Handle defaults, apply possible command line options
+        logger = logger or self._logger
         keys = (keys or []) + ['test']
         names = names or []
         filters = (filters or []) + list(Test._opt('filters', []))
@@ -2112,7 +2176,7 @@ class Tree(tmt.utils.Common):
 
         if Test._opt('source'):
             tests = [
-                Test(node=test) for test in self.tree.prune(
+                Test(node=test, logger=self._logger.descend()) for test in self.tree.prune(
                     keys=keys, sources=cmd_line_names)]
 
         else:
@@ -2123,15 +2187,22 @@ class Tree(tmt.utils.Common):
                 tests = []
                 for name in names:
                     selected_tests = [
-                        Test(node=test) for test
-                        in name_filter(self.tree.prune(keys=keys, names=[name]))]
-                    tests.extend(
-                        sorted(selected_tests, key=lambda test: test.order))
+                        Test(
+                            node=test,
+                            logger=logger.descend(
+                                logger_name=test.get('name', None)
+                                )  # .apply_verbosity_options(**self._options),
+                            ) for test in name_filter(self.tree.prune(keys=keys, names=[name]))]
+                    tests.extend(sorted(selected_tests, key=lambda test: test.order))
             # Otherwise just perform a regular key/name filtering
             else:
                 selected_tests = [
-                    Test(node=test) for test
-                    in name_filter(self.tree.prune(keys=keys, names=names))]
+                    Test(
+                        node=test,
+                        logger=logger.descend(
+                            logger_name=test.get('name', None)
+                            )  # .apply_verbosity_options(**self._options),
+                        ) for test in name_filter(self.tree.prune(keys=keys, names=names))]
                 tests = sorted(selected_tests, key=lambda test: test.order)
 
         # Apply filters & conditions
@@ -2140,6 +2211,7 @@ class Tree(tmt.utils.Common):
 
     def plans(
             self,
+            logger: Optional[tmt.log.Logger] = None,
             keys: Optional[List[str]] = None,
             names: Optional[List[str]] = None,
             filters: Optional[List[str]] = None,
@@ -2150,6 +2222,7 @@ class Tree(tmt.utils.Common):
             ) -> List[Plan]:
         """ Search available plans """
         # Handle defaults, apply possible command line options
+        logger = logger or (run._logger if run is not None else self._logger)
         local_plan_keys = (keys or []) + ['execute']
         remote_plan_keys = (keys or []) + ['plan']
         names = (names or []) + list(Plan._opt('names', []))
@@ -2176,11 +2249,25 @@ class Tree(tmt.utils.Common):
             sources = None
 
         # Build the list, convert to objects, sort and filter
-        plans = [Plan(node=plan, run=run)
-                 for plan in [
-                     *self.tree.prune(keys=local_plan_keys, names=names, sources=sources),
-                     *self.tree.prune(keys=remote_plan_keys, names=names, sources=sources),
-            ]]
+        plans = [
+            Plan(
+                node=plan,
+                logger=logger.descend(
+                    logger_name=plan.get('name', None),
+                    extra_shift=0
+                    ).apply_verbosity_options(**Plan._options),
+                run=run) for plan in [
+                *
+                self.tree.prune(
+                    keys=local_plan_keys,
+                    names=names,
+                    sources=sources),
+                *
+                self.tree.prune(
+                    keys=remote_plan_keys,
+                    names=names,
+                    sources=sources),
+                ]]
 
         plans = self._filters_conditions(
             sorted(plans, key=lambda plan: plan.order),
@@ -2192,6 +2279,7 @@ class Tree(tmt.utils.Common):
 
     def stories(
             self,
+            logger: Optional[tmt.log.Logger] = None,
             keys: Optional[List[str]] = None,
             names: Optional[List[str]] = None,
             filters: Optional[List[str]] = None,
@@ -2202,6 +2290,7 @@ class Tree(tmt.utils.Common):
             ) -> List[Story]:
         """ Search available stories """
         # Handle defaults, apply possible command line options
+        logger = logger or self._logger
         keys = (keys or []) + ['story']
         names = (names or []) + list(Story._opt('names', []))
         filters = (filters or []) + list(Story._opt('filters', []))
@@ -2228,14 +2317,19 @@ class Tree(tmt.utils.Common):
 
         # Build the list, convert to objects, sort and filter
         stories = [
-            Story(node=story) for story
+            Story(node=story, logger=logger.descend()) for story
             in self.tree.prune(keys=keys, names=names, whole=whole, sources=sources)]
         return self._filters_conditions(
             sorted(stories, key=lambda story: story.order),
             filters, conditions, links, excludes)
 
     @staticmethod
-    def init(path: str, template: str, force: bool) -> None:
+    def init(
+            *,
+            path: str,
+            template: str,
+            force: bool,
+            logger: tmt.log.Logger) -> None:
         """ Initialize a new tmt tree, optionally with a template """
         path = os.path.realpath(path)
         dry = Tree._opt('dry')
@@ -2244,7 +2338,7 @@ class Tree(tmt.utils.Common):
         tree: Optional[Tree] = None
 
         try:
-            tree = Tree(path=path)
+            tree = Tree(logger=logger, path=path)
             # Are we creating a new tree under the existing one?
             assert tree is not None  # narrow type
             if path == tree.root:
@@ -2265,7 +2359,7 @@ class Tree(tmt.utils.Common):
             else:
                 try:
                     fmf.Tree.init(path)
-                    tree = Tree(path=path)
+                    tree = Tree(logger=logger, path=path)
                     assert tree.root is not None  # narrow type
                     path = tree.root
                 except fmf.utils.GeneralError as error:
@@ -2313,7 +2407,8 @@ class Run(tmt.utils.Common):
                  *,
                  id_: Optional[str] = None,
                  tree: Optional[Tree] = None,
-                 context: Optional['tmt.cli.Context'] = None) -> None:
+                 context: Optional['tmt.cli.Context'] = None,
+                 logger: tmt.log.Logger) -> None:
         """ Initialize tree, workdir and plans """
         # Use the last run id if requested
         self.config = tmt.utils.Config()
@@ -2329,7 +2424,7 @@ class Run(tmt.utils.Common):
         # Do not create workdir now, postpone it until later, as options
         # have not been processed yet and we do not want commands such as
         # tmt run discover --how fmf --help to create a new workdir.
-        super().__init__(context=context)
+        super().__init__(context=context, logger=logger)
         self._workdir_path: WorkdirArgumentType = id_ or True
         self._tree = tree
         self._plans: Optional[List[Plan]] = None
@@ -2342,14 +2437,14 @@ class Run(tmt.utils.Common):
         default_plan = tmt.utils.yaml_to_dict(tmt.templates.DEFAULT_PLAN)
         # The default discover method for this case is 'shell'
         default_plan[tmt.templates.DEFAULT_PLAN_NAME]['discover']['how'] = 'shell'
-        self.tree = tmt.Tree(tree=fmf.Tree(default_plan))
+        self.tree = tmt.Tree(logger=self._logger, tree=fmf.Tree(default_plan))
         self.debug("No metadata found, using the default plan.")
 
     def _save_tree(self, tree: Optional[Tree]) -> None:
         """ Save metadata tree, handle the default plan """
         default_plan = tmt.utils.yaml_to_dict(tmt.templates.DEFAULT_PLAN)
         try:
-            self.tree = tree if tree else tmt.Tree(path='.')
+            self.tree = tree if tree else tmt.Tree(logger=self._logger, path='.')
             self.debug(f"Using tree '{self.tree.root}'.")
             # Clear the tree and insert default plan if requested
             if Plan._opt("default"):
@@ -2383,11 +2478,13 @@ class Run(tmt.utils.Common):
             # Variables gathered from 'environment-file' options
             self._environment_from_options.update(
                 tmt.utils.environment_files_to_dict(
-                    (self.opt('environment-file') or []),
-                    root=self.tree.root))
+                    env_files=(self.opt('environment-file') or []),
+                    root=self.tree.root,
+                    logger=self._logger))
             # Variables from 'environment' options (highest priority)
             self._environment_from_options.update(
-                tmt.utils.environment_to_dict(self.opt('environment')))
+                tmt.utils.environment_to_dict(
+                    variables=self.opt('environment'), logger=self._logger))
 
         # Combine workdir and command line
         combined = self._environment_from_workdir.copy()
@@ -2438,7 +2535,12 @@ class Run(tmt.utils.Common):
 
         for plan in (data.plans or []):
             node = fmf.Tree({'execute': None}, name=plan, parent=dummy_parent)
-            self._plans.append(Plan(node=node, run=self, skip_validation=True))
+            self._plans.append(
+                Plan(
+                    node=node,
+                    logger=self._logger.descend(),
+                    run=self,
+                    skip_validation=True))
 
     def load(self) -> None:
         """ Load list of selected plans and enabled steps """
@@ -2452,7 +2554,7 @@ class Run(tmt.utils.Common):
         # create a new Tree from the root in run.yaml
         if self._workdir and not self.opt('root'):
             if data.root:
-                self._save_tree(tmt.Tree(path=data.root))
+                self._save_tree(tmt.Tree(logger=self._logger.descend(), path=data.root))
             else:
                 # The run was used without any metadata, default plan
                 # was used, load it
@@ -2534,7 +2636,7 @@ class Run(tmt.utils.Common):
     def follow(self) -> None:
         """ Periodically check for new lines in the log. """
         assert self.workdir is not None  # narrow type
-        logfile = open(os.path.join(self.workdir, tmt.utils.LOG_FILENAME), 'r')
+        logfile = open(os.path.join(self.workdir, tmt.log.LOG_FILENAME), 'r')
         # Move to the end of the file
         logfile.seek(0, os.SEEK_END)
         # Rewind some lines back to show more context
@@ -2768,7 +2870,11 @@ class Status(tmt.utils.Common):
         assert self._context_object is not None  # narrow type
         assert self._context_object.tree is not None  # narrow type
         for abs_path in tmt.utils.generate_runs(root_path, id_):
-            run = Run(id_=abs_path, tree=self._context_object.tree, context=self._context)
+            run = Run(
+                logger=self._logger,
+                id_=abs_path,
+                tree=self._context_object.tree,
+                context=self._context)
             self.process_run(run)
 
 
@@ -2783,7 +2889,8 @@ class Clean(tmt.utils.Common):
                  parent: Optional[tmt.utils.Common] = None,
                  name: Optional[str] = None,
                  workdir: tmt.utils.WorkdirArgumentType = None,
-                 context: Optional['tmt.cli.Context'] = None) -> None:
+                 context: Optional['tmt.cli.Context'] = None,
+                 logger: tmt.log.Logger) -> None:
         """
         Initialize name and relation with the parent object
 
@@ -2792,7 +2899,7 @@ class Clean(tmt.utils.Common):
         # Set the option to skip to initialize the work tree
         if context:
             context.params[tmt.utils.PLAN_SKIP_WORKTREE_INIT] = True
-        super().__init__(parent=parent, name=name, workdir=workdir, context=context)
+        super().__init__(logger=logger, parent=parent, name=name, workdir=workdir, context=context)
 
     def images(self) -> bool:
         """ Clean images of provision plugins """
@@ -2858,11 +2965,15 @@ class Clean(tmt.utils.Common):
         if self.opt('last'):
             # Pass the context containing --last to Run to choose
             # the correct one.
-            return self._stop_running_guests(Run(context=self._context))
+            return self._stop_running_guests(Run(logger=self._logger, context=self._context))
         successful = True
         assert self._context_object is not None  # narrow type
         for abs_path in tmt.utils.generate_runs(root_path, id_):
-            run = Run(id_=abs_path, tree=self._context_object.tree, context=self._context)
+            run = Run(
+                logger=self._logger,
+                id_=abs_path,
+                tree=self._context_object.tree,
+                context=self._context)
             if not self._stop_running_guests(run):
                 successful = False
         return successful
@@ -2888,7 +2999,7 @@ class Clean(tmt.utils.Common):
         if self.opt('last'):
             # Pass the context containing --last to Run to choose
             # the correct one.
-            last_run = Run(context=self._context)
+            last_run = Run(logger=self._logger, context=self._context)
             last_run._workdir_load(last_run._workdir_path)
             assert last_run.workdir is not None  # narrow type
             return self._clean_workdir(last_run.workdir)
@@ -3172,10 +3283,11 @@ class Links(tmt.utils.SpecBasedContainer):
 
 
 def resolve_dynamic_ref(
+        *,
         workdir: str,
         ref: Optional[str],
         plan: Plan,
-        common: tmt.utils.Common) -> Optional[str]:
+        logger: tmt.log.Logger) -> Optional[str]:
     """
     Get the final value for the dynamic reference
 
@@ -3193,7 +3305,7 @@ def resolve_dynamic_ref(
     if not os.path.exists(ref_filepath):
         raise tmt.utils.FileError(
             f"Dynamic 'ref' definition file '{ref_filepath}' does not exist.")
-    common.debug(f"Dynamic 'ref' definition file '{ref_filepath}' detected.")
+    logger.debug(f"Dynamic 'ref' definition file '{ref_filepath}' detected.")
 
     # Read it, process it and get the value of the attribute 'ref'
     try:
@@ -3205,7 +3317,7 @@ def resolve_dynamic_ref(
     reference_tree = fmf.Tree(data=data)
     reference_tree.adjust(fmf.context.Context(**plan._fmf_context()))
     # Also temporarily build a plan so that env and context variables are expanded
-    Plan(node=reference_tree, run=plan.my_run, skip_validation=True)
+    Plan(logger=logger, node=reference_tree, run=plan.my_run, skip_validation=True)
     ref = reference_tree.get("ref")
 
     return ref

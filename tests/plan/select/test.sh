@@ -36,10 +36,10 @@ rlJournalStart
     for name in '-n' '--name'; do
         rlPhaseStartTest "tmt run plan $name <name>"
             tmt='tmt run -i $tmp discover'
-            rlRun "$tmt plan $name core | tee $output"
+            rlRun "$tmt plan $name core 2>&1 >/dev/null | tee $output"
             rlAssertGrep "^/plans/features/core" $output
             rlAssertNotGrep "^/plans/features/basic" $output
-            rlRun "$tmt plan $name non-existent 2>&1 | tee $output" 2
+            rlRun "$tmt plan $name non-existent 2>&1 >/dev/null | tee $output" 2
             rlAssertGrep "No plans found." $output
         rlPhaseEnd
     done

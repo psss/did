@@ -7,6 +7,7 @@ import click
 import requests
 
 import tmt
+import tmt.log
 import tmt.options
 import tmt.steps
 import tmt.steps.prepare
@@ -33,7 +34,7 @@ class PrepareAnsibleData(tmt.steps.prepare.PrepareStepData):
     def pre_normalization(  # type: ignore[override]
             cls,
             raw_data: _RawAnsibleStepData,
-            logger: tmt.utils.Common) -> None:
+            logger: tmt.log.Logger) -> None:
         super().pre_normalization(raw_data, logger)
 
         # Perform `playbook` normalization here, so we could merge `playbooks` to it.

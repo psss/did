@@ -8,9 +8,8 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "tmt run --remove discover finish | tee output"
-        rlAssertGrep "0 tests selected" "output"
-        rlRun "rm output"
+        rlRun -s "tmt run --remove discover finish"
+        rlAssertGrep "0 tests selected" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartCleanup

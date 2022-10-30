@@ -656,7 +656,11 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 self.info(key, value, 'green')
 
         # Create a new GuestTestcloud instance and start it
-        self._guest = GuestTestcloud(data=data, name=self.name, parent=self.step)
+        self._guest = GuestTestcloud(
+            logger=self._logger,
+            data=data,
+            name=self.name,
+            parent=self.step)
         self._guest.start()
 
     def guest(self) -> Optional[tmt.Guest]:

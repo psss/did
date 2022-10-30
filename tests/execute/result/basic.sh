@@ -9,7 +9,7 @@ run()
     orig=$3 # original result
     ret=$4  # tmt return code
 
-    rlRun -s "tmt run -a --scratch --id \${run} test --name ${tn} provision --how local report -v | grep report -A2 | tail -n 1" \
+    rlRun -s "tmt run -a --scratch --id \${run} test --name ${tn} provision --how local report -v 2>&1 >/dev/null | grep report -A2 | tail -n 1" \
         ${ret} "Result: ${res}, Test name: ${tn}, Original result: '${orig}', tmt return code: ${ret}"
 
     if [ -z "${orig}" ]; then # No original result provided
@@ -47,7 +47,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Verbose execute prints result"
-        rlRun -s "tmt run --id \${run} --scratch --until execute tests --filter tag:-cherry_pick provision --how local execute -v" "2"
+        rlRun -s "tmt run --id \${run} --scratch --until execute tests --filter tag:-cherry_pick provision --how local execute -v 2>&1 >/dev/null" "2"
         while read -r line; do
             if rlIsRHELLike "=8" && [[ $line =~ /test/error-timeout ]]; then
                 # Centos stream 8 doesn't do watchdog properly https://github.com/teemtee/tmt/issues/1387
@@ -75,7 +75,7 @@ EOF
 
     rlPhaseStartTest "Verbose execute prints result - reboot case"
         # Before the reboot results is not known
-        rlRun -s "tmt run --id \${run} --scratch --until execute tests -n /xfail-with-reboot provision --how container execute -v"
+        rlRun -s "tmt run --id \${run} --scratch --until execute tests -n /xfail-with-reboot provision --how container execute -v 2>&1 >/dev/null"
         EXPECTED=$(cat <<EOF
             00:00:00 /test/xfail-with-reboot [1/1]
             00:00:00 pass /test/xfail-with-reboot (original result: fail) [1/1]
@@ -85,7 +85,7 @@ EOF
     rlPhaseEnd
 
     rlPhaseStartTest "Verbose execute prints result - abort case"
-        rlRun -s "tmt run --id \${run} --scratch --until execute tests tests -n /abort provision --how container execute -v" "2"
+        rlRun -s "tmt run --id \${run} --scratch --until execute tests tests -n /abort provision --how container execute -v 2>&1 >/dev/null" "2"
         rlAssertGrep "00:00:00 errr /test/abort (aborted) [1/1" $rlRun_LOG -F
     rlPhaseEnd
 

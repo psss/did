@@ -48,7 +48,7 @@ class DiscoverExample(tmt.steps.discover.DiscoverPlugin):
         print("Code should prepare environment for tests.")
 
         # Discover available tests
-        self._tests = tmt.Tree(path=".").tests()
+        self._tests = tmt.Tree(logger=self._logger, path=".").tests()
 
     def tests(self):
         """

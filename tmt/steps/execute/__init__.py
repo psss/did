@@ -130,10 +130,11 @@ class ExecutePlugin(tmt.steps.Plugin):
             *,
             step: Step,
             data: StepData,
-            workdir: tmt.utils.WorkdirArgumentType = None) -> None:
-        super().__init__(step=step, data=data, workdir=workdir)
+            workdir: tmt.utils.WorkdirArgumentType = None,
+            logger: tmt.log.Logger) -> None:
+        super().__init__(logger=logger, step=step, data=data, workdir=workdir)
         if tmt.steps.Login._opt('test'):
-            self._login_after_test = tmt.steps.Login(step=self.step, order=90)
+            self._login_after_test = tmt.steps.Login(logger=logger, step=self.step, order=90)
 
     @classmethod
     def base_command(
@@ -418,9 +419,14 @@ class Execute(tmt.steps.Step):
 
     _preserved_files = ['step.yaml', 'results.yaml', 'data']
 
-    def __init__(self, *, plan: "tmt.Plan", data: tmt.steps.RawStepDataArgument) -> None:
+    def __init__(
+            self,
+            *,
+            plan: "tmt.Plan",
+            data: tmt.steps.RawStepDataArgument,
+            logger: tmt.log.Logger) -> None:
         """ Initialize execute step data """
-        super().__init__(plan=plan, data=data)
+        super().__init__(plan=plan, data=data, logger=logger)
         # List of Result() objects representing test results
         self._results: List[tmt.Result] = []
 

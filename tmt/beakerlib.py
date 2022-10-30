@@ -77,11 +77,11 @@ class Library:
             self,
             *,
             identifier: BeakerlibIdentifierType,
-            parent: Optional[tmt.utils.Common] = None
-            ) -> None:
+            parent: Optional[tmt.utils.Common] = None,
+            logger: tmt.log.Logger) -> None:
         """ Process the library identifier and fetch the library """
         # Use an empty common class if parent not provided (for logging, cache)
-        self.parent = parent or tmt.utils.Common(workdir=True)
+        self.parent = parent or tmt.utils.Common(logger=logger, workdir=True)
 
         # Default branch is detected from the origin after cloning
         self.default_branch: Optional[str] = None
@@ -277,8 +277,10 @@ class Library:
                 raise LibraryError
             raise tmt.utils.GeneralError(
                 f"Library '{self.name}' not found in '{self.repo}'.")
-        self.require = tmt.base.normalize_require(library_node.get('require', []))
-        self.recommend = tmt.base.normalize_require(library_node.get('recommend', []))
+        self.require = tmt.base.normalize_require(
+            library_node.get('require', []), self.parent._logger)
+        self.recommend = tmt.base.normalize_require(
+            library_node.get('recommend', []), self.parent._logger)
 
         # Create a symlink if the library is deep in the structure
         # FIXME: hot fix for https://github.com/beakerlib/beakerlib/pull/72
@@ -298,11 +300,12 @@ class Library:
 
 
 def dependencies(
-    original_require: List[tmt.base.Require],
-    original_recommend: Optional[List[tmt.base.Require]] = None,
-    parent: Optional[tmt.utils.Common] = None,
-    imported_lib_ids: ImportedIdentifiersType = None,
-        ) -> LibraryDependenciesType:
+        *,
+        original_require: List[tmt.base.Require],
+        original_recommend: Optional[List[tmt.base.Require]] = None,
+        parent: Optional[tmt.utils.Common] = None,
+        imported_lib_ids: ImportedIdentifiersType = None,
+        logger: tmt.log.Logger) -> LibraryDependenciesType:
     """
     Check dependencies for possible beakerlib libraries
 
@@ -333,12 +336,16 @@ def dependencies(
     for dependency in filter(already_fetched, to_fetch):
         # Library require/recommend
         try:
-            library = Library(identifier=dependency, parent=parent)
+            library = Library(logger=logger, identifier=dependency, parent=parent)
             gathered_libraries.append(library)
             imported_lib_ids.append(library.identifier)
             # Recursively check for possible dependent libraries
             requires, recommends, libraries = dependencies(
-                library.require, library.recommend, parent, imported_lib_ids)
+                original_require=library.require,
+                original_recommend=library.recommend,
+                parent=parent,
+                imported_lib_ids=imported_lib_ids,
+                logger=logger)
             processed_require.update(set(requires))
             processed_recommend.update(set(recommends))
             gathered_libraries.extend(libraries)

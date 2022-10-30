@@ -8,7 +8,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "tmt run -dddvvvr | tee output"
+        rlRun "tmt run -dddvvvr 2>&1 >/dev/null | tee output"
         rlAssertGrep "Test Management Tool" "output"
     rlPhaseEnd
 

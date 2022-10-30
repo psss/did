@@ -2,7 +2,7 @@ import re
 
 import tmt
 
-tree = tmt.Tree(path='data')
+tree = tmt.Tree(logger=tmt.Logger.create(), path='data')
 prefix = r'https://github.com/.*/tmt/tree/.*/tests/core/web-link/data/'
 
 

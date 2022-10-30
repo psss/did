@@ -9,6 +9,7 @@ import click
 import fmf
 
 import tmt
+import tmt.log
 import tmt.options
 import tmt.steps
 import tmt.steps.prepare
@@ -49,9 +50,14 @@ class InstallBase(tmt.utils.Common):
     debuginfo_packages: List[str]
     repository_packages: List[str]
 
-    def __init__(self, *, parent: tmt.steps.prepare.PreparePlugin, guest: Guest) -> None:
+    def __init__(
+            self,
+            *,
+            parent: tmt.steps.prepare.PreparePlugin,
+            guest: Guest,
+            logger: tmt.log.Logger) -> None:
         """ Initialize installation data """
-        super().__init__(parent=parent, relative_indent=0)
+        super().__init__(logger=logger, parent=parent, relative_indent=0)
         self.guest = guest
 
         # Get package related data from the plugin
@@ -567,13 +573,14 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
         # Pick the right implementation
         try:
             guest.execute(Command('stat', '/run/ostree-booted'), silent=True)
-            installer: InstallBase = InstallRpmOstree(parent=self, guest=guest)
+            installer: InstallBase = InstallRpmOstree(
+                logger=self._logger, parent=self, guest=guest)
         except tmt.utils.RunError:
             try:
                 guest.execute(Command('rpm', '-q', 'dnf'), silent=True)
-                installer = InstallDnf(parent=self, guest=guest)
+                installer = InstallDnf(logger=self._logger, parent=self, guest=guest)
             except tmt.utils.RunError:
-                installer = InstallYum(parent=self, guest=guest)
+                installer = InstallYum(logger=self._logger, parent=self, guest=guest)
 
         # Enable copr repositories and install packages
         installer.enable_copr()

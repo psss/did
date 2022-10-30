@@ -88,9 +88,14 @@ class Prepare(tmt.steps.Step):
 
     _plugin_base_class = PreparePlugin
 
-    def __init__(self, *, plan: 'Plan', data: tmt.steps.RawStepDataArgument) -> None:
+    def __init__(
+            self,
+            *,
+            plan: 'Plan',
+            data: tmt.steps.RawStepDataArgument,
+            logger: tmt.log.Logger) -> None:
         """ Initialize prepare step data """
-        super().__init__(plan=plan, data=data)
+        super().__init__(plan=plan, data=data, logger=logger)
         self.preparations_applied = 0
 
     def wake(self) -> None:
@@ -200,6 +205,8 @@ class Prepare(tmt.steps.Step):
             # operations inside prepare plugins on the guest use the
             # prepare step config rather than provision step config.
             guest_copy = copy.copy(guest)
+            guest_copy.inject_logger(
+                guest._logger.clone().apply_verbosity_options(**self._options))
             guest_copy.parent = self
             # Execute each prepare plugin
             for phase in self.phases(classes=(Action, PreparePlugin)):

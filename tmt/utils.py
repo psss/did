@@ -46,6 +46,7 @@ if sys.version_info >= (3, 8):
 else:
     from typing_extensions import Literal, Protocol
 
+import tmt.log
 
 if TYPE_CHECKING:
     import tmt.base
@@ -57,9 +58,6 @@ log = fmf.utils.Logging('tmt').logger
 # Default workdir root and max
 WORKDIR_ROOT = '/var/tmp/tmt'
 WORKDIR_MAX = 1000
-
-# Log in workdir
-LOG_FILENAME = 'log.txt'
 
 # Maximum number of lines of stdout/stderr to show upon errors
 OUTPUT_LINES = 100
@@ -153,49 +151,6 @@ LoggerFnType = Union[
     BaseLoggerFnType,
     LevelessLoggerFnType,
     SemanticLoggerFnType]
-
-
-def indent(
-        key: str,
-        value: Optional[str] = None,
-        color: Optional[str] = None,
-        level: int = 0) -> str:
-    """
-    Indent a key/value message.
-
-    If both ``key`` and ``value`` are specified, ``{key}: {value}``
-    message is rendered. Otherwise, just ``key`` is used alone. If
-    ``value`` contains multiple lines, each but the very first line is
-    indented by one extra level.
-
-    :param value: optional value to print at right side of ``key``.
-    :param color: optional color to apply on ``key``.
-    :param level: number of indentation levels. Each level is indented
-                  by :py:data:`INDENT` spaces.
-    """
-
-    indent = ' ' * INDENT * level
-    deeper = ' ' * INDENT * (level + 1)
-
-    # Colorize
-    if color is not None:
-        key = style(key, fg=color)
-
-    # Handle key only
-    if value is None:
-        message = key
-
-    # Handle key + value
-    else:
-        # Multiline content indented deeper
-        if isinstance(value, str):
-            lines = value.splitlines()
-            if len(lines) > 1:
-                value = ''.join([f"\n{deeper}{line}" for line in lines])
-
-        message = f'{key}: {value}'
-
-    return indent + message
 
 
 class Config:
@@ -426,6 +381,9 @@ class Common:
     # mostly fine.
     parent: Optional['Common'] = None
 
+    def inject_logger(self, logger: tmt.log.Logger) -> None:
+        self._logger = logger
+
     def __init__(
             self,
             *,
@@ -434,6 +392,7 @@ class Common:
             workdir: WorkdirArgumentType = None,
             context: Optional['tmt.cli.Context'] = None,
             relative_indent: int = 1,
+            logger: tmt.log.Logger,
             **kwargs: Any) -> None:
         """
         Initialize name and relation with the parent object
@@ -443,9 +402,20 @@ class Common:
         Store command line context and options for future use
         if context is provided.
         """
+
         # Use lowercase class name as the default name
         self.name = name or self.__class__.__name__.lower()
         self.parent = parent
+
+        # Store command line context
+        if context:
+            self._save_context_to_instance(context)
+
+            # TODO: not needed here, apparently, it's applied elsewhere, not to
+            # each and every Common child.
+            # logger.apply_verbosity_options(**self._options)
+
+        self.inject_logger(logger)
 
         # Prepare a safe variant of the name which does not contain
         # spaces or other special characters to prevent problems with
@@ -454,10 +424,6 @@ class Common:
 
         # Relative log indent level shift against the parent
         self._relative_indent = relative_indent
-
-        # Store command line context
-        if context:
-            self._save_context_to_instance(context)
 
         # Initialize the workdir if requested
         self._workdir_load(workdir)
@@ -527,6 +493,7 @@ class Common:
         # Translate dashes to underscores to match click's conversion
         option = option.replace('-', '_')
         # Check the environment first
+        # TODO: moved to log.py
         if option == 'debug':
             try:
                 debug = os.environ['TMT_DEBUG']
@@ -571,25 +538,11 @@ class Common:
             shift: int = 0) -> str:
         """ Indent message according to the object hierarchy """
 
-        return indent(
+        return tmt.log.indent(
             key,
             value=value,
             color=color,
             level=self._level() + shift)
-
-    def _log(self, message: str) -> None:
-        """ Append provided message to the current log """
-        # Nothing to do if there is no workdir
-        if self.workdir is None:
-            return
-
-        # Store log only in the top parent
-        if self.parent:
-            self.parent._log(message)
-        else:
-            with open(os.path.join(self.workdir, LOG_FILENAME), 'a') as log:
-                log.write(datetime.datetime.utcnow().strftime('%H:%M:%S') + ' '
-                          + remove_color(message) + '\n')
 
     def print(
             self,
@@ -599,8 +552,7 @@ class Common:
             shift: int = 0,
             err: bool = False) -> None:
         """ Print a message regardless the quiet mode """
-        self._log(self._indent(key, value, color=None, shift=shift))
-        echo(self._indent(key, value, color, shift), err=err)
+        self._logger.print(key, value=value, color=color, shift=shift)
 
     def info(
             self,
@@ -610,9 +562,7 @@ class Common:
             shift: int = 0,
             err: bool = False) -> None:
         """ Show a message unless in quiet mode """
-        self._log(self._indent(key, value, color=None, shift=shift))
-        if not self.opt('quiet'):
-            echo(self._indent(key, value, color, shift), err=err)
+        self._logger.info(key, value=value, color=color, shift=shift)
 
     def verbose(
             self,
@@ -627,9 +577,7 @@ class Common:
 
         In quiet mode verbose messages are not displayed.
         """
-        self._log(self._indent(key, value, color=None, shift=shift))
-        if not self.opt('quiet') and self.opt('verbose') >= level:
-            echo(self._indent(key, value, color, shift), err=err)
+        self._logger.verbose(key, value=value, color=color, shift=shift, level=level)
 
     def debug(
             self,
@@ -644,17 +592,15 @@ class Common:
 
         In quiet mode debug messages are not displayed.
         """
-        self._log(self._indent(key, value, color=None, shift=shift))
-        if not self.opt('quiet') and self.opt('debug') >= level:
-            echo(self._indent(key, value, color, shift), err=err)
+        self._logger.debug(key, value=value, color=color, shift=shift, level=level)
 
     def warn(self, message: str, shift: int = 0) -> None:
         """ Show a yellow warning message on info level, send to stderr """
-        self.info('warn', message, color='yellow', shift=shift, err=True)
+        self._logger.warn(message, shift=shift)
 
     def fail(self, message: str, shift: int = 0) -> None:
         """ Show a red failure message on info level, send to stderr """
-        self.info('fail', message, color='red', shift=shift, err=True)
+        self._logger.fail(message, shift=shift)
 
     def _command_verbose_logger(
             self,
@@ -906,6 +852,7 @@ class Common:
         new workdir is created under the 'workdir_root' directory.
         """
         workdir_root = os.getenv('TMT_WORKDIR_ROOT', WORKDIR_ROOT)
+
         # Prepare the workdir name from given id or path
         if isinstance(id_, str):
             # Use provided directory if full path given
@@ -955,6 +902,15 @@ class Common:
 
             # Create the workdir
             create_directory(workdir, 'workdir', quiet=True)
+
+        # TODO: chicken and egg problem: when `Common` is instantiated, the workdir
+        # path might be already known, but it's often not created yet. Therefore
+        # a logfile handler cannot be attached to the given logger.
+        # This is a problem, as we modify a given logger, and we may modify the
+        # incorrect logger, and we may modify 3rd party app logger. The solution
+        # to our little logging problem would probably be related to refactoring
+        # of workdir creation some day in the future.
+        self._logger.add_logfile_handler(os.path.join(workdir, tmt.log.LOG_FILENAME))
         self._workdir = workdir
 
     def _workdir_name(self) -> Optional[str]:
@@ -995,6 +951,7 @@ class Common:
                 return None
             # Create a child workdir under the parent workdir
             create_directory(self._workdir, 'workdir', quiet=True)
+
         return self._workdir
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1226,7 +1183,11 @@ def _add_simple_var(result: EnvironmentType, var: str) -> None:
     result[name] = value
 
 
-def _add_file_vars(result: EnvironmentType, filepath: str) -> None:
+def _add_file_vars(
+        *,
+        result: EnvironmentType,
+        filepath: str,
+        logger: tmt.log.Logger) -> None:
     """
     Add variables loaded from file into the result dictionary
 
@@ -1243,7 +1204,7 @@ def _add_file_vars(result: EnvironmentType, filepath: str) -> None:
             # Handle empty file as an empty environment
             content = file.read()
             if not content:
-                log.warn(f"Empty environment file '{filepath}'.")
+                logger.warn(f"Empty environment file '{filepath}'.")
                 return
             file_vars = yaml_to_dict(content)
     except Exception as exception:
@@ -1277,7 +1238,10 @@ def shell_to_dict(variables: Union[str, List[str]]) -> EnvironmentType:
     return result
 
 
-def environment_to_dict(variables: Union[str, List[str]]) -> EnvironmentType:
+def environment_to_dict(
+        *,
+        variables: Union[str, List[str]],
+        logger: tmt.log.Logger) -> EnvironmentType:
     """
     Convert environment variables into a dictionary
 
@@ -1310,7 +1274,7 @@ def environment_to_dict(variables: Union[str, List[str]]) -> EnvironmentType:
             continue
         for var in shlex.split(variable):
             if var.startswith('@'):
-                _add_file_vars(result, var)
+                _add_file_vars(result=result, filepath=var, logger=logger)
             else:
                 _add_simple_var(result, var)
 
@@ -1318,7 +1282,11 @@ def environment_to_dict(variables: Union[str, List[str]]) -> EnvironmentType:
 
 
 @lru_cache(maxsize=None)
-def environment_file_to_dict(env_file: str, root: str = ".") -> EnvironmentType:
+def environment_file_to_dict(
+        *,
+        env_file: str,
+        root: str = ".",
+        logger: tmt.log.Logger) -> EnvironmentType:
     """
     Read environment variables from the given file.
 
@@ -1401,7 +1369,7 @@ def environment_file_to_dict(env_file: str, root: str = ".") -> EnvironmentType:
                 f"(i.e. A=B).")
 
     if not environment:
-        log.warn(f"Empty environment file '{env_file}'.")
+        logger.warn(f"Empty environment file '{env_file}'.")
 
         return {}
 
@@ -1409,8 +1377,10 @@ def environment_file_to_dict(env_file: str, root: str = ".") -> EnvironmentType:
 
 
 def environment_files_to_dict(
+        *,
         env_files: Iterable[str],
-        root: Optional[str] = None) -> EnvironmentType:
+        root: Optional[str] = None,
+        logger: tmt.log.Logger) -> EnvironmentType:
     """
     Read environment variables from the given list of files.
 
@@ -1443,7 +1413,7 @@ def environment_files_to_dict(
     result: EnvironmentType = {}
 
     for env_file in env_files:
-        result.update(environment_file_to_dict(env_file, root=root))
+        result.update(environment_file_to_dict(env_file=env_file, root=root, logger=logger))
 
     return result
 
@@ -1462,7 +1432,7 @@ def modify_environ(
         os.environ.update(environ_backup)
 
 
-def context_to_dict(context: List[str]) -> FmfContextType:
+def context_to_dict(*, context: List[str], logger: tmt.log.Logger) -> FmfContextType:
     """
     Convert command line context definition into a dictionary
 
@@ -1474,7 +1444,7 @@ def context_to_dict(context: List[str]) -> FmfContextType:
     """
     return {
         key: value.split(',')
-        for key, value in environment_to_dict(context).items()}
+        for key, value in environment_to_dict(variables=context, logger=logger).items()}
 
 
 def dict_to_yaml(
@@ -2437,7 +2407,7 @@ def validate_git_status(test: 'tmt.base.Test') -> Tuple[bool, str]:
         [os.path.join(test.node.root, '.fmf', 'version')]
 
     # Use tmt's run instead of subprocess.run
-    run = Common().run
+    run = Common(logger=test._logger).run
 
     # Check for not committed metadata changes
     cmd = Command(
@@ -3192,7 +3162,7 @@ class updatable_message(contextlib.AbstractContextManager):  # type: ignore[type
 
         self._previous_line = value
 
-        message = indent(
+        message = tmt.log.indent(
             self.key,
             value=style(
                 message,
@@ -3593,8 +3563,11 @@ class ValidateFmfMixin:
     method to perform the validation.
     """
 
-    def _validate_fmf_node(self, node: fmf.Tree, logger: Common,
-                           raise_on_validation_error: bool) -> None:
+    def _validate_fmf_node(
+            self,
+            node: fmf.Tree,
+            raise_on_validation_error: bool,
+            logger: tmt.log.Logger) -> None:
         """ Validate a given fmf node """
 
         errors = validate_fmf_node(
@@ -3613,30 +3586,30 @@ class ValidateFmfMixin:
             self,
             *,
             node: fmf.Tree,
-            logger: Common,
             skip_validation: bool = False,
             raise_on_validation_error: bool = False,
+            logger: tmt.log.Logger,
             **kwargs: Any) -> None:
         # Validate *before* letting next class in line touch the data.
         if not skip_validation:
-            self._validate_fmf_node(node, logger, raise_on_validation_error)
-
-        kwargs.setdefault('logger', self)
+            self._validate_fmf_node(node, raise_on_validation_error, logger)
 
         # ignore[call-arg]: pypy is not aware of this class being a
         # mixin, therefore it cannot allow keyword arguments, because
         # object.__init__() allows none. But it's fine, as we will never
         # instantiate this class itself.
-        super().__init__(node=node, **kwargs)  # type: ignore[call-arg]
+        super().__init__(node=node, logger=logger, **kwargs)  # type: ignore[call-arg]
 
 
 # A type representing compatible sources of keys and values.
 KeySource = Union[Dict[str, Any], fmf.Tree]
 
-NormalizeCallback = Callable[[Any], T]
+NormalizeCallback = Callable[[Any, tmt.log.Logger], T]
 
 
-def normalize_string_list(value: Union[None, str, List[str]]) -> List[str]:
+def normalize_string_list(
+        value: Union[None, str, List[str]],
+        logger: tmt.log.Logger) -> List[str]:
     """
     Normalize a string-or-list-of-strings input value.
 
@@ -3663,7 +3636,9 @@ def normalize_string_list(value: Union[None, str, List[str]]) -> List[str]:
     return [value] if isinstance(value, str) else value
 
 
-def normalize_shell_script_list(value: Union[None, str, List[str]]) -> List[ShellScript]:
+def normalize_shell_script_list(
+        value: Union[None, str, List[str]],
+        logger: tmt.log.Logger) -> List[ShellScript]:
     """
     Normalize a string-or-list-of-strings input value.
 
@@ -3724,13 +3699,19 @@ class NormalizeKeysMixin:
     #
     # TODO: wouldn't it be nice if these could be mention in dataclass.field()?
     # It would require a clone of dataclass.field() though.
-    def _normalize_string_list(self, value: Union[None, str, List[str]]) -> List[str]:
+    def _normalize_string_list(
+            self,
+            value: Union[None, str, List[str]],
+            logger: tmt.log.Logger) -> List[str]:
         if value is None:
             return []
 
         return [value] if isinstance(value, str) else value
 
-    def _normalize_environment(self, value: Optional[Dict[str, Any]]) -> EnvironmentType:
+    def _normalize_environment(
+            self,
+            value: Optional[Dict[str, Any]],
+            logger: tmt.log.Logger) -> EnvironmentType:
         if value is None:
             return {}
 
@@ -3738,10 +3719,13 @@ class NormalizeKeysMixin:
             name: str(value) for name, value in value.items()
             }
 
-    def _normalize_script(self, value: Union[None, str, List[str]]) -> List[ShellScript]:
+    def _normalize_script(
+            self,
+            value: Union[None, str, List[str]],
+            logger: tmt.log.Logger) -> List[ShellScript]:
         """ Normalize inputs to a list of shell scripts """
 
-        return normalize_shell_script_list(value)
+        return normalize_shell_script_list(value, logger)
 
     @classmethod
     def _iter_key_annotations(cls) -> Generator[Tuple[str, Any], None, None]:
@@ -3816,7 +3800,7 @@ class NormalizeKeysMixin:
             self,
             key_source: Dict[str, Any],
             key_source_name: str,
-            logger: Common) -> None:
+            logger: tmt.log.Logger) -> None:
         """ Extract values for class-level attributes, and verify they match declared types. """
 
         LOG_SHIFT, LOG_LEVEL = 2, 4
@@ -3887,10 +3871,12 @@ class NormalizeKeysMixin:
                 normalize_callback = dataclass_field_metadata(field).normalize_callback
 
             if not normalize_callback:
-                normalize_callback = getattr(self, f'_normalize_{keyname}', None)
+                normalize_callback = cast(
+                    Optional[NormalizeCallback[Any]],
+                    getattr(self, f'_normalize_{keyname}', None))
 
             if normalize_callback:
-                value = normalize_callback(value)
+                value = normalize_callback(value, logger)
 
                 debug('normalized value', str(value))
                 debug('normalized value type', str(type(value)))
@@ -3922,12 +3908,11 @@ class LoadFmfKeysMixin(NormalizeKeysMixin):
             self,
             *,
             node: fmf.Tree,
-            logger: Common,
+            logger: tmt.log.Logger,
             **kwargs: Any) -> None:
         self._load_keys(node.get(), node.name, logger)
 
-        kwargs.setdefault('logger', logger)
-        super().__init__(node=node, **kwargs)
+        super().__init__(node=node, logger=logger, **kwargs)
 
 
 FieldCLIOption = Union[str, Sequence[str]]

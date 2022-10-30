@@ -17,6 +17,7 @@ import click
 import fmf
 
 import tmt
+import tmt.log
 import tmt.plugins
 import tmt.steps
 import tmt.utils
@@ -100,9 +101,10 @@ class Guest(tmt.utils.Common):
                  *,
                  data: GuestData,
                  name: Optional[str] = None,
-                 parent: Optional[tmt.utils.Common] = None) -> None:
+                 parent: Optional[tmt.utils.Common] = None,
+                 logger: tmt.log.Logger) -> None:
         """ Initialize guest data """
-        super().__init__(parent=parent, name=name)
+        super().__init__(logger=logger, parent=parent, name=name)
 
         self.load(data)
 
@@ -1109,7 +1111,11 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
         super().wake()
 
         if data is not None:
-            guest = self._guest_class(data=data, name=self.name, parent=self.step)
+            guest = self._guest_class(
+                logger=self._logger,
+                data=data,
+                name=self.name,
+                parent=self.step)
             guest.wake()
             self._guest = guest
 
@@ -1147,17 +1153,25 @@ class Provision(tmt.steps.Step):
 
     _preserved_files = ['step.yaml', 'guests.yaml']
 
-    def __init__(self, *, plan: 'tmt.Plan', data: tmt.steps.RawStepDataArgument) -> None:
+    def __init__(
+            self,
+            *,
+            plan: 'tmt.Plan',
+            data: tmt.steps.RawStepDataArgument,
+            logger: tmt.log.Logger) -> None:
         """ Initialize provision step data """
-        super().__init__(plan=plan, data=data)
+        super().__init__(plan=plan, data=data, logger=logger)
 
         # List of provisioned guests and loaded guest data
         self._guests: List[Guest] = []
         self._guest_data: Dict[str, GuestData] = {}
         self.is_multihost = False
 
-    def _normalize_data(self, raw_data: List[tmt.steps._RawStepData]) -> List[tmt.steps.StepData]:
-        data = super()._normalize_data(raw_data)
+    def _normalize_data(
+            self,
+            raw_data: List[tmt.steps._RawStepData],
+            logger: tmt.log.Logger) -> List[tmt.steps.StepData]:
+        data = super()._normalize_data(raw_data, logger)
 
         # Check that the names are unique
         names = [datum.name for datum in data]

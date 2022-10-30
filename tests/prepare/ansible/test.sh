@@ -24,7 +24,7 @@ rlJournalStart
             rlPhaseEnd
 
             rlPhaseStartTest "Ansible ($method) - check extra-args attribute"
-                rlRun "tmt run -rddd discover provision -h $method prepare finish plan -n /$plan \
+                rlRun "tmt run -rddd discover provision -h $method prepare finish plan -n /$plan 2>&1 >/dev/null \
                     | grep \"ansible-playbook\"\
                     | tee output"
                 rlAssertGrep "-vvv" output

@@ -9,35 +9,35 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Check the TMT_DEBUG variable"
-        rlRun "TMT_DEBUG=3 tmt plan show | tee output"
-        rlAssertGrep "Using the 'DiscoverFmf' plugin" 'output'
-        rlRun "TMT_DEBUG=weird tmt plan show 2>&1 | tee output" 2
-        rlAssertGrep "Invalid debug level" 'output'
+        rlRun -s "TMT_DEBUG=3 tmt plan show 2>&1 >/dev/null"
+        rlAssertGrep "Using the 'DiscoverFmf' plugin" $rlRun_LOG
+        rlRun -s "TMT_DEBUG=weird tmt plan show 2>&1 >/dev/null" 2
+        rlAssertGrep "Invalid debug level" $rlRun_LOG
     rlPhaseEnd
 
     for execute in 'tmt'; do
         tmt="tmt run -avvvr execute --how $execute"
 
         rlPhaseStartTest "Variable in L1 ($execute)"
-            rlRun "$tmt plan --name no test --name yes | tee output"
-            rlAssertGrep '>>>L1<<<' 'output'
+            rlRun -s "$tmt plan --name no test --name yes"
+            rlAssertGrep '>>>L1<<<' $rlRun_LOG
         rlPhaseEnd
 
         rlPhaseStartTest "Variable in L2 ($execute)"
-            rlRun "$tmt plan --name yes test --name no | tee output"
-            rlAssertGrep '>>>L2<<<' 'output'
-            rlRun "$tmt plan --name yes test --name yes | tee output"
-            rlAssertGrep '>>>L2<<<' 'output'
+            rlRun -s "$tmt plan --name yes test --name no"
+            rlAssertGrep '>>>L2<<<' $rlRun_LOG
+            rlRun -s "$tmt plan --name yes test --name yes"
+            rlAssertGrep '>>>L2<<<' $rlRun_LOG
         rlPhaseEnd
 
         rlPhaseStartTest "Variable in option ($execute)"
             for plan in yes no; do
                 for test in yes no; do
-                    rlRun "tmt run -avvvr -e STR=O -e INT=0 \
+                    rlRun -s "tmt run -avvvr -e STR=O -e INT=0 \
                         execute --how $execute \
                         plan --name $plan \
-                        test --name $test | tee output"
-                    rlAssertGrep '>>>O0<<<' 'output'
+                        test --name $test"
+                    rlAssertGrep '>>>O0<<<' $rlRun_LOG
                 done
             done
         rlPhaseEnd
@@ -47,18 +47,18 @@ rlJournalStart
         rlPhaseStartTest "Variable in YAML file ($execute)"
             for plan in yes no; do
                 for test in yes no; do
-                    rlRun "tmt run -avvvr -e @vars.yaml \
+                    rlRun -s "tmt run -avvvr -e @vars.yaml \
                         execute --how $execute \
                         plan --name $plan \
-                        test --name $test | tee output"
-                    rlAssertGrep '>>>O0<<<' 'output'
+                        test --name $test"
+                    rlAssertGrep '>>>O0<<<' $rlRun_LOG
                 done
             done
         rlPhaseEnd
 
         rlPhaseStartTest "Empty environment file ($execute)"
             rlRun -s "tmt run -r -e @empty.yaml 2>&1"
-            rlAssertGrep "WARNING.*Empty environment file" $rlRun_LOG
+            rlAssertGrep "warn: Empty environment file" $rlRun_LOG
         rlPhaseEnd
     done
 

@@ -6,11 +6,13 @@ import fmf
 import pytest
 
 import tmt
+import tmt.log
 import tmt.utils
 
 PATH = os.path.dirname(os.path.realpath(__file__))
 ROOTDIR = os.path.join(PATH, "../..")
 
+LOGGER = tmt.log.Logger.create(verbose=0, debug=0, quiet=False)
 
 # This is what `Tree.{tests,plans,stories}`` do internally, but after getting
 # all nodes, these methods would construct tmt objects representing found
@@ -22,13 +24,15 @@ ROOTDIR = os.path.join(PATH, "../..")
 # `Tree` modifies them - use the underlying fmf tree's `prune()` method, and
 # use the right keys to filter out nodes we're interested in (the same `Tree`
 # uses).
+
+
 def _iter_nodes(tree, keys):
     for node in tree.tree.prune(keys=keys):
         yield tree, node
 
 
 def _iter_trees():
-    yield tmt.Tree(path=ROOTDIR)
+    yield tmt.Tree(logger=LOGGER, path=ROOTDIR)
 
     # Ad hoc construction, but here me out: there are small, custom-tailored fmf trees
     # to serve various tests. These are invisible to the top-level tree. Lucky us though,
@@ -177,7 +181,7 @@ def test_plans_schema(tree, plan):
         ]
     )
 def test_hw_schema_examples(hw: str, request) -> None:
-    tree = tmt.Tree()
+    tree = tmt.Tree(logger=LOGGER)
 
     # Our hardware schema is supposed to be referenced from provision plugin schemas.
     # Instead of cutting it out, we can use a provision plugin schema & prepare the

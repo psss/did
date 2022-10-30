@@ -18,6 +18,7 @@ else:
 import click
 from click import echo
 
+import tmt.log
 import tmt.options
 import tmt.utils
 from tmt.options import show_step_method_hints
@@ -128,12 +129,12 @@ class StepData(
             })
 
     @classmethod
-    def pre_normalization(cls, raw_data: _RawStepData, logger: tmt.utils.Common) -> None:
+    def pre_normalization(cls, raw_data: _RawStepData, logger: tmt.log.Logger) -> None:
         """ Called before normalization, useful for tweaking raw data """
 
         logger.debug(f'{cls.__name__}: original raw data', str(raw_data), level=4)
 
-    def post_normalization(self, raw_data: _RawStepData, logger: tmt.utils.Common) -> None:
+    def post_normalization(self, raw_data: _RawStepData, logger: tmt.log.Logger) -> None:
         """ Called after normalization, useful for tweaking normalized data """
 
         pass
@@ -144,8 +145,7 @@ class StepData(
     def from_spec(  # type: ignore[override]
             cls: Type[T],
             raw_data: _RawStepData,
-            logger: tmt.utils.Common
-            ) -> T:
+            logger: tmt.log.Logger) -> T:
         """ Convert from a specification file or from a CLI option """
 
         cls.pre_normalization(raw_data, logger)
@@ -210,9 +210,13 @@ class Step(tmt.utils.Common):
             plan: 'Plan',
             data: Optional[RawStepDataArgument] = None,
             name: Optional[str] = None,
-            workdir: tmt.utils.WorkdirArgumentType = None) -> None:
+            workdir: tmt.utils.WorkdirArgumentType = None,
+            logger: tmt.log.Logger) -> None:
         """ Initialize and check the step data """
-        super().__init__(name=name, parent=plan, workdir=workdir)
+        logger.apply_verbosity_options(**self.__class__._options)
+
+        super().__init__(name=name, parent=plan, workdir=workdir, logger=logger)
+
         # Initialize data
         self.plan: 'Plan' = plan
         self._status: Optional[str] = None
@@ -252,7 +256,10 @@ class Step(tmt.utils.Common):
             if raw_datum.get('how', None) is None:
                 raw_datum['how'] = self.DEFAULT_HOW
 
-    def _normalize_data(self, raw_data: List[_RawStepData]) -> List[StepData]:
+    def _normalize_data(
+            self,
+            raw_data: List[_RawStepData],
+            logger: tmt.log.Logger) -> List[StepData]:
         """
         Normalize step data entries.
 
@@ -274,7 +281,7 @@ class Step(tmt.utils.Common):
     @property
     def data(self) -> List[StepData]:
         if not hasattr(self, '_data'):
-            self._data = self._normalize_data(self._raw_data)
+            self._data = self._normalize_data(self._raw_data, self._logger)
 
         return self._data
 
@@ -443,7 +450,7 @@ class Step(tmt.utils.Common):
                         'how': how
                         })
 
-            self.data = self._normalize_data(_raw_data)
+            self.data = self._normalize_data(_raw_data, self._logger)
             self._raw_data = _raw_data
 
             self.debug('updated data', str(self.data), level=4)
@@ -650,14 +657,19 @@ class BasePlugin(Phase):
             *,
             step: Step,
             data: StepData,
-            workdir: tmt.utils.WorkdirArgumentType = None) -> None:
+            workdir: tmt.utils.WorkdirArgumentType = None,
+            logger: tmt.log.Logger) -> None:
         """ Store plugin name, data and parent step """
+        logger.apply_verbosity_options(**self.__class__._options)
+
         # Store name, data and parent step
         super().__init__(
+            logger=logger,
             parent=step,
             name=data.name,
             workdir=workdir,
             order=data.order)
+
         # It is not possible to use TypedDict here because
         # all keys are not known at the time of the class definition
         self.data = data
@@ -751,7 +763,7 @@ class BasePlugin(Phase):
                 # normalization in the process.
                 if raw_data is not None:
                     try:
-                        data = plugin_data_class.from_spec(raw_data, step)
+                        data = plugin_data_class.from_spec(raw_data, step._logger)
 
                     except Exception as exc:
                         raise tmt.utils.GeneralError(
@@ -764,7 +776,11 @@ class BasePlugin(Phase):
                     f'plugin {plugin_class.__name__} ' \
                     f'expects {plugin_data_class.__name__}'
 
-                plugin = plugin_class(step=step, data=data)
+                plugin = plugin_class(
+                    logger=step._logger.descend(logger_name=None),
+                    step=step,
+                    data=data
+                    )
                 assert isinstance(plugin, BasePlugin)
                 return plugin
 
@@ -1069,9 +1085,9 @@ class Reboot(Action):
     # True if reboot enabled
     _enabled: bool = False
 
-    def __init__(self, *, step: Step, order: int) -> None:
+    def __init__(self, *, step: Step, order: int, logger: tmt.log.Logger) -> None:
         """ Initialize relations, store the reboot order """
-        super().__init__(parent=step, name='reboot', order=order)
+        super().__init__(logger=logger, parent=step, name='reboot', order=order)
 
     @classmethod
     def command(
@@ -1099,7 +1115,8 @@ class Reboot(Action):
         """ Return list of reboot instances for given step """
         if not Reboot._enabled:
             return []
-        return [Reboot(step=step, order=phase) for phase in cls.phases(step)]
+        return [Reboot(logger=step._logger.descend(), step=step, order=phase)
+                for phase in cls.phases(step)]
 
     def go(self) -> None:
         """ Reboot the guest(s) """
@@ -1121,9 +1138,9 @@ class Login(Action):
     # True if interactive login enabled
     _enabled: bool = False
 
-    def __init__(self, *, step: Step, order: int):
+    def __init__(self, *, step: Step, order: int, logger: tmt.log.Logger) -> None:
         """ Initialize relations, store the login order """
-        super().__init__(parent=step, name='login', order=order)
+        super().__init__(logger=logger, parent=step, name='login', order=order)
 
     @classmethod
     def command(
@@ -1186,7 +1203,8 @@ class Login(Action):
         """ Return list of login instances for given step """
         if not Login._enabled:
             return []
-        return [Login(step=step, order=phase) for phase in cls.phases(step)]
+        return [Login(logger=step._logger.descend(), step=step, order=phase)
+                for phase in cls.phases(step)]
 
     def go(self) -> None:
         """ Login to the guest(s) """

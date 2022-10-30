@@ -567,7 +567,11 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
         if data.ssh_option:
             self.info('ssh options', fmf.utils.listed(data.ssh_option), 'green')
 
-        self._guest = GuestArtemis(data=data, name=self.name, parent=self.step)
+        self._guest = GuestArtemis(
+            logger=self._logger,
+            data=data,
+            name=self.name,
+            parent=self.step)
         self._guest.start()
 
     def guest(self) -> Optional[GuestArtemis]:

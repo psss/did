@@ -125,9 +125,14 @@ class Discover(tmt.steps.Step):
     _plugin_base_class = DiscoverPlugin
     _preserved_files = ['step.yaml', 'tests.yaml']
 
-    def __init__(self, *, plan: 'tmt.base.Plan', data: tmt.steps.RawStepDataArgument):
+    def __init__(
+            self,
+            *,
+            plan: 'tmt.base.Plan',
+            data: tmt.steps.RawStepDataArgument,
+            logger: tmt.log.Logger) -> None:
         """ Store supported attributes, check for sanity """
-        super().__init__(plan=plan, data=data)
+        super().__init__(plan=plan, data=data, logger=logger)
 
         # List of Test() objects representing discovered tests
         self._tests: List[tmt.Test] = []
@@ -137,8 +142,12 @@ class Discover(tmt.steps.Step):
         super().load()
         try:
             raw_test_data = tmt.utils.yaml_to_dict(self.read('tests.yaml'))
-            self._tests = [tmt.Test.from_dict(data, name, skip_validation=True)
-                           for name, data in raw_test_data.items()]
+            self._tests = [
+                tmt.Test.from_dict(
+                    logger=self._logger,
+                    mapping=data,
+                    name=name,
+                    skip_validation=True) for name, data in raw_test_data.items()]
 
         except tmt.utils.FileError:
             self.debug('Discovered tests not found.', level=2)

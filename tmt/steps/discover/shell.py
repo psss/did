@@ -9,6 +9,7 @@ import fmf
 
 import tmt
 import tmt.base
+import tmt.log
 import tmt.steps
 import tmt.steps.discover
 import tmt.utils
@@ -69,39 +70,54 @@ class TestDescription(
     _normalize_contact = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_component = tmt.utils.LoadFmfKeysMixin._normalize_string_list
 
-    def _normalize_test(self, value: str) -> ShellScript:
+    def _normalize_test(
+            self,
+            value: str,
+            logger: tmt.log.Logger) -> ShellScript:
         return ShellScript(value)
 
-    def _normalize_order(self, value: Optional[int]) -> int:
+    def _normalize_order(
+            self,
+            value: Optional[int],
+            logger: tmt.log.Logger) -> int:
         if value is None:
             # TODO: ugly circular dependency (see tmt.base.DEFAULT_ORDER)
             return 50
         return int(value)
 
-    def _normalize_link(self, value: tmt.base._RawLinks) -> tmt.base.Links:
+    def _normalize_link(
+            self,
+            value: tmt.base._RawLinks,
+            logger: tmt.log.Logger) -> tmt.base.Links:
         return tmt.base.Links(data=value)
 
-    def _normalize_adjust(self,
-                          value: Optional[Union[
-                              tmt.base._RawAdjustRule,
-                              List[tmt.base._RawAdjustRule]]]
-                          ) -> List[tmt.base._RawAdjustRule]:
+    def _normalize_adjust(
+            self,
+            value: Optional[Union[tmt.base._RawAdjustRule, List[tmt.base._RawAdjustRule]]],
+            logger: tmt.log.Logger) -> List[tmt.base._RawAdjustRule]:
         if value is None:
             return []
         return [value] if not isinstance(value, list) else value
 
-    def _normalize_tier(self, value: Optional[Union[int, str]]) -> Optional[str]:
+    def _normalize_tier(
+            self,
+            value: Optional[Union[int, str]],
+            logger: tmt.log.Logger) -> Optional[str]:
         if value is None:
             return None
         return str(value)
 
-    def _normalize_require(self, value: Optional[tmt.base._RawRequire]) -> List[tmt.base.Require]:
-        return tmt.base.normalize_require(value)
+    def _normalize_require(
+            self,
+            value: Optional[tmt.base._RawRequire],
+            logger: tmt.log.Logger) -> List[tmt.base.Require]:
+        return tmt.base.normalize_require(value, logger)
 
     def _normalize_recommend(
             self,
-            value: Optional[tmt.base._RawRequire]) -> List[tmt.base.Require]:
-        return tmt.base.normalize_require(value)
+            value: Optional[tmt.base._RawRequire],
+            logger: tmt.log.Logger) -> List[tmt.base.Require]:
+        return tmt.base.normalize_require(value, logger)
 
     # ignore[override]: expected, we do want to accept more specific
     # type than the one declared in superclass.
@@ -109,8 +125,7 @@ class TestDescription(
     def from_spec(  # type: ignore[override]
             cls: Type[T],
             raw_data: Dict[str, Any],
-            logger: tmt.utils.Common
-            ) -> T:
+            logger: tmt.log.Logger) -> T:
         """ Convert from a specification file or from a CLI option """
 
         data = cls(name=raw_data['name'], test=raw_data['test'])
@@ -182,9 +197,12 @@ class DiscoverShellData(tmt.steps.discover.DiscoverStepData):
         default=None,
         help="Branch, tag or commit specifying the git revision.")
 
-    def _normalize_tests(self, value: List[Dict[str, Any]]
-                         ) -> List[TestDescription]:
-        return [TestDescription.from_spec(raw_datum, tmt.utils.Common()) for raw_datum in value]
+    def _normalize_tests(
+            self,
+            value: List[Dict[str, Any]],
+            logger: tmt.log.Logger) -> List[TestDescription]:
+        # TODO: find a better logger
+        return [TestDescription.from_spec(raw_datum, logger) for raw_datum in value]
 
     def to_serialized(self) -> Dict[str, Any]:
         """ Convert to a form suitable for saving in a file """
@@ -283,10 +301,10 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         # Resolve possible dynamic references
         try:
             ref = tmt.base.resolve_dynamic_ref(
+                logger=self._logger,
                 workdir=testdir,
                 ref=ref,
-                plan=self.step.plan,
-                common=self)
+                plan=self.step.plan)
         except tmt.utils.FileError as error:
             raise tmt.utils.DiscoverError(str(error))
 
@@ -384,7 +402,10 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
                     "Failed to process 'dist-git-source'.") from error
 
         # Use a tmt.Tree to apply possible command line filters
-        self._tests = tmt.Tree(tree=tests).tests(conditions=["manual is False"])
+        self._tests = tmt.Tree(
+            logger=self._logger,
+            tree=tests).tests(
+            conditions=["manual is False"])
 
     def tests(self) -> List[tmt.base.Test]:
         return self._tests

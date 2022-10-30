@@ -19,6 +19,7 @@ import tmt.base
 import tmt.convert
 import tmt.export
 import tmt.identifier
+import tmt.log
 import tmt.options
 import tmt.plugins
 import tmt.steps
@@ -49,11 +50,13 @@ class ContextObject:
     manages across commands.
     """
 
+    logger: tmt.log.Logger
     common: tmt.utils.Common
     fmf_context: tmt.utils.FmfContextType
     tree: tmt.Tree
     steps: Set[str] = dataclasses.field(default_factory=set)
     clean: Optional[tmt.Clean] = None
+    clean_logger: Optional[tmt.log.Logger] = None
     clean_partials: DefaultDict[str, List[tmt.base.CleanCallback]] = dataclasses.field(
         default_factory=lambda: collections.defaultdict(list))
     run: Optional[tmt.Run] = None
@@ -163,19 +166,26 @@ def main(
         raise SystemExit(0)
 
     # Disable coloring if NO_COLOR is set
-    if 'NO_COLOR' in os.environ:
-        click_contex.color = False
+    # TODO: wouldn't it be nice to support --color/--no-color options?
+    apply_colors = sys.stderr.isatty() and 'NO_COLOR' not in os.environ
+
+    logger = tmt.log.Logger.create(**kwargs)
+    logger.add_console_handler(apply_colors=apply_colors)
+
+    # Propagate color setting to Click as well.
+    click_contex.color = apply_colors
 
     # Save click context and fmf context for future use
     tmt.utils.Common._save_context(click_contex)
 
     # Initialize metadata tree (from given path or current directory)
-    tree = tmt.Tree(path=root or os.curdir)
+    tree = tmt.Tree(logger=logger, path=root or os.curdir)
 
     # TODO: context object details need checks
     click_contex.obj = ContextObject(
-        common=tmt.utils.Common(),
-        fmf_context=tmt.utils.context_to_dict(context),
+        logger=logger,
+        common=tmt.utils.Common(logger=logger),
+        fmf_context=tmt.utils.context_to_dict(context=context, logger=logger),
         steps=set(),
         tree=tree
         )
@@ -240,7 +250,15 @@ def main(
 def run(context: Context, id_: str, **kwargs: Any) -> None:
     """ Run test steps. """
     # Initialize
-    run = tmt.Run(id_=id_, tree=context.obj.tree, context=context)
+    logger = context.obj.logger.descend(logger_name='run', extra_shift=0)
+    logger.apply_verbosity_options(**kwargs)
+
+    run = tmt.Run(
+        id_=id_,
+        tree=context.obj.tree,
+        context=context,
+        logger=logger
+        )
     context.obj.run = run
 
 
@@ -1154,7 +1172,7 @@ def init(
     """
 
     tmt.Tree._save_context(context)
-    tmt.Tree.init(path, template, force)
+    tmt.Tree.init(logger=context.obj.logger, path=path, template=template, force=force)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1205,7 +1223,7 @@ def status(
             "used together.")
     if not os.path.exists(workdir_root):
         raise tmt.utils.GeneralError(f"Path '{workdir_root}' doesn't exist.")
-    status_obj = tmt.Status(context=context)
+    status_obj = tmt.Status(logger=context.obj.logger, context=context)
     status_obj.show()
 
 
@@ -1231,16 +1249,33 @@ def clean(context: Context, **kwargs: Any) -> None:
     the same, irrespective of the order on the command line. First, all
     the guests are cleaned, followed by runs and images.
     """
+
+    context.obj.clean_logger = context.obj.logger \
+        .descend(logger_name='clean', extra_shift=0) \
+        .apply_verbosity_options(**kwargs)
+
     echo(style('clean', fg='red'))
-    clean_obj = tmt.Clean(parent=context.obj.common, context=context)
+    clean_obj = tmt.Clean(
+        logger=context.obj.clean_logger,
+        parent=context.obj.common,
+        context=context
+        )
     context.obj.clean = clean_obj
     exit_code = 0
     if context.invoked_subcommand is None:
+        assert context.obj.clean_logger is not None  # narrow type
+
         # Set path to default
         context.params['workdir_root'] = tmt.utils.WORKDIR_ROOT
         # Create another level to the hierarchy so that logging indent is
         # consistent between the command and subcommands
-        clean_obj = tmt.Clean(parent=clean_obj, context=context)
+        clean_obj = tmt.Clean(
+            logger=context.obj.clean_logger
+            .descend(logger_name='clean-images', extra_shift=0)
+            .apply_verbosity_options(**kwargs),
+            parent=clean_obj,
+            context=context
+            )
         if os.path.exists(tmt.utils.WORKDIR_ROOT):
             if not clean_obj.guests():
                 exit_code = 1
@@ -1317,7 +1352,15 @@ def clean_runs(
         raise tmt.utils.GeneralError("--keep must not be a negative number.")
     if not os.path.exists(workdir_root):
         raise tmt.utils.GeneralError(f"Path '{workdir_root}' doesn't exist.")
-    clean_obj = tmt.Clean(parent=context.obj.clean, context=context)
+
+    assert context.obj.clean_logger is not None  # narrow type
+
+    clean_obj = tmt.Clean(
+        logger=context.obj.clean_logger
+        .descend(logger_name='clean-runs', extra_shift=0)
+        .apply_verbosity_options(**kwargs),
+        parent=context.obj.clean,
+        context=context)
     context.obj.clean_partials["runs"].append(clean_obj.runs)
 
 
@@ -1350,7 +1393,16 @@ def clean_guests(
             "Options --last and --id cannot be used together.")
     if not os.path.exists(workdir_root):
         raise tmt.utils.GeneralError(f"Path '{workdir_root}' doesn't exist.")
-    clean_obj = tmt.Clean(parent=context.obj.clean, context=context)
+
+    assert context.obj.clean_logger is not None  # narrow type
+
+    clean_obj = tmt.Clean(
+        logger=context.obj.clean_logger
+        .descend(logger_name='clean-guests', extra_shift=0)
+        .apply_verbosity_options(**kwargs),
+        parent=context.obj.clean,
+        context=context
+        )
     context.obj.clean_partials["guests"].append(clean_obj.guests)
 
 
@@ -1368,7 +1420,15 @@ def clean_images(context: Context, **kwargs: Any) -> None:
     # FIXME: If there are more provision methods supporting this,
     #        we should add options to specify which provision should be
     #        cleaned, similarly to guests.
-    clean_obj = tmt.Clean(parent=context.obj.clean, context=context)
+    assert context.obj.clean_logger is not None  # narrow type
+
+    clean_obj = tmt.Clean(
+        logger=context.obj.clean_logger
+        .descend(logger_name='clean-images', extra_shift=0)
+        .apply_verbosity_options(**kwargs),
+        parent=context.obj.clean,
+        context=context
+        )
     context.obj.clean_partials["images"].append(clean_obj.images)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -19,7 +19,7 @@ rlJournalStart
 
     rlPhaseStartTest
         rlRun "set -o pipefail"
-        rlRun "tmt run -ar discover -vvvddd report -vvv | tee output"
+        rlRun "tmt run -ar discover -vvvddd report -vvv 2>&1 >/dev/null | tee output"
         rlAssertGrep "Copy local library.*example" "output"
         rlAssertGrep "Create fyle 'fooo'" "output"
     rlPhaseEnd

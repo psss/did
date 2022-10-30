@@ -10,8 +10,8 @@ rlJournalStart
     good="plan --name /plan/good"
 
     rlPhaseStartTest "Check environment-file option reads properly"
-        rlRun "tmt run -rvvvddd $good | tee output"
-        rlAssertGrep "total: 1 test passed" 'output'
+        rlRun -s "tmt run -rvvvddd $good"
+        rlAssertGrep "total: 1 test passed" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "Check if --environment overwrites --environment-file"
@@ -33,7 +33,7 @@ rlJournalStart
 
     rlPhaseStartTest "Empty environment file"
         rlRun "tmt run -rvvddd discover finish plan -n empty 2>&1 | tee output"
-        rlAssertGrep "WARNING.*Empty environment file" "output"
+        rlAssertGrep "warn: Empty environment file" "output"
     rlPhaseEnd
 
     rlPhaseStartTest "Escape from the tree"

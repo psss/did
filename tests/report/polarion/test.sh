@@ -8,7 +8,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "tmt run -avr execute report -h polarion --project-id RHELBASEOS --no-upload --file xunit.xml | tee output" 2
+        rlRun "tmt run -avr execute report -h polarion --project-id RHELBASEOS --no-upload --file xunit.xml 2>&1 >/dev/null | tee output" 2
         rlAssertGrep "1 test passed, 1 test failed and 1 error" "output"
         rlAssertGrep '<testsuite disabled="0" errors="1" failures="1" name="/plan" skipped="0" tests="3"' "xunit.xml"
         rlAssertGrep '<property name="polarion-project-id" value="RHELBASEOS" />' "xunit.xml"

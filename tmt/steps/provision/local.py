@@ -139,7 +139,7 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
             guest='localhost',
             role=self.get('role')
             )
-        self._guest = GuestLocal(data=data, name=self.name, parent=self.step)
+        self._guest = GuestLocal(logger=self._logger, data=data, name=self.name, parent=self.step)
 
     def guest(self) -> Optional[GuestLocal]:
         """ Return the provisioned guest """

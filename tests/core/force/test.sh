@@ -10,61 +10,61 @@ rlJournalStart
 
     rlPhaseStartTest "Force the whole run - new workdir"
         # The first run, fresh, no results should be found
-        rlRun "tmt run -ddvvi $run discover | tee output" 0 "First run (fresh)"
-        rlAssertGrep "Run data not found." output
-        rlAssertGrep "Discovered tests not found." output
-        rlAssertNotGrep "Discover.*already done" output
-        rlAssertNotGrep "Provision.*already done" output
-        rlAssertGrep "1 test selected" output
-        rlAssertNotGrep "1 guest provisioned" output
+        rlRun -s "tmt run -ddvvi $run discover" 0 "First run (fresh)"
+        rlAssertGrep "Run data not found." $rlRun_LOG
+        rlAssertGrep "Discovered tests not found." $rlRun_LOG
+        rlAssertNotGrep "Discover.*already done" $rlRun_LOG
+        rlAssertNotGrep "Provision.*already done" $rlRun_LOG
+        rlAssertGrep "1 test selected" $rlRun_LOG
+        rlAssertNotGrep "1 guest provisioned" $rlRun_LOG
 
         # Discover step done, no other steps executed
-        rlRun "tmt run -ddvvi $run | tee output" 0 "Second run (done)"
-        rlAssertNotGrep "Run data not found." output
-        rlAssertNotGrep "Discovered tests not found." output
-        rlAssertGrep "Discover.*already done" output
-        rlAssertNotGrep "Provision.*already done" output
-        rlAssertGrep "1 test selected" output
-        rlAssertNotGrep "1 guest provisioned" output
+        rlRun -s "tmt run -ddvvi $run" 0 "Second run (done)"
+        rlAssertNotGrep "Run data not found." $rlRun_LOG
+        rlAssertNotGrep "Discovered tests not found." $rlRun_LOG
+        rlAssertGrep "Discover.*already done" $rlRun_LOG
+        rlAssertNotGrep "Provision.*already done" $rlRun_LOG
+        rlAssertGrep "1 test selected" $rlRun_LOG
+        rlAssertNotGrep "1 guest provisioned" $rlRun_LOG
 
         # Force, all steps should be executed again
-        rlRun "tmt run --scratch -ddvvi $run | tee output" 0 "Third run (force)"
-        rlAssertGrep "Run data not found." output
-        rlAssertGrep "Discovered tests not found." output
-        rlAssertNotGrep "Discover.*already done" output
-        rlAssertNotGrep "Provision.*already done" output
-        rlAssertGrep "1 test selected" output
-        rlAssertGrep "1 guest provisioned" output
+        rlRun -s "tmt run --scratch -ddvvi $run" 0 "Third run (force)"
+        rlAssertGrep "Run data not found." $rlRun_LOG
+        rlAssertGrep "Discovered tests not found." $rlRun_LOG
+        rlAssertNotGrep "Discover.*already done" $rlRun_LOG
+        rlAssertNotGrep "Provision.*already done" $rlRun_LOG
+        rlAssertGrep "1 test selected" $rlRun_LOG
+        rlAssertGrep "1 guest provisioned" $rlRun_LOG
 
         # Finally wake up, everything should be done
-        rlRun "tmt run -ddvvi $run | tee output" 0 "Fourth run (wake)"
-        rlAssertNotGrep "Run data not found." output
-        rlAssertNotGrep "Discovered tests not found." output
-        rlAssertGrep "Discover.*already done" output
-        rlAssertGrep "Provision.*already done" output
-        rlAssertGrep "1 test selected" output
-        rlAssertGrep "1 guest provisioned" output
+        rlRun -s "tmt run -ddvvi $run" 0 "Fourth run (wake)"
+        rlAssertNotGrep "Run data not found." $rlRun_LOG
+        rlAssertNotGrep "Discovered tests not found." $rlRun_LOG
+        rlAssertGrep "Discover.*already done" $rlRun_LOG
+        rlAssertGrep "Provision.*already done" $rlRun_LOG
+        rlAssertGrep "1 test selected" $rlRun_LOG
+        rlAssertGrep "1 guest provisioned" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "Force all steps"
         # The first run, start from scratch, no results should be found
-        rlRun "tmt run --scratch -ddvvi $run | tee output" 0 "First run (fresh)"
-        rlAssertGrep "Discovered tests not found." output
-        rlAssertGrep "1 test selected" output
+        rlRun -s "tmt run --scratch -ddvvi $run" 0 "First run (fresh)"
+        rlAssertGrep "Discovered tests not found." $rlRun_LOG
+        rlAssertGrep "1 test selected" $rlRun_LOG
 
         new_file="$run/tmpfile"
         rlRun "touch $new_file" 0 "Create a file in the workdir"
         rlAssertExists $new_file
 
         # Second run, force all enabled steps
-        rlRun "tmt run --force -ddvvi $run | tee output" 0 "Second run (force)"
-        rlAssertGrep "Discovered tests not found." output
-        rlAssertGrep "1 test selected" output
+        rlRun -s "tmt run --force -ddvvi $run" 0 "Second run (force)"
+        rlAssertGrep "Discovered tests not found." $rlRun_LOG
+        rlAssertGrep "1 test selected" $rlRun_LOG
         rlAssertExists $new_file
     rlPhaseEnd
 
     rlPhaseStartCleanup
-        rlRun "rm -rf output $run" 0 "Remove run directory"
+        rlRun "rm -rf $run" 0 "Remove run directory"
         rlRun "popd"
     rlPhaseEnd
 rlJournalEnd

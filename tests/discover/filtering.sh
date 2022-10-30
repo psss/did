@@ -11,7 +11,7 @@ rlJournalStart
     rlPhaseStartTest "Filter by test name"
         plan='plan --name fmf/nourl/noref/nopath'
         discover='discover --how fmf --test discover1'
-        rlRun "tmt run -dvr $discover $plan finish | tee output"
+        rlRun "tmt run -dvr $discover $plan finish 2>&1 >/dev/null | tee output"
         rlAssertGrep '1 test selected' output
         rlAssertGrep '/tests/discover1' output
         rlAssertNotGrep '/tests/discover2' output
@@ -21,7 +21,7 @@ rlJournalStart
     rlPhaseStartTest "Filter by advanced filter"
         plan='plan --name fmf/nourl/noref/nopath'
         discover='discover --how fmf --filter tier:1,2'
-        rlRun "tmt run -dvr $discover $plan finish | tee output"
+        rlRun "tmt run -dvr $discover $plan finish 2>&1 >/dev/null | tee output"
         rlAssertGrep '2 tests selected' output
         rlAssertGrep '/tests/discover1' output
         rlAssertGrep '/tests/discover2' output
@@ -32,9 +32,9 @@ rlJournalStart
         rlPhaseStartTest "Exclude tests using $exclude <regex>"
             plan='plan --name fmf/nourl/noref/nopath'
             discover='discover --how fmf'
-            rlRun "tmt run -dvr $discover $plan | tee output"
+            rlRun "tmt run -dvr $discover $plan 2>&1 >/dev/null | tee output"
             rlAssertGrep '/tests/discover1' output
-            rlRun "tmt run -dvr $discover $exclude discover1 $plan | tee output"
+            rlRun "tmt run -dvr $discover $exclude discover1 $plan 2>&1 >/dev/null | tee output"
             rlAssertNotGrep '/tests/discover1' output
         rlPhaseEnd
     done
@@ -42,7 +42,7 @@ rlJournalStart
     rlPhaseStartTest "Exclude tests via exclude option within a plan metadata"
         plan='plan --name fmf/exclude'
         discover='discover --how fmf'
-        rlRun "tmt run -dvr $discover $plan | tee output"
+        rlRun "tmt run -dvr $discover $plan 2>&1 >/dev/null | tee output"
         rlAssertNotGrep '/tests/discover1' output
         rlAssertGrep '/tests/discover2' output
     rlPhaseEnd
@@ -51,14 +51,14 @@ rlJournalStart
         plan='plans --default'
         for link_relation in "" "relates:" "rel.*:"; do
             discover="discover -h fmf --link ${link_relation}/tmp/foo"
-            rlRun "tmt run -dvr $discover $plan finish | tee output"
+            rlRun "tmt run -dvr $discover $plan finish 2>&1 >/dev/null | tee output"
             rlAssertGrep '1 test selected' output
             rlAssertGrep '/tests/discover1' output
         done
         for link_relation in "verifies:https://github.com/teemtee/tmt/issues/870" \
             "ver.*:.*/issues/870" ".*/issues/870"; do
             discover="discover -h fmf --link $link_relation --link rubbish"
-            rlRun "tmt run -dvr $discover $plan finish | tee output"
+            rlRun "tmt run -dvr $discover $plan finish 2>&1 >/dev/null | tee output"
             rlAssertGrep '1 test selected' output
             rlAssertGrep '/tests/discover2' output
         done
@@ -69,7 +69,7 @@ rlJournalStart
         rlRun "tmt run -r $plan discover -h fmf --fmf-id finish | tee output"
 
         # check "discover --fmf-id" shows the same tests as "tmt run discover"
-        rlRun "tmt run -v $plan discover | tee discover"
+        rlRun "tmt run -v $plan discover 2>&1 >/dev/null | tee discover"
         tests_list=$(tac discover |
                      sed -n '/summary:/q;p')
         url_discover=$(grep "url:" discover | awk '{print $2}')
@@ -91,8 +91,7 @@ rlJournalStart
 
     rlPhaseStartTest 'fmf-id (w/o url): Show fmf ids for discovered tests'
         plan='plan --name fmf/nourl/noref/nopath'
-        rlRun "tmt run -dvvvr $plan discover -h fmf --fmf-id finish \
-               | tee output"
+        rlRun "tmt run -dvvvr $plan discover -h fmf --fmf-id finish 2>&1 >/dev/null | tee output"
 
         # check "discover --fmf-id" shows the same tests as "tmt run discover"
         tests_list=$(tmt run -v $plan discover |
@@ -129,10 +128,10 @@ rlJournalStart
     # If plan or test weren't explicitly specified then fmf-ids for all tests
     # in all plans should be shown
     rlPhaseStartTest "fmf-id (w/o url): plans were executed if plan/test -n=."
-        ids_amount=$(tmt run -r discover -h fmf --fmf-id finish |
+        ids_amount=$(tmt run -r discover -h fmf --fmf-id finish 2>&1 >/dev/null |
                      grep "name:" |
                      wc -l)
-        tests_amount=$(tmt run -r discover -h fmf finish |
+        tests_amount=$(tmt run -r discover -h fmf finish 2>&1 >/dev/null |
                        grep "summary:" |
                        awk '{print $2}' |
                        awk '{s+=$1} END {print s}')
@@ -146,7 +145,7 @@ rlJournalStart
         rlRun "cd $path"
         rlRun "tmt run -r test --name /tests/unit \
                           plans --default \
-                          discover --how fmf --fmf-id finish | tee output"
+                          discover --how fmf --fmf-id finish 2>&1 >/dev/null | tee output"
         rlAssertNotGrep "path:" output
     rlPhaseEnd
 
@@ -167,22 +166,22 @@ rlJournalStart
         rlRun "cd $tmp_dir"
         rlRun "tmt init --template base"
         rlRun "tmt run -rdvvv discover -h fmf --fmf-id finish 2>&1 \
-               | tee output" 2
+               2>&1 >/dev/null | tee output" 2
         rlAssertGrep "\`tmt run discover --fmf-id\` without \`url\` option \
 in plan \`/plans/example\` can be used only within git repo." output
 
         rlRun "tmt run -rdvvv discover -h fmf --fmf-id \
-               --url https://github.com/teemtee/fmf finish | tee output" 0
+               --url https://github.com/teemtee/fmf finish 2>&1 >/dev/null | tee output" 0
         rlRun "rm -rf $tmp_dir"
 
         # 1: w/ url in plan: w/o url in CLI - w/ url in CLI
         tmp_dir="$(mktemp -d)"
         rlRun "cd $tmp_dir"
         rlRun "tmt init --template full"
-        rlRun "tmt run -rdvvv discover -h fmf --fmf-id finish | tee output" 0
+        rlRun "tmt run -rdvvv discover -h fmf --fmf-id finish 2>&1 >/dev/null | tee output" 0
 
         rlRun "tmt run -rdvvv discover -h fmf --fmf-id \
-               --url https://github.com/teemtee/fmf finish | tee output" 0
+               --url https://github.com/teemtee/fmf finish 2>&1 >/dev/null | tee output" 0
         rlRun "rm -rf $tmp_dir"
 
         # 2: w/o url in plan AND w/ url in plan: w/o url in CLI - w/ url in CLI
@@ -194,13 +193,13 @@ in plan \`/plans/example\` can be used only within git repo." output
         rlRun "tmt init --template base"
         rlRun "cp plans/example.fmf $tmp_dir1/plans/a-non-url.fmf"
         rlRun "cd $tmp_dir1"
-        rlRun "tmt run -rdvvv discover -h fmf --fmf-id finish 2>&1 \
+        rlRun "tmt run -rdvvv discover -h fmf --fmf-id finish 2>&1 >/dev/null \
                | tee output" 2
         rlAssertGrep "\`tmt run discover --fmf-id\` without \`url\` option \
 in plan \`/plans/a-non-url\` can be used only within git repo." output
 
         rlRun "tmt run -rdvvv discover -h fmf --fmf-id \
-               --url https://github.com/teemtee/fmf finish | tee output" 0
+               --url https://github.com/teemtee/fmf finish 2>&1 >/dev/null | tee output" 0
         rlRun "rm -rf $tmp_dir1 $tmp_dir2"
 
         # 2: w/ url in plan AND w/o url in plan: w/o url in CLI - w/ url in CLI
@@ -212,13 +211,13 @@ in plan \`/plans/a-non-url\` can be used only within git repo." output
         rlRun "tmt init --template base"
         rlRun "cp plans/example.fmf $tmp_dir1/plans/z-non-url.fmf"
         rlRun "cd $tmp_dir1"
-        rlRun "tmt run -rdvvv discover -h fmf --fmf-id finish 2>&1 \
+        rlRun "tmt run -rdvvv discover -h fmf --fmf-id finish 2>&1 >/dev/null \
                | tee output" 2
         rlAssertGrep "\`tmt run discover --fmf-id\` without \`url\` option \
 in plan \`/plans/z-non-url\` can be used only within git repo." output
 
         rlRun "tmt run -rdvvv discover -h fmf --fmf-id \
-               --url https://github.com/teemtee/fmf finish | tee output" 0
+               --url https://github.com/teemtee/fmf finish 2>&1 >/dev/null | tee output" 0
         rlRun "rm -rf $tmp_dir1 $tmp_dir2"
     rlPhaseEnd
 
@@ -227,7 +226,7 @@ in plan \`/plans/z-non-url\` can be used only within git repo." output
         tmp_dir="$(mktemp -d)"
         rlRun "cd $tmp_dir"
         rlRun "tmt run -rdvvv discover -h fmf --fmf-id \
-               --url https://github.com/teemtee/fmf finish | tee output" 0
+               --url https://github.com/teemtee/fmf finish 2>&1 >/dev/null | tee output" 0
         rlRun "rm -rf $tmp_dir"
     rlPhaseEnd
 
@@ -235,7 +234,7 @@ in plan \`/plans/z-non-url\` can be used only within git repo." output
     rlPhaseStartTest "fmf-id (w/o url): current dir doesn't have fmf metadata"
         tmp_dir="$(mktemp -d)"
         rlRun "cd $tmp_dir"
-        rlRun "tmt run -rdvvv discover -h fmf --fmf-id finish 2>&1 \
+        rlRun "tmt run -rdvvv discover -h fmf --fmf-id finish 2>&1 >/dev/null \
                | tee output" 2
         rlAssertGrep "No metadata found in the current directory" output
         rlRun "rm -rf $tmp_dir"

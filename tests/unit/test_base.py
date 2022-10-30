@@ -31,9 +31,9 @@ def test_invalid_yaml_syntax():
     shutil.rmtree(tmp)
 
 
-def test_test_defaults():
+def test_test_defaults(root_logger):
     """ Test default test attributes """
-    test = tmt.Test.from_dict(dict(test='./test.sh'), '/smoke')
+    test = tmt.Test.from_dict(logger=root_logger, mapping=dict(test='./test.sh'), name='/smoke')
     assert test.name == '/smoke'
     assert test.component == list()
     assert str(test.test) == './test.sh'
@@ -46,18 +46,23 @@ def test_test_defaults():
     assert test.tag == list()
 
 
-def test_test_invalid():
+def test_test_invalid(root_logger):
     """ Test invalid test """
     # Missing name
     with pytest.raises(tmt.utils.GeneralError):
-        tmt.Test.from_dict({}, '')
+        tmt.Test.from_dict(logger=root_logger, mapping={}, name='')
     # Invalid name
     with pytest.raises(SpecificationError):
-        tmt.Test.from_dict({}, 'bad')
+        tmt.Test.from_dict(logger=root_logger, mapping={}, name='bad')
     # Invalid attributes
     for key in ['component', 'require', 'tag']:
         with pytest.raises(SpecificationError) as exc_context:
-            tmt.Test.from_dict({key: 1}, '/smoke', raise_on_validation_error=True)
+            tmt.Test.from_dict(
+                logger=root_logger,
+                mapping={
+                    key: 1},
+                name='/smoke',
+                raise_on_validation_error=True)
 
         exc = exc_context.value
 
@@ -71,10 +76,17 @@ def test_test_invalid():
             == f'/smoke:{key} - 1 is not valid under any of the given schemas'
 
     with pytest.raises(SpecificationError):
-        tmt.Test.from_dict({'environment': 'string'}, '/smoke', raise_on_validation_error=True)
+        tmt.Test.from_dict(logger=root_logger, mapping={'environment': 'string'},
+                           name='/smoke', raise_on_validation_error=True)
     # Listify attributes
-    assert tmt.Test.from_dict({'test': 'test', 'tag': 'a'}, '/smoke').tag == ['a']
-    assert tmt.Test.from_dict({'test': 'test', 'tag': ['a', 'b']}, '/smoke').tag == ['a', 'b']
+    assert tmt.Test.from_dict(
+        logger=root_logger,
+        mapping={
+            'test': 'test',
+            'tag': 'a'},
+        name='/smoke').tag == ['a']
+    assert tmt.Test.from_dict(logger=root_logger, mapping={'test': 'test', 'tag': [
+                              'a', 'b']}, name='/smoke').tag == ['a', 'b']
 
 
 def test_link():

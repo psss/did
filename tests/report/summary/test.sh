@@ -8,12 +8,12 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Check summary"
-        rlRun "tmt run -r | tee output" 2 "Run tests in concise mode"
+        rlRun "tmt run -r 2>&1 >/dev/null | tee output" 2 "Run tests in concise mode"
         rlAssertGrep "3 tests passed, 2 tests failed and 1 error" "output"
     rlPhaseEnd
 
     rlPhaseStartTest "Check details"
-        rlRun "tmt run -v | tee output" 2 "Run tests in verbose mode"
+        rlRun "tmt run -v 2>&1 >/dev/null | tee output" 2 "Run tests in verbose mode"
         rlAssertGrep "fail /test/bad/one" "output"
         rlAssertGrep "fail /test/bad/two" "output"
         rlAssertGrep "pass /test/good/one" "output"
@@ -23,9 +23,9 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Check the last run"
-        rlRun "tmt run -l | tee output" 2 "Last run in concise mode "
+        rlRun "tmt run -l 2>&1 >/dev/null | tee output" 2 "Last run in concise mode "
         rlAssertGrep "3 tests passed, 2 tests failed and 1 error" "output"
-        rlRun "tmt run -lvr | tee output" 2 "Last run in verbose mode "
+        rlRun "tmt run -lvr 2>&1 >/dev/null | tee output" 2 "Last run in verbose mode "
         rlAssertGrep "3 tests passed, 2 tests failed and 1 error" "output"
         rlAssertGrep "fail /test/bad/one" "output"
         rlAssertGrep "pass /test/good/one" "output"
