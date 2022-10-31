@@ -13,6 +13,7 @@ from tmt.steps import Action
 from tmt.utils import GeneralError
 
 if TYPE_CHECKING:
+    import tmt.cli
     from tmt.base import Plan
 
 
@@ -55,7 +56,7 @@ class PreparePlugin(tmt.steps.Plugin):
         @click.option(
             '-h', '--how', metavar='METHOD',
             help='Use specified method for environment preparation.')
-        def prepare(context: click.core.Context, **kwargs: Any) -> None:
+        def prepare(context: 'tmt.cli.Context', **kwargs: Any) -> None:
             context.obj.steps.add('prepare')
             Prepare._save_context(context)
 

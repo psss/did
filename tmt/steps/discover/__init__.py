@@ -8,6 +8,7 @@ from fmf.utils import listed
 import tmt
 
 if TYPE_CHECKING:
+    import tmt.cli
     import tmt.steps
     import tmt.options
 
@@ -50,7 +51,7 @@ class DiscoverPlugin(tmt.steps.GuestlessPlugin):
         @click.option(
             '-h', '--how', metavar='METHOD',
             help='Use specified method to discover tests.')
-        def discover(context: click.Context, **kwargs: Any) -> None:
+        def discover(context: 'tmt.cli.Context', **kwargs: Any) -> None:
             # TODO: This part should go into the 'fmf.py' module
             if kwargs.get('fmf_id'):
                 # Set quiet, disable debug and verbose to avoid logging

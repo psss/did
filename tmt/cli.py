@@ -7,7 +7,7 @@ import dataclasses
 import os
 import subprocess
 import sys
-from typing import TYPE_CHECKING, Any, List, Optional, Set, cast
+from typing import TYPE_CHECKING, Any, DefaultDict, List, Optional, Set
 
 import click
 import fmf
@@ -40,13 +40,43 @@ tmt.plugins.explore()
 
 @dataclasses.dataclass
 class ContextObject:
-    """ Click Context Object Container """
+    """
+    Click Context Object container.
+
+    In Click terms, this is "an arbitrary object of user data." In this container,
+    tmt CLI code stores all structures relevant for the command execution. The
+    container itself is then attached to :py:class:`click.Context` object Click
+    manages across commands.
+    """
+
     common: tmt.utils.Common
     fmf_context: tmt.utils.FmfContextType
     tree: tmt.Tree
     steps: Set[str] = dataclasses.field(default_factory=set)
     clean: Optional[tmt.Clean] = None
+    clean_partials: DefaultDict[str, List[tmt.base.CleanCallback]] = dataclasses.field(
+        default_factory=lambda: collections.defaultdict(list))
     run: Optional[tmt.Run] = None
+
+
+class Context(click.Context):
+    """
+    Custom :py:class:`click.Context`-like class for typing purposes.
+
+    Objects of this class are never instantiated, it serves only as a type
+    stub in commands below, to simplify handling and static analysis of
+    ``context.obj``. There is no added functionality, the only change is
+    a much narrower type of ``obj`` attribute.
+
+    This class shall be used instead of the original :py:class:`click.Context`.
+    Click is obviously not aware of our type annotations, and ``context``
+    objects managed by Click would always be of type :py:class:`click.Context`,
+    we would just convince mypy their ``obj`` attribute is no longer ``Any``.
+    """
+
+    # In contrast to the original Context, we *know* we do set obj to a valid
+    # object, and every time we touch it, it should absolutely be not-None.
+    obj: ContextObject
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,11 +86,19 @@ class ContextObject:
 class CustomGroup(click.Group):
     """ Custom Click Group """
 
-    def list_commands(self, context: click.core.Context) -> List[str]:
+    # ignore[override]: expected, we want to use more specific `Context`
+    # type than the one declared in superclass.
+    def list_commands(self, context: Context) -> List[str]:  # type: ignore[override]
         """ Prevent alphabetical sorting """
         return list(self.commands.keys())
 
-    def get_command(self, context: click.core.Context, cmd_name: str) -> Optional[click.Command]:
+    # ignore[override]: expected, we want to use more specific `Context`
+    # type than the one declared in superclass.
+    def get_command(  # type: ignore[override]
+            self,
+            context: Context,
+            cmd_name: str
+            ) -> Optional[click.Command]:
         """ Allow command shortening """
         # Backward-compatible 'test convert' (just temporary for now FIXME)
         cmd_name = cmd_name.replace('convert', 'import')
@@ -114,7 +152,7 @@ remote_plan_options = create_options_decorator(tmt.options.REMOTE_PLAN_OPTIONS)
     '--version', is_flag=True,
     help='Show tmt version and commit hash.')
 def main(
-        click_contex: click.core.Context,
+        click_contex: Context,
         root: str,
         context: List[str],
         **kwargs: Any) -> None:
@@ -195,7 +233,7 @@ def main(
          'are supported). Can be specified multiple times.')
 @verbosity_options
 @force_dry_options
-def run(context: click.core.Context, id_: str, **kwargs: Any) -> None:
+def run(context: Context, id_: str, **kwargs: Any) -> None:
     """ Run test steps. """
     # Initialize
     run = tmt.Run(id_=id_, tree=context.obj.tree, context=context)
@@ -232,7 +270,7 @@ run.add_command(tmt.steps.Reboot.command())
     '--default', is_flag=True,
     help="Use default plans even if others are available.")
 @verbosity_options
-def run_plans(context: click.core.Context, **kwargs: Any) -> None:
+def run_plans(context: Context, **kwargs: Any) -> None:
     """
     Select plans which should be executed.
 
@@ -258,7 +296,7 @@ def run_plans(context: click.core.Context, **kwargs: Any) -> None:
     help="Filter by linked objects (regular expressions are "
          "supported for both relation and target).")
 @verbosity_options
-def run_tests(context: click.core.Context, **kwargs: Any) -> None:
+def run_tests(context: Context, **kwargs: Any) -> None:
     """
     Select tests which should be executed.
 
@@ -283,7 +321,7 @@ if run_callback is None:
 @run_callback()  # type: ignore[misc]
 @click.pass_context
 def finito(
-        click_context: click.core.Context,
+        click_context: Context,
         commands: Any,
         *args: Any,
         **kwargs: Any) -> None:
@@ -299,7 +337,7 @@ def finito(
 @main.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @verbosity_options
-def tests(context: click.core.Context, **kwargs: Any) -> None:
+def tests(context: Context, **kwargs: Any) -> None:
     """
     Manage tests (L1 metadata).
 
@@ -316,7 +354,7 @@ def tests(context: click.core.Context, **kwargs: Any) -> None:
 @click.pass_context
 @filter_options
 @verbosity_options
-def tests_ls(context: click.core.Context, **kwargs: Any) -> None:
+def tests_ls(context: Context, **kwargs: Any) -> None:
     """
     List available tests.
 
@@ -332,7 +370,7 @@ def tests_ls(context: click.core.Context, **kwargs: Any) -> None:
 @click.pass_context
 @filter_options
 @verbosity_options
-def tests_show(context: click.core.Context, **kwargs: Any) -> None:
+def tests_show(context: Context, **kwargs: Any) -> None:
     """
     Show test details.
 
@@ -351,7 +389,7 @@ def tests_show(context: click.core.Context, **kwargs: Any) -> None:
 @fmf_source_options
 @fix_options
 @verbosity_options
-def tests_lint(context: click.core.Context, **kwargs: Any) -> None:
+def tests_lint(context: Context, **kwargs: Any) -> None:
     """
     Check tests against the L1 metadata specification.
 
@@ -382,7 +420,7 @@ _test_templates = listed(tmt.templates.TEST, join='or')
 @verbosity_options
 @force_dry_options
 def tests_create(
-        context: click.core.Context,
+        context: Context,
         name: str,
         template: str,
         force: bool,
@@ -393,6 +431,7 @@ def tests_create(
     Specify directory name or use '.' to create tests under the
     current working directory.
     """
+    assert context.obj.tree.root is not None  # narrow type
     tmt.Test._save_context(context)
     tmt.Test.create(name, template, context.obj.tree.root, force)
 
@@ -448,7 +487,7 @@ def tests_create(
 @verbosity_options
 @force_dry_options
 def tests_import(
-        context: click.core.Context,
+        context: Context,
         paths: List[str],
         makefile: bool,
         restraint: bool,
@@ -567,7 +606,7 @@ def tests_import(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
 def tests_export(
-        context: click.core.Context,
+        context: Context,
         format_: str,
         how: str,
         nitrate: bool,
@@ -591,7 +630,7 @@ def tests_export(
 
     if how == 'nitrate' or how == 'polarion':
         for test in context.obj.tree.tests():
-            test.export(format_=tmt.base.ExportFormat(how))
+            test.export(format_=tmt.base.ExportFormat(how))  # type: ignore[call-overload]
     elif format_ in ['dict', 'yaml']:
         keys = None
         if kwargs.get('fmf_id'):
@@ -615,7 +654,7 @@ def tests_export(
 @filter_options
 @verbosity_options
 @force_dry_options
-def tests_id(context: click.core.Context, **kwargs: Any) -> None:
+def tests_id(context: Context, **kwargs: Any) -> None:
     """
     Generate a unique id for each selected test.
 
@@ -636,7 +675,7 @@ def tests_id(context: click.core.Context, **kwargs: Any) -> None:
 @click.pass_context
 @verbosity_options
 @remote_plan_options
-def plans(context: click.core.Context, **kwargs: Any) -> None:
+def plans(context: Context, **kwargs: Any) -> None:
     """
     Manage test plans (L2 metadata).
 
@@ -656,7 +695,7 @@ def plans(context: click.core.Context, **kwargs: Any) -> None:
 @filter_options
 @verbosity_options
 @remote_plan_options
-def plans_ls(context: click.core.Context, **kwargs: Any) -> None:
+def plans_ls(context: Context, **kwargs: Any) -> None:
     """
     List available plans.
 
@@ -673,7 +712,7 @@ def plans_ls(context: click.core.Context, **kwargs: Any) -> None:
 @filter_options
 @verbosity_options
 @remote_plan_options
-def plans_show(context: click.core.Context, **kwargs: Any) -> None:
+def plans_show(context: Context, **kwargs: Any) -> None:
     """
     Show plan details.
 
@@ -691,7 +730,7 @@ def plans_show(context: click.core.Context, **kwargs: Any) -> None:
 @filter_options
 @fmf_source_options
 @verbosity_options
-def plans_lint(context: click.core.Context, **kwargs: Any) -> None:
+def plans_lint(context: Context, **kwargs: Any) -> None:
     """
     Check plans against the L2 metadata specification.
 
@@ -740,12 +779,13 @@ _plan_templates = listed(tmt.templates.PLAN, join='or')
 @verbosity_options
 @force_dry_options
 def plans_create(
-        context: click.core.Context,
+        context: Context,
         name: str,
         template: str,
         force: bool,
         **kwargs: Any) -> None:
     """ Create a new plan based on given template. """
+    assert context.obj.tree.root is not None  # narrow type
     tmt.Plan._save_context(context)
     tmt.Plan.create(name, template, context.obj.tree.root, force)
 
@@ -759,7 +799,7 @@ def plans_create(
 @click.option(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
-def plans_export(context: click.core.Context, format_: str, **kwargs: Any) -> None:
+def plans_export(context: Context, format_: str, **kwargs: Any) -> None:
     """
     Export plans into desired format.
 
@@ -784,7 +824,7 @@ def plans_export(context: click.core.Context, format_: str, **kwargs: Any) -> No
 @filter_options
 @verbosity_options
 @force_dry_options
-def plans_id(context: click.core.Context, **kwargs: Any) -> None:
+def plans_id(context: Context, **kwargs: Any) -> None:
     """
     Generate a unique id for each selected plan.
 
@@ -804,7 +844,7 @@ def plans_id(context: click.core.Context, **kwargs: Any) -> None:
 @main.group(invoke_without_command=True, cls=CustomGroup)
 @click.pass_context
 @verbosity_options
-def stories(context: click.core.Context, **kwargs: Any) -> None:
+def stories(context: Context, **kwargs: Any) -> None:
     """
     Manage user stories.
 
@@ -825,7 +865,7 @@ def stories(context: click.core.Context, **kwargs: Any) -> None:
 @story_flags_filter_options
 @verbosity_options
 def stories_ls(
-        context: click.core.Context,
+        context: Context,
         implemented: bool,
         verified: bool,
         documented: bool,
@@ -842,8 +882,7 @@ def stories_ls(
     Use '.' to select stories under the current working directory.
     """
     tmt.Story._save_context(context)
-    # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
-    for story in cast(tmt.Tree, context.obj.tree).stories():
+    for story in context.obj.tree.stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):
             story.ls()
@@ -855,7 +894,7 @@ def stories_ls(
 @story_flags_filter_options
 @verbosity_options
 def stories_show(
-        context: click.core.Context,
+        context: Context,
         implemented: bool,
         verified: bool,
         documented: bool,
@@ -872,8 +911,7 @@ def stories_show(
     Use '.' to select stories under the current working directory.
     """
     tmt.Story._save_context(context)
-    # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
-    for story in cast(tmt.Tree, context.obj.tree).stories():
+    for story in context.obj.tree.stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):
             story.show()
@@ -893,12 +931,13 @@ _story_templates = listed(tmt.templates.STORY, join='or')
 @verbosity_options
 @force_dry_options
 def stories_create(
-        context: click.core.Context,
+        context: Context,
         name: str,
         template: str,
         force: bool,
         **kwargs: Any) -> None:
     """ Create a new story based on given template. """
+    assert context.obj.tree.root is not None  # narrow type
     tmt.Story._save_context(context)
     tmt.Story.create(name, template, context.obj.tree.root, force)
 
@@ -915,7 +954,7 @@ def stories_create(
 @story_flags_filter_options
 @verbosity_options
 def stories_coverage(
-        context: click.core.Context,
+        context: Context,
         code: bool,
         test: bool,
         docs: bool,
@@ -944,8 +983,7 @@ def stories_coverage(
     total = code_coverage = test_coverage = docs_coverage = 0
     if not any([code, test, docs]):
         code = test = docs = True
-    # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
-    for story in cast(tmt.Tree, context.obj.tree).stories():
+    for story in context.obj.tree.stories():
         # Check conditions
         if not story._match(
                 implemented, verified, documented, covered, unimplemented,
@@ -992,7 +1030,7 @@ def stories_coverage(
     '-d', '--debug', is_flag=True,
     help='Provide as much debugging details as possible.')
 def stories_export(
-        context: click.core.Context,
+        context: Context,
         format_: str,
         implemented: bool,
         verified: bool,
@@ -1011,8 +1049,7 @@ def stories_export(
     """
     tmt.Story._save_context(context)
 
-    # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
-    for story in cast(tmt.Tree, context.obj.tree).stories(whole=True):
+    for story in context.obj.tree.stories(whole=True):
         if not story._match(implemented, verified, documented, covered,
                             unimplemented, unverified, undocumented, uncovered):
             continue
@@ -1030,7 +1067,7 @@ def stories_export(
 @filter_options
 @fmf_source_options
 @verbosity_options
-def stories_lint(context: click.core.Context, **kwargs: Any) -> None:
+def stories_lint(context: Context, **kwargs: Any) -> None:
     """
     Check stories against the L3 metadata specification.
 
@@ -1055,7 +1092,7 @@ def stories_lint(context: click.core.Context, **kwargs: Any) -> None:
 @verbosity_options
 @force_dry_options
 def stories_id(
-        context: click.core.Context,
+        context: Context,
         implemented: bool,
         verified: bool,
         documented: bool,
@@ -1073,8 +1110,7 @@ def stories_id(
     are kept intact.
     """
     tmt.Story._save_context(context)
-    # FIXME: cast() - https://github.com/teemtee/tmt/pull/1592
-    for story in cast(tmt.Tree, context.obj.tree).stories():
+    for story in context.obj.tree.stories():
         if story._match(implemented, verified, documented, covered,
                         unimplemented, unverified, undocumented, uncovered):
             tmt.identifier.id_command(story.node, "story", dry=kwargs["dry"])
@@ -1095,7 +1131,7 @@ def stories_id(
 @verbosity_options
 @force_dry_options
 def init(
-        context: click.core.Context,
+        context: Context,
         path: str,
         template: str,
         force: bool,
@@ -1140,7 +1176,7 @@ def init(
     help='List all runs which have all enabled steps completed.')
 @verbosity_options
 def status(
-        context: click.core.Context,
+        context: Context,
         workdir_root: str,
         abandoned: bool,
         active: bool,
@@ -1178,7 +1214,7 @@ def status(
 @click.pass_context
 @verbosity_options
 @dry_options
-def clean(context: click.core.Context, **kwargs: Any) -> None:
+def clean(context: Context, **kwargs: Any) -> None:
     """
     Clean workdirs, guests or images.
 
@@ -1194,7 +1230,6 @@ def clean(context: click.core.Context, **kwargs: Any) -> None:
     echo(style('clean', fg='red'))
     clean_obj = tmt.Clean(parent=context.obj.common, context=context)
     context.obj.clean = clean_obj
-    context.obj.clean_partials = collections.defaultdict(list)
     exit_code = 0
     if context.invoked_subcommand is None:
         # Set path to default
@@ -1226,7 +1261,7 @@ if clean_callback is None:
 @clean_callback()  # type: ignore[misc]
 @click.pass_context
 def perform_clean(
-        click_context: click.core.Context,
+        click_context: Context,
         commands: Any,
         *args: Any,
         **kwargs: Any) -> None:
@@ -1259,7 +1294,7 @@ def perform_clean(
 @verbosity_options
 @dry_options
 def clean_runs(
-        context: click.core.Context,
+        context: Context,
         workdir_root: str,
         last: bool,
         id_: str,
@@ -1296,7 +1331,7 @@ def clean_runs(
 @verbosity_options
 @dry_options
 def clean_guests(
-        context: click.core.Context,
+        context: Context,
         workdir_root: str,
         last: bool,
         id_: int,
@@ -1319,7 +1354,7 @@ def clean_guests(
 @click.pass_context
 @verbosity_options
 @dry_options
-def clean_images(context: click.core.Context, **kwargs: Any) -> None:
+def clean_images(context: Context, **kwargs: Any) -> None:
     """
     Remove images of supported provision methods.
 
@@ -1343,7 +1378,7 @@ def clean_images(context: click.core.Context, **kwargs: Any) -> None:
 @fmf_source_options
 @fix_options
 @verbosity_options
-def lint(context: click.core.Context, **kwargs: Any) -> None:
+def lint(context: Context, **kwargs: Any) -> None:
     """
     Check all the present metadata against the specification.
 
@@ -1369,7 +1404,7 @@ def lint(context: click.core.Context, **kwargs: Any) -> None:
 
 @main.group(cls=CustomGroup)
 @click.pass_context
-def setup(context: click.core.Context, **kwargs: Any) -> None:
+def setup(context: Context, **kwargs: Any) -> None:
     """
     Setup the environment for working with tmt.
     """
@@ -1377,7 +1412,7 @@ def setup(context: click.core.Context, **kwargs: Any) -> None:
 
 @setup.group(cls=CustomGroup)
 @click.pass_context
-def completion(context: click.core.Context, **kwargs: Any) -> None:
+def completion(context: Context, **kwargs: Any) -> None:
     """
     Setup shell completions.
 
@@ -1423,7 +1458,7 @@ def setup_completion(shell: str, install: bool) -> None:
     '--install', '-i', 'install', is_flag=True,
     help="Persistently store the script to tmt's configuration directory "
          "and set it up by modifying '~/.bashrc'.")
-def completion_bash(context: click.core.Context, install: bool, **kwargs: Any) -> None:
+def completion_bash(context: Context, install: bool, **kwargs: Any) -> None:
     """
     Setup shell completions for bash.
     """
@@ -1436,7 +1471,7 @@ def completion_bash(context: click.core.Context, install: bool, **kwargs: Any) -
     '--install', '-i', 'install', is_flag=True,
     help="Persistently store the script to tmt's configuration directory "
          "and set it up by modifying '~/.zshrc'.")
-def completion_zsh(context: click.core.Context, install: bool, **kwargs: Any) -> None:
+def completion_zsh(context: Context, install: bool, **kwargs: Any) -> None:
     """
     Setup shell completions for zsh.
     """
@@ -1449,7 +1484,7 @@ def completion_zsh(context: click.core.Context, install: bool, **kwargs: Any) ->
     '--install', '-i', 'install', is_flag=True,
     help="Persistently store the script to "
          "'~/.config/fish/completions/tmt.fish'.")
-def completion_fish(context: click.core.Context, install: bool, **kwargs: Any) -> None:
+def completion_fish(context: Context, install: bool, **kwargs: Any) -> None:
     """
     Setup shell completions for fish.
     """

@@ -306,7 +306,7 @@ class Common:
     """
 
     # Command line context, options and workdir
-    _context: Optional[click.Context] = None
+    _context: Optional['tmt.cli.Context'] = None
     # When set to true, _opt will be ignored (default will be returned)
     ignore_class_options: bool = False
     _options: Dict[str, Any] = dict()
@@ -332,7 +332,7 @@ class Common:
             parent: Optional[CommonDerivedType] = None,
             name: Optional[str] = None,
             workdir: WorkdirArgumentType = None,
-            context: Optional[click.Context] = None,
+            context: Optional['tmt.cli.Context'] = None,
             relative_indent: int = 1,
             **kwargs: Any) -> None:
         """
@@ -367,12 +367,12 @@ class Common:
         return self.name
 
     @classmethod
-    def _save_context(cls, context: click.Context) -> None:
+    def _save_context(cls, context: 'tmt.cli.Context') -> None:
         """ Save provided command line context and options for future use """
         cls._context = context
         cls._options = context.params
 
-    def _save_context_to_instance(self, context: click.Context) -> None:
+    def _save_context_to_instance(self, context: 'tmt.cli.Context') -> None:
         """ Save provided command line context and options to the instance """
         self._context = context
         self._options = context.params

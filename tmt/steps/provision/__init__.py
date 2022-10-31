@@ -10,7 +10,7 @@ import string
 import subprocess
 import tempfile
 from shlex import quote
-from typing import Any, Dict, List, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union, cast
 
 import click
 import fmf
@@ -20,6 +20,10 @@ import tmt.plugins
 import tmt.steps
 import tmt.utils
 from tmt.steps import Action
+
+if TYPE_CHECKING:
+    import tmt.cli
+
 
 # Timeout in seconds of waiting for a connection after reboot
 CONNECTION_TIMEOUT = 5 * 60
@@ -1003,7 +1007,7 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
         @click.option(
             '-h', '--how', metavar='METHOD',
             help='Use specified method for provisioning.')
-        def provision(context: click.Context, **kwargs: Any) -> None:
+        def provision(context: 'tmt.cli.Context', **kwargs: Any) -> None:
             context.obj.steps.add('provision')
             Provision._save_context(context)
 

@@ -22,6 +22,7 @@ from tmt.options import show_step_method_hints
 
 if TYPE_CHECKING:
     import tmt.base
+    import tmt.cli
     from tmt.base import Plan
     from tmt.steps.provision import Guest
 
@@ -1026,7 +1027,7 @@ class Reboot(Action):
         @click.option(
             '--hard', is_flag=True,
             help='Hard reboot of the machine. Unsaved data may be lost.')
-        def reboot(context: click.Context, **kwargs: Any) -> None:
+        def reboot(context: 'tmt.cli.Context', **kwargs: Any) -> None:
             """ Reboot the guest. """
             Reboot._save_context(context)
             Reboot._enabled = True
@@ -1089,7 +1090,7 @@ class Login(Action):
         @click.option(
             '-t', '--test', is_flag=True,
             help='Log into the guest after each executed test in the execute phase.')
-        def login(context: click.Context, **kwargs: Any) -> None:
+        def login(context: 'tmt.cli.Context', **kwargs: Any) -> None:
             """
             Provide user with an interactive shell on the guest.
 

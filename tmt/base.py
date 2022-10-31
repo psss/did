@@ -8,10 +8,10 @@ import re
 import shutil
 import sys
 import time
-from typing import (Any, ClassVar, Dict, Generator, Iterable, List, Optional,
-                    Sequence, Tuple, TypeVar, Union, cast, overload)
+from typing import (TYPE_CHECKING, Any, Callable, ClassVar, Dict, Generator,
+                    Iterable, List, Optional, Sequence, Tuple, TypeVar, Union,
+                    cast, overload)
 
-import click
 import fmf
 import fmf.base
 import fmf.utils
@@ -38,6 +38,10 @@ if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
 else:
     from typing_extensions import Literal, TypedDict
+
+if TYPE_CHECKING:
+    import tmt.cli
+
 
 T = TypeVar('T')
 
@@ -464,7 +468,7 @@ class Core(
         return tmt.utils.fmf_id(self.name, self.node.root)
 
     @classmethod
-    def _save_context(cls, context: click.Context) -> None:
+    def _save_context(cls, context: 'tmt.cli.Context') -> None:
         """ Save provided command line context for future use """
         super(Core, cls)._save_context(context)
 
@@ -2255,7 +2259,7 @@ class Run(tmt.utils.Common):
                  *,
                  id_: Optional[str] = None,
                  tree: Optional[Tree] = None,
-                 context: Optional[click.Context] = None) -> None:
+                 context: Optional['tmt.cli.Context'] = None) -> None:
         """ Initialize tree, workdir and plans """
         # Use the last run id if requested
         self.config = tmt.utils.Config()
@@ -2714,6 +2718,9 @@ class Status(tmt.utils.Common):
             self.process_run(run)
 
 
+CleanCallback = Callable[[], bool]
+
+
 class Clean(tmt.utils.Common):
     """ A class for cleaning up workdirs, guests or images """
 
@@ -2722,7 +2729,7 @@ class Clean(tmt.utils.Common):
                  parent: Optional[tmt.utils.Common] = None,
                  name: Optional[str] = None,
                  workdir: tmt.utils.WorkdirArgumentType = None,
-                 context: Optional[click.Context] = None) -> None:
+                 context: Optional['tmt.cli.Context'] = None) -> None:
         """
         Initialize name and relation with the parent object
 

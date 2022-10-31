@@ -1,11 +1,14 @@
 import dataclasses
-from typing import Any, List, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, Any, List, Optional, Type, Union, cast
 
 import click
 
 import tmt
 import tmt.steps
 from tmt.steps import Action
+
+if TYPE_CHECKING:
+    import tmt.cli
 
 
 @dataclasses.dataclass
@@ -41,7 +44,7 @@ class ReportPlugin(tmt.steps.GuestlessPlugin):
         @click.option(
             '-h', '--how', metavar='METHOD',
             help='Use specified method for results reporting.')
-        def report(context: click.Context, **kwargs: Any) -> None:
+        def report(context: 'tmt.cli.Context', **kwargs: Any) -> None:
             context.obj.steps.add('report')
             Report._save_context(context)
 

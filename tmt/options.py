@@ -3,7 +3,7 @@
 """ Common options and the MethodCommand class """
 
 import re
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type
 
 import click
 
@@ -18,6 +18,10 @@ except ImportError:
     from typing import TypeVar, Union
 
     FC = TypeVar('FC', bound=Union[Callable[..., Any], click.Command])  # type: ignore[misc]
+
+
+if TYPE_CHECKING:
+    import tmt.cli
 
 
 MethodDictType = Dict[str, click.core.Command]
@@ -234,7 +238,7 @@ def create_method_class(methods: MethodDictType) -> Type[click.Command]:
     class MethodCommand(click.Command):
         _method: Optional[click.Command] = None
 
-        def _check_method(self, context: click.Context, args: List[str]) -> None:
+        def _check_method(self, context: 'tmt.cli.Context', args: List[str]) -> None:
             """ Manually parse the --how option """
             how = None
             subcommands = (
@@ -269,22 +273,27 @@ def create_method_class(methods: MethodDictType) -> Type[click.Command]:
 
             if how and self._method is None:
                 # Use run for logging, steps may not be initialized yet
+                assert context.obj.run is not None  # narrow type
                 show_step_method_hints(context.obj.run, self.name, how)
                 raise tmt.utils.SpecificationError(
                     f"Unsupported {self.name} method '{how}'.")
 
-        def parse_args(self, context: click.Context, args: List[str]) -> List[str]:
+        def parse_args(  # type: ignore[override]
+                self,
+                context: 'tmt.cli.Context',
+                args: List[str]
+                ) -> List[str]:
             self._check_method(context, args)
             if self._method is not None:
                 return self._method.parse_args(context, args)
             return super().parse_args(context, args)
 
-        def get_help(self, context: click.Context) -> str:
+        def get_help(self, context: 'tmt.cli.Context') -> str:  # type: ignore[override]
             if self._method is not None:
                 return self._method.get_help(context)
             return super().get_help(context)
 
-        def invoke(self, context: click.Context) -> Any:
+        def invoke(self, context: 'tmt.cli.Context') -> Any:  # type: ignore[override]
             if self._method:
                 return self._method.invoke(context)
             return super().invoke(context)

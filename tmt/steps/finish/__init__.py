@@ -1,6 +1,6 @@
 import copy
 import dataclasses
-from typing import Any, List, Optional, Type, cast
+from typing import TYPE_CHECKING, Any, List, Optional, Type, cast
 
 import click
 import fmf
@@ -9,6 +9,9 @@ import tmt
 import tmt.steps
 from tmt.steps import Action, Method, StepData
 from tmt.utils import GeneralError
+
+if TYPE_CHECKING:
+    import tmt.cli
 
 
 @dataclasses.dataclass
@@ -41,7 +44,7 @@ class FinishPlugin(tmt.steps.Plugin):
         @click.option(
             '-h', '--how', metavar='METHOD',
             help='Use specified method for finishing tasks.')
-        def finish(context: click.Context, **kwargs: Any) -> None:
+        def finish(context: 'tmt.cli.Context', **kwargs: Any) -> None:
             context.obj.steps.add('finish')
             Finish._save_context(context)
 

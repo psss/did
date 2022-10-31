@@ -18,6 +18,7 @@ from tmt.steps.provision import Guest
 from tmt.utils import GeneralError
 
 if TYPE_CHECKING:
+    import tmt.cli
     import tmt.options
     import tmt.steps.discover
     import tmt.steps.provision
@@ -151,7 +152,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         @click.option(
             '-h', '--how', metavar='METHOD',
             help='Use specified method for test execution.')
-        def execute(context: click.Context, **kwargs: Any) -> None:
+        def execute(context: 'tmt.cli.Context', **kwargs: Any) -> None:
             context.obj.steps.add('execute')
             Execute._save_context(context)
 
