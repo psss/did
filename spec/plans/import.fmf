@@ -27,6 +27,8 @@ description: |
     steps might be possible in the future but currently is not
     supported in any way.
 
+    .. versionadded:: 1.19
+
     __ https://fmf.readthedocs.io/en/latest/concept.html#identifiers
 
 example:
