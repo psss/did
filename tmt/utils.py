@@ -1975,16 +1975,17 @@ def fmf_id(name: str, fmf_root: str) -> 'tmt.base.FmfId':
     remote = run(f"git config --get remote.{remote_name}.url")
     fmf_id.url = public_git_url(remote)
 
-    # Get the ref (skip for master as it is the default)
-    ref = run('git rev-parse --abbrev-ref HEAD')
-    if ref != 'master':
-        fmf_id.ref = ref
-
     # Construct path (if different from git root)
     git_root = run('git rev-parse --show-toplevel')
     if git_root != fmf_root:
         fmf_id.path = os.path.join(
             '/', os.path.relpath(fmf_root, git_root))
+
+    # Get the ref (skip for the default)
+    ref = run('git rev-parse --abbrev-ref HEAD')
+    def_branch = default_branch(git_root)
+    if ref != def_branch:
+        fmf_id.ref = ref
 
     return fmf_id
 

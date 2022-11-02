@@ -635,7 +635,7 @@ def export_to_nitrate(test: 'tmt.Test') -> None:
             echo(style(section + ': ', fg='green') + attribute.strip())
 
     # fmf identifer
-    fmf_id = tmt.utils.dict_to_yaml(test.fmf_id.to_dict())
+    fmf_id = tmt.utils.dict_to_yaml(test.fmf_id.to_minimal_dict())
     struct_field.set('fmf', fmf_id)
     echo(style('fmf id:\n', fg='green') + fmf_id.strip())
 

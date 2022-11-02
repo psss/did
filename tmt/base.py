@@ -448,7 +448,7 @@ class Core(
     def _fmf_id(self) -> None:
         """ Show fmf identifier """
         echo(tmt.utils.format('fmf-id', cast(Dict[str, Any],
-             self.fmf_id.to_dict()), key_color='magenta'))
+             self.fmf_id.to_minimal_dict()), key_color='magenta'))
 
     # Caching properties does not play nicely with mypy and annotations,
     # and constructing a workaround would be hard because of support of
