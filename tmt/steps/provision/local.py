@@ -12,56 +12,6 @@ class ProvisionLocalData(tmt.steps.provision.GuestData, tmt.steps.provision.Prov
     pass
 
 
-@tmt.steps.provides_method('local')
-class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
-    """
-    Use local host for test execution
-
-    In general it is not recommended to run tests on your local machine
-    as there might be security risks. Run only those tests which you
-    know are safe so that you don't destroy your laptop ;-)
-
-    Example config:
-
-        provision:
-            how: local
-
-    Note that 'tmt run' is expected to be executed under a regular user.
-    If there are admin rights required (for example in the prepare step)
-    you might be asked for a sudo password.
-    """
-
-    _data_class = ProvisionLocalData
-
-    # Guest instance
-    _guest = None
-
-    def wake(self, data: Optional[tmt.steps.provision.GuestData] = None) -> None:
-        """ Wake up the plugin, process data, apply options """
-        super().wake(data=data)
-        if data:
-            self._guest = GuestLocal(data, name=self.name, parent=self.step)
-
-    def go(self) -> None:
-        """ Provision the container """
-        super().go()
-
-        # Create a GuestLocal instance
-        data = tmt.steps.provision.GuestData(
-            guest='localhost',
-            role=self.get('role')
-            )
-        self._guest = GuestLocal(data, name=self.name, parent=self.step)
-
-    def guest(self) -> Optional['GuestLocal']:
-        """ Return the provisioned guest """
-        return self._guest
-
-    def requires(self) -> List[str]:
-        """ List of required packages needed for workdir sync """
-        return GuestLocal.requires()
-
-
 class GuestLocal(tmt.Guest):
     """ Local Host """
 
@@ -120,3 +70,54 @@ class GuestLocal(tmt.Guest):
             options: Optional[List[str]] = None,
             extend_options: Optional[List[str]] = None) -> None:
         """ Nothing to be done to pull workdir """
+
+
+@tmt.steps.provides_method('local')
+class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
+    """
+    Use local host for test execution
+
+    In general it is not recommended to run tests on your local machine
+    as there might be security risks. Run only those tests which you
+    know are safe so that you don't destroy your laptop ;-)
+
+    Example config:
+
+        provision:
+            how: local
+
+    Note that 'tmt run' is expected to be executed under a regular user.
+    If there are admin rights required (for example in the prepare step)
+    you might be asked for a sudo password.
+    """
+
+    _data_class = ProvisionLocalData
+    _guest_class = GuestLocal
+
+    # Guest instance
+    _guest = None
+
+    def wake(self, data: Optional[tmt.steps.provision.GuestData] = None) -> None:
+        """ Wake up the plugin, process data, apply options """
+        super().wake(data=data)
+        if data:
+            self._guest = GuestLocal(data, name=self.name, parent=self.step)
+
+    def go(self) -> None:
+        """ Provision the container """
+        super().go()
+
+        # Create a GuestLocal instance
+        data = tmt.steps.provision.GuestData(
+            guest='localhost',
+            role=self.get('role')
+            )
+        self._guest = GuestLocal(data, name=self.name, parent=self.step)
+
+    def guest(self) -> Optional[GuestLocal]:
+        """ Return the provisioned guest """
+        return self._guest
+
+    def requires(self) -> List[str]:
+        """ List of required packages needed for workdir sync """
+        return GuestLocal.requires()

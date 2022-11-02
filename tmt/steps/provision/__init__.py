@@ -43,233 +43,6 @@ class CheckRsyncOutcome(enum.Enum):
 
 
 @dataclasses.dataclass
-class ProvisionStepData(tmt.steps.StepData):
-    pass
-
-
-class ProvisionPlugin(tmt.steps.GuestlessPlugin):
-    """ Common parent of provision plugins """
-
-    _data_class = ProvisionStepData
-
-    # Default implementation for provision is a virtual machine
-    how = 'virtual'
-
-    # List of all supported methods aggregated from all plugins of the same step.
-    _supported_methods: List[tmt.steps.Method] = []
-
-    @classmethod
-    def base_command(
-            cls,
-            usage: str,
-            method_class: Optional[Type[click.Command]] = None) -> click.Command:
-        """ Create base click command (common for all provision plugins) """
-
-        # Prepare general usage message for the step
-        if method_class:
-            usage = Provision.usage(method_overview=usage)
-
-        # Create the command
-        @click.command(cls=method_class, help=usage)
-        @click.pass_context
-        @click.option(
-            '-h', '--how', metavar='METHOD',
-            help='Use specified method for provisioning.')
-        def provision(context: click.Context, **kwargs: Any) -> None:
-            context.obj.steps.add('provision')
-            Provision._save_context(context)
-
-        return provision
-
-    def wake(self, data: Optional['GuestData'] = None) -> None:
-        """
-        Wake up the plugin
-
-        Override data with command line options.
-        Wake up the guest based on provided guest data.
-        """
-        super().wake()
-
-    def guest(self) -> Optional['Guest']:
-        """
-        Return provisioned guest
-
-        Each ProvisionPlugin has to implement this method.
-        Should return a provisioned Guest() instance.
-        """
-        raise NotImplementedError()
-
-    def requires(self) -> List[str]:
-        """ List of required packages needed for workdir sync """
-        return Guest.requires()
-
-    @classmethod
-    def clean_images(cls, clean: 'tmt.base.Clean', dry: bool) -> bool:
-        """ Remove the images of one particular plugin """
-        return True
-
-
-class Provision(tmt.steps.Step):
-    """ Provision an environment for testing or use localhost. """
-
-    # Default implementation for provision is a virtual machine
-    DEFAULT_HOW = 'virtual'
-
-    _plugin_base_class = ProvisionPlugin
-
-    def __init__(self, plan: 'tmt.Plan', data: tmt.steps.RawStepDataArgument) -> None:
-        """ Initialize provision step data """
-        super().__init__(plan=plan, data=data)
-
-        # List of provisioned guests and loaded guest data
-        self._guests: List['Guest'] = []
-        self._guest_data: Dict[str, 'GuestData'] = {}
-        self.is_multihost = False
-
-    def _normalize_data(self, raw_data: List[tmt.steps._RawStepData]) -> List[tmt.steps.StepData]:
-        data = super()._normalize_data(raw_data)
-
-        # Check that the names are unique
-        names = [datum.name for datum in data]
-        names_count = collections.Counter(names)
-        if len(data) > 1 and names_count.most_common(1)[0][1] > 1:
-            duplicate_names = [name for name in names_count.elements() if names_count[name] > 1]
-            duplicate_string = ', '.join(duplicate_names)
-            raise tmt.utils.GeneralError(
-                f"Provision step names must be unique for multihost testing. "
-                f"Duplicate names: '{duplicate_string}' in plan '{self.plan.name}'.")
-
-        return data
-
-    def load(self) -> None:
-        """ Load guest data from the workdir """
-        super().load()
-        try:
-            raw_guest_data = tmt.utils.yaml_to_dict(self.read('guests.yaml'))
-
-            self._guest_data = {
-                name: tmt.utils.SerializableContainer.unserialize(guest_data)
-                for name, guest_data in raw_guest_data.items()
-                }
-
-        except tmt.utils.FileError:
-            self.debug('Provisioned guests not found.', level=2)
-
-    def save(self) -> None:
-        """ Save guest data to the workdir """
-        super().save()
-        try:
-            raw_guest_data = {guest.name: guest.save().to_serialized()
-                              for guest in self.guests()}
-
-            self.write('guests.yaml', tmt.utils.dict_to_yaml(raw_guest_data))
-        except tmt.utils.FileError:
-            self.debug('Failed to save provisioned guests.')
-
-    def wake(self) -> None:
-        """ Wake up the step (process workdir and command line) """
-        super().wake()
-
-        # Choose the right plugin and wake it up
-        for data in self.data:
-            # FIXME: cast() - see https://github.com/teemtee/tmt/issues/1599
-            plugin = cast(ProvisionPlugin, ProvisionPlugin.delegate(self, data=data))
-            self._phases.append(plugin)
-            # If guest data loaded, perform a complete wake up
-            plugin.wake(data=self._guest_data.get(plugin.name))
-
-            guest = plugin.guest()
-            if guest:
-                self._guests.append(guest)
-
-        # Nothing more to do if already done
-        if self.status() == 'done':
-            self.debug(
-                'Provision wake up complete (already done before).', level=2)
-        # Save status and step data (now we know what to do)
-        else:
-            self.status('todo')
-            self.save()
-
-    def summary(self) -> None:
-        """ Give a concise summary of the provisioning """
-        # Summary of provisioned guests
-        guests = fmf.utils.listed(self.guests(), 'guest')
-        self.info('summary', f'{guests} provisioned', 'green', shift=1)
-        # Guest list in verbose mode
-        for guest in self.guests():
-            if not guest.name.startswith(tmt.utils.DEFAULT_NAME):
-                self.verbose(guest.name, color='red', shift=2)
-
-    def go(self) -> None:
-        """ Provision all guests"""
-        super().go()
-
-        # Nothing more to do if already done
-        if self.status() == 'done':
-            self.info('status', 'done', 'green', shift=1)
-            self.summary()
-            self.actions()
-            return
-
-        # Provision guests
-        self._guests = []
-        save = True
-        self.is_multihost = sum(isinstance(phase, ProvisionPlugin) for phase in self.phases()) > 1
-        try:
-            for phase in self.phases(classes=(Action, ProvisionPlugin)):
-                try:
-                    if isinstance(phase, Action):
-                        phase.go()
-
-                    elif isinstance(phase, ProvisionPlugin):
-                        phase.go()
-
-                        guest = phase.guest()
-                        if guest:
-                            guest.details()
-
-                    if self.is_multihost:
-                        self.info('')
-                finally:
-                    if isinstance(phase, ProvisionPlugin):
-                        guest = phase.guest()
-                        if guest:
-                            self._guests.append(guest)
-
-            # Give a summary, update status and save
-            self.summary()
-            self.status('done')
-        except (SystemExit, tmt.utils.SpecificationError) as error:
-            # A plugin will only raise SystemExit if the exit is really desired
-            # and no other actions should be done. An example of this is
-            # listing available images. In such case, the workdir is deleted
-            # as it's redundant and save() would throw an error.
-            save = False
-            raise error
-        finally:
-            if save:
-                self.save()
-
-    def guests(self) -> List['Guest']:
-        """ Return the list of all provisioned guests """
-        return self._guests
-
-    def requires(self) -> List[str]:
-        """
-        Packages required by all enabled provision plugins
-
-        Return a list of packages which need to be installed on the
-        provisioned guest so that the workdir can be synced to it.
-        Used by the prepare step.
-        """
-        requires = set()
-        for plugin in self.phases(classes=ProvisionPlugin):
-            requires.update(plugin.requires())
-        return list(requires)
-
-
-@dataclasses.dataclass
 class GuestData(tmt.utils.SerializableContainer):
     """
     Keys necessary to describe, create, save and restore a guest.
@@ -1179,3 +952,231 @@ class GuestSsh(Guest):
     def requires(cls) -> List[str]:
         """ No extra requires needed """
         return []
+
+
+@dataclasses.dataclass
+class ProvisionStepData(tmt.steps.StepData):
+    pass
+
+
+class ProvisionPlugin(tmt.steps.GuestlessPlugin):
+    """ Common parent of provision plugins """
+
+    _data_class = ProvisionStepData
+    _guest_class = Guest
+
+    # Default implementation for provision is a virtual machine
+    how = 'virtual'
+
+    # List of all supported methods aggregated from all plugins of the same step.
+    _supported_methods: List[tmt.steps.Method] = []
+
+    @classmethod
+    def base_command(
+            cls,
+            usage: str,
+            method_class: Optional[Type[click.Command]] = None) -> click.Command:
+        """ Create base click command (common for all provision plugins) """
+
+        # Prepare general usage message for the step
+        if method_class:
+            usage = Provision.usage(method_overview=usage)
+
+        # Create the command
+        @click.command(cls=method_class, help=usage)
+        @click.pass_context
+        @click.option(
+            '-h', '--how', metavar='METHOD',
+            help='Use specified method for provisioning.')
+        def provision(context: click.Context, **kwargs: Any) -> None:
+            context.obj.steps.add('provision')
+            Provision._save_context(context)
+
+        return provision
+
+    def wake(self, data: Optional[GuestData] = None) -> None:
+        """
+        Wake up the plugin
+
+        Override data with command line options.
+        Wake up the guest based on provided guest data.
+        """
+        super().wake()
+
+    def guest(self) -> Optional[Guest]:
+        """
+        Return provisioned guest
+
+        Each ProvisionPlugin has to implement this method.
+        Should return a provisioned Guest() instance.
+        """
+        raise NotImplementedError()
+
+    def requires(self) -> List[str]:
+        """ List of required packages needed for workdir sync """
+        return Guest.requires()
+
+    @classmethod
+    def clean_images(cls, clean: 'tmt.base.Clean', dry: bool) -> bool:
+        """ Remove the images of one particular plugin """
+        return True
+
+
+class Provision(tmt.steps.Step):
+    """ Provision an environment for testing or use localhost. """
+
+    # Default implementation for provision is a virtual machine
+    DEFAULT_HOW = 'virtual'
+
+    _plugin_base_class = ProvisionPlugin
+
+    def __init__(self, plan: 'tmt.Plan', data: tmt.steps.RawStepDataArgument) -> None:
+        """ Initialize provision step data """
+        super().__init__(plan=plan, data=data)
+
+        # List of provisioned guests and loaded guest data
+        self._guests: List[Guest] = []
+        self._guest_data: Dict[str, GuestData] = {}
+        self.is_multihost = False
+
+    def _normalize_data(self, raw_data: List[tmt.steps._RawStepData]) -> List[tmt.steps.StepData]:
+        data = super()._normalize_data(raw_data)
+
+        # Check that the names are unique
+        names = [datum.name for datum in data]
+        names_count = collections.Counter(names)
+        if len(data) > 1 and names_count.most_common(1)[0][1] > 1:
+            duplicate_names = [name for name in names_count.elements() if names_count[name] > 1]
+            duplicate_string = ', '.join(duplicate_names)
+            raise tmt.utils.GeneralError(
+                f"Provision step names must be unique for multihost testing. "
+                f"Duplicate names: '{duplicate_string}' in plan '{self.plan.name}'.")
+
+        return data
+
+    def load(self) -> None:
+        """ Load guest data from the workdir """
+        super().load()
+        try:
+            raw_guest_data = tmt.utils.yaml_to_dict(self.read('guests.yaml'))
+
+            self._guest_data = {
+                name: tmt.utils.SerializableContainer.unserialize(guest_data)
+                for name, guest_data in raw_guest_data.items()
+                }
+
+        except tmt.utils.FileError:
+            self.debug('Provisioned guests not found.', level=2)
+
+    def save(self) -> None:
+        """ Save guest data to the workdir """
+        super().save()
+        try:
+            raw_guest_data = {guest.name: guest.save().to_serialized()
+                              for guest in self.guests()}
+
+            self.write('guests.yaml', tmt.utils.dict_to_yaml(raw_guest_data))
+        except tmt.utils.FileError:
+            self.debug('Failed to save provisioned guests.')
+
+    def wake(self) -> None:
+        """ Wake up the step (process workdir and command line) """
+        super().wake()
+
+        # Choose the right plugin and wake it up
+        for data in self.data:
+            # FIXME: cast() - see https://github.com/teemtee/tmt/issues/1599
+            plugin = cast(ProvisionPlugin, ProvisionPlugin.delegate(self, data=data))
+            self._phases.append(plugin)
+            # If guest data loaded, perform a complete wake up
+            plugin.wake(data=self._guest_data.get(plugin.name))
+
+            guest = plugin.guest()
+            if guest:
+                self._guests.append(guest)
+
+        # Nothing more to do if already done
+        if self.status() == 'done':
+            self.debug(
+                'Provision wake up complete (already done before).', level=2)
+        # Save status and step data (now we know what to do)
+        else:
+            self.status('todo')
+            self.save()
+
+    def summary(self) -> None:
+        """ Give a concise summary of the provisioning """
+        # Summary of provisioned guests
+        guests = fmf.utils.listed(self.guests(), 'guest')
+        self.info('summary', f'{guests} provisioned', 'green', shift=1)
+        # Guest list in verbose mode
+        for guest in self.guests():
+            if not guest.name.startswith(tmt.utils.DEFAULT_NAME):
+                self.verbose(guest.name, color='red', shift=2)
+
+    def go(self) -> None:
+        """ Provision all guests"""
+        super().go()
+
+        # Nothing more to do if already done
+        if self.status() == 'done':
+            self.info('status', 'done', 'green', shift=1)
+            self.summary()
+            self.actions()
+            return
+
+        # Provision guests
+        self._guests = []
+        save = True
+        self.is_multihost = sum(isinstance(phase, ProvisionPlugin) for phase in self.phases()) > 1
+        try:
+            for phase in self.phases(classes=(Action, ProvisionPlugin)):
+                try:
+                    if isinstance(phase, Action):
+                        phase.go()
+
+                    elif isinstance(phase, ProvisionPlugin):
+                        phase.go()
+
+                        guest = phase.guest()
+                        if guest:
+                            guest.details()
+
+                    if self.is_multihost:
+                        self.info('')
+                finally:
+                    if isinstance(phase, ProvisionPlugin):
+                        guest = phase.guest()
+                        if guest:
+                            self._guests.append(guest)
+
+            # Give a summary, update status and save
+            self.summary()
+            self.status('done')
+        except (SystemExit, tmt.utils.SpecificationError) as error:
+            # A plugin will only raise SystemExit if the exit is really desired
+            # and no other actions should be done. An example of this is
+            # listing available images. In such case, the workdir is deleted
+            # as it's redundant and save() would throw an error.
+            save = False
+            raise error
+        finally:
+            if save:
+                self.save()
+
+    def guests(self) -> List[Guest]:
+        """ Return the list of all provisioned guests """
+        return self._guests
+
+    def requires(self) -> List[str]:
+        """
+        Packages required by all enabled provision plugins
+
+        Return a list of packages which need to be installed on the
+        provisioned guest so that the workdir can be synced to it.
+        Used by the prepare step.
+        """
+        requires = set()
+        for plugin in self.phases(classes=ProvisionPlugin):
+            requires.update(plugin.requires())
+        return list(requires)

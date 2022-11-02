@@ -224,187 +224,6 @@ class ArtemisAPI:
         return self.query(path, method='delete', request_kwargs=request_kwargs)
 
 
-@tmt.steps.provides_method('artemis')
-class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
-    """
-    Provision guest using Artemis backend
-
-    Minimal configuration could look like this:
-
-        provision:
-            how: artemis
-            image: Fedora
-            api-url: https://your-artemis.com/
-
-    Note that the actual value of "image" depends on what images - or
-    "composes" as Artemis calls them - supports and can deliver.
-
-    Note that "api-url" can be also given via ARTEMIS_API_URL
-    environment variable.
-
-    Full configuration example:
-
-        provision:
-            how: artemis
-
-            # Artemis API
-            api-url: https://your-artemis.com/
-            api-version: 0.0.32
-
-            # Mandatory environment properties
-            image: Fedora
-
-            # Optional environment properties
-            arch: aarch64
-            pool: optional-pool-name
-
-            # Provisioning process control (optional)
-            priority-group: custom-priority-group
-            keyname: custom-SSH-key-name
-
-            # Labels to be attached to guest request (optional)
-            user-data:
-                foo: bar
-
-            # Timeouts and deadlines (optional)
-            provision-timeout: 3600
-            provision-tick: 10
-            api-timeout: 600
-            api-retries: 5
-            api-retry-backoff-factor: 1
-    """
-
-    _data_class = ProvisionArtemisData
-
-    # Guest instance
-    _guest = None
-
-    # TODO: fix types once superclass gains its annotations
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options for Artemis """
-        return [
-            click.option(
-                '--api-url', metavar='URL',
-                help="Artemis API URL.",
-                envvar='ARTEMIS_API_URL'
-                ),
-            click.option(
-                '--api-version', metavar='x.y.z',
-                help="Artemis API version to use.",
-                type=click.Choice(SUPPORTED_API_VERSIONS),
-                envvar='ARTEMIS_API_VERSION'
-                ),
-            click.option(
-                '--arch', metavar='ARCH',
-                help='Architecture to provision.'
-                ),
-            click.option(
-                '--image', metavar='COMPOSE',
-                help='Image (or "compose" in Artemis terminology) '
-                     'to provision.'
-                ),
-            click.option(
-                '--pool', metavar='NAME',
-                help='Pool to enforce.'
-                ),
-            click.option(
-                '--priority-group', metavar='NAME',
-                help='Provisioning priority group.'
-                ),
-            click.option(
-                '--keyname', metavar='NAME',
-                help='SSH key name.'
-                ),
-            click.option(
-                '--user-data', metavar='KEY=VALUE',
-                help='Optional data to attach to guest.',
-                multiple=True,
-                default=[]
-                ),
-            click.option(
-                '--provision-timeout', metavar='SECONDS',
-                help=f'How long to wait for provisioning to complete, '
-                     f'{DEFAULT_PROVISION_TIMEOUT} seconds by default.'
-                ),
-            click.option(
-                '--provision-tick', metavar='SECONDS',
-                help=f'How often check Artemis API for provisioning status, '
-                     f'{DEFAULT_PROVISION_TICK} seconds by default.',
-                ),
-            click.option(
-                '--api-timeout', metavar='SECONDS',
-                help=f'How long to wait for API operations to complete, '
-                     f'{DEFAULT_API_TIMEOUT} seconds by default.',
-                ),
-            click.option(
-                '--api-retries', metavar='COUNT',
-                help=f'How many attempts to use when talking to API, '
-                     f'{DEFAULT_API_RETRIES} by default.',
-                ),
-            click.option(
-                '--api-retry-backoff-factor', metavar='COUNT',
-                help=f'A factor for exponential API retry backoff, '
-                     f'{DEFAULT_RETRY_BACKOFF_FACTOR} by default.',
-                ),
-            ] + super().options(how)
-
-    # FIXME: ignore - https://github.com/teemtee/tmt/issues/1437
-    def wake(self, data: Optional[ArtemisGuestData] = None) -> None:  # type: ignore[override]
-        """ Wake up the plugin, process data, apply options """
-
-        super().wake(data=data)
-
-        if data:
-            self._guest = GuestArtemis(data, name=self.name, parent=self.step)
-
-    def go(self) -> None:
-        """ Provision the guest """
-        super().go()
-
-        api_version = self.get('api-version')
-
-        if api_version not in SUPPORTED_API_VERSIONS:
-            raise ProvisionError(f"API version '{api_version}' not supported.")
-
-        try:
-            user_data = {
-                key.strip(): value.strip()
-                for key, value in (
-                    pair.split('=', 1)
-                    for pair in self.get('user-data')
-                    )
-                }
-
-        except ValueError:
-            raise ProvisionError('Cannot parse user-data.')
-
-        data = ArtemisGuestData(
-            api_url=self.get('api-url'),
-            api_version=api_version,
-            arch=self.get('arch'),
-            image=self.get('image'),
-            hardware=self.get('hardware'),
-            pool=self.get('pool'),
-            priority_group=self.get('priority-group'),
-            keyname=self.get('keyname'),
-            user_data=user_data,
-            user=self.get('user'),
-            provision_timeout=self.get('provision-timeout'),
-            provision_tick=self.get('provision-tick'),
-            api_timeout=self.get('api-timeout'),
-            api_retries=self.get('api-retries'),
-            api_retry_backoff_factor=self.get('api-retry-backoff-factor')
-            )
-
-        self._guest = GuestArtemis(data, name=self.name, parent=self.step)
-        self._guest.start()
-
-    def guest(self) -> Optional['GuestArtemis']:
-        """ Return the provisioned guest """
-        return self._guest
-
-
 class GuestArtemis(tmt.GuestSsh):
     """
     Artemis guest instance
@@ -563,3 +382,185 @@ class GuestArtemis(tmt.GuestSsh):
                 'guest',
                 f"Failed to remove, "
                 f"unhandled API response '{response.status_code}'.")
+
+
+@tmt.steps.provides_method('artemis')
+class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
+    """
+    Provision guest using Artemis backend
+
+    Minimal configuration could look like this:
+
+        provision:
+            how: artemis
+            image: Fedora
+            api-url: https://your-artemis.com/
+
+    Note that the actual value of "image" depends on what images - or
+    "composes" as Artemis calls them - supports and can deliver.
+
+    Note that "api-url" can be also given via ARTEMIS_API_URL
+    environment variable.
+
+    Full configuration example:
+
+        provision:
+            how: artemis
+
+            # Artemis API
+            api-url: https://your-artemis.com/
+            api-version: 0.0.32
+
+            # Mandatory environment properties
+            image: Fedora
+
+            # Optional environment properties
+            arch: aarch64
+            pool: optional-pool-name
+
+            # Provisioning process control (optional)
+            priority-group: custom-priority-group
+            keyname: custom-SSH-key-name
+
+            # Labels to be attached to guest request (optional)
+            user-data:
+                foo: bar
+
+            # Timeouts and deadlines (optional)
+            provision-timeout: 3600
+            provision-tick: 10
+            api-timeout: 600
+            api-retries: 5
+            api-retry-backoff-factor: 1
+    """
+
+    _data_class = ProvisionArtemisData
+    _guest_class = GuestArtemis
+
+    # Guest instance
+    _guest = None
+
+    # TODO: fix types once superclass gains its annotations
+    @classmethod
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
+        """ Prepare command line options for Artemis """
+        return [
+            click.option(
+                '--api-url', metavar='URL',
+                help="Artemis API URL.",
+                envvar='ARTEMIS_API_URL'
+                ),
+            click.option(
+                '--api-version', metavar='x.y.z',
+                help="Artemis API version to use.",
+                type=click.Choice(SUPPORTED_API_VERSIONS),
+                envvar='ARTEMIS_API_VERSION'
+                ),
+            click.option(
+                '--arch', metavar='ARCH',
+                help='Architecture to provision.'
+                ),
+            click.option(
+                '--image', metavar='COMPOSE',
+                help='Image (or "compose" in Artemis terminology) '
+                     'to provision.'
+                ),
+            click.option(
+                '--pool', metavar='NAME',
+                help='Pool to enforce.'
+                ),
+            click.option(
+                '--priority-group', metavar='NAME',
+                help='Provisioning priority group.'
+                ),
+            click.option(
+                '--keyname', metavar='NAME',
+                help='SSH key name.'
+                ),
+            click.option(
+                '--user-data', metavar='KEY=VALUE',
+                help='Optional data to attach to guest.',
+                multiple=True,
+                default=[]
+                ),
+            click.option(
+                '--provision-timeout', metavar='SECONDS',
+                help=f'How long to wait for provisioning to complete, '
+                     f'{DEFAULT_PROVISION_TIMEOUT} seconds by default.'
+                ),
+            click.option(
+                '--provision-tick', metavar='SECONDS',
+                help=f'How often check Artemis API for provisioning status, '
+                     f'{DEFAULT_PROVISION_TICK} seconds by default.',
+                ),
+            click.option(
+                '--api-timeout', metavar='SECONDS',
+                help=f'How long to wait for API operations to complete, '
+                     f'{DEFAULT_API_TIMEOUT} seconds by default.',
+                ),
+            click.option(
+                '--api-retries', metavar='COUNT',
+                help=f'How many attempts to use when talking to API, '
+                     f'{DEFAULT_API_RETRIES} by default.',
+                ),
+            click.option(
+                '--api-retry-backoff-factor', metavar='COUNT',
+                help=f'A factor for exponential API retry backoff, '
+                     f'{DEFAULT_RETRY_BACKOFF_FACTOR} by default.',
+                ),
+            ] + super().options(how)
+
+    # FIXME: ignore - https://github.com/teemtee/tmt/issues/1437
+    def wake(self, data: Optional[ArtemisGuestData] = None) -> None:  # type: ignore[override]
+        """ Wake up the plugin, process data, apply options """
+
+        super().wake(data=data)
+
+        if data:
+            self._guest = GuestArtemis(data, name=self.name, parent=self.step)
+
+    def go(self) -> None:
+        """ Provision the guest """
+        super().go()
+
+        api_version = self.get('api-version')
+
+        if api_version not in SUPPORTED_API_VERSIONS:
+            raise ProvisionError(f"API version '{api_version}' not supported.")
+
+        try:
+            user_data = {
+                key.strip(): value.strip()
+                for key, value in (
+                    pair.split('=', 1)
+                    for pair in self.get('user-data')
+                    )
+                }
+
+        except ValueError:
+            raise ProvisionError('Cannot parse user-data.')
+
+        data = ArtemisGuestData(
+            api_url=self.get('api-url'),
+            api_version=api_version,
+            arch=self.get('arch'),
+            image=self.get('image'),
+            hardware=self.get('hardware'),
+            pool=self.get('pool'),
+            priority_group=self.get('priority-group'),
+            keyname=self.get('keyname'),
+            user_data=user_data,
+            user=self.get('user'),
+            provision_timeout=self.get('provision-timeout'),
+            provision_tick=self.get('provision-tick'),
+            api_timeout=self.get('api-timeout'),
+            api_retries=self.get('api-retries'),
+            api_retry_backoff_factor=self.get('api-retry-backoff-factor')
+            )
+
+        self._guest = GuestArtemis(data, name=self.name, parent=self.step)
+        self._guest.start()
+
+    def guest(self) -> Optional[GuestArtemis]:
+        """ Return the provisioned guest """
+        return self._guest

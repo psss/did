@@ -31,94 +31,6 @@ class ProvisionPodmanData(PodmanGuestData, tmt.steps.provision.ProvisionStepData
     pass
 
 
-@tmt.steps.provides_method('container')
-class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
-    """
-    Create a new container using podman
-
-    Example config:
-
-        provision:
-            how: container
-            image: fedora:latest
-
-    In order to always pull the fresh container image use 'pull: true'.
-
-    In order to run the container with different user as the default 'root',
-    use 'user: USER'.
-    """
-
-    _data_class = ProvisionPodmanData
-
-    # Guest instance
-    _guest = None
-
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options for connect """
-        return [
-            click.option(
-                '-i', '--image', metavar='IMAGE',
-                help='Select image to use. Short name or complete url.'),
-            click.option(
-                '-c', '--container', metavar='NAME',
-                help='Name or id of an existing container to be used.'),
-            click.option(
-                '-p', '--pull', is_flag=True,
-                help='Force pulling a fresh container image.'),
-            click.option(
-                '-u', '--user', metavar='USER',
-                help='User to use for all container operations.')
-            ] + super().options(how)
-
-    def default(self, option: str, default: Any = None) -> Any:
-        """ Return default data for given option """
-        if option == 'pull':
-            return self.get('force-pull', default=default)
-
-        return super().default(option, default=default)
-
-    def wake(self, data: Optional[tmt.steps.provision.GuestData] = None) -> None:
-        """ Wake up the plugin, process data, apply options """
-        super().wake(data=data)
-        # Wake up podman instance
-        if data:
-            guest = GuestContainer(data, name=self.name, parent=self.step)
-            guest.wake()
-            self._guest = guest
-
-    def go(self) -> None:
-        """ Provision the container """
-        super().go()
-
-        # Show which image we are using
-        pull = ' (force pull)' if self.get('pull') else ''
-        self.info('image', f"{self.get('image')}{pull}", 'green')
-
-        # Prepare data for the guest instance
-        data_from_options = {
-            key: self.get(key)
-            for key in PodmanGuestData.keys()
-            if key != 'force_pull'
-            }
-
-        data_from_options['force_pull'] = self.get('pull')
-
-        data = PodmanGuestData(**data_from_options)
-
-        # Create a new GuestTestcloud instance and start it
-        self._guest = GuestContainer(data, name=self.name, parent=self.step)
-        self._guest.start()
-
-    def guest(self) -> Optional['GuestContainer']:
-        """ Return the provisioned guest """
-        return self._guest
-
-    def requires(self) -> List[str]:
-        """ List of required packages needed for workdir sync """
-        return GuestContainer.requires()
-
-
 class GuestContainer(tmt.Guest):
     """ Container Instance """
 
@@ -273,3 +185,92 @@ class GuestContainer(tmt.Guest):
         if self.container:
             self.podman(['container', 'rm', '-f', self.container])
             self.info('container', 'removed', 'green')
+
+
+@tmt.steps.provides_method('container')
+class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
+    """
+    Create a new container using podman
+
+    Example config:
+
+        provision:
+            how: container
+            image: fedora:latest
+
+    In order to always pull the fresh container image use 'pull: true'.
+
+    In order to run the container with different user as the default 'root',
+    use 'user: USER'.
+    """
+
+    _data_class = ProvisionPodmanData
+    _guest_class = GuestContainer
+
+    # Guest instance
+    _guest = None
+
+    @classmethod
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
+        """ Prepare command line options for connect """
+        return [
+            click.option(
+                '-i', '--image', metavar='IMAGE',
+                help='Select image to use. Short name or complete url.'),
+            click.option(
+                '-c', '--container', metavar='NAME',
+                help='Name or id of an existing container to be used.'),
+            click.option(
+                '-p', '--pull', is_flag=True,
+                help='Force pulling a fresh container image.'),
+            click.option(
+                '-u', '--user', metavar='USER',
+                help='User to use for all container operations.')
+            ] + super().options(how)
+
+    def default(self, option: str, default: Any = None) -> Any:
+        """ Return default data for given option """
+        if option == 'pull':
+            return self.get('force-pull', default=default)
+
+        return super().default(option, default=default)
+
+    def wake(self, data: Optional[tmt.steps.provision.GuestData] = None) -> None:
+        """ Wake up the plugin, process data, apply options """
+        super().wake(data=data)
+        # Wake up podman instance
+        if data:
+            guest = GuestContainer(data, name=self.name, parent=self.step)
+            guest.wake()
+            self._guest = guest
+
+    def go(self) -> None:
+        """ Provision the container """
+        super().go()
+
+        # Show which image we are using
+        pull = ' (force pull)' if self.get('pull') else ''
+        self.info('image', f"{self.get('image')}{pull}", 'green')
+
+        # Prepare data for the guest instance
+        data_from_options = {
+            key: self.get(key)
+            for key in PodmanGuestData.keys()
+            if key != 'force_pull'
+            }
+
+        data_from_options['force_pull'] = self.get('pull')
+
+        data = PodmanGuestData(**data_from_options)
+
+        # Create a new GuestTestcloud instance and start it
+        self._guest = GuestContainer(data, name=self.name, parent=self.step)
+        self._guest.start()
+
+    def guest(self) -> Optional[GuestContainer]:
+        """ Return the provisioned guest """
+        return self._guest
+
+    def requires(self) -> List[str]:
+        """ List of required packages needed for workdir sync """
+        return GuestContainer.requires()

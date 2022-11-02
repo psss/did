@@ -188,159 +188,6 @@ class ProvisionTestcloudData(TestcloudGuestData, tmt.steps.provision.ProvisionSt
     pass
 
 
-@tmt.steps.provides_method('virtual.testcloud')
-class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
-    """
-    Local virtual machine using testcloud
-
-    Minimal config which uses the latest fedora image:
-
-        provision:
-            how: virtual
-
-    Here's a full config example:
-
-        provision:
-            how: virtual
-            image: fedora
-            user: root
-            memory: 2048
-
-    As the image use 'fedora' for the latest released Fedora compose,
-    'rawhide' for the latest Rawhide compose, short aliases such as
-    'fedora-32', 'f-32' or 'f32' for specific release or a full url to
-    the qcow2 image for example from:
-
-        https://kojipkgs.fedoraproject.org/compose/
-
-    Short names are also provided for 'centos', 'centos-stream',
-    'debian' and 'ubuntu' (e.g. 'centos-8' or 'c8').
-
-    Supported Fedora CoreOS images are:
-
-        fedora-coreos
-        fedora-coreos-stable
-        fedora-coreos-testing
-        fedora-coreos-next
-
-    Use the full path for images stored on local disk, for example:
-
-        /var/tmp/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2
-
-    In addition to the qcow2 format, vagrant boxes can be used as well,
-    testcloud will take care of unpacking the image for you.
-    """
-
-    _data_class = ProvisionTestcloudData
-
-    # Guest instance
-    _guest = None
-
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options for testcloud """
-        return [
-            click.option(
-                '-i', '--image', metavar='IMAGE',
-                help='Select image to be used. Provide a short name, '
-                     'full path to a local file or a complete url.'),
-            click.option(
-                '-m', '--memory', metavar='MEMORY', type=int,
-                help='Set available memory in MB, 2048 MB by default.'),
-            click.option(
-                '-D', '--disk', metavar='MEMORY', type=int,
-                help='Specify disk size in GB, 10 GB by default.'),
-            click.option(
-                '-u', '--user', metavar='USER',
-                help='Username to use for all guest operations.'),
-            click.option(
-                '-c', '--connection',
-                type=click.Choice(['session', 'system']),
-                help="What session type to use, 'session' by default."),
-            click.option(
-                '-a', '--arch',
-                type=click.Choice(['x86_64', 'aarch64', 's390x', 'ppc64le']),
-                help="What architecture to virtualize, host arch by default."),
-            ] + super().options(how)
-
-    # FIXME: ignore - https://github.com/teemtee/tmt/issues/1437
-    def wake(self, data: Optional[TestcloudGuestData] = None) -> None:  # type: ignore[override]
-        """ Wake up the plugin, process data, apply options """
-        super().wake(data=data)
-
-        # Wake up testcloud instance
-        if data:
-            guest = GuestTestcloud(data, name=self.name, parent=self.step)
-            guest.wake()
-            self._guest = guest
-
-    def go(self) -> None:
-        """ Provision the testcloud instance """
-        super().go()
-
-        # Give info about provided data
-        data = TestcloudGuestData(**{
-            key: self.get(key)
-            for key in TestcloudGuestData.keys()
-            })
-
-        # Once plan schema is enforced this won't be necessary
-        # click enforces int for cmdline and schema validation
-        # will make sure 'int' gets from plan data.
-        # Another key is 'port' however that is not exposed to the cli
-        for int_key in ["memory", "disk", "port"]:
-            value = getattr(data, int_key)
-            if value is not None:
-                try:
-                    setattr(data, int_key, int(value))
-                except ValueError:
-                    raise tmt.utils.SpecificationError(
-                        f"Value '{value}' cannot be converted to int for '{int_key}' attribute.")
-
-        for key, value in data.items():
-            if key == 'memory':
-                self.info('memory', f"{value} MB", 'green')
-            elif key == 'disk':
-                self.info('disk', f"{value} GB", 'green')
-            elif key == 'connection':
-                self.verbose('connection', value, 'green')
-            elif key == 'key':
-                if value:
-                    self.info('key', fmf.utils.listed(value), 'green')
-            elif value is not None:
-                self.info(key, value, 'green')
-
-        # Create a new GuestTestcloud instance and start it
-        self._guest = GuestTestcloud(data, name=self.name, parent=self.step)
-        self._guest.start()
-
-    def guest(self) -> Optional[tmt.Guest]:
-        """ Return the provisioned guest """
-        return self._guest
-
-    @classmethod
-    def clean_images(cls, clean: 'tmt.base.Clean', dry: bool) -> bool:
-        """ Remove the testcloud images """
-        clean.info('testcloud', shift=1, color='green')
-        if not os.path.exists(TESTCLOUD_IMAGES):
-            clean.warn(
-                f"Directory '{TESTCLOUD_IMAGES}' does not exist.", shift=2)
-            return True
-        successful = True
-        for image in os.listdir(TESTCLOUD_IMAGES):
-            image = os.path.join(TESTCLOUD_IMAGES, image)
-            if dry:
-                clean.verbose(f"Would remove '{image}'.", shift=2)
-            else:
-                clean.verbose(f"Removing '{image}'.", shift=2)
-                try:
-                    os.remove(image)
-                except OSError:
-                    clean.fail(f"Failed to remove '{image}'.", shift=2)
-                    successful = False
-        return successful
-
-
 class GuestTestcloud(tmt.GuestSsh):
     """
     Testcloud Instance
@@ -664,3 +511,157 @@ class GuestTestcloud(tmt.GuestSsh):
             raise tmt.utils.ProvisionError("No instance initialized.")
         self._instance.reboot(soft=not hard)
         return self.reconnect(timeout=timeout)
+
+
+@tmt.steps.provides_method('virtual.testcloud')
+class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
+    """
+    Local virtual machine using testcloud
+
+    Minimal config which uses the latest fedora image:
+
+        provision:
+            how: virtual
+
+    Here's a full config example:
+
+        provision:
+            how: virtual
+            image: fedora
+            user: root
+            memory: 2048
+
+    As the image use 'fedora' for the latest released Fedora compose,
+    'rawhide' for the latest Rawhide compose, short aliases such as
+    'fedora-32', 'f-32' or 'f32' for specific release or a full url to
+    the qcow2 image for example from:
+
+        https://kojipkgs.fedoraproject.org/compose/
+
+    Short names are also provided for 'centos', 'centos-stream',
+    'debian' and 'ubuntu' (e.g. 'centos-8' or 'c8').
+
+    Supported Fedora CoreOS images are:
+
+        fedora-coreos
+        fedora-coreos-stable
+        fedora-coreos-testing
+        fedora-coreos-next
+
+    Use the full path for images stored on local disk, for example:
+
+        /var/tmp/images/Fedora-Cloud-Base-31-1.9.x86_64.qcow2
+
+    In addition to the qcow2 format, vagrant boxes can be used as well,
+    testcloud will take care of unpacking the image for you.
+    """
+
+    _data_class = ProvisionTestcloudData
+    _guest_class = GuestTestcloud
+
+    # Guest instance
+    _guest = None
+
+    @classmethod
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
+        """ Prepare command line options for testcloud """
+        return [
+            click.option(
+                '-i', '--image', metavar='IMAGE',
+                help='Select image to be used. Provide a short name, '
+                     'full path to a local file or a complete url.'),
+            click.option(
+                '-m', '--memory', metavar='MEMORY', type=int,
+                help='Set available memory in MB, 2048 MB by default.'),
+            click.option(
+                '-D', '--disk', metavar='MEMORY', type=int,
+                help='Specify disk size in GB, 10 GB by default.'),
+            click.option(
+                '-u', '--user', metavar='USER',
+                help='Username to use for all guest operations.'),
+            click.option(
+                '-c', '--connection',
+                type=click.Choice(['session', 'system']),
+                help="What session type to use, 'session' by default."),
+            click.option(
+                '-a', '--arch',
+                type=click.Choice(['x86_64', 'aarch64', 's390x', 'ppc64le']),
+                help="What architecture to virtualize, host arch by default."),
+            ] + super().options(how)
+
+    # FIXME: ignore - https://github.com/teemtee/tmt/issues/1437
+    def wake(self, data: Optional[TestcloudGuestData] = None) -> None:  # type: ignore[override]
+        """ Wake up the plugin, process data, apply options """
+        super().wake(data=data)
+
+        # Wake up testcloud instance
+        if data:
+            guest = GuestTestcloud(data, name=self.name, parent=self.step)
+            guest.wake()
+            self._guest = guest
+
+    def go(self) -> None:
+        """ Provision the testcloud instance """
+        super().go()
+
+        # Give info about provided data
+        data = TestcloudGuestData(**{
+            key: self.get(key)
+            for key in TestcloudGuestData.keys()
+            })
+
+        # Once plan schema is enforced this won't be necessary
+        # click enforces int for cmdline and schema validation
+        # will make sure 'int' gets from plan data.
+        # Another key is 'port' however that is not exposed to the cli
+        for int_key in ["memory", "disk", "port"]:
+            value = getattr(data, int_key)
+            if value is not None:
+                try:
+                    setattr(data, int_key, int(value))
+                except ValueError:
+                    raise tmt.utils.SpecificationError(
+                        f"Value '{value}' cannot be converted to int for '{int_key}' attribute.")
+
+        for key, value in data.items():
+            if key == 'memory':
+                self.info('memory', f"{value} MB", 'green')
+            elif key == 'disk':
+                self.info('disk', f"{value} GB", 'green')
+            elif key == 'connection':
+                self.verbose('connection', value, 'green')
+            elif key == 'key':
+                if value:
+                    self.info('key', fmf.utils.listed(value), 'green')
+            elif value is not None:
+                self.info(key, value, 'green')
+
+        # Create a new GuestTestcloud instance and start it
+        self._guest = GuestTestcloud(data, name=self.name, parent=self.step)
+        self._guest.start()
+
+    def guest(self) -> Optional[tmt.Guest]:
+        """ Return the provisioned guest """
+        return self._guest
+
+    @classmethod
+    def clean_images(cls, clean: 'tmt.base.Clean', dry: bool) -> bool:
+        """ Remove the testcloud images """
+        clean.info('testcloud', shift=1, color='green')
+        if not os.path.exists(TESTCLOUD_IMAGES):
+            clean.warn(
+                f"Directory '{TESTCLOUD_IMAGES}' does not exist.", shift=2)
+            return True
+        successful = True
+        for image in os.listdir(TESTCLOUD_IMAGES):
+            image = os.path.join(TESTCLOUD_IMAGES, image)
+            if dry:
+                clean.verbose(f"Would remove '{image}'.", shift=2)
+            else:
+                clean.verbose(f"Removing '{image}'.", shift=2)
+                try:
+                    os.remove(image)
+                except OSError:
+                    clean.fail(f"Failed to remove '{image}'.", shift=2)
+                    successful = False
+        return successful
