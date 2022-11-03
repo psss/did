@@ -1,0 +1,4 @@
+summary: Remote plan with invalid git url
+plan:
+    import:
+        url: https://some.weird.url/

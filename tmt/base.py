@@ -1613,8 +1613,12 @@ class Plan(Core):
 
             # Use fmf cache for exploring plans (the whole git repo is not needed)
             else:
-                node = fmf.Tree.node(
-                    {key: value for key, value in plan_id.items() if value is not None})
+                try:
+                    node = fmf.Tree.node(plan_id.to_minimal_spec())
+                except fmf.utils.FetchError as error:
+                    raise tmt.utils.GitUrlError(
+                        f"Failed to import remote plan '{self.name}', "
+                        f"use '--shallow' to skip cloning repositories.\n{error}")
 
             # Override the plan name with the local one to ensure unique names
             node.name = self.name

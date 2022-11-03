@@ -1,1 +1,7 @@
-summary: Check importing a plan into a plan
+/basic:
+  summary: Check importing a plan into a plan
+  test: ./basic.sh
+
+/errors:
+  summary: Check correct error handling in invalid situations
+  test: ./errors.sh
