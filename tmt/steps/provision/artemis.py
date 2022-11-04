@@ -24,6 +24,8 @@ else:
 # know when particular feature became available, and avoid using it with
 # older APIs.
 SUPPORTED_API_VERSIONS = (
+    # NEW: added new CPU constraints
+    '0.0.46',
     # NEW: added hostname HW constraint
     '0.0.38',
     # NEW: virtualization HW constraint
