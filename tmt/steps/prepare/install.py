@@ -85,7 +85,7 @@ class InstallBase(tmt.utils.Common):
     def prepare_sudo(self) -> None:
         """ Check if sudo is needed for installation """
         self.debug('Check if sudo is necessary.', level=2)
-        user_output = self.guest.execute('whoami')
+        user_output = self.guest.execute('whoami', silent=True)
         if user_output.stdout is None:
             raise tmt.utils.RunError(
                 'unexpected command output',
@@ -134,7 +134,7 @@ class InstallBase(tmt.utils.Common):
         url = '/'.join(parts)
         # Download the repo file on guest
         try:
-            self.guest.execute(f'curl -LOf {url}', cwd='/etc/yum.repos.d')
+            self.guest.execute(f'curl -LOf {url}', cwd='/etc/yum.repos.d', silent=True)
         except tmt.utils.RunError as error:
             if error.stderr and 'not found' in error.stderr.lower():
                 raise tmt.utils.PrepareError(
@@ -151,7 +151,8 @@ class InstallBase(tmt.utils.Common):
         self.debug('Make sure the copr plugin is available.')
         try:
             self.guest.execute(
-                f'rpm -q {self.copr_plugin} || {self.command} install -y {self.copr_plugin}')
+                f'rpm -q {self.copr_plugin} || {self.command} install -y {self.copr_plugin}',
+                silent=True)
         # Enable repositories manually for epel6
         except tmt.utils.RunError:
             for copr in coprs:
@@ -289,7 +290,7 @@ class InstallRpmOstree(InstallBase):
         self.required_packages = []
         for package in self.repository_packages:
             try:
-                output = self.guest.execute(f"rpm -q --whatprovides '{package}'")
+                output = self.guest.execute(f"rpm -q --whatprovides '{package}'", silent=True)
                 assert output.stdout
                 self.debug(f"Package '{output.stdout.strip()}' already installed.")
             except tmt.utils.RunError:
@@ -448,11 +449,11 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
 
         # Pick the right implementation
         try:
-            guest.execute('stat /run/ostree-booted')
+            guest.execute('stat /run/ostree-booted', silent=True)
             installer: InstallBase = InstallRpmOstree(parent=self, guest=guest)
         except tmt.utils.RunError:
             try:
-                guest.execute('rpm -q dnf')
+                guest.execute('rpm -q dnf', silent=True)
                 installer = InstallDnf(parent=self, guest=guest)
             except tmt.utils.RunError:
                 installer = InstallYum(parent=self, guest=guest)

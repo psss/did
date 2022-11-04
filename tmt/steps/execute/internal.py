@@ -139,6 +139,17 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
         return environment
 
+    def _test_output_logger(
+            self,
+            key: str,
+            value: Optional[str] = None,
+            color: Optional[str] = None,
+            shift: int = 2,
+            level: int = 3,
+            err: bool = False) -> None:
+        """ Custom logger for test output with shift 2 and level 3 defaults """
+        self.verbose(key=key, value=value, color=color, shift=shift, level=level, err=err)
+
     def execute(self, test: Test, guest: Guest,
                 extra_environment: Optional[EnvironmentType] = None) -> None:
         """ Run test on the guest """
@@ -177,23 +188,19 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         else:
             remote_command = TEST_WRAPPER_NONINTERACTIVE.format(remote_command=remote_command)
 
-        # Prepare custom function to log output in verbose mode
-        def log(
-                key: str,
-                value: Optional[str] = None,
-                color: Optional[str] = None,
-                shift: int = 1,
-                level: int = 1) -> None:
-            self.verbose(key, value, color, shift=2, level=3)
-
         # Execute the test, save the output and return code
         start = time.time()
         try:
             stdout, _ = guest.execute(
-                remote_command, cwd=workdir, env=environment,
-                join=True, interactive=self.get('interactive'), log=log,
+                remote_command,
+                cwd=workdir,
+                env=environment,
+                join=True,
+                interactive=self.get('interactive'),
+                log=self._test_output_logger,
                 timeout=tmt.utils.duration_to_seconds(test.duration),
-                test_session=True)
+                test_session=True,
+                friendly_command=test.test)
             test.returncode = 0
         except tmt.utils.RunError as error:
             stdout = error.stdout

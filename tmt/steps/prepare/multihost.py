@@ -54,4 +54,5 @@ class PrepareMultihost(tmt.steps.prepare.PreparePlugin):
         for host_name, host_address in self.get('hosts').items():
             if host_address:
                 guest.execute(
-                    f'echo "{host_address} {host_name}" >> /etc/hosts')
+                    f'echo "{host_address} {host_name}" >> /etc/hosts',
+                    silent=True)

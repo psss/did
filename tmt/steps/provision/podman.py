@@ -8,6 +8,7 @@ import click
 import tmt
 import tmt.steps
 import tmt.steps.provision
+from tmt.utils import BaseLoggerFnType
 
 # Timeout in seconds of waiting for a connection
 CONNECTION_TIMEOUT = 60
@@ -118,7 +119,10 @@ class GuestContainer(tmt.Guest):
 
     def execute(self,
                 command: Union[List[str], str],
+                friendly_command: Optional[str] = None,
                 test_session: bool = False,
+                silent: bool = False,
+                log: Optional[BaseLoggerFnType] = None,
                 **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Execute given commands in podman via shell """
         if not self.container and not self.opt('dry'):
@@ -145,7 +149,11 @@ class GuestContainer(tmt.Guest):
         assert isinstance(command, str)
         return self.podman(
             ['exec'] + interactive +
-            [self.container or 'dry', 'bash', '-c', command], **kwargs)
+            [self.container or 'dry', 'bash', '-c', command],
+            log=log if log else self._command_verbose_logger,
+            friendly_command=friendly_command or command,
+            silent=silent,
+            **kwargs)
 
     def push(
             self,

@@ -20,6 +20,7 @@ import tmt.plugins
 import tmt.steps
 import tmt.utils
 from tmt.steps import Action
+from tmt.utils import BaseLoggerFnType
 
 if TYPE_CHECKING:
     import tmt.cli
@@ -182,7 +183,7 @@ class Guest(tmt.utils.Common):
 
         # A small helper to make the repeated run & extract combo easier on eyes.
         def _fetch_detail(command: str, pattern: str) -> str:
-            output = self.execute(command)
+            output = self.execute(command, silent=True)
 
             if not output.stdout:
                 raise tmt.utils.RunError(
@@ -304,7 +305,10 @@ class Guest(tmt.utils.Common):
 
     def execute(self,
                 command: Union[str, List[str]],
+                friendly_command: Optional[str] = None,
                 test_session: bool = False,
+                silent: bool = False,
+                log: Optional[BaseLoggerFnType] = None,
                 **kwargs: Any) -> tmt.utils.CommandOutput:
         """
         Execute command on the guest
@@ -392,7 +396,7 @@ class Guest(tmt.utils.Common):
 
         def try_whoami() -> None:
             try:
-                self.execute('whoami')
+                self.execute('whoami', silent=True)
 
             except tmt.utils.RunError:
                 raise tmt.utils.WaitingIncomplete()
@@ -644,7 +648,10 @@ class GuestSsh(Guest):
 
     def execute(self,
                 command: Union[str, List[str]],
+                friendly_command: Optional[str] = None,
                 test_session: bool = False,
+                silent: bool = False,
+                log: Optional[BaseLoggerFnType] = None,
                 **kwargs: Any) -> tmt.utils.CommandOutput:
         """
         Execute command on the guest
@@ -685,6 +692,7 @@ class GuestSsh(Guest):
         if isinstance(command, (list, tuple)):
             command = ' '.join(command)
         self.debug(f"Execute command '{command}' on guest '{self.guest}'.")
+        friendly_command = friendly_command or command
 
         # TODO: _ssh_command() returns two incompatible types, we need to chose the right one.
         ssh_command = self._ssh_command()
@@ -693,7 +701,11 @@ class GuestSsh(Guest):
         command = (
             ssh_command + interactive + ptty + [self._ssh_guest()] +
             [f'{environment}{directory}{command}'])
-        return self.run(command, **kwargs)
+        return self.run(command,
+                        log=log if log else self._command_verbose_logger,
+                        friendly_command=friendly_command,
+                        silent=silent,
+                        **kwargs)
 
     def push(self,
              source: Optional[str] = None,

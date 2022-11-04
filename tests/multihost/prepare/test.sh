@@ -41,11 +41,11 @@ rlJournalStart
         # 1 ran on all (4 guests) + 1 ran on server role (2 guests) + 1 ran
         # on single guest (1 guest) + 4 implicit preparations = 11 preparations
         rlAssertGrep "11 preparations applied" $rlRun_LOG
-        rlRun "grep 'All' $rlRun_LOG | wc -l > lines"
+        rlRun "grep -e 'script:.*All' $rlRun_LOG | wc -l > lines"
         rlAssertGrep "4" lines
-        rlRun "grep 'Server' $rlRun_LOG | wc -l > lines"
+        rlRun "grep -e 'script:.*Server' $rlRun_LOG | wc -l > lines"
         rlAssertGrep "2" lines
-        rlRun "grep 'Client one' $rlRun_LOG | wc -l > lines"
+        rlRun "grep -e 'script:.*Client one' $rlRun_LOG | wc -l > lines"
         rlAssertGrep "1" lines
     rlPhaseEnd
 

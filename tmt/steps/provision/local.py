@@ -1,10 +1,12 @@
 import dataclasses
+import shlex
 from typing import Any, List, Optional, Union
 
 import tmt
 import tmt.steps
 import tmt.steps.provision
 import tmt.utils
+from tmt.utils import BaseLoggerFnType
 
 
 @dataclasses.dataclass
@@ -31,7 +33,10 @@ class GuestLocal(tmt.Guest):
 
     def execute(self,
                 command: Union[List[str], str],
+                friendly_command: Optional[str] = None,
                 test_session: bool = False,
+                silent: bool = False,
+                log: Optional[BaseLoggerFnType] = None,
                 **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Execute command on localhost """
         # Prepare the environment (plan/cli variables override)
@@ -41,8 +46,19 @@ class GuestLocal(tmt.Guest):
         # a default would return not the default, but existing key, i.e. `None`.
         environment.update(kwargs.pop('env', None) or {})
         environment.update(self.parent.plan.environment)
+        if friendly_command is None:
+            if isinstance(command, (list, tuple)):
+                friendly_command = ' '.join(shlex.quote(s) for s in command)
+            else:
+                friendly_command = command
         # Run the command under the prepared environment
-        return self.run(command, env=environment, shell=True, **kwargs)
+        return self.run(command,
+                        env=environment,
+                        shell=True,
+                        log=log if log else self._command_verbose_logger,
+                        friendly_command=friendly_command,
+                        silent=silent,
+                        **kwargs)
 
     def stop(self) -> None:
         """ Stop the guest """

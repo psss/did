@@ -556,6 +556,22 @@ class Common:
         """ Show a red failure message on info level, send to stderr """
         self.info('fail', message, color='red', shift=shift, err=True)
 
+    def _command_verbose_logger(
+            self,
+            key: str,
+            value: Optional[str] = None,
+            color: Optional[str] = None,
+            shift: int = 1,
+            level: int = 3,
+            err: bool = False) -> None:
+        """
+        Reports the executed command in verbose mode.
+
+        This is a tailored verbose() function used for command logging where
+        default parameters are adjusted (to preserve the function type).
+        """
+        self.verbose(key=key, value=value, color=color, shift=shift, level=level, err=err)
+
     def _run(self,
              command: Union[str, List[str]],
              cwd: Optional[str],
@@ -682,6 +698,8 @@ class Common:
 
     def run(self,
             command: Union[str, List[str]],
+            friendly_command: Optional[str] = None,
+            silent: bool = False,
             message: Optional[str] = None,
             cwd: Optional[str] = None,
             dry: bool = False,
@@ -697,20 +715,30 @@ class Common:
         Command is run in the workdir be default.
         In dry mode commands are not executed unless dry=True.
         Environment is updated with variables from the 'env' dictionary.
+
         Output is logged using self.debug() or custom 'log' function.
-        Returns stdout if join=True, (stdout, stderr) tuple otherwise.
+        A user friendly command string 'friendly_command' will be shown,
+        if provided, at the beginning of the command output.
+
+        Returns named tuple CommandOutput.
         """
 
         # A bit of logging - command, default message, error message for later...
+        # for debug output we want to rather print actual command rather than
+        # the provided printable command
         if isinstance(command, (list, tuple)):
-            printable_command = ' '.join(shlex.quote(s) for s in command)
+            full_command_string = ' '.join(shlex.quote(s) for s in command)
         else:
-            printable_command = command
+            full_command_string = command
 
         if message:
-            self.debug(message, level=2)
+            self.verbose(message, level=2)
 
-        self.debug(f'Run command: {printable_command}', level=2)
+        # Add full command to the debug log, short version to verbose/custom log
+        self.debug(f'Run command: {full_command_string}', level=2)
+        if not silent and friendly_command:
+            logger = log or self.verbose
+            logger("cmd", friendly_command, color="yellow", level=2)
 
         # Nothing more to do in dry mode (unless requested)
         if self.opt('dry') and not dry:
@@ -726,10 +754,10 @@ class Common:
 
         try:
             return self._run(
-                command, cwd, shell, env, log, join, interactive, timeout)
+                command, cwd, shell, env, log if not silent else None, join, interactive, timeout)
         except RunError as error:
             self.debug(error.message, level=3)
-            message = f"Failed to run command: {printable_command} Reason: {error.message}"
+            message = f"Failed to run command: {friendly_command} Reason: {error.message}"
             raise RunError(
                 message, error.command, error.returncode,
                 error.stdout, error.stderr, caller=self)
