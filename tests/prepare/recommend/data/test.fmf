@@ -2,6 +2,10 @@
     test: rpm -q tree
     recommend: [tree, forest]
 
+/debuginfo:
+    test: rpm -q grep-debuginfo
+    recommend: [grep-debuginfo, forest-debuginfo]
+
 /weird:
     test: /bin/true
     recommend: weird-package

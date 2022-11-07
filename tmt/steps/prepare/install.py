@@ -254,7 +254,10 @@ class InstallDnf(InstallBase):
         packages = self.list_packages(self.debuginfo_packages, title="debuginfo")
         # Make sure debuginfo-install is present on the target system
         self.guest.execute(f"{self.command} install -y /usr/bin/debuginfo-install")
-        self.guest.execute(f"debuginfo-install -y {packages}")
+        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
+        parent = cast(tmt.steps.prepare.PreparePlugin, self.parent)
+        skip = "--skip-broken " if parent.get("missing") == "skip" else ""
+        self.guest.execute(f"debuginfo-install -y {skip}{packages}")
 
 
 class InstallYum(InstallDnf):
