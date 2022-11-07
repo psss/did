@@ -6,6 +6,7 @@ METHODS=${METHODS:-container}
 rlJournalStart
     rlPhaseStartSetup
         rlRun "tmp=\$(mktemp -d)" 0 "Create tmp directory"
+        rlRun "chmod go+rx $tmp" 0 "Make tmp directory accessible by others"
         rlRun "run=\$(mktemp -d)" 0 "Create run directory"
         rlRun "pushd $tmp"
         rlRun "set -o pipefail"
