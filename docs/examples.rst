@@ -634,6 +634,16 @@ package then could be done in the following way::
         how: install
         package: python3-pytest
 
+Eventually, use :ref:`/spec/core/adjust` to extend the step
+conditionally::
+
+    adjust:
+      - when: distro == fedora
+        prepare+:
+          - name: pytest
+            how: install
+            package: python3-pytest
+
 
 Parametrize Plans
 ------------------------------------------------------------------
