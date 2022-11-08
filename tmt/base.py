@@ -2289,8 +2289,11 @@ class Run(tmt.utils.Common):
             # Clear the tree and insert default plan if requested
             if Plan._opt("default"):
                 new_tree = fmf.Tree(default_plan)
-                # Make sure the fmf root is set for the default plan
+                # Make sure the fmf root is set for both the default
+                # plan (needed during the discover step) and the whole
+                # tree (which is stored to 'run.yaml' during save()).
                 new_tree.find(tmt.templates.DEFAULT_PLAN_NAME).root = self.tree.root
+                new_tree.root = self.tree.root
                 self.tree.tree = new_tree
                 self.debug("Enforcing use of the default plan.")
             # Insert default plan if no plan detected. Check using

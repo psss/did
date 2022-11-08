@@ -48,3 +48,7 @@
 /tests:
     summary: Tests defined under discover can use all metadata
     test: ./tests.sh
+
+/force:
+    summary: Force run of discover finds tests
+    test: ./force.sh
