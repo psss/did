@@ -123,6 +123,11 @@ class Guest(tmt.utils.Common):
         _, run_id = os.path.split(parent.plan.my_run.workdir)
         return self._random_name(prefix="tmt-{0}-".format(run_id[-3:]))
 
+    @classmethod
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
+        """ Prepare command line options related to guests """
+        return list()
+
     def load(self, data: GuestData) -> None:
         """
         Load guest data into object attributes for easy access
@@ -480,6 +485,7 @@ class GuestSshData(GuestData):
     key: List[str] = dataclasses.field(default_factory=list)
     # password
     password: Optional[str] = None
+    ssh_option: List[str] = dataclasses.field(default_factory=list)
 
 
 class GuestSsh(Guest):
@@ -504,6 +510,7 @@ class GuestSsh(Guest):
     user: Optional[str]
     key: List[str]
     password: Optional[str]
+    ssh_option: List[str]
 
     # Master ssh connection process and socket path
     _ssh_master_process: Optional['subprocess.Popen[bytes]'] = None
@@ -532,6 +539,10 @@ class GuestSsh(Guest):
             '-oForwardX11=no',
             '-oStrictHostKeyChecking=no',
             '-oUserKnownHostsFile=/dev/null',
+            # Prevent ssh from disconnecting if no data has been
+            # received from the server for a long time (#868).
+            '-oServerAliveInterval=60',
+            '-oServerAliveCountMax=5',
             ]
         if self.key or self.password:
             # Skip ssh-agent (it adds additional identities)
@@ -546,6 +557,8 @@ class GuestSsh(Guest):
 
         # Use the shared master connection
         options.append(f'-S{self._ssh_socket()}')
+
+        options.extend([f'-o{option}' for option in self.ssh_option])
 
         return ' '.join(options) if join else options
 
@@ -589,6 +602,15 @@ class GuestSsh(Guest):
             assert isinstance(ssh_options, list)
 
             return command + ssh_options
+
+    @classmethod
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
+        """ Prepare command line options related to SSH-capable guests """
+        return super().options(how=how) + [
+            click.option('--ssh-option', metavar="OPTION", multiple=True, default=[],
+                         help="Specify additional SSH option. "
+                              "Value is passed to SSH's -o option, see ssh_config(5) for "
+                              "supported options. Can be specified multiple times.")]
 
     def ansible(self, playbook: str, extra_args: Optional[str] = None) -> None:
         """ Prepare guest using ansible playbook """
@@ -1013,6 +1035,20 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
 
         return provision
 
+    # TODO: this might be needed until https://github.com/teemtee/tmt/issues/1696 is resolved
+    def opt(self, option: str, default: Optional[Any] = None) -> Any:
+        """ Get an option from the command line options """
+
+        if option == 'ssh-option':
+            value = super().opt(option, default=default)
+
+            if isinstance(value, tuple):
+                return list(value)
+
+            return value
+
+        return super().opt(option, default=default)
+
     def wake(self, data: Optional[GuestData] = None) -> None:
         """
         Wake up the plugin
@@ -1034,6 +1070,11 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
     def requires(self) -> List[str]:
         """ List of required packages needed for workdir sync """
         return Guest.requires()
+
+    @classmethod
+    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
+        """ Return list of options. """
+        return super().options(how) + cls._guest_class.options(how)
 
     @classmethod
     def clean_images(cls, clean: 'tmt.base.Clean', dry: bool) -> bool:

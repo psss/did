@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, List, Optional
 
 import click
 import fmf
+import fmf.utils
 import requests
 
 import tmt
@@ -633,6 +634,9 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
             elif key == 'key':
                 if value:
                     self.info('key', fmf.utils.listed(value), 'green')
+            elif key == 'ssh_option':
+                if value:
+                    self.info('ssh options', fmf.utils.listed(value), 'green')
             elif value is not None:
                 self.info(key, value, 'green')
 

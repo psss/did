@@ -1,0 +1,5 @@
+summary: Check that custom SSH options are used
+enabled: false
+adjust:
+  - when: how == full
+    enabled: true

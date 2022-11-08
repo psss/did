@@ -1,7 +1,8 @@
 import dataclasses
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import click
+import fmf.utils
 
 import tmt
 import tmt.steps
@@ -126,6 +127,11 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
                 data.key = key
             else:
                 data.key = [key]
+
+        # FIXME: cast() - typeless "dispatcher" method
+        data.ssh_option = cast(List[str], self.get('ssh-option'))
+        if data.ssh_option:
+            self.info('ssh options', fmf.utils.listed(data.ssh_option), 'green')
 
         # And finally create the guest
         self._guest = tmt.GuestSsh(data=data, name=self.name, parent=self.step)
