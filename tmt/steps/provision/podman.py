@@ -53,21 +53,15 @@ class GuestContainer(tmt.Guest):
             return
         # Check if the image is available
         assert self.image is not None
-        command = ['images', '-q', self.image]
-        podman_output = self.podman(command, message=f"Check for container image '{self.image}'.")
-
-        if podman_output.stdout is None:
-            raise tmt.utils.RunError(
-                'command produced no usable output',
-                command,
-                0,
-                podman_output.stdout,
-                podman_output.stderr)
-
-        image_id = podman_output.stdout.strip()
+        command = ['image', 'exists', self.image]
+        try:
+            self.podman(command, message=f"Check for container image '{self.image}'.")
+            needs_pull = False
+        except tmt.utils.RunError:
+            needs_pull = True
 
         # Pull image if not available or pull forced
-        if not image_id or self.force_pull:
+        if needs_pull or self.force_pull:
             self.podman(
                 ['pull', '-q', self.image],
                 message=f"Pull image '{self.image}'.")
@@ -224,7 +218,7 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
                 '-c', '--container', metavar='NAME',
                 help='Name or id of an existing container to be used.'),
             click.option(
-                '-p', '--pull', is_flag=True,
+                '-p', '--pull', 'force_pull', is_flag=True,
                 help='Force pulling a fresh container image.'),
             click.option(
                 '-u', '--user', metavar='USER',
@@ -252,17 +246,14 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
         super().go()
 
         # Show which image we are using
-        pull = ' (force pull)' if self.get('pull') else ''
+        pull = ' (force pull)' if self.get('force_pull') else ''
         self.info('image', f"{self.get('image')}{pull}", 'green')
 
         # Prepare data for the guest instance
         data_from_options = {
             key: self.get(key)
             for key in PodmanGuestData.keys()
-            if key != 'force_pull'
             }
-
-        data_from_options['force_pull'] = self.get('pull')
 
         data = PodmanGuestData(**data_from_options)
 
