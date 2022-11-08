@@ -17,6 +17,12 @@ Source0: https://github.com/teemtee/tmt/releases/download/%{version}/tmt-%{versi
 
 %define workdir_root /var/tmp/tmt
 
+# Hint for shebang fixer, otherwise uses /usr/bin/python3
+# which can be changed by user
+%if 0%{?rhel} == 8
+%global __python3 /usr/bin/python3.6
+%endif
+
 # Main tmt package requires the Python module
 Requires: python%{python3_pkgversion}-%{name} == %{version}-%{release}
 Requires: git-core rsync sshpass
