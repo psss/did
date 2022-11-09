@@ -434,7 +434,7 @@ Kopkova, Ondrej Moriš, Martin Zelený, Karel Šrot, František
 Zatloukal, Simon Walter, Petr Matyáš, Yariv Rachmani, Pavel
 Cahyna, Martin Litwora, Brian Grech, Vojtěch Eichler, Philip Daly,
 Vector Li, Evgeny Fedin, Guy Inger, Adrián Tomašov, Jan Havlín and
-Lukáš Kotek.
+Lukáš Kotek, Daniel Diblík.
 
 
 Copyright

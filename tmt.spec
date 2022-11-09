@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.18.0
+Version: 1.19.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -206,6 +206,84 @@ chmod 1777 %{buildroot}%{workdir_root}
 
 
 %changelog
+* Wed Nov 09 2022 Lukáš Zachar <lzachar@redhat.com> - 1.19.0-1
+- Protect args in rsync call
+- Set tree root for the default plan tree as well
+- Properly set the `tmt` script shebang on `rhel-8`
+- Use image exists to check for container image
+- Updates docs with example on `adjust` & `prepare+`
+- Fix test duration enforcement
+- Skip missing debuginfo packages in `recommend`
+- Explicitly document extending the plan environment
+- Fix ownership of a tmp directory propagated to container
+- Support fetching remote repo for `shell` discover
+- Fix default `framework`, remove old execution methods
+- Add support for Artemis v0.0.46 upcoming release
+- Handle an fmf fetch error in remote plan clone
+- Do not truncate `RunError` output in verbose mode
+- Warn user about data erasing after prepare step
+- Formalize `data` package passed to the `Result` class
+- Change order of plugin and guest classes in files
+- Add `compatible` as a new hardware specification key
+- Add `tpm` as a new hardware specification key
+- Move the hardware specification into a separate page
+- Improve fmf-id processing
+- Add test for TTY state in test environment
+- Login after each test using the `--test` parameter
+- Mention version where important features were added
+- Handle dist-git-sources for gitlab
+- Fix getting CentOS via --how virtual
+- Capture uncaught exceptions when using testcloud
+- Update the overview of essential classes
+- When following command line --how, do not iterate over step data
+- Convert utils' Run unit tests to class-less tests
+- Enable variable expansion for dynamic references
+- Support beaker libraries as recommended packages
+- Add `SpecBasedContainer.to_minimal_spec()` method (#1637)
+- Enable context based plan parametrization
+- Coverage for tests defined under `discover.shell`
+- Fix `/tests/run/shell` access permission problem
+- Add step data classes for provisioning and report
+- Adjust support for the dynamic `ref` evaluation
+- Add support for dynamic `ref` evaluation
+- Add a test for fmf id parsing and normalization
+- Fix NO_COLOR not being honored by executed command output
+- Moves common command options into one place
+- Log full chain of exceptions, not just the first cause
+- Drop deprecated PluginIndex
+- Add message to failure tags in junit report
+- Update the pip installation plan
+- Remove pointless reimport of tmt.base in discover steps
+- Do not use f-string as a docstring
+- Fix use of variable before assignment in `Plan.go`
+- Fix variable redefinition in `discover/shell.py`
+- Fix guest distro detection, do not throw results away
+- Fix a typo in `cpu.sockets` hardware requirement
+- Make links relative for report html
+- Review all uses of `type: ignore` and link relevant issues
+- Enhance ClickOptionDecorator type to announce identity
+- Update `/tests/execute/upgrade/override` duration
+- Review all uses of `Any` and link relevant issues
+- Annotate all `cast()` calls with respective issues
+- Move the `Result` class into a separate file
+- Unblock mypy's follow-import setting
+- Use set comprehension instead of list-in-set sequence
+- Use `enumerate()` instead of `range(len())`
+- Use dict comprehension instead of tuple-in-list-in-dict
+- Replace two more list comprehensions with generators
+- Replace GeneralError's "origin" with Python's "raise from"
+- Fix normalization of the `Plan.context` key
+- Adds a missing import to polarion plugin
+- Update all linters to their most recent versions
+- Define CPU HW components with more granularity
+- Adjust the support for importing remote plans
+- Add import plan feature and tests
+- Add type annotations to `base.py`
+- Fix test depending on ordering of elements in junit XML
+- Adds type annotations to `tmt` itself
+- Remove custom yet same implementation of step's show()
+- Make sure `repo_copy` is gone before `make srpm`
+
 * Mon Oct 10 2022 Petr Šplíchal <psplicha@redhat.com> - 1.18.0-1
 - Fix recommended packages handling for rpm-ostree
 - Add EFI configuration to the `tmt-reboot` script
