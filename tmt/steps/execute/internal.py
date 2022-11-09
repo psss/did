@@ -168,7 +168,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         guest.push(
             source=test_wrapper_filepath,
             destination=test_wrapper_filepath,
-            options=["-p", "--chmod=755"])
+            options=["-s", "-p", "--chmod=755"])
 
         # Prepare the actual remote command
         remote_command = f'./{TEST_WRAPPER_FILENAME}'

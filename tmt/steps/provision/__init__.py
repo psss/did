@@ -31,10 +31,10 @@ RECONNECT_WAIT_TICK_INCREASE = 1.0
 
 # Default rsync options
 DEFAULT_RSYNC_OPTIONS = [
-    "-R", "-r", "-z", "--links", "--safe-links", "--delete"]
+    "-s", "-R", "-r", "-z", "--links", "--safe-links", "--delete"]
 
-DEFAULT_RSYNC_PUSH_OPTIONS = ["-R", "-r", "-z", "--links", "--safe-links", "--delete"]
-DEFAULT_RSYNC_PULL_OPTIONS = ["-R", "-r", "-z", "--links", "--safe-links", "--protect-args"]
+DEFAULT_RSYNC_PUSH_OPTIONS = ["-s", "-R", "-r", "-z", "--links", "--safe-links", "--delete"]
+DEFAULT_RSYNC_PULL_OPTIONS = ["-s", "-R", "-r", "-z", "--links", "--safe-links", "--protect-args"]
 
 
 class CheckRsyncOutcome(enum.Enum):
