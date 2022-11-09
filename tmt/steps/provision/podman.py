@@ -237,7 +237,7 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
         super().wake(data=data)
         # Wake up podman instance
         if data:
-            guest = GuestContainer(data, name=self.name, parent=self.step)
+            guest = GuestContainer(data=data, name=self.name, parent=self.step)
             guest.wake()
             self._guest = guest
 
@@ -258,7 +258,7 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
         data = PodmanGuestData(**data_from_options)
 
         # Create a new GuestTestcloud instance and start it
-        self._guest = GuestContainer(data, name=self.name, parent=self.step)
+        self._guest = GuestContainer(data=data, name=self.name, parent=self.step)
         self._guest.start()
 
     def guest(self) -> Optional[GuestContainer]:

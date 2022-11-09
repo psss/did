@@ -27,7 +27,7 @@ def _iter_nodes(tree, keys):
 
 
 def _iter_trees():
-    yield tmt.Tree(ROOTDIR)
+    yield tmt.Tree(path=ROOTDIR)
 
     # Ad hoc construction, but here me out: there are small, custom-tailored fmf trees
     # to serve various tests. These are invisible to the top-level tree. Lucky us though,
@@ -41,7 +41,7 @@ def _iter_trees():
     if False:
         for dirpath, dirnames, _ in os.walk(os.path.join(ROOTDIR, 'tests')):
             if '.fmf' in dirnames:
-                yield tmt.Tree(dirpath)
+                yield tmt.Tree(path=dirpath)
 
 
 def _iter_tests_in_tree(tree):

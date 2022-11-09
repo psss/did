@@ -44,10 +44,10 @@ class Phase(tmt.utils.Common):
 
     def __init__(
             self,
+            *,
             order: int = tmt.utils.DEFAULT_PLUGIN_ORDER,
-            *args: Any,
             **kwargs: Any):
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self.order: int = order
 
     def enabled_on_guest(self, guest: 'Guest') -> bool:
@@ -198,6 +198,7 @@ class Step(tmt.utils.Common):
 
     def __init__(
             self,
+            *,
             plan: 'Plan',
             data: Optional[RawStepDataArgument] = None,
             name: Optional[str] = None,
@@ -608,6 +609,7 @@ class BasePlugin(Phase):
 
     def __init__(
             self,
+            *,
             step: Step,
             data: StepData,
             workdir: tmt.utils.WorkdirArgumentType = None) -> None:
@@ -717,7 +719,7 @@ class BasePlugin(Phase):
                     f'plugin {plugin_class.__name__} ' \
                     f'expects {plugin_data_class.__name__}'
 
-                plugin = plugin_class(step, data)
+                plugin = plugin_class(step=step, data=data)
                 assert isinstance(plugin, BasePlugin)
                 return plugin
 
@@ -1006,7 +1008,7 @@ class Reboot(Action):
     # True if reboot enabled
     _enabled: bool = False
 
-    def __init__(self, step: Step, order: int) -> None:
+    def __init__(self, *, step: Step, order: int) -> None:
         """ Initialize relations, store the reboot order """
         super().__init__(parent=step, name='reboot', order=order)
 
@@ -1036,7 +1038,7 @@ class Reboot(Action):
         """ Return list of reboot instances for given step """
         if not Reboot._enabled:
             return []
-        return [Reboot(step, phase) for phase in cls.phases(step)]
+        return [Reboot(step=step, order=phase) for phase in cls.phases(step)]
 
     def go(self) -> None:
         """ Reboot the guest(s) """
@@ -1058,7 +1060,7 @@ class Login(Action):
     # True if interactive login enabled
     _enabled: bool = False
 
-    def __init__(self, step: Step, order: int):
+    def __init__(self, *, step: Step, order: int):
         """ Initialize relations, store the login order """
         super().__init__(parent=step, name='login', order=order)
 
@@ -1123,7 +1125,7 @@ class Login(Action):
         """ Return list of login instances for given step """
         if not Login._enabled:
             return []
-        return [Login(step, phase) for phase in cls.phases(step)]
+        return [Login(step=step, order=phase) for phase in cls.phases(step)]
 
     def go(self) -> None:
         """ Login to the guest(s) """

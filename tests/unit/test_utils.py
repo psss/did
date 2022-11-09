@@ -623,7 +623,7 @@ class Test_validate_git_status:
         run(
             'git push'.split(),
             cwd=mine)
-        test = tmt.Tree(str(fmf_root)).tests()[0]
+        test = tmt.Tree(path=str(fmf_root)).tests()[0]
         validation = validate_git_status(test)
         assert validation == (True, '')
 
@@ -638,7 +638,7 @@ class Test_validate_git_status:
             'git commit -m initial_commit'.split(),
             cwd=tmpdir)
 
-        test = tmt.Tree(str(tmpdir)).tests()[0]
+        test = tmt.Tree(path=str(tmpdir)).tests()[0]
         val, msg = validate_git_status(test)
         assert not val
         assert "Failed to get remote branch" in msg
@@ -654,7 +654,7 @@ class Test_validate_git_status:
             'git commit -m missing_fmf_root'.split(),
             cwd=local_git_repo)
 
-        test = tmt.Tree(str(local_git_repo)).tests()[0]
+        test = tmt.Tree(path=str(local_git_repo)).tests()[0]
         validate = validate_git_status(test)
         assert validate == (False, 'Uncommitted changes in .fmf/version')
 
@@ -669,7 +669,7 @@ class Test_validate_git_status:
             'git commit -m main.fmf'.split(),
             cwd=local_git_repo)
 
-        test = tmt.Tree(str(local_git_repo)).tests()[0]
+        test = tmt.Tree(path=str(local_git_repo)).tests()[0]
         validate = validate_git_status(test)
         assert validate == (False, 'Uncommitted changes in main.fmf')
 
@@ -701,7 +701,7 @@ class Test_validate_git_status:
         # Change README but since it is not part of metadata we do not check it
         mine.join("README").write('changed')
 
-        test = tmt.Tree(str(mine_fmf_root)).tests()[0]
+        test = tmt.Tree(path=str(mine_fmf_root)).tests()[0]
         validation_result = validate_git_status(test)
 
         assert validation_result == (
@@ -723,7 +723,7 @@ class Test_validate_git_status:
             'git commit -m changes'.split(),
             cwd=mine)
 
-        test = tmt.Tree(str(fmf_root)).tests()[0]
+        test = tmt.Tree(path=str(fmf_root)).tests()[0]
         validation_result = validate_git_status(test)
 
         assert validation_result == (

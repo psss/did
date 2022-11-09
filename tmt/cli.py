@@ -132,7 +132,7 @@ def main(
     tmt.utils.Common._save_context(click_contex)
 
     # Initialize metadata tree (from given path or current directory)
-    tree = tmt.Tree(root or os.curdir)
+    tree = tmt.Tree(path=root or os.curdir)
 
     # TODO: context object details need checks
     click_contex.obj = ContextObject(
@@ -198,7 +198,7 @@ def main(
 def run(context: click.core.Context, id_: str, **kwargs: Any) -> None:
     """ Run test steps. """
     # Initialize
-    run = tmt.Run(id_, context.obj.tree, context=context)
+    run = tmt.Run(id_=id_, tree=context.obj.tree, context=context)
     context.obj.run = run
 
 

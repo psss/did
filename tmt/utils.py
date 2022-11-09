@@ -328,6 +328,7 @@ class Common:
 
     def __init__(
             self,
+            *,
             parent: Optional[CommonDerivedType] = None,
             name: Optional[str] = None,
             workdir: WorkdirArgumentType = None,

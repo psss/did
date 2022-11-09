@@ -596,7 +596,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
 
         # Wake up testcloud instance
         if data:
-            guest = GuestTestcloud(data, name=self.name, parent=self.step)
+            guest = GuestTestcloud(data=data, name=self.name, parent=self.step)
             guest.wake()
             self._guest = guest
 
@@ -637,7 +637,7 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 self.info(key, value, 'green')
 
         # Create a new GuestTestcloud instance and start it
-        self._guest = GuestTestcloud(data, name=self.name, parent=self.step)
+        self._guest = GuestTestcloud(data=data, name=self.name, parent=self.step)
         self._guest.start()
 
     def guest(self) -> Optional[tmt.Guest]:

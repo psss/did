@@ -519,7 +519,7 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
         super().wake(data=data)
 
         if data:
-            self._guest = GuestArtemis(data, name=self.name, parent=self.step)
+            self._guest = GuestArtemis(data=data, name=self.name, parent=self.step)
 
     def go(self) -> None:
         """ Provision the guest """
@@ -560,7 +560,7 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
             api_retry_backoff_factor=self.get('api-retry-backoff-factor')
             )
 
-        self._guest = GuestArtemis(data, name=self.name, parent=self.step)
+        self._guest = GuestArtemis(data=data, name=self.name, parent=self.step)
         self._guest.start()
 
     def guest(self) -> Optional[GuestArtemis]:

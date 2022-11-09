@@ -325,7 +325,7 @@ extra-task: /tmt/integration
         self.assertEqual(self.runner_output.exit_code, 0)
 
         tree_f36_intel = tmt.Tree(
-            '.',
+            path='.',
             context={
                 'distro': ['fedora-36'],
                 'arch': ['x86_64']})
@@ -338,7 +338,7 @@ extra-task: /tmt/integration
         self.assertEquals(test.node.get('extra-nitrate'), 'TC#0545993')
 
         tree_f35_intel = tmt.Tree(
-            '.',
+            path='.',
             context={
                 'distro': ['fedora-35'],
                 'arch': ['x86_64']})

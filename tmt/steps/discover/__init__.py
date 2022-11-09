@@ -127,7 +127,7 @@ class Discover(tmt.steps.Step):
 
     _plugin_base_class = DiscoverPlugin
 
-    def __init__(self, plan: 'tmt.base.Plan', data: tmt.steps.RawStepDataArgument):
+    def __init__(self, *, plan: 'tmt.base.Plan', data: tmt.steps.RawStepDataArgument):
         """ Store supported attributes, check for sanity """
         super().__init__(plan=plan, data=data)
 

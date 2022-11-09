@@ -104,7 +104,7 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
         """ Wake up the plugin, process data, apply options """
         super().wake(data=data)
         if data:
-            self._guest = GuestLocal(data, name=self.name, parent=self.step)
+            self._guest = GuestLocal(data=data, name=self.name, parent=self.step)
 
     def go(self) -> None:
         """ Provision the container """
@@ -115,7 +115,7 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
             guest='localhost',
             role=self.get('role')
             )
-        self._guest = GuestLocal(data, name=self.name, parent=self.step)
+        self._guest = GuestLocal(data=data, name=self.name, parent=self.step)
 
     def guest(self) -> Optional[GuestLocal]:
         """ Return the provisioned guest """

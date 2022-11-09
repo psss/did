@@ -83,31 +83,32 @@ def test_link():
     assert Links().get() == []
 
     # Single string (default relation)
-    assert Links('/fmf/id').get() == [Link(relation='relates', target='/fmf/id')]
+    assert Links(data='/fmf/id').get() == [Link(relation='relates', target='/fmf/id')]
     # Multiple strings (default relation)
-    assert Links(['one', 'two']).get() == [
+    assert Links(data=['one', 'two']).get() == [
         Link(relation='relates', target='one'), Link(relation='relates', target='two')]
     # Multiple string mixed relation
-    assert Links(['implicit', dict(duplicates='explicit')]).get() == [
+    assert Links(data=['implicit', dict(duplicates='explicit')]).get() == [
         Link(relation='relates', target='implicit'),
         Link(relation='duplicates', target='explicit')]
     # Multiple strings (explicit relation)
-    assert Links([dict(parent='mom'), dict(child='son')]).get() == [
+    assert Links(data=[dict(parent='mom'), dict(child='son')]).get() == [
         Link(relation='parent', target='mom'), Link(relation='child', target='son')]
 
     # Single dictionary (default relation)
-    assert Links(dict(name='foo')).get() == [Link(relation='relates', target=FmfId(name='foo'))]
+    assert Links(data=dict(name='foo')).get() == [
+        Link(relation='relates', target=FmfId(name='foo'))]
     # Single dictionary (explicit relation)
-    assert Links(dict(verifies='foo')).get() == [Link(relation='verifies', target='foo')]
+    assert Links(data=dict(verifies='foo')).get() == [Link(relation='verifies', target='foo')]
     # Multiple dictionaries
     family = [dict(parent='mom', note='foo'), dict(child='son')]
-    assert Links(family).get() == [
+    assert Links(data=family).get() == [
         Link(relation='parent', target='mom', note='foo'), Link(relation='child', target='son')
         ]
 
     # Selected relations
-    assert Links(family).get('parent') == [Link(relation='parent', target='mom', note='foo')]
-    assert Links(family).get('child') == [Link(relation='child', target='son')]
+    assert Links(data=family).get('parent') == [Link(relation='parent', target='mom', note='foo')]
+    assert Links(data=family).get('child') == [Link(relation='child', target='son')]
 
     # Full fmf id
     fmf_id = tmt.utils.yaml_to_dict("""
@@ -116,7 +117,7 @@ def test_link():
             name: /stories/select/filter/regexp
         note: Need to get the regexp filter working first.
         """)
-    link = Links(fmf_id)
+    link = Links(data=fmf_id)
     assert link.get() == [
         Link(
             relation='blocked-by',
@@ -127,14 +128,14 @@ def test_link():
 
     # Invalid links and relations
     with pytest.raises(SpecificationError, match='Invalid link'):
-        Links(123)
+        Links(data=123)
     with pytest.raises(SpecificationError, match='Multiple relations'):
-        Links(dict(verifies='one', blocks='another'))
+        Links(data=dict(verifies='one', blocks='another'))
     with pytest.raises(SpecificationError, match='Invalid link relation'):
-        Links(dict(depends='other'))
+        Links(data=dict(depends='other'))
 
     # Searching for links
-    links = Links([dict(parent='mom', note='foo'), dict(child='son', note='bar')])
+    links = Links(data=[dict(parent='mom', note='foo'), dict(child='son', note='bar')])
     assert links.has_link(LinkNeedle())
     assert links.has_link(LinkNeedle(relation='[a-z]+'))
     assert links.has_link(LinkNeedle(relation='en'))

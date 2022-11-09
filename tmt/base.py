@@ -1921,6 +1921,7 @@ class Tree(tmt.utils.Common):
     """ Test Metadata Tree """
 
     def __init__(self,
+                 *,
                  path: str = '.',
                  tree: Optional[fmf.Tree] = None,
                  context: Optional[tmt.utils.FmfContextType] = None) -> None:
@@ -2185,7 +2186,7 @@ class Tree(tmt.utils.Common):
         tree: Optional[Tree] = None
 
         try:
-            tree = Tree(path)
+            tree = Tree(path=path)
             # Are we creating a new tree under the existing one?
             assert tree is not None  # narrow type
             if path == tree.root:
@@ -2206,7 +2207,7 @@ class Tree(tmt.utils.Common):
             else:
                 try:
                     fmf.Tree.init(path)
-                    tree = Tree(path)
+                    tree = Tree(path=path)
                     assert tree.root is not None  # narrow type
                     path = tree.root
                 except fmf.utils.GeneralError as error:
@@ -2251,6 +2252,7 @@ class Run(tmt.utils.Common):
     tree: Optional[Tree]
 
     def __init__(self,
+                 *,
                  id_: Optional[str] = None,
                  tree: Optional[Tree] = None,
                  context: Optional[click.Context] = None) -> None:
@@ -2289,7 +2291,7 @@ class Run(tmt.utils.Common):
         """ Save metadata tree, handle the default plan """
         default_plan = tmt.utils.yaml_to_dict(tmt.templates.DEFAULT_PLAN)
         try:
-            self.tree = tree if tree else tmt.Tree('.')
+            self.tree = tree if tree else tmt.Tree(path='.')
             self.debug(f"Using tree '{self.tree.root}'.")
             # Clear the tree and insert default plan if requested
             if Plan._opt("default"):
@@ -2392,7 +2394,7 @@ class Run(tmt.utils.Common):
         # create a new Tree from the root in run.yaml
         if self._workdir and not self.opt('root'):
             if data.root:
-                self._save_tree(tmt.Tree(data.root))
+                self._save_tree(tmt.Tree(path=data.root))
             else:
                 # The run was used without any metadata, default plan
                 # was used, load it
@@ -2716,6 +2718,7 @@ class Clean(tmt.utils.Common):
     """ A class for cleaning up workdirs, guests or images """
 
     def __init__(self,
+                 *,
                  parent: Optional[tmt.utils.Common] = None,
                  name: Optional[str] = None,
                  workdir: tmt.utils.WorkdirArgumentType = None,
@@ -2728,7 +2731,7 @@ class Clean(tmt.utils.Common):
         # Set the option to skip to initialize the work tree
         if context:
             context.params[tmt.utils.PLAN_SKIP_WORKTREE_INIT] = True
-        super().__init__(parent, name, workdir, context)
+        super().__init__(parent=parent, name=name, workdir=workdir, context=context)
 
     def images(self) -> bool:
         """ Clean images of provision plugins """
@@ -2798,7 +2801,7 @@ class Clean(tmt.utils.Common):
         successful = True
         assert self._context_object is not None  # narrow type
         for abs_path in tmt.utils.generate_runs(root_path, id_):
-            run = Run(abs_path, self._context_object.tree, self._context)
+            run = Run(id_=abs_path, tree=self._context_object.tree, context=self._context)
             if not self._stop_running_guests(run):
                 successful = False
         return successful
@@ -3030,7 +3033,7 @@ class Links(tmt.utils.SpecBasedContainer):
 
     _links: List[Link]
 
-    def __init__(self, data: Optional[_RawLinks] = None):
+    def __init__(self, *, data: Optional[_RawLinks] = None):
         """ Create a collection from raw link data """
 
         # TODO: this should not happen with mandatory validation

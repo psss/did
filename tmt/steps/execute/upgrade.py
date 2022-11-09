@@ -110,8 +110,8 @@ class ExecuteUpgrade(ExecuteInternal):
     # FIXME: ignore[assignment]: https://github.com/teemtee/tmt/issues/1540
     _data_class = ExecuteUpgradeData  # type: ignore[assignment]
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
         self._discover_upgrade: Optional[DiscoverFmf] = None
 
     @classmethod
@@ -177,7 +177,7 @@ class ExecuteUpgrade(ExecuteInternal):
 
     def _get_plan(self, upgrades_repo: str) -> tmt.base.Plan:
         """ Get plan based on upgrade path """
-        tree = tmt.base.Tree(upgrades_repo)
+        tree = tmt.base.Tree(path=upgrades_repo)
         try:
             # We do not want to consider plan -n provided on the command line
             # in the remote repo for finding upgrade path.
@@ -207,7 +207,7 @@ class ExecuteUpgrade(ExecuteInternal):
                 }
             )
 
-        self._discover_upgrade = DiscoverFmf(self.step, data)
+        self._discover_upgrade = DiscoverFmf(step=self.step, data=data)
         self._run_discover_upgrade()
 
     def _run_discover_upgrade(self) -> None:

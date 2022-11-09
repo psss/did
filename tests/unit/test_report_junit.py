@@ -129,8 +129,8 @@ class TestStateMapping:
         results.extend(
             [
                 Result(
-                    ResultData(result=ResultOutcome.PASS),
-                    "/pass")
+                    data=ResultData(result=ResultOutcome.PASS),
+                    name="/pass")
                 ]
             )
 
@@ -149,8 +149,8 @@ class TestStateMapping:
         results.extend(
             [
                 Result(
-                    ResultData(result=ResultOutcome.INFO),
-                    "/info")
+                    data=ResultData(result=ResultOutcome.INFO),
+                    name="/info")
                 ]
             )
         report.go()
@@ -170,8 +170,8 @@ class TestStateMapping:
         results.extend(
             [
                 Result(
-                    ResultData(result=ResultOutcome.WARN),
-                    "/warn")
+                    data=ResultData(result=ResultOutcome.WARN),
+                    name="/warn")
                 ]
             )
         report.go()
@@ -191,8 +191,8 @@ class TestStateMapping:
         results.extend(
             [
                 Result(
-                    ResultData(result=ResultOutcome.ERROR),
-                    "/error")
+                    data=ResultData(result=ResultOutcome.ERROR),
+                    name="/error")
                 ]
             )
         report.go()
@@ -212,8 +212,8 @@ class TestStateMapping:
         results.extend(
             [
                 Result(
-                    ResultData(result=ResultOutcome.FAIL),
-                    "/fail")
+                    data=ResultData(result=ResultOutcome.FAIL),
+                    name="/fail")
                 ]
             )
         report.go()

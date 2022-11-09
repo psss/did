@@ -1,6 +1,6 @@
 -   id: tmt-lint
     name: tmt lint
-    entry: bash -c "git ls-files --error-unmatch $(python3 -c 'import tmt; print(tmt.Tree(\".\").root)')/.fmf/version && tmt lint --source $@" PAD
+    entry: bash -c "git ls-files --error-unmatch $(python3 -c 'import tmt; print(tmt.Tree(path=\".\").root)')/.fmf/version && tmt lint --source $@" PAD
     files: '.*\.fmf$'
     verbose: true
     pass_filenames: true
@@ -9,7 +9,7 @@
 
 -   id: tmt-tests-lint
     name: tmt tests lint
-    entry: bash -c "git ls-files --error-unmatch $(python3 -c 'import tmt; print(tmt.Tree(\".\").root)')/.fmf/version && tmt tests lint --source $@" PAD
+    entry: bash -c "git ls-files --error-unmatch $(python3 -c 'import tmt; print(tmt.Tree(path=\".\").root)')/.fmf/version && tmt tests lint --source $@" PAD
     files: '.*\.fmf$'
     verbose: true
     pass_filenames: true
@@ -18,7 +18,7 @@
 
 -   id: tmt-plans-lint
     name: tmt plans lint
-    entry: bash -c "git ls-files --error-unmatch $(python3 -c 'import tmt; print(tmt.Tree(\".\").root)')/.fmf/version && tmt plans lint --source $@" PAD
+    entry: bash -c "git ls-files --error-unmatch $(python3 -c 'import tmt; print(tmt.Tree(path=\".\").root)')/.fmf/version && tmt plans lint --source $@" PAD
     files: '.*\.fmf$'
     verbose: true
     pass_filenames: true
@@ -27,7 +27,7 @@
 
 -   id: tmt-stories-lint
     name: tmt stories lint
-    entry: bash -c "git ls-files --error-unmatch $(python3 -c 'import tmt; print(tmt.Tree(\".\").root)')/.fmf/version && tmt stories lint --source $@" PAD
+    entry: bash -c "git ls-files --error-unmatch $(python3 -c 'import tmt; print(tmt.Tree(path=\".\").root)')/.fmf/version && tmt stories lint --source $@" PAD
     files: '.*\.fmf$'
     verbose: true
     pass_filenames: true

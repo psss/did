@@ -96,6 +96,7 @@ class Result(tmt.utils.SerializableContainer):
 
     def __init__(
             self,
+            *,
             data: ResultData,
             name: Optional[str] = None,
             test: Optional['tmt.base.Test'] = None) -> None:
@@ -215,7 +216,7 @@ class Result(tmt.utils.SerializableContainer):
 
         name = serialized.pop('name')
         serialized['result'] = ResultOutcome.from_spec(serialized['result'])
-        return cls(ResultData(**serialized), name=name)
+        return cls(data=ResultData(**serialized), name=name)
 
     @staticmethod
     def failures(log: Optional[str], msg_type: str = 'FAIL') -> str:

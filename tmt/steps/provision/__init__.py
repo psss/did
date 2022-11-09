@@ -91,11 +91,12 @@ class Guest(tmt.utils.Common):
         return list(self._data_class.keys())
 
     def __init__(self,
+                 *,
                  data: GuestData,
                  name: Optional[str] = None,
                  parent: Optional[tmt.utils.Common] = None) -> None:
         """ Initialize guest data """
-        super().__init__(parent, name)
+        super().__init__(parent=parent, name=name)
 
         self.load(data)
 
@@ -1044,7 +1045,7 @@ class Provision(tmt.steps.Step):
 
     _plugin_base_class = ProvisionPlugin
 
-    def __init__(self, plan: 'tmt.Plan', data: tmt.steps.RawStepDataArgument) -> None:
+    def __init__(self, *, plan: 'tmt.Plan', data: tmt.steps.RawStepDataArgument) -> None:
         """ Initialize provision step data """
         super().__init__(plan=plan, data=data)
 

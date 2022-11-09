@@ -74,6 +74,7 @@ class Library:
 
     def __init__(
             self,
+            *,
             identifier: BeakerlibIdentifierType,
             parent: Optional[tmt.utils.Common] = None
             ) -> None:
@@ -332,7 +333,7 @@ def dependencies(
     for dependency in filter(already_fetched, to_fetch):
         # Library require/recommend
         try:
-            library = Library(dependency, parent=parent)
+            library = Library(identifier=dependency, parent=parent)
             gathered_libraries.append(library)
             imported_lib_ids.append(library.identifier)
             # Recursively check for possible dependent libraries

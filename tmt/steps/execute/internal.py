@@ -45,8 +45,8 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
     _data_class = ExecuteInternalData
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
         self._previous_progress_message = ""
         self.scripts = SCRIPTS
 

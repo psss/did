@@ -1,7 +1,7 @@
 
 import tmt
 
-tree = tmt.Tree('data')
+tree = tmt.Tree(path='data')
 
 
 def test_root():

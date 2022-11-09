@@ -126,12 +126,13 @@ class ExecutePlugin(tmt.steps.Plugin):
 
     def __init__(
             self,
+            *,
             step: Step,
             data: StepData,
             workdir: tmt.utils.WorkdirArgumentType = None) -> None:
-        super().__init__(step, data, workdir)
+        super().__init__(step=step, data=data, workdir=workdir)
         if tmt.steps.Login._opt('test'):
-            self._login_after_test = tmt.steps.Login(self.step, 90)
+            self._login_after_test = tmt.steps.Login(step=self.step, order=90)
 
     @classmethod
     def base_command(
@@ -251,7 +252,7 @@ class ExecutePlugin(tmt.steps.Plugin):
 
         data = ResultData(result=result, log=[self.data_path(test, TEST_OUTPUT_FILENAME)],
                           note=note, duration=test.real_duration)
-        return [tmt.Result(data, test=test)]
+        return [tmt.Result(data=data, test=test)]
 
     def check_beakerlib(self, test: "tmt.Test") -> List["tmt.Result"]:
         """ Check result of a beakerlib test """
@@ -267,7 +268,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         except tmt.utils.FileError:
             self.debug(f"Unable to read '{beakerlib_results_file}'.", level=3)
             data.note = 'beakerlib: TestResults FileError'
-            return [tmt.Result(data, test=test)]
+            return [tmt.Result(data=data, test=test)]
 
         search_result = re.search('TESTRESULT_RESULT_STRING=(.*)', results)
         # States are: started, incomplete and complete
@@ -279,7 +280,7 @@ class ExecutePlugin(tmt.steps.Plugin):
                 f"No result or state found in '{beakerlib_results_file}'.",
                 level=3)
             data.note = 'beakerlib: Result/State missing'
-            return [tmt.Result(data, test=test)]
+            return [tmt.Result(data=data, test=test)]
 
         result = search_result.group(1)
         state = search_state.group(1)
@@ -296,7 +297,7 @@ class ExecutePlugin(tmt.steps.Plugin):
         # Finally we have a valid result
         else:
             data.result = ResultOutcome.from_spec(result.lower())
-        return [tmt.Result(data, test=test)]
+        return [tmt.Result(data=data, test=test)]
 
     def check_result_file(self, test: "tmt.Test") -> List["tmt.Result"]:
         """
@@ -338,7 +339,7 @@ class ExecutePlugin(tmt.steps.Plugin):
             else:
                 data.result = ResultOutcome.ERROR
                 data.note = f"invalid test result '{result}' in result file"
-        return [tmt.Result(data, test=test)]
+        return [tmt.Result(data=data, test=test)]
 
     def check_custom_results(self, test: "tmt.Test") -> List["tmt.Result"]:
         """
@@ -414,7 +415,7 @@ class Execute(tmt.steps.Step):
 
     _plugin_base_class = ExecutePlugin
 
-    def __init__(self, plan: "tmt.Plan", data: tmt.steps.RawStepDataArgument) -> None:
+    def __init__(self, *, plan: "tmt.Plan", data: tmt.steps.RawStepDataArgument) -> None:
         """ Initialize execute step data """
         super().__init__(plan=plan, data=data)
         # List of Result() objects representing test results

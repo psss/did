@@ -144,7 +144,7 @@ class TestDescription(
         """ Convert from a serialized form loaded from a file """
 
         obj = super().from_serialized(serialized)
-        obj.link = tmt.base.Links(serialized['link'])
+        obj.link = tmt.base.Links(data=serialized['link'])
         obj.require = [
             tmt.base.RequireSimple.from_spec(require)
             if isinstance(require, str) else tmt.base.RequireFmfId.from_spec(require)

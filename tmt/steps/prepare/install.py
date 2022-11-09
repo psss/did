@@ -32,7 +32,7 @@ class InstallBase(tmt.utils.Common):
     copr_plugin: Optional[str] = None
     command: Optional[str] = None
 
-    def __init__(self, parent: tmt.steps.prepare.PreparePlugin, guest: Guest) -> None:
+    def __init__(self, *, parent: tmt.steps.prepare.PreparePlugin, guest: Guest) -> None:
         """ Initialize installation data """
         super().__init__(parent=parent, relative_indent=0)
         self.guest = guest

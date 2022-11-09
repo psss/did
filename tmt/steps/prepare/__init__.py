@@ -87,7 +87,7 @@ class Prepare(tmt.steps.Step):
 
     _plugin_base_class = PreparePlugin
 
-    def __init__(self, plan: 'Plan', data: tmt.steps.RawStepDataArgument) -> None:
+    def __init__(self, *, plan: 'Plan', data: tmt.steps.RawStepDataArgument) -> None:
         """ Initialize prepare step data """
         super().__init__(plan=plan, data=data)
         self.preparations_applied = 0
