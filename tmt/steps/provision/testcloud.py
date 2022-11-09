@@ -266,39 +266,42 @@ class GuestTestcloud(tmt.GuestSsh):
 
         assert testcloud is not None
         # Plain name match means we want the latest release
-        if name == 'fedora':
-            url = testcloud.util.get_fedora_image_url("latest", self.arch)
-        elif name == 'fedora-coreos':
-            url = testcloud.util.get_fedora_image_url("stable", self.arch)
-        elif name == 'centos':
-            url = testcloud.util.get_centos_image_url("latest", stream=False, arch=self.arch)
-        elif name == 'centos-stream':
-            url = testcloud.util.get_centos_image_url("latest", stream=True, arch=self.arch)
-        elif name == 'ubuntu':
-            url = testcloud.util.get_ubuntu_image_url("latest", self.arch)
-        elif name == 'debian':
-            url = testcloud.util.get_debian_image_url("latest", self.arch)
+        try:
+            if name == 'fedora':
+                url = testcloud.util.get_fedora_image_url("latest", self.arch)
+            elif name == 'fedora-coreos':
+                url = testcloud.util.get_fedora_image_url("stable", self.arch)
+            elif name == 'centos':
+                url = testcloud.util.get_centos_image_url("latest", stream=False, arch=self.arch)
+            elif name == 'centos-stream':
+                url = testcloud.util.get_centos_image_url("latest", stream=True, arch=self.arch)
+            elif name == 'ubuntu':
+                url = testcloud.util.get_ubuntu_image_url("latest", self.arch)
+            elif name == 'debian':
+                url = testcloud.util.get_debian_image_url("latest", self.arch)
 
-        elif matched_fedora:
-            url = testcloud.util.get_fedora_image_url(
-                matched_fedora.group(2), self.arch)
-        elif matched_fedora_coreos:
-            url = testcloud.util.get_fedora_image_url(
-                matched_fedora_coreos.group(2), self.arch)
-        elif matched_centos[0]:
-            url = testcloud.util.get_centos_image_url(
-                matched_centos[0].group(2), stream=False, arch=self.arch)
-        elif matched_centos[1]:
-            url = testcloud.util.get_centos_image_url(
-                matched_centos[1].group(2), stream=True, arch=self.arch)
-        elif matched_ubuntu:
-            url = testcloud.util.get_ubuntu_image_url(
-                matched_ubuntu.group(2), self.arch)
-        elif matched_debian:
-            url = testcloud.util.get_debian_image_url(
-                matched_debian.group(2), self.arch)
-        elif 'rawhide' in name:
-            url = testcloud.util.get_fedora_image_url("rawhide", self.arch)
+            elif matched_fedora:
+                url = testcloud.util.get_fedora_image_url(
+                    matched_fedora.group(2), self.arch)
+            elif matched_fedora_coreos:
+                url = testcloud.util.get_fedora_image_url(
+                    matched_fedora_coreos.group(2), self.arch)
+            elif matched_centos[0]:
+                url = testcloud.util.get_centos_image_url(
+                    matched_centos[0].group(2), stream=False, arch=self.arch)
+            elif matched_centos[1]:
+                url = testcloud.util.get_centos_image_url(
+                    matched_centos[1].group(2), stream=True, arch=self.arch)
+            elif matched_ubuntu:
+                url = testcloud.util.get_ubuntu_image_url(
+                    matched_ubuntu.group(2), self.arch)
+            elif matched_debian:
+                url = testcloud.util.get_debian_image_url(
+                    matched_debian.group(2), self.arch)
+            elif 'rawhide' in name:
+                url = testcloud.util.get_fedora_image_url("rawhide", self.arch)
+        except Exception as error:
+            raise ProvisionError("Could not get image url.") from error
 
         if not url:
             raise ProvisionError(f"Could not map '{name}' to compose.")
