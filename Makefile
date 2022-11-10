@@ -59,6 +59,8 @@ rpm: tarball
 srpm: tarball
 	rpmbuild --define '_topdir $(TMP)' -bs tmt.spec
 packages: rpm srpm
+bump2dev:
+	$(shell sed "s/^Version:.*/Version: $$(echo $(VERSION) | awk '{ split($$0,v,"."); printf "%s.%s.dev", v[1], v[2]+1 }')/" -i tmt.spec)
 
 
 # Containers

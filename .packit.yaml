@@ -7,6 +7,8 @@ downstream_package_name: tmt
 
 
 actions:
+  post-upstream-clone:
+  - make bump2dev
   create-archive:
   - make tarball
   get-current-version:
