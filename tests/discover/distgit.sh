@@ -337,7 +337,7 @@ done
         rlPhaseStartTest "${prefix}path pointing to the fmf root in the extracted sources"
             rlRun 'pushd tmt'
             rlRun -s "tmt run --remove plans --default discover -v --how fmf \
-            --dist-git-source --dist-git-merge --ref e2d36db --dist-git-extract ${prefix}tmt-*/tests/execute/framework/data \
+            --dist-git-source --dist-git-merge --ref e2d36db --dist-git-extract ${prefix}tmt-1.7.0/tests/execute/framework/data \
             tests --name ^/tests/beakerlib/with-framework\$"
             rlAssertGrep "summary: 1 test selected" $rlRun_LOG -F
 
