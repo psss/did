@@ -150,6 +150,22 @@ class Config(object):
         except (NoOptionError, NoSectionError):
             return MAX_WIDTH
 
+    @property
+    def separator(self):
+        """ Separator character to use for the report """
+        try:
+            return self.parser.get("general", "separator")
+        except (NoOptionError, NoSectionError):
+            return "~"
+
+    @property
+    def separator_width(self):
+        """ Number of separator characters to use for the report """
+        try:
+            return int(self.parser.get("general", "separator_width"))
+        except (NoOptionError, NoSectionError):
+            return 79
+
     def sections(self, kind=None):
         """ Return all sections (optionally of given kind only) """
         result = []
