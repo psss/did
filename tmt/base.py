@@ -557,6 +557,11 @@ class Core(
                     require.to_minimal_spec() for require in cast(List[Require], value)
                     ]
 
+            # TODO: this belongs to Story.export, and it will be moved when the time
+            # of export() cleanup comes.
+            elif key == 'priority' and value is not None:
+                data[key] = cast(StoryPriority, value).value
+
             else:
                 data[key] = value
 
