@@ -20,6 +20,11 @@ class GuestLocal(tmt.Guest):
     localhost = True
     parent: tmt.steps.Step
 
+    @property
+    def is_ready(self) -> bool:
+        """ Local is always ready """
+        return True
+
     def ansible(self, playbook: str, extra_args: Optional[str] = None) -> None:
         """ Prepare localhost using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)

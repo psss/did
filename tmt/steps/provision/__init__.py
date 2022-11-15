@@ -124,6 +124,12 @@ class Guest(tmt.utils.Common):
         _, run_id = os.path.split(parent.plan.my_run.workdir)
         return self._random_name(prefix="tmt-{0}-".format(run_id[-3:]))
 
+    @property
+    def is_ready(self) -> bool:
+        """ Detect guest is ready or not """
+
+        raise NotImplementedError()
+
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
         """ Prepare command line options related to guests """
@@ -1218,10 +1224,13 @@ class Provision(tmt.steps.Step):
 
                     if self.is_multihost:
                         self.info('')
+                except (tmt.utils.RunError, tmt.utils.ProvisionError) as error:
+                    self.fail(str(error))
+                    raise
                 finally:
                     if isinstance(phase, ProvisionPlugin):
                         guest = phase.guest()
-                        if guest:
+                        if guest and (guest.is_ready or self.opt('dry')):
                             self._guests.append(guest)
 
             # Give a summary, update status and save

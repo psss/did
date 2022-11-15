@@ -43,6 +43,17 @@ class GuestContainer(tmt.Guest):
     force_pull: bool
     parent: tmt.steps.Step
 
+    @property
+    def is_ready(self) -> bool:
+        """ Detect the guest is ready or not """
+        # Check the container is running or not
+        if self.container is None:
+            return False
+        cmd_output = self.podman(['container', 'inspect', '--format',
+                                  '{{json .State.Running}}', self.container])
+        cmd_stdout, cmd_stderr = cmd_output
+        return str(cmd_stdout).strip() == 'true'
+
     def wake(self) -> None:
         """ Wake up the guest """
         self.debug(
@@ -161,6 +172,9 @@ class GuestContainer(tmt.Guest):
             destination: Optional[str] = None,
             options: Optional[List[str]] = None) -> None:
         """ Make sure that the workdir has a correct selinux context """
+        if not self.is_ready:
+            return
+
         self.debug("Update selinux context of the run workdir.", level=3)
         assert self.parent.plan.workdir is not None  # narrow type
         self.run(
@@ -178,6 +192,8 @@ class GuestContainer(tmt.Guest):
             options: Optional[List[str]] = None,
             extend_options: Optional[List[str]] = None) -> None:
         """ Nothing to be done to pull workdir """
+        if not self.is_ready:
+            return
 
     def stop(self) -> None:
         """ Stop provisioned guest """

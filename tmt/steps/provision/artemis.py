@@ -270,6 +270,14 @@ class GuestArtemis(tmt.GuestSsh):
 
         return self._api
 
+    @property
+    def is_ready(self) -> bool:
+        """ Detect the guest is ready or not """
+
+        # FIXME: A more robust solution should be provided. Currently just
+        #        return True if self.guest is not None
+        return self.guest is not None
+
     def _create(self) -> None:
         environment: Dict[str, Any] = {
             'hw': {

@@ -219,6 +219,22 @@ class GuestTestcloud(tmt.GuestSsh):
     _image: Optional['testcloud.image.Image'] = None  # type: ignore[name-defined]
     _instance: Optional['testcloud.instance.Instance'] = None  # type: ignore[name-defined]
 
+    @property
+    def is_ready(self) -> bool:
+        if self._instance is None:
+            return False
+
+        assert testcloud is not None
+        assert libvirt is not None
+        try:
+            state = testcloud.instance._find_domain(self._instance.name, self._instance.connection)
+            # Note the type of variable 'state' is 'Any'. Hence, we don't use:
+            #     return state == 'running'
+            # to avoid error from type checking.
+            return True if state == 'running' else False
+        except libvirt.libvirtError:
+            return False
+
     def _get_url(self, url: str, message: str) -> requests.Response:
         """ Get url, retry when fails, return response """
 
