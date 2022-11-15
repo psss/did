@@ -1,0 +1,13 @@
+summary: Story keys are correctly displayed
+title: A Concise Title
+story: As a user I want this and that
+description: Some description
+priority: must have
+example: An inspiring example
+id: e3a9a8ed-4585-4e86-80e8-1d99eb5345a9
+enabled: true
+order: 70
+tag: foo
+tier: 3
+link:
+  - implemented-by: /some/code.py
