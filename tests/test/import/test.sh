@@ -137,6 +137,14 @@ rlJournalStart
         rlRun 'popd'
     rlPhaseEnd
 
+    rlPhaseStartTest "Empty requires"
+        rlRun 'pushd $tmp/data/parent/empty-requires'
+        rlRun -s 'tmt test import --makefile --no-nitrate --no-purpose' '0'
+        rlAssertExists "main.fmf"
+        rlRun -s 'cat main.fmf'
+        rlAssertGrep 'recommend:\s*\[\]' "main.fmf"
+        rlRun 'popd'
+    rlPhaseEnd
 
     rlPhaseStartCleanup
         rlRun "rm -r $tmp" 0 "Removing tmp directory"

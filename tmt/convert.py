@@ -208,32 +208,32 @@ def read_datafile(
     data: NitrateDataType = dict()
     makefile_regex_test = r'^run:.*\n\t(.*)$'
     if filename == 'Makefile':
-        regex_task = r'Name:\s*(.*)\n'
-        regex_summary = r'^Description:\s*(.*)\n'
+        regex_task = r'Name:[ \t]*(.*)$'
+        regex_summary = r'^Description:[ \t]*(.*)$'
         regex_test = makefile_regex_test
-        regex_contact = r'^Owner:\s*(.*)'
-        regex_duration = r'^TestTime:\s*(.*)'
-        regex_recommend = r'^Requires:\s*(.*)'
-        regex_require = r'^RhtsRequires:\s*(.*)'
+        regex_contact = r'^Owner:[ \t]*(.*)$'
+        regex_duration = r'^TestTime:[ \t]*(\d+.*)$'
+        regex_recommend = r'^Requires:[ \t]*(.*)$'
+        regex_require = r'^RhtsRequires:[ \t]*(.*)$'
         rec_separator = None
     else:
-        regex_task = r'name=\s*(.*)\n'
-        regex_summary = r'description=\s*(.*)\n'
-        regex_test = r'entry_point=\s*(.*)$'
-        regex_contact = r'owner=\s*(.*)'
-        regex_duration = r'max_time=\s*(.*)'
-        regex_require = r'dependencies=\s*(.*)'
-        regex_recommend = r'softDependencies=\s*(.*)'
+        regex_task = r'name=[ \t]*(.*)$'
+        regex_summary = r'description=[ \t]*(.*)$'
+        regex_test = r'entry_point=[ \t]*(.*)$'
+        regex_contact = r'owner=[ \t]*(.*)$'
+        regex_duration = r'max_time=[ \t]*(\d+.*)$'
+        regex_require = r'dependencies=[ \t]*(.*)$'
+        regex_recommend = r'softDependencies=[ \t]*(.*)$'
         rec_separator = ';'
 
     if testinfo is None:
         testinfo = datafile
 
     # Beaker task name
-    search_result = re.search(regex_task, testinfo)
+    search_result = re.search(regex_task, testinfo, re.M)
     if search_result is None:
         raise ConvertError("Unable to parse 'Name' from testinfo.desc.")
-    beaker_task = search_result.group(1)
+    beaker_task = search_result.group(1).strip()
     echo(style('task: ', fg='green') + beaker_task)
     data['extra-task'] = beaker_task
     data['extra-summary'] = beaker_task
@@ -241,7 +241,7 @@ def read_datafile(
     # Summary
     search_result = re.search(regex_summary, testinfo, re.M)
     if search_result is not None:
-        data['summary'] = search_result.group(1)
+        data['summary'] = search_result.group(1).strip()
         echo(style('summary: ', fg='green') + data['summary'])
 
     # Test script
@@ -253,7 +253,7 @@ def read_datafile(
         else:
             raise ConvertError("Makefile is missing the 'run' target.")
     else:
-        data['test'] = search_result.group(1)
+        data['test'] = search_result.group(1).strip()
         echo(style('test: ', fg='green') + data['test'])
 
     # Detect framework
@@ -279,7 +279,7 @@ def read_datafile(
         # Read the test file and determine the framework used.
         if test_path:
             with open(test_path, encoding="utf-8") as test_file:
-                if re.search("beakerlib", test_file.read()):
+                if re.search("beakerlib", test_file.read(), re.M):
                     data["framework"] = "beakerlib"
                 else:
                     data["framework"] = "shell"
@@ -292,12 +292,12 @@ def read_datafile(
     # Contact
     search_result = re.search(regex_contact, testinfo, re.M)
     if search_result is not None:
-        data['contact'] = search_result.group(1)
+        data['contact'] = search_result.group(1).strip()
         echo(style('contact: ', fg='green') + data['contact'])
 
     if filename == 'Makefile':
         # Component
-        search_result = re.search(r'^RunFor:\s*(.*)', testinfo, re.M)
+        search_result = re.search(r'^RunFor:[ \t]*(.*)$', testinfo, re.M)
         if search_result is not None:
             data['component'] = search_result.group(1).split()
             echo(style('component: ', fg='green') +
@@ -306,12 +306,12 @@ def read_datafile(
     # Duration
     search_result = re.search(regex_duration, testinfo, re.M)
     if search_result is not None:
-        data['duration'] = search_result.group(1)
+        data['duration'] = search_result.group(1).strip()
         echo(style('duration: ', fg='green') + data['duration'])
 
     if filename == 'Makefile':
         # Environment
-        variables = re.findall(r'^Environment:\s*(.*)', testinfo, re.M)
+        variables = re.findall(r'^Environment:[ \t]*(.*)$', testinfo, re.M)
         if variables:
             data['environment'] = {}
             for variable in variables:
@@ -336,7 +336,7 @@ def read_datafile(
     requires = re.findall(regex_require, testinfo, re.M)
     if requires:
         data['require'] = [
-            sanitize_name(require) for line in requires
+            sanitize_name(require.strip()) for line in requires
             for require in line.split(rec_separator)]
         echo(style('require: ', fg='green') + ' '.join(data['require']))
 
@@ -344,16 +344,16 @@ def read_datafile(
     recommends = re.findall(regex_recommend, testinfo, re.M)
     if recommends:
         data['recommend'] = [
-            sanitize_name(recommend) for line in recommends
+            sanitize_name(recommend.strip()) for line in recommends
             for recommend in line.split(rec_separator)]
         echo(
             style('recommend: ', fg='green') + ' '.join(data['recommend']))
 
     if filename == 'Makefile':
         # Convert Type into tags
-        search_result = re.search(r'^Type:\s*(.*)', testinfo, re.M)
+        search_result = re.search(r'^Type:[ \t]*(.*)$', testinfo, re.M)
         if search_result is not None:
-            makefile_type = search_result.group(1)
+            makefile_type = search_result.group(1).strip()
             if 'all' in [type_.lower() for type_ in types]:
                 tags = makefile_type.split()
             else:
