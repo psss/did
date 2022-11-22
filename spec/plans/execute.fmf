@@ -135,6 +135,36 @@ description: |
             how: upgrade
             url: https://github.com/teemtee/upgrade
             filter: "tag:fedora"
+
+      - |
+        # A simple beakerlib test using the $IN_PLACE_UPGRADE variable
+        . /usr/share/beakerlib/beakerlib.sh || exit 1
+
+        VENV_PATH=/var/tmp/venv_test
+
+        rlJournalStart
+            # Perform the setup only for the old distro
+            if [[ "$IN_PLACE_UPGRADE" !=  "new" ]]; then
+                rlPhaseStartSetup
+                    rlRun "python3.9 -m venv $VENV_PATH"
+                    rlRun "$VENV_PATH/bin/pip install pyjokes"
+                rlPhaseEnd
+            fi
+
+            # Execute the test for both old & new distro
+            rlPhaseStartTest
+                rlAsssertExists "$VENV_PATH/bin/pyjoke"
+                rlRun "$VENV_PATH/bin/pyjoke"
+            rlPhaseEnd
+
+            # Skip the cleanup phase when on the old distro
+            if [[ "$IN_PLACE_UPGRADE" !=  "old" ]]; then
+                rlPhaseStartCleanup
+                    rlRun "rm -rf $VENV_PATH"
+                rlPhaseEnd
+            fi
+        rlJournalEnd
+
     link:
       - implemented-by: /tmt/steps/execute/upgrade.py
       - verified-by: /tests/execute/upgrade
