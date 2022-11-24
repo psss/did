@@ -247,33 +247,6 @@ description: |
       - implemented-by: /tmt/steps/execute/internal.py
       - verified-by: /tests/execute/framework
 
-/where:
-    summary: Execute tests on selected guests
-    description: |
-        In the :ref:`/spec/plans/provision/multihost` scenarios it
-        is often necessary to execute test code on selected guests
-        only or execute different test code on individual guests.
-        The ``where`` key allows to select guests where the tests
-        should be executed by providing their ``name`` or the
-        ``role`` they play in the scenario. Use a list to specify
-        multiple names or roles. By default, when the ``where`` key
-        is not defined, tests are executed on all provisioned
-        guests.
-    example: |
-        # Execute discovered tests on the client (already supported)
-        execute:
-          - how: tmt
-            where: client
-
-        # Run different script for each role (not supported yet)
-        execute:
-          - name: run-the-client-code
-            script: client.py
-            where: client
-          - name: run-the-server-code
-            script: server.py
-            where: server
-
 /script:
     summary: Execute shell scripts
     story: As a user I want to easily run shell script as a test.

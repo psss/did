@@ -132,7 +132,7 @@ example: |
         ``where`` key to select guests on which the
         :ref:`preparation</spec/plans/prepare/where>`
         tasks should be applied or where the test
-        :ref:`execution</spec/plans/execute/where>` should
+        :ref:`execution</spec/plans/discover/where>` should
         take place.
 
         If guests need to be synchronized during the environment

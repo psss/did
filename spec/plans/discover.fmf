@@ -213,3 +213,75 @@ description: |
             dist-git-source: true
     link:
       - implemented-by: /tmt/steps/discover/fmf.py
+
+/where:
+    summary: Execute tests on selected guests
+    description: |
+        In the :ref:`/spec/plans/provision/multihost` scenarios it
+        is often necessary to execute test code on selected guests
+        only or execute different test code on individual guests.
+        The ``where`` key allows to select guests where the tests
+        should be executed by providing their ``name`` or the
+        ``role`` they play in the scenario. Use a list to specify
+        multiple names or roles. By default, when the ``where`` key
+        is not defined, tests are executed on all provisioned
+        guests.
+
+        There is also an alternative to the syntax using a ``where``
+        dictionary encapsulating the ``discover`` config under keys
+        corresponding to guest names or roles. This can result in
+        much more concise config especially when defining several
+        shell scripts for each guest or role.
+
+    example:
+      - |
+        # Run different script for each guest or role
+        discover:
+            how: shell
+            tests:
+              - name: run-the-client-code
+                test: client.py
+                where: client
+              - name: run-the-server-code
+                test: server.py
+                where: server
+
+      - |
+        # Filter different set of tests for each guest or role
+        discover:
+          - how: fmf
+            filter: tag:client-tests
+            where: client
+          - how: fmf
+            filter: tag:server-tests
+            where: server
+
+      - |
+        # Alternative syntax using the 'where' dictionary
+        # encapsulating for tests defined by fmf
+        discover:
+            where:
+                client:
+                  - how: fmf
+                    filter: tag:client-tests
+                server:
+                  - how: fmf
+                    filter: tag:server-tests
+
+      - |
+        # Alternative syntax using the 'where' dictionary
+        # encapsulating for shell script tests
+        discover:
+            where:
+                server:
+                    how: shell
+                    tests:
+                      - test: first server script
+                      - test: second server script
+                      - test: third server script
+                client:
+                    how: shell
+                    tests:
+                      - test: first client script
+                      - test: second client script
+                      - test: third client script
