@@ -59,6 +59,10 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
             click.option(
                 '-o', '--open', is_flag=True,
                 help='Open results in your preferred web browser.'),
+            click.option(
+                '--absolute-paths',
+                is_flag=True,
+                help='Make paths absolute rather than relative to working directory.')
             ] + super().options(how)
 
     def go(self) -> None:
@@ -68,13 +72,16 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
         import_jinja2()
         assert jinja2
 
-        # Links used in html should be relative to this path
-        report_dir = self.workdir
-
         # Prepare the template
         environment = jinja2.Environment()
         environment.filters["basename"] = lambda x: os.path.basename(x)
-        environment.filters["relpath"] = lambda x: os.path.relpath(x, report_dir)
+
+        if self.opt('absolute-paths'):
+            environment.filters["linkable_path"] = os.path.abspath
+        else:
+            # Links used in html should be relative to a workdir
+            environment.filters["linkable_path"] = lambda x: os.path.relpath(x, self.workdir)
+
         environment.trim_blocks = True
         environment.lstrip_blocks = True
         with open(HTML_TEMPLATE_PATH) as file:
