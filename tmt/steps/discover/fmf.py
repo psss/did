@@ -281,7 +281,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                     raise tmt.utils.DiscoverError(
                         "No metadata found in the current directory. "
                         "Use 'tmt init' to get started.")
-                for i, attr in enumerate(fmf_tree.climb()):
+                for attr in fmf_tree.climb():
                     try:
                         plan_url = attr.data.get('discover').get('url')
                         plan_name = attr.name

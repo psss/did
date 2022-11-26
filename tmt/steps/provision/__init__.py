@@ -636,7 +636,7 @@ class GuestSsh(Guest):
         # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         parent = cast(Provision, self.parent)
 
-        stdout, stderr = self.run(
+        stdout, _ = self.run(
             ansible_command,
             cwd=parent.plan.worktree,
             env=self._prepare_environment())

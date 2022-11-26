@@ -103,7 +103,7 @@ class GuestContainer(tmt.Guest):
         playbook = self._ansible_playbook_path(playbook)
         # As non-root we must run with podman unshare
         podman_unshare = ['podman', 'unshare'] if os.geteuid() != 0 else []
-        stdout, stderr = self.run(
+        stdout, _ = self.run(
             podman_unshare + ['ansible-playbook'] +
             self._ansible_verbosity() +
             self._ansible_extra_args(extra_args) +

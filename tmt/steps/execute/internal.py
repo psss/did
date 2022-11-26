@@ -189,7 +189,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         # Execute the test, save the output and return code
         start = time.time()
         try:
-            stdout, stderr = guest.execute(
+            stdout, _ = guest.execute(
                 remote_command, cwd=workdir, env=environment,
                 join=True, interactive=self.get('interactive'), log=log,
                 timeout=tmt.utils.duration_to_seconds(test.duration),

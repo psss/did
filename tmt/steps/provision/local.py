@@ -21,7 +21,7 @@ class GuestLocal(tmt.Guest):
     def ansible(self, playbook: str, extra_args: Optional[str] = None) -> None:
         """ Prepare localhost using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
-        stdout, stderr = self.run(
+        stdout, _ = self.run(
             ['sudo', '-E', 'ansible-playbook'] +
             self._ansible_verbosity() +
             self._ansible_extra_args(extra_args) +

@@ -3088,7 +3088,7 @@ def load_schema_store() -> SchemaStore:
     schema_dirpath = pkg_resources.resource_filename('tmt', 'schemas')
 
     try:
-        for dirpath, dirnames, filenames in os.walk(
+        for dirpath, _, filenames in os.walk(
                 schema_dirpath, followlinks=True):
             for filename in filenames:
                 # Ignore all files but YAML files.
