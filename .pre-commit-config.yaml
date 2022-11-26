@@ -32,6 +32,7 @@ repos:
         # *pre-commit* to which files to apply flake8 check.
         files: >
           (?x)^(
+            bin/.*|
             examples/.*|
             tests/.*|
             tmt/.*
