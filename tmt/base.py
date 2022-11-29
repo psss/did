@@ -1640,6 +1640,16 @@ class Plan(Core):
 
         return self._imported_plan
 
+    def prune(self) -> None:
+        """ Remove all uninteresting files from the plan workdir """
+        self.verbose(
+            "prune", f"Prune plan workdir '{self.workdir}'.", color="magenta", level=3, shift=2)
+        if hasattr(self, 'worktree'):  # TODO: fix when worktree is set
+            self.debug(f"Prune worktree '{self.worktree}'.", level=3, shift=2)
+            shutil.rmtree(self.worktree)
+        for step in self.steps(disabled=True):
+            step.prune()
+
 
 class StoryPriority(enum.Enum):
     MUST_HAVE = 'must have'

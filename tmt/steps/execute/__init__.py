@@ -416,6 +416,8 @@ class Execute(tmt.steps.Step):
 
     _plugin_base_class = ExecutePlugin
 
+    _preserved_files = ['step.yaml', 'results.yaml', 'data']
+
     def __init__(self, *, plan: "tmt.Plan", data: tmt.steps.RawStepDataArgument) -> None:
         """ Initialize execute step data """
         super().__init__(plan=plan, data=data)

@@ -2,7 +2,9 @@
 """ Step Classes """
 
 import dataclasses
+import os
 import re
+import shutil
 import sys
 import textwrap
 from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple,
@@ -14,6 +16,7 @@ else:
     from typing_extensions import TypedDict
 
 import click
+import fmf.utils
 from click import echo
 
 import tmt.options
@@ -196,6 +199,11 @@ class Step(tmt.utils.Common):
     #: or :py:meth:`wake`, and serves as a source for normalization performed
     #: by :py:meth:`_normalize_data`.
     _raw_data: List[_RawStepData]
+
+    # The step has pruning capability to remove all irrelevant files. All
+    # important files located in workdir should be specified in the list below
+    # to avoid deletion during pruning.
+    _preserved_files: List[str] = ['step.yaml']
 
     def __init__(
             self,
@@ -504,6 +512,18 @@ class Step(tmt.utils.Common):
         self.info(self.name, color='blue')
         # Show workdir in verbose mode
         self.debug('workdir', self.workdir, 'magenta')
+
+    def prune(self) -> None:
+        """ Remove all uninteresting files from the step workdir """
+        if self.workdir is None:
+            return
+        self.debug(
+            f"Prune all files from '{self.workdir}' except for " +
+            fmf.utils.listed(self._preserved_files, quote="'") + ".",
+            level=3, shift=1)
+        for entry in os.listdir(self.workdir):
+            if entry not in self._preserved_files:
+                shutil.rmtree(os.path.join(self.workdir, entry))
 
 
 class Method:

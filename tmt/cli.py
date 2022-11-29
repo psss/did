@@ -201,6 +201,10 @@ def main(
     '-r', '--rm', '--remove', 'remove', is_flag=True,
     help='Remove the workdir when test run is finished.')
 @click.option(
+    '-k', '--keep', is_flag=True,
+    help='Keep all files in the run workdir after testing is done '
+         '(skip pruning during the finish step).')
+@click.option(
     '--scratch', is_flag=True,
     help='Remove the run workdir before executing to start from scratch.')
 @click.option(

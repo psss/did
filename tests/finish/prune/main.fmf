@@ -1,0 +1,5 @@
+summary: Basic check of file pruning
+description:
+    Verify correct pruning of irrelevant files from
+    tmt workdir and also check whether important files
+    remain there.

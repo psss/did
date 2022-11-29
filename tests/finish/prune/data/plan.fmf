@@ -1,0 +1,19 @@
+summary: Simple plan with a test writing to file
+
+discover:
+  - how: fmf
+    filter: tag:test1
+  - how: fmf
+    filter: tag:test2
+  - how: shell
+    tests:
+      - name: /write/test-data
+        test: echo test > $TMT_TEST_DATA/out-test.txt
+      - name: /write/plan-data
+        test: echo test > $TMT_PLAN_DATA/out-plan.txt
+
+provision:
+  how: local
+
+execute:
+  how: tmt

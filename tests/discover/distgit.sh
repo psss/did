@@ -105,7 +105,7 @@ EOF
         WORKDIR=/var/tmp/tmt/XXX
         WORKDIR_TESTS=$WORKDIR/plans/discover/default-0/tests
 
-        rlRun -s "tmt run -vv --id $WORKDIR --scratch"
+        rlRun -s "tmt run -vv --id $WORKDIR --scratch --keep"
 
         rlAssertGrep "/unit" $rlRun_LOG -F
         rlAssertGrep "summary: 1 test selected" $rlRun_LOG -F
@@ -134,7 +134,7 @@ done
         WORKDIR_SOURCE=$WORKDIR/plans/default/discover/default-0/source
         WORKDIR_TESTS=$WORKDIR/plans/default/discover/default-0/tests
 
-        rlRun -s "tmt run --id $WORKDIR --scratch plans --default \
+        rlRun -s "tmt run --keep --id $WORKDIR --scratch plans --default \
              discover -vvv -ddd --how fmf --dist-git-source \
              --dist-git-type TESTING tests --name /tests/magic"
         rlAssertGrep "\s/tests/magic" $rlRun_LOG -E
@@ -373,7 +373,7 @@ done
         WORKDIR_SOURCE=$WORKDIR/plans/default/discover/default-0/source
         WORKDIR_TESTS=$WORKDIR/plans/default/discover/default-0/tests
 
-        rlRun -s "tmt run --id $WORKDIR --scratch plans --default \
+        rlRun -s "tmt run --keep --id $WORKDIR --scratch plans --default \
              discover -vvv -ddd --how fmf --dist-git-source \
              --dist-git-type TESTING tests --name /tests/magic"
         rlAssertGrep "\s/tests/magic" $rlRun_LOG -E
@@ -435,7 +435,7 @@ EOF
         WORKDIR=/var/tmp/tmt/XXX
         WORKDIR_SOURCE=$WORKDIR/plans/discover/default-0/source
 
-        rlRun -s "tmt run --id $WORKDIR --scratch -vvv"
+        rlRun -s "tmt run --keep --id $WORKDIR --scratch -vvv"
 
         # Source dir has everything available
         rlAssertExists $WORKDIR_SOURCE/foo-123/all_in_one

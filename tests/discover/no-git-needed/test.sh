@@ -10,12 +10,12 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "tmt --root tests run -i $run" 0
+        rlRun "tmt --root tests run --keep -i $run" 0
         rlAssertNotExists "$run/plan/discover/default-0/tests/foo"
     rlPhaseEnd
 
     rlPhaseStartTest
-        rlRun "tmt --root tests run --scratch -ai $run discover -h fmf --sync-repo" 0
+        rlRun "tmt --root tests run --keep --scratch -ai $run discover -h fmf --sync-repo" 0
         rlAssertExists "$run/plan/discover/default-0/tests/foo"
     rlPhaseEnd
 

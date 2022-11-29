@@ -17,7 +17,7 @@ rlJournalStart
                 run_dir="$tmp/$method"
                 rlRun "mkdir -p $tmp/$method"
 
-                rlRun "tmt run -av --scratch --id $run_dir execute -h $method report -h html $absolute_paths | tee output" 2
+                rlRun "tmt run --keep -av --scratch --id $run_dir execute -h $method report -h html $absolute_paths | tee output" 2
                 rlAssertGrep "summary: 2 tests passed, 1 test failed and 2 errors" output -F
 
                 HTML="${run_dir}${PATH_INDEX}"

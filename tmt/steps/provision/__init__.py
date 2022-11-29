@@ -1102,6 +1102,8 @@ class Provision(tmt.steps.Step):
 
     _plugin_base_class = ProvisionPlugin
 
+    _preserved_files = ['step.yaml', 'guests.yaml']
+
     def __init__(self, *, plan: 'tmt.Plan', data: tmt.steps.RawStepDataArgument) -> None:
         """ Initialize provision step data """
         super().__init__(plan=plan, data=data)

@@ -1,0 +1,7 @@
+test: "true"
+
+/test1:
+  tag: test1
+
+/test2:
+  tag: test2
