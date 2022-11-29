@@ -1,3 +1,6 @@
+/:
+    inherit: false
+
 plan:
     import:
         url: https://github.com/teemtee/tests
