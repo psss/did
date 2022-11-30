@@ -353,25 +353,28 @@ NO_COLOR
     non-colored text. See https://no-color.org/ for more
     information.
 
-The following environment variables are provided to the test
-during the execution:
+The following environment variables are provided to the environment
+during ``prepare``, ``execute`` and ``finish`` steps:
 
 TMT_TREE
     The full path of the working directory where the metadata tree
     is copied. This usually contains the whole git repository from
     which tests have been executed.
 
-TMT_TEST_DATA
-    Path to the directory where test can store logs and other
-    artifacts generated during its execution. These will be pulled
-    back from the guest and available for inspection after the
-    test execution is finished.
-
 TMT_PLAN_DATA
     Path to the common directory used for storing logs and other
     artifacts related to the whole plan execution. It is pulled
     back from the guest and available for inspection after the
     plan is completed.
+
+The following environment variables are provided to the test
+during the execution:
+
+TMT_TEST_DATA
+    Path to the directory where test can store logs and other
+    artifacts generated during its execution. These will be pulled
+    back from the guest and available for inspection after the
+    test execution is finished.
 
 TMT_SOURCE_DIR
     Path to directory with downloaded and extracted sources if

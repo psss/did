@@ -144,7 +144,6 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
         environment.update(test.environment)
         assert self.parent is not None
         assert isinstance(self.parent, tmt.steps.execute.Execute)
-        environment["TMT_TREE"] = self.parent.plan.worktree
         environment["TMT_TEST_DATA"] = os.path.join(
             data_directory, tmt.steps.execute.TEST_DATA)
         environment["TMT_REBOOT_REQUEST"] = os.path.join(

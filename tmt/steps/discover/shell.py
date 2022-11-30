@@ -346,6 +346,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         # Symlink tests directory to the plan work tree
         # (unless remote repository is provided using 'url')
         if not url:
+            assert self.step.plan.worktree  # narrow type
             relative_path = os.path.relpath(self.step.plan.worktree, self.workdir)
             os.symlink(relative_path, testdir)
 

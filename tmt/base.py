@@ -1059,6 +1059,7 @@ class Plan(Core):
 
         # Save the run, prepare worktree and plan data directory
         self.my_run = run
+        self.worktree: Optional[str] = None
         if self.my_run:
             # Skip to initialize the work tree if the corresponding option is
             # true. Note that 'tmt clean' consumes the option because it
@@ -1146,6 +1147,9 @@ class Plan(Core):
             combined.update(self.my_run.environment)
             # Include path to the plan data directory
             combined["TMT_PLAN_DATA"] = self.data_directory
+            # And tree path if possible
+            if self.worktree:
+                combined["TMT_TREE"] = self.worktree
             return combined
         else:
             return self._environment
@@ -1684,7 +1688,7 @@ class Plan(Core):
         """ Remove all uninteresting files from the plan workdir """
         self.verbose(
             "prune", f"Prune plan workdir '{self.workdir}'.", color="magenta", level=3, shift=2)
-        if hasattr(self, 'worktree'):  # TODO: fix when worktree is set
+        if self.worktree:
             self.debug(f"Prune worktree '{self.worktree}'.", level=3, shift=2)
             shutil.rmtree(self.worktree)
         for step in self.steps(disabled=True):

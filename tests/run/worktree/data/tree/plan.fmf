@@ -5,3 +5,9 @@ discover:
     how: fmf
 execute:
     how: tmt
+prepare:
+    how: shell
+    script: declare -p TMT_TREE
+finish:
+    how: shell
+    script: declare -p TMT_TREE
