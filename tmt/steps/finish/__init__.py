@@ -7,7 +7,7 @@ import fmf
 
 import tmt
 import tmt.steps
-from tmt.steps import Action, Method, StepData
+from tmt.steps import Action, Method
 from tmt.utils import GeneralError
 
 if TYPE_CHECKING:
@@ -63,10 +63,6 @@ class Finish(tmt.steps.Step):
     steps failed (for example when the environment preparation was not
     successful) so that provisioned systems are not kept running.
     """
-
-    _plugin_base_class = FinishPlugin
-
-    data: List[StepData]
 
     _plugin_base_class = FinishPlugin
 
