@@ -65,9 +65,6 @@ EXTRA_TEST_KEYS = (
 # Unofficial temporary story keys
 EXTRA_STORY_KEYS = ("id".split())
 
-# Dynamic reference
-DEFAULT_DYNAMIC_REF_FILEPATH: str = ".tmt/ref.fmf"
-
 SECTIONS_HEADINGS = {
     'Setup': ['<h1>Setup</h1>'],
     'Test': ['<h1>Test</h1>',
@@ -3176,35 +3173,35 @@ def resolve_dynamic_ref(
         plan: Plan,
         common: tmt.utils.Common) -> Optional[str]:
     """
-    Get final value for the reference, returns original ref if this feature isn't used.
+    Get the final value for the dynamic reference
 
+    Returns original ref if the dynamic referencing isn't used.
     Plan is used for context and environment expansion to process reference.
     Common instance is used for appropriate logging.
     """
-    # Prepare path of the dynamic reference file either following
-    # special syntax ref: @filepath or using the default location
-    if ref and ref.startswith("@"):
-        ref_filepath = os.path.join(workdir, ref[1:])
-        if not os.path.exists(ref_filepath):
-            raise tmt.utils.FileError(
-                f"Dynamic 'ref' definition file '{ref_filepath}' does not exist.")
-    else:
-        ref_filepath = os.path.join(workdir, DEFAULT_DYNAMIC_REF_FILEPATH)
 
-    # Apply dynamic referencing if the definition file exists and
-    # no custom standard ref (without the '@' prefix) is provided
-    if os.path.exists(ref_filepath) and (not ref or ref.startswith("@")):
-        common.debug(f"Dynamic 'ref' definition file '{ref_filepath}' detected.")
-        # Read it, process it and get the value of the attribute 'ref'
-        try:
-            with open(ref_filepath, encoding='utf-8') as datafile:
-                data = tmt.utils.yaml_to_dict(datafile.read())
-        except OSError as error:
-            raise tmt.utils.FileError(f"Failed to read '{ref_filepath}'.") from error
-        # Build a dynamic reference tree, adjust ref based on the context
-        reference_tree = fmf.Tree(data=data)
-        reference_tree.adjust(fmf.context.Context(**plan._fmf_context()))
-        # Also temporarily build a plan so that env and context variables are expanded
-        Plan(node=reference_tree, run=plan.my_run, skip_validation=True)
-        ref = reference_tree.get("ref")
+    # Nothing to do if no dynamic reference provided
+    if not ref or not ref.startswith("@"):
+        return ref
+
+    # Prepare path of the dynamic reference file
+    ref_filepath = os.path.join(workdir, ref[1:])
+    if not os.path.exists(ref_filepath):
+        raise tmt.utils.FileError(
+            f"Dynamic 'ref' definition file '{ref_filepath}' does not exist.")
+    common.debug(f"Dynamic 'ref' definition file '{ref_filepath}' detected.")
+
+    # Read it, process it and get the value of the attribute 'ref'
+    try:
+        with open(ref_filepath, encoding='utf-8') as datafile:
+            data = tmt.utils.yaml_to_dict(datafile.read())
+    except OSError as error:
+        raise tmt.utils.FileError(f"Failed to read '{ref_filepath}'.") from error
+    # Build a dynamic reference tree, adjust ref based on the context
+    reference_tree = fmf.Tree(data=data)
+    reference_tree.adjust(fmf.context.Context(**plan._fmf_context()))
+    # Also temporarily build a plan so that env and context variables are expanded
+    Plan(node=reference_tree, run=plan.my_run, skip_validation=True)
+    ref = reference_tree.get("ref")
+
     return ref

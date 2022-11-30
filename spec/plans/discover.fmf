@@ -112,10 +112,8 @@ description: |
             in an `adjust` block, for example depending on a test
             run context.
 
-            Dynamic ``ref`` assignment is enabled whenever
-            ``.tmt/ref.fmf`` file exists in a test repository or
-            the actual test plan reference has a format
-            ``ref: @FILEPATH``.
+            Dynamic ``ref`` assignment is enabled whenever a test
+            plan reference has the format ``ref: @FILEPATH``.
         path
             Path to the metadata tree root. Must be relative to
             the git repository root if url provided, absolute

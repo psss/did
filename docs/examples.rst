@@ -689,9 +689,8 @@ stored in a default branch of a tests repository. That special file
 should contain rules assigning attribute ``ref`` in an ``adjust``
 block depending on the context.
 
-Dynamic ``ref`` assignment is enabled whenever ``.tmt/ref.fmf`` file
-exists in a test repository or the actual test plan reference has
-a format ``ref: @FILEPATH``.
+Dynamic ``ref`` assignment is enabled whenever a test plan reference
+has the format ``ref: @FILEPATH``.
 
 Example of a test plan::
 
