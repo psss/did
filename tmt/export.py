@@ -764,6 +764,7 @@ def export_to_polarion(test: 'tmt.Test') -> None:
     if not dry_mode:
         polarion_case.caseautomation = 'automated'
         polarion_case.automation_script = automation_script
+        polarion_case.add_hyperlink(test.web_link(), 'testscript')
     echo(style('script: ', fg='green') + automation_script)
 
     # Components

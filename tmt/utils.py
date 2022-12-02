@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 import unicodedata
+import urllib.parse
 from collections import OrderedDict
 from functools import lru_cache
 from pathlib import Path
@@ -2090,8 +2091,38 @@ def public_git_url(url: str) -> str:
     return url
 
 
+def web_git_url(url: str, ref: str, path: Optional[str] = None) -> str:
+    """
+    Convert a public git url into a clickable web url format
+
+    Compose a clickable link from git url, ref and path to file
+    for the most common git servers.
+    """
+    if path:
+        path = urllib.parse.quote_plus(path, safe="/")
+
+    # Special handling for pkgs.devel (ref at the end)
+    if 'pkgs.devel' in url:
+        url = url.replace('git://', 'https://').replace('.com', '.com/cgit')
+        url += '/tree'
+        if path:
+            url += path
+        url += f'?h={ref}'
+        return url
+
+    # GitHub & GitLab
+    if any(server in url for server in ['github', 'gitlab']):
+        url = url.replace('.git', '').rstrip('/')
+        url += f'/tree/{ref}'
+
+    if path:
+        url += path
+
+    return url
+
+
 @lru_cache(maxsize=None)
-def fmf_id(name: str, fmf_root: str) -> 'tmt.base.FmfId':
+def fmf_id(name: str, fmf_root: str, always_get_ref: bool = False) -> 'tmt.base.FmfId':
     """ Return full fmf identifier of the node """
 
     def run(command: str) -> str:
@@ -2126,7 +2157,7 @@ def fmf_id(name: str, fmf_root: str) -> 'tmt.base.FmfId':
     # Get the ref (skip for the default)
     ref = run('git rev-parse --abbrev-ref HEAD')
     def_branch = default_branch(git_root)
-    if ref != def_branch:
+    if ref != def_branch or always_get_ref:
         fmf_id.ref = ref
 
     return fmf_id

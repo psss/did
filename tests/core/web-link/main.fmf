@@ -1,0 +1,4 @@
+summary: Check that clickable url is correctly generated
+test: python3 -m pytest -vvv -ra --showlocals test.py
+framework: shell
+require: python3-pytest
