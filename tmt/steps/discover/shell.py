@@ -12,6 +12,7 @@ import tmt.base
 import tmt.steps
 import tmt.steps.discover
 import tmt.utils
+from tmt.utils import Command, ShellScript
 
 T = TypeVar('T', bound='TestDescription')
 
@@ -36,7 +37,7 @@ class TestDescription(
     # does not support save/load operations. This is a known issue, introduced by a patch
     # transitioning step data to data classes, it is temporary, and it will be fixed as
     # soon as possible - nobody want's to keep two very same lists of attributes.
-    test: str
+    test: ShellScript
 
     # Core attributes (supported across all levels)
     summary: Optional[str] = None
@@ -67,6 +68,9 @@ class TestDescription(
     _normalize_tag = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_contact = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_component = tmt.utils.LoadFmfKeysMixin._normalize_string_list
+
+    def _normalize_test(self, value: str) -> ShellScript:
+        return ShellScript(value)
 
     def _normalize_order(self, value: Optional[int]) -> int:
         if value is None:
@@ -121,6 +125,7 @@ class TestDescription(
         data['link'] = self.link.to_spec() if self.link else None
         data['require'] = [require.to_spec() for require in self.require]
         data['recommend'] = [recommend.to_spec() for recommend in self.recommend]
+        data['test'] = str(self.test)
 
         return data
 
@@ -136,6 +141,7 @@ class TestDescription(
         data['link'] = self.link.to_spec() if self.link else None
         data['require'] = [require.to_spec() for require in self.require]
         data['recommend'] = [recommend.to_spec() for recommend in self.recommend]
+        data['test'] = str(self.test)
 
         return data
 
@@ -155,6 +161,7 @@ class TestDescription(
             if isinstance(recommend, str) else tmt.base.RequireFmfId.from_spec(recommend)
             for recommend in serialized['recommend']
             ]
+        obj.test = ShellScript(serialized['test'])
 
         return obj
 
@@ -278,7 +285,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
         if ref:
             self.info('ref', ref, 'green')
             self.debug(f"Checkout ref '{ref}'.")
-            self.run(['git', 'checkout', '-f', str(ref)], cwd=testdir)
+            self.run(Command('git', 'checkout', '-f', str(ref)), cwd=testdir)
 
         # Remove .git so that it's not copied to the SUT
         shutil.rmtree(os.path.join(testdir, '.git'))
@@ -348,7 +355,7 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             assert self.step.plan.my_run.tree.root is not None  # narrow type
             try:
                 run_result = self.run(
-                    ["git", "rev-parse", "--show-toplevel"],
+                    Command("git", "rev-parse", "--show-toplevel"),
                     cwd=self.step.plan.my_run.tree.root,
                     dry=True)[0]
                 assert run_result is not None

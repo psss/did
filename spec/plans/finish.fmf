@@ -16,6 +16,12 @@ example: |
 /shell:
     summary:
         Perform finishing tasks using shell (bash) scripts
+    description:
+        Execute arbitrary shell commands to finish the testing.
+
+        Default shell options are applied to the script, see the
+        :ref:`/spec/tests/test` key specification for more
+        details.
 
     example: |
         finish:

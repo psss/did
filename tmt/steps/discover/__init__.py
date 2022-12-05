@@ -16,7 +16,7 @@ import tmt.base
 import tmt.steps
 import tmt.utils
 from tmt.steps import Action
-from tmt.utils import GeneralError
+from tmt.utils import Command, GeneralError
 
 
 @dataclasses.dataclass
@@ -95,7 +95,7 @@ class DiscoverPlugin(tmt.steps.GuestlessPlugin):
         """
         if handler_name is None:
             stdout, _ = self.run(
-                ["git", "config", "--get-regexp", '^remote\\..*.url'],
+                Command("git", "config", "--get-regexp", '^remote\\..*.url'),
                 cwd=distgit_dir)
             if stdout is None:
                 raise tmt.utils.GeneralError("Missing remote origin url.")
@@ -115,7 +115,7 @@ class DiscoverPlugin(tmt.steps.GuestlessPlugin):
             with open(os.path.join(target_dir, source_name), 'wb') as tarball:
                 tarball.write(response.content)
             self.run(
-                ["tar", "--auto-compress", "--extract", "-f", source_name],
+                Command("tar", "--auto-compress", "--extract", "-f", source_name),
                 cwd=target_dir)
 
 

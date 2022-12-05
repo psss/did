@@ -1218,7 +1218,7 @@ class Login(Action):
             cwd: Optional[str] = None,
             env: Optional[tmt.utils.EnvironmentType] = None) -> None:
         """ Run the interactive command """
-        commands: List[str] = self.opt('command')
+        scripts = [tmt.utils.ShellScript(script) for script in self.opt('command')]
         self.info('login', 'Starting interactive shell', color='yellow')
         for guest in self.parent.plan.provision.guests():
             # Attempt to push the workdir to the guest
@@ -1229,9 +1229,9 @@ class Login(Action):
                 self.warn("Failed to push workdir to the guest.")
                 cwd = None
             # Execute all requested commands
-            for command in commands:
-                self.debug(f"Run '{command}' in interactive mode.")
-                guest.execute(command, interactive=True, cwd=cwd, env=env)
+            for script in scripts:
+                self.debug(f"Run '{script}' in interactive mode.")
+                guest.execute(script, interactive=True, cwd=cwd, env=env)
         self.info('login', 'Interactive shell finished', color='yellow')
 
     def after_test(

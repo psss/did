@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import click
 import fmf
@@ -10,14 +10,37 @@ import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
 from tmt.steps.provision import Guest
+from tmt.utils import ShellScript
 
 
 # TODO: remove `ignore` with follow-imports enablement
 @dataclasses.dataclass
 class PrepareShellData(tmt.steps.prepare.PrepareStepData):
-    script: List[str] = dataclasses.field(default_factory=list)
+    script: List[ShellScript] = dataclasses.field(default_factory=list)
 
-    _normalize_script = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    # ignore[override] & cast: two base classes define to_spec(), with conflicting
+    # formal types.
+    def to_spec(self) -> Dict[str, Any]:  # type: ignore[override]
+        data = cast(Dict[str, Any], super().to_spec())
+        data['script'] = [str(script) for script in self.script]
+
+        return data
+
+    def to_serialized(self) -> Dict[str, Any]:
+        data = super().to_serialized()
+
+        data['script'] = [str(script) for script in self.script]
+
+        return data
+
+    @classmethod
+    def from_serialized(cls, serialized: Dict[str, Any]) -> 'PrepareShellData':
+        """ Convert from a serialized form loaded from a file """
+
+        obj = super().from_serialized(serialized)
+        obj.script = [ShellScript(script) for script in serialized['script']]
+
+        return obj
 
 
 # TODO: drop ignore once type annotations between modules enabled
@@ -57,12 +80,12 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
         super().go(guest)
 
         # Give a short summary
-        scripts = self.get('script')
+        scripts: List[tmt.utils.ShellScript] = self.get('script')
         overview = fmf.utils.listed(scripts, 'script')
         self.info('overview', f'{overview} found', 'green')
 
         # Execute each script on the guest (with default shell options)
         for script in scripts:
-            self.verbose('script', script, 'green')
-            script_with_options = f'{tmt.utils.SHELL_OPTIONS}; {script}'
+            self.verbose('script', str(script), 'green')
+            script_with_options = tmt.utils.ShellScript(f'{tmt.utils.SHELL_OPTIONS}; {script}')
             guest.execute(script_with_options, cwd=self.step.plan.worktree)

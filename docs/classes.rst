@@ -280,6 +280,144 @@ of default implementations.
         return self.to_dict()
 
 
+Commands vs. shell scripts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+tmt internals makes distinction between a command and a shell script. This is
+important to enforce proper handling of shell scripts specified by users -
+``prepare`` and ``finish`` scripts, test commands, etc.
+
+There are two basic types for describing commands:
+
+* ``tmt.utils.Command`` - a list of "command elements" representing an
+  executable followed by its arguments. Common throughout tmt's code, never used
+  with ``shell=True``. This is the only form accepted by
+  ``tmt.utils.Common.run()`` method.
+* ``tmt.utils.ShellScript`` - a free-form string containing a shell script, from
+  a single built-in command to multiline complex scripts. Traditionally, this
+  kind of "commands" is accompanied by ``shell=True``, tmt code converts
+  ``ShellScript`` values into ``Command`` elements, e.g. with the help of the
+  ``ShellScript.to_element()`` method.
+
+Following rules apply:
+
+* tmt code shall stick to ``Command`` and ``ShellScript`` types when passing
+  commands between functions and classes. There should be no need for custom
+  types like ``List[str]`` or ``str``, the preferred types are equipped with
+  necessary conversion helpers.
+* in most cases, tmt is given **scripts** by users, not executable commands with
+  options. Plugin writers should avoid using bare ``str`` or ``Command`` types
+  when annotating this kind of input. For example:
+
+  .. code-block:: python
+
+     class FooStepData(tmt.steps.StepData):
+       # `--script ...` option dictates step data to have a field of correct type
+       script: List[tmt.utils.ShellScript]
+
+     ...
+     def go(self):
+       ...
+
+       # When calling `get()`, hint type linters with the right type
+       scripts: List[tmt.utils.ShellScript] = self.get('script')
+* ``shell=True`` should not be needed, use ``ShellScript.to_shell_command()``
+  instead.
+
+Both ``ShellScript`` and ``Command`` support addition, therefore it's possible
+to build up commands and scripts from smaller building blocks:
+
+.. code-block:: python
+
+   >>> command = Command('ls')
+   >>> command += Command('-al')
+   >>> command += ['/']
+   >>> str(command)
+   'ls -al /'
+
+   >>> script = ShellScript('ls -al')
+   >>> script += ShellScript('ls -al $HOME')
+   >>> str(script)
+   'ls -al; ls -al $HOME'
+
+There are several functions available to help with conversion between
+command and shell script format:
+
+``Command.to_element``
+------------------------------------------------------------------
+
+Convert a command - or possibly just command options - to a command element.
+Useful when you got a list of command options that another command is expecting
+as its options:
+
+.. code-block:: python
+
+   >>> ssh_command = Command('ssh', '-o', 'ForwardX11=yes', '-o', 'IdentitiesOnly=yes')
+   >>> command = Command('rsync', '-e', ssh_command.to_element())
+   >>> str(command)
+   "rsync -e 'ssh -o ForwardX11=yes -o IdentitiesOnly=yes'"
+
+``Command.to_script``
+------------------------------------------------------------------
+
+Convert a command to a shell script:
+
+.. code-block:: python
+
+   >>> command1 = Command('ls', '-al', '/')
+   >>> command2 = Command('bash', '-c', command1.to_script().to_element())
+   >>> str(command2)
+   "bash -c 'ls -al /'"
+
+
+``Script.to_element``
+------------------------------------------------------------------
+
+Convert a shell script to a command element:
+
+.. code-block:: python
+
+   >>> command = Command('bash', '-c', ShellScript('ls -al /').to_element())
+   >>> str(command)
+   "bash -c 'ls -al /'"
+
+``Script.from_scripts``
+------------------------------------------------------------------
+
+Convert a list of shell scripts into a single script. Useful when building a
+script from multiple steps:
+
+.. code-block:: python
+
+   >>> scripts: List[ShellScript] = [
+   ...   ShellScript('cd $HOME'),
+   ...   ShellScript('ls -al')
+   ... ]
+   >>>
+   >>> if True:
+   ...   scripts.append(ShellScript('rm -f bar'))
+   ...
+   >>> script = ShellScript.from_scripts(scripts)
+   >>> str(script)
+   'cd $HOME; ls -al; rm -f bar'
+
+``Script.to_shell_command``
+------------------------------------------------------------------
+
+Convert a shell script into a shell-driven command. This is what ``shell=True``
+would do, but it makes it explicit and involves correct type conversion:
+
+.. code-block:: python
+
+   >>> script = ShellScript("""
+   ... cd $HOME
+   ... ls -al
+   ... """)
+   >>> command = script.to_shell_command()
+   >>> str(command)
+   "/bin/bash -c '\ncd $HOME\nls -al\n'"
+
+
 Essential Classes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

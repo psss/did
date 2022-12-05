@@ -36,7 +36,7 @@ def test_test_defaults():
     test = tmt.Test.from_dict(dict(test='./test.sh'), '/smoke')
     assert test.name == '/smoke'
     assert test.component == list()
-    assert test.test == './test.sh'
+    assert str(test.test) == './test.sh'
     assert test.path == '/'
     assert test.require == list()
     assert test.environment == dict()

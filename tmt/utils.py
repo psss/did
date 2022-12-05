@@ -290,6 +290,98 @@ class StreamLogger(Thread):
 
 CommonDerivedType = TypeVar('CommonDerivedType', bound='Common')
 
+#: A single element of command-line.
+_CommandElement = str
+
+
+class ShellScript:
+    """ A shell script, a free-form blob of text understood by a shell. """
+
+    def __init__(self, script: str) -> None:
+        """
+        A shell script, a free-form blob of text understood by a shell.
+
+        :param script: the actual script to be encapsulated by ``ShellScript``
+            wrapper.
+        """
+
+        self._script = script
+
+    def __str__(self) -> str:
+        return self._script
+
+    def __add__(self, other: 'ShellScript') -> 'ShellScript':
+        return ShellScript.from_scripts([self, other])
+
+    @classmethod
+    def from_scripts(cls, scripts: List['ShellScript']) -> 'ShellScript':
+        """
+        Create a single script from many shorter ones.
+
+        Scripts are merged into a single ``ShellScript`` instance, joined
+        together with ``;`` character.
+
+        :param scripts: scripts to merge into one.
+        """
+
+        return ShellScript('; '.join(script._script for script in scripts))
+
+    def to_element(self) -> _CommandElement:
+        """ Convert a shell script to a command element """
+
+        return self._script
+
+    def to_shell_command(self) -> 'Command':
+        """
+        Convert a shell script into a shell-driven command.
+
+        Turns a shell script into a full-fledged command one might pass to the OS.
+        Basically what would ``run(script, shell=True)`` do.
+        """
+
+        return Command(DEFAULT_SHELL, '-c', self.to_element())
+
+
+class Command:
+    """ A command with its arguments. """
+
+    def __init__(self, *elements: _CommandElement) -> None:
+        self._command = elements
+
+    def __str__(self) -> str:
+        return self.to_element()
+
+    def __add__(self, other: Union['Command', List[str]]) -> 'Command':
+        if isinstance(other, Command):
+            return Command(*self._command, *other._command)
+
+        return Command(*self._command, *other)
+
+    def to_element(self) -> _CommandElement:
+        """
+        Convert a command to a shell command line element.
+
+        Use when a command or just a list of command options should become a part
+        of another command. Common examples of such "higher level" commands
+        would be would be ``rsync -e`` or ``ansible-playbook --ssh-common-args``.
+        """
+
+        return ' '.join(shlex.quote(s) for s in self._command)
+
+    def to_script(self) -> ShellScript:
+        """
+        Convert a command to a shell script.
+
+        Use when a command is supposed to become a part of a shell script.
+        """
+
+        return ShellScript(' '.join(shlex.quote(s) for s in self._command))
+
+    def to_popen(self) -> List[str]:
+        """ Convert a command to form accepted by :py:mod:`subprocess.Popen` """
+
+        return list(self._command)
+
 
 class CommandOutput(NamedTuple):
     stdout: Optional[str]
@@ -574,7 +666,7 @@ class Common:
         self.verbose(key=key, value=value, color=color, shift=shift, level=level, err=err)
 
     def _run(self,
-             command: Union[str, List[str]],
+             command: Command,
              cwd: Optional[str],
              shell: bool,
              env: Optional[EnvironmentType],
@@ -610,7 +702,8 @@ class Common:
         if interactive:
             try:
                 subprocess.run(
-                    command, cwd=cwd, shell=shell, env=environment, check=True,
+                    command.to_popen(),
+                    cwd=cwd, shell=shell, env=environment, check=True,
                     executable=executable)
             except subprocess.CalledProcessError:
                 # Interactive mode can return non-zero if the last command
@@ -622,7 +715,8 @@ class Common:
         # Create the process
         try:
             process = subprocess.Popen(
-                command, cwd=cwd, shell=shell, env=environment,
+                command.to_popen(),
+                cwd=cwd, shell=shell, env=environment,
                 start_new_session=True,
                 stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT if join else subprocess.PIPE,
@@ -698,7 +792,7 @@ class Common:
                 stdout_thread.get_output(), stderr_thread.get_output())
 
     def run(self,
-            command: Union[str, List[str]],
+            command: Command,
             friendly_command: Optional[str] = None,
             silent: bool = False,
             message: Optional[str] = None,
@@ -924,7 +1018,7 @@ class RunError(GeneralError):
     def __init__(
             self,
             message: str,
-            command: Union[str, List[str]],
+            command: Command,
             returncode: int,
             stdout: Optional[str] = None,
             stderr: Optional[str] = None,
@@ -2339,7 +2433,12 @@ def validate_git_status(test: 'tmt.base.Test') -> Tuple[bool, str]:
     run = Common().run
 
     # Check for not committed metadata changes
-    cmd = ['git', 'status', '--porcelain', '--'] + sources
+    cmd = Command(
+        'git',
+        'status', '--porcelain',
+        '--',
+        *sources
+        )
     try:
         result = run(cmd, cwd=test.node.root, join=True)
     except RunError as error:
@@ -2359,7 +2458,7 @@ def validate_git_status(test: 'tmt.base.Test') -> Tuple[bool, str]:
         return (False, "Uncommitted changes in " + " ".join(not_committed))
 
     # Check for not pushed changes
-    cmd = ["git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"]
+    cmd = Command("git", "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
     try:
         result = run(cmd, cwd=test.node.root)
     except RunError as error:
@@ -2371,12 +2470,14 @@ def validate_git_status(test: 'tmt.base.Test') -> Tuple[bool, str]:
     assert result.stdout is not None
     remote_ref = result.stdout.strip()
 
-    cmd = [
+    cmd = Command(
         'git',
         'diff',
         f'HEAD..{remote_ref}',
         '--name-status',
-        '--'] + sources
+        '--',
+        *sources
+        )
     try:
         result = run(cmd, cwd=test.node.root)
     except RunError as error:
@@ -3004,9 +3105,13 @@ def git_clone(
     Environment is updated by 'env' dictionary.
     """
     depth = ['--depth=1'] if shallow else []
-    command = ['git', 'clone'] + depth + [url, destination]
     try:
-        return common.run(command, env=env)
+        return common.run(
+            Command(
+                'git', 'clone',
+                *depth,
+                url, destination
+                ), env=env)
     except RunError:
         if not shallow:
             # Do not retry if shallow was not used
@@ -3551,6 +3656,41 @@ def normalize_string_list(value: Union[None, str, List[str]]) -> List[str]:
     return [value] if isinstance(value, str) else value
 
 
+def normalize_shell_script_list(value: Union[None, str, List[str]]) -> List[ShellScript]:
+    """
+    Normalize a string-or-list-of-strings input value.
+
+    This is a fairly common input format present mostly in fmf nodes where
+    tmt, to make things easier for humans, allows this:
+
+    .. code-block:: yaml
+
+       foo: bar
+
+       foo:
+         - bar
+         - baz
+
+    Internally, we should stick to one type only, and make sure whatever we get
+    on the input, a list of strings would be the output.
+
+    :param value: input value from key source.
+    """
+
+    if value is None:
+        return []
+
+    if isinstance(value, str):
+        return [ShellScript(value)]
+
+    if isinstance(value, list):
+        return [ShellScript(str(item)) for item in value]
+
+    # TODO: propagate field name down to normalization callbacks for better exceptions
+    raise SpecificationError(
+        "Field can be either string or list of strings, '{type(value)}' found.")
+
+
 class NormalizeKeysMixin:
     """
     Mixin adding support for loading fmf keys into object attributes.
@@ -3590,6 +3730,11 @@ class NormalizeKeysMixin:
         return {
             name: str(value) for name, value in value.items()
             }
+
+    def _normalize_script(self, value: Union[None, str, List[str]]) -> List[ShellScript]:
+        """ Normalize inputs to a list of shell scripts """
+
+        return normalize_shell_script_list(value)
 
     @classmethod
     def _iter_key_annotations(cls) -> Generator[Tuple[str, Any], None, None]:

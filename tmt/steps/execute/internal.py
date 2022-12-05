@@ -3,7 +3,7 @@ import json
 import os
 import sys
 import time
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import click
 
@@ -17,19 +17,42 @@ from tmt.result import Result, ResultOutcome
 from tmt.steps.execute import (SCRIPTS, TEST_OUTPUT_FILENAME,
                                TMT_FILE_SUBMIT_SCRIPT, TMT_REBOOT_SCRIPT)
 from tmt.steps.provision import Guest
-from tmt.utils import EnvironmentType
+from tmt.utils import EnvironmentType, ShellScript
 
 TEST_WRAPPER_FILENAME = 'tmt-test-wrapper.sh'
+
 TEST_WRAPPER_INTERACTIVE = '{remote_command}'
 TEST_WRAPPER_NONINTERACTIVE = 'set -eo pipefail; {remote_command} </dev/null |& cat'
 
 
 @dataclasses.dataclass
 class ExecuteInternalData(tmt.steps.execute.ExecuteStepData):
-    script: List[str] = dataclasses.field(default_factory=list)
+    script: List[ShellScript] = dataclasses.field(default_factory=list)
     interactive: bool = False
 
-    _normalize_script = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    # ignore[override] & cast: two base classes define to_spec(), with conflicting
+    # formal types.
+    def to_spec(self) -> Dict[str, Any]:  # type: ignore[override]
+        data = cast(Dict[str, Any], super().to_spec())
+        data['script'] = [str(script) for script in self.script]
+
+        return data
+
+    def to_serialized(self) -> Dict[str, Any]:
+        data = super().to_serialized()
+
+        data['script'] = [str(script) for script in self.script]
+
+        return data
+
+    @classmethod
+    def from_serialized(cls, serialized: Dict[str, Any]) -> 'ExecuteInternalData':
+        """ Convert from a serialized form loaded from a file """
+
+        obj = super().from_serialized(serialized)
+        obj.script = [ShellScript(script) for script in serialized['script']]
+
+        return obj
 
 
 @tmt.steps.provides_method('tmt')
@@ -168,13 +191,13 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
 
         # Prepare the test command (use default options for shell tests)
         if test.framework == "shell":
-            test_command = f"{tmt.utils.SHELL_OPTIONS}; {test.test}"
+            test_command = ShellScript(f"{tmt.utils.SHELL_OPTIONS}; {test.test}")
         else:
             test_command = test.test
-        self.debug('Test script', test_command, level=3)
+        self.debug('Test script', str(test_command), level=3)
 
         # Prepare the wrapper, push to guest
-        self.write(test_wrapper_filepath, test_command, 'w')
+        self.write(test_wrapper_filepath, str(test_command), 'w')
         os.chmod(test_wrapper_filepath, 0o755)
         guest.push(
             source=test_wrapper_filepath,
@@ -182,11 +205,15 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
             options=["-s", "-p", "--chmod=755"])
 
         # Prepare the actual remote command
-        remote_command = f'./{TEST_WRAPPER_FILENAME}'
+        remote_command = ShellScript(f'./{TEST_WRAPPER_FILENAME}')
         if self.get('interactive'):
-            remote_command = TEST_WRAPPER_INTERACTIVE.format(remote_command=remote_command)
+            remote_command = ShellScript(
+                TEST_WRAPPER_INTERACTIVE.format(
+                    remote_command=remote_command))
         else:
-            remote_command = TEST_WRAPPER_NONINTERACTIVE.format(remote_command=remote_command)
+            remote_command = ShellScript(
+                TEST_WRAPPER_NONINTERACTIVE.format(
+                    remote_command=remote_command))
 
         # Execute the test, save the output and return code
         start = time.time()
@@ -200,7 +227,7 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 log=self._test_output_logger,
                 timeout=tmt.utils.duration_to_seconds(test.duration),
                 test_session=True,
-                friendly_command=test.test)
+                friendly_command=str(test.test))
             test.returncode = 0
         except tmt.utils.RunError as error:
             stdout = error.stdout

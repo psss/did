@@ -11,6 +11,7 @@ import fmf
 import tmt
 import tmt.base
 import tmt.utils
+from tmt.utils import Command
 
 # A beakerlib identifier type, can be a string or a fmf id (with extra beakerlib keys)
 BeakerlibIdentifierType = Union[tmt.base.RequireSimple, tmt.base.RequireFmfId]
@@ -252,8 +253,7 @@ class Library:
                 raise
             # Check out the requested branch
             try:
-                self.parent.run(
-                    ['git', 'checkout', self.ref], cwd=directory)
+                self.parent.run(Command('git', 'checkout', self.ref), cwd=directory)
             except tmt.utils.RunError:
                 # Fallback to install during the prepare step if in rpm format
                 if self.format == 'rpm':

@@ -31,8 +31,8 @@ import tmt.steps.report
 import tmt.templates
 import tmt.utils
 from tmt.result import Result, ResultOutcome
-from tmt.utils import (EnvironmentType, FmfContextType, WorkdirArgumentType,
-                       verdict)
+from tmt.utils import (Command, EnvironmentType, FmfContextType, ShellScript,
+                       WorkdirArgumentType, verdict)
 
 if sys.version_info >= (3, 8):
     from typing import Literal, TypedDict
@@ -592,6 +592,16 @@ class Core(
             elif key == 'priority' and value is not None:
                 data[key] = cast(StoryPriority, value).value
 
+            # TODO: this belongs to Plan.export, and it will be moved when the time
+            # of export() cleanup comes.
+            elif key == 'script' and isinstance(value, list):
+                data[key] = [str(script) for script in cast(List[ShellScript], value)]
+
+            # TODO: this belongs to Test.export, and it will be moved when the time
+            # of export() cleanup comes.
+            elif key == 'test' and isinstance(value, ShellScript):
+                data[key] = str(value)
+
             else:
                 data[key] = value
 
@@ -638,7 +648,7 @@ class Test(Core):
     component: List[str] = []
 
     # Test execution data
-    test: str
+    test: ShellScript
     path: Optional[str] = None
     framework: str = "shell"
     manual: bool = False
@@ -654,6 +664,14 @@ class Test(Core):
 
     _normalize_contact = tmt.utils.LoadFmfKeysMixin._normalize_string_list
     _normalize_component = tmt.utils.LoadFmfKeysMixin._normalize_string_list
+
+    def _normalize_test(self, value: Optional[str]) -> ShellScript:
+        # TODO: mandatory schema validation would remove the need for Optional...
+        # `test` is mandatory, must exist, so how to initialize if it's missing :(
+        if value is None:
+            return ShellScript('')
+
+        return ShellScript(value)
 
     def _normalize_require(self, value: Optional[_RawRequire]) -> List[Require]:
         return normalize_require(value)
@@ -752,7 +770,7 @@ class Test(Core):
 
         # TODO: As long as validation is optional, a missing `test` key would be reported
         # as such but won't stop tmt from moving on.
-        if self.test is None:
+        if str(self.test) == '':
             raise tmt.utils.SpecificationError(
                 f"The 'test' attribute in '{self.name}' must be defined.")
 
@@ -847,7 +865,7 @@ class Test(Core):
 
     def _lint_manual(self, test_path: str) -> bool:
         """ Check that the manual instructions respect the specification """
-        manual_test = os.path.join(test_path, self.test)
+        manual_test = os.path.join(test_path, str(self.test))
 
         # File does not exist
         if not os.path.exists(manual_test):
@@ -1179,9 +1197,7 @@ class Plan(Core):
 
         # Sync metadata root to the worktree
         self.debug(f"Sync the worktree to '{self.worktree}'.", level=2)
-        self.run([
-            "rsync", "-ar", "--exclude", ".git",
-            f"{tree_root}/", self.worktree])
+        self.run(Command("rsync", "-ar", "--exclude", ".git", f"{tree_root}/", self.worktree))
 
     def _initialize_data_directory(self) -> None:
         """
@@ -1645,7 +1661,7 @@ class Plan(Core):
                 else:
                     tmt.utils.git_clone(plan_id.url, destination, self)
                 if plan_id.ref:
-                    self.run(['git', 'checkout', plan_id.ref], cwd=destination)
+                    self.run(Command('git', 'checkout', plan_id.ref), cwd=destination)
                 if plan_id.path:
                     destination = os.path.join(destination, plan_id.path.lstrip("/"))
                 node = fmf.Tree(destination).find(plan_id.name)

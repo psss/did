@@ -1,14 +1,15 @@
 import dataclasses
 import os
 from shlex import quote
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Union
 
 import click
 
 import tmt
 import tmt.steps
 import tmt.steps.provision
-from tmt.utils import BaseLoggerFnType
+import tmt.utils
+from tmt.utils import BaseLoggerFnType, Command, ShellScript
 
 # Timeout in seconds of waiting for a connection
 CONNECTION_TIMEOUT = 60
@@ -49,8 +50,11 @@ class GuestContainer(tmt.Guest):
         # Check the container is running or not
         if self.container is None:
             return False
-        cmd_output = self.podman(['container', 'inspect', '--format',
-                                  '{{json .State.Running}}', self.container])
+        cmd_output = self.podman(Command(
+            'container', 'inspect',
+            '--format', '{{json .State.Running}}',
+            self.container
+            ))
         cmd_stdout, cmd_stderr = cmd_output
         return str(cmd_stdout).strip() == 'true'
 
@@ -65,9 +69,12 @@ class GuestContainer(tmt.Guest):
             return
         # Check if the image is available
         assert self.image is not None
-        command = ['image', 'exists', self.image]
+
         try:
-            self.podman(command, message=f"Check for container image '{self.image}'.")
+            self.podman(
+                Command('image', 'exists', self.image),
+                message=f"Check for container image '{self.image}'."
+                )
             needs_pull = False
         except tmt.utils.RunError:
             needs_pull = True
@@ -75,8 +82,9 @@ class GuestContainer(tmt.Guest):
         # Pull image if not available or pull forced
         if needs_pull or self.force_pull:
             self.podman(
-                ['pull', '-q', self.image],
-                message=f"Pull image '{self.image}'.")
+                Command('pull', '-q', self.image),
+                message=f"Pull image '{self.image}'."
+                )
 
         # Mount the whole plan directory in the container
         workdir = self.parent.plan.workdir
@@ -90,13 +98,18 @@ class GuestContainer(tmt.Guest):
         # Run the container
         self.debug(f"Start container '{self.image}'.")
         assert self.container is not None
-        self.podman(
-            ['run'] + workaround +
-            ['--name', self.container, '-v', f'{workdir}:{workdir}:z',
-             '-itd', '--user', self.user, self.image])
+        self.podman(Command(
+            'run',
+            *workaround,
+            '--name', self.container,
+            '-v', f'{workdir}:{workdir}:z',
+            '-itd',
+            '--user', self.user,
+            self.image
+            ))
 
     def reboot(self, hard: bool = False,
-               command: Optional[Union[str, List[str], Tuple[str, ...]]] = None,
+               command: Optional[Union[Command, ShellScript]] = None,
                timeout: Optional[int] = None) -> bool:
         """ Restart the container, return True if successful  """
         if command:
@@ -107,60 +120,81 @@ class GuestContainer(tmt.Guest):
                 "Containers do not support soft reboot, they can only be "
                 "stopped and started again (hard reboot).")
         assert self.container is not None
-        self.podman(['container', 'restart', self.container])
+        self.podman(Command('container', 'restart', self.container))
         return self.reconnect(timeout=timeout or CONNECTION_TIMEOUT)
 
     def ansible(self, playbook: str, extra_args: Optional[str] = None) -> None:
         """ Prepare container using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
+
         # As non-root we must run with podman unshare
-        podman_unshare = ['podman', 'unshare'] if os.geteuid() != 0 else []
+        podman_command = Command()
+
+        if os.geteuid() != 0:
+            podman_command += ['podman', 'unshare']
+
+        podman_command += [
+            'ansible-playbook',
+            *self._ansible_verbosity(),
+            *self._ansible_extra_args(extra_args),
+            '-c', 'podman', '-i', f'{self.container},', playbook
+            ]
+
         stdout, _ = self.run(
-            podman_unshare + ['ansible-playbook'] +
-            self._ansible_verbosity() +
-            self._ansible_extra_args(extra_args) +
-            ['-c', 'podman', '-i', f'{self.container},', playbook],
+            podman_command,
             cwd=self.parent.plan.worktree,
             env=self._prepare_environment())
         self._ansible_summary(stdout)
 
-    def podman(self, command: List[str], **kwargs: Any) -> tmt.utils.CommandOutput:
+    def podman(self, command: Command, **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Run given command via podman """
-        return self.run(['podman'] + command, **kwargs)
+        return self.run(Command('podman') + command, **kwargs)
 
     def execute(self,
-                command: Union[List[str], str],
+                command: Union[tmt.utils.Command, tmt.utils.ShellScript],
+                cwd: Optional[str] = None,
+                env: Optional[tmt.utils.EnvironmentType] = None,
                 friendly_command: Optional[str] = None,
                 test_session: bool = False,
                 silent: bool = False,
                 log: Optional[BaseLoggerFnType] = None,
+                interactive: bool = False,
                 **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Execute given commands in podman via shell """
         if not self.container and not self.opt('dry'):
             raise tmt.utils.ProvisionError(
                 'Could not execute without provisioned container.')
 
-        # Change to given directory on guest if cwd provided
-        directory = kwargs.get('cwd', '')
-        if directory:
-            directory = f"cd {quote(directory)}; "
+        podman_command = Command('exec')
 
-        # Prepare the environment variables export
-        environment = self._export_environment(
-            self._prepare_environment(kwargs.get('env', dict())))
+        # Accumulate all necessary commands - they will form a "shell" script, a single
+        # string passed to a shell executed inside the container.
+        script = ShellScript.from_scripts(self._export_environment(self._prepare_environment(env)))
+
+        # Change to given directory on guest if cwd provided
+        if cwd is not None:
+            script += ShellScript(f'cd {quote(cwd)}')
+
+        if isinstance(command, Command):
+            script += command.to_script()
+
+        else:
+            script += command
 
         # Run in interactive mode if requested
-        interactive = ['-it'] if kwargs.get('interactive') else []
+        if interactive:
+            podman_command += ['-it']
+
+        podman_command += [
+            self.container or 'dry',
+            ]
+
+        podman_command += script.to_shell_command()
 
         # Note that we MUST run commands via bash, so variables
         # work as expected
-        if isinstance(command, list):
-            command = ' '.join(command)
-        command = directory + environment + command
-        assert isinstance(command, str)
         return self.podman(
-            ['exec'] + interactive +
-            [self.container or 'dry', 'bash', '-c', command],
+            podman_command,
             log=log if log else self._command_verbose_logger,
             friendly_command=friendly_command or command,
             silent=silent,
@@ -177,13 +211,13 @@ class GuestContainer(tmt.Guest):
 
         self.debug("Update selinux context of the run workdir.", level=3)
         assert self.parent.plan.workdir is not None  # narrow type
-        self.run(
-            ["chcon", "--recursive", "--type=container_file_t",
-             self.parent.plan.workdir], shell=False)
+        self.run(Command(
+            "chcon", "--recursive", "--type=container_file_t", self.parent.plan.workdir
+            ), shell=False)
         # In case explicit destination is given, use `podman cp` to copy data
         # to the container
         if source and destination:
-            self.podman(["cp", source, f"{self.container}:{destination}"])
+            self.podman(Command("cp", source, f"{self.container}:{destination}"))
 
     def pull(
             self,
@@ -198,13 +232,13 @@ class GuestContainer(tmt.Guest):
     def stop(self) -> None:
         """ Stop provisioned guest """
         if self.container:
-            self.podman(['container', 'stop', self.container])
+            self.podman(Command('container', 'stop', self.container))
             self.info('container', 'stopped', 'green')
 
     def remove(self) -> None:
         """ Remove the container """
         if self.container:
-            self.podman(['container', 'rm', '-f', self.container])
+            self.podman(Command('container', 'rm', '-f', self.container))
             self.info('container', 'removed', 'green')
 
 

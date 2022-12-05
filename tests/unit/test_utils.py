@@ -14,10 +14,11 @@ import pytest
 import tmt
 import tmt.plugins
 import tmt.steps.discover
-from tmt.utils import (Common, GeneralError, StructuredField,
-                       StructuredFieldError, WaitingIncomplete,
-                       WaitingTimedOutError, duration_to_seconds, listify,
-                       public_git_url, validate_git_status, wait)
+from tmt.utils import (Command, Common, GeneralError, ShellScript,
+                       StructuredField, StructuredFieldError,
+                       WaitingIncomplete, WaitingTimedOutError,
+                       duration_to_seconds, listify, public_git_url,
+                       validate_git_status, wait)
 
 run = Common().run
 
@@ -27,23 +28,23 @@ def local_git_repo(tmpdir):
     origin = tmpdir.join('origin')
     os.makedirs(origin)
 
-    run('git init'.split(), cwd=origin)
+    run(Command('git', 'init'), cwd=origin)
     run(
-        'git config --local user.email lzachar@redhat.com'.split(),
+        Command('git', 'config', '--local', 'user.email', 'lzachar@redhat.com'),
         cwd=origin)
     run(
-        'git config --local user.name LZachar'.split(),
+        Command('git', 'config', '--local', 'user.name', 'LZachar'),
         cwd=origin)
     # We need to be able to push, --bare repo is another option here however
     # that would require to add separate fixture for bare repo (unusable for
     # local changes)
     run(
-        'git config --local receive.denyCurrentBranch ignore'.split(),
+        Command('git', 'config', '--local', 'receive.denyCurrentBranch', 'ignore'),
         cwd=origin)
     origin.join('README').write('something to have in the repo')
-    run('git add -A'.split(), cwd=origin)
+    run(Command('git', 'add', '-A'), cwd=origin)
     run(
-        'git commit -m initial_commit'.split(),
+        Command('git', 'commit', '-m', 'initial_commit'),
         cwd=origin)
     return origin
 
@@ -52,14 +53,11 @@ def local_git_repo(tmpdir):
 def origin_and_local_git_repo(local_git_repo):
     top_dir = local_git_repo.dirpath()
     fork_dir = top_dir.join('fork')
-    run(
-        f'git clone {local_git_repo} {fork_dir}'.split(),
+    run(ShellScript(f'git clone {local_git_repo} {fork_dir}').to_shell_command(),
         cwd=top_dir)
-    run(
-        'git config --local user.email lzachar@redhat.com'.split(),
+    run(ShellScript('git config --local user.email lzachar@redhat.com').to_shell_command(),
         cwd=fork_dir)
-    run(
-        'git config --local user.name LZachar'.split(),
+    run(ShellScript('git config --local user.name LZachar').to_shell_command(),
         cwd=fork_dir)
     return local_git_repo, fork_dir
 
@@ -539,19 +537,24 @@ def test_run_interactive_joined(tmpdir):
 
 
 def test_run_not_joined_stdout():
-    stdout, _ = Common()._run("ls /", shell=True, cwd=".", env={}, log=None)
+    stdout, _ = Common()._run(Command("ls", "/"), shell=False, cwd=".", env={}, log=None)
     assert "sbin" in stdout
 
 
 def test_run_not_joined_stderr():
-    _, stderr = Common()._run("ls non_existing || true", shell=True, cwd=".", env={}, log=None)
+    _, stderr = Common()._run(
+        ShellScript("ls non_existing || true").to_shell_command(),
+        shell=False,
+        cwd=".",
+        env={},
+        log=None)
     assert "ls: cannot access" in stderr
 
 
 def test_run_joined():
     stdout, _ = Common()._run(
-        "ls non_existing / || true",
-        shell=True,
+        ShellScript("ls non_existing / || true").to_shell_command(),
+        shell=False,
         cwd=".",
         env={},
         log=None,
@@ -562,8 +565,8 @@ def test_run_joined():
 
 def test_run_big():
     stdout, _ = Common()._run(
-        """for NUM in {1..100}; do LINE="$LINE n"; done; for NUM in {1..1000}; do echo $LINE; done""",  # noqa: E501
-        shell=True,
+        ShellScript("""for NUM in {1..100}; do LINE="$LINE n"; done; for NUM in {1..1000}; do echo $LINE; done""").to_shell_command(),  # noqa: E501
+        shell=False,
         cwd=".",
         env={},
         log=None,
@@ -624,14 +627,11 @@ class Test_validate_git_status:
             fmf_root = mine
         tmt.Tree.init(str(fmf_root), None, None)
         fmf_root.join('main.fmf').write('test: echo')
-        run(
-            ['git', 'add', str(fmf_root), str(fmf_root.join('main.fmf'))],
+        run(ShellScript(f'git add {fmf_root} {fmf_root.join("main.fmf")}').to_shell_command(),
             cwd=mine)
-        run(
-            'git commit -m add_test'.split(),
+        run(ShellScript('git commit -m add_test').to_shell_command(),
             cwd=mine)
-        run(
-            'git push'.split(),
+        run(ShellScript('git push').to_shell_command(),
             cwd=mine)
         test = tmt.Tree(path=str(fmf_root)).tests()[0]
         validation = validate_git_status(test)
@@ -641,11 +641,9 @@ class Test_validate_git_status:
         tmpdir = local_git_repo
         tmt.Tree.init(str(tmpdir), None, None)
         tmpdir.join('main.fmf').write('test: echo')
-        run(
-            'git add main.fmf .fmf/version'.split(),
+        run(ShellScript('git add main.fmf .fmf/version').to_shell_command(),
             cwd=tmpdir)
-        run(
-            'git commit -m initial_commit'.split(),
+        run(ShellScript('git commit -m initial_commit').to_shell_command(),
             cwd=tmpdir)
 
         test = tmt.Tree(path=str(tmpdir)).tests()[0]
@@ -658,10 +656,10 @@ class Test_validate_git_status:
         tmt.Tree.init(str(local_git_repo), None, None)
         local_git_repo.join('main.fmf').write('test: echo')
         run(
-            'git add main.fmf'.split(),
+            ShellScript('git add main.fmf').to_shell_command(),
             cwd=local_git_repo)
         run(
-            'git commit -m missing_fmf_root'.split(),
+            ShellScript('git commit -m missing_fmf_root').to_shell_command(),
             cwd=local_git_repo)
 
         test = tmt.Tree(path=str(local_git_repo)).tests()[0]
@@ -672,11 +670,10 @@ class Test_validate_git_status:
         tmt.Tree.init(str(local_git_repo), None, None)
         local_git_repo.join('main.fmf').write('test: echo')
         local_git_repo.join('test.fmf').write('tag: []')
-        run(
-            'git add .fmf/version test.fmf'.split(),
+        run(ShellScript('git add .fmf/version test.fmf').to_shell_command(),
             cwd=local_git_repo)
         run(
-            'git commit -m main.fmf'.split(),
+            ShellScript('git commit -m main.fmf').to_shell_command(),
             cwd=local_git_repo)
 
         test = tmt.Tree(path=str(local_git_repo)).tests()[0]
@@ -694,13 +691,12 @@ class Test_validate_git_status:
             fmf_root = origin
         tmt.Tree.init(str(fmf_root), None, None)
         fmf_root.join('main.fmf').write('test: echo')
-        run('git add -A'.split(), cwd=origin)
-        run(
-            'git commit -m added_test'.split(),
+        run(ShellScript('git add -A').to_shell_command(), cwd=origin)
+        run(ShellScript('git commit -m added_test').to_shell_command(),
             cwd=origin)
 
         # Pull changes from previous line
-        run('git pull'.split(),
+        run(ShellScript('git pull').to_shell_command(),
             cwd=mine)
 
         mine_fmf_root = mine
@@ -726,11 +722,9 @@ class Test_validate_git_status:
         tmt.Tree.init(str(fmf_root), None, None)
 
         fmf_root.join('main.fmf').write('test: echo')
-        run(
-            'git add main.fmf .fmf/version'.split(),
+        run(ShellScript('git add main.fmf .fmf/version').to_shell_command(),
             cwd=fmf_root)
-        run(
-            'git commit -m changes'.split(),
+        run(ShellScript('git commit -m changes').to_shell_command(),
             cwd=mine)
 
         test = tmt.Tree(path=str(fmf_root)).tests()[0]

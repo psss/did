@@ -10,7 +10,8 @@ import string
 import subprocess
 import tempfile
 from shlex import quote
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, Union, cast
+from typing import (TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type,
+                    Union, cast, overload)
 
 import click
 import fmf
@@ -20,7 +21,7 @@ import tmt.plugins
 import tmt.steps
 import tmt.utils
 from tmt.steps import Action
-from tmt.utils import BaseLoggerFnType
+from tmt.utils import BaseLoggerFnType, Command, ShellScript
 
 if TYPE_CHECKING:
     import tmt.cli
@@ -188,7 +189,7 @@ class Guest(tmt.utils.Common):
             return
 
         # A small helper to make the repeated run & extract combo easier on eyes.
-        def _fetch_detail(command: str, pattern: str) -> str:
+        def _fetch_detail(command: Command, pattern: str) -> str:
             output = self.execute(command, silent=True)
 
             if not output.stdout:
@@ -212,13 +213,13 @@ class Guest(tmt.utils.Common):
             return match.group(1)
 
         # Distro
-        distro_commands = [
+        distro_commands: List[Tuple[Command, str]] = [
             # Check os-release first
-            ('cat /etc/os-release', r'PRETTY_NAME="(.*)"'),
+            (Command('cat', '/etc/os-release'), r'PRETTY_NAME="(.*)"'),
             # Check for lsb-release
-            ('cat /etc/lsb-release', r'DISTRIB_DESCRIPTION="(.*)"'),
+            (Command('cat', '/etc/lsb-release'), r'DISTRIB_DESCRIPTION="(.*)"'),
             # Check for redhat-release
-            ('cat /etc/redhat-release', r'(.*)')
+            (Command('cat', '/etc/redhat-release'), r'(.*)')
             ]
 
         for command, pattern in distro_commands:
@@ -239,7 +240,7 @@ class Guest(tmt.utils.Common):
             self.info('distro', distro, 'green')
 
         # Kernel
-        kernel = _fetch_detail('uname -r', r'(.+)')
+        kernel = _fetch_detail(Command('uname', '-r'), r'(.+)')
         self.verbose('kernel', kernel, 'green')
 
     def _ansible_verbosity(self) -> List[str]:
@@ -298,33 +299,63 @@ class Guest(tmt.utils.Common):
         return environment
 
     @staticmethod
-    def _export_environment(environment: tmt.utils.EnvironmentType) -> str:
+    def _export_environment(environment: tmt.utils.EnvironmentType) -> List[ShellScript]:
         """ Prepare shell export of environment variables """
         if not environment:
-            return ""
-        return f'export {" ".join(tmt.utils.shell_variables(environment))}; '
+            return []
+        return [
+            ShellScript(f'export {variable}')
+            for variable in tmt.utils.shell_variables(environment)
+            ]
 
     def ansible(self, playbook: str, extra_args: Optional[str] = None) -> None:
         """ Prepare guest using ansible playbook """
 
         raise NotImplementedError()
 
+    @overload
     def execute(self,
-                command: Union[str, List[str]],
+                command: tmt.utils.ShellScript,
+                cwd: Optional[str] = None,
+                env: Optional[tmt.utils.EnvironmentType] = None,
                 friendly_command: Optional[str] = None,
                 test_session: bool = False,
                 silent: bool = False,
                 log: Optional[BaseLoggerFnType] = None,
+                interactive: bool = False,
+                **kwargs: Any) -> tmt.utils.CommandOutput:
+        pass
+
+    @overload
+    def execute(self,
+                command: tmt.utils.Command,
+                cwd: Optional[str] = None,
+                env: Optional[tmt.utils.EnvironmentType] = None,
+                friendly_command: Optional[str] = None,
+                test_session: bool = False,
+                silent: bool = False,
+                log: Optional[BaseLoggerFnType] = None,
+                interactive: bool = False,
+                **kwargs: Any) -> tmt.utils.CommandOutput:
+        pass
+
+    def execute(self,
+                command: Union[tmt.utils.Command, tmt.utils.ShellScript],
+                cwd: Optional[str] = None,
+                env: Optional[tmt.utils.EnvironmentType] = None,
+                friendly_command: Optional[str] = None,
+                test_session: bool = False,
+                silent: bool = False,
+                log: Optional[BaseLoggerFnType] = None,
+                interactive: bool = False,
                 **kwargs: Any) -> tmt.utils.CommandOutput:
         """
-        Execute command on the guest
+        Execute a command on the guest.
 
-        command ... string or list of command arguments (required)
-        env ....... dictionary with environment variables
-        cwd ....... working directory to be entered before execution
-
-        If the command is provided as a list, it will be space-joined.
-        If necessary, quote escaping has to be handled by the caller.
+        :param command: either a command or a shell script to execute.
+        :param cwd: if set, execute command in this directory on the guest.
+        :param env: if set, set these environment variables before running the command.
+        :param friendly_command: nice, human-friendly representation of the command.
         """
 
         raise NotImplementedError()
@@ -364,7 +395,7 @@ class Guest(tmt.utils.Common):
     def reboot(
             self,
             hard: bool = False,
-            command: Optional[str] = None,
+            command: Optional[Union[Command, ShellScript]] = None,
             timeout: Optional[int] = None) -> bool:
         """
         Reboot the guest, return True if successful
@@ -402,7 +433,7 @@ class Guest(tmt.utils.Common):
 
         def try_whoami() -> None:
             try:
-                self.execute('whoami', silent=True)
+                self.execute(Command('whoami'), silent=True)
 
             except tmt.utils.RunError:
                 raise tmt.utils.WaitingIncomplete()
@@ -441,7 +472,7 @@ class Guest(tmt.utils.Common):
         # Check for rsync (nothing to do if already installed)
         self.debug("Ensure that rsync is installed on the guest.")
         try:
-            self.execute("rsync --version")
+            self.execute(Command('rsync', '--version'))
             return CheckRsyncOutcome.ALREADY_INSTALLED
         except tmt.utils.RunError:
             pass
@@ -449,7 +480,7 @@ class Guest(tmt.utils.Common):
         # Check the package manager
         self.debug("Check the package manager.")
         try:
-            self.execute("dnf --version")
+            self.execute(Command('dnf', '--version'))
             package_manager = "dnf"
         except tmt.utils.RunError:
             package_manager = "yum"
@@ -459,7 +490,7 @@ class Guest(tmt.utils.Common):
         # FIXME: Find a better way how to detect read-only distros
         self.debug("Check for a read-only distro.")
         try:
-            self.execute("rpm-ostree --version")
+            self.execute(Command('rpm-ostree', '--version'))
             readonly = (
                 " --installroot=/root/pkg --releasever / "
                 "&& ln -sf /root/pkg/bin/rsync /usr/local/bin/rsync")
@@ -467,7 +498,7 @@ class Guest(tmt.utils.Common):
             readonly = ""
 
         # Install the rsync
-        self.execute(f"{package_manager} install -y rsync" + readonly)
+        self.execute(ShellScript(f"{package_manager} install -y rsync" + readonly))
 
         return CheckRsyncOutcome.INSTALLED
 
@@ -543,7 +574,7 @@ class GuestSsh(Guest):
             self._ssh_socket_path = tempfile.mktemp(dir=socket_dir)
         return self._ssh_socket_path
 
-    def _ssh_options(self, join: bool = False) -> Union[str, List[str]]:
+    def _ssh_options(self) -> Command:
         """ Return common ssh options (list or joined) """
         options = [
             '-oForwardX11=no',
@@ -561,7 +592,7 @@ class GuestSsh(Guest):
             options.append(f'-p{self.port}')
         if self.key:
             for key in self.key:
-                options.append(f'-i{shlex.quote(key) if join else key}')
+                options.extend(['-i', key])
         if self.password:
             options.extend(['-oPasswordAuthentication=yes'])
 
@@ -570,48 +601,33 @@ class GuestSsh(Guest):
 
         options.extend([f'-o{option}' for option in self.ssh_option])
 
-        return ' '.join(options) if join else options
+        return Command(*options)
 
-    def _ssh_master_connection(self, command: List[str]) -> None:
+    def _ssh_master_connection(self, command: Command) -> None:
         """ Check/create the master ssh connection """
         if self._ssh_master_process:
             return
 
-        # TODO: _ssh_options() returns two incompatible types, we need to chose the right one.
-        ssh_options = self._ssh_options()
-        assert isinstance(ssh_options, list)
-
-        command = command + ssh_options + ["-MNnT", self._ssh_guest()]
-        self.debug(f"Create the master ssh connection: {' '.join(command)}")
+        # Do not modify the original command...
+        ssh_master_command = command + self._ssh_options() + Command("-MNnT", self._ssh_guest())
+        self.debug(f"Create the master ssh connection: {ssh_master_command}")
         self._ssh_master_process = subprocess.Popen(
-            command,
+            ssh_master_command.to_popen(),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL)
 
-    def _ssh_command(self, join: bool = False) -> Union[str, List[str]]:
-        """ Prepare an ssh command line for execution (list or joined) """
-        command = []
-        if self.password:
-            password = shlex.quote(self.password) if join else self.password
-            command.extend(["sshpass", "-p", password])
-        command.append("ssh")
+    def _ssh_command(self) -> Command:
+        """ Prepare an ssh command line for execution """
+        command = Command(
+            *(["sshpass", "-p", self.password] if self.password else []),
+            "ssh"
+            )
 
         # Check the master connection
         self._ssh_master_connection(command)
 
-        if join:
-            # TODO: _ssh_options() returns two incompatible types, we need to chose the right one.
-            joined_ssh_options = self._ssh_options(join=True)
-            assert isinstance(joined_ssh_options, str)
-
-            return " ".join(command) + " " + joined_ssh_options
-        else:
-            # TODO: _ssh_options() returns two incompatible types, we need to chose the right one.
-            ssh_options = self._ssh_options()
-            assert isinstance(ssh_options, list)
-
-            return command + ssh_options
+        return command + self._ssh_options()
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
@@ -626,22 +642,15 @@ class GuestSsh(Guest):
         """ Prepare guest using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
 
-        # TODO: _ssh_options() returns two incompatible types, we need to chose the right one.
-        joined_ssh_options = self._ssh_options(join=True)
-        assert isinstance(joined_ssh_options, str)
-
-        ansible_command = [
-            'ansible-playbook'
-            ] + self._ansible_verbosity()
+        ansible_command = Command('ansible-playbook', *self._ansible_verbosity())
 
         if extra_args:
             ansible_command += self._ansible_extra_args(extra_args)
 
-        ansible_command += [
-            f'--ssh-common-args={joined_ssh_options}',
+        ansible_command += Command(
+            '--ssh-common-args', self._ssh_options().to_element(),
             '-i', f'{self._ssh_guest()},',
-            playbook
-            ]
+            playbook)
 
         # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
         parent = cast(Provision, self.parent)
@@ -660,38 +669,34 @@ class GuestSsh(Guest):
         return self.guest is not None
 
     def execute(self,
-                command: Union[str, List[str]],
+                command: Union[tmt.utils.Command, tmt.utils.ShellScript],
+                cwd: Optional[str] = None,
+                env: Optional[tmt.utils.EnvironmentType] = None,
                 friendly_command: Optional[str] = None,
                 test_session: bool = False,
                 silent: bool = False,
                 log: Optional[BaseLoggerFnType] = None,
+                interactive: bool = False,
                 **kwargs: Any) -> tmt.utils.CommandOutput:
         """
-        Execute command on the guest
+        Execute a command on the guest.
 
-        command ... string or list of command arguments (required)
-        env ....... dictionary with environment variables
-        cwd ....... working directory to be entered before execution
-
-        If the command is provided as a list, it will be space-joined.
-        If necessary, quote escaping has to be handled by the caller.
+        :param command: either a command or a shell script to execute.
+        :param cwd: execute command in this directory on the guest.
+        :param env: if set, set these environment variables before running the command.
+        :param friendly_command: nice, human-friendly representation of the command.
         """
+
         # Abort if guest is unavailable
         if self.guest is None:
             if not self.opt('dry'):
                 raise tmt.utils.GeneralError('The guest is not available.')
 
-        # Prepare the export of environment variables
-        environment = self._export_environment(
-            self._prepare_environment(kwargs.get('env', dict())))
-
-        # Change to given directory on guest if cwd provided
-        directory = kwargs.get('cwd') or ''
-        if directory:
-            directory = f"cd {quote(directory)}; "
+        ssh_command: tmt.utils.Command = self._ssh_command()
 
         # Run in interactive mode if requested
-        interactive = ['-t'] if kwargs.get('interactive') else []
+        if interactive:
+            ssh_command += Command('-t')
 
         # Force ssh to allocate pseudo-terminal if requested. Without a pseudo-terminal,
         # remote processes spawned by SSH would keep running after SSH process death, e.g.
@@ -699,26 +704,45 @@ class GuestSsh(Guest):
         #
         # Note that polite request, `-t`, is not enough since `ssh` itself has no pseudo-terminal,
         # and a single `-t` wouldn't have the necessary effect.
-        ptty = ['-tt'] if test_session else []
+        if test_session:
+            ssh_command += Command('-tt')
 
-        # Prepare command and run it
-        if isinstance(command, (list, tuple)):
-            command = ' '.join(command)
-        self.debug(f"Execute command '{command}' on guest '{self.guest}'.")
-        friendly_command = friendly_command or command
+        # Accumulate all necessary commands - they will form a "shell" script, a single
+        # string passed to SSH to execute on the remote machine.
+        remote_commands: ShellScript = ShellScript.from_scripts(
+            self._export_environment(self._prepare_environment(env))
+            )
 
-        # TODO: _ssh_command() returns two incompatible types, we need to chose the right one.
-        ssh_command = self._ssh_command()
-        assert isinstance(ssh_command, list)
+        # Change to given directory on guest if cwd provided
+        if cwd:
+            remote_commands += ShellScript(f'cd {quote(cwd)}')
 
-        command = (
-            ssh_command + interactive + ptty + [self._ssh_guest()] +
-            [f'{environment}{directory}{command}'])
-        return self.run(command,
-                        log=log if log else self._command_verbose_logger,
-                        friendly_command=friendly_command,
-                        silent=silent,
-                        **kwargs)
+        if isinstance(command, Command):
+            remote_commands += command.to_script()
+
+        else:
+            remote_commands += command
+
+        remote_command = remote_commands.to_element()
+
+        ssh_command += [
+            self._ssh_guest(),
+            remote_command
+            ]
+
+        self.debug(f"Execute command '{remote_command}' on guest '{self.guest}'.")
+
+        if friendly_command is None:
+            friendly_command = str(command)
+
+        return self.run(
+            ssh_command,
+            log=log if log else self._command_verbose_logger,
+            friendly_command=friendly_command,
+            silent=silent,
+            cwd=cwd,
+            interactive=interactive,
+            **kwargs)
 
     def push(self,
              source: Optional[str] = None,
@@ -759,14 +783,13 @@ class GuestSsh(Guest):
             assert source
             assert destination
 
-            # TODO: _ssh_command() returns two incompatible types, we need to chose the right one.
-            joined_ssh_command = self._ssh_command(join=True)
-            assert isinstance(joined_ssh_command, str)
-
-            self.run(
-                ["rsync"] + options
-                + ["-e", joined_ssh_command]
-                + [source, f"{self._ssh_guest()}:{destination}"])
+            self.run(Command(
+                "rsync",
+                *options,
+                "-e", self._ssh_command().to_element(),
+                source,
+                f"{self._ssh_guest()}:{destination}"
+                ))
 
         # Try to push twice, check for rsync after the first failure
         try:
@@ -826,14 +849,13 @@ class GuestSsh(Guest):
             assert source
             assert destination
 
-            # TODO: _ssh_command() returns two incompatible types, we need to chose the right one.
-            joined_ssh_command = self._ssh_command(join=True)
-            assert isinstance(joined_ssh_command, str)
-
-            self.run(
-                ["rsync"] + options
-                + ["-e", joined_ssh_command]
-                + [f"{self._ssh_guest()}:{source}", destination])
+            self.run(Command(
+                "rsync",
+                *options,
+                "-e", self._ssh_command().to_element(),
+                f"{self._ssh_guest()}:{source}",
+                destination
+                ))
 
         # Try to pull twice, check for rsync after the first failure
         try:
@@ -881,7 +903,7 @@ class GuestSsh(Guest):
     def reboot(
             self,
             hard: bool = False,
-            command: Optional[str] = None,
+            command: Optional[Union[Command, ShellScript]] = None,
             timeout: Optional[int] = None,
             tick: float = tmt.utils.DEFAULT_WAIT_TICK,
             tick_increase: float = tmt.utils.DEFAULT_WAIT_TICK_INCREASE) -> bool:
@@ -900,14 +922,14 @@ class GuestSsh(Guest):
             raise tmt.utils.ProvisionError(
                 "Method does not support hard reboot.")
 
-        command = command or "reboot"
+        command = command or Command("reboot")
         self.debug(f"Reboot using the command '{command}'.")
 
         re_boot_time = re.compile(r'btime\s+(\d+)')
 
         def get_boot_time() -> int:
             """ Reads btime from /proc/stat """
-            stdout = self.execute(["cat", "/proc/stat"]).stdout
+            stdout = self.execute(Command("cat", "/proc/stat")).stdout
             assert stdout
 
             match = re_boot_time.search(stdout)
@@ -984,7 +1006,7 @@ class GuestSsh(Guest):
         # Check for rsync (nothing to do if already installed)
         self.debug("Ensure that rsync is installed on the guest.")
         try:
-            self.execute("rsync --version")
+            self.execute(Command('rsync', '--version'))
             return CheckRsyncOutcome.ALREADY_INSTALLED
         except tmt.utils.RunError:
             pass
@@ -992,7 +1014,7 @@ class GuestSsh(Guest):
         # Check the package manager
         self.debug("Check the package manager.")
         try:
-            self.execute("dnf --version")
+            self.execute(Command('dnf', '--version'))
             package_manager = "dnf"
         except tmt.utils.RunError:
             package_manager = "yum"
@@ -1002,7 +1024,7 @@ class GuestSsh(Guest):
         # FIXME: Find a better way how to detect read-only distros
         self.debug("Check for a read-only distro.")
         try:
-            self.execute("rpm-ostree --version")
+            self.execute(Command('rpm-ostree', '--version'))
             readonly = (
                 " --installroot=/root/pkg --releasever / "
                 "&& ln -sf /root/pkg/bin/rsync /usr/local/bin/rsync")
@@ -1010,7 +1032,7 @@ class GuestSsh(Guest):
             readonly = ""
 
         # Install the rsync
-        self.execute(f"{package_manager} install -y rsync" + readonly)
+        self.execute(ShellScript(f"{package_manager} install -y rsync" + readonly))
 
         return CheckRsyncOutcome.INSTALLED
 

@@ -1,12 +1,11 @@
 import dataclasses
-import shlex
 from typing import Any, List, Optional, Union
 
 import tmt
 import tmt.steps
 import tmt.steps.provision
 import tmt.utils
-from tmt.utils import BaseLoggerFnType
+from tmt.utils import BaseLoggerFnType, Command, ShellScript
 
 
 @dataclasses.dataclass
@@ -29,40 +28,50 @@ class GuestLocal(tmt.Guest):
         """ Prepare localhost using ansible playbook """
         playbook = self._ansible_playbook_path(playbook)
         stdout, _ = self.run(
-            ['sudo', '-E', 'ansible-playbook'] +
-            self._ansible_verbosity() +
-            self._ansible_extra_args(extra_args) +
-            ['-c', 'local', '-i', 'localhost,', playbook],
+            Command(
+                'sudo', '-E',
+                'ansible-playbook',
+                *self._ansible_verbosity(),
+                *self._ansible_extra_args(extra_args),
+                '-c', 'local',
+                '-i', 'localhost,',
+                playbook),
             env=self._prepare_environment())
         self._ansible_summary(stdout)
 
     def execute(self,
-                command: Union[List[str], str],
+                command: Union[Command, ShellScript],
+                cwd: Optional[str] = None,
+                env: Optional[tmt.utils.EnvironmentType] = None,
                 friendly_command: Optional[str] = None,
                 test_session: bool = False,
                 silent: bool = False,
                 log: Optional[BaseLoggerFnType] = None,
+                interactive: bool = False,
                 **kwargs: Any) -> tmt.utils.CommandOutput:
         """ Execute command on localhost """
         # Prepare the environment (plan/cli variables override)
         environment: tmt.utils.EnvironmentType = dict()
-        # Beware of using dict() as default: `env` is `Optional[EnvironmentType]`, and may
-        # be set by a caller by perfectly acceptable `None`. In such a case, `pop()` with
-        # a default would return not the default, but existing key, i.e. `None`.
-        environment.update(kwargs.pop('env', None) or {})
+        environment.update(env or {})
         environment.update(self.parent.plan.environment)
+
+        if isinstance(command, Command):
+            actual_command = command
+
+        else:
+            actual_command = command.to_shell_command()
+
         if friendly_command is None:
-            if isinstance(command, (list, tuple)):
-                friendly_command = ' '.join(shlex.quote(s) for s in command)
-            else:
-                friendly_command = command
+            friendly_command = str(actual_command)
+
         # Run the command under the prepared environment
-        return self.run(command,
+        return self.run(actual_command,
                         env=environment,
-                        shell=True,
                         log=log if log else self._command_verbose_logger,
                         friendly_command=friendly_command,
                         silent=silent,
+                        cwd=cwd,
+                        interactive=interactive,
                         **kwargs)
 
     def stop(self) -> None:
@@ -72,7 +81,7 @@ class GuestLocal(tmt.Guest):
 
     def reboot(self,
                hard: bool = False,
-               command: Optional[str] = None,
+               command: Optional[Union[Command, ShellScript]] = None,
                timeout: Optional[int] = None) -> bool:
         """ Reboot the guest, return True if successful """
 

@@ -7,7 +7,7 @@ import platform
 import re
 import time
 import types
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Union
 
 import click
 import fmf
@@ -18,7 +18,8 @@ import tmt
 import tmt.steps
 import tmt.steps.provision
 import tmt.utils
-from tmt.utils import WORKDIR_ROOT, ProvisionError, retry_session
+from tmt.utils import (WORKDIR_ROOT, Command, ProvisionError, ShellScript,
+                       retry_session)
 
 if TYPE_CHECKING:
     import tmt.base
@@ -354,9 +355,9 @@ class GuestTestcloud(tmt.GuestSsh):
 
         # Generate ssh key
         self.debug('Generating an ssh key.')
-        command = ["ssh-keygen", "-f", self.key[0], "-N", ""]
+        command = Command("ssh-keygen", "-f", self.key[0], "-N", "")
         if key_type is not None:
-            command.extend(["-t", key_type])
+            command += Command("-t", key_type)
         self.run(command)
         self.verbose('key', self.key[0], 'green')
         with open(self.pubkey, 'r') as pubkey:
@@ -525,7 +526,7 @@ class GuestTestcloud(tmt.GuestSsh):
 
     def reboot(self,
                hard: bool = False,
-               command: Optional[str] = None,
+               command: Optional[Union[Command, ShellScript]] = None,
                timeout: Optional[int] = None,
                tick: float = tmt.utils.DEFAULT_WAIT_TICK,
                tick_increase: float = tmt.utils.DEFAULT_WAIT_TICK_INCREASE) -> bool:

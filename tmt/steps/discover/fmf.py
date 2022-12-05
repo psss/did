@@ -16,6 +16,7 @@ import tmt.options
 import tmt.steps
 import tmt.steps.discover
 import tmt.utils
+from tmt.utils import Command
 
 
 @dataclasses.dataclass
@@ -252,7 +253,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 "the `--dist-git-merge` option.")
 
         def get_git_root(dir: str) -> str:
-            stdout, _ = self.run(["git", "rev-parse", "--show-toplevel"], cwd=dir, dry=True)
+            stdout, _ = self.run(Command("git", "rev-parse", "--show-toplevel"), cwd=dir, dry=True)
             assert stdout is not None
             return stdout.strip("\n")
 
@@ -368,13 +369,13 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             self.info('ref', ref, 'green')
             self.debug(f"Checkout ref '{ref}'.")
             self.run(
-                ['git', 'checkout', '-f', str(ref)],
+                Command('git', 'checkout', '-f', str(ref)),
                 cwd=self.testdir)
 
         # Show current commit hash if inside a git repository
         if os.path.isdir(self.testdir):
             try:
-                hash_, _ = self.run(["git", "rev-parse", "--short", "HEAD"],
+                hash_, _ = self.run(Command("git", "rev-parse", "--short", "HEAD"),
                                     cwd=self.testdir)
                 if hash_ is not None:
                     self.verbose('hash', hash_.strip(), 'green')
@@ -486,16 +487,17 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if modified_url:
             self.info('modified-url', modified_url, 'green')
             self.debug(f"Fetch also '{modified_url}' as 'reference'.")
-            self.run(['git', 'remote', 'add', 'reference', modified_url],
+            self.run(Command('git', 'remote', 'add', 'reference', modified_url),
                      cwd=self.testdir)
-            self.run(['git', 'fetch', 'reference'], cwd=self.testdir)
+            self.run(Command('git', 'fetch', 'reference'), cwd=self.testdir)
         if modified_only:
             modified_ref = self.get(
                 'modified-ref', tmt.utils.default_branch(self.testdir))
             self.info('modified-ref', modified_ref, 'green')
             output = self.run(
-                ['git', 'log', '--format=', '--stat', '--name-only',
-                 f"{modified_ref}..HEAD"], cwd=self.testdir)[0]
+                Command(
+                    'git', 'log', '--format=', '--stat', '--name-only', f"{modified_ref}..HEAD"
+                    ), cwd=self.testdir)[0]
             if output:
                 directories = [os.path.dirname(name) for name in output.split('\n')]
                 modified = set(f"^/{re.escape(name)}" for name in directories if name)

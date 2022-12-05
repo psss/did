@@ -5,6 +5,7 @@ import tmt
 import tmt.steps
 import tmt.steps.prepare
 from tmt.steps.provision import Guest
+from tmt.utils import ShellScript
 
 
 # Derived from StepData, not PrepareStepData, on purpose: this is not a plugin
@@ -54,5 +55,5 @@ class PrepareMultihost(tmt.steps.prepare.PreparePlugin):
         for host_name, host_address in self.get('hosts').items():
             if host_address:
                 guest.execute(
-                    f'echo "{host_address} {host_name}" >> /etc/hosts',
+                    ShellScript(f'echo "{host_address} {host_name}" >> /etc/hosts'),
                     silent=True)
