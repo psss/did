@@ -44,7 +44,7 @@ BuildRequires: python%{python3_pkgversion}-pytest
 BuildRequires: python%{python3_pkgversion}-click
 BuildRequires: python%{python3_pkgversion}-fmf >= 1.2.0
 BuildRequires: python%{python3_pkgversion}-requests
-BuildRequires: python%{python3_pkgversion}-testcloud >= 0.8.1
+BuildRequires: python%{python3_pkgversion}-testcloud >= 0.8.2
 BuildRequires: python%{python3_pkgversion}-markdown
 BuildRequires: python%{python3_pkgversion}-junit_xml
 BuildRequires: python%{python3_pkgversion}-ruamel-yaml
@@ -77,7 +77,7 @@ Dependencies required to run tests in a container environment.
 Summary: Virtual machine provisioner for the Test Management Tool
 Obsoletes: tmt-testcloud < 0.17
 Requires: tmt == %{version}-%{release}
-Requires: python%{python3_pkgversion}-testcloud >= 0.8.1
+Requires: python%{python3_pkgversion}-testcloud >= 0.8.2
 Requires: libvirt-daemon-config-network
 Requires: openssh-clients
 Requires: (ansible or ansible-core)
