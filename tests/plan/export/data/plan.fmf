@@ -25,3 +25,9 @@ execute:
       - merge-pull-request
       - add-build-to-update
       - add-build-to-compose
+
+/remote:
+    plan:
+        import:
+            url: https://github.com/teemtee/tmt
+            name: /plans/features/basic

@@ -539,6 +539,12 @@ class Core(
         # Always include node name, add requested keys, ignore adjust
         data: Dict[str, Any] = dict(name=self.name)
         for key in keys:
+            # TODO: provide more mature solution for https://github.com/teemtee/tmt/issues/1688
+            # Until that, do not export fields that start with an underscore, to avoid leaking
+            # "private" object members.
+            if key.startswith('_'):
+                continue
+
             if key == 'adjust':
                 continue
 

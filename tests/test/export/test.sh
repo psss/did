@@ -26,12 +26,14 @@ rlJournalStart
         rlPhaseStartTest "$cmd"
             rlRun -s "$cmd" 0 "Export test"
             rlAssertGrep "'name': '$tname'" $rlRun_LOG
+            rlAssertNotGrep "'_" $rlRun_LOG
         rlPhaseEnd
 
         cmd="tmt tests export --format yaml $tname"
         rlPhaseStartTest "$cmd"
             rlRun -s "$cmd" 0 "Export test"
             rlAssertGrep "name: $tname" $rlRun_LOG
+            rlAssertNotGrep " _" $rlRun_LOG
         rlPhaseEnd
     done
 
@@ -61,12 +63,14 @@ rlJournalStart
         rlPhaseStartTest "$cmd"
             rlRun -s "$cmd" 0 "Export test"
             rlAssertGrep "'name': '$tname'" $rlRun_LOG
+            rlAssertNotGrep "'_" $rlRun_LOG
         rlPhaseEnd
 
         cmd="tmt tests export --format yaml --fmf-id $tname"
         rlPhaseStartTest "$cmd"
             rlRun -s "$cmd" 0 "Export test"
             rlAssertGrep "name: $tname" $rlRun_LOG
+            rlAssertNotGrep " _" $rlRun_LOG
         rlPhaseEnd
     done
 

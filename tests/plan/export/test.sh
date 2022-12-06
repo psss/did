@@ -16,6 +16,7 @@ rlJournalStart
         rlAssertGrep "- name: /plan/gate" $rlRun_LOG
         rlAssertGrep "discover:" $rlRun_LOG
         rlAssertGrep "execute:" $rlRun_LOG
+        rlAssertNotGrep " _" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "tmt plan export /plan/basic"
@@ -24,6 +25,7 @@ rlJournalStart
         rlAssertGrep "summary: Just basic keys." $rlRun_LOG
         rlAssertGrep "discover:" $rlRun_LOG
         rlAssertGrep "execute:" $rlRun_LOG
+        rlAssertNotGrep " _" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "tmt plan export /plan/context"
@@ -34,6 +36,7 @@ rlJournalStart
         rlAssertGrep "execute:" $rlRun_LOG
         rlAssertGrep "context:" $rlRun_LOG
         rlAssertGrep "component: dash" $rlRun_LOG
+        rlAssertNotGrep " _" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "tmt plan export /plan/environment"
@@ -44,6 +47,7 @@ rlJournalStart
         rlAssertGrep "execute:" $rlRun_LOG
         rlAssertGrep "environment:" $rlRun_LOG
         rlAssertGrep "RELEASE: f35" $rlRun_LOG
+        rlAssertNotGrep " _" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "tmt plan export /plan/gate"
@@ -56,6 +60,7 @@ rlJournalStart
         rlAssertGrep "- merge-pull-request" $rlRun_LOG
         rlAssertGrep "- add-build-to-update" $rlRun_LOG
         rlAssertGrep "- add-build-to-compose" $rlRun_LOG
+        rlAssertNotGrep " _" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "Invalid format"

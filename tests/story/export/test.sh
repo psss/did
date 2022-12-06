@@ -11,6 +11,7 @@ rlJournalStart
         rlAssertGrep "name: /mini" $rlRun_LOG
         rlAssertGrep "order: 50" $rlRun_LOG
         rlAssertGrep "story: As a user I want this and that" $rlRun_LOG
+        rlAssertNotGrep " _" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "Export to yaml (full story)"
@@ -25,6 +26,7 @@ rlJournalStart
         rlAssertGrep "story: As a user I want this and that" $rlRun_LOG
         rlAssertGrep "title: A Concise Title" $rlRun_LOG
         rlAssertGrep "priority: must have" $rlRun_LOG
+        rlAssertNotGrep " _" $rlRun_LOG
         rlRun "grep -A1 ^link: $rlRun_LOG | grep -- ' - implemented-by: /some/code.py'"
         rlRun "grep -A1 ^tag: $rlRun_LOG | grep -- '- foo'"
         rlRun "grep -A1 ^example: $rlRun_LOG | grep -- '- An inspiring example'"
