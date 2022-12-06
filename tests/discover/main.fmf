@@ -2,6 +2,10 @@
     summary: Check that all supported options are present
     test: ./options.sh
 
+/order:
+    summary: Test order is defined and respected
+    test: ./order.sh
+
 /references:
     summary: Verify that basic referencing works.
     description:

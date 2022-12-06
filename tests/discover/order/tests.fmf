@@ -1,0 +1,14 @@
+test: echo $TMT_TEST_DATA >> $TMT_PLAN_DATA/execution_order
+
+/no-order-0:
+    tag: no-order
+/no-order-2:
+    tag: no-order
+/no-order-1:
+    tag: no-order
+
+/order-10:
+    order: 10
+
+/order-80:
+    order: 80

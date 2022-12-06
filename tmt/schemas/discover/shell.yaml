@@ -34,6 +34,9 @@ properties:
   dist-git-type:
     $ref: "/schemas/common#/definitions/dist-git-type"
 
+  order:
+    $ref: "/schemas/core#/definitions/order"
+
   tests:
     type: array
     items:
