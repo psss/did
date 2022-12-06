@@ -550,7 +550,7 @@ class Core(
 
             value = getattr(self, key)
 
-            if key == 'link' and value:
+            if key == 'link' and value is not None:
                 # TODO: links must be saved in a form that can be than crunched by
                 # Links.__init__() method - it is tempting to use to_serialized()
                 # and from_unserialized(), but we don't use unserialization code
@@ -604,7 +604,7 @@ class Core(
         if self.link is None:
             return False
 
-        return self.link.has_link(needle)
+        return self.link.has_link(needle=needle)
 
 
 Node = Core
@@ -3113,10 +3113,26 @@ class Links(tmt.utils.SpecBasedContainer):
             # TODO: needs a format for fmf id target
             echo(tmt.utils.format(link.relation.rstrip('-by'), f"{link.target}", key_color='cyan'))
 
-    def has_link(self, needle: LinkNeedle) -> bool:
-        """ Check whether this set of links contains a matching link """
+    def has_link(self, needle: Optional[LinkNeedle] = None) -> bool:
+        """
+        Check whether this set of links contains a matching link.
+
+        If ``needle`` is left unspecified, method would take all links into
+        account, as if the ``needle`` was match all possible links (``.*:.*``).
+        Method would then answer the question "are there *any* links at all?"
+
+        :param needle: if set, only links matching ``needle`` are considered. If
+            not set, method considers all present links.
+        :returns: ``True`` if there are matching links, ``False`` otherwise.
+        """
+
+        if needle is None:
+            return bool(self._links)
 
         return any(needle.matches(link) for link in self._links)
+
+    def __bool__(self) -> bool:
+        return self.has_link()
 
 
 def resolve_dynamic_ref(
