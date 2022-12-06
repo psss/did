@@ -426,11 +426,17 @@ class GuestTestcloud(tmt.GuestSsh):
             raise ProvisionError(
                 f"Failed to prepare image '{self.image_url}'.") from error
 
+        # Prepare hostname (get rid of possible unwanted characters)
+        hostname = re.sub(r"[^a-zA-Z0-9\-]+", "-", self.name.lower()).strip("-")
+
         # Create instance
         self.instance_name = self._tmt_name()
         self._instance = testcloud.instance.Instance(
-            name=self.instance_name, image=self._image,
-            connection=f"qemu:///{self.connection}", desired_arch=self.arch)
+            name=self.instance_name,
+            hostname=hostname,
+            image=self._image,
+            connection=f"qemu:///{self.connection}",
+            desired_arch=self.arch)
         self.verbose('name', self.instance_name, 'green')
 
         # Decide if we want to multiply timeouts when emulating an architecture
