@@ -5,4 +5,5 @@ max-line-length = 99
 filename = bin/,
            examples/,
            tests/,
-           tmt/
+           tmt/,
+           setup.py

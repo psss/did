@@ -2,15 +2,18 @@
 # coding: utf-8
 
 import re
-import sys
 from io import open
+from typing import Dict, List
 
 from setuptools import setup
 
 # Parse version from the spec file
 with open('tmt.spec', encoding='utf-8') as specfile:
     lines = "\n".join(line.rstrip() for line in specfile)
-    version = re.search('Version: (.+)', lines).group(1).rstrip()
+
+    match = re.search('Version: (.+)', lines)
+    assert match is not None, "Could not find 'Version:' in tmt.spec"
+    version = match.group(1).rstrip()
 
 # acceptable version schema: major.minor[.patch][sub]
 __version__ = version
@@ -23,7 +26,7 @@ __pkgdata__ = {
         'steps/report/html/*'
         ]
     }
-__pkgdir__ = {}
+__pkgdir__: Dict[str, str] = {}
 __pkgs__ = [
     'tmt',
     'tmt/plugins',
@@ -87,7 +90,7 @@ extras_require['all'] = [
     for dependency in extra]
 
 pip_src = 'https://pypi.python.org/packages/source'
-__deplinks__ = []
+__deplinks__: List[str] = []
 
 # README is in the parent directory
 readme = 'README.rst'
@@ -97,7 +100,7 @@ with open(readme, encoding='utf-8') as _file:
 github = 'https://github.com/teemtee/tmt'
 download_url = '{0}/archive/main.zip'.format(github)
 
-default_setup = dict(
+setup(
     url=github,
     license='MIT',
     author='Petr Splichal',
@@ -127,7 +130,5 @@ default_setup = dict(
     packages=__pkgs__,
     provides=__provides__,
     scripts=__scripts__,
-    version=__version__,
+    version=__version__
     )
-
-setup(**default_setup)

@@ -35,7 +35,8 @@ repos:
             bin/.*|
             examples/.*|
             tests/.*|
-            tmt/.*
+            tmt/.*|
+            setup.py
           )$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
