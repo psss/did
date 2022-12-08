@@ -113,6 +113,10 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
                 help='Path to the file to store junit to'),
             ] + super().options(how)
 
+    def prune(self) -> None:
+        """ Do not prune generated junit report """
+        pass
+
     def go(self) -> None:
         """ Read executed tests and write junit """
         super().go()

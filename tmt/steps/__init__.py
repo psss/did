@@ -16,7 +16,6 @@ else:
     from typing_extensions import TypedDict
 
 import click
-import fmf.utils
 from click import echo
 
 import tmt.options
@@ -517,13 +516,31 @@ class Step(tmt.utils.Common):
         """ Remove all uninteresting files from the step workdir """
         if self.workdir is None:
             return
-        self.debug(
-            f"Prune all files from '{self.workdir}' except for " +
-            fmf.utils.listed(self._preserved_files, quote="'") + ".",
-            level=3, shift=1)
-        for entry in os.listdir(self.workdir):
-            if entry not in self._preserved_files:
-                shutil.rmtree(os.path.join(self.workdir, entry))
+        self.debug(f"Prune workdir '{self.workdir}'.", level=3, shift=1)
+
+        # Do not prune plugin workdirs, each plugin decides what should
+        # be pruned from the workdir and what should be kept there
+        plugins = self.phases(classes=BasePlugin)
+        plugin_workdirs = []
+        for plugin in plugins:
+            if plugin.workdir is not None:
+                plugin_workdirs.append(os.path.basename(plugin.workdir))
+            plugin.prune()
+
+        # Prune everything except for the preserved files
+        preserved_files = self._preserved_files + plugin_workdirs
+        for file in os.listdir(self.workdir):
+            if file in preserved_files:
+                continue
+            full_path = os.path.join(self.workdir, file)
+            self.debug(f"Remove '{full_path}'.", level=3, shift=1)
+            try:
+                if os.path.isfile(full_path) or os.path.islink(full_path):
+                    os.remove(full_path)
+                else:
+                    shutil.rmtree(full_path)
+            except OSError as error:
+                self.warn(f"Unable to remove '{full_path}': {error}", shift=1)
 
 
 class Method:
@@ -935,6 +952,22 @@ class BasePlugin(Phase):
     def requires(self) -> List[str]:
         """ List of packages required by the plugin on the guest """
         return []
+
+    def prune(self) -> None:
+        """
+        Prune uninteresting files from the plugin workdir
+
+        By default we remove the whole workdir. Individual plugins can
+        override this method to keep files and directories which are
+        useful for inspection when the run is finished.
+        """
+        if self.workdir is None:
+            return
+        self.debug(f"Remove plugin workdir '{self.workdir}'.", level=3)
+        try:
+            shutil.rmtree(self.workdir)
+        except OSError as error:
+            self.warn(f"Unable to remove '{self.workdir}': {error}")
 
 
 class GuestlessPlugin(BasePlugin):

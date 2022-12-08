@@ -9,7 +9,7 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Check pruning"
-        rlRun "tmt run -i $tmp1 -a"
+        rlRun -s "tmt run -i $tmp1 -a finish -ddd"
         rlAssertNotExists $tmp1/plan/tree
         rlAssertNotExists $tmp1/plan/discover/default-0
         rlAssertNotExists $tmp1/plan/discover/default-1
@@ -18,10 +18,21 @@ rlJournalStart
         for step in discover execute finish prepare provision report; do
             rlAssertExists $tmp1/plan/$step/step.yaml
         done
+
+        # Interesting output from the report plugins should be kept
+        rlAssertExists $tmp1/plan/report/html/index.html
+        rlAssertExists $tmp1/plan/report/junit/junit.xml
+        rlAssertNotExists $tmp1/plan/report/display
+
+        # Successfully removes files, symlinks and directories
+        for kind in file link directory; do
+            rlAssertGrep "Remove.*/finish/$kind" $rlRun_LOG
+            rlAssertNotExists $tmp1/plan/finish/$kind
+        done
     rlPhaseEnd
 
     rlPhaseStartTest "Check Keeping"
-        rlRun "tmt run --keep -i $tmp2 -a"
+        rlRun "tmt run --keep -i $tmp2 -a finish -ddd"
         rlAssertExists $tmp2/plan/tree
         rlAssertExists $tmp2/plan/discover/default-0
         rlAssertExists $tmp2/plan/discover/default-1

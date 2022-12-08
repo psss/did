@@ -65,6 +65,10 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
                 help='Make paths absolute rather than relative to working directory.')
             ] + super().options(how)
 
+    def prune(self) -> None:
+        """ Do not prune generated html report """
+        pass
+
     def go(self) -> None:
         """ Process results """
         super().go()

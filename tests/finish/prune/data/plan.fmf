@@ -13,7 +13,20 @@ discover:
         test: echo test > $TMT_PLAN_DATA/out-plan.txt
 
 provision:
-  how: local
+    how: local
 
 execute:
-  how: tmt
+    how: tmt
+
+report:
+  - name: display
+    how: display
+  - name: html
+    how: html
+  - name: junit
+    how: junit
+
+finish:
+  - script: touch ../finish/file
+  - script: ln -s . ../finish/link
+  - script: mkdir ../finish/directory
