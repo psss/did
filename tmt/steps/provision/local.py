@@ -121,12 +121,6 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
     # Guest instance
     _guest = None
 
-    def wake(self, data: Optional[tmt.steps.provision.GuestData] = None) -> None:
-        """ Wake up the plugin, process data, apply options """
-        super().wake(data=data)
-        if data:
-            self._guest = GuestLocal(data=data, name=self.name, parent=self.step)
-
     def go(self) -> None:
         """ Provision the container """
         super().go()

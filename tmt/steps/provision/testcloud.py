@@ -615,17 +615,6 @@ class ProvisionTestcloud(tmt.steps.provision.ProvisionPlugin):
                 help="What architecture to virtualize, host arch by default."),
             ] + super().options(how)
 
-    # FIXME: ignore - https://github.com/teemtee/tmt/issues/1437
-    def wake(self, data: Optional[TestcloudGuestData] = None) -> None:  # type: ignore[override]
-        """ Wake up the plugin, process data, apply options """
-        super().wake(data=data)
-
-        # Wake up testcloud instance
-        if data:
-            guest = GuestTestcloud(data=data, name=self.name, parent=self.step)
-            guest.wake()
-            self._guest = guest
-
     def go(self) -> None:
         """ Provision the testcloud instance """
         super().go()

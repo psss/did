@@ -523,15 +523,6 @@ class ProvisionArtemis(tmt.steps.provision.ProvisionPlugin):
                 ),
             ] + super().options(how)
 
-    # FIXME: ignore - https://github.com/teemtee/tmt/issues/1437
-    def wake(self, data: Optional[ArtemisGuestData] = None) -> None:  # type: ignore[override]
-        """ Wake up the plugin, process data, apply options """
-
-        super().wake(data=data)
-
-        if data:
-            self._guest = GuestArtemis(data=data, name=self.name, parent=self.step)
-
     def go(self) -> None:
         """ Provision the guest """
         super().go()

@@ -1037,6 +1037,9 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
     # List of all supported methods aggregated from all plugins of the same step.
     _supported_methods: List[tmt.steps.Method] = []
 
+    # TODO: Generics would provide a better type, https://github.com/teemtee/tmt/issues/1437
+    _guest: Optional[Guest] = None
+
     @classmethod
     def base_command(
             cls,
@@ -1082,6 +1085,11 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
         Wake up the guest based on provided guest data.
         """
         super().wake()
+
+        if data is not None:
+            guest = self._guest_class(data=data, name=self.name, parent=self.step)
+            guest.wake()
+            self._guest = guest
 
     def guest(self) -> Optional[Guest]:
         """

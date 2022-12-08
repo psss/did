@@ -256,15 +256,6 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
 
         return super().default(option, default=default)
 
-    def wake(self, data: Optional[tmt.steps.provision.GuestData] = None) -> None:
-        """ Wake up the plugin, process data, apply options """
-        super().wake(data=data)
-        # Wake up podman instance
-        if data:
-            guest = GuestContainer(data=data, name=self.name, parent=self.step)
-            guest.wake()
-            self._guest = guest
-
     def go(self) -> None:
         """ Provision the container """
         super().go()

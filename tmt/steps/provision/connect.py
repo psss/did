@@ -8,7 +8,6 @@ import tmt
 import tmt.steps
 import tmt.steps.provision
 import tmt.utils
-from tmt.steps.provision import GuestSshData
 
 DEFAULT_USER = "root"
 
@@ -78,13 +77,6 @@ class ProvisionConnect(tmt.steps.provision.ProvisionPlugin):
                 '-p', '--password', metavar='PASSWORD',
                 help='Password for login into the guest system.'),
             ] + super().options(how)
-
-    # FIXME: ignore - https://github.com/teemtee/tmt/issues/1437
-    def wake(self, data: Optional[GuestSshData] = None) -> None:  # type: ignore[override]
-        """ Wake up the plugin, process data, apply options """
-        super().wake(data=data)
-        if data:
-            self._guest = tmt.GuestSsh(data=data, name=self.name, parent=self.step)
 
     def go(self) -> None:
         """ Prepare the connection """
