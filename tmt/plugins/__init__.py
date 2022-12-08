@@ -67,7 +67,8 @@ def import_(module: str, path: Optional[str] = None) -> None:
     try:
         importlib.import_module(module)
         log.debug(f"Successfully imported the '{module}' module.")
-    except ImportError as error:
+    except (ImportError, SystemExit) as error:
+        # setup.py when executed during import raises SystemExit
         raise SystemExit(
             f"Failed to import the '{module}' module" +
             (f" from '{path}'." if path else ".") + f"\n({error})")
