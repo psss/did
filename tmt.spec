@@ -1,5 +1,5 @@
 Name: tmt
-Version: 1.19.0
+Version: 1.20.0
 Release: 1%{?dist}
 
 Summary: Test Management Tool
@@ -206,6 +206,37 @@ chmod 1777 %{buildroot}%{workdir_root}
 
 
 %changelog
+* Thu Dec 08 2022 Lukáš Zachar <lzachar@redhat.com> - 1.20.0-1
+- Do not prune `html` and `junit` reports
+- Skip extending fmf context if cli context missing
+- Connect needs is_ready property as well
+- Cover setup.py with pre-commit Python checks
+- Do not leak "private" fields into export
+- Set guest hostname in testcloud provision
+- Capture provision error when login is used
+- Support `TMT_WORKDIR_ROOT` environment variable
+- Support step data definitions carrying CLI options
+- Adds flake8 coverage for bin/ directory
+- Prune irrelevant files during the `finish` step
+- Add junit plugin schema
+- Support to import empty key from Makefile
+- Deleting unsed and duplicite part of finish step
+- Support absolute paths in HTML reports
+- Capture exceptions when getting `image_url`
+- Enable verbose output for `provision` & `prepare`
+- Add support for Artemis v0.0.47 upcoming release
+- Remove unused variables
+- Initial support for passing ssh options from cli
+- Update specification of the `where` multihost key
+- Add a simple test demonstrating the upgrade testing
+- Use custom subclass of click.Context for better annotations
+- Extend the `duration` for tests using containers
+- Change common class constructors to use keyword arguments only
+- Make packit build with the next release.dev version
+- Add basic test coverage for `tmt story export`
+- Fix export of the story `priority` field
+- Read source from correct directory if ref is used
+
 * Wed Nov 09 2022 Lukáš Zachar <lzachar@redhat.com> - 1.19.0-1
 - Protect args in rsync call
 - Set tree root for the default plan tree as well
