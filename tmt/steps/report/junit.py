@@ -1,9 +1,7 @@
 import dataclasses
 import os
 import types
-from typing import Any, List, Optional, cast, overload
-
-import click
+from typing import Any, Optional, cast, overload
 
 import tmt
 import tmt.base
@@ -11,6 +9,7 @@ import tmt.options
 import tmt.result
 import tmt.steps
 import tmt.steps.report
+from tmt.utils import field
 
 DEFAULT_NAME = "junit.xml"
 
@@ -90,7 +89,12 @@ def make_junit_xml(report: "tmt.steps.report.ReportPlugin") -> JunitTestSuite:
 
 @dataclasses.dataclass
 class ReportJUnitData(tmt.steps.report.ReportStepData):
-    file: Optional[str] = None
+    file: Optional[str] = field(
+        default=None,
+        option='--file',
+        metavar='FILE',
+        help='Path to the file to store junit to.'
+        )
 
 
 @tmt.steps.provides_method('junit')
@@ -103,15 +107,6 @@ class ReportJUnit(tmt.steps.report.ReportPlugin):
     """
 
     _data_class = ReportJUnitData
-
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options for connect """
-        return [
-            click.option(
-                '--file', metavar='FILE',
-                help='Path to the file to store junit to'),
-            ] + super().options(how)
 
     def prune(self) -> None:
         """ Do not prune generated junit report """

@@ -2,14 +2,14 @@ import dataclasses
 import datetime
 import os
 import xml.etree.ElementTree as ET
-from typing import List, Optional
+from typing import Optional
 
-import click
 from requests import post
 
 import tmt
 import tmt.steps
 import tmt.steps.report
+from tmt.utils import field
 
 from .junit import make_junit_xml
 
@@ -18,10 +18,33 @@ DEFAULT_NAME = 'xunit.xml'
 
 @dataclasses.dataclass
 class ReportPolarionData(tmt.steps.report.ReportStepData):
-    file: Optional[str] = None
-    upload: bool = True
-    project_id: Optional[str] = None
-    testrun_title: Optional[str] = None
+    file: Optional[str] = field(
+        default=None,
+        option='--file',
+        metavar='FILE',
+        help='Path to the file to store xUnit in.'
+        )
+
+    upload: bool = field(
+        default=True,
+        option=('--upload / --no-upload'),
+        is_flag=True,
+        help="Whether to upload results to Polarion."
+        )
+
+    project_id: Optional[str] = field(
+        default=None,
+        option='--project-id',
+        metavar='ID',
+        help='Use specific Polarion project ID.'
+        )
+
+    testrun_title: Optional[str] = field(
+        default=None,
+        option='--testrun-title',
+        metavar='TITLE',
+        help='Use specific TestRun title.'
+        )
 
 
 @tmt.steps.provides_method('polarion')
@@ -31,21 +54,6 @@ class ReportPolarion(tmt.steps.report.ReportPlugin):
     """
 
     _data_class = ReportPolarionData
-
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options """
-        return [
-            click.option(
-                '--file', metavar='FILE', help='Path to the file to store xUnit in'),
-            click.option(
-                '--upload / --no-upload', default=True, show_default=True,
-                help="Whether to upload results to Polarion"),
-            click.option(
-                '--project-id', required=True, help='Use specific Polarion project ID'),
-            click.option(
-                '--testrun-title', help='Use specific TestRun title')
-            ] + super().options(how)
 
     def go(self) -> None:
         """ Go through executed tests and report into Polarion """

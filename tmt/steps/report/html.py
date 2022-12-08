@@ -2,9 +2,7 @@ import dataclasses
 import os
 import os.path
 import webbrowser
-from typing import List, Optional
 
-import click
 import jinja2
 import pkg_resources
 
@@ -12,6 +10,8 @@ import tmt
 import tmt.options
 import tmt.steps
 import tmt.steps.report
+import tmt.utils
+from tmt.utils import field
 
 HTML_TEMPLATE_PATH = pkg_resources.resource_filename(
     'tmt', 'steps/report/html/template.html.j2')
@@ -19,7 +19,19 @@ HTML_TEMPLATE_PATH = pkg_resources.resource_filename(
 
 @dataclasses.dataclass
 class ReportHtmlData(tmt.steps.report.ReportStepData):
-    open: bool = False
+    open: bool = field(
+        default=False,
+        option=('-o', '--open'),
+        is_flag=True,
+        help='Open results in your preferred web browser.'
+        )
+
+    absolute_paths: bool = field(
+        default=False,
+        option='--absolute-paths',
+        is_flag=True,
+        help='Make paths absolute rather than relative to working directory.'
+        )
 
 
 @tmt.steps.provides_method('html')
@@ -36,19 +48,6 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
 
     _data_class = ReportHtmlData
 
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options for the html report """
-        return [
-            click.option(
-                '-o', '--open', is_flag=True,
-                help='Open results in your preferred web browser.'),
-            click.option(
-                '--absolute-paths',
-                is_flag=True,
-                help='Make paths absolute rather than relative to working directory.')
-            ] + super().options(how)
-
     def prune(self) -> None:
         """ Do not prune generated html report """
         pass
@@ -61,7 +60,7 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
         environment = jinja2.Environment()
         environment.filters["basename"] = lambda x: os.path.basename(x)
 
-        if self.opt('absolute-paths'):
+        if self.get('absolute-paths'):
             environment.filters["linkable_path"] = os.path.abspath
         else:
             # Links used in html should be relative to a workdir

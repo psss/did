@@ -22,5 +22,8 @@ properties:
   open:
     type: boolean
 
+  absolute-paths:
+    type: boolean
+
 required:
   - how
