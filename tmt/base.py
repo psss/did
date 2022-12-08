@@ -1181,8 +1181,10 @@ class Plan(Core):
     def _fmf_context(self) -> tmt.utils.FmfContextType:
         """ Return combined context from plan data and command line """
         combined = self.context.copy()
-        assert self._context_object is not None  # narrow type
-        combined.update(self._context_object.fmf_context)
+
+        if self._context_object is not None:
+            combined.update(self._context_object.fmf_context)
+
         return combined
 
     @staticmethod
