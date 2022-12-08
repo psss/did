@@ -652,6 +652,13 @@ class GuestSsh(Guest):
             env=self._prepare_environment())
         self._ansible_summary(stdout)
 
+    @property
+    def is_ready(self) -> bool:
+        """ Detect guest is ready or not """
+
+        # Enough for now, ssh connection can be created later
+        return self.guest is not None
+
     def execute(self,
                 command: Union[str, List[str]],
                 friendly_command: Optional[str] = None,
