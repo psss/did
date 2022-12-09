@@ -449,8 +449,9 @@ class Core(
         """ Show source files """
         if self.id is not None:
             echo(tmt.utils.format('id', self.id, key_color='magenta'))
-        echo(tmt.utils.format(
-            'sources', self.node.sources, key_color='magenta'))
+        echo(tmt.utils.format('sources', self.node.sources, key_color='magenta'))
+        self._fmf_id()
+        echo(tmt.utils.format('web', self.web_link(), key_color='magenta', wrap=False))
 
     def _fmf_id(self) -> None:
         """ Show fmf identifier """
@@ -834,7 +835,6 @@ class Test(Core):
                 echo(tmt.utils.format(key, value))
         if self.opt('verbose'):
             self._show_additional_keys()
-            self._fmf_id()
         if self.opt('verbose', 0) >= 2:
             # Print non-empty unofficial attributes
             for key in sorted(self.node.get().keys()):
