@@ -3,7 +3,6 @@ import os.path
 import tempfile
 from typing import List, Optional, Union
 
-import click
 import requests
 
 import tmt
@@ -13,7 +12,7 @@ import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
 from tmt.steps.provision import Guest
-from tmt.utils import PrepareError, retry_session
+from tmt.utils import PrepareError, field, retry_session
 
 
 class _RawAnsibleStepData(tmt.steps._RawStepData, total=False):
@@ -23,8 +22,21 @@ class _RawAnsibleStepData(tmt.steps._RawStepData, total=False):
 
 @dataclasses.dataclass
 class PrepareAnsibleData(tmt.steps.prepare.PrepareStepData):
-    playbook: List[str] = dataclasses.field(default_factory=list)
-    extra_args: Optional[str] = None
+    playbook: List[str] = field(
+        default_factory=list,
+        option=('-p', '--playbook'),
+        multiple=True,
+        metavar='PLAYBOOK',
+        help='Path or URL of an ansible playbook to run.',
+        normalize=tmt.utils.normalize_string_list
+        )
+
+    extra_args: Optional[str] = field(
+        default=None,
+        option='--extra-args',
+        metavar='EXTRA-ARGS',
+        help='Optional arguments for ansible-playbook.'
+        )
 
     # ignore[override]: method violates a liskov substitution principle,
     # but only apparently.  Thanks to how tmt initializes module, we can
@@ -83,18 +95,6 @@ class PrepareAnsible(tmt.steps.prepare.PreparePlugin):
     """
 
     _data_class = PrepareAnsibleData
-
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options """
-        return [
-            click.option(
-                '-p', '--playbook', metavar='PLAYBOOK', multiple=True,
-                help='Path or URL of an ansible playbook to run.'),
-            click.option(
-                '--extra-args', metavar='EXTRA-ARGS',
-                help='Optional arguments for ansible-playbook.')
-            ] + super().options(how)
 
     def go(self, guest: Guest) -> None:
         """ Prepare the guests """

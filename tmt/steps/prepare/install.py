@@ -3,9 +3,8 @@ import os
 import re
 import shutil
 import sys
-from typing import List, Optional, Tuple, cast
+from typing import List, Tuple, cast
 
-import click
 import fmf
 
 import tmt
@@ -15,7 +14,7 @@ import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
 from tmt.steps.provision import Guest
-from tmt.utils import Command, ShellScript
+from tmt.utils import Command, ShellScript, field
 
 if sys.version_info >= (3, 8):
     from typing import Literal
@@ -478,17 +477,50 @@ class InstallRpmOstree(InstallBase):
 
 @dataclasses.dataclass
 class PrepareInstallData(tmt.steps.prepare.PrepareStepData):
-    package: List[str] = dataclasses.field(default_factory=list)
-    directory: List[str] = dataclasses.field(default_factory=list)
-    copr: List[str] = dataclasses.field(default_factory=list)
-    exclude: List[str] = dataclasses.field(default_factory=list)
-    # TODO: use enum
-    missing: Literal['skip', 'fail'] = 'fail'
+    package: List[str] = field(
+        default_factory=list,
+        option=('-p', '--package'),
+        metavar='PACKAGE',
+        multiple=True,
+        help='Package name or path to rpm to be installed.',
+        normalize=tmt.utils.normalize_string_list
+        )
 
-    _normalize_package = tmt.utils.NormalizeKeysMixin._normalize_string_list
-    _normalize_directory = tmt.utils.NormalizeKeysMixin._normalize_string_list
-    _normalize_copr = tmt.utils.NormalizeKeysMixin._normalize_string_list
-    _normalize_exclude = tmt.utils.NormalizeKeysMixin._normalize_string_list
+    directory: List[str] = field(
+        default_factory=list,
+        option=('-D', '--directory'),
+        metavar='PATH',
+        multiple=True,
+        help='Path to a local directory with rpm packages.',
+        normalize=tmt.utils.normalize_string_list
+        )
+
+    copr: List[str] = field(
+        default_factory=list,
+        option=('-c', '--copr'),
+        metavar='REPO',
+        multiple=True,
+        help='Copr repository to be enabled.',
+        normalize=tmt.utils.normalize_string_list
+        )
+
+    exclude: List[str] = field(
+        default_factory=list,
+        option=('-x', '--exclude'),
+        metavar='PACKAGE',
+        multiple=True,
+        help='Packages to be skipped during installation.',
+        normalize=tmt.utils.normalize_string_list
+        )
+
+    # TODO: use enum
+    missing: Literal['skip', 'fail'] = field(
+        default='fail',
+        option=('-m', '--missing'),
+        metavar='ACTION',
+        choices=['fail', 'skip'],
+        help='Action on missing packages, fail (default) or skip.'
+        )
 
 
 @tmt.steps.provides_method('install')
@@ -539,28 +571,6 @@ class PrepareInstall(tmt.steps.prepare.PreparePlugin):
     """
 
     _data_class = PrepareInstallData
-
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options """
-        return [
-            click.option(
-                '-p', '--package', metavar='PACKAGE', multiple=True,
-                help='Package name or path to rpm to be installed.'),
-            click.option(
-                '-D', '--directory', metavar='PATH', multiple=True,
-                help='Path to a local directory with rpm packages.'),
-            click.option(
-                '-c', '--copr', metavar='REPO', multiple=True,
-                help='Copr repository to be enabled.'),
-            click.option(
-                '-x', '--exclude', metavar='PACKAGE', multiple=True,
-                help='Packages to be skipped during installation.'),
-            click.option(
-                '-m', '--missing', metavar='ACTION',
-                type=click.Choice(['fail', 'skip']),
-                help='Action on missing packages, fail (default) or skip.'),
-            ] + super().options(how)
 
     def go(self, guest: Guest) -> None:
         """ Perform preparation for the guests """

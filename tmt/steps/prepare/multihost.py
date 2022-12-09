@@ -5,7 +5,7 @@ import tmt
 import tmt.steps
 import tmt.steps.prepare
 from tmt.steps.provision import Guest
-from tmt.utils import ShellScript
+from tmt.utils import ShellScript, field
 
 
 # Derived from StepData, not PrepareStepData, on purpose: this is not a plugin
@@ -13,8 +13,8 @@ from tmt.utils import ShellScript
 # defined by this "step" by using `where` key in their own data.
 @dataclasses.dataclass
 class PrepareMultihostData(tmt.steps.prepare.PrepareStepData):
-    roles: Dict[str, List[str]] = dataclasses.field(default_factory=dict)
-    hosts: Dict[str, str] = dataclasses.field(default_factory=dict)
+    roles: Dict[str, List[str]] = field(default_factory=dict)
+    hosts: Dict[str, str] = field(default_factory=dict)
 
 
 @tmt.steps.provides_method('multihost')

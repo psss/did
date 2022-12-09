@@ -1,22 +1,27 @@
 import dataclasses
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, cast
 
-import click
 import fmf
 
 import tmt
-import tmt.options
 import tmt.steps
 import tmt.steps.prepare
 import tmt.utils
 from tmt.steps.provision import Guest
-from tmt.utils import ShellScript
+from tmt.utils import ShellScript, field
 
 
 # TODO: remove `ignore` with follow-imports enablement
 @dataclasses.dataclass
 class PrepareShellData(tmt.steps.prepare.PrepareStepData):
-    script: List[ShellScript] = dataclasses.field(default_factory=list)
+    script: List[ShellScript] = field(
+        default_factory=list,
+        option=('-s', '--script'),
+        multiple=True,
+        metavar='SCRIPT',
+        help='Shell script to be executed. Can be used multiple times.',
+        normalize=tmt.utils.normalize_shell_script_list
+        )
 
     # ignore[override] & cast: two base classes define to_spec(), with conflicting
     # formal types.
@@ -64,16 +69,6 @@ class PrepareShell(tmt.steps.prepare.PreparePlugin):
     """
 
     _data_class = PrepareShellData
-
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options """
-        return [
-            click.option(
-                '-s', '--script', metavar='SCRIPT',
-                multiple=True,
-                help='Shell script to be executed, can be used multiple times.')
-            ] + super().options(how)
 
     def go(self, guest: Guest) -> None:
         """ Prepare the guests """
