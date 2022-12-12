@@ -85,14 +85,27 @@ description:
         - implemented-by: /tmt/steps/report/polarion.py
 
 /reportportal:
-    summary: Send a JUnit report file to a ReportPortal instance
+    summary: Report test results to a ReportPortal instance
     story:
         As a tester I want to review results in a nicely arranged
         web page with links to detailed test output.
     description:
-        Send a JUnit report with test results to a ReportPortal instance.
-    example: |
-        tmt run --all report --how reportportal --url URL --token TOKEN
+        Prepare a JUnit report with test results, zip it and send
+        it to a ReportPortal instance.
+    example:
+      - |
+        # Set environment variables with the server url and token
+        export TMT_REPORT_REPORTPORTAL_URL=...
+        export TMT_REPORT_REPORTPORTAL_TOKEN=...
+      - |
+        # Enable ReportPortal report from the command line
+        tmt run --all report --how reportportal --project=baseosqe --launch-name=maven
+      - |
+        # Use ReportPortal as the default report for given plan
+        report:
+            how: reportportal
+            project: baseosqe
+            launch-name: maven
     link:
         - implemented-by: /tmt/steps/report/reportportal.py
 

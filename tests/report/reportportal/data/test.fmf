@@ -1,0 +1,11 @@
+/good:
+    summary: Passing test
+    test: echo "Everything's fine!"
+
+/bad:
+    summary: Failing test
+    test: echo "Something bad happened!"; false
+
+/weird:
+    summary: An error encountered
+    test: this-is-a-weird-command

@@ -3,9 +3,7 @@ import io
 import os
 import types
 import zipfile
-from typing import List, Optional
-
-import click
+from typing import Optional
 
 import tmt.steps.report
 import tmt.utils
@@ -31,22 +29,43 @@ def import_junit_xml() -> None:
 
 @dataclasses.dataclass
 class ReportReportPortalData(tmt.steps.report.ReportStepData):
-    url: Optional[str] = None
-    project: Optional[str] = None
-    token: Optional[str] = None
-    launch_name: Optional[str] = None
+    url: Optional[str] = tmt.utils.field(
+        option="--url",
+        metavar="URL",
+        default=os.environ.get("TMT_REPORT_REPORTPORTAL_URL"),
+        help="The URL of the ReportPortal instance where the data should be sent to.")
+    token: Optional[str] = tmt.utils.field(
+        option="--token",
+        metavar="TOKEN",
+        default=os.environ.get("TMT_REPORT_REPORTPORTAL_TOKEN"),
+        help="The token to use for upload to the ReportPortal instance.")
+    project: Optional[str] = tmt.utils.field(
+        option="--project",
+        metavar="PROJECT",
+        default=None,
+        help="The project name which is used to create the full URL.")
+    launch_name: Optional[str] = tmt.utils.field(
+        option="--launch-name",
+        metavar="NAME",
+        default=None,
+        help="The launch name (base name of run id used by default).")
 
 
 @tmt.steps.provides_method("reportportal")
 class ReportReportPortal(tmt.steps.report.ReportPlugin):
     """
-    Send results in JUnit format to a ReportPortal instance
+    Report test results to a ReportPortal instance
 
-    Requires a TOKEN for authentication, a URL of the ReportPortal instance and
-    the PROJECT name. The optional launch NAME is passed to ReportPortal.
+    Requires a TOKEN for authentication, a URL of the ReportPortal
+    instance and the PROJECT name. In addition to command line options
+    it's possible to use environment variables to set the url and token:
 
-    Assuming the URL and TOKEN variables are provided by the environment, the
-    config can look like this:
+        export TMT_REPORT_REPORTPORTAL_URL=...
+        export TMT_REPORT_REPORTPORTAL_TOKEN=...
+
+    The optional launch NAME is passed to ReportPortal. Assuming the URL
+    and TOKEN variables are provided by the environment, the config can
+    look like this:
 
         report:
             how: reportportal
@@ -56,24 +75,6 @@ class ReportReportPortal(tmt.steps.report.ReportPlugin):
 
     _data_class = ReportReportPortalData
 
-    @classmethod
-    def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:
-        """ Prepare command line options """
-        return [
-            click.option(
-                "--url", envvar="TMT_REPORT_REPORTPORTAL_URL", metavar="URL", required=True,
-                help="The URL of the ReportPortal instance where the data should be sent to."),
-            click.option(
-                "--project", metavar="PROJECT", required=True,
-                help="The project name which is used to create the full URL."),
-            click.option(
-                "--token", envvar="TMT_REPORT_REPORTPORTAL_TOKEN", metavar="TOKEN", required=True,
-                help="The token to use for upload to the ReportPortal instance."),
-            click.option(
-                "--launch-name", metavar="NAME",
-                help="The launch name."),
-            ] + super().options(how)
-
     def go(self) -> None:
         """
         Read executed tests, prepare junit, compress it to a zip zile and
@@ -82,12 +83,36 @@ class ReportReportPortal(tmt.steps.report.ReportPlugin):
 
         super().go()
 
+        # Check the data, show interesting info to the user
+        # Required fields are: url, token and project
+        server = self.get("url")
+        if not server:
+            raise tmt.utils.ReportError("No ReportPortal server url provided.")
+        server = server.rstrip("/")
+
+        token = self.get("token")
+        if not token:
+            raise tmt.utils.ReportError("No ReportPortal token provided.")
+
+        project = self.get("project")
+        if not project:
+            raise tmt.utils.ReportError("No ReportPortal project provided.")
+        self.info("project", project, color="green")
+
+        # Use provided launch name, default to run workdir name
+        assert self.step.plan.my_run is not None
+        assert self.step.plan.my_run.workdir is not None
+        launch_name = self.get("launch-name") or os.path.basename(self.step.plan.my_run.workdir)
+        self.info("launch", launch_name, color="green")
+
+        # Generate a xUnit report
         import_junit_xml()
         assert junit_xml is not None
         suite = junit.make_junit_xml(self)
         data = junit_xml.TestSuite.to_xml_string([suite])
-        bytestream = io.BytesIO()
 
+        # Zip the report
+        bytestream = io.BytesIO()
         with zipfile.ZipFile(bytestream, "w", compression=zipfile.ZIP_DEFLATED,
                              compresslevel=1) as zipstream:
             # XML file names are irrelevant to ReportPortal
@@ -95,16 +120,14 @@ class ReportReportPortal(tmt.steps.report.ReportPlugin):
                 entry.write(data.encode("utf-8"))
         bytestream.seek(0)
 
+        # Send the report to the ReportPortal instance
         with tmt.utils.retry_session() as session:
-            assert self.step.plan.my_run is not None
-            assert self.step.plan.my_run._workdir is not None
-            launch_name = self.get("launch_name") or os.path.basename(
-                self.step.plan.my_run._workdir)
-            url = self.get("url") + "/api/v1/" + self.get("project") + "/launch/import"
+            url = f"{server}/api/v1/{project}/launch/import"
+            self.debug(f"Send the report to '{url}'.")
             response = session.post(
                 url,
                 headers={
-                    "Authorization": "bearer " + self.get("token"),
+                    "Authorization": "bearer " + token,
                     "accept": "*/*",
                     },
                 files={
@@ -113,11 +136,15 @@ class ReportReportPortal(tmt.steps.report.ReportPlugin):
                     },
                 )
 
+        # Handle the response
+        try:
+            message = tmt.utils.yaml_to_dict(response.text).get("message")
+        except (tmt.utils.GeneralError, KeyError):
+            message = response.text
         if not response.ok:
-            message = response.json().get("message")
-            if message is None:
-                message = response.text
             raise tmt.utils.ReportError(
-                "Received non-ok status code from ReportPortal, response text is: " + message)
+                f"Received non-ok status code from ReportPortal, response text is: {message}")
         else:
-            self.info("output", "Response code: " + str(response.status_code), "yellow")
+            self.debug(f"Response code from the server: {response.status_code}")
+            self.debug(f"Message from the server: {message}")
+            self.info("report", "Successfully uploaded.", "yellow")

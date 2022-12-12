@@ -1,0 +1,10 @@
+discover:
+    how: fmf
+provision:
+    how: local
+execute:
+    how: tmt
+report:
+    how: reportportal
+    project: tmt
+    launch-name: smoke

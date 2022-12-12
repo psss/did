@@ -1,0 +1,6 @@
+summary: Report test results into ReportPortal
+description:
+    Run three tests (pass, fail and error) and report the results
+    to the ReportPortal instance. As for now just for local
+    testing as it needs a running instance.
+enabled: false
