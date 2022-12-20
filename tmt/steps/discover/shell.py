@@ -197,6 +197,12 @@ class DiscoverShellData(tmt.steps.discover.DiscoverStepData):
         default=None,
         help="Branch, tag or commit specifying the git revision.")
 
+    keep_git_metadata: Optional[bool] = tmt.utils.field(
+        option="--keep-git-metadata",
+        is_flag=True,
+        default=False,
+        help="keep the git metadata if a repo is synced to guest.")
+
     def _normalize_tests(
             self,
             value: List[Dict[str, Any]],
@@ -315,7 +321,9 @@ class DiscoverShell(tmt.steps.discover.DiscoverPlugin):
             self.run(Command('git', 'checkout', '-f', str(ref)), cwd=testdir)
 
         # Remove .git so that it's not copied to the SUT
-        shutil.rmtree(os.path.join(testdir, '.git'))
+        # if 'keep-git-metadata' option is not specified
+        if not self.get('keep_git_metadata', False):
+            shutil.rmtree(os.path.join(testdir, '.git'))
 
     def go(self) -> None:
         """ Discover available tests """

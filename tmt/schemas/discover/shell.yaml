@@ -37,6 +37,9 @@ properties:
   order:
     $ref: "/schemas/core#/definitions/order"
 
+  keep-git-metadata:
+    type: boolean
+
   tests:
     type: array
     items:
