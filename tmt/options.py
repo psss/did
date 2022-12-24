@@ -12,7 +12,7 @@ import tmt.utils
 # When dealing with older Click packages (I'm looking at you, Python 3.6),
 # we need to define FC on our own.
 try:
-    from click.decorators import FC  # type: ignore[attr-defined]
+    from click.decorators import FC
 
 except ImportError:
     from typing import TypeVar, Union
@@ -37,7 +37,7 @@ _ClickOptionDecoratorType = Callable[[FC], FC]
 # * we could do that right here, because right now, we don't care too much about
 # what this `foo` type actually is - what's important is the identity, return type
 # matches the type of the argument.
-ClickOptionDecoratorType = _ClickOptionDecoratorType[Any]  # type: ignore[misc]
+ClickOptionDecoratorType = _ClickOptionDecoratorType[Any]
 
 # Verbose, debug and quiet output
 VERBOSITY_OPTIONS: List[ClickOptionDecoratorType] = [
@@ -274,6 +274,7 @@ def create_method_class(methods: MethodDictType) -> Type[click.Command]:
             if how and self._method is None:
                 # Use run for logging, steps may not be initialized yet
                 assert context.obj.run is not None  # narrow type
+                assert self.name is not None  # narrow type
                 show_step_method_hints(context.obj.run, self.name, how)
                 raise tmt.utils.SpecificationError(
                     f"Unsupported {self.name} method '{how}'.")

@@ -7,6 +7,7 @@ import fmf.utils
 import tmt.base
 import tmt.result
 import tmt.steps
+import tmt.steps.discover.fmf
 import tmt.steps.execute
 import tmt.utils
 from tmt.steps.discover import DiscoverPlugin
@@ -125,10 +126,10 @@ class ExecuteUpgrade(ExecuteInternal):
                 '--upgrade-path', '-p', metavar='PLAN_NAME',
                 help='Upgrade path corresponding to a plan name in the repository '
                 'with upgrade tasks.'),
-            DiscoverFmf.REF_OPTION,
-            DiscoverFmf.TEST_OPTION,
-            DiscoverFmf.FILTER_OPTION,
-            DiscoverFmf.EXCLUDE_OPTION
+            tmt.steps.discover.fmf.REF_OPTION,
+            tmt.steps.discover.fmf.TEST_OPTION,
+            tmt.steps.discover.fmf.FILTER_OPTION,
+            tmt.steps.discover.fmf.EXCLUDE_OPTION
             ] + super().options(how)
 
     @property

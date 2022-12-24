@@ -338,9 +338,7 @@ if run_callback is None:
 
 
 # TODO: commands is unknown, needs revisit
-# ignore[misc]: untyped decorator. This might be a click issue, but it's
-# probably caused by how we initialize clean_callback.
-@run_callback()  # type: ignore[misc]
+@run_callback()
 @click.pass_context
 def finito(
         click_context: Context,
@@ -1295,9 +1293,7 @@ if clean_callback is None:
     clean_callback = clean.resultcallback
 
 
-# ignore[misc]: untyped decorator. This might be a click issue, but it's
-# probably caused by how we initialize clean_callback.
-@clean_callback()  # type: ignore[misc]
+@clean_callback()
 @click.pass_context
 def perform_clean(
         click_context: Context,
@@ -1458,6 +1454,14 @@ def lint(context: Context, **kwargs: Any) -> None:
         try:
             context.forward(command)
         except SystemExit as e:
+            # SystemExit.code is Union[str, int, None], because that's all accepted by
+            # `sys.exit()` (see https://docs.python.org/3.9/library/sys.html#sys.exit).
+            # Our code is sane, returns either zero or another integer, so let's add
+            # a check & raise an error should we run into an unexpected type. It'd mean
+            # subcommands suddenly started returning non-integer exit code, and why would
+            # they do anything like that??
+            if not isinstance(e.code, int):
+                raise tmt.utils.GeneralError(f"Unexpected non-integer exit code '{e.code}'.")
             exit_code |= e.code
     raise SystemExit(exit_code)
 

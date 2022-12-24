@@ -627,7 +627,7 @@ def read_nitrate(
     except (nitrate.NitrateError,
             nitrate.xmlrpc_driver.NitrateXmlrpcError,
             gssapi.raw.misc.GSSError) as error:
-        raise ConvertError(error)
+        raise ConvertError(str(error))
     if not testcases:
         echo("No {0}testcase found for '{1}'.".format(
             '' if disabled else 'non-disabled ', beaker_task))

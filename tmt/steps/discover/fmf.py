@@ -74,6 +74,20 @@ class DiscoverFmfStepData(tmt.steps.discover.DiscoverStepData):
             self.ref = self.revision
 
 
+REF_OPTION = click.option(
+    '-r', '--ref', metavar='REVISION',
+    help='Branch, tag or commit specifying the git revision.')
+TEST_OPTION = click.option(
+    '-t', '--test', metavar='NAMES', multiple=True,
+    help='Select tests by name.')
+FILTER_OPTION = click.option(
+    '-F', '--filter', metavar='FILTERS', multiple=True,
+    help='Include only tests matching the filter.')
+EXCLUDE_OPTION = click.option(
+    '-x', '--exclude', metavar='[REGEXP]', multiple=True,
+    help="Exclude a regular expression from search result.")
+
+
 @tmt.steps.provides_method('fmf')
 class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     """
@@ -149,19 +163,6 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
 
     _data_class = DiscoverFmfStepData
 
-    REF_OPTION = click.option(
-        '-r', '--ref', metavar='REVISION',
-        help='Branch, tag or commit specifying the git revision.')
-    TEST_OPTION = click.option(
-        '-t', '--test', metavar='NAMES', multiple=True,
-        help='Select tests by name.')
-    FILTER_OPTION = click.option(
-        '-F', '--filter', metavar='FILTERS', multiple=True,
-        help='Include only tests matching the filter.')
-    EXCLUDE_OPTION = click.option(
-        '-x', '--exclude', metavar='[REGEXP]', multiple=True,
-        help="Exclude a regular expression from search result.")
-
     # Options which require .git to be present for their functionality
     _REQUIRES_GIT = (
         "ref",
@@ -177,7 +178,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             click.option(
                 '-u', '--url', metavar='REPOSITORY',
                 help='URL of the git repository with fmf metadata.'),
-            cls.REF_OPTION,
+            REF_OPTION,
             click.option(
                 '--modified-url', metavar='REPOSITORY',
                 help='URL of the reference git repository with fmf metadata.'),
@@ -192,13 +193,13 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
             click.option(
                 '-p', '--path', metavar='ROOT',
                 help='Path to the metadata tree root.'),
-            cls.TEST_OPTION,
+            TEST_OPTION,
             click.option(
                 '--link', metavar="RELATION:TARGET", multiple=True,
                 help="Filter by linked objects (regular expressions are "
                      "supported for both relation and target)."),
-            cls.FILTER_OPTION,
-            cls.EXCLUDE_OPTION,
+            FILTER_OPTION,
+            EXCLUDE_OPTION,
             click.option(
                 '--fmf-id', default=False, is_flag=True,
                 help='Show fmf identifiers for tests discovered in plan.'),
