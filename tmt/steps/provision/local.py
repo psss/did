@@ -144,7 +144,3 @@ class ProvisionLocal(tmt.steps.provision.ProvisionPlugin):
     def guest(self) -> Optional[GuestLocal]:
         """ Return the provisioned guest """
         return self._guest
-
-    def requires(self) -> List[str]:
-        """ List of required packages needed for workdir sync """
-        return GuestLocal.requires()

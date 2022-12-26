@@ -1038,11 +1038,6 @@ class GuestSsh(Guest):
 
         return CheckRsyncOutcome.INSTALLED
 
-    @classmethod
-    def requires(cls) -> List[str]:
-        """ No extra requires needed """
-        return []
-
 
 @dataclasses.dataclass
 class ProvisionStepData(tmt.steps.StepData):
@@ -1129,8 +1124,16 @@ class ProvisionPlugin(tmt.steps.GuestlessPlugin):
         raise NotImplementedError()
 
     def requires(self) -> List[str]:
-        """ List of required packages needed for workdir sync """
-        return Guest.requires()
+        """
+        Provide a list of packages required for the workdir sync.
+
+        By default, plugin's guest class - :py:attr:`ProvisionPlugin._guest_class` - is asked to
+        provide the list of required packages via :py:meth:`Guest.requires` method.
+
+        :returns: a list of package names.
+        """
+
+        return self._guest_class.requires()
 
     @classmethod
     def options(cls, how: Optional[str] = None) -> List[tmt.options.ClickOptionDecoratorType]:

@@ -318,7 +318,3 @@ class ProvisionPodman(tmt.steps.provision.ProvisionPlugin):
     def guest(self) -> Optional[GuestContainer]:
         """ Return the provisioned guest """
         return self._guest
-
-    def requires(self) -> List[str]:
-        """ List of required packages needed for workdir sync """
-        return GuestContainer.requires()
