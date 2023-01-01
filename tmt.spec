@@ -48,6 +48,7 @@ BuildRequires: python%{python3_pkgversion}-testcloud >= 0.8.2
 BuildRequires: python%{python3_pkgversion}-markdown
 BuildRequires: python%{python3_pkgversion}-junit_xml
 BuildRequires: python%{python3_pkgversion}-ruamel-yaml
+BuildRequires: python%{python3_pkgversion}-jinja2
 # Only needed for rhel-8 (it has python3.6)
 %if 0%{?rhel} == 8
 BuildRequires: python%{python3_pkgversion}-typing-extensions
@@ -104,7 +105,6 @@ Additional dependencies needed for test metadata import and export.
 %package report-html
 Summary: Report plugin with support for generating web pages
 Requires: tmt == %{version}-%{release}
-Requires: python3-jinja2
 
 %description report-html
 Generate test results in the html format. Quickly review test

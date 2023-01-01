@@ -1,11 +1,11 @@
 import dataclasses
 import os
 import os.path
-import types
 import webbrowser
 from typing import List, Optional
 
 import click
+import jinja2
 import pkg_resources
 
 import tmt
@@ -15,22 +15,6 @@ import tmt.steps.report
 
 HTML_TEMPLATE_PATH = pkg_resources.resource_filename(
     'tmt', 'steps/report/html/template.html.j2')
-
-jinja2: Optional[types.ModuleType] = None
-
-
-def import_jinja2() -> None:
-    """
-    Import jinja2 module only when needed
-
-    Until we have a separate package for each plugin.
-    """
-    global jinja2
-    try:
-        import jinja2
-    except ImportError:
-        raise tmt.utils.ReportError(
-            "Missing 'jinja2', fixable by 'pip install tmt[report-html]'")
 
 
 @dataclasses.dataclass
@@ -72,9 +56,6 @@ class ReportHtml(tmt.steps.report.ReportPlugin):
     def go(self) -> None:
         """ Process results """
         super().go()
-
-        import_jinja2()
-        assert jinja2
 
         # Prepare the template
         environment = jinja2.Environment()

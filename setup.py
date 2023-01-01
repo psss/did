@@ -48,6 +48,7 @@ install_requires = [
     'click',
     'requests',
     'ruamel.yaml',
+    'jinja2',
     ]
 
 # typing_extensions is needed with Python 3.7 and older, types imported
@@ -79,7 +80,6 @@ extras_require = {
         'markdown',
         'python-bugzilla',
         'html2text'],
-    'report-html': ['jinja2'],
     'report-junit': ['junit_xml'],
     'report-polarion': ['junit_xml', 'pylero'],
     'export-polarion': ['pylero'],
