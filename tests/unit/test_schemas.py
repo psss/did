@@ -2,6 +2,7 @@ import itertools
 import os
 import textwrap
 
+import fmf
 import pytest
 
 import tmt
@@ -103,3 +104,92 @@ def test_stories_schema(tree, story):
 @pytest.mark.parametrize(('tree', 'plan'), PLANS, ids=extract_testcase_id)
 def test_plans_schema(tree, plan):
     validate_node(tree, plan, 'plan.yaml', 'Plan', plan.name)
+
+
+#
+# Exercise the HW requirement schema with some interesting examples
+#
+@pytest.mark.parametrize(
+    ('hw',),
+    [
+        (
+            """
+            ---
+
+            arch: x86_64
+            boot:
+                method: bios
+            compatible:
+                distro:
+                    - rhel-7
+                    - rhel-8
+            cpu:
+                sockets: 1
+                cores: 2
+                threads: 8
+                cores-per-socket: 2
+                threads-per-core: 4
+                processors: 8
+                model: 62
+                model-name: Haswell
+                family: 6
+                family-name: Skylake
+            disk:
+                - size: 40 GiB
+                - size: 120 GiB
+            hostname: foo.dot.com
+            memory: 8 GiB
+            network:
+                - type: eth
+                - type: eth
+            tpm:
+                version: "2.0"
+            virtualization:
+                is-supported: true
+                is-virtualized: false
+                hypervisor: xen
+            """,
+            ),
+        (
+            """
+            ---
+
+            and:
+              - arch: x86_64
+              - cpu:
+                  model-name: foo
+              - memory: 8 GiB
+              - or:
+                  - virtualization:
+                      is-supported: true
+                  - virtualization:
+                      is-supported: false
+            """,
+            )
+        ],
+    ids=[
+        'all-requirements',
+        'conditions'
+        ]
+    )
+def test_hw_schema_examples(hw: str, request) -> None:
+    tree = tmt.Tree()
+
+    # Our hardware schema is supposed to be referenced from provision plugin schemas.
+    # Instead of cutting it out, we can use a provision plugin schema & prepare the
+    # fmf node correctly, to pretend it comes from `provision` step. The only required
+    # field is usually `how`.
+    node = fmf.Tree(
+        {
+            'how': 'artemis',
+            'hardware': tmt.utils.yaml_to_dict(textwrap.dedent(hw), yaml_type='safe')
+            }
+        )
+
+    validate_node(
+        tree,
+        node,
+        os.path.join('provision', 'artemis.yaml'),
+        'HW requirements',
+        request.node.callspec.id
+        )

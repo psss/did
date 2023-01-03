@@ -10,6 +10,9 @@ $id: /schemas/provision/hardware
 $schema: http://json-schema.org/draft-07/schema
 
 definitions:
+  # HW requirements: `arch`
+  arch:
+    type: string
 
   # HW requirements: `boot` block
   boot:
@@ -185,6 +188,9 @@ definitions:
     type: object
 
     properties:
+      arch:
+        "$ref": "#/definitions/arch"
+
       boot:
         "$ref": "#/definitions/boot"
 
@@ -225,14 +231,7 @@ definitions:
       "and":
         type: array
         items:
-          anyOf:
-            - "$ref": "#/definitions/boot"
-            - "$ref": "#/definitions/compatible"
-            - "$ref": "#/definitions/cpu"
-            - "$ref": "#/definitions/disks"
-            - "$ref": "#/definitions/networks"
-            - "$ref": "#/definitions/tpm"
-            - "$ref": "#/definitions/virtualization"
+          oneOf:
             - "$ref": "#/definitions/block"
             - "$ref": "#/definitions/and"
             - "$ref": "#/definitions/or"
@@ -246,14 +245,7 @@ definitions:
       "or":
         type: array
         items:
-          anyOf:
-            - "$ref": "#/definitions/boot"
-            - "$ref": "#/definitions/compatible"
-            - "$ref": "#/definitions/cpu"
-            - "$ref": "#/definitions/disks"
-            - "$ref": "#/definitions/networks"
-            - "$ref": "#/definitions/tpm"
-            - "$ref": "#/definitions/virtualization"
+          oneOf:
             - "$ref": "#/definitions/block"
             - "$ref": "#/definitions/and"
             - "$ref": "#/definitions/or"
@@ -262,14 +254,7 @@ definitions:
       - "or"
 
   hardware:
-    anyOf:
-      - "$ref": "#/definitions/boot"
-      - "$ref": "#/definitions/compatible"
-      - "$ref": "#/definitions/cpu"
-      - "$ref": "#/definitions/disks"
-      - "$ref": "#/definitions/networks"
-      - "$ref": "#/definitions/tpm"
-      - "$ref": "#/definitions/virtualization"
+    oneOf:
       - "$ref": "#/definitions/block"
       - "$ref": "#/definitions/and"
       - "$ref": "#/definitions/or"
