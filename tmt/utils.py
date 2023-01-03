@@ -16,6 +16,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import textwrap
 import time
 import unicodedata
 import urllib.parse
@@ -305,13 +306,19 @@ class ShellScript:
             wrapper.
         """
 
-        self._script = script
+        self._script = textwrap.dedent(script)
 
     def __str__(self) -> str:
         return self._script
 
     def __add__(self, other: 'ShellScript') -> 'ShellScript':
         return ShellScript.from_scripts([self, other])
+
+    def __and__(self, other: 'ShellScript') -> 'ShellScript':
+        return ShellScript(f'{self} && {other}')
+
+    def __or__(self, other: 'ShellScript') -> 'ShellScript':
+        return ShellScript(f'{self} || {other}')
 
     @classmethod
     def from_scripts(cls, scripts: List['ShellScript']) -> 'ShellScript':

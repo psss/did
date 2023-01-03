@@ -3,7 +3,7 @@ import os
 import re
 import shutil
 import sys
-from typing import List, Optional, cast
+from typing import List, Optional, Tuple, cast
 
 import click
 import fmf
@@ -29,9 +29,25 @@ class InstallBase(tmt.utils.Common):
     """ Base class for installation implementations """
 
     # Each installer knows its package manager and copr plugin
-    package_manager: Optional[str] = None
-    copr_plugin: Optional[str] = None
-    command: Optional[str] = None
+    package_manager: str
+    copr_plugin: str
+
+    # Save a prepared command and options for package operations
+    command: Command
+    options: Command
+
+    use_sudo: bool = False
+
+    skip_missing: bool = False
+
+    packages: List[str]
+    directories: List[str]
+    exclude: List[str]
+
+    local_packages: List[str]
+    remote_packages: List[str]
+    debuginfo_packages: List[str]
+    repository_packages: List[str]
 
     def __init__(self, *, parent: tmt.steps.prepare.PreparePlugin, guest: Guest) -> None:
         """ Initialize installation data """
@@ -41,16 +57,25 @@ class InstallBase(tmt.utils.Common):
         # Get package related data from the plugin
         assert self.parent is not None
         # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
-        self.packages = cast(tmt.steps.prepare.PreparePlugin, self.parent).get("package", [])
-        self.directories = cast(tmt.steps.prepare.PreparePlugin, self.parent).get("directory", [])
-        self.exclude = cast(tmt.steps.prepare.PreparePlugin, self.parent).get("exclude", [])
+        parent = cast(tmt.steps.prepare.PreparePlugin, self.parent)
+
+        self.packages = parent.get("package", [])
+        self.directories = parent.get("directory", [])
+        self.exclude = parent.get("exclude", [])
+
         if not self.packages and not self.directories:
             self.debug("No packages for installation found.", level=3)
 
+        self.skip_missing = bool(parent.get('missing') == 'skip')
+        self.use_sudo = self._test_sudo()
+
         # Prepare package lists and installation command
         self.prepare_packages()
-        self.prepare_sudo()
-        self.prepare_command()
+
+        self.command, self.options = self.prepare_command()
+
+        self.debug(f"Using '{self.command}' for all package operations.")
+        self.debug(f"Options for package operations are '{self.options}'.")
 
     def prepare_packages(self) -> None:
         """ Process package names and directories """
@@ -83,7 +108,7 @@ class InstallBase(tmt.utils.Common):
                     self.debug(f"Found rpm '{filename}'.", level=3)
                     self.local_packages.append(os.path.join(directory, filename))
 
-    def prepare_sudo(self) -> None:
+    def _test_sudo(self) -> bool:
         """ Check if sudo is needed for installation """
         self.debug('Check if sudo is necessary.', level=2)
         command = Command('whoami')
@@ -96,30 +121,66 @@ class InstallBase(tmt.utils.Common):
                 user_output.stdout,
                 user_output.stderr)
 
-        self.sudo = '' if user_output.stdout.strip() == 'root' else 'sudo '
+        return user_output.stdout.strip() != 'root'
 
-    def prepare_command(self) -> None:
-        """ Prepare installation command"""
+    def prepare_command(self) -> Tuple[Command, Command]:
+        """ Prepare installation command and subcommand options """
         raise NotImplementedError
 
     def prepare_repository(self) -> None:
         """ Configure additional repository """
         raise NotImplementedError
 
-    def list_packages(self, package_list: List[str], title: str) -> str:
-        """ Show package info and return quoted package names """
+    def operation_script(self, subcommand: Command, args: Command) -> ShellScript:
+        """
+        Render a shell script to perform the requested package operation.
+
+        .. warning::
+
+           Each and every argument from ``args`` **will be** sanitized by
+           escaping. This is not compatible with operations that wish to use
+           shell wildcards. Such operations need to be constructed manually.
+
+        :param subcommand: package manager subcommand, e.g. ``install`` or ``erase``.
+        :param args: arguments for the subcommand, e.g. package names.
+        """
+
+        return ShellScript(
+            f"{self.command.to_script()} {subcommand.to_script()} "
+            f"{self.options.to_script()} {args.to_script()}")
+
+    def perform_operation(self, subcommand: Command, args: Command) -> tmt.utils.CommandOutput:
+        """
+        Perform the requested package operation.
+
+        .. warning::
+
+           Each and every argument from ``args`` **will be** sanitized by
+           escaping. This is not compatible with operations that wish to use
+           shell wildcards. Such operations need to be constructed manually.
+
+        :param subcommand: package manager subcommand, e.g. ``install`` or ``erase``.
+        :param args: arguments for the subcommand, e.g. package names.
+        :returns: command output.
+        """
+
+        return self.guest.execute(self.operation_script(subcommand, args))
+
+    def list_packages(self, packages: List[str], title: str) -> Command:
+        """ Show package info and return package names """
+
         # Show a brief summary by default
         if not self.opt('verbose'):
-            summary = fmf.utils.listed(package_list, max=3)
+            summary = fmf.utils.listed(packages, max=3)
             self.info(title, summary, 'green')
         # Provide a full list of packages in verbose mode
         else:
-            summary = fmf.utils.listed(package_list, 'package')
+            summary = fmf.utils.listed(packages, 'package')
             self.info(title, summary + ' requested', 'green')
-            for package in sorted(package_list):
+            for package in sorted(packages):
                 self.verbose(package, shift=1)
-        # Return quoted package names
-        return " ".join([tmt.utils.quote(package) for package in package_list])
+
+        return Command(*packages)
 
     def enable_copr_epel6(self, copr: str) -> None:
         """ Manually enable copr repositories for epel6 """
@@ -154,11 +215,9 @@ class InstallBase(tmt.utils.Common):
         self.debug('Make sure the copr plugin is available.')
         try:
             self.guest.execute(
-                ShellScript(
-                    f'rpm -q {self.copr_plugin} || {self.command} install -y {self.copr_plugin}'
-                    ),
-                silent=True
-                )
+                ShellScript(f'rpm -q {self.copr_plugin}')
+                | self.operation_script(Command('install'), Command('-y', self.copr_plugin)),
+                silent=True)
         # Enable repositories manually for epel6
         except tmt.utils.RunError:
             for copr in coprs:
@@ -168,7 +227,10 @@ class InstallBase(tmt.utils.Common):
         else:
             for copr in coprs:
                 self.info('copr', copr, 'green')
-                self.guest.execute(ShellScript(f"{self.command} copr enable -y {copr}"))
+                self.perform_operation(
+                    Command('copr'),
+                    Command('enable', '-y', copr)
+                    )
 
     def prepare_install_local(self) -> None:
         """ Copy packages to the test system """
@@ -219,55 +281,82 @@ class InstallBase(tmt.utils.Common):
 class InstallDnf(InstallBase):
     """ Install packages using dnf """
 
-    package_manager: Optional[str] = "dnf"
-    copr_plugin: Optional[str] = "dnf-plugins-core"
+    package_manager = "dnf"
+    copr_plugin = "dnf-plugins-core"
 
-    def prepare_command(self) -> None:
+    def prepare_command(self) -> Tuple[Command, Command]:
         """ Prepare installation command """
-        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
-        parent = cast(tmt.steps.prepare.PreparePlugin, self.parent)
-        self.options = '-y'
-        self.skip = ' --skip-broken' if parent.get('missing') == 'skip' else ''
-        for package in self.exclude:
-            self.options += " --exclude " + tmt.utils.quote(package)
 
-        self.command = f"{self.sudo}{self.package_manager}{self.skip}"
-        self.debug(f"Using '{self.command}' for all package operations.")
-        self.debug(f"Options for package operations are '{self.options}'")
+        options = Command('-y')
+
+        for package in self.exclude:
+            options += Command('--exclude', package)
+
+        command = Command()
+
+        if self.use_sudo:
+            command += Command('sudo')
+
+        command += Command(self.package_manager)
+
+        if self.skip_missing:
+            command += Command('--skip-broken')
+
+        return (command, options)
 
     def install_local(self) -> None:
         """ Install copied local packages """
         # Use both dnf install/reinstall to get all packages refreshed
         # FIXME Simplify this once BZ#1831022 is fixed/implemeted.
-        self.guest.execute(
-            ShellScript(f"{self.command} install {self.options} {self.rpms_directory}/*"))
-        self.guest.execute(
-            ShellScript(f"{self.command} reinstall {self.options} {self.rpms_directory}/*"))
+        self.guest.execute(ShellScript(
+            f"""
+            {self.command.to_script()} install {self.options.to_script()} {self.rpms_directory}/*
+            """
+            ))
+        self.guest.execute(ShellScript(
+            f"""
+            {self.command.to_script()} reinstall {self.options.to_script()} {self.rpms_directory}/*
+            """
+            ))
+
         summary = fmf.utils.listed(self.local_packages, 'local package')
         self.info('total', f"{summary} installed", 'green')
 
     def install_from_url(self) -> None:
         """ Install packages directly from URL """
-        packages = self.list_packages(self.remote_packages, title="remote package")
-        self.guest.execute(ShellScript(f"{self.command} install {self.options} {packages}"))
+        self.perform_operation(
+            Command('install'),
+            self.list_packages(self.remote_packages, title="remote package")
+            )
 
     def install_from_repository(self) -> None:
         """ Install packages from the repository """
         packages = self.list_packages(self.repository_packages, title="package")
-        check = f'rpm -q --whatprovides {packages}'
+
         # Check and install
         self.guest.execute(
-            ShellScript(f"{check} || {self.command} install {self.options} {packages}"))
+            ShellScript(f'rpm -q --whatprovides {packages.to_script()}')
+            | self.operation_script(Command('install'), packages)
+            )
 
     def install_debuginfo(self) -> None:
         """ Install debuginfo packages """
         packages = self.list_packages(self.debuginfo_packages, title="debuginfo")
+
         # Make sure debuginfo-install is present on the target system
-        self.guest.execute(ShellScript(f"{self.command} install -y /usr/bin/debuginfo-install"))
-        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
-        parent = cast(tmt.steps.prepare.PreparePlugin, self.parent)
-        skip = "--skip-broken " if parent.get("missing") == "skip" else ""
-        self.guest.execute(ShellScript(f"debuginfo-install -y {skip}{packages}"))
+        self.perform_operation(
+            Command('install'),
+            Command('-y', '/usr/bin/debuginfo-install')
+            )
+
+        command = Command('debuginfo-install', '-y')
+
+        if self.skip_missing:
+            command += Command('--skip-broken')
+
+        command += packages
+
+        self.guest.execute(command)
 
 
 class InstallYum(InstallDnf):
@@ -279,13 +368,18 @@ class InstallYum(InstallDnf):
     def install_from_repository(self) -> None:
         """ Install packages from the repository """
         packages = self.list_packages(self.repository_packages, title="package")
+
         # Extra ignore/check for yum to workaround BZ#1920176
-        check = f'rpm -q --whatprovides {packages}'
-        final_check = " || true" if self.skip else f" && {check}"
+        check = ShellScript(f'rpm -q --whatprovides {packages.to_script()}')
+        script = check | self.operation_script(Command('install'), packages)
+
+        if self.skip_missing:
+            script |= ShellScript('true')
+        else:
+            script &= check
+
         # Check and install
-        self.guest.execute(ShellScript(
-            f"{check} || {self.command} install {self.options} {packages}{final_check}"
-            ))
+        self.guest.execute(script)
 
 
 class InstallRpmOstree(InstallBase):
@@ -300,31 +394,33 @@ class InstallRpmOstree(InstallBase):
         self.required_packages = []
         for package in self.repository_packages:
             try:
-                output = self.guest.execute(
-                    ShellScript(f"rpm -q --whatprovides '{package}'"),
-                    silent=True
-                    )
+                output = self.guest.execute(Command('rpm', '-q', package), silent=True)
                 assert output.stdout
                 self.debug(f"Package '{output.stdout.strip()}' already installed.")
             except tmt.utils.RunError:
-                if self.skip:
+                if self.skip_missing:
                     self.recommended_packages.append(package)
                 else:
                     self.required_packages.append(package)
 
-    def prepare_command(self) -> None:
+    def prepare_command(self) -> Tuple[Command, Command]:
         """ Prepare installation command for rpm-ostree"""
-        # FIXME: cast() - https://github.com/teemtee/tmt/issues/1372
-        missing = cast(tmt.steps.prepare.PreparePlugin, self.parent).get("missing")
-        self.skip = True if missing == 'skip' else False
-        self.command = f"{self.sudo}rpm-ostree"
-        self.options = '--apply-live --idempotent --allow-inactive'
+
+        command = Command()
+
+        if self.use_sudo:
+            command += Command('sudo')
+
+        command += Command('rpm-ostree')
+
+        options = Command('--apply-live', '--idempotent', '--allow-inactive')
+
         for package in self.exclude:
             # exclude not supported in rpm-ostree
             self.warn(f"there is no support for rpm-ostree exclude. "
                       f"Package '{package}' may still be installed.")
-        self.debug(f"Using '{self.command}' for all package operations.")
-        self.debug(f"Options for package operations are '{self.options}'.")
+
+        return (command, options)
 
     def install_debuginfo(self) -> None:
         """ Install debuginfo packages """
@@ -335,10 +431,10 @@ class InstallRpmOstree(InstallBase):
         local_packages_installed = []
         for package in self.local_packages:
             try:
-                self.guest.execute(ShellScript(
-                    f"{self.command} install {self.options} "
-                    f"{self.rpms_directory}/{os.path.basename(package)}"
-                    ))
+                self.perform_operation(
+                    Command('install'),
+                    Command(f'{self.rpms_directory}/{os.path.basename(package)}')
+                    )
                 local_packages_installed.append(package)
             except tmt.utils.RunError as error:
                 self.warn(f"Local package '{package}' not installed: {error.stderr}")
@@ -354,21 +450,24 @@ class InstallRpmOstree(InstallBase):
             self.list_packages(self.recommended_packages, title="package")
             for package in self.recommended_packages:
                 try:
-                    self.guest.execute(
-                        ShellScript(
-                            f"{self.command} install {self.options} '{package}'"
-                            )
+                    self.perform_operation(
+                        Command('install'),
+                        Command(package)
                         )
                 except tmt.utils.RunError as error:
-                    if error.stderr and "error: Packages not found" in error.stderr and self.skip:
+                    if error.stderr \
+                            and "error: Packages not found" in error.stderr \
+                            and self.skip_missing:
                         self.warn(f"No match for recommended package '{package}'.")
                         continue
                     raise
 
         # Install required packages
         if self.required_packages:
-            packages = self.list_packages(self.required_packages, title="package")
-            self.guest.execute(ShellScript(f"{self.command} install {self.options} {packages}"))
+            self.perform_operation(
+                Command('install'),
+                self.list_packages(self.required_packages, title="package")
+                )
 
 
 @dataclasses.dataclass
