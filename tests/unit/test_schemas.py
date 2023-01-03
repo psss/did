@@ -142,6 +142,10 @@ def test_plans_schema(tree, plan):
             network:
                 - type: eth
                 - type: eth
+            system:
+                vendor: HPE
+                model: ProLiant DL385 Gen10
+                numa-nodes: ">= 2"
             tpm:
                 version: "2.0"
             virtualization:

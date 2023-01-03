@@ -148,6 +148,27 @@ definitions:
     items:
       "$ref": "#/definitions/network"
 
+  # HW requirements: single `system` item
+  system:
+    type: object
+
+    properties:
+      vendor:
+        type: string
+
+      model:
+        type: string
+
+      numa-nodes:
+        anyOf:
+          - type: string
+          - type: integer
+
+    additionalProperties: false
+
+    # enforce at least one property
+    minProperties: 1
+
   # HW requirements: `tpm` block
   tpm:
     type: object
@@ -211,6 +232,9 @@ definitions:
 
       network:
         "$ref": "#/definitions/networks"
+
+      system:
+        "$ref": "#/definitions/system"
 
       tpm:
         "$ref": "#/definitions/tpm"
