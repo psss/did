@@ -1997,7 +1997,7 @@ FormatWrap = Literal[True, False, 'auto']
 def format(
         key: str,
         value: Union[None, bool, str, List[Any], Dict[Any, Any]] = None,
-        indent: int = 12,
+        indent: int = 24,
         width: int = 72,
         wrap: FormatWrap = 'auto',
         key_color: Optional[str] = 'green',
