@@ -35,6 +35,11 @@ description: |
         (mariadb, mariadb:10.5, httpd, httpd:2.4, perl, perl:5.32,
         ruby, ruby:2.7).
 
+    initiator
+        Name of the service, pipeline or tool which initiated the
+        testing or special value ``human`` for manual testing. See
+        the :ref:`/spec/context/initiator` section for details.
+
     trigger
         The event which triggered testing, see the
         :ref:`/spec/context/trigger` section for the full list

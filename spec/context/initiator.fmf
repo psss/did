@@ -1,0 +1,49 @@
+summary: Definition of the initiator dimension
+
+story:
+    As a user I want to run a custom set of tests based on the
+    service, pipeline or tool which initiated the testing.
+
+description: |
+    Sometimes it is useful to choose a custom set of tests for
+    particular automation service or when tests are run manually.
+    The following values are defined:
+
+    human
+        Test execution was initiated manually by a human.
+
+    packit
+        For jobs initiated by the Packit service.
+        To be implemented.
+
+    fedora-ci
+        Testing in the Fedora CI pipeline.
+        To be implemented.
+
+    centos-ci
+        Testing in the CentOS CI pipeline.
+        To be implemented.
+
+    rhel-ci
+        Testing in the RHEL CI pipeline.
+        To be implemented.
+
+    ewa
+        Errata Workflow Automation jobs.
+        To be implemented.
+
+    Each service, pipeline or tool is responsible to set the value
+    to its name. For manual testing ``--context initiator=human``
+    is expected on the command line.
+
+example: |
+    # Enable the plan only when run manually
+    summary: Tests requiring special environment
+    discover:
+        how: fmf
+        filter: tag:special
+    execute:
+        how: tmt
+    adjust:
+        enabled: false
+        when: initiator != human
