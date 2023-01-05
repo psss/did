@@ -48,7 +48,7 @@ def import_testcloud() -> None:
 
 
 # Testcloud cache to our tmt's workdir root
-TESTCLOUD_DATA = os.path.join(WORKDIR_ROOT, 'testcloud')
+TESTCLOUD_DATA = os.path.join(os.getenv('TMT_WORKDIR_ROOT', WORKDIR_ROOT), 'testcloud')
 TESTCLOUD_IMAGES = os.path.join(TESTCLOUD_DATA, 'images')
 
 # Userdata for cloud-init
