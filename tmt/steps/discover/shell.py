@@ -170,8 +170,17 @@ class TestDescription(
 class DiscoverShellData(tmt.steps.discover.DiscoverStepData):
     tests: List[TestDescription] = dataclasses.field(default_factory=list)
 
-    url: Optional[str] = None
-    ref: Optional[str] = None
+    url: Optional[str] = tmt.utils.field(
+        option="--url",
+        metavar='REPOSITORY',
+        default=None,
+        help="URL of the git repository with tests to be fetched.")
+
+    ref: Optional[str] = tmt.utils.field(
+        option="--ref",
+        metavar='REVISION',
+        default=None,
+        help="Branch, tag or commit specifying the git revision.")
 
     def _normalize_tests(self, value: List[Dict[str, Any]]
                          ) -> List[TestDescription]:
