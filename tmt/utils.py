@@ -1553,9 +1553,6 @@ class FieldMetadata(Generic[T]):
             elif callable(self.option_choices):
                 self.option_kwargs['type'] = click.Choice(self.option_choices())
 
-            if self.normalize_callback is not None:
-                self.option_kwargs['type'] = self.normalize_callback
-
             self._option = click.option(
                 *self.option_args,
                 **self.option_kwargs
@@ -3607,6 +3604,65 @@ KeySource = Union[Dict[str, Any], fmf.Tree]
 NormalizeCallback = Callable[[Any, tmt.log.Logger], T]
 
 
+def dataclass_normalize_field(
+        container: Any,
+        keyname: str,
+        raw_value: Any,
+        logger: tmt.log.Logger) -> Any:
+    """
+    Normalize and assign a value to container field.
+
+    If there is a normalization callback defined for the field, either in field
+    metadata or as a special ``_normalize_$keyname`` method, the method is
+    called for ``raw_value``, and its return value is assigned to container
+    field instead of ``value``.
+    """
+
+    normalize_callback: Optional[NormalizeCallback[Any]] = None
+
+    # First try new-style fields, i.e. normalize callback stored in field metadata
+    if dataclasses.is_dataclass(container):
+        field: dataclasses.Field[Any] = dataclass_field_by_name(container, keyname)
+        normalize_callback = dataclass_field_metadata(field).normalize_callback
+
+    if not normalize_callback:
+        normalize_callback = getattr(container, f'_normalize_{keyname}', None)
+
+    if normalize_callback:
+        value = normalize_callback(raw_value, logger)
+
+    else:
+        value = raw_value
+
+    # As mentioned in BasePlugin._update_data_from_options, the test
+    # performed there is questionable. To gain more visibility into how
+    # normalization and CLI updates work together, a bit of logging of
+    # values the CLI update process does not consider.
+    #
+    # Keep for debugging purposes, as long as normalization settles down.
+    if value is None or value == [] or value == ():
+        logger.debug(
+            'field normalized to false-ish value',
+            f'{container.__class__.__name__}.{keyname}',
+            level=4)
+
+        with_getattr = getattr(container, keyname, None)
+        with_dict = container.__dict__.get(keyname, None)
+
+        logger.debug('value', str(value), level=4, shift=1)
+        logger.debug('current value (getattr)', str(with_getattr), level=4, shift=1)
+        logger.debug('current value (__dict__)', str(with_dict), level=4, shift=1)
+
+        if value != with_getattr or with_getattr != with_dict:
+            logger.debug('known values do not match', level=4, shift=2)
+
+    # Set attribute by adding it to __dict__ directly. Messing with setattr()
+    # might cause re-use of mutable values by other instances.
+    container.__dict__[keyname] = value
+
+    return value
+
+
 def normalize_string_list(
         value: Union[None, str, List[str]],
         logger: tmt.log.Logger) -> List[str]:
@@ -3665,12 +3721,12 @@ def normalize_shell_script_list(
     if isinstance(value, str):
         return [ShellScript(value)]
 
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple)):
         return [ShellScript(str(item)) for item in value]
 
     # TODO: propagate field name down to normalization callbacks for better exceptions
     raise SpecificationError(
-        "Field can be either string or list of strings, '{type(value)}' found.")
+        f"Field can be either string or list of strings, '{type(value).__name__}' found.")
 
 
 class NormalizeKeysMixin:
@@ -3706,7 +3762,14 @@ class NormalizeKeysMixin:
         if value is None:
             return []
 
-        return [value] if isinstance(value, str) else value
+        if isinstance(value, str):
+            return [value]
+
+        if isinstance(value, (list, tuple)):
+            return [item for item in value]
+
+        raise SpecificationError(
+            f"Field can be either string or list of strings, '{type(value).__name__}' found.")
 
     def _normalize_environment(
             self,
@@ -3863,30 +3926,10 @@ class NormalizeKeysMixin:
                 debug('raw value', str(value))
                 debug('raw value type', str(type(value)))
 
-            # First try new-style fields, i.e. normalize callback stored in field metadata
-            normalize_callback: Optional[NormalizeCallback[Any]] = None
-
-            if dataclasses.is_dataclass(self):
-                field: dataclasses.Field[Any] = dataclass_field_by_name(self, keyname)
-                normalize_callback = dataclass_field_metadata(field).normalize_callback
-
-            if not normalize_callback:
-                normalize_callback = cast(
-                    Optional[NormalizeCallback[Any]],
-                    getattr(self, f'_normalize_{keyname}', None))
-
-            if normalize_callback:
-                value = normalize_callback(value, logger)
-
-                debug('normalized value', str(value))
-                debug('normalized value type', str(type(value)))
+            value = dataclass_normalize_field(self, keyname, value, logger)
 
             debug('final value', str(value))
             debug('final value type', str(type(value)))
-
-            # Set attribute by adding it to __dict__ directly. Messing with setattr()
-            # might cause re-use of mutable values by other instances.
-            self.__dict__[keyname] = value
 
             # Apparently pointless, but makes the debugging output more readable.
             # There may be plenty of tests and plans and keys, a bit of spacing

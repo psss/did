@@ -904,11 +904,29 @@ class BasePlugin(Phase):
             return True
         return where in (guest.name, guest.role)
 
-    def _update_data_from_options(self, keys: List[str]) -> None:
-        for key in keys:
-            value = self.opt(tmt.utils.key_to_option(key))
-            if value:
-                setattr(self.data, key, value)
+    def _update_data_from_options(self, keys: Optional[List[str]] = None) -> None:
+        """
+        Update plugin data with values provided by CLI options.
+
+        Called by the plugin wake-up mechanism to allow CLI options to take an
+        effect.
+
+        :param keys: if specified, only the listed keys would be affected.
+        """
+
+        keys = keys or list(self.data.keys())
+
+        for keyname in keys:
+            value = self.opt(tmt.utils.key_to_option(keyname))
+
+            # TODO: this test is incorrect. It should not test for false-ish values,
+            # but rather check whether the value returned by `self.opt()` is or is
+            # not option default. And that's apparently not trivial with current CLI
+            # handling.
+            if value is None or value == [] or value == () or value is False:
+                continue
+
+            tmt.utils.dataclass_normalize_field(self.data, keyname, value, self._logger)
 
     def wake(self) -> None:
         """
@@ -941,7 +959,7 @@ class BasePlugin(Phase):
         #         f'supported methods {", ".join([method.name for method in self.methods()])}, ' \
         #         f'current data is {self.data}'
 
-        self._update_data_from_options(keys=self._keys)
+        self._update_data_from_options()
 
     # NOTE: it's tempting to rename this method to `go()` and use more natural
     # `super().go()` in child classes' `go()` methods. But, `go()` does not have

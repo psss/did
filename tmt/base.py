@@ -864,7 +864,7 @@ class Test(Core):
         self.ls()
         for key in self.KEYS_SHOW_ORDER:
             value = getattr(self, key)
-            if key == 'link':
+            if key == 'link' and value is not None:
                 value.show()
                 continue
             # No need to show the default order
