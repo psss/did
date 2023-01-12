@@ -19,13 +19,21 @@ srpm_build_deps:
   - python3-docutils
 
 jobs:
-- job: tests
+
+- job: copr_build
   trigger: pull_request
   targets:
   - fedora-all
   - epel-8
   - epel-9
   enable_net: False
+
+- job: tests
+  trigger: pull_request
+  targets:
+  - fedora-all
+  - epel-8
+  - epel-9
 
 - job: tests
   trigger: pull_request
