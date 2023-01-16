@@ -201,7 +201,7 @@ class DiscoverShellData(tmt.steps.discover.DiscoverStepData):
         option="--keep-git-metadata",
         is_flag=True,
         default=False,
-        help="keep the git metadata if a repo is synced to guest.")
+        help="Keep the git metadata if a repo is synced to guest.")
 
     def _normalize_tests(
             self,

@@ -62,6 +62,26 @@ description: |
             revision. Defaults to the remote repository's default
             branch.
 
+        keep-git-metadata
+            By default the ``.git`` directory is removed to save
+            disk space. Set to ``true`` to sync the git metadata
+            to guest as well.
+
+        There is a support for discovering tests from extracted
+        (rpm) sources. Needs to run on top of the supported
+        DistGit (Fedora, CentOS), ``url`` can be used to point to
+        such repository, ``path`` denotes path to the metadata
+        tree root within extracted sources. At this moment no
+        patches are applied, only tarball extraction happens.
+
+        dist-git-source
+            Set to ``true`` to enable extracting sources.
+        dist-git-type
+            The DistGit auto detection is based on git remotes.
+            Use this option to specify it directly. At least
+            ``Fedora`` and ``CentOS`` are supported as values,
+            help will print all possible values.
+
     example:
       - |
         # Define several local tests
