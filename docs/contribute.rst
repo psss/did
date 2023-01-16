@@ -247,6 +247,32 @@ squash the changes into a single commit. Use multiple commits to
 group relevant code changes if the pull request is too large for a
 single commit.
 
+Consider pasting the following checklist (or selected items which
+are applicable) to the pull request description to easily track
+progress of the implementation and prevent forgetting about
+essential steps to be completed before it is merged::
+
+    * [ ] implement the feature
+    * [ ] write documentation
+    * [ ] extend the test coverage
+    * [ ] update specification
+    * [ ] adjust module docs
+    * [ ] add a usage example
+    * [ ] modify json schema
+    * [ ] mention version
+
+The version should be mentioned in the specification when a new
+essential feature is added so that users can easily check whether
+given functionality is already available in their package::
+
+    .. versionadded:: 1.23
+
+If the pull request addresses an existing issue, mention it using
+one of the automatically parsed formats so that it is linked to
+it, for example::
+
+    Fix #1234.
+
 
 Merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
