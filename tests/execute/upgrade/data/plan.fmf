@@ -2,7 +2,7 @@ discover:
     how: fmf
 provision:
     how: virtual
-    image: fedora-36
+    image: $@{distro}
 execute:
     how: upgrade
     url: https://github.com/teemtee/upgrade
@@ -12,4 +12,4 @@ execute:
 /path:
     summary: Basic upgrade test with upgrade path
     execute+:
-        upgrade-path: /paths/fedora36to37
+        upgrade-path: $@{upgrade-path}

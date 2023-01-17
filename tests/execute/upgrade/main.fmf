@@ -22,4 +22,4 @@ duration: 10m
 
 /ignore_test:
     summary: Ignore test -n run subcommand in remote repo
-    test: ./ignore_test.sh
+    test: ./ignore-test.sh
