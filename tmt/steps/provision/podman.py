@@ -198,6 +198,7 @@ class GuestContainer(tmt.Guest):
             log=log if log else self._command_verbose_logger,
             friendly_command=friendly_command or command,
             silent=silent,
+            interactive=interactive,
             **kwargs)
 
     def push(
