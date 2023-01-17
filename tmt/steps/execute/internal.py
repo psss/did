@@ -283,7 +283,10 @@ class ExecuteInternal(tmt.steps.execute.ExecutePlugin):
                 tmt.steps.execute.TEST_DATA)
             with open(reboot_request_path, 'r') as reboot_file:
                 reboot_data = json.loads(reboot_file.read())
-            reboot_command = reboot_data.get('command')
+            try:
+                reboot_command = ShellScript(reboot_data.get('command'))
+            except TypeError:
+                reboot_command = None
             try:
                 timeout = int(reboot_data.get('timeout'))
             except ValueError:
