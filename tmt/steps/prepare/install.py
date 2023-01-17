@@ -363,6 +363,13 @@ class InstallDnf(InstallBase):
 
         self.guest.execute(command)
 
+        # Check the packages are installed on the guest because 'debuginfo-install'
+        # returns 0 even though it didn't manage to install the required packages
+        if not self.skip_missing:
+            packages_debuginfo = [f'{package}-debuginfo' for package in self.debuginfo_packages]
+            command = Command('rpm', '-q', *packages_debuginfo)
+            self.guest.execute(command)
+
 
 class InstallYum(InstallDnf):
     """ Install packages using yum """
