@@ -13,7 +13,7 @@ rlJournalStart
             plan -n /plan/no-path \
             test -n /test \
             execute -h upgrade -t '/tasks/prepare' \
-            provision -h container -i fedora:35" 0 "Run a single upgrade task"
+            provision -h container -i fedora:36" 0 "Run a single upgrade task"
         # 1 test before + 1 upgrade tasks + 1 test after
         rlAssertGrep "3 tests passed" $rlRun_LOG
         # Check that the IN_PLACE_UPGRADE variable was set
@@ -21,7 +21,7 @@ rlJournalStart
         rlAssertGrep "IN_PLACE_UPGRADE=old" "$data/old/test/output.txt"
         rlAssertGrep "IN_PLACE_UPGRADE=new" "$data/new/test/output.txt"
         # No upgrade path -> no environment variable
-        rlAssertNotGrep "VERSION_ID=35" "$data/upgrade/tasks/prepare/output.txt"
+        rlAssertNotGrep "VERSION_ID=36" "$data/upgrade/tasks/prepare/output.txt"
     rlPhaseEnd
 
     rlPhaseStartCleanup
