@@ -52,7 +52,7 @@ def test_github_issues_closed():
     """ Closed issues """
     did.base.Config(CONFIG)
     option = "--gh-issues-closed "
-    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[1].stats
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[2].stats
     assert any([
         "psss/did#017 - What did you do" in str(stat) for stat in stats])
 
@@ -64,7 +64,7 @@ def test_github_pull_requests_created():
     INTERVAL = "--since 2016-10-26 --until 2016-10-26"
     EMAIL = " --email mfrodl@redhat.com"
     stats = did.cli.main(
-        option + INTERVAL + EMAIL)[0][0].stats[0].stats[2].stats
+        option + INTERVAL + EMAIL)[0][0].stats[0].stats[3].stats
     assert any([
         "psss/did#112 - Fixed test for Trac plugin" in str(stat)
         for stat in stats])
@@ -75,7 +75,7 @@ def test_github_pull_requests_closed():
     did.base.Config(CONFIG)
     option = "--gh-pull-requests-closed "
     INTERVAL = "--since 2015-09-22 --until 2015-09-22"
-    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[3].stats
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[5].stats
     assert any([
         "psss/did#037 - Skip CI users" in str(stat) for stat in stats])
 
@@ -85,9 +85,33 @@ def test_github_pull_requests_reviewed():
     did.base.Config(CONFIG.replace('psss', 'evgeni'))
     option = "--gh-pull-requests-reviewed "
     INTERVAL = "--since 2017-02-22 --until 2017-02-23"
-    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[4].stats
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[6].stats
     assert any(["Katello/katello-client-bootstrap#164" in str(stat)
                 for stat in stats])
+
+
+def test_github_pull_requests_commented():
+    """ Commented pull requests """
+    did.base.Config(CONFIG)
+    option = "--gh-pull-requests-commented "
+    INTERVAL = "--since 2023-01-10 --until 2023-01-23"
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[4].stats
+    for stat in stats:
+        print(stat)
+    assert any([
+        "psss/did#285 - Fix error when building SRPM in copr"
+        in str(stat) for stat in stats])
+
+
+def test_github_issues_commented():
+    """ Commented issues """
+    did.base.Config(CONFIG)
+    option = "--gh-issues-commented "
+    INTERVAL = "--since 2023-01-10 --until 2023-01-23"
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[1].stats
+    assert any([
+        "teemtee/tmt#1788 - Allow modification of imported plans"
+        in str(stat) for stat in stats])
 
 
 def test_github_invalid_token():
@@ -111,7 +135,7 @@ def test_github_unicode():
     did.base.Config("[gh]\ntype = github\nurl = https://api.github.com/")
     option = "--gh-pull-requests-created "
     stats = did.cli.main(
-        option + INTERVAL + EMAIL)[0][0].stats[0].stats[2].stats
+        option + INTERVAL + EMAIL)[0][0].stats[0].stats[3].stats
     assert any([
         "Boundary events lose it’s documentation" in str(stat)
         for stat in stats])

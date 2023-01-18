@@ -154,6 +154,18 @@ class IssuesClosed(Stats):
             Issue(issue) for issue in self.parent.github.search(query)]
 
 
+class IssueCommented(Stats):
+    """ Issues commented """
+
+    def fetch(self):
+        log.info("Searching for issues commented on by {0}".format(self.user))
+        query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
+            self.user.login, self.options.since, self.options.until)
+        query += "+type:issue"
+        self.stats = [
+            Issue(issue) for issue in self.parent.github.search(query)]
+
+
 class PullRequestsCreated(Stats):
     """ Pull requests created """
 
@@ -161,6 +173,19 @@ class PullRequestsCreated(Stats):
         log.info("Searching for pull requests created by {0}".format(
             self.user))
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
+            self.user.login, self.options.since, self.options.until)
+        query += "+type:pr"
+        self.stats = [
+            Issue(issue) for issue in self.parent.github.search(query)]
+
+
+class PullRequestsCommented(Stats):
+    """ Pull requests commented """
+
+    def fetch(self):
+        log.info("Searching for pull requests commented on by {0}".format(
+            self.user))
+        query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
         self.stats = [
@@ -220,12 +245,18 @@ class GitHubStats(StatsGroup):
             IssuesCreated(
                 option=option + "-issues-created", parent=self,
                 name="Issues created on {0}".format(option)),
+            IssueCommented(
+                option=option + "-issues-commented", parent=self,
+                name="Issues commented on {0}".format(option)),
             IssuesClosed(
                 option=option + "-issues-closed", parent=self,
                 name="Issues closed on {0}".format(option)),
             PullRequestsCreated(
                 option=option + "-pull-requests-created", parent=self,
                 name="Pull requests created on {0}".format(option)),
+            PullRequestsCommented(
+                option=option + "-pull-requests-commented", parent=self,
+                name="Pull requests commented on {0}".format(option)),
             PullRequestsClosed(
                 option=option + "-pull-requests-closed", parent=self,
                 name="Pull requests closed on {0}".format(option)),
