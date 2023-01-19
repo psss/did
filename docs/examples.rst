@@ -1549,3 +1549,25 @@ supports this option, the images are removed from
         images
             testcloud
                 Removing '/var/tmp/tmt/testcloud/images/Fedora-Cloud-Base-34_Beta-1.3.x86_64.qcow2'.
+
+
+Coding
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to perform more advanced processing of the metadata
+which is not supported by the command line use Python.  Just
+import the ``tmt`` module and create a logger for debugging::
+
+    import tmt
+    logger = tmt.log.Logger.create()
+    tree = tmt.Tree(path="/path/to/the/tree", logger=logger)
+
+    for test in tree.tests():
+        print(test.name)
+
+You might also want to explore all available plugins if you need
+to work with metadata export::
+
+    tmt.plugins.explore()
+    for plan in tree.plans():
+        print(plan.export(format="yaml"))
