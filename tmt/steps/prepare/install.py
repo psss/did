@@ -460,12 +460,9 @@ class InstallRpmOstree(InstallBase):
                         Command(package)
                         )
                 except tmt.utils.RunError as error:
-                    if error.stderr \
-                            and "error: Packages not found" in error.stderr \
-                            and self.skip_missing:
-                        self.warn(f"No match for recommended package '{package}'.")
-                        continue
-                    raise
+                    self.debug(f"Package installation failed: {error}")
+                    self.warn(f"Unable to install recommended package '{package}'.")
+                    continue
 
         # Install required packages
         if self.required_packages:
