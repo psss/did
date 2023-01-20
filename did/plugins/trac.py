@@ -96,7 +96,9 @@ class Trac(object):
             for ticket, changelg in zip(tickets, changelogs)]
 
     def history(self, user=None):
-        """ Return relevant who-did-what logs from the ticket history """
+        """
+        Return relevant who-did-what logs from the ticket history
+        """
         for event in self.changelog:
             when, who, what, old, new, ignore = event
             if (when >= self.options.since.date and
@@ -112,7 +114,9 @@ class Trac(object):
         return False
 
     def updated(self, user):
-        """ True if the user commented the ticket in given time frame """
+        """
+        True if the user commented the ticket in given time frame
+        """
         for who, what, old, new in self.history(user):
             if (what == "comment" or what == "description") and new != "":
                 return True
@@ -165,8 +169,8 @@ class TracUpdated(TracCommon):
 
     def fetch(self):
         log.info("Searching for tickets updated by {0}".format(self.user))
-        query = "time=..{2}&modified={1}..".format(
-            self.user.login, self.options.since, self.options.until)
+        query = "time=..{1}&modified={0}..".format(
+            self.options.since, self.options.until)
         self.stats = [
             ticket for ticket in Trac.search(query, self.parent, self.options)
             if ticket.updated(self.user)]

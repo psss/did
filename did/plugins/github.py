@@ -20,7 +20,7 @@ token stored in a file rather than in your did config file.
 
 __ https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
 
-"""
+"""  # noqa: W505,E501
 
 import json
 import re
@@ -91,7 +91,8 @@ class GitHub(object):
                 log.debug(error)
                 raise ReportError(f"GitHub JSON failed: {response.text}.")
 
-            # Update url to the next page, break if no next page provided
+            # Update url to the next page, break if no next page
+            # provided
             if 'next' in response.links:
                 url = response.links['next']['url']
             else:

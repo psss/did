@@ -1,7 +1,7 @@
 # coding: utf-8
 
 """
-Google Apps stats such as attended events, completed tasks or sent emails
+Google stats such as attended events, completed tasks or sent emails
 
 Config example::
 
@@ -18,35 +18,37 @@ installed on your system::
     sudo dnf install python3-google-api-client python3-oauth2client  # dnf
     pip install did[google]                                          # pip
 
-To retrieve data via Google API, you will need to create access credentials
-(``client_id`` and ``client_secret``) first. Perform the following steps to
-create such a pair:
+To retrieve data via Google API, you will need to create access
+credentials (``client_id`` and ``client_secret``) first. Perform the
+following steps to create such a pair:
 
     1. Open https://console.developers.google.com/flows/enableapi?apiid=calendar,tasks
-    2. In the drop-down menu, select *Create project* and click *Continue*
+    2. In the drop-down menu, select *Create project* and click
+       *Continue*
     3. Click *Go to credentials*
-    4. In the *Where will you be calling the API from?* drop-down menu, choose
-       *Other UI (e.g. Windows, CLI tool)*
+    4. In the *Where will you be calling the API from?* drop-down menu,
+       choose *Other UI (e.g. Windows, CLI tool)*
     5. In *What data will you be accessing?*, choose *User data*
     6. Click *What credentials do I need?*
-    7. Input 'did credentials' in the *Name* field and click *Create client ID*
+    7. Input 'did credentials' in the *Name* field and click *Create
+       client ID*
     8. In *Product name shown to users*, type 'did'
     9. Click *Continue*, then *Done*
     10. Click the *did credentials* link to display the credentials
 
 The ``apps`` configuration option defines the scope of user data the
-application will request (read-only) access to. Currently, the only supported
-values are ``calendar`` and ``tasks``.
+application will request (read-only) access to. Currently, the only
+supported values are ``calendar`` and ``tasks``.
 
-During the first run, user will be asked to grant the plugin access rights to
-selected apps. If the user approves the request, this decision is remembered by
-creating a *credential storage* file. The path to the storage can be customized
-by configuring the ``storage`` option.
+During the first run, user will be asked to grant the plugin access
+rights to selected apps. If the user approves the request, this decision
+is remembered by creating a *credential storage* file. The path to the
+storage can be customized by configuring the ``storage`` option.
 
-If you want to store the ``client_id`` and ``client_secret`` not as plain text
-within your config file, use ``client_id_file`` and ``client_secret_file`` to
-point to files with the corresponding files.
-"""
+If you want to store the ``client_id`` and ``client_secret`` not as
+plain text within your config file, use ``client_id_file`` and
+``client_secret_file`` to point to files with the corresponding files.
+"""  # noqa: W505
 
 import os
 
@@ -83,9 +85,9 @@ def authorized_http(client_id, client_secret, apps, file=None):
     """
     Start an authorized HTTP session.
 
-    Try fetching valid user credentials from storage. If nothing has been
-    stored, or if the stored credentials are invalid, complete the OAuth2 flow
-    to obtain new credentials.
+    Try fetching valid user credentials from storage. If nothing has
+    been stored, or if the stored credentials are invalid, complete the
+    OAuth2 flow to obtain new credentials.
     """
     if not os.path.exists(CREDENTIAL_DIR):
         os.makedirs(CREDENTIAL_DIR)
@@ -139,7 +141,7 @@ class Event(object):
     """ Google Calendar Event """
 
     def __init__(self, dict):
-        """ Create Event object from dictionary returned by Google API """
+        """ Create Event object from dict returned by Google API """
         self.__dict__ = dict
 
     def __str__(self):
@@ -190,7 +192,7 @@ class Task(object):
     """ Google Tasks task """
 
     def __init__(self, dict):
-        """ Create Task object from dictionary returned by Google API """
+        """ Create Task object from dict returned by Google API """
         self.__dict__ = dict
 
     def __str__(self):

@@ -53,7 +53,8 @@ class WikiChanges(Stats):
 
     def header(self):
         """ Show summary header. """
-        # Different header for wiki: Updates on xxx: x changes of y pages
+        # Different header for wiki:
+        # Updates on xxx: x changes of y pages
         item(
             "{0}: {1} change{2} of {3} page{4}".format(
                 self.name, self.changes, "" if self.changes == 1 else "s",

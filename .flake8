@@ -1,0 +1,11 @@
+[flake8]
+max-line-length = 88
+max-doc-length = 72
+
+# When changing this list, you probably also want to change
+# pre-commit config too.
+filename = bin/,
+           examples/,
+           tests/,
+           did/,
+           setup.py

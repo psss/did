@@ -29,7 +29,7 @@ auth_url = https://issues.jboss.org/rest/auth/latest/session
 def test_config_gss_auth():
     """  Test default authentication configuration """
     did.base.Config(CONFIG)
-    stats = JiraStats("jira")
+    JiraStats("jira")
 
 
 def test_config_basic_auth():
@@ -40,7 +40,7 @@ def test_config_basic_auth():
                     auth_username = tom
                     auth_password = motak
                     """)
-    stats = JiraStats("jira")
+    JiraStats("jira")
 
 
 def test_config_missing_username():
@@ -84,11 +84,11 @@ def test_config_invaliad_ssl_verify():
 
 
 def assert_conf_error(config, expected_error=ReportError):
-    """  Test given configuration and check that given error type is raised """
+    """ Test given config and check that given error type is raised """
     did.base.Config(config)
     error = None
     try:
-        stats = JiraStats("jira")
+        JiraStats("jira")
     except ReportError as e:
         error = e
     assert isinstance(error, expected_error)

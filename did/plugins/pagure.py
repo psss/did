@@ -58,7 +58,8 @@ class Pagure(object):
             log.debug("Result: {0} fetched".format(
                 listed(len(objects), "item")))
             log.data(pretty(data))
-            # FIXME later: Work around https://pagure.io/pagure/issue/4057
+            # FIXME later:
+            # Work around https://pagure.io/pagure/issue/4057
             if not objects:
                 break
             result.extend(objects)
@@ -150,7 +151,8 @@ class PullRequestsCreated(Stats):
 #        issues = [Issue(issue) for issue in self.parent.pagure.search(
 #            query='user/{0}/requests/actionable?'
 #                'status=all&closed={1}..{2}'.format(
-#                self.user.login, self.options.since, self.options.until),
+#                self.user.login, self.options.since,
+#                self.options.until),
 #            pagination='pagination',
 #            result_field='requests')]
 #        self.stats = sorted(issues, key=lambda i: unicode(i))

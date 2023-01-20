@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/mirrors-autopep8
-    rev: 'v1.5.7'
+    rev: 'v2.0.1'
     hooks:
       - id: autopep8
         args:
@@ -11,14 +11,36 @@ repos:
           - --aggressive
           - --aggressive
           - --hang-closing
+          - --max-line-length=88
 
   - repo: https://github.com/PyCQA/isort
-    rev: "5.8.0"
+    rev: "5.11.4"
     hooks:
       - id: isort
 
+  - repo: https://github.com/pycqa/flake8
+    rev: "6.0.0"
+    hooks:
+      - id: flake8
+        args:
+          - --config
+          - .flake8
+        # The list of directories and files to check - matches flake8
+        # configuration in setup.cfg, but has a slightly different
+        # purpose. setup.cfg tells flake8 what to check when called e.g.
+        # by pre-commit or IDE linter integration, the list below tells
+        # *pre-commit* to which files to apply flake8 check.
+        files: >
+          (?x)^(
+            bin/.*|
+            examples/.*|
+            tests/.*|
+            did/.*|
+            setup.py
+          )$
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: "v3.4.0"
+    rev: "v4.4.0"
     hooks:
       - id: end-of-file-fixer
       - id: mixed-line-ending

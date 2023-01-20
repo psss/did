@@ -35,6 +35,7 @@ It is challenging to be both concise and descriptive, but that is
 what a well-written summary should do. Consider the commit message
 as something that will be pasted into release notes:
 
+* Maximum line length is 88 for code and 72 for docs.
 * The first line should have up to 50 characters.
 * Complete sentence with the first word capitalized.
 * Should concisely describe the purpose of the patch.

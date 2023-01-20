@@ -1,8 +1,6 @@
 # coding: utf-8
 """ Tests for the GitLab plugin """
 
-import time
-
 import pytest
 
 import did.base

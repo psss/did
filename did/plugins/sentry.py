@@ -109,7 +109,8 @@ class Sentry(object):
                 log.debug("Fetched {0}.".format(listed(len(data), 'activity')))
                 log.data(pretty(data))
                 for activity in [Activity(item) for item in data]:
-                    # We've reached the last page, older records not relevant
+                    # We've reached the last page, older records not
+                    # relevant
                     if activity.created < self.stats.options.since.date:
                         return activities
                     # Store only relevant activites (before until date)

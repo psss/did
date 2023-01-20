@@ -43,7 +43,7 @@ class Change(object):
         self.prefix = prefix
 
     def __str__(self):
-        """ Consistent identifier, project and subject for displaying """
+        """ Consistent identifier, project & subject for displaying """
         return "{0}#{1} - {2} - {3}".format(
             self.prefix, self.id, self.project, self.subject)
 
@@ -151,8 +151,8 @@ class GerritUnit(Stats):
             one is used (limit by the current user and since option);
             if empty, nothing will be added to query_string
         limit_since:
-            [optional] Boolean (defaults to False) post-process the results
-            to eliminate items created after since option.
+            [optional] Boolean (defaults to False) post-process the
+            results to eliminate items created after since option.
         """
         work_list = []
         log.info("Searching for changes by {0}".format(self.user))
@@ -309,7 +309,6 @@ class AddedPatches(GerritUnit):
                     continue
                 if 'email' not in chg['author']:
                     continue
-                date = self.get_gerrit_date(chg['date'][:10])
                 comment_date = self.get_gerrit_date(chg['date'][:10])
                 if (owner == chg['author']['email'] and
                         '_revision_number' in chg and
@@ -394,7 +393,7 @@ class GerritStats(StatsGroup):
     #      authentication)
     #
     # I.e.
-    # curl -v 'https://REPOURL/changes/?q=status:merged+owner:mcepl+-age:1y'
+    # curl -v 'https://url/changes/?q=status:merged+owner:mcepl+-age:1y'
 
     # Default order
     order = 350
@@ -421,6 +420,7 @@ class GerritStats(StatsGroup):
             MergedChanges(option=option + '-merged', parent=self),
             SubmitedChanges(option=option + '-submitted', parent=self),
             WIPChanges(option=option + '-wip', parent=self),
-            #AddedPatches(option=option + '-added-patches', parent=self),
+            # AddedPatches(
+            #     option=option + '-added-patches', parent=self),
             ReviewedChanges(option=option + '-reviewed', parent=self),
             ]

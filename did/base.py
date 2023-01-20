@@ -166,7 +166,9 @@ class Config(object):
         return result
 
     def section(self, section, skip=['type', 'order']):
-        """ Return section items, skip selected (type/order by default) """
+        """
+        Return section items, skip selected (type/order by default)
+        """
         return [(key, val) for key, val in self.parser.items(section)
                 if key not in skip]
 
@@ -386,7 +388,8 @@ class User(object):
 
     def __init__(self, email, stats=None):
         """ Detect name, login and email """
-        # Make sure we received the email string, save the original for cloning
+        # Make sure we received the email string, save the original for
+        # cloning
         if not email:
             raise ConfigError("Email required for user initialization.")
         self._original = email.strip()
@@ -476,15 +479,15 @@ def get_token(
     the config file as plain text or from an outsourced file.
 
     Returns:
-        str: The stripped token or `None` if no or only empty entries were
-            found in the `config` dict.
+        str: The stripped token or `None` if no or only empty entries
+            were found in the `config` dict.
 
     Keyword Args:
         config (dict): A configuration dictionary
-        token_key (str): The dict entry to look for when the token is stored
-            as plain text in the config
-        token_file_key (str): The dict entry to look for when the token is
-            supposed to be read from file
+        token_key (str): The dict entry to look for when the token is
+            stored as plain text in the config
+        token_file_key (str): The dict entry to look for when the token
+            is supposed to be read from file
     """
     token = None
 

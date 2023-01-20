@@ -86,8 +86,9 @@ class Bugzilla(object):
         try:
             result = self.server.query(query)
         except xmlrpc.client.Fault as error:
-            # Ignore non-existent users (this is necessary for users with
-            # several email aliases to allow them using --merge/--total)
+            # Ignore non-existent users (this is necessary for users
+            # with several email aliases to allow them using
+            # --merge/--total)
             if "not a valid username" in str(error):
                 log.debug(error)
                 return []
@@ -203,8 +204,9 @@ class Bug(object):
                             and change["added"] == "MODIFIED"
                             and change["removed"] != "CLOSED"):
                         decision = True
-            # Make sure that the bug has not been later moved to ASSIGNED.
-            # (This would mean the issue has not been fixed properly.)
+            # Make sure that the bug has not been later moved to
+            # ASSIGNED. (This would mean the issue has not been fixed
+            # properly.)
             else:
                 for change in record["changes"]:
                     if (change["field_name"] == "status"
@@ -226,8 +228,9 @@ class Bug(object):
                             and change["added"] == "CLOSED"
                             and record["who"] in [user.email, user.name]):
                         decision = True
-            # Make sure that the bug has not been later moved from CLOSED.
-            # (This would mean the bug was not closed for a proper reason.)
+            # Make sure that the bug has not been later moved from
+            # CLOSED. (This would mean the bug was not closed for a
+            # proper reason.)
             else:
                 for change in record["changes"]:
                     if (change["field_name"] == "status"
@@ -530,11 +533,11 @@ class PatchedBugs(Stats):
                 query, options=self.options)
             if bug.patched(self.user)]
 
-        # When user adds the Patch keyword when creating a bug, there is no
-        # action in the bug's history from which this would be apparent. We
-        # therefore need to check if there are any bugs reported by the user
-        # which contain the Patch keyword but have no such action in their
-        # history.
+        # When user adds the Patch keyword when creating a bug, there is
+        # no action in the bug's history from which this would be
+        # apparent. We therefore need to check if there are any bugs
+        # reported by the user which contain the Patch keyword but have
+        # no such action in their history.
         query = {
             # Reported by user
             "f1": "reporter",

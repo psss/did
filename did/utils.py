@@ -9,7 +9,7 @@ import pkgutil
 import re
 import sys
 import unicodedata
-from pprint import pformat as pretty
+from pprint import pformat as pretty  # noqa: F401 (used by other modules)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -40,8 +40,8 @@ EMAIL_REGEXP = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
 
 def _find_base(path):
     """
-    Given a path to a python file or package, find the top level directory
-    that isn't a valid package.
+    Given a path to a python file or package, find the top level
+    directory that isn't a valid package.
     """
     if not os.path.isdir(path):
         path = os.path.dirname(path)
@@ -56,7 +56,9 @@ def _find_base(path):
 
 
 def _import(path, continue_on_error):
-    """ Eats or raises import exceptions based on ``continue_on_error``. """
+    """
+    Eats or raises import exceptions based on ``continue_on_error``.
+    """
     log.debug("Importing %s" % path)
     try:
         # importlib is available in stdlib from 2.7+
@@ -198,7 +200,8 @@ def pluralize(singular=None):
 
 def listed(items, singular=None, plural=None, max=None, quote=""):
     """
-    Convert an iterable into a nice, human readable list or description::
+    Convert an iterable into a nice, human readable list or
+    description::
 
         listed(range(1)) .................... 0
         listed(range(2)) .................... 0 and 1
@@ -216,7 +219,8 @@ def listed(items, singular=None, plural=None, max=None, quote=""):
     # Convert items to list if necessary
     items = list(range(items)) if isinstance(items, int) else list(items)
     more = " more"
-    # Description mode expected when singular provided but no maximum set
+    # Description mode expected when singular provided
+    # but no maximum set
     if singular is not None and max is None:
         max = 0
         more = ""
@@ -457,16 +461,17 @@ class Coloring(object):
         """
         Set the coloring mode
 
-        If enabled, some objects (like case run Status) are printed in color
-        to easily spot failures, errors and so on. By default the feature is
-        enabled when script is attached to a terminal. Possible values are::
+        If enabled, some objects (like case run Status) are printed in
+        color to easily spot failures, errors and so on. By default the
+        feature is enabled when script is attached to a terminal.
+        Possible values are::
 
             COLOR=0 ... COLOR_OFF .... coloring disabled
             COLOR=1 ... COLOR_ON ..... coloring enabled
             COLOR=2 ... COLOR_AUTO ... if terminal attached (default)
 
-        Environment variable COLOR can be used to set up the coloring to the
-        desired mode without modifying code.
+        Environment variable COLOR can be used to set up the coloring to
+        the desired mode without modifying code.
         """
         # Detect from the environment if no mode given (only once)
         if mode is None:
