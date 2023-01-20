@@ -4,21 +4,36 @@ actions:
   get-current-version:
   - make version
 
+srpm_build_deps:
+  - make
+  - python3-docutils
+
 jobs:
+- job: copr_build
+  trigger: pull_request
+  targets:
+  - fedora-all
+  - epel-8
+  - epel-9
+  enable_net: False
+
 - job: tests
   trigger: pull_request
   metadata:
     targets:
     - fedora-all
     - epel-8
+    - epel-9
 
 - job: copr_build
   trigger: commit
   metadata:
-    branch: master
+    branch: main
     targets:
     - fedora-all
     - epel-8
+    - epel-9
+    enable_net: False
     list_on_homepage: True
     preserve_project: True
     owner: psss
