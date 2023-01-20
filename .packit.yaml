@@ -4,6 +4,9 @@ actions:
   get-current-version:
   - make version
 
+srpm_build_deps:
+  - make
+
 jobs:
 - job: tests
   trigger: pull_request
