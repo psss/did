@@ -10,7 +10,7 @@ import did.cli
 
 CONFIG = """
 [general]
-email = jayconrod@google.com
+email = bcmills@google.com
 
 [gerrit]
 type = gerrit
@@ -18,10 +18,10 @@ url = https://go-review.googlesource.com/#/
 prefix = GR
 """
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 def test_gerrit_smoke():
     """ Smoke test for all stats """
@@ -35,10 +35,10 @@ def test_gerrit_merged():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--gerrit-merged",
-        "--since", "2020-06-01",
-        "--until", "2020-06-30"])[0][0].stats[0].stats[1].stats
+        "--since", "2022-10-20",
+        "--until", "2022-10-30"])[0][0].stats[0].stats[1].stats
     assert any([
-        "GR#238157 - go - cmd: update golang.org/x/tools" in str(change)
+        "GR#401835 - go - os/exec: add the Cancel and WaitDelay fields" in str(change)
         for change in stats])
 
 
@@ -47,10 +47,10 @@ def test_gerrit_reviewed():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--gerrit-reviewed",
-        "--since", "2020-06-01",
-        "--until", "2020-06-30"])[0][0].stats[0].stats[4].stats
+        "--since", "2022-10-20",
+        "--until", "2022-10-30"])[0][0].stats[0].stats[4].stats
     assert any([
-        "GR#237177 - go - cmd/go/internal/web" in str(change)
+        "GR#446275 - go - testing: change Error to Errorf in comment" in str(change)
         for change in stats])
 
 
@@ -59,10 +59,10 @@ def test_gerrit_submitted_for_review():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--gerrit-submitted",
-        "--since", "2020-06-01",
-        "--until", "2020-06-30"])[0][0].stats[0].stats[2].stats
+        "--since", "2022-10-20",
+        "--until", "2022-10-30"])[0][0].stats[0].stats[2].stats
     assert any([
-        "GR#240458 - go - cmd/go/internal/modfetch" in str(change)
+        "GR#445115 - text - cases: fix build, memory leaks, and error" in str(change)
         for change in stats])
 
 
@@ -71,10 +71,10 @@ def test_gerrit_wip():
     did.base.Config(CONFIG)
     stats = did.cli.main([
         "--gerrit-wip",
-        "--since", "2020-06-01",
-        "--until", "2020-06-30"])[0][0].stats[0].stats[3].stats
+        "--since", "2022-07-01",
+        "--until", "2022-07-30"])[0][0].stats[0].stats[3].stats
     assert any([
-        "GR#237584 - go - doc: update install instructions" in str(change)
+        "GR#416555 - sync - errgroup: propagate panics and goexits" in str(change)
         for change in stats])
 
 
