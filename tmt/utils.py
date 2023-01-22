@@ -3511,12 +3511,18 @@ def wait(
     parent.debug(
         'wait',
         f"waiting for condition '{check.__name__}' with timeout {timeout},"
-        f"deadline in {timeout.total_seconds()}, checking every {tick} seconds")
+        f" deadline in {timeout.total_seconds()} seconds,"
+        f" checking every {tick:.2f} seconds")
 
     while True:
         now = NOW()
 
         if now > deadline:
+            parent.debug(
+                'wait',
+                f"'{check.__name__}' did not succeed,"
+                f" {now - deadline:.2f} over quota")
+
             raise WaitingTimedOutError(check, timeout)
 
         try:
@@ -3530,20 +3536,27 @@ def wait(
                 parent.debug(
                     'wait',
                     f"'{check.__name__}' finished successfully but took too much time,"
-                    f"{now - deadline} over quota")
+                    f" {now - deadline:.2f} over quota")
 
                 raise WaitingTimedOutError(check, timeout, check_success=True)
 
             parent.debug(
                 'wait',
-                f"'{check.__name__}' finished successfully, {deadline - now} seconds left")
+                f"'{check.__name__}' finished successfully,"
+                f" {deadline - now:.2f} seconds left")
 
             return ret
 
         except WaitingIncomplete:
+            # Update timestamp for more accurate logging - check() could have taken minutes
+            # to complete, using the pre-check timestamp for logging would be misleading.
+            now = NOW()
+
             parent.debug(
                 'wait',
-                f"'{check.__name__}' still pending, {deadline - now} seconds left")
+                f"'{check.__name__}' still pending,"
+                f" {deadline - now:.2f} seconds left,"
+                f" current tick {tick:.2f} seconds")
 
             time.sleep(tick)
 
