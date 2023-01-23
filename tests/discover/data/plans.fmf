@@ -170,11 +170,13 @@ execute:
     /dynamic-ref:
         /no-context:
             discover:
+                url: https://github.com/teemtee/tmt
                 how: fmf
                 ref: "@tests/discover/data/dynamic-ref.fmf"
         /with-context:
             context:
                 branch: fedora
             discover:
+                url: https://github.com/teemtee/tmt
                 how: fmf
                 ref: "@tests/discover/data/dynamic-ref.fmf"
