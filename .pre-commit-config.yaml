@@ -45,3 +45,7 @@ repos:
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
+      - id: name-tests-test
+        args:
+          - --pytest-test-first
+        exclude: disable_test_trac.py
