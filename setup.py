@@ -20,6 +20,7 @@ __version__ = version
 __pkg__ = 'tmt'
 __pkgdata__ = {
     'tmt': [
+        'py.typed',
         'schemas/*.yaml',
         'schemas/*/*.yaml',
         'steps/execute/scripts/*',
