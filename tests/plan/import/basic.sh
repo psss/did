@@ -70,7 +70,8 @@ rlJournalStart
     rlPhaseEnd
 
     rlPhaseStartTest "Run Tests"
-        rlRun -s "tmt run -v"
+        rlRun -s "tmt run --verbose --dry" 0 "Run tests (dry mode)"
+        rlRun -s "tmt run --verbose" 0 "Run tests"
         rlAssertGrep "pass /tests/basic/ls" $rlRun_LOG
         rlAssertGrep "pass /lint/tests" $rlRun_LOG
     rlPhaseEnd
