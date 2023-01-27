@@ -120,8 +120,8 @@ class Config(object):
     @property
     def quarter(self):
         """ The first month of the quarter, 1 by default """
+        month = self.parser.get("general", "quarter", fallback=1)
         try:
-            month = self.parser.get("general", "quarter", fallback=1)
             month = int(month) % 3
         except ValueError:
             raise ConfigError(
