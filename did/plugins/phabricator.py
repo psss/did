@@ -31,6 +31,8 @@ from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
 # Number of differentials to be fetched per page
+# See "Paging and Limits" section here for example:
+# https://reviews.llvm.org/conduit/method/differential.revision.search/
 PER_PAGE = 100
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -79,19 +81,66 @@ class Phabricator:
         # Resolve logins to phids for users
         # see https://reviews.llvm.org/conduit/method/user.search/
         url = self.url + "/user.search"
-        data = {
+        data_dict = {
             'api.token': self.token,
             }
         for idx, login in enumerate(logins):
-            data[f'constraints[usernames][{idx}]'] = login
+            data_dict[f'constraints[usernames][{idx}]'] = login
 
+        results = self._get_all_pages(url, data_dict)
+        return [user["phid"] for user in results]
+
+    def search_diffs(self, data_dict: Dict[str, Any],
+                     verbose: bool = False) -> List["Differential"]:
+        """ Find Phabricator Differentials """
+        url = self.url + "/differential.revision.search"
+        result = []
+        for diff in self._get_all_pages(url, data_dict):
+            result.append(Differential(diff, verbose=verbose))
+        log.data(pretty(result))
+        return result
+
+    def _get_all_pages(self, url: str, data_dict: Dict[str, Any]):
+        """
+        Gets all pages of a Phabricator Conduit API request
+        """
+        data_dict['after'] = None
+        results = []
+        while True:
+            res = self._get_page(url, data_dict)
+            if "result" not in res:
+                raise ReportError("Mising key Phabricator dict: result")
+            results.extend(res["result"]["data"])
+            # Define offset of next differentials to fetch
+            if "cursor" in res:
+                data_dict['after'] = res["cursor"]["after"]
+                if data_dict['after'] is None:
+                    break
+            else:
+                break
+        log.debug("Results: %s fetched", listed(len(results), "item"))
+        return results
+
+    def _get_page(self, url: str, data_dict: Dict[str, Any]):
+        """
+        Gets a single page of a Phabricator Conduit API request
+        """
+        data_dict['limit'] = PER_PAGE
+        data_dict['api.token'] = self.token
         try:
-            response = requests.post(url, data=data)
+            response = requests.post(url, data=data_dict)
             log.debug("Response headers: %s", response.headers)
         except requests.exceptions.RequestException as error:
             log.debug(error)
             raise ReportError(
-                f"Phabricator search on '{self.url}' failed.") from error
+                f"Phabricator search on {url} failed") from error
+
+        if response.status_code != 200:
+            log.debug("Phabricator status code: {response.status.code}")
+            raise RuntimeError(
+                "Phabricator request exited with status code "
+                f"{response.status_code} rather than 200.")
+
         try:
             decoded = response.json()
             # Handle API errors
@@ -102,54 +151,7 @@ class Phabricator:
             log.debug(error)
             raise ReportError(
                 "Phabricator failed to parse JSON response.") from error
-        return [user["phid"] for user in decoded["result"]["data"]]
-
-    def search(self, query, data_dict: Dict[str, Any],
-               verbose: bool = False) -> List["Differential"]:
-        """ Perform Phabricator query """
-        url = self.url + query
-        data_dict['api.token'] = self.token
-        data_dict['limit'] = PER_PAGE
-        data_dict['after'] = None
-
-        result = []
-        while True:
-            log.debug("Phabricator search")
-            try:
-                response = requests.post(url, data=data_dict)
-                log.debug("Response headers: %s", response.headers)
-            except requests.exceptions.RequestException as error:
-                log.debug(error)
-                raise ReportError(
-                    f"Phabricator search on {self.url} failed") from error
-
-            if response.status_code != 200:
-                log.debug("Phabricator status code: {response.status.code}")
-                raise RuntimeError(
-                    "Phabricator request exited with status code "
-                    f"{response.status_code} rather than 200.")
-
-            try:
-                decoded = response.json()
-                # Handle API errors
-                if decoded["error_info"] is not None:
-                    raise RuntimeError(
-                        f"Phabricator error encountered: {decoded['error_info']}")
-            except requests.exceptions.JSONDecodeError as error:
-                log.debug(error)
-                raise ReportError(
-                    "Phabricator failed to parse JSON response.") from error
-
-            res = decoded["result"]
-            result.extend(Differential(diff, verbose=verbose) for diff in res["data"])
-            # Define offset of next differentials to fetch
-            data_dict['after'] = res["cursor"]["after"]
-            if data_dict['after'] is None:
-                break
-
-        log.debug("Result: %s fetched", listed(len(result), "item"))
-        log.data(pretty(result))
-        return result
+        return decoded
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -222,8 +224,7 @@ class DifferentialsCreated(Stats):
             data_dict[f'constraints[authorPHIDs][{idx}]'] = login
         data_dict['constraints[createdStart]'] = self.options.since.date.strftime("%s")
         data_dict['constraints[createdEnd]'] = self.options.until.date.strftime("%s")
-        self.stats = self.parent.phabricator.search(
-            "/differential.revision.search",
+        self.stats = self.parent.phabricator.search_diffs(
             data_dict=data_dict,
             verbose=self.options.verbose)
 
@@ -238,8 +239,7 @@ class DifferentialsReviewed(Stats):
             data_dict[f'constraints[reviewerPHIDs][{idx}]'] = login
         data_dict['constraints[modifiedStart]'] = self.options.since.date.strftime("%s")
         data_dict['constraints[modifiedEnd]'] = self.options.until.date.strftime("%s")
-        self.stats = self.parent.phabricator.search(
-            "/differential.revision.search",
+        self.stats = self.parent.phabricator.search_diffs(
             data_dict=data_dict,
             verbose=self.options.verbose)
 
