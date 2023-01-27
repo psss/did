@@ -25,7 +25,7 @@ type = phabricator
 
 URL = "url = https://reviews.llvm.org/api/"
 LOGINS = "login = kwk, kkleine"
-TOKEN = 'token = {os.getenv(key="PHABRICATOR_TOKEN", default="No token specified")}'
+TOKEN = "token = " + os.getenv(key="PHABRICATOR_TOKEN", default="NoTokenSpecified")
 
 CONFIG_OK = f"""
 {CONFIG_BASE}
@@ -50,7 +50,6 @@ CONFIG_BAD_MISSING_TOKEN = f"""
 {CONFIG_BASE}
 {URL}
 {LOGINS}
-{TOKEN}
 """
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -94,7 +93,7 @@ def test_differentials_created():
     needle = "D129553 [standalone-build-x86_64]: build lld"
     assert any([needle in str(stat) for stat in stats])
     # Verbose search (URL is prefixed instead of differential number)
-    option = "--ph-differentials-created --verbose"
+    option = "--ph-differentials-created --verbose "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
     needle = "https://reviews.llvm.org/D129553 [standalone-build-x86_64]: build lld"
     assert any([needle in str(stat) for stat in stats])
@@ -111,7 +110,7 @@ def test_differentials_reviewed():
     needle = "D99780 workflows: Add GitHub action for automating some release tasks"
     assert any([needle in str(stat) for stat in stats])
     # Verbose search (URL is prefixed instead of differential number)
-    option = "--ph-differentials-reviewed --verbose"
+    option = "--ph-differentials-reviewed --verbose "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[1].stats
     needle = "https://reviews.llvm.org/D99780 workflows: Add GitHub action "\
              "for automating some release tasks"
