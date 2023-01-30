@@ -17,7 +17,7 @@ from dateutil.relativedelta import MO as MONDAY
 from dateutil.relativedelta import relativedelta as delta
 
 from did import utils
-from did.utils import log
+from did.utils import DEFAULT_SEPARATOR, MAX_WIDTH, log
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -25,9 +25,6 @@ from did.utils import log
 
 # Config file location
 CONFIG = os.path.expanduser("~/.did")
-
-# Default maximum width
-MAX_WIDTH = 79
 
 # Today's date
 TODAY = datetime.date.today()
@@ -156,7 +153,7 @@ class Config(object):
         try:
             return self.parser.get("general", "separator")
         except (NoOptionError, NoSectionError):
-            return "~"
+            return DEFAULT_SEPARATOR
 
     @property
     def separator_width(self):
@@ -164,7 +161,7 @@ class Config(object):
         try:
             return int(self.parser.get("general", "separator_width"))
         except (NoOptionError, NoSectionError):
-            return 79
+            return MAX_WIDTH
 
     def sections(self, kind=None):
         """ Return all sections (optionally of given kind only) """

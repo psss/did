@@ -15,6 +15,12 @@ from pprint import pformat as pretty  # noqa: F401 (used by other modules)
 #  Constants
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# Default maximum width
+MAX_WIDTH = 79
+
+# Default separator character
+DEFAULT_SEPARATOR = "~"
+
 # Coloring
 COLOR_ON = 1
 COLOR_OFF = 0
@@ -157,12 +163,12 @@ def load_components(*paths, **kwargs):
     return num_loaded
 
 
-def header(text, separator_width=79, separator="~"):
+def header(text, separator=DEFAULT_SEPARATOR, separator_width=MAX_WIDTH):
     """ Show text as a header. """
     print("\n{0}\n {1}\n{0}".format(separator_width * separator, text))
 
 
-def shorted(text, width=79):
+def shorted(text, width=MAX_WIDTH):
     """ Shorten text, make sure it's not cut in the middle of a word """
     if len(text) <= width:
         return text

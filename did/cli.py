@@ -53,7 +53,7 @@ class Options(object):
         try:
             width = did.base.Config().width
         except did.base.ConfigFileError:
-            width = did.base.MAX_WIDTH
+            width = did.utils.MAX_WIDTH
 
         # Time & user selection
         group = self.parser.add_argument_group("Select")
@@ -210,7 +210,10 @@ def main(arguments=None):
         print(header)
         team_stats = UserStats(options=options)
         if options.merge:
-            utils.header("Total Report", did.base.Config().separator_width, did.base.Config().separator)
+            utils.header(
+                "Total Report",
+                separator=did.base.Config().separator,
+                separator_width=did.base.Config().separator_width)
             utils.item("Users: {0}".format(len(users)), options=options)
 
         # Check individual user stats
@@ -218,7 +221,10 @@ def main(arguments=None):
             if options.merge:
                 utils.item(user, 1, options=options)
             else:
-                utils.header(user, did.base.Config().separator_width, did.base.Config().separator)
+                utils.header(
+                    user,
+                    separator=did.base.Config().separator,
+                    separator_width=did.base.Config().separator_width)
             user_stats = UserStats(user=user, options=options)
             user_stats.check()
             team_stats.merge(user_stats)
@@ -227,7 +233,10 @@ def main(arguments=None):
         # Display merged team report
         if options.merge or options.total:
             if options.total:
-                utils.header("Total Report", did.base.Config().separator_width, did.base.Config().separator)
+                utils.header(
+                    "Total Report",
+                    separator=did.base.Config().separator,
+                    separator_width=did.base.Config().separator_width)
             team_stats.show()
 
         # Return all gathered stats objects
