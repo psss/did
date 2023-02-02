@@ -26,6 +26,9 @@ Minimum config file should contain at least a ``general`` section
 with an email address which will be used for searching. Option
 ``width`` specifies the maximum width of the report, ``quarter``
 can be used to choose a different start month of the quarter.
+Option ``week`` can be used to choose a different first day of the week:
+defaults to ``0`` which is Monday;
+other common setting for this option would be ``6`` which is Sunday.
 The ``separator`` and ``separator_width`` options control the
 character used, and width of the separator between users::
 
@@ -33,6 +36,7 @@ character used, and width of the separator between users::
     email = Petr Šplíchal <psplicha@redhat.com>
     width = 79
     quarter = 1
+    week = 0
     separator = #
     separator_width = 20
 

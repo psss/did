@@ -13,7 +13,6 @@ from configparser import NoOptionError, NoSectionError
 from datetime import timedelta
 
 from dateutil.relativedelta import FR as FRIDAY
-from dateutil.relativedelta import MO as MONDAY
 from dateutil.relativedelta import relativedelta as delta
 
 from did import utils
@@ -124,6 +123,17 @@ class Config(object):
             raise ConfigError(
                 f"Invalid quarter start '{month}', should be integer.")
         return month
+
+    @property
+    def week(self):
+        """ The first day of the week, 0 (Monday) by default"""
+        week = self.parser.get("general", "week", fallback=0)
+        try:
+            week = int(week) % 7
+        except ValueError as exc:
+            raise ConfigError(
+                f"Invalid week start '{week}', should be integer.") from exc
+        return week
 
     @property
     def email(self):
@@ -256,14 +266,18 @@ class Date(object):
     @staticmethod
     def this_week():
         """ Return start and end date of the current week. """
-        since = TODAY + delta(weekday=MONDAY(-1))
+        since = TODAY
+        while since.weekday() != Config().week:
+            since -= delta(days=1)
         until = since + delta(weeks=1)
         return Date(since), Date(until)
 
     @staticmethod
     def last_week():
         """ Return start and end date of the last week. """
-        since = TODAY + delta(weekday=MONDAY(-2))
+        since = TODAY - delta(weeks=1)
+        while since.weekday() != Config().week:
+            since -= delta(days=1)
         until = since + delta(weeks=1)
         return Date(since), Date(until)
 
