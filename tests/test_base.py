@@ -115,6 +115,20 @@ def test_Date_period():
         assert str(since) == "2014-01-01"
         assert str(until) == "2015-01-01"
         assert period == "the last year"
+    # This week in Israel
+    for argument in ["", "week", "this week"]:
+        Config(config="[general]\nweek = 6")
+        since, until, period = Date.period(argument)
+        assert str(since) == "2015-09-27"
+        assert str(until) == "2015-10-04"
+        assert period == "the week 39"
+    # Last week in Israel
+    for argument in ["last", "last week"]:
+        Config(config="[general]\nweek = 6")
+        since, until, period = Date.period(argument)
+        assert str(since) == "2015-09-20"
+        assert str(until) == "2015-09-27"
+        assert period == "the week 38"
     # Adding and subtracting days
     assert str(Date('2018-11-29') + 1) == '2018-11-30'
     assert str(Date('2018-11-29') + 2) == '2018-12-01'
@@ -267,7 +281,7 @@ class TestGetToken(unittest.TestCase):
         token = str(uuid4())
         config = {"mytoken": token}
         self.assertIsNone(get_token(config))
-        self.assertEqual(get_token(config, token_key="mytoken"), token)
+        self.assertEqual(get_token(config, token_key="mytoken"), token)  # nosec
 
     def test_get_token_file(self):
         """ Test getting a token from a file """
@@ -278,7 +292,7 @@ class TestGetToken(unittest.TestCase):
 
     def test_get_token_file_empty(self):
         """ Test getting a token from a file with just whitespace. """
-        token_in_file = "   "
+        token_in_file = "   "  # nosec
         with self.get_token_as_file(token_in_file) as filename:
             config = {"token_file": filename}
             self.assertIsNone(get_token(config))
@@ -296,7 +310,7 @@ class TestGetToken(unittest.TestCase):
         token_in_file = str(uuid4())
         with self.get_token_as_file(token_in_file) as filename:
             config = {"mytoken_file": filename}
-            self.assertEqual(
+            self.assertEqual(  # nosec
                 get_token(
                     config,
                     token_file_key="mytoken_file"),
