@@ -151,7 +151,7 @@ Tests
 
 To run tests using pytest::
 
-    coverage run --source=did -m py.test tests
+    coverage run --source=did -m pytest tests
     coverage report
 
 Install pytest and coverage using yum::

@@ -20,11 +20,11 @@ tmp:
 
 # Run the test suite, optionally with coverage
 test: tmp
-	DID_DIR=$(TMP) py.test tests
+	DID_DIR=$(TMP) pytest tests
 smoke: tmp
-	DID_DIR=$(TMP) py.test tests/test_cli.py
+	DID_DIR=$(TMP) pytest tests/test_cli.py
 coverage: tmp
-	DID_DIR=$(TMP) coverage run --source=did,bin -m py.test tests
+	DID_DIR=$(TMP) coverage run --source=did,bin -m pytest tests
 	coverage report
 	coverage annotate
 
