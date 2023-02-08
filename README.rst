@@ -248,9 +248,6 @@ Status
 .. image:: https://badge.fury.io/py/did.svg
     :target: http://badge.fury.io/py/did
 
-.. image:: https://travis-ci.org/psss/did.svg?branch=master
-    :target: https://travis-ci.org/psss/did
-
 .. image:: https://coveralls.io/repos/github/psss/did/badge.svg
     :target: https://coveralls.io/github/psss/did
 
