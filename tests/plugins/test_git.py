@@ -2,6 +2,7 @@
 """ Tests for the git plugin """
 
 import os
+import tempfile
 
 import pytest
 
@@ -92,11 +93,12 @@ def test_git_nothing():
 
 def test_git_invalid():
     """ Invalid git repo """
-    did.base.Config(CONFIG.format("/tmp"))
-    try:
-        did.cli.main(INTERVAL)
-    except SystemExit:
-        raise RuntimeError("Expected warning only")
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        did.base.Config(CONFIG.format(tmpdirname))
+        try:
+            did.cli.main(INTERVAL)
+        except SystemExit:
+            raise RuntimeError("Expected warning only")
 
 
 def test_git_non_existent():

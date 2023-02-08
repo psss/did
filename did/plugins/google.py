@@ -284,9 +284,9 @@ class GoogleStatsGroup(StatsGroup):
     def __init__(self, option, name=None, parent=None, user=None):
         super(GoogleStatsGroup, self).__init__(option, name, parent, user)
         config = dict(Config().section(option))
-        client_id = get_token(
+        client_id = get_token(  # nosec
             config, token_key="client_id", token_file_key="client_id_file")
-        client_secret = get_token(
+        client_secret = get_token(  # nosec
             config,
             token_key="client_secret",
             token_file_key="client_secret_file")

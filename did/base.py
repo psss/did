@@ -475,7 +475,7 @@ class User(object):
             log.info("Using login alias '{0}' for '{1}'".format(login, stats))
 
 
-def get_token(
+def get_token(  # nosec
         config: dict,
         token_key: str = "token",
         token_file_key: str = "token_file") -> str:
@@ -511,7 +511,7 @@ def get_token(
         with open(file_path, encoding="utf-8") as token_file:
             token = token_file.read().strip()
 
-    if token == "":
+    if token == "":  # nosec
         token = None
 
     return token

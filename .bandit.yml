@@ -1,0 +1,4 @@
+---
+# https://bandit.readthedocs.io/en/latest/plugins/b101_assert_used.html?highlight=assert_used
+assert_used:
+  skips: ['tests/test_*.py', 'tests/plugins/test_*.py', 'tests/plugins/disable_test_trac.py']

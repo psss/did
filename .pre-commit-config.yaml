@@ -39,6 +39,14 @@ repos:
             setup.py
           )$
 
+  - repo: https://github.com/PyCQA/bandit
+    rev: "1.7.4"
+    hooks:
+      - id: bandit
+        args:
+          - --configfile
+          - .bandit.yml
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: "v4.4.0"
     hooks:
