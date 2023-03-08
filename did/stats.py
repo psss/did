@@ -240,10 +240,10 @@ class UserStats(StatsGroup):
         for stat in self.stats:
             stat.add_option(parser)
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Header & Footer
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class EmptyStats(Stats):
     """ Custom stats group for header & footer """
