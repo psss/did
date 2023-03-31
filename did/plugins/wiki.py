@@ -19,7 +19,7 @@ xmlrpc api endpoint::
 
 import xmlrpc.client
 
-from did.base import Config, ConfigError
+from did.base import Config, ConfigError, ReportError
 from did.stats import Stats, StatsGroup
 from did.utils import item
 
@@ -41,8 +41,13 @@ class WikiChanges(Stats):
         Stats.__init__(self, option, name, parent)
 
     def fetch(self):
-        for change in self.proxy.getRecentChanges(
-                self.options.since.datetime):
+        try:
+            changes = self.proxy.getRecentChanges(self.options.since.datetime)
+        except (xmlrpc.client.Error, OSError) as error:
+            raise ReportError(
+                f"Unable to fetch wiki changes from '{self.url}' "
+                f"because of '{error}'.")
+        for change in changes:
             if (change["author"] == self.user.login
                     and change["lastModified"] < self.options.until.date):
                 self.changes += 1
