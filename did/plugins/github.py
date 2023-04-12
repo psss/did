@@ -211,7 +211,7 @@ class PullRequestsReviewed(Stats):
     def fetch(self):
         log.info("Searching for pull requests reviewed by {0}".format(
             self.user))
-        query = "search/issues?q=reviewed-by:{0}+closed:{1}..{2}".format(
+        query = "search/issues?q=reviewed-by:{0}+-author:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
         self.stats = [
