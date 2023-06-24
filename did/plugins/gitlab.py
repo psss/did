@@ -109,7 +109,7 @@ class GitLab(object):
 
     def get_project_mr(self, project_id, mr_id):
         mrs = self.get_project_mrs(project_id)
-        mr = next(filter(lambda x: x['id'] == mr_id, mrs))
+        mr = next(filter(lambda x: x['id'] == mr_id, mrs), None)
         return mr
 
     def get_project_mrs(self, project_id):
@@ -121,7 +121,7 @@ class GitLab(object):
 
     def get_project_issue(self, project_id, issue_id):
         issues = self.get_project_issues(project_id)
-        issue = next(filter(lambda x: x['id'] == issue_id, issues))
+        issue = next(filter(lambda x: x['id'] == issue_id, issues), None)
         return issue
 
     def get_project_issues(self, project_id):
@@ -192,9 +192,15 @@ class Note(Issue):
 
     def iid(self):
         if self.data['note']['noteable_type'] == 'Issue':
-            return self.gitlabapi.get_project_issue(
+            issue = self.gitlabapi.get_project_issue(
                 self.data['project_id'],
-                self.data['note']['noteable_id'])['iid']
+                self.data['note']['noteable_id'])
+
+            # `noteable_type` is `Issue` even for `WorkItem`s, which
+            # aren't returned by `get_project_issue()`
+            if issue is not None:
+                return issue['iid']
+            return 'unknown'
         elif self.data['note']['noteable_type'] == 'MergeRequest':
             return self.gitlabapi.get_project_mr(
                 self.data['project_id'],
