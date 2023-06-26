@@ -356,7 +356,7 @@ class GitLabStats(StatsGroup):
                 name="Merge requests created on {0}".format(option)),
             MergeRequestsCommented(
                 option=option + "-merge-requests-commented", parent=self,
-                name="Issues commented on {0}".format(option)),
+                name="Merge requests commented on {0}".format(option)),
             MergeRequestsApproved(
                 option=option + "-merge-requests-approved", parent=self,
                 name="Merge requests approved on {0}".format(option)),
