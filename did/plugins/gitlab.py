@@ -81,14 +81,16 @@ class GitLab():
         self.project_issues: dict[str, list[dict[str, Any]]] = {}
         self.timeout = timeout
 
-    def _get_gitlab_api_raw(self, url):
+    def _get_gitlab_api_raw(self, url, params=None):
         log.debug("Connecting to GitLab API at '%s'.", url)
+        if params:
+            log.debug("Query params: %s", params)
         retries = 0
         while True:
             try:
                 api_raw = requests.get(
                     url, headers=self.headers, verify=self.ssl_verify,
-                    timeout=self.timeout)
+                    params=params, timeout=self.timeout)
                 api_raw.raise_for_status()
                 return api_raw
             except requests.exceptions.HTTPError as http_err:
@@ -115,9 +117,9 @@ class GitLab():
                     )
                 sleep(GITLAB_INTERVAL)
 
-    def _get_gitlab_api(self, endpoint):
+    def _get_gitlab_api(self, endpoint, params=None):
         url = f'{self.url}/api/v{GITLAB_API}/{endpoint}'
-        return self._get_gitlab_api_raw(url)
+        return self._get_gitlab_api_raw(url, params=params)
 
     def _get_gitlab_api_json(self, endpoint):
         log.debug("Query: %s", endpoint)
@@ -126,11 +128,16 @@ class GitLab():
         return result
 
     def _get_gitlab_api_list(
-            self, endpoint, since=None, get_all_results=False):
+        self, endpoint,
+        params=None,
+        since=None,
+        get_all_results=False
+            ):
         results = []
-        result = self._get_gitlab_api(endpoint)
+        result = self._get_gitlab_api(endpoint, params=params)
         result.raise_for_status()
         results.extend(result.json())
+        log.data(pretty(results))
         while ('next' in result.links and 'url' in result.links['next'] and
                 get_all_results):
             log.debug("-> Fetching more paginated data")
@@ -169,6 +176,26 @@ class GitLab():
         mrs = self.get_project_mrs(project_id)
         mr = next(filter(lambda x: x['id'] == mr_id, mrs), None)
         return mr
+
+    def get_user_mr(self, username, state, since, until):
+        """
+        Fetch merge requests by user using GitLab's global
+        merge_requests endpoint.
+
+        This endpoint is available to all authenticated users
+        (not just admins) and returns merge requests based on
+        the user's visibility permissions.
+        See: https://docs.gitlab.com/ee/api/merge_requests.html
+        """
+        since = since.date.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        until = until.date.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        endpoint = 'merge_requests'
+        return self._get_gitlab_api_list(endpoint, params={
+            'author_username': username,
+            'state': state,
+            'updated_after': since,
+            'updated_before': until
+            }, get_all_results=True)
 
     def get_project_mrs(self, project_id):
         if project_id not in self.project_mrs:
@@ -230,7 +257,10 @@ class Issue():
         self.id = set_id
         if set_id is None:
             self.id = self.iid()
-        self.title = data['target_title']
+        self.title = self._get_title()
+
+    def _get_title(self):
+        return self.data['target_title']
 
     def iid(self):
         return self.gitlabapi.get_project_issue(
@@ -294,9 +324,30 @@ class Note(Issue):
         return "unknown"
 
 
+class MergedRequest(Issue):
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, data, parent):
+        # For merged requests from the global merge_requests API,
+        # we get MR objects directly (not events), so iid and title
+        # are already in the data
+        set_id = data['iid']
+        super().__init__(data, parent, set_id)
+
+    def _get_title(self):
+        # MR objects from global API have 'title' field,
+        # unlike event objects which have 'target_title'
+        return self.data['title']
+
+    def iid(self):
+        # Override to avoid unnecessary API call since we already
+        # have iid
+        return self.data['iid']
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class IssuesCreated(Stats):
     """ Issue created """
@@ -398,9 +449,23 @@ class MergeRequestsApproved(Stats):
             for mr in results]
 
 
+class MergeRequestsMerged(Stats):
+    """ Merge requests merged """
+
+    def fetch(self):
+        log.info("Searching for Merged requests authored by %s", self.user)
+        results = self.parent.gitlab.get_user_mr(
+            self.user.login, 'merged',
+            self.options.since, self.options.until
+            )
+        self.stats = [
+            MergedRequest(mr, self.parent)
+            for mr in results]
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class GitLabStats(StatsGroup):
     """ GitLab work """
@@ -461,4 +526,7 @@ class GitLabStats(StatsGroup):
             MergeRequestsClosed(
                 option=f"{option}-merge-requests-closed", parent=self,
                 name=f"Merge requests closed on {option}"),
+            MergeRequestsMerged(
+                option=f"{option}-merge-requests-merged", parent=self,
+                name=f"Merged requests on {option}"),
             ]
