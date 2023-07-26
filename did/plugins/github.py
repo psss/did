@@ -372,6 +372,19 @@ class PullRequestsReviewed(Stats):
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
 
+class PullRequestsMerged(Stats):
+    """ Pull requests merged """
+
+    def fetch(self):
+        log.info("Searching for merged pull requests authored by %s", self.user)
+        login = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
+        query = f"search/issues?q=author:{login}+merged:{since}..{until}+type:pr"
+        self.stats = [
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -427,4 +440,7 @@ class GitHubStats(StatsGroup):
             PullRequestsReviewed(
                 option=f"{option}-pull-requests-reviewed", parent=self,
                 name=f"Pull requests reviewed on {option}"),
+            PullRequestsMerged(
+                option=f"{option}-pull-requests-merged", parent=self,
+                name=f"Merged pull requests on {option}"),
             ]
