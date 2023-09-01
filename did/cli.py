@@ -77,8 +77,8 @@ class Options(object):
         # Formating options
         group = self.parser.add_argument_group("Format")
         group.add_argument(
-            "--format", default="text",
-            help="Output style, possible values: text (default) or wiki")
+            "--format", default="text", choices=["text", "md", "wiki"],
+            help="Output style, default: text")
         group.add_argument(
             "--width", default=width, type=int,
             help="Maximum width of the report output (default: %(default)s)")
@@ -149,8 +149,17 @@ class Options(object):
             raise RuntimeError(
                 "Invalid date range ({0} to {1})".format(
                     opt.since, opt.until.date - delta(days=1)))
-        header = "Status report for {0} ({1} to {2}).".format(
+
+        header = "Status report for {0} ({1} to {2})".format(
             period, opt.since, opt.until.date - delta(days=1))
+        if opt.format == "md":
+            # In markdown the first line must be a header
+            # using alternate syntax allowing to use did's
+            # output in commit messages as well
+            header = f"{header}\n{'=' * len(header)}"
+        else:
+            # In markdown no trailing punctuation is allowed in headings
+            header = header + "."
 
         # Finito
         log.debug("Gathered options:")
