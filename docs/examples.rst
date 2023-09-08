@@ -95,7 +95,7 @@ corresponding option groups for each of them::
 
     Format:
       Format:
-      --format {text,md,wiki}
+      --format {text,markdown,wiki}
                        Output style, default: text
       --width WIDTH    Maximum width of the report output (default: 79)
       --brief          Show brief summary only, do not list individual items

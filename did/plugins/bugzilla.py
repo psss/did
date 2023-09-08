@@ -140,7 +140,7 @@ class Bug(object):
         """ Consistent identifier and summary for displaying """
         if self.options.format == "wiki":
             return "<<Bug({0})>> - {1}".format(self.id, self.summary)
-        elif self.options.format == "md":
+        elif self.options.format == "markdown":
             link = self.parent.url.replace("xmlrpc.cgi", "show_bug.cgi?id=")
             return "[{0}#{1}]({2}{1}) - {3}".format(
                 self.prefix, str(self.id), link, self.summary)

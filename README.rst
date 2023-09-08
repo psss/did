@@ -86,12 +86,12 @@ The default output is plain text of maximum width 79 characters.
 This can be adjusted using the ``--width`` parameter. To disable
 shortening altogether use ``--width=0``. The default width value
 can be saved in the config file as well. Use ``--format=wiki`` to
-enable simple MoinMoin wiki syntax or ``--format=wiki`` to enable
+enable simple MoinMoin wiki syntax or ``--format=markdown`` to enable
 markdown syntax. For stats which support them,
 ``--brief`` and ``--verbose`` can be used to specify a different
 level of detail to be shown.
 
---format {text,md,wiki}
+--format {text,markdown,wiki}
     Output style, default: text
 
 --width=WIDTH

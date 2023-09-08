@@ -186,7 +186,7 @@ def item(text, level=0, options=None):
         return
     # Four space for each level, additional space for wiki format
     indent = level * 4
-    if options.format == "md":
+    if options.format == "markdown":
         indent = level * 2
     if options.format == "wiki" and level == 0:
         indent = 1

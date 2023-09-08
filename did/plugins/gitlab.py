@@ -177,7 +177,7 @@ class Issue(object):
 
     def __str__(self):
         """ String representation """
-        if self.parent.options.format == "md":
+        if self.parent.options.format == "markdown":
             return "[{1}#{3}]({0}/{1}/-/{2}/{3}) - {4}".format(
                 self.gitlabapi.url,
                 self.project['path_with_namespace'],

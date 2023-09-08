@@ -122,7 +122,7 @@ class Issue(object):
 
     def __str__(self):
         """ String representation """
-        if self.options.format == "md":
+        if self.options.format == "markdown":
             return "[{0}/{1}#{2}](https://github.com/{0}/{1}/issues/{2}) - {3}".format(
                 self.owner, self.project,
                 str(self.id), self.data["title"].strip())

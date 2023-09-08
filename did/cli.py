@@ -77,7 +77,7 @@ class Options(object):
         # Formating options
         group = self.parser.add_argument_group("Format")
         group.add_argument(
-            "--format", default="text", choices=["text", "md", "wiki"],
+            "--format", default="text", choices=["text", "markdown", "wiki"],
             help="Output style, default: text")
         group.add_argument(
             "--width", default=width, type=int,
@@ -152,7 +152,7 @@ class Options(object):
 
         header = "Status report for {0} ({1} to {2})".format(
             period, opt.since, opt.until.date - delta(days=1))
-        if opt.format == "md":
+        if opt.format == "markdown":
             # In markdown the first line must be a header
             # using alternate syntax allowing to use did's
             # output in commit messages as well

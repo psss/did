@@ -131,7 +131,7 @@ class Issue(object):
 
     def __str__(self):
         """ Jira key and summary for displaying """
-        if self.options.format == "md":
+        if self.options.format == "markdown":
             return "[{0}-{1}]({2}) - {3}".format(
                 self.prefix,
                 self.identifier,
