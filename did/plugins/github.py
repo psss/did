@@ -110,7 +110,7 @@ class GitHub(object):
 class Issue(object):
     """ GitHub Issue """
 
-    def __init__(self, data):
+    def __init__(self, data, parent):
         self.data = data
         self.title = data["title"]
         matched = re.search(
@@ -118,12 +118,18 @@ class Issue(object):
         self.owner = matched.groups()[0]
         self.project = matched.groups()[1]
         self.id = matched.groups()[2]
+        self.options = parent.options
 
     def __str__(self):
         """ String representation """
-        return "{0}/{1}#{2} - {3}".format(
-            self.owner, self.project,
-            str(self.id).zfill(PADDING), self.data["title"])
+        if self.options.format == "markdown":
+            return "[{0}/{1}#{2}]({3}) - {4}".format(
+                self.owner, self.project,
+                str(self.id), self.data["html_url"], self.data["title"].strip())
+        else:
+            return "{0}/{1}#{2} - {3}".format(
+                self.owner, self.project,
+                str(self.id).zfill(PADDING), self.data["title"])
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -139,7 +145,7 @@ class IssuesCreated(Stats):
             self.user.login, self.options.since, self.options.until)
         query += "+type:issue"
         self.stats = [
-            Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
 
 class IssuesClosed(Stats):
@@ -151,7 +157,7 @@ class IssuesClosed(Stats):
             self.user.login, self.options.since, self.options.until)
         query += "+type:issue"
         self.stats = [
-            Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
 
 class IssueCommented(Stats):
@@ -163,7 +169,7 @@ class IssueCommented(Stats):
             self.user.login, self.options.since, self.options.until)
         query += "+type:issue"
         self.stats = [
-            Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
 
 class PullRequestsCreated(Stats):
@@ -176,7 +182,7 @@ class PullRequestsCreated(Stats):
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
         self.stats = [
-            Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
 
 class PullRequestsCommented(Stats):
@@ -189,7 +195,7 @@ class PullRequestsCommented(Stats):
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
         self.stats = [
-            Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
 
 class PullRequestsClosed(Stats):
@@ -202,7 +208,7 @@ class PullRequestsClosed(Stats):
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
         self.stats = [
-            Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
 
 class PullRequestsReviewed(Stats):
@@ -215,7 +221,7 @@ class PullRequestsReviewed(Stats):
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
         self.stats = [
-            Issue(issue) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -94,7 +94,9 @@ corresponding option groups for each of them::
       --footer         All above
 
     Format:
-      --format FORMAT  Output style, possible values: text (default) or wiki
+      Format:
+      --format {text,markdown,wiki}
+                       Output style, default: text
       --width WIDTH    Maximum width of the report output (default: 79)
       --brief          Show brief summary only, do not list individual items
       --verbose        Include more details (like modified git directories)

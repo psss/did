@@ -112,23 +112,32 @@ SSL_VERIFY = True
 class Issue(object):
     """ Jira issue investigator """
 
-    def __init__(self, issue=None, prefix=None):
+    def __init__(self, issue=None, parent=None):
         """ Initialize issue """
         if issue is None:
             return
+        self.parent = parent
+        self.options = parent.options
         self.issue = issue
         self.key = issue["key"]
         self.summary = issue["fields"]["summary"]
         self.comments = issue["fields"]["comment"]["comments"]
         matched = re.match(r"(\w+)-(\d+)", self.key)
         self.identifier = matched.groups()[1]
-        if prefix is not None:
-            self.prefix = prefix
+        if parent.prefix is not None:
+            self.prefix = parent.prefix
         else:
             self.prefix = matched.groups()[0]
 
     def __str__(self):
         """ Jira key and summary for displaying """
+        if self.options.format == "markdown":
+            return "[{0}-{1}]({2}) - {3}".format(
+                self.prefix,
+                self.identifier,
+                f"{self.parent.url}/browse/{self.issue['key']}",
+                self.summary
+                )
         return "{0}-{1} - {2}".format(
             self.prefix, self.identifier, self.summary)
 
@@ -168,7 +177,10 @@ class Issue(object):
             if len(issues) >= data["total"]:
                 break
         # Return the list of issue objects
-        return [Issue(issue, prefix=stats.parent.prefix) for issue in issues]
+        return [
+            Issue(issue, parent=stats.parent)
+            for issue in issues
+            ]
 
     def updated(self, user, options):
         """ True if the issue was commented by given user """
