@@ -491,16 +491,18 @@ def get_token(
     wide mechanism to retrieve tokens or secrets either directly from
     the config file as plain text or from an outsourced file.
 
-    Returns:
-        str: The stripped token or `None` if no or only empty entries
-            were found in the `config` dict.
+    :param config:
+        A configuration dictionary.
+    :param token_key:
+        The dict entry to look for when the token is stored as plain
+        text in the config.
+    :param token_file_key:
+        The dict entry to look for when the token is supposed to be read
+        from file.
+    :returns:
+        The stripped token or `None` if no or only empty entries were
+        found in the `config` dict.
 
-    Keyword Args:
-        config (dict): A configuration dictionary
-        token_key (str): The dict entry to look for when the token is
-            stored as plain text in the config
-        token_file_key (str): The dict entry to look for when the token
-            is supposed to be read from file
     """
     token = None
 

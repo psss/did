@@ -6,7 +6,11 @@ python:
       - method: pip
         path: .
         extra_requirements: [all]
+
 build:
+    os: ubuntu-22.04
+    tools:
+        python: "3.11"
     apt_packages:
       - python3-dev
       - libkrb5-dev
