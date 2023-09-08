@@ -178,12 +178,16 @@ class Issue(object):
     def __str__(self):
         """ String representation """
         if self.parent.options.format == "markdown":
+            endpoint = "merge_requests"
+            if self.data['target_type'] == 'Issue' or (
+                    self.data['target_type'] == 'Note'
+                    and self.data['note']['noteable_type'] == 'Issue'
+                    ):
+                endpoint = "issues"
             return "[{1}#{3}]({0}/{1}/-/{2}/{3}) - {4}".format(
                 self.gitlabapi.url,
                 self.project['path_with_namespace'],
-                ("issues"
-                    if self.data['target_type'] == 'Issue'
-                    else "merge_requests"),
+                endpoint,
                 str(self.id), self.title)
         else:
             return "{0}#{1} - {2}".format(
