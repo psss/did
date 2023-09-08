@@ -123,9 +123,9 @@ class Issue(object):
     def __str__(self):
         """ String representation """
         if self.options.format == "markdown":
-            return "[{0}/{1}#{2}](https://github.com/{0}/{1}/issues/{2}) - {3}".format(
+            return "[{0}/{1}#{2}]({3}) - {4}".format(
                 self.owner, self.project,
-                str(self.id), self.data["title"].strip())
+                str(self.id), self.data["html_url"], self.data["title"].strip())
         else:
             return "{0}/{1}#{2} - {3}".format(
                 self.owner, self.project,
