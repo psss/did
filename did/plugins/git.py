@@ -78,7 +78,7 @@ class GitRepo(object):
                 return commits
         else:
             log.debug(errors.strip())
-            log.warn("Unable to check commits in '{0}'".format(self.path))
+            log.warning("Unable to check commits in '{0}'".format(self.path))
             return []
 
 

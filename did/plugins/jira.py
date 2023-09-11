@@ -432,10 +432,10 @@ class JiraStats(StatsGroup):
                     delta = (
                         expiring_at.astimezone() - datetime.now().astimezone())
                     if delta.days < self.token_expiration:
-                        log.warn(
+                        log.warning(
                             f"Jira token '{self.token_name}' "
                             f"expires in {delta.days} days.")
                 except (requests.exceptions.HTTPError,
                         KeyError, ValueError) as error:
-                    log.warn(error)
+                    log.warning(error)
         return self._session

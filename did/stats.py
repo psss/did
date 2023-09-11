@@ -131,7 +131,7 @@ class StatsGroupPlugin(type):
 
         if plugin_name in registry:
             orig = registry[plugin_name]
-            log.warn("%s overriding %s" % (cls.__module__, orig.__module__))
+            log.warning("%s overriding %s" % (cls.__module__, orig.__module__))
 
         registry[plugin_name] = cls
 
