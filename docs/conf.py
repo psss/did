@@ -15,21 +15,6 @@
 import os
 import sys
 
-try:
-    # use bootstrap theme if user has it installed
-    import sphinx_bootstrap_theme
-    HTML_THEME = 'bootstrap'
-    html_theme_path = [sphinx_bootstrap_theme.get_html_theme_path()]
-except ImportError:
-    try:
-        # fall back to sphinx_rtd_theme if available
-        import sphinx_rtd_theme
-        HTML_THEME = 'sphinx_rtd_theme'
-        html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-    except ImportError:
-        # and fall back to 'default' if neither of those are available
-        HTML_THEME = 'default'
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -45,6 +30,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx_rtd_theme',
     ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -125,7 +111,7 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = HTML_THEME
+html_theme = "sphinx_rtd_theme"
 
 # 1.3.1 sphinx READTHEDOCS build compat
 # SEE:
