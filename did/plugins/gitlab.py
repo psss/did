@@ -94,7 +94,12 @@ class GitLab(object):
 
     def get_user(self, username):
         query = 'users?username={0}'.format(username)
-        result = self._get_gitlab_api_json(query)
+        try:
+            result = self._get_gitlab_api_json(query)
+        except requests.exceptions.JSONDecodeError as jde:
+            raise ReportError(
+                f"Unable to query user '{username}' on {self.url}."
+                ) from jde
         try:
             return result[0]
         except IndexError:
