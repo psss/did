@@ -74,7 +74,8 @@ class Pagure(object):
 class Issue(object):
     """ Pagure Issue or Pull Request """
 
-    def __init__(self, data):
+    def __init__(self, data, options):
+        self.options = options
         self.data = data
         self.title = data['title']
         self.project = data['project']['fullname']
@@ -90,8 +91,15 @@ class Issue(object):
 
     def __str__(self):
         """ String representation """
-        return '{0}#{1} - {2}'.format(
-            self.project, self.identifier, self.title)
+        if self.options.format == "markdown":
+            return "[{0}#{1}]({2}) - {3}".format(
+                self.project,
+                self.identifier,
+                self.data["full_url"],
+                self.title)
+        else:
+            return '{0}#{1} - {2}'.format(
+                self.project, self.identifier, self.title)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
@@ -103,7 +111,7 @@ class IssuesCreated(Stats):
 
     def fetch(self):
         log.info('Searching for issues created by {0}'.format(self.user))
-        issues = [Issue(issue) for issue in self.parent.pagure.search(
+        issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
             query='user/{0}/issues?assignee=false&created={1}..{2}'.format(
                 self.user.login, self.options.since, self.options.until),
             pagination='pagination_issues_created',
@@ -116,7 +124,7 @@ class IssuesClosed(Stats):
 
     def fetch(self):
         log.info('Searching for issues closed by {0}'.format(self.user))
-        issues = [Issue(issue) for issue in self.parent.pagure.search(
+        issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
             query='user/{0}/issues?status=all&author=false&since={1}'.format(
                 self.user.login, self.options.since),
             pagination='pagination_issues_assigned',
@@ -135,7 +143,7 @@ class PullRequestsCreated(Stats):
     def fetch(self):
         log.info('Searching for pull requests created by {0}'.format(
             self.user))
-        issues = [Issue(issue) for issue in self.parent.pagure.search(
+        issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
             query='user/{0}/requests/filed?status=all&created={1}..{2}'.format(
                 self.user.login, self.options.since, self.options.until),
             pagination='pagination',
