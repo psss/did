@@ -213,6 +213,12 @@ class UserStats(StatsGroup):
                 else:
                     items_created = True
 
+            # public-inbox is more user friendly but it wouldn't be
+            # possible to import it, so let's just create an alias when
+            # looking up the plugin type.
+            if type_ == 'public-inbox':
+                type_ = 'public_inbox'
+
             if not type_:
                 msg = "Plugin type not defined in section '{0}'."
                 raise did.base.ConfigError(msg.format(section))
