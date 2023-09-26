@@ -23,18 +23,22 @@ credentials (``client_id`` and ``client_secret``) first. Perform the
 following steps to create such a pair:
 
     1. Open https://console.developers.google.com/flows/enableapi?apiid=calendar,tasks
-    2. In the drop-down menu, select *Create project* and click
-       *Continue*
-    3. Click *Go to credentials*
-    4. In the *Where will you be calling the API from?* drop-down menu,
-       choose *Other UI (e.g. Windows, CLI tool)*
+    2. You will need to create new project first, select organization
+       and location for it
+    3. Enable both APIs (tasks and calendar) on the next page after you
+       confirm
+    4. From the left tab go to 'APIs & Services' and 'OAuth consent
+       screen'
     5. In *What data will you be accessing?*, choose *User data*
-    6. Click *What credentials do I need?*
-    7. Input 'did credentials' in the *Name* field and click *Create
-       client ID*
-    8. In *Product name shown to users*, type 'did'
-    9. Click *Continue*, then *Done*
-    10. Click the *did credentials* link to display the credentials
+    6. In there create new and fill at least an app name and emails
+    7. On the next page select all scopes or at least all relevant to
+       calendar and tasks, you will need to go through all the pages
+    8. Save it and go to 'Credentials' tab
+    9. Select 'Create credentials' and choose 'OAuth client ID'
+    10. Choose app type, doesn't matter but Desktop is likely the
+        correct choice and add a name
+    11. With that created you will be presented with ``client_id`` and
+        ``client_secret`` which you can save into your config file
 
 The ``apps`` configuration option defines the scope of user data the
 application will request (read-only) access to. Currently, the only
