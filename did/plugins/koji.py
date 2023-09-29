@@ -59,7 +59,7 @@ class KojiStats(StatsGroup):
         except KeyError:
             raise did.base.ReportError(
                 "No koji url set in the [{0}] section".format(option))
-        server = koji.ClientSession(url)
+        server = koji.ClientSession(url, opts=config)
         try:
             user = server.getUser(config['login'], strict=True)
         except KeyError:
