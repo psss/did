@@ -58,16 +58,20 @@ class Bodhi(object):
 class Update(object):
     """ Bodhi update """
 
-    def __init__(self, data):
+    def __init__(self, data, format):
         self.data = data
+        self.format = format
         self.title = data['title']
         self.project = data['release']['name']
         self.identifier = data['alias']
         self.created = data['date_submitted']
+        self.url = data['url']
         log.details('[{0}] {1}'.format(self.created, self))
 
     def __str__(self):
         """ String representation """
+        if self.format == "markdown":
+            return f'[{self.identifier}]({self.url}) - {self.title} [{self.project}]'
         return f'{self.identifier} - {self.title} [{self.project}]'
 
 
@@ -81,7 +85,8 @@ class UpdatesCreated(Stats):
     def fetch(self):
         log.info('Searching for updates created by {0}'.format(self.user))
         self.stats = [
-            Update(update) for update in self.parent.bodhi.search(
+            Update(update, self.parent.options.format)
+            for update in self.parent.bodhi.search(
                 query='updates/?user={0}&submitted_before={1}'
                 '&submitted_since={2}'.format(
                       self.user.login, self.options.until.date,
