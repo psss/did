@@ -230,7 +230,8 @@ Zhao, Henrique Ferreiro, Jakub Vávra, Luigi Toscano, Lukáš
 Zapletal, Maryna Nalbandian, Dominika Hoďovská, Jakub Haruda,
 Han Han, Štěpán Němec, Evgeny Fedin, Mikel Olasagasti Uranga,
 Miloš Malík, Jeffrey Bastian, Côme Chilliet, Marcin Juszkiewicz,
-Tomáš Kopeček, Konrad Kleine, Sandro Bonazzola and Morgan Weetman.
+Tomáš Kopeček, Konrad Kleine, Sandro Bonazzola, Morgan Weetman,
+Jakub Rozek and Petr Matyáš.
 
 
 Copyright
