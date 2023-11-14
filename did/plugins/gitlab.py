@@ -25,6 +25,7 @@ __ https://docs.gitlab.com/ce/api/
 """
 
 import distutils.util
+from time import sleep
 
 import dateutil
 import requests
@@ -36,6 +37,10 @@ from did.utils import listed, log, pretty
 
 GITLAB_SSL_VERIFY = True
 GITLAB_API = 4
+
+# Retry fetching
+GITLAB_ATTEMPTS = 5
+GITLAB_INTERVAL = 5
 
 # Identifier padding
 PADDING = 3
@@ -61,7 +66,26 @@ class GitLab(object):
         self.project_issues = {}
 
     def _get_gitlab_api_raw(self, url):
-        return requests.get(url, headers=self.headers, verify=self.ssl_verify)
+        log.debug("Connecting to GitLab API at '%s'.", url)
+        retries = 0
+        while True:
+            try:
+                api_raw = requests.get(
+                    url, headers=self.headers, verify=self.ssl_verify)
+                return api_raw
+            except requests.exceptions.ConnectionError as connection_error:
+                retries += 1
+                if retries > GITLAB_ATTEMPTS:
+                    raise ReportError(
+                        f"Unable to connect to '{url}'. Error: {connection_error}"
+                        ) from connection_error
+                log.debug(
+                    "Retrying connection to '%s' in %s seconds due to %s.",
+                    url,
+                    GITLAB_INTERVAL,
+                    connection_error
+                    )
+                sleep(GITLAB_INTERVAL)
 
     def _get_gitlab_api(self, endpoint):
         url = '{0}/api/v{1}/{2}'.format(self.url, GITLAB_API, endpoint)
