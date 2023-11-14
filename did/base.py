@@ -102,7 +102,7 @@ class Config(object):
         # Parse the config from file
         try:
             log.info("Inspecting config file '{0}'.".format(path))
-            self.parser.readfp(codecs.open(path, "r", "utf8"))
+            self.parser.read_file(codecs.open(path, "r", "utf8"))
         except IOError as error:
             log.debug(error)
             Config.parser = None
