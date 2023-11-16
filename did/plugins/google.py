@@ -11,6 +11,7 @@ Config example::
     client_secret = <client_secret>
     apps = calendar,tasks
     storage = ~/.did/google-api-credentials.json
+    skip = ["Lunch break", "Status deadline"]
 
 Make sure you have additional dependencies of the google plugin
 installed on your system::
@@ -232,6 +233,8 @@ class GoogleStatsBase(Stats):
             self._events = self.parent.calendar.events(
                 calendarId="primary", singleEvents=True, orderBy="startTime",
                 timeMin=self.since, timeMax=self.until)
+            self._events = [event for event in self._events
+                            if str(event) not in self.parent.skip]
         return self._events
 
     @property
@@ -301,6 +304,7 @@ class GoogleStatsGroup(StatsGroup):
             apps = [app.lower() for app in split(config["apps"])]
         except KeyError:
             apps = DEFAULT_APPS
+        self.skip = config.get("skip", [])
 
         http = authorized_http(client_id, client_secret, apps, storage)
         self.calendar = GoogleCalendar(http)
