@@ -55,7 +55,7 @@ setup(
     author_email='psplicha@redhat.com',
     maintainer='Petr Šplíchal',
     maintainer_email='psplicha@redhat.com',
-    license='GPLv2+',
+    license='GPL-2.0-or-later',
 
     keywords=['status', 'report', 'tasks', 'work'],
     classifiers=[

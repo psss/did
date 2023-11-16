@@ -3,7 +3,7 @@ Version: 0.21
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
-License: GPLv2+
+License: GPL-2.0-or-later
 
 URL: https://github.com/psss/did
 Source0: %{url}/releases/download/%{version}/did-%{version}.tar.bz2
