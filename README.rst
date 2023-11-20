@@ -31,7 +31,7 @@ Synopsis
 
 Usage is straightforward::
 
-    did [this|last] [week|month|quarter|year] [opts]
+    did [this|last] [week|month|quarter|year|monday|..|sunday] [opts]
 
 
 Examples

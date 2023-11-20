@@ -14,6 +14,11 @@ from datetime import timedelta
 
 from dateutil.relativedelta import FR as FRIDAY
 from dateutil.relativedelta import MO as MONDAY
+from dateutil.relativedelta import SA as SATURDAY
+from dateutil.relativedelta import SU as SUNDAY
+from dateutil.relativedelta import TH as THURSDAY
+from dateutil.relativedelta import TU as TUESDAY
+from dateutil.relativedelta import WE as WEDNESDAY
 from dateutil.relativedelta import relativedelta as delta
 
 from did import utils
@@ -329,13 +334,40 @@ class Date(object):
             until = Date("yesterday")
             until.date += delta(days=1)
             period = "yesterday"
-        elif "friday" in argument:
+        elif "monday" in argument or "tuesday" in argument or \
+             "wednesday" in argument or "thursday" in argument or \
+             "friday" in argument or "saturday" in argument or \
+             "sunday" in argument:
+            today = Date("today")
             since = Date("today")
-            until = Date("today")
-            since.date += delta(weekday=FRIDAY(-1))
-            until.date += delta(weekday=FRIDAY(-1))
-            until.date += delta(days=1)
-            period = "the last friday"
+            until = Date()
+            if "monday" in argument:
+                weekday = MONDAY(-1)
+                period = "the last monday"
+            elif "tuesday" in argument:
+                weekday = TUESDAY(-1)
+                period = "the last tuesday"
+            elif "wednesday" in argument:
+                weekday = WEDNESDAY(-1)
+                period = "the last wednesday"
+            elif "thursday" in argument:
+                weekday = THURSDAY(-1)
+                period = "the last thursday"
+            elif "friday" in argument:
+                weekday = FRIDAY(-1)
+                period = "the last friday"
+            elif "saturday" in argument:
+                weekday = SATURDAY(-1)
+                period = "the last saturday"
+            else:
+                weekday = SUNDAY(-1)
+                period = "the last sunday"
+            since.date += delta(weekday=weekday)
+            if since.date == today.date:
+                # technically last dayofweek is today, but we want
+                # the one week ago
+                since.date -= delta(days=7)
+            until.date = since.date + delta(days=1)
         elif "year" in argument:
             if "last" in argument:
                 since, until = Date.last_year()

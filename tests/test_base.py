@@ -73,6 +73,30 @@ def test_Date_period():
         assert str(since) == "2015-09-21"
         assert str(until) == "2015-09-28"
         assert period == "the week 39"
+    # Last Monday
+    for argument in ["last monday"]:
+        since, until, period = Date.period(argument)
+        assert str(since) == "2015-09-28"
+        assert str(until) == "2015-09-29"
+        assert period == "the last monday"
+    # Last Tuesday
+    for argument in ["last tuesday"]:
+        since, until, period = Date.period(argument)
+        assert str(since) == "2015-09-29"
+        assert str(until) == "2015-09-30"
+        assert period == "the last tuesday"
+    # Last Wednesday
+    for argument in ["last wednesday"]:
+        since, until, period = Date.period(argument)
+        assert str(since) == "2015-09-30"
+        assert str(until) == "2015-10-01"
+        assert period == "the last wednesday"
+    # Last Thursday
+    for argument in ["last thursday"]:
+        since, until, period = Date.period(argument)
+        assert str(since) == "2015-10-01"
+        assert str(until) == "2015-10-02"
+        assert period == "the last thursday"
     # Last Friday
     for argument in ["last friday"]:
         since, until, period = Date.period(argument)

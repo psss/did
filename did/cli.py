@@ -169,7 +169,8 @@ class Options(object):
     def check(self):
         """ Perform additional check for given options """
         keywords = [
-            'today', 'yesterday', 'friday',
+            'today', 'yesterday', 'monday', 'tuesday', 'wednesday', 'thursday',
+            'friday', 'saturday', 'sunday',
             'this', 'last',
             'week', 'month', 'quarter', 'year']
         for argument in self.arg:
