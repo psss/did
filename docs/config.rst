@@ -78,6 +78,31 @@ This allows to override the default value for individual stats::
 See :class:`did.base.User` for detailed information about the
 advanced email/login alias support.
 
+
+Team
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When multiple email addresses are provided in the config file, a
+team report can be easily created as well::
+
+    [general]
+    email =
+        Petr Šplíchal <psplicha@redhat.com>; github:psss; gitlab:psssssss,
+        Lukáš Zachar <lzachar@redhat.com>; github:lukaszachy
+
+    [github]
+    type = github
+    url = https://api.github.com/
+
+    [gitlab]
+    type = gitlab
+    url = https://gitlab.com
+
+Note in the example above that if user logins to be used in the
+search query are different from the email address prefix you need
+to specify them explicitly.
+
+
 Order
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
