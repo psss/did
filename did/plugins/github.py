@@ -131,6 +131,19 @@ class Issue(object):
                 self.owner, self.project,
                 str(self.id).zfill(PADDING), self.data["title"])
 
+    def __eq__(self, other):
+        """ Equality comparison """
+        if isinstance(other, Issue):
+            return (
+                self.owner == other.owner
+                and self.project == other.project
+                and self.id == other.id)
+        return False
+
+    def __hash__(self):
+        """ Hash function """
+        return hash((self.owner, self.project, self.id))
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
