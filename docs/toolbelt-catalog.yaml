@@ -1,0 +1,45 @@
+# Catalog entry for Backstage [backstage.io]
+
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+    name: did
+    title: did
+    description:
+        What did you do last week, month, year? Comfortably gather
+        status report data for given week, month, quarter, year or
+        selected date range.
+    annotations:
+        github.com/project-slug: psss/did
+    links:
+      - title: docs
+        url: https://did.readthedocs.io
+        icon: docs
+      - title: code
+        url: https://github.com/psss/did/
+        icon: github
+      - title: pypi
+        url: https://pypi.org/project/did
+      - title: copr
+        url: https://copr.fedorainfracloud.org/coprs/psss/did/
+    tags:
+      - reporting
+      - bodhi
+      - bugzilla
+      - git
+      - github
+      - gitlab
+      - google
+      - jira
+      - koji
+      - nitrate
+      - pagure
+      - sentry
+      - trello
+      - wiki
+      - python
+    namespace: quality-community
+spec:
+    type: tool
+    owner: user:redhat/psplicha
+    lifecycle: production
