@@ -169,11 +169,22 @@ def header(text, separator=DEFAULT_SEPARATOR, separator_width=MAX_WIDTH):
 
 
 def shorted(text, width=MAX_WIDTH):
-    """ Shorten text, make sure it's not cut in the middle of a word """
-    if len(text) <= width:
-        return text
-    # We remove any word after first overlapping non-word character
-    return "{0}...".format(re.sub(r"\W+\w*$", "", text[:width - 2]))
+    """
+    Shorten text, make sure it's not cut in the middle of a word
+
+    When multiple lines are provided in the text, each of them is
+    shortened separately.
+    """
+    lines = []
+
+    for line in text.split("\n"):
+        if len(line) <= width:
+            lines.append(line)
+        else:
+            # Remove any word after first overlapping non-word character
+            lines.append("{0}...".format(re.sub(r"\W+\w*$", "", line[:width - 2])))
+
+    return "\n".join(lines)
 
 
 def item(text, level=0, options=None):

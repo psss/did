@@ -43,11 +43,15 @@ class GitRepo(object):
         """ List commits for given user. """
         # Prepare the command
         command = "git log --all --author={0}".format(user.login).split()
-        command.append("--format=format:%h - %s")
         command.append("--since='{0} 00:00:00'".format(options.since))
         command.append("--until='{0} 00:00:00'".format(options.until))
         if options.verbose:
             command.append("--name-only")
+            # Need an extra new line to separate merge commits otherwise
+            # they are squeezed together without an empty line between
+            command.append("--format=format:%n%h - %s")
+        else:
+            command.append("--format=format:%h - %s")
         log.info("Checking commits in {0}".format(self.path))
         log.details(pretty(command))
 
@@ -61,21 +65,33 @@ class GitRepo(object):
             raise did.base.ReportError(
                 "Unable to access git repo '{0}'".format(self.path))
         output, errors = process.communicate()
+        output = output.strip()
         log.debug("git log output:")
         log.debug(output)
         if process.returncode == 0:
             if not output:
                 return []
-            else:
-                if not options.verbose:
-                    return output.split("\n")
-                commits = []
-                for commit in output.split("\n\n"):
-                    summary = commit.split("\n")[0]
-                    directory = re.sub("/[^/]+$", "", commit.split("\n")[1])
-                    commits.append("{0}\n{1}* {2}".format(
-                        summary, 8 * " ", directory))
-                return commits
+
+            # Single commit per line in non-verbose mode
+            if not options.verbose:
+                return output.split("\n")
+
+            # In verbose mode commits separated by two empty lines
+            commits = []
+            for commit in re.split("\n\n+", output):
+                lines = commit.split("\n")
+
+                # Use a single line if no files changed (e.g. merges)
+                if len(lines) == 1:
+                    commits.append(lines[0])
+
+                # Show the first directory with modified files
+                # FIXME: But why just the first one? Shouldn't we show
+                # all? Or at least more? With a maximum limit?
+                else:
+                    directory = re.sub("/[^/]+$", "", lines[1])
+                    commits.append("{0}\n{1}* {2}".format(lines[0], 8 * " ", directory))
+            return commits
         else:
             log.debug(errors.strip())
             log.warning("Unable to check commits in '{0}'".format(self.path))
