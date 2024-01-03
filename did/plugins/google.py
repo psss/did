@@ -1,7 +1,7 @@
 # coding: utf-8
 
 """
-Google stats such as attended events, completed tasks or sent emails
+Google stats such as attended events or completed tasks
 
 Config example::
 
