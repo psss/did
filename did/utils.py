@@ -185,6 +185,30 @@ def shorted(text, width=MAX_WIDTH):
     return "\n".join(lines)
 
 
+def strtobool(val):
+    """
+    Convert a string representation of truth to true (1) or false (0).
+    Reimplemented following instructions at
+    https://peps.python.org/pep-0632/#migration-advice
+    This is a copy of
+    https://github.com/pypa/distutils/blob/ee021a1c58b43607ccc75447159bd90f502c6bea/distutils/util.py#L340
+    Which is under MIT license.
+
+    Returns:
+      1 if val is within 'y', 'yes', 't', 'true', 'on', and '1'.
+      0 if val is within 'n', 'no', 'f', 'false', 'off', and '0'.
+    Raises:
+       ValueError if 'val' is anything else.
+    """
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return 1
+    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return 0
+    else:
+        raise ValueError("invalid truth value {!r}".format(val))
+
+
 def item(text, level=0, options=None):
     """ Print indented item. """
     # Extra line before in each section (unless brief)

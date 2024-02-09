@@ -77,7 +77,6 @@ Notes:
   Other values are ``basic`` and ``token``.
 """
 
-import distutils.util
 import os
 import re
 import urllib.parse
@@ -89,7 +88,7 @@ from requests_gssapi import DISABLED, HTTPSPNEGOAuth
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
-from did.utils import listed, log, pretty
+from did.utils import listed, log, pretty, strtobool
 
 # Maximum number of results fetched at once
 MAX_RESULTS = 1000
@@ -344,7 +343,7 @@ class JiraStats(StatsGroup):
         # SSL verification
         if "ssl_verify" in config:
             try:
-                self.ssl_verify = distutils.util.strtobool(
+                self.ssl_verify = strtobool(
                     config["ssl_verify"])
             except Exception as error:
                 raise ReportError(
@@ -355,7 +354,7 @@ class JiraStats(StatsGroup):
         # Make sure we have project set
         self.project = config.get("project", None)
         if "use_scriptrunner" in config:
-            self.use_scriptrunner = distutils.util.strtobool(
+            self.use_scriptrunner = strtobool(
                 config["use_scriptrunner"])
         else:
             self.use_scriptrunner = True
