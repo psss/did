@@ -251,9 +251,9 @@ class JiraResolved(Stats):
         log.info("Searching for issues resolved in {0} by {1}".format(
             self.parent.project, self.user))
         query = (
-            "assignee = '{0}' AND "
-            "resolved >= {1} AND resolved <= {2}".format(
-                self.user.login or self.user.email,
+            "(assignee = '{0}' OR tester = '{1}') AND "
+            "resolved >= {2} AND resolved <= {3}".format(
+                self.user.login or self.user.email, self.user.login or self.user.email,
                 self.options.since, self.options.until))
         if self.parent.project:
             query = query + " AND project = '{0}'".format(
