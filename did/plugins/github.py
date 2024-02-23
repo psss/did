@@ -9,6 +9,7 @@ Config example::
     url = https://api.github.com/
     token = <authentication-token>
     login = <username>
+    project = <project1, project2>
 
 The authentication token is optional. However, unauthenticated
 queries are limited. For more details see `GitHub API`__ docs.
@@ -236,6 +237,16 @@ class PullRequestsReviewed(Stats):
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
+class ReleasesCreated(Stats):
+    """ Releases created """
+
+    def fetch(self):
+        for project in self.user.projects:
+            log.info("Searching for releases created by {0} in {1}".format(self.user, project))
+            query = "repos/{0}/releases?q=author:{1}+created:{2}..{3}".format(
+                project, self.user.login, self.options.since, self.options.until)
+            self.stats = [
+                Releases(release) for release in self.parent.github.search(query)]
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
