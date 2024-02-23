@@ -38,3 +38,6 @@ tmp/
 
 # VS Code
 .vscode
+
+# PyCharm
+.idea
