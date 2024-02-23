@@ -172,7 +172,7 @@ class GitLab(object):
         """ Perform GitLab query """
         if not self.user:
             self.user = self.get_user(user)
-        if not self.events:
+        if self.events is None:
             self.events = self.user_events(self.user['id'], since, until)
         result = []
         for event in self.events:
