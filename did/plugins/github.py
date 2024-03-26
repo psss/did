@@ -84,7 +84,8 @@ class GitHub(object):
         except requests.exceptions.JSONDecodeError as error:
             log.debug(error)
             raise ReportError(f"GitHub JSON failed: {response.text}.")
-        if data.get("message", "").startswith("API rate limit exceeded"):
+        if (response.status_code in (403, 429)
+            and data.get("message", "").startswith("API rate limit exceeded")):
             raise ReportError(
                 "GitHub API rate limit exceeded. "
                 "Consider creating an access token.")
