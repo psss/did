@@ -3,6 +3,6 @@
 
 rlJournalStart
     rlPhaseStartTest
-        rlRun "did --test last quarter"
+        rlRun "did --test last week"
     rlPhaseEnd
 rlJournalEnd
