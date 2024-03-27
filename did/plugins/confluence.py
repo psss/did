@@ -32,7 +32,6 @@ Notes:
   higher priority.
 """
 
-import distutils.util
 import os
 import re
 import urllib.parse
@@ -43,7 +42,7 @@ from requests_gssapi import DISABLED, HTTPSPNEGOAuth
 
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
-from did.utils import listed, log, pretty
+from did.utils import listed, log, pretty, strtobool
 
 # Maximum number of results fetched at once
 MAX_RESULTS = 100
@@ -214,7 +213,7 @@ class ConfluenceStats(StatsGroup):
         # SSL verification
         if "ssl_verify" in config:
             try:
-                self.ssl_verify = distutils.util.strtobool(
+                self.ssl_verify = strtobool(
                     config["ssl_verify"])
             except Exception as error:
                 raise ReportError(

@@ -24,7 +24,6 @@ __ https://docs.gitlab.com/ce/api/
 
 """
 
-import distutils.util
 from time import sleep
 
 import dateutil
@@ -33,7 +32,7 @@ from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
-from did.utils import listed, log, pretty
+from did.utils import listed, log, pretty, strtobool
 
 GITLAB_SSL_VERIFY = True
 GITLAB_API = 4
@@ -382,7 +381,7 @@ class GitLabStats(StatsGroup):
                 "No GitLab token set in the [{0}] section".format(option))
         # Check SSL verification
         try:
-            self.ssl_verify = bool(distutils.util.strtobool(
+            self.ssl_verify = bool(strtobool(
                 config["ssl_verify"]))
         except KeyError:
             self.ssl_verify = GITLAB_SSL_VERIFY
