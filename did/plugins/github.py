@@ -27,14 +27,14 @@ import re
 
 import requests
 
-from did.base import Config, ReportError, get_token
+from did.base import Config, Date, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
 # Identifier padding
 PADDING = 3
 
-# Number of issues to be fetched per page
+# Number of GH items to be fetched per page
 PER_PAGE = 100
 
 
@@ -55,42 +55,73 @@ class GitHub(object):
 
         self.token = token
 
+    @staticmethod
+    def until(until):
+        """ Issue #362: until for GH should have - delta(day=1) """
+        return until - 1
+
+    @staticmethod
+    def request_data(url, headers):
+        """ Fetch the URL from GitHub API and deserialize it to JSON """
+        log.debug(f"GitHub URL: {url}")
+        try:
+            response = requests.get(url, headers=headers)
+            log.debug(f"Response headers:\n{response.headers}")
+        except requests.exceptions.RequestException as error:
+            log.debug(error)
+            raise ReportError(f"GitHub failed to request URL {url}.")
+
+        # Check if credentials are valid
+        log.debug(f"GitHub status code: {response.status_code}")
+        if response.status_code == 401:
+            raise ReportError(
+                "Defined token is not valid. "
+                "Either update it or remove it.")
+
+        # Parse fetched json data
+        try:
+            data = json.loads(response.text)
+        except requests.exceptions.JSONDecodeError as error:
+            log.debug(error)
+            raise ReportError(f"GitHub JSON failed: {response.text}.")
+        if (response.status_code in (403, 409)
+            and data.get("message", "").startswith("API rate limit exceeded")):
+            raise ReportError(
+                "GitHub API rate limit exceeded. "
+                "Consider creating an access token.")
+        return data, response
+
+    def has_comments(self, issue_data, user, since, until):
+        url = issue_data["comments_url"]
+        if not url:
+            return False
+
+        url = f"{url}?per_page={PER_PAGE}&sort=created&since={since}"
+
+        while True:
+            comments, response = self.request_data(url, self.headers)
+            for comment in comments:
+                date = Date(comment["created_at"].split("T", 1)[0])
+                if date.date > until:
+                    return False
+                if user == comment["user"]["login"]:
+                    return True
+            # Update url to the next page, break if no next page
+            # provided
+            if 'next' in response.links:
+                url = response.links['next']['url']
+            else:
+                break
+        return False
+
     def search(self, query):
         """ Perform GitHub query """
         result = []
         url = self.url + "/" + query + f"&per_page={PER_PAGE}"
 
         while True:
-            # Fetch the query
-            log.debug(f"GitHub query: {url}")
-            try:
-                response = requests.get(url, headers=self.headers)
-                log.debug(f"Response headers:\n{response.headers}")
-            except requests.exceptions.RequestException as error:
-                log.debug(error)
-                raise ReportError(f"GitHub search on {self.url} failed.")
-
-            # Check if credentials are valid
-            log.debug(f"GitHub status code: {response.status_code}")
-            if response.status_code == 401:
-                raise ReportError(
-                    "Defined token is not valid. "
-                    "Either update it or remove it.")
-
-            # Parse fetched json data
-            try:
-                data = json.loads(response.text)["items"]
-                result.extend(data)
-            except KeyError:
-                if json.loads(response.text)["message"].startswith(
-                        "API rate limit exceeded"):
-                    raise ReportError(
-                        "GitHub API rate limit exceeded. "
-                        "Consider creating an access token.")
-            except requests.exceptions.JSONDecodeError as error:
-                log.debug(error)
-                raise ReportError(f"GitHub JSON failed: {response.text}.")
-
+            data, response = self.request_data(url, self.headers)
+            result.extend(data["items"])
             # Update url to the next page, break if no next page
             # provided
             if 'next' in response.links:
@@ -155,7 +186,7 @@ class IssuesCreated(Stats):
     def fetch(self):
         log.info("Searching for issues created by {0}".format(self.user))
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            self.user.login, self.options.since, GitHub.until(self.options.until))
         query += "+type:issue"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
@@ -167,7 +198,7 @@ class IssuesClosed(Stats):
     def fetch(self):
         log.info("Searching for issues closed by {0}".format(self.user))
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            self.user.login, self.options.since, GitHub.until(self.options.until))
         query += "+type:issue"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
@@ -178,11 +209,16 @@ class IssueCommented(Stats):
 
     def fetch(self):
         log.info("Searching for issues commented on by {0}".format(self.user))
+        user = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
         query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            user, since, until)
         query += "+type:issue"
         self.stats = [
-            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)
+            # Additional filter for the comments by user in the interval
+            if self.parent.github.has_comments(issue, user, since, until)]
 
 
 class PullRequestsCreated(Stats):
@@ -192,7 +228,7 @@ class PullRequestsCreated(Stats):
         log.info("Searching for pull requests created by {0}".format(
             self.user))
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            self.user.login, self.options.since, GitHub.until(self.options.until))
         query += "+type:pr"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
@@ -204,11 +240,16 @@ class PullRequestsCommented(Stats):
     def fetch(self):
         log.info("Searching for pull requests commented on by {0}".format(
             self.user))
+        user = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
         query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            self.user.login, self.options.since, until)
         query += "+type:pr"
         self.stats = [
-            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)
+            # Additional filter for the comments by user in the interval
+            if self.parent.github.has_comments(issue, user, since, until)]
 
 
 class PullRequestsClosed(Stats):
@@ -218,7 +259,7 @@ class PullRequestsClosed(Stats):
         log.info("Searching for pull requests closed by {0}".format(
             self.user))
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            self.user.login, self.options.since, GitHub.until(self.options.until))
         query += "+type:pr"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
@@ -231,7 +272,7 @@ class PullRequestsReviewed(Stats):
         log.info("Searching for pull requests reviewed by {0}".format(
             self.user))
         query = "search/issues?q=reviewed-by:{0}+-author:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            self.user.login, self.options.since, GitHub.until(self.options.until))
         query += "+type:pr"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
