@@ -140,12 +140,23 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
     # Default order
     order = 500
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.arguments = []
+
+    def add_argument(self, *args, **kwargs):
+        """ A wraper around _ArgumentGroup to add global options for StatsGroup """
+        self.arguments.append(([*args], {**kwargs}))
+
     def add_group(self, parser):
         """ Add option group and all children options. """
 
         group = parser.add_argument_group(self.name)
         for stat in self.stats:
             stat.add_option(group)
+
+        for args, kwargs in self.arguments:
+            group.add_argument(*args, **kwargs)
 
         group.add_argument(
             "--{0}".format(self.option), action="store_true", help="All above")
