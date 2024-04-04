@@ -3,6 +3,6 @@
 
 rlJournalStart
     rlPhaseStartTest
-        rlRun "did --test last week"
+        rlRun "did --test --github-approximate-commented last quarter"
     rlPhaseEnd
 rlJournalEnd

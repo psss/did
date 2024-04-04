@@ -215,10 +215,12 @@ class IssueCommented(Stats):
         query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
             user, since, until)
         query += "+type:issue"
+        approx = getattr(
+            self.options, f"{self.parent.option}_approximate_commented", False)
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)
             # Additional filter for the comments by user in the interval
-            if self.parent.github.has_comments(issue, user, since, until)]
+            if approx or self.parent.github.has_comments(issue, user, since, until)]
 
 
 class PullRequestsCreated(Stats):
@@ -246,10 +248,12 @@ class PullRequestsCommented(Stats):
         query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
             self.user.login, self.options.since, until)
         query += "+type:pr"
+        approx = getattr(
+            self.options, f"{self.parent.option}_approximate_commented", False)
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)
             # Additional filter for the comments by user in the interval
-            if self.parent.github.has_comments(issue, user, since, until)]
+            if approx or self.parent.github.has_comments(issue, user, since, until)]
 
 
 class PullRequestsClosed(Stats):
@@ -300,6 +304,10 @@ class GitHubStats(StatsGroup):
         # Check authorization token
         self.token = get_token(config)
         self.github = GitHub(self.url, self.token)
+        self.add_argument(
+            f"--{option}-approximate-commented", action="store_true",
+            help="If set, the filter to check if the user actually commented issues or "
+            "pull requests is not applied. It is recommended for long reports")
         # Create the list of stats
         self.stats = [
             IssuesCreated(
