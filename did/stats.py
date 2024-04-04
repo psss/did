@@ -140,7 +140,7 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
     # Default order
     order = 500
 
-    def add_option(self, parser):
+    def add_group(self, parser):
         """ Add option group and all children options. """
 
         group = parser.add_argument_group(self.name)
@@ -240,10 +240,10 @@ class UserStats(StatsGroup):
             results.append(obj)
         return sorted(results, key=lambda x: x.order)
 
-    def add_option(self, parser):
+    def add_groups(self, parser):
         """ Add options for each stats group. """
         for stat in self.stats:
-            stat.add_option(parser)
+            stat.add_group(parser)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Header & Footer
