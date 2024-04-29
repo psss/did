@@ -213,6 +213,12 @@ class UserStats(StatsGroup):
                 else:
                     items_created = True
 
+            # Some plugins (like public-inbox) need to have underscores
+            # in their names to follow python modules conventions, but
+            # it's more user-friendly to have dashes instead, so let's
+            # replace all the dashes by underscores.
+            type_ = type_.replace('-', '_')
+
             if not type_:
                 msg = "Plugin type not defined in section '{0}'."
                 raise did.base.ConfigError(msg.format(section))
