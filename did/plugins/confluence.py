@@ -29,6 +29,35 @@ Notes:
   only valid for basic authentication, ``auth_password`` or
   ``auth_password_file`` must be provided, ``auth_password`` has a
   higher priority.
+
+Configuration example (token authentication)::
+
+    [redhat-confluence]
+    type = confluence
+    url = https://spaces.redhat.com/
+    auth_url = https://spaces.redhat.com/login.action
+    auth_type = token
+    token_file = ~/.did/confluence-token
+    token_name = did
+    token_expiration = 30
+
+Notes:
+Either ``token`` or ``token_file`` has to be defined.
+
+token
+    Token string directly included in the config.
+    Has a higher priority over ``token_file``.
+
+token_file
+    Path to the file where the token is stored.
+
+token_expiration
+    Print warning if token with provided ``token_name`` expires within
+    specified number of ``days``.
+
+token_name
+    Name of the token to check for expiration in ``token_expiration``
+    days. This has to match the name as seen in your Confluence profile.
 """
 
 import distutils.util
@@ -40,7 +69,7 @@ import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
 
-from did.base import Config, ReportError
+from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
@@ -51,7 +80,7 @@ MAX_RESULTS = 100
 MAX_BATCHES = 100
 
 # Supported authentication types
-AUTH_TYPES = ["gss", "basic"]
+AUTH_TYPES = ["gss", "basic", "token"]
 
 # Enable ssl verify
 SSL_VERIFY = True
@@ -94,19 +123,23 @@ class Confluence(object):
 class ConfluencePage(Confluence):
     """ Confluence page results """
 
-    def __init__(self, page):
+    def __init__(self, page, url, myformat):
         """ Initialize the page """
         self.title = page['title']
+        self.url = f"{url}{page['_links']['webui']}"
+        self.format = myformat
 
     def __str__(self):
         """ Page title for displaying """
-        return "{}".format(self.title)
+        if self.format == "markdown":
+            return f"[{self.title}]({self.url})"
+        return f"{self.title}"
 
 
 class ConfluenceComment(Confluence):
     """ Confluence comment results """
 
-    def __init__(self, comment):
+    def __init__(self, comment, url, myformat):
         """ Initialize issue """
         # Remove the 'Re:' prefix
         self.title = re.sub('^Re: ', '', comment['title'])
@@ -114,9 +147,12 @@ class ConfluenceComment(Confluence):
         # Remove html tags
         self.body = re.sub('</p><p>', ' ', self.body)
         self.body = re.sub('<[^<]+?>', '', self.body)
+        self.url = url
+        self.format = myformat
 
     def __str__(self):
         """ Confluence title & comment snippet for displaying """
+        # TODO: implement markdown output here
         return "{}: {}".format(self.title, self.body)
 
 
@@ -134,8 +170,14 @@ class PageCreated(Stats):
             "type=page AND creator = '{0}' "
             "AND created >= {1} AND created < {2}".format(
                 self.user.login, self.options.since, self.options.until))
+        result = Confluence.search(query, self)
         self.stats = [
-            ConfluencePage(page) for page in Confluence.search(query, self)]
+            ConfluencePage(
+                page,
+                self.parent.url,
+                self.options.format
+                ) for page in result
+            ]
 
 
 class CommentAdded(Stats):
@@ -146,7 +188,11 @@ class CommentAdded(Stats):
             "AND created >= {1} AND created < {2}".format(
                 self.user.login, self.options.since, self.options.until))
         self.stats = [
-            ConfluenceComment(comment) for comment in Confluence.search(
+            ConfluenceComment(
+                comment,
+                self.parent.url,
+                self.options.format
+                ) for comment in Confluence.search(
                 query, self, expand="body.editor")]
 
 
@@ -210,6 +256,27 @@ class ConfluenceStats(StatsGroup):
                 raise ReportError(
                     "`auth_password` and `auth_password_file` are only valid "
                     "for basic authentication (section [{0}])".format(option))
+        if self.auth_type == "token":
+            self.token = get_token(config)
+            if self.token is None:
+                raise ReportError(
+                    "The `token` or `token_file` key must be set "
+                    f"in the [{option}] section.")
+            if "token_expiration" in config or "token_name" in config:
+                try:
+                    self.token_expiration = int(config["token_expiration"])
+                    self.token_name = config["token_name"]
+                except KeyError:
+                    raise ReportError(
+                        "The ``token_name`` and ``token_expiration`` "
+                        "must be set at the same time in "
+                        "[{0}] section.".format(option))
+                except ValueError:
+                    raise ReportError(
+                        "The ``token_expiration`` must contain number, used in "
+                        "[{0}] section.".format(option))
+            else:
+                self.token_expiration = self.token_name = None
         # SSL verification
         if "ssl_verify" in config:
             try:
@@ -250,6 +317,11 @@ class ConfluenceStats(StatsGroup):
                 basic_auth = (self.auth_username, self.auth_password)
                 response = self._session.get(
                     self.auth_url, auth=basic_auth, verify=self.ssl_verify)
+            elif self.auth_type == "token":
+                self.session.headers["Authorization"] = f"Bearer {self.token}"
+                response = self._session.get(
+                    "{0}/rest/api/content".format(self.url),
+                    verify=self.ssl_verify)
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
                 response = self._session.get(
@@ -260,4 +332,31 @@ class ConfluenceStats(StatsGroup):
                 log.error(error)
                 raise ReportError(
                     "Confluence authentication failed. Try kinit.")
+            if self.token_expiration:
+                response = self._session.get(
+                    "{0}/rest/pat/latest/tokens".format(self.url),
+                    verify=self.ssl_verify)
+                try:
+                    response.raise_for_status()
+                    token_found = None
+                    for token in response.json():
+                        if token["name"] == self.token_name:
+                            token_found = token
+                            break
+                    if token_found is None:
+                        raise ValueError(
+                            f"Can't check validity for the '{self.token_name}' "
+                            f"token as it doesn't exist.")
+                    from datetime import datetime
+                    expiring_at = datetime.strptime(
+                        token_found["expiringAt"], r"%Y-%m-%dT%H:%M:%S.%f%z")
+                    delta = (
+                        expiring_at.astimezone() - datetime.now().astimezone())
+                    if delta.days < self.token_expiration:
+                        log.warning(
+                            f"Confluence token '{self.token_name}' "
+                            f"expires in {delta.days} days.")
+                except (requests.exceptions.HTTPError,
+                        KeyError, ValueError) as error:
+                    log.warning(error)
         return self._session
