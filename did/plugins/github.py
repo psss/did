@@ -77,6 +77,10 @@ class GitHub(object):
             raise ReportError(
                 "Defined token is not valid. "
                 "Either update it or remove it.")
+        if response.status_code == 403:
+            raise ReportError(
+                "Problems with the token scope. "
+                f"Please, see the details in the response: {response.text}")
 
         # Parse fetched json data
         try:
