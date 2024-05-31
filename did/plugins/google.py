@@ -128,13 +128,15 @@ def authorized_http(client_id, client_secret, apps, file=None):
 class GoogleCalendar(object):
     """ Google Calendar functions """
 
-    def __init__(self, http):
+    def __init__(self, http, parent):
         self.service = discovery.build("calendar", "v3", http=http)
+        self.parent = parent
 
     def events(self, **kwargs):
         """ Fetch events meeting specified criteria """
         events_result = self.service.events().list(**kwargs).execute()
-        return [Event(event) for event in events_result.get("items", [])]
+        return [Event(event, self.parent.options.format)
+                for event in events_result.get("items", [])]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -144,13 +146,21 @@ class GoogleCalendar(object):
 class Event(object):
     """ Google Calendar Event """
 
-    def __init__(self, dict):
+    def __init__(self, in_dict, out_format):
         """ Create Event object from dict returned by Google API """
-        self.__dict__ = dict
+        self.__dict__ = in_dict
+        self._format = out_format
 
     def __str__(self):
         """ String representation """
-        return self.summary if hasattr(self, "summary") else "(No title)"
+        date = (
+            self.start["date"] if "date" in self.start
+            else self.start["dateTime"][:10]
+            )
+        if self._format == "markdown":
+            return f"{date} - *{self.summary}*"
+        else:
+            return self.summary
 
     def __getitem__(self, name):
         return self.__dict__.get(name, None)
@@ -179,13 +189,15 @@ class Event(object):
 class GoogleTasks(object):
     """ Google Tasks functions """
 
-    def __init__(self, http):
+    def __init__(self, http, parent):
         self.service = discovery.build("tasks", "v1", http=http)
+        self.parent = parent
 
     def tasks(self, **kwargs):
         """ Fetch tasks specified criteria """
         tasks_result = self.service.tasks().list(**kwargs).execute()
-        return [Task(task) for task in tasks_result.get("items", [])]
+        return [Task(task, self.parent.options.format)
+                for task in tasks_result.get("items", [])]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -195,12 +207,15 @@ class GoogleTasks(object):
 class Task(object):
     """ Google Tasks task """
 
-    def __init__(self, dict):
+    def __init__(self, in_dict, out_format):
         """ Create Task object from dict returned by Google API """
-        self.__dict__ = dict
+        self.__dict__ = in_dict
+        self._format = out_format
 
     def __str__(self):
         """ String representation """
+        # TODO: decide if there's something different we want
+        #       to return in markdown
         return self.title if hasattr(self, "title") else "(No title)"
 
     def __getitem__(self, name):
@@ -233,7 +248,7 @@ class GoogleStatsBase(Stats):
                 calendarId="primary", singleEvents=True, orderBy="startTime",
                 timeMin=self.since, timeMax=self.until)
             self._events = [event for event in self._events
-                            if str(event) not in self.parent.skip]
+                            if str(event.summary) not in self.parent.skip]
         return self._events
 
     @property
@@ -306,8 +321,8 @@ class GoogleStatsGroup(StatsGroup):
         self.skip = config.get("skip", [])
 
         http = authorized_http(client_id, client_secret, apps, storage)
-        self.calendar = GoogleCalendar(http)
-        self.tasks = GoogleTasks(http)
+        self.calendar = GoogleCalendar(http, self)
+        self.tasks = GoogleTasks(http, self)
 
         self.stats = [
             GoogleEventsOrganized(
