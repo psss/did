@@ -29,7 +29,8 @@ from time import sleep
 
 import dateutil
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import urllib3
+from urllib3.exceptions import InsecureRequestWarning
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
@@ -387,7 +388,7 @@ class GitLabStats(StatsGroup):
         except KeyError:
             self.ssl_verify = GITLAB_SSL_VERIFY
         if not self.ssl_verify:
-            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+            urllib3.disable_warnings(InsecureRequestWarning)
         self.gitlab = GitLab(self.url, self.token, self.ssl_verify)
         # Create the list of stats
         self.stats = [
