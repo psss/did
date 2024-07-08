@@ -126,7 +126,7 @@ class GitLab(object):
                 ) from jde
         try:
             return result[0]
-        except IndexError:
+        except (IndexError, KeyError):
             raise ReportError(
                 "Unable to find user '{0}' on GitLab.".format(username))
 
