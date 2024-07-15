@@ -41,17 +41,17 @@ class Message():
     def __init__(self, msg: mailbox.mboxMessage) -> None:
         self.msg = msg
 
-    def __msg_id(self, keyid: str) -> str:
+    def __msg_id(self, keyid: str) -> typing.Optional[str]:
         msgid = self.msg[keyid]
         if msgid is None:
             return None
 
         return msgid.lstrip("<").rstrip(">")
 
-    def id(self) -> str:
+    def id(self) -> typing.Optional[str]:
         return self.__msg_id("Message-Id")
 
-    def parent_id(self) -> str:
+    def parent_id(self) -> typing.Optional[str]:
         return self.__msg_id("In-Reply-To")
 
     def subject(self) -> str:
