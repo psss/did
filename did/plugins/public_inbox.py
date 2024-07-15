@@ -146,7 +146,7 @@ class PublicInbox():
 
         return msgs
 
-    def __fetch_thread_root(self, initial_msg: Message) -> Message:
+    def __fetch_thread_root(self, initial_msg: Message) -> typing.Optional[Message]:
         msg_id = initial_msg.id()
         url = self.__get_url(f"/all/{msg_id}/t.mbox.gz")
 
@@ -178,11 +178,10 @@ class PublicInbox():
                 log.debug("Found message %s thread root: %s.", msg_id, msg.id())
                 return msg
 
-        # if root is not found, return initial message as root.
         log.warning("Couldn't find message root")
-        return initial_msg
+        return None
 
-    def __get_thread_root(self, msg: Message) -> Message:
+    def __get_thread_root(self, msg: Message) -> typing.Optional[Message]:
         log.debug("Looking for thread root of message %s", msg.id())
         if msg.is_thread_root():
             log.debug("Message is thread root already. Returning.")
