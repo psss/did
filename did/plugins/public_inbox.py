@@ -42,6 +42,7 @@ class Message():
     def __msg_id(self, keyid: str) -> typing.Optional[str]:
         msgid = self.msg[keyid]
         if msgid is None:
+            log.debug("Missing header %s" % keyid)
             return None
 
         return msgid.lstrip("<").rstrip(">")
@@ -157,6 +158,8 @@ class PublicInbox():
             if msg.is_thread_root():
                 log.debug("Found message %s thread root: %s.", msg_id, msg.id())
                 return msg
+
+        log.warn("Couldn't find message root")
 
         # if root is not found, return initial message as root.
         return msg
