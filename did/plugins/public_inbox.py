@@ -162,7 +162,7 @@ class PublicInbox():
         log.warn("Couldn't find message root")
         return None
 
-    def __get_thread_root(self, msg: Message) -> typing.Optional[Message]:
+    def __get_thread_root(self, msg: Message) -> Message:
         log.debug("Looking for thread root of message %s", msg.id())
         if msg.is_thread_root():
             log.debug("Message is thread root already. Returning.")
@@ -171,6 +171,10 @@ class PublicInbox():
         parent_id = msg.parent_id()
         if parent_id not in self.messages_cache:
             root = self.__fetch_thread_root(msg)
+            if root is None:
+                log.debug("Can't retrieve the thread root, returning.")
+                return msg
+
             log.debug("Found root message %s for message %s", root.id(), msg.id())
             return root
 
@@ -184,7 +188,11 @@ class PublicInbox():
 
             parent_id = parent.parent_id()
             if parent_id not in self.messages_cache:
-                root = self.__fetch_thread_root(msg)
+                root = self.__fetch_thread_root(parent)
+                if root is None:
+                    log.debug("Can't retrieve the message parent, returning.")
+                    return parent
+
                 log.debug("Found root message %s for message %s", root.id(), msg.id())
                 return root
 
