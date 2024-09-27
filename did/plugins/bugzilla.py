@@ -16,6 +16,7 @@ Config example::
     type = bugzilla
     prefix = BZ
     url = https://bugzilla.redhat.com/xmlrpc.cgi
+    ssl_verify = True
     resolutions = notabug, duplicate
 
 Resolutions:
@@ -46,7 +47,7 @@ import bugzilla
 
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
-from did.utils import log, pretty, split
+from did.utils import log, pretty, split, strtobool
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -54,10 +55,13 @@ from did.utils import log, pretty, split
 
 DEFAULT_RESOLUTIONS = ["notabug", "duplicate"]
 
+# Enable ssl verify
+SSL_VERIFY = True
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Bugzilla
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class Bugzilla(object):
     """ Bugzilla investigator """
@@ -71,7 +75,10 @@ class Bugzilla(object):
     def server(self):
         """ Connection to the server """
         if self._server is None:
-            self._server = bugzilla.Bugzilla(url=self.parent.url)
+            self._server = bugzilla.Bugzilla(
+                url=self.parent.url,
+                sslverify=self.parent.ssl_verify
+                )
         return self._server
 
     def search(self, query, options):
@@ -643,6 +650,18 @@ class BugzillaStats(StatsGroup):
         except KeyError:
             raise ReportError(
                 "No bugzilla url set in the [{0}] section".format(option))
+
+        # SSL verification
+        if "ssl_verify" in config:
+            try:
+                self.ssl_verify = strtobool(
+                    config["ssl_verify"])
+            except Exception as error:
+                raise ReportError(
+                    "Error when parsing 'ssl_verify': {0}".format(error))
+        else:
+            self.ssl_verify = SSL_VERIFY
+
         # Make sure we have prefix set
         try:
             self.prefix = config["prefix"]
