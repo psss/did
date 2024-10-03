@@ -1,0 +1,18 @@
+discover:
+    how: fmf
+provision:
+    how: local
+execute:
+    how: tmt
+
+/basic:
+    summary:
+        Basic functionality
+    discover+:
+        filter: "tier:0"
+
+/plugins:
+    summary:
+        Plugin features
+    discover+:
+        filter: "tier:1"

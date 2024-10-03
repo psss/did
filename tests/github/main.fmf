@@ -1,0 +1,11 @@
+/help:
+    summary: Check the help message and option sanity
+    test: ./help.sh
+
+/pulls:
+    summary: Verify pull request stats
+    test: ./pulls.sh
+
+/issues:
+    summary: Verify issue stats
+    test: ./issues.sh
