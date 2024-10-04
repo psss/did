@@ -13,9 +13,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         if: ${{ github.event_name == 'release' }}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         if: ${{ github.event_name == 'workflow_dispatch' }}
         with:
           ref: ${{ github.event.inputs.ref }}
