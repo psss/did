@@ -24,6 +24,7 @@ __ https://docs.github.com/en/authentication/keeping-your-account-and-data-secur
 
 import json
 import re
+import time
 
 import requests
 
@@ -77,16 +78,21 @@ class GitHub(object):
                     "Defined token is not valid. "
                     "Either update it or remove it.")
 
+            # Handle the exceeded rate limit
+            if response.status_code in [403, 429]:
+                if response.headers.get("X-RateLimit-Remaining") == "0":
+                    reset_time = int(response.headers["X-RateLimit-Reset"])
+                    sleep_time = int(max(reset_time - time.time(), 0)) + 1
+                    log.warning("GitHub rate limit exceeded, use token to speed up.")
+                    log.warning(f"Sleeping now for {listed(sleep_time, 'second')}.")
+                    time.sleep(sleep_time)
+                    continue
+                raise ReportError(f"GitHub query failed: {response.text}")
+
             # Parse fetched json data
             try:
                 data = json.loads(response.text)["items"]
                 result.extend(data)
-            except KeyError:
-                if json.loads(response.text)["message"].startswith(
-                        "API rate limit exceeded"):
-                    raise ReportError(
-                        "GitHub API rate limit exceeded. "
-                        "Consider creating an access token.")
             except requests.exceptions.JSONDecodeError as error:
                 log.debug(error)
                 raise ReportError(f"GitHub JSON failed: {response.text}.")
