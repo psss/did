@@ -1,8 +1,9 @@
 #!/bin/bash
 . /usr/share/beakerlib/beakerlib.sh || exit 1
 
-YEAR_2022="--since 2022-01-01 --until 2022-12-31"
 YEAR_2021="--since 2021-01-01 --until 2021-12-31"
+YEAR_2022="--since 2022-01-01 --until 2022-12-31"
+YEAR_2023="--since 2023-01-01 --until 2023-12-31"
 
 rlJournalStart
 
@@ -22,6 +23,14 @@ rlJournalStart
         rlAssertGrep "teemtee/tmt#1737 - Introduce a new step for cleanup tasks" $rlRun_LOG
         rlAssertGrep "teemtee/fmf#149 - Checkout of the default branch fails" $rlRun_LOG
         rlAssertNotGrep "packit/packit-service#1645 - Manually trigger internal jobs" $rlRun_LOG
+    rlPhaseEnd
+
+    rlPhaseStartTest "Issues Created (org:teemtee,packit)"
+        rlRun -s "did --config ./config-more.ini --gh-issues-created $YEAR_2023"
+        rlAssertGrep "Issues created on gh: 33$" $rlRun_LOG
+        rlAssertGrep "teemtee/tmt#2493 - Implement retry functionality" $rlRun_LOG
+        rlAssertGrep "packit/packit#1989 - Mention branch name" $rlRun_LOG
+        rlAssertNotGrep "readthedocs/sphinx_rtd_theme#1525 - Left menu" $rlRun_LOG
     rlPhaseEnd
 
     rlPhaseStartTest "Issues Created (repo:teemtee/fmf)"

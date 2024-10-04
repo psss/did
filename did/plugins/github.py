@@ -17,6 +17,11 @@ of the project to only search in the given repository::
     org = <organization-name>
     repo = <full-project-name>
 
+Multiple users, organization or repositories can be searched as
+well. Use ``,`` as the separator, for example::
+
+    org = one,two,three
+
 The authentication token is optional. However, unauthenticated
 queries are limited. For more details see `GitHub API`__ docs.
 Use ``login`` to override the default email address for searching.
@@ -62,15 +67,16 @@ class GitHub(object):
             self.headers = {}
 
         # Prepare the org, user, repo filter
-        self.filter = ""
-        if user:
-            self.filter += f"+user:{user}"
-        if org:
-            self.filter += f"+org:{org}"
-        if repo:
-            self.filter += f"+repo:{repo}"
+        def condition(key: str, names: str) -> list[str]:
+            """ Prepare one or more conditions for given key & names """
+            if not names:
+                return []
+            return [f"+{key}:{name}" for name in re.split(r"\s*,\s*", names)]
 
-        self.token = token
+        self.filter = "".join(
+            condition("user", user) +
+            condition("org", org) +
+            condition("repo", repo))
 
     def search(self, query):
         """ Perform GitHub query """

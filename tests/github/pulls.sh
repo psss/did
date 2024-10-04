@@ -30,6 +30,17 @@ rlJournalStart
         rlAssertNotGrep "packit/packit.dev#399 - Update \`tmt\` examples" $rlRun_LOG
     rlPhaseEnd
 
+    rlPhaseStartTest "Pull Requests Created (org:teemtee,packit)"
+        rlRun -s "did --config ./config-more.ini --gh-pull-requests-created $YEAR_2022"
+        rlAssertGrep "Pull requests created on gh: 86$" $rlRun_LOG
+        rlAssertGrep "teemtee/tmt#1750 - Include the new web link in verbose" $rlRun_LOG
+        rlAssertGrep "teemtee/fmf#170 - Implement a directive for disabling inheritance" $rlRun_LOG
+        rlAssertGrep "teemtee/try#002 - Check logs for test with a hash sign in" $rlRun_LOG
+        rlAssertNotGrep "psss/did#275 - Speed up local testing" $rlRun_LOG
+        rlAssertNotGrep "psss/python-nitrate#039 - Enable basic sanity" $rlRun_LOG
+        rlAssertGrep "packit/packit.dev#399 - Update \`tmt\` examples" $rlRun_LOG
+    rlPhaseEnd
+
     rlPhaseStartTest "Pull Requests Created (repo:teemtee/fmf)"
         rlRun -s "did --config ./config-repo.ini --gh-pull-requests-created $YEAR_2022"
         rlAssertGrep "Pull requests created on gh: 7$" $rlRun_LOG
