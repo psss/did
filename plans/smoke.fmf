@@ -1,8 +1,0 @@
-summary:
-    Basic smoke test
-discover:
-    how: fmf
-provision:
-    how: local
-execute:
-    how: tmt

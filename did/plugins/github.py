@@ -9,6 +9,19 @@ Config example::
     token = <authentication-token>
     login = <username>
 
+Optionally the search query can be limited to repositories owned
+by the given user or organization. You can also use the full name
+of the project to only search in the given repository::
+
+    user = <repository-owner>
+    org = <organization-name>
+    repo = <full-project-name>
+
+Multiple users, organization or repositories can be searched as
+well. Use ``,`` as the separator, for example::
+
+    org = one,two,three
+
 The authentication token is optional. However, unauthenticated
 queries are limited. For more details see `GitHub API`__ docs.
 Use ``login`` to override the default email address for searching.
@@ -45,7 +58,7 @@ PER_PAGE = 100
 class GitHub(object):
     """ GitHub Investigator """
 
-    def __init__(self, url, token):
+    def __init__(self, url, token=None, user=None, org=None, repo=None):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         if token is not None:
@@ -53,12 +66,22 @@ class GitHub(object):
         else:
             self.headers = {}
 
-        self.token = token
+        # Prepare the org, user, repo filter
+        def condition(key: str, names: str) -> list[str]:
+            """ Prepare one or more conditions for given key & names """
+            if not names:
+                return []
+            return [f"+{key}:{name}" for name in re.split(r"\s*,\s*", names)]
+
+        self.filter = "".join(
+            condition("user", user) +
+            condition("org", org) +
+            condition("repo", repo))
 
     def search(self, query):
         """ Perform GitHub query """
         result = []
-        url = self.url + "/" + query + f"&per_page={PER_PAGE}"
+        url = self.url + "/" + query + self.filter + f"&per_page={PER_PAGE}"
 
         while True:
             # Fetch the query
@@ -255,15 +278,23 @@ class GitHubStats(StatsGroup):
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
         config = dict(Config().section(option))
+
         # Check server url
         try:
             self.url = config["url"]
         except KeyError:
             raise ReportError(
                 "No github url set in the [{0}] section".format(option))
+
         # Check authorization token
         self.token = get_token(config)
-        self.github = GitHub(self.url, self.token)
+        self.github = GitHub(
+            url=self.url,
+            token=self.token,
+            org=config.get("org"),
+            user=config.get("user"),
+            repo=config.get("repo"))
+
         # Create the list of stats
         self.stats = [
             IssuesCreated(
