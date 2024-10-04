@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 GitLab stats such as created and closed issues
 

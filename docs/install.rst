@@ -36,7 +36,7 @@ Installing did using pip directly on the system is easy::
 Use virtual environments if you do not want to affect your system.
 Install virtualenv wrapper to make the work more comfortable::
 
-    sudo yum install python-virtualenvwrapper   # Fedora
+    sudo dnf install python-virtualenvwrapper   # Fedora
     sudo apt install virtualenvwrapper          # Ubuntu
 
 Create a new virtual environment, upgrade tools, install did::
@@ -58,7 +58,7 @@ dependencies, for example::
 Note: For plugins depending on gssapi (jira & rt) there are some
 extra dependencies::
 
-    sudo yum install gcc krb5-devel python-devel    # Fedora
+    sudo dnf install gcc krb5-devel python-devel    # Fedora
     sudo apt install gcc libkrb5-dev python-dev     # Ubuntu
 
 See the `pypi package index`__ for detailed package information.

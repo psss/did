@@ -134,7 +134,7 @@ Install
 
 Install directly from Fedora/Copr repository::
 
-    yum install did
+    dnf install did
 
 Or use pip to install from Python Package Index::
 
@@ -237,7 +237,7 @@ Jakub Rozek and Petr Matyáš.
 Copyright
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Copyright (c) 2015 Red Hat, Inc. All rights reserved.
+Copyright Red Hat
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License as

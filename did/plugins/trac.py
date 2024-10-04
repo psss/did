@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Trac stats such as created, accepted, updated and closed tickets
 

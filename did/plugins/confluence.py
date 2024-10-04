@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Confluence stats such as created pages and comments
 

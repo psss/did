@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Nitrate stats such as created test plans, runs, cases
 

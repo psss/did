@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Sentry stats such as commented and resolved issues.
 

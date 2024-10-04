@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Gerrit stats such as submitted, review or merged changes
 

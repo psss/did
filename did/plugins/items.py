@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Custom section with multiple items
 
