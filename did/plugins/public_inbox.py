@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Public-Inbox stats about mailing lists threads
 

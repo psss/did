@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """
 Bugzilla stats such as filed, fixed or verified bugs
 

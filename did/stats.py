@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """ Stats & StatsGroup, the core of the data gathering """
 
 import re

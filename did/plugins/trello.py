@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Trello actions such as created, moved or closed cards
 

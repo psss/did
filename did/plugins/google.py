@@ -1,4 +1,3 @@
-# coding: utf-8
 
 """
 Google stats such as attended events or completed tasks

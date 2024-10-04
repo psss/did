@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 MoinMoin wiki stats about updated pages
 

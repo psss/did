@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Phabricator stats for authored and reviewed differentials, aka reviews.
 

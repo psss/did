@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 import re
 
@@ -59,12 +58,12 @@ setup(
 
     keywords=['status', 'report', 'tasks', 'work'],
     classifiers=[
-        'License :: OSI Approved :: '
-            'GNU General Public License v2 or later (GPLv2+)',
+        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         'Topic :: Office/Business',
         'Topic :: Utilities',
         ],

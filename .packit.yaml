@@ -13,7 +13,6 @@ jobs:
   trigger: pull_request
   targets:
   - fedora-all
-  - epel-8
   - epel-9
   enable_net: False
 
@@ -21,7 +20,6 @@ jobs:
   trigger: pull_request
   targets:
   - fedora-all
-  - epel-8
   - epel-9
 
 - job: copr_build
@@ -29,7 +27,6 @@ jobs:
   branch: main
   targets:
   - fedora-all
-  - epel-8
   - epel-9
   enable_net: False
   list_on_homepage: True

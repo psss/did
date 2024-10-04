@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Zammad stats such as updated tickets
 

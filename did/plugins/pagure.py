@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Pagure stats such as created/closed issues and pull requests.
 

@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Jira stats such as created, updated or resolved issues
 

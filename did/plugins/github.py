@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 GitHub stats such as created and closed issues
 

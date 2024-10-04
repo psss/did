@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 Request Tracker stats such as reported and resolved tickets
 

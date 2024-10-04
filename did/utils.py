@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """ Logging, config, constants & utilities """
 
 import importlib
