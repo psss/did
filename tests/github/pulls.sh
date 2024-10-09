@@ -5,6 +5,7 @@ did="did --config"
 
 YEAR_2022="--since 2022-01-01 --until 2022-12-31"
 YEAR_2021="--since 2021-01-01 --until 2021-12-31"
+CHECK_UNTIL="--since 2022-10-01 --until 2022-10-26"
 
 rlJournalStart
 
@@ -63,6 +64,14 @@ rlJournalStart
         rlAssertGrep "psss/did#275 - Speed up local testing" $rlRun_LOG
         rlAssertGrep "psss/python-nitrate#039 - Enable basic sanity" $rlRun_LOG
         rlAssertNotGrep "packit/packit.dev#399 - Update \`tmt\` examples" $rlRun_LOG
+    rlPhaseEnd
+
+    rlPhaseStartTest "Pull Requests Created, check correct --until"
+        rlRun -s "$did ./config-default.ini --gh-pull-requests-created $CHECK_UNTIL"
+        rlAssertGrep "Pull requests created on gh: 7$" $rlRun_LOG
+        rlAssertGrep 'teemtee/tmt#1642 - Move the hardware specification into a separate page$' $rlRun_LOG
+        rlAssertNotGrep 'teemtee/tmt#1645' $rlRun_LOG
+        rlAssertNotGrep 'teemtee/tmt#1644' $rlRun_LOG
     rlPhaseEnd
 
     # Pull Requests Closed

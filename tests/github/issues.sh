@@ -6,6 +6,7 @@ did="did --config"
 YEAR_2021="--since 2021-01-01 --until 2021-12-31"
 YEAR_2022="--since 2022-01-01 --until 2022-12-31"
 YEAR_2023="--since 2023-01-01 --until 2023-12-31"
+CHECK_UNTIL="--since 2022-10-01 --until 2022-10-26"
 
 rlJournalStart
 
@@ -49,6 +50,14 @@ rlJournalStart
         rlAssertGrep "psss/did#247 - Implement pagination for the GitHub plugin" $rlRun_LOG
         rlAssertNotGrep "packit/packit#1386 - Allow to disable web access" $rlRun_LOG
         rlAssertNotGrep "teemtee/tmt#910 - Shall we introduce a uuid for tests?" $rlRun_LOG
+    rlPhaseEnd
+
+    rlPhaseStartTest "Issues Created, check correct --until"
+        rlRun -s "$did ./config-default.ini --gh-issues-created $CHECK_UNTIL"
+        rlAssertGrep "Issues created on gh: 1$" $rlRun_LOG
+        rlAssertGrep "teemtee/tmt#1559 - Update the overview of essential classes$" $rlRun_LOG
+        rlAssertNotGrep 'teemtee/tmt#1648' $rlRun_LOG
+        rlAssertNotGrep 'teemtee/tmt#1650' $rlRun_LOG
     rlPhaseEnd
 
     # Issues Closed
