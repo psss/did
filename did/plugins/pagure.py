@@ -111,7 +111,7 @@ class IssuesCreated(Stats):
     def fetch(self):
         log.info('Searching for issues created by {0}'.format(self.user))
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
-            query='user/{0}/issues?assignee=false&created={1}..{2}'.format(
+            query='user/{0}/issues?status=all&created={1}..{2}'.format(
                 self.user.login, self.options.since, self.options.until),
             pagination='pagination_issues_created',
             result_field='issues_created')]
