@@ -195,7 +195,7 @@ class IssuesCreated(Stats):
         log.info('Searching for issues created by %s', self.user)
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
             query=(
-                f'user/{self.user.login}/issues?assignee=false'
+                f'user/{self.user.login}/issues?status=all'
                 f'&created={self.options.since}..{self.options.until}'),
             pagination='pagination_issues_created',
             result_field='issues_created')]
