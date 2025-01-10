@@ -126,7 +126,7 @@ class GitLab(object):
             return result[0]
         except (IndexError, KeyError):
             raise ReportError(
-                "Unable to find user '{0}' on GitLab.".format(username))
+                f"Unable to find user '{username}' on {self.url}.")
 
     def get_project(self, project_id):
         if project_id not in self.projects:
