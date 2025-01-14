@@ -1,6 +1,9 @@
 # Config for building https://did.readthedocs.io/
 version: 2
 
+sphinx:
+  configuration: docs/conf.py
+
 python:
     install:
       - method: pip
