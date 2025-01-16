@@ -62,7 +62,7 @@ class Trac(object):
         """ Perform Trac search """
         # Extend the default max number of tickets to be fetched
         query = "{0}&max={1}".format(query, MAX_TICKETS)
-        log.debug("Search query: {0}".format(query))
+        log.debug("Search query: %s", query)
         try:
             result = parent.proxy.ticket.query(query)
         except xmlrpc.client.Fault as error:
@@ -70,10 +70,10 @@ class Trac(object):
             raise ReportError(error)
         except xmlrpc.client.ProtocolError as error:
             log.debug(error)
-            log.error("Trac url: {0}".format(parent.url))
+            log.error("Trac url: %s", parent.url)
             raise ReportError(
                 "Unable to contact Trac server. Is the url above correct?")
-        log.debug("Search result: {0}".format(result))
+        log.debug("Search result: %s", result)
         # Fetch tickets and their history using multicall
         multicall = xmlrpc.client.MultiCall(parent.proxy)
         for ticket_id in sorted(result):
@@ -85,7 +85,7 @@ class Trac(object):
         changelogs = result[1::2]
         # Print debugging info
         for ticket, changelog in zip(tickets, changelogs):
-            log.debug("Fetched ticket #{0}".format(ticket[0]))
+            log.debug("Fetched ticket #%s", ticket[0])
             log.debug(pretty(ticket))
             log.debug("Changelog:")
             log.debug(pretty(changelog))
@@ -145,7 +145,7 @@ class TracCreated(TracCommon):
     """ Created tickets """
 
     def fetch(self):
-        log.info("Searching for tickets created by {0}".format(self.user))
+        log.info("Searching for tickets created by %s", self.user)
         query = "reporter=~{0}&time={1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         self.stats = Trac.search(query, self.parent, self.options)
@@ -155,7 +155,7 @@ class TracAccepted(TracCommon):
     """ Accepted tickets """
 
     def fetch(self):
-        log.info("Searching for tickets accepted by {0}".format(self.user))
+        log.info("Searching for tickets accepted by %s", self.user)
         query = "time=..{2}&modified={1}..&owner=~{0}".format(
                 self.user.login, self.options.since, self.options.until)
         self.stats = [
@@ -167,7 +167,7 @@ class TracUpdated(TracCommon):
     """ Updated tickets """
 
     def fetch(self):
-        log.info("Searching for tickets updated by {0}".format(self.user))
+        log.info("Searching for tickets updated by %s", self.user)
         query = "time=..{1}&modified={0}..".format(
             self.options.since, self.options.until)
         self.stats = [
@@ -179,7 +179,7 @@ class TracClosed(TracCommon):
     """ Closed tickets """
 
     def fetch(self):
-        log.info("Searching for tickets closed by {0}".format(self.user))
+        log.info("Searching for tickets closed by %s", self.user)
         query = "owner=~{0}&time=..{2}&modified={1}..".format(
             self.user.login, self.options.since, self.options.until)
         self.stats = [

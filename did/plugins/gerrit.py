@@ -74,7 +74,7 @@ class Gerrit(object):
         return urllib.parse.urlunsplit(split)
 
     def get_query_result(self, url):
-        log.debug('url = {0}'.format(url))
+        log.debug('url = %s', url)
         res = self.opener.open(url)
         if res.getcode() != 200:
             raise IOError(
@@ -96,12 +96,12 @@ class Gerrit(object):
         messages_url = self.join_URL_frags(
             self.baseurl, '/changes/{0}/detail'.format(chg.change_id))
         changelog = self.get_query_result(messages_url)
-        log.debug("changelog = {0}".format(changelog))
+        log.debug("changelog = %s", changelog)
         return changelog
 
     def search(self, query):
         full_url = self.join_URL_frags(self.baseurl, '/changes/?q=' + query)
-        log.debug('full_url = {0}'.format(full_url))
+        log.debug('full_url = %s', full_url)
         tickets = []
 
         # Get tickets
@@ -154,9 +154,11 @@ class GerritUnit(Stats):
             results to eliminate items created after since option.
         """
         work_list = []
-        log.info("Searching for changes by {0}".format(self.user))
-        log.debug('query_string = {0}, common_query_options = {1}'.format(
-            query_string, common_query_options))
+        log.info("Searching for changes by %s", self.user)
+        log.debug(
+            'query_string = %s, common_query_options = %s',
+            query_string,
+            common_query_options)
 
         self.since_date = self.get_gerrit_date(self.options.since)
 
@@ -184,9 +186,9 @@ class GerritUnit(Stats):
                 len(common_query_options) > 0:
             query_string += common_query_options
 
-        log.debug('query_string = {0}'.format(query_string))
-        log.debug('self.prefix = {0}'.format(self.prefix))
-        log.debug('[fetch] self.base_url = {0}'.format(self.base_url))
+        log.debug('query_string = %s', query_string)
+        log.debug('self.prefix = %s', self.prefix)
+        log.debug('[fetch] self.base_url = %s', self.base_url)
         work_list = self.repo.search(query_string)
 
         if limit_since:
@@ -194,13 +196,13 @@ class GerritUnit(Stats):
             log.debug('Limiting by since option')
             self.stats = []
             for chg in work_list:
-                log.debug('chg = {0}'.format(chg))
+                log.debug('chg = %s', chg)
                 chg_created = self.get_gerrit_date(chg['created'][:10])
-                log.debug('chg_created = {0}'.format(chg_created))
+                log.debug('chg_created = %s', chg_created)
                 if chg_created >= self.since_date:
                     tmplist.append(chg)
             work_list = tmplist[:]
-        log.debug("work_list = {0}".format(work_list))
+        log.debug("work_list = %s", work_list)
 
         # Return the list of tick_data objects
         return [Change(ticket, prefix=self.prefix) for ticket in work_list]
@@ -213,9 +215,9 @@ class AbandonedChanges(GerritUnit):
     """
 
     def fetch(self):
-        log.info("Searching for changes abandoned by {0}".format(self.user))
+        log.info("Searching for changes abandoned by %s", self.user)
         self.stats = GerritUnit.fetch(self, 'status:abandoned')
-        log.debug("self.stats = {0}".format(self.stats))
+        log.debug("self.stats = %s", self.stats)
 
 
 class MergedChanges(GerritUnit):
@@ -225,9 +227,9 @@ class MergedChanges(GerritUnit):
     """
 
     def fetch(self):
-        log.info("Searching for changes merged by {0}".format(self.user))
+        log.info("Searching for changes merged by %s", self.user)
         self.stats = GerritUnit.fetch(self, 'status:merged')
-        log.debug("self.stats = {0}".format(self.stats))
+        log.debug("self.stats = %s", self.stats)
 
 
 class SubmitedChanges(GerritUnit):
@@ -244,14 +246,14 @@ class SubmitedChanges(GerritUnit):
     """
 
     def fetch(self):
-        log.info("Searching for changes opened by {0}".format(self.user))
+        log.info("Searching for changes opened by %s", self.user)
         if 'wip' in self.server_features:
             query_string = 'status:open -is:wip'
         else:
             query_string = 'status:open'
         self.stats = GerritUnit.fetch(self, query_string,
                                       limit_since=True)
-        log.debug("self.stats = {0}".format(self.stats))
+        log.debug("self.stats = %s", self.stats)
 
 
 class WIPChanges(GerritUnit):
@@ -260,13 +262,13 @@ class WIPChanges(GerritUnit):
     """
 
     def fetch(self):
-        log.info("Searching for WIP changes opened by {0}".format(self.user))
+        log.info("Searching for WIP changes opened by %s", self.user)
         if 'wip' not in self.server_features:
             log.debug("WIP reviews are not supported by this server")
             return []
         self.stats = GerritUnit.fetch(self, 'status:open is:wip',
                                       limit_since=True)
-        log.debug("self.stats = {0}".format(self.stats))
+        log.debug("self.stats = %s", self.stats)
 
 
 class AddedPatches(GerritUnit):
@@ -277,8 +279,7 @@ class AddedPatches(GerritUnit):
     """
 
     def fetch(self):
-        log.info("Searching for patches added to changes by {0}".format(
-            self.user))
+        log.info("Searching for patches added to changes by %s", self.user)
         reviewer = self.user.login
         self.stats = []
         tickets = GerritUnit.fetch(
@@ -286,18 +287,16 @@ class AddedPatches(GerritUnit):
                 reviewer),
             '')
         for tck in tickets:
-            log.debug("ticket = {0}".format(tck))
+            log.debug("ticket = %s", tck)
             try:
                 changes = self.repo.get_changelog(tck)
             except IOError:
-                log.debug('Failing to retrieve details for {0}'.format(
-                    tck.change_id))
+                log.debug('Failing to retrieve details for %s', tck.change_id)
                 continue
 
             owner = changes['owner']['email']
 
-            log.debug("changes.messages = {0}".format(
-                pretty(changes['messages'])))
+            log.debug("changes.messages = %s", pretty(changes['messages']))
             cmnts_by_user = []
             for chg in changes['messages']:
                 # TODO This is a very bad algorithm for recognising
@@ -319,7 +318,7 @@ class AddedPatches(GerritUnit):
                 self.stats.append(
                     Change(tck.ticket, changelog=changes,
                            prefix=self.prefix))
-        log.debug("self.stats = {0}".format(self.stats))
+        log.debug("self.stats = %s", self.stats)
 
 
 class ReviewedChanges(GerritUnit):
@@ -330,7 +329,7 @@ class ReviewedChanges(GerritUnit):
     """
 
     def fetch(self):
-        log.info("Searching for changes reviewed by {0}".format(self.user))
+        log.info("Searching for changes reviewed by %s", self.user)
         # Collect ALL changes opened (and perhaps now closed) after
         # given date and collect all reviews from them ... then limit by
         # actual reviewer (not reviewer:<login> because that doesn’t
@@ -343,15 +342,13 @@ class ReviewedChanges(GerritUnit):
                 self.user.login),
             '', limit_since=True)
         for tck in tickets:
-            log.debug("ticket = {0}".format(tck))
+            log.debug("ticket = %s", tck)
             try:
                 changes = self.repo.get_changelog(tck)
             except IOError:
-                log.debug('Failing to retrieve details for {0}'.format(
-                    tck.change_id))
+                log.debug('Failing to retrieve details for %s', tck.change_id)
                 continue
-            log.debug("changes.messages = {0}".format(
-                pretty(changes['messages'])))
+            log.debug("changes.messages = %s", pretty(changes['messages']))
             cmnts_by_user = []
             for chg in changes['messages']:
                 if 'author' not in chg:
@@ -366,7 +363,7 @@ class ReviewedChanges(GerritUnit):
                 self.stats.append(
                     Change(tck.ticket, changelog=changes,
                            prefix=self.prefix))
-        log.debug("self.stats = {0}".format(self.stats))
+        log.debug("self.stats = %s", self.stats)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -404,7 +401,7 @@ class GerritStats(StatsGroup):
             raise IOError(
                 'No gerrit URL set in the [{0}] section'.format(option))
         self.repo_url = self.config['url']
-        log.debug('repo_url = {0}'.format(self.repo_url))
+        log.debug('repo_url = %s', self.repo_url)
 
         if "prefix" not in self.config:
             raise ReportError(

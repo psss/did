@@ -51,7 +51,7 @@ class GitRepo(object):
             command.append("--format=format:%n%h - %s")
         else:
             command.append("--format=format:%h - %s")
-        log.info("Checking commits in {0}".format(self.path))
+        log.info("Checking commits in %s", self.path)
         log.details(pretty(command))
 
         # Get the commit messages
@@ -93,7 +93,7 @@ class GitRepo(object):
             return commits
         else:
             log.debug(errors.strip())
-            log.warning("Unable to check commits in '{0}'".format(self.path))
+            log.warning("Unable to check commits in '%s'", self.path)
             return []
 
 
@@ -152,8 +152,7 @@ class GitStats(StatsGroup):
                         continue
                     # Silently ignore non-git directories
                     if not os.path.exists(os.path.join(repo_path, ".git")):
-                        log.debug("Skipping non-git directory '{0}'.".format(
-                            repo_path))
+                        log.debug("Skipping non-git directory '%s'.", repo_path)
                         continue
                     self.stats.append(GitCommits(
                         option="{0}-{1}".format(repo, repo_dir),

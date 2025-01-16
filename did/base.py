@@ -101,7 +101,7 @@ class Config(object):
             path = Config.path()
         # Parse the config from file
         try:
-            log.info("Inspecting config file '{0}'.".format(path))
+            log.info("Inspecting config file '%s'.", path)
             self.parser.read_file(codecs.open(path, "r", "utf8"))
         except IOError as error:
             log.debug(error)
@@ -497,12 +497,12 @@ class User(object):
         # Update login/email if alias detected
         if email is not None:
             self.email = email
-            log.info("Using email alias '{0}' for '{1}'".format(email, stats))
+            log.info("Using email alias '%s' for '%s'", email, stats)
             if login is None:
                 login = email.split("@")[0]
         if login is not None:
             self.login = login
-            log.info("Using login alias '{0}' for '{1}'".format(login, stats))
+            log.info("Using login alias '%s' for '%s'", login, stats)
 
 
 def get_token(
