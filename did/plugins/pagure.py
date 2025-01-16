@@ -45,7 +45,7 @@ class Pagure(object):
         result = []
         url = "/".join((self.url, query))
         while url:
-            log.debug("Pagure query: {0}".format(url))
+            log.debug("Pagure query: %s", url)
             try:
                 response = requests.get(url, headers=self.headers)
                 log.data("Response headers:\n{0}".format(response.headers))
@@ -54,8 +54,7 @@ class Pagure(object):
                 raise ReportError("Pagure search {0} failed.".format(self.url))
             data = response.json()
             objects = data[result_field]
-            log.debug("Result: {0} fetched".format(
-                listed(len(objects), "item")))
+            log.debug("Result: %s fetched", listed(len(objects), "item"))
             log.data(pretty(data))
             # FIXME later:
             # Work around https://pagure.io/pagure/issue/4057
@@ -109,7 +108,7 @@ class IssuesCreated(Stats):
     """ Issues created """
 
     def fetch(self):
-        log.info('Searching for issues created by {0}'.format(self.user))
+        log.info('Searching for issues created by %s', self.user)
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
             query='user/{0}/issues?assignee=false&created={1}..{2}'.format(
                 self.user.login, self.options.since, self.options.until),
@@ -122,7 +121,7 @@ class IssuesClosed(Stats):
     """ Issues closed """
 
     def fetch(self):
-        log.info('Searching for issues closed by {0}'.format(self.user))
+        log.info('Searching for issues closed by %s', self.user)
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
             query='user/{0}/issues?status=all&author=false&since={1}'.format(
                 self.user.login, self.options.since),
@@ -140,8 +139,7 @@ class PullRequestsCreated(Stats):
     """ Pull requests created """
 
     def fetch(self):
-        log.info('Searching for pull requests created by {0}'.format(
-            self.user))
+        log.info('Searching for pull requests created by %s', self.user)
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
             query='user/{0}/requests/filed?status=all&created={1}..{2}'.format(
                 self.user.login, self.options.since, self.options.until),

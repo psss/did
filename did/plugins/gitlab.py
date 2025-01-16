@@ -90,7 +90,7 @@ class GitLab(object):
         return self._get_gitlab_api_raw(url)
 
     def _get_gitlab_api_json(self, endpoint):
-        log.debug("Query: {0}".format(endpoint))
+        log.debug("Query: %s", endpoint)
         result = self._get_gitlab_api(endpoint).json()
         log.data(pretty(result))
         return result
@@ -179,7 +179,7 @@ class GitLab(object):
                     event['action_name'] == action_name and
                     since.date <= created_at and until.date >= created_at):
                 result.append(event)
-        log.debug("Result: {0} fetched".format(listed(len(result), "item")))
+        log.debug("Result: %s fetched", listed(len(result), "item"))
         return result
 
 
@@ -258,8 +258,7 @@ class IssuesCreated(Stats):
     """ Issue created """
 
     def fetch(self):
-        log.info("Searching for Issues created by {0}".format(
-            self.user))
+        log.info("Searching for Issues created by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
             'Issue', 'opened')
@@ -272,8 +271,7 @@ class IssuesCommented(Stats):
     """ Issue commented """
 
     def fetch(self):
-        log.info("Searching for Issues commented by {0}".format(
-            self.user))
+        log.info("Searching for Issues commented by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
             'Note', 'commented on')
@@ -287,8 +285,7 @@ class IssuesClosed(Stats):
     """ Issue closed """
 
     def fetch(self):
-        log.info("Searching for Issues closed by {0}".format(
-            self.user))
+        log.info("Searching for Issues closed by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
             'Issue', 'closed')
@@ -301,8 +298,7 @@ class MergeRequestsCreated(Stats):
     """ Merge requests created """
 
     def fetch(self):
-        log.info("Searching for Merge requests created by {0}".format(
-            self.user))
+        log.info("Searching for Merge requests created by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
             'MergeRequest', 'opened')
@@ -315,8 +311,7 @@ class MergeRequestsCommented(Stats):
     """ MergeRequests commented """
 
     def fetch(self):
-        log.info("Searching for MergeRequests commented by {0}".format(
-            self.user))
+        log.info("Searching for MergeRequests commented by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
             'Note', 'commented on')
@@ -330,8 +325,7 @@ class MergeRequestsClosed(Stats):
     """ Merge requests closed """
 
     def fetch(self):
-        log.info("Searching for Merge requests closed by {0}".format(
-            self.user))
+        log.info("Searching for Merge requests closed by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
             'MergeRequest', 'accepted')
@@ -344,8 +338,7 @@ class MergeRequestsApproved(Stats):
     """ Merge requests approved """
 
     def fetch(self):
-        log.info("Searching for Merge requests approved by {0}".format(
-            self.user))
+        log.info("Searching for Merge requests approved by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
             'MergeRequest', 'approved')

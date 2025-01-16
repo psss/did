@@ -34,12 +34,11 @@ class Bodhi(object):
         current_page = 1
         original_query = query
         while current_page:
-            log.debug("Bodhi query: {0}".format(query))
+            log.debug("Bodhi query: %s", query)
             client = BodhiClient(self.url)
             data = client.send_request(query, verb='GET')
             objects = data['updates']
-            log.debug("Result: {0} fetched".format(
-                listed(len(objects), "item")))
+            log.debug("Result: %s fetched", listed(len(objects), "item"))
             log.data(pretty(data))
             result.extend(objects)
             if current_page < data['pages']:
@@ -82,7 +81,7 @@ class UpdatesCreated(Stats):
     """ Updates created """
 
     def fetch(self):
-        log.info('Searching for updates created by {0}'.format(self.user))
+        log.info('Searching for updates created by %s', self.user)
         self.stats = [
             Update(update, self.parent.options.format)
             for update in self.parent.bodhi.search(

@@ -126,7 +126,7 @@ class GitHub(object):
             else:
                 break
 
-        log.debug("Result: {0} fetched".format(listed(len(result), "item")))
+        log.debug("Result: %s fetched", listed(len(result), "item"))
         log.data(pretty(result))
         return result
 
@@ -181,7 +181,7 @@ class IssuesCreated(Stats):
     """ Issues created """
 
     def fetch(self):
-        log.info("Searching for issues created by {0}".format(self.user))
+        log.info("Searching for issues created by %s", self.user)
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:issue"
@@ -193,7 +193,7 @@ class IssuesClosed(Stats):
     """ Issues closed """
 
     def fetch(self):
-        log.info("Searching for issues closed by {0}".format(self.user))
+        log.info("Searching for issues closed by %s", self.user)
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:issue"
@@ -205,7 +205,7 @@ class IssueCommented(Stats):
     """ Issues commented """
 
     def fetch(self):
-        log.info("Searching for issues commented on by {0}".format(self.user))
+        log.info("Searching for issues commented on by %s", self.user)
         query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:issue"
@@ -217,8 +217,7 @@ class PullRequestsCreated(Stats):
     """ Pull requests created """
 
     def fetch(self):
-        log.info("Searching for pull requests created by {0}".format(
-            self.user))
+        log.info("Searching for pull requests created by %s", self.user)
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
@@ -230,8 +229,7 @@ class PullRequestsCommented(Stats):
     """ Pull requests commented """
 
     def fetch(self):
-        log.info("Searching for pull requests commented on by {0}".format(
-            self.user))
+        log.info("Searching for pull requests commented on by %s", self.user)
         query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
@@ -243,8 +241,7 @@ class PullRequestsClosed(Stats):
     """ Pull requests closed """
 
     def fetch(self):
-        log.info("Searching for pull requests closed by {0}".format(
-            self.user))
+        log.info("Searching for pull requests closed by %s", self.user)
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"
@@ -256,8 +253,7 @@ class PullRequestsReviewed(Stats):
     """ Pull requests reviewed """
 
     def fetch(self):
-        log.info("Searching for pull requests reviewed by {0}".format(
-            self.user))
+        log.info("Searching for pull requests reviewed by %s", self.user)
         query = "search/issues?q=reviewed-by:{0}+-author:{0}+closed:{1}..{2}".format(
             self.user.login, self.options.since, self.options.until)
         query += "+type:pr"

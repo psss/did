@@ -22,7 +22,7 @@ class TestPlans(Stats):
 
     def fetch(self):
         import nitrate
-        log.info("Searching for test plans created by {0}".format(self.user))
+        log.info("Searching for test plans created by %s", self.user)
         self.stats.extend(nitrate.TestPlan.search(
             is_active=True,
             author__email=self.user.email,
@@ -35,7 +35,7 @@ class TestRuns(Stats):
 
     def fetch(self):
         import nitrate
-        log.info("Searching for test runs finished by {0}".format(self.user))
+        log.info("Searching for test runs finished by %s", self.user)
         self.stats.extend(nitrate.TestRun.search(
             default_tester__email=self.user.email,
             stop_date__gt=str(self.options.since),
@@ -104,7 +104,7 @@ class NitrateStats(StatsGroup):
         """ All test cases created by the user """
         import nitrate
         if self._cases is None:
-            log.info("Searching for cases created by {0}".format(self.user))
+            log.info("Searching for cases created by %s", self.user)
             self._cases = [
                 case for case in nitrate.TestCase.search(
                     author__email=self.user.email,
@@ -118,7 +118,7 @@ class NitrateStats(StatsGroup):
         """ All test case copies created by the user """
         import nitrate
         if self._copies is None:
-            log.info("Searching for cases copied by {0}".format(self.user))
+            log.info("Searching for cases copied by %s", self.user)
             self._copies = [
                 case for case in nitrate.TestCase.search(
                     author__email=self.user.email,

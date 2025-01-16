@@ -43,7 +43,7 @@ class RequestTracker(object):
 
         # Make the connection
         connection = http.client.HTTPSConnection(self.url.netloc, 443)
-        log.debug("GET {0}".format(path))
+        log.debug("GET %s", path)
         connection.putrequest("GET", path)
         connection.putheader("Authorization", "Negotiate {0}".format(data))
         connection.putheader("Referer", self.url_string)
@@ -62,13 +62,13 @@ class RequestTracker(object):
     def search(self, query):
         """ Perform request tracker search """
         # Prepare the path
-        log.debug("Query: {0}".format(query))
+        log.debug("Query: %s", query)
         path = self.url.path + '?Format=__id__+__Subject__'
         path += "&Order=ASC&OrderBy=id&Query=" + urllib.parse.quote(query)
 
         # Get the tickets
         lines = self.get(path)
-        log.info("Fetched tickets: {0}".format(len(lines)))
+        log.info("Fetched tickets: %s", len(lines))
         return [self.parent.ticket(line, self.parent) for line in lines]
 
 
@@ -98,7 +98,7 @@ class ReportedTickets(Stats):
     """ Tickets reported """
 
     def fetch(self):
-        log.info("Searching for tickets reported by {0}".format(self.user))
+        log.info("Searching for tickets reported by %s", self.user)
         query = "Requestor.EmailAddress = '{0}'".format(self.user.email)
         query += " AND Created > '{0}'".format(self.options.since)
         query += " AND Created < '{0}'".format(self.options.until)
@@ -109,7 +109,7 @@ class ResolvedTickets(Stats):
     """ Tickets resolved """
 
     def fetch(self):
-        log.info("Searching for tickets resolved by {0}".format(self.user))
+        log.info("Searching for tickets resolved by %s", self.user)
         query = "Owner.EmailAddress = '{0}'".format(self.user.email)
         query += "AND Resolved > '{0}'".format(self.options.since)
         query += "AND Resolved < '{0}'".format(self.options.until)
