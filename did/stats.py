@@ -36,8 +36,7 @@ class Stats(object):
             self.user = self.parent.user
         else:
             self.user = user
-        log.debug(
-            'Loading {0} Stats instance for {1}'.format(option, self.user))
+        log.debug('Loading %s Stats instance for %s', option, self.user)
 
     @property
     def name(self):
@@ -129,7 +128,7 @@ class StatsGroupPlugin(type):
 
         if plugin_name in registry:
             orig = registry[plugin_name]
-            log.warning("%s overriding %s" % (cls.__module__, orig.__module__))
+            log.warning("%s overriding %s", cls.__module__, orig.__module__)
 
         registry[plugin_name] = cls
 

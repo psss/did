@@ -119,11 +119,11 @@ class PublicInbox(object):
         for msg in _unique_messages(mbox):
             msg_id = msg.id()
 
-            log.debug("Found message %s." % msg_id)
+            log.debug("Found message %s.", msg_id)
             msgs.append(msg)
 
             if msg_id not in self.messages_cache:
-                log.debug("Message %s is new, adding to the cache." % msg_id)
+                log.debug("Message %s is new, adding to the cache.", msg_id)
                 self.messages_cache[msg_id] = msg
 
         return msgs
@@ -132,16 +132,16 @@ class PublicInbox(object):
         msg_id = msg.id()
         url = self.__get_url("/all/%s/t.mbox.gz" % msg_id)
 
-        log.debug("Fetching message %s thread (%s)" % (msg_id, url))
+        log.debug("Fetching message %s thread (%s)", msg_id, url)
         resp = requests.get(url)
         mbox = self.__get_mbox_from_content(resp.content)
         for msg in self.__get_msgs_from_mbox(mbox):
             if msg.is_thread_root():
-                log.debug("Found message %s thread root: %s." % (msg_id, msg.id()))
+                log.debug("Found message %s thread root: %s.", msg_id, msg.id())
                 return msg
 
     def __get_thread_root(self, msg: Message) -> Message:
-        log.debug("Looking for thread root of message %s" % msg.id())
+        log.debug("Looking for thread root of message %s", msg.id())
         if msg.is_thread_root():
             log.debug("Message is thread root already. Returning.")
             return msg
@@ -149,11 +149,11 @@ class PublicInbox(object):
         parent_id = msg.parent_id()
         if parent_id not in self.messages_cache:
             root = self.__fetch_thread_root(msg)
-            log.debug("Found root message %s for message %s" % (root.id(), msg.id()))
+            log.debug("Found root message %s for message %s", root.id(), msg.id())
             return root
 
         while True:
-            log.debug("Parent is %s" % parent_id)
+            log.debug("Parent is %s", parent_id)
             assert parent_id in self.messages_cache
             parent = self.messages_cache[parent_id]
             if parent.is_thread_root():
@@ -163,17 +163,15 @@ class PublicInbox(object):
             parent_id = parent.parent_id()
             if parent_id not in self.messages_cache:
                 root = self.__fetch_thread_root(msg)
-                log.debug(
-                    "Found root message %s for message %s" %
-                    (root.id(), msg.id()))
+                log.debug("Found root message %s for message %s", root.id(), msg.id())
                 return root
 
     def __fetch_all_threads(self, since: Date, until: Date) -> list[Message]:
         since_str = since.date.isoformat()
         until_str = until.date.isoformat()
 
-        log.info("Fetching all mails on server %s from %s between %s and %s" %
-                 (self.url, self.user, since_str, until_str))
+        log.info("Fetching all mails on server %s from %s between %s and %s",
+                 self.url, self.user, since_str, until_str)
         resp = requests.post(
             self.__get_url("/all/"),
             headers={"Content-Length": "0"},
@@ -221,11 +219,9 @@ class ThreadsStarted(Stats):
 
     def fetch(self):
         log.info(
-            "Searching for new threads on {0} started by {1}".format(
-                self.parent.url,
-                self.user,
-                )
-            )
+            "Searching for new threads on %s started by %s",
+            self.parent.url,
+            self.user)
 
         self.stats = [
             msg
@@ -249,11 +245,9 @@ class ThreadsInvolved(Stats):
 
     def fetch(self):
         log.info(
-            "Searching for mail threads on {0} where {1} was involved".format(
-                self.parent.url,
-                self.user,
-                )
-            )
+            "Searching for mail threads on %s where %s was involved",
+            self.parent.url,
+            self.user)
 
         self.stats = [
             msg

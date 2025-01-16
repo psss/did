@@ -69,8 +69,8 @@ class Options(object):
         log.debug("Loading Sample Stats group to build Options")
         self.sample_stats = UserStats()
         self.sample_stats.add_option(self.parser)
-        log.info("Default command line: did {0}".format(" ".join(
-            [f'--{stat.option}' for stat in self.sample_stats.stats])))
+        log.info("Default command line: did %s",
+                 (" ".join([f'--{stat.option}' for stat in self.sample_stats.stats])))
 
         # Formating options
         group = self.parser.add_argument_group("Format")
@@ -161,7 +161,7 @@ class Options(object):
 
         # Finito
         log.debug("Gathered options:")
-        log.debug('options = {0}'.format(opt))
+        log.debug('options = %s', opt)
         return opt, header
 
     def check(self):

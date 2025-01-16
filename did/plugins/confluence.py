@@ -67,7 +67,7 @@ class Confluence(object):
     @staticmethod
     def search(query, stats, expand=None):
         """ Perform page/comment search for given stats instance """
-        log.debug("Search query: {0}".format(query))
+        log.debug("Search query: %s", query)
         content = []
 
         # Fetch data from the server in batches of MAX_RESULTS issues
@@ -81,8 +81,11 @@ class Confluence(object):
                         "start": batch * MAX_RESULTS})))
             data = response.json()
             log.debug(
-                "Batch {0} result: {1} fetched".format(
-                    batch, listed(data["results"], "object")))
+                "Batch %s result: %s fetched",
+                batch,
+                listed(
+                    data["results"],
+                    "object"))
             log.data(pretty(data))
             content.extend(data["results"])
             # If all issues fetched, we're done
@@ -129,7 +132,7 @@ class PageCreated(Stats):
     """ Created pages """
 
     def fetch(self):
-        log.info("Searching for pages created by {0}".format(self.user))
+        log.info("Searching for pages created by %s", self.user)
         query = (
             "type=page AND creator = '{0}' "
             "AND created >= {1} AND created < {2}".format(
@@ -140,7 +143,7 @@ class PageCreated(Stats):
 
 class CommentAdded(Stats):
     def fetch(self):
-        log.info("Searching for comments added by {0}".format(self.user))
+        log.info("Searching for comments added by %s", self.user)
         query = (
             "type=comment AND creator = '{0}' "
             "AND created >= {1} AND created < {2}".format(
@@ -241,7 +244,7 @@ class ConfluenceStats(StatsGroup):
         """ Initialize the session """
         if self._session is None:
             self._session = requests.Session()
-            log.debug("Connecting to {0}".format(self.auth_url))
+            log.debug("Connecting to %s", self.auth_url)
             # Disable SSL warning when ssl_verify is False
             if not self.ssl_verify:
                 requests.packages.urllib3.disable_warnings(

@@ -63,7 +63,7 @@ def _import(path, continue_on_error):
     """
     Eats or raises import exceptions based on ``continue_on_error``.
     """
-    log.debug("Importing %s" % path)
+    log.debug("Importing %s", path)
     try:
         # importlib is available in stdlib from 2.7+
         return importlib.import_module(path)
@@ -504,9 +504,10 @@ class Coloring(object):
             raise RuntimeError("Invalid color mode '{0}'".format(mode))
         self._mode = mode
         log.debug(
-            "Coloring {0} ({1})".format(
-                "enabled" if self.enabled() else "disabled",
-                self.MODES[self._mode]))
+            "Coloring %s (%s)",
+            "enabled" if self.enabled() else "disabled",
+            self.MODES[self._mode]
+            )
 
     def get(self):
         """ Get the current color mode """
