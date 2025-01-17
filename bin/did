@@ -44,4 +44,4 @@ except did.base.GeneralError as error:
     if "--debug" in sys.argv:
         raise
     did.utils.log.error(error)
-    raise SystemExit(1)
+    raise SystemExit(1) from error

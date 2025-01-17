@@ -36,7 +36,7 @@ class Pagure(object):
         self.url = url.rstrip("/")
         self.token = token
         if token is not None:
-            self.headers = {'Authorization': 'token {0}'.format(token)}
+            self.headers = {'Authorization': f'token {token}'}
         else:
             self.headers = {}
 
@@ -48,10 +48,10 @@ class Pagure(object):
             log.debug("Pagure query: %s", url)
             try:
                 response = requests.get(url, headers=self.headers)
-                log.data("Response headers:\n{0}".format(response.headers))
+                log.data(f"Response headers:\n{response.headers}")
             except requests.RequestException as error:
                 log.error(error)
-                raise ReportError("Pagure search {0} failed.".format(self.url))
+                raise ReportError(f"Pagure search {self.url} failed.") from error
             data = response.json()
             objects = data[result_field]
             log.debug("Result: %s fetched", listed(len(objects), "item"))
@@ -85,19 +85,15 @@ class Issue(object):
                 float(data['closed_at'])).date()
         except TypeError:
             self.closed = None
-        log.details('[{0}] {1}'.format(self.created, self))
+        log.details(f'[{self.created}] {self}')
 
     def __str__(self):
         """ String representation """
+        label = f"{self.project}#{self.identifier}"
         if self.options.format == "markdown":
-            return "[{0}#{1}]({2}) - {3}".format(
-                self.project,
-                self.identifier,
-                self.data["full_url"],
-                self.title)
+            return f"[{label}]({self.data["full_url"]}) - {self.title}"
         else:
-            return '{0}#{1} - {2}'.format(
-                self.project, self.identifier, self.title)
+            return f'{label} - {self.title}'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
@@ -110,8 +106,9 @@ class IssuesCreated(Stats):
     def fetch(self):
         log.info('Searching for issues created by %s', self.user)
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
-            query='user/{0}/issues?status=all&created={1}..{2}'.format(
-                self.user.login, self.options.since, self.options.until),
+            query=(
+                f'user/{self.user.login}/issues?status=all'
+                f'&created={self.options.since}..{self.options.until}'),
             pagination='pagination_issues_created',
             result_field='issues_created')]
         self.stats = sorted(issues, key=lambda i: str(i))
@@ -123,8 +120,9 @@ class IssuesClosed(Stats):
     def fetch(self):
         log.info('Searching for issues closed by %s', self.user)
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
-            query='user/{0}/issues?status=all&author=false&since={1}'.format(
-                self.user.login, self.options.since),
+            query=(
+                f'user/{self.user.login}/issues?status=all'
+                f'&author=false&since={self.options.since}'),
             pagination='pagination_issues_assigned',
             result_field='issues_assigned')]
         self.stats = sorted([
@@ -141,8 +139,9 @@ class PullRequestsCreated(Stats):
     def fetch(self):
         log.info('Searching for pull requests created by %s', self.user)
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
-            query='user/{0}/requests/filed?status=all&created={1}..{2}'.format(
-                self.user.login, self.options.since, self.options.until),
+            query=(
+                f'user/{self.user.login}/requests/filed?'
+                f'status=all&created={self.options.since}..{self.options.until}'),
             pagination='pagination',
             result_field='requests')]
         self.stats = sorted(issues, key=lambda i: str(i))
@@ -179,25 +178,25 @@ class PagureStats(StatsGroup):
         # Check server url
         try:
             self.url = config['url']
-        except KeyError:
+        except KeyError as key_err:
             raise ReportError(
-                'No Pagure url set in the [{0}] section'.format(option))
+                f'No Pagure url set in the [{option}] section') from key_err
         # Check authorization token
         self.token = get_token(config)
         self.pagure = Pagure(self.url, self.token)
         # Create the list of stats
         self.stats = [
             IssuesCreated(
-                option=option + '-issues-created', parent=self,
-                name='Issues created on {0}'.format(option)),
+                option=f'{option}-issues-created', parent=self,
+                name=f'Issues created on {option}'),
             IssuesClosed(
-                option=option + '-issues-closed', parent=self,
-                name='Issues closed on {0}'.format(option)),
+                option=f'{option}-issues-closed', parent=self,
+                name=f'Issues closed on {option}'),
             PullRequestsCreated(
-                option=option + '-pull-requests-created', parent=self,
-                name='Pull requests created on {0}'.format(option)),
+                option=f'{option}-pull-requests-created', parent=self,
+                name=f'Pull requests created on {option}'),
             # FIXME: Blocked by https://pagure.io/pagure/issue/4329
             # PullRequestsClosed(
-            #     option=option + '-pull-requests-closed', parent=self,
-            #     name='Pull requests closed on {0}'.format(option)),
+            #     option=f'{option}-pull-requests-closed', parent=self,
+            #     name=f'Pull requests closed on {option}'),
             ]

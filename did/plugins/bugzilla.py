@@ -101,7 +101,7 @@ class Bugzilla(object):
             log.error("An error encountered, while searching for bugs.")
             log.debug(error)
             raise ReportError(
-                "Have you baked cookies using the 'bugzilla login' command?")
+                "Have you baked cookies using the 'bugzilla login' command?") from error
         log.debug("Search result:")
         log.debug(pretty(result))
         bugs = dict((bug.id, bug) for bug in result)
@@ -144,14 +144,16 @@ class Bug(object):
     def __str__(self):
         """ Consistent identifier and summary for displaying """
         if self.options.format == "wiki":
-            return "<<Bug({0})>> - {1}".format(self.id, self.summary)
+            return f"<<Bug({self.id})>> - {self.summary}"
         elif self.options.format == "markdown":
             link = self.parent.url.replace("xmlrpc.cgi", "show_bug.cgi?id=")
-            return "[{0}#{1}]({2}{1}) - {3}".format(
-                self.prefix, str(self.id), link, self.summary)
+            return (
+                f"[{self.prefix}#{str(self.id)}]"
+                f"({link}{str(self.id)})"
+                f" - {self.summary}"
+                )
         else:
-            return "{0}#{1} - {2}".format(
-                self.prefix, str(self.id).rjust(7, "0"), self.summary)
+            return f"{self.prefix}#{str(self.id).rjust(7, "0")} - {self.summary}"
 
     def __eq__(self, other):
         """ Compare bugs by their id """
@@ -168,8 +170,7 @@ class Bug(object):
             return self.bug.summary
         if (self.bug.resolution.lower() in self.parent.resolutions
                 or "all" in self.parent.resolutions):
-            return "{0} [{1}]".format(
-                self.bug.summary, self.bug.resolution.lower())
+            return f"{self.bug.summary} [{self.bug.resolution.lower()}]"
         return self.bug.summary
 
     @property
@@ -647,9 +648,8 @@ class BugzillaStats(StatsGroup):
         # Check Bugzilla instance url
         try:
             self.url = config["url"]
-        except KeyError:
-            raise ReportError(
-                "No bugzilla url set in the [{0}] section".format(option))
+        except KeyError as exc:
+            raise ReportError(f"No bugzilla url set in the [{option}] section") from exc
 
         # SSL verification
         if "ssl_verify" in config:
@@ -658,16 +658,15 @@ class BugzillaStats(StatsGroup):
                     config["ssl_verify"])
             except Exception as error:
                 raise ReportError(
-                    "Error when parsing 'ssl_verify': {0}".format(error))
+                    f"Error when parsing 'ssl_verify': {error}") from error
         else:
             self.ssl_verify = SSL_VERIFY
 
         # Make sure we have prefix set
         try:
             self.prefix = config["prefix"]
-        except KeyError:
-            raise ReportError(
-                "No prefix set in the [{0}] section".format(option))
+        except KeyError as exc:
+            raise ReportError(f"No prefix set in the [{option}] section") from exc
         # Check for customized list of resolutions
         try:
             self.resolutions = [

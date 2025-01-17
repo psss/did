@@ -145,7 +145,7 @@ def load_components(*paths, **kwargs):
         if os.path.exists(fs_path):
             base = _find_base(fs_path)
             if not base:
-                msg = "%s is not a valid python module or package." % path
+                msg = f"{path} is not a valid python module or package."
                 if continue_on_error:
                     log.info(msg)
                     continue
@@ -163,7 +163,8 @@ def load_components(*paths, **kwargs):
 
 def header(text, separator=DEFAULT_SEPARATOR, separator_width=MAX_WIDTH):
     """ Show text as a header. """
-    print("\n{0}\n {1}\n{0}".format(separator_width * separator, text))
+    hr = separator_width * separator
+    print(f"\n{hr}\n {text}\n{hr}")
 
 
 def shorted(text, width=MAX_WIDTH):
@@ -228,7 +229,9 @@ def item(text, level=0, options=None):
         indent = 1
     # Shorten the text if necessary to match the desired maximum width
     width = options.width - indent - 2 if options.width else 333
-    print("{0}* {1}".format(" " * indent, shorted(str(text), width)))
+    spaces = " " * indent
+    short_text = shorted(str(text), width)
+    print(f"{spaces}* {short_text}")
 
 
 def pluralize(singular=None):
@@ -272,20 +275,20 @@ def listed(items, singular=None, plural=None, max=None, quote=""):
     if singular is not None and plural is None:
         plural = pluralize(singular)
     # Convert to strings and optionally quote each item
-    items = ["{0}{1}{0}".format(quote, item) for item in items]
+    items = [f"{quote}{item}{quote}" for item in items]
 
     # Select the maximum of items and describe the rest if max provided
     if max is not None:
         # Special case when the list is empty (0 items)
         if max == 0 and len(items) == 0:
-            return "0 {0}".format(plural)
+            return f"0 {plural}"
         # Cut the list if maximum exceeded
         if len(items) > max:
             rest = len(items[max:])
             items = items[:max]
             if singular is not None:
-                more += " {0}".format(singular if rest == 1 else plural)
-            items.append("{0}{1}".format(rest, more))
+                more += f" {singular if rest == 1 else plural}"
+            items.append(f"{rest}{more}")
 
     # For two and more items use 'and' instead of the last comma
     if len(items) < 2:
@@ -393,8 +396,8 @@ class Logging(object):
             if Coloring().enabled():
                 level = color(" " + levelname + " ", "lightwhite", colour)
             else:
-                level = "[{0}]".format(levelname)
-            return "{0} {1}".format(level, record.getMessage())
+                level = f"[{levelname}]"
+            return f"{level} {record.getMessage()}"
 
     @staticmethod
     def _create_logger(name='did', level=None):
@@ -469,11 +472,11 @@ def color(text, color=None, background=None, light=False, enabled=True):
     if color and color.startswith("light"):
         light = True
         color = color[5:]
-    color = color and ";{0}".format(colors[color]) or ""
-    background = background and ";{0}".format(colors[background] + 10) or ""
+    color = color and f";{colors[color]}" or ""
+    background = background and f";{colors[background] + 10}" or ""
     light = light and 1 or 0
     # Starting and finishing sequence
-    start = "\033[{0}{1}{2}m".format(light, color, background)
+    start = f"\033[{light}{color}{background}m"
     finish = "\033[1;m"
     return "".join([start, text, finish])
 
@@ -528,7 +531,7 @@ class Coloring(object):
             except KeyError:
                 mode = COLOR_AUTO
         elif mode < 0 or mode > 2:
-            raise RuntimeError("Invalid color mode '{0}'".format(mode))
+            raise RuntimeError(f"Invalid color mode '{mode}'")
         self._mode = mode
         log.debug(
             "Coloring %s (%s)",

@@ -100,13 +100,16 @@ class Confluence(object):
 
         # Fetch data from the server in batches of MAX_RESULTS issues
         for batch in range(MAX_BATCHES):
+            encoded_query = urllib.parse.urlencode(
+                {
+                    "cql": query,
+                    "limit": MAX_RESULTS,
+                    "expand": expand,
+                    "start": batch * MAX_RESULTS
+                    }
+                )
             response = stats.parent.session.get(
-                "{0}/rest/api/content/search?{1}".format(
-                    stats.parent.url, urllib.parse.urlencode({
-                        "cql": query,
-                        "limit": MAX_RESULTS,
-                        "expand": expand,
-                        "start": batch * MAX_RESULTS})))
+                f"{stats.parent.url}/rest/api/content/search?{encoded_query}")
             data = response.json()
             log.debug(
                 "Batch %s result: %s fetched",
@@ -155,7 +158,7 @@ class ConfluenceComment(Confluence):
     def __str__(self):
         """ Confluence title & comment snippet for displaying """
         # TODO: implement markdown output here
-        return "{}: {}".format(self.title, self.body)
+        return f"{self.title}: {self.body}"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,9 +172,8 @@ class PageCreated(Stats):
     def fetch(self):
         log.info("Searching for pages created by %s", self.user)
         query = (
-            "type=page AND creator = '{0}' "
-            "AND created >= {1} AND created < {2}".format(
-                self.user.login, self.options.since, self.options.until))
+            f"type=page AND creator = '{self.user.login}' "
+            f"AND created >= {self.options.since} AND created < {self.options.until}")
         result = Confluence.search(query, self)
         self.stats = [
             ConfluencePage(
@@ -186,9 +188,8 @@ class CommentAdded(Stats):
     def fetch(self):
         log.info("Searching for comments added by %s", self.user)
         query = (
-            "type=comment AND creator = '{0}' "
-            "AND created >= {1} AND created < {2}".format(
-                self.user.login, self.options.since, self.options.until))
+            f"type=comment AND creator = '{self.user.login}' "
+            f"AND created >= {self.options.since} AND created < {self.options.until}")
         self.stats = [
             ConfluenceComment(
                 comment,
@@ -215,8 +216,7 @@ class ConfluenceStats(StatsGroup):
         # Make sure there is an url provided
         config = dict(Config().section(option))
         if "url" not in config:
-            raise ReportError(
-                "No Confluence url set in the [{0}] section".format(option))
+            raise ReportError(f"No Confluence url set in the [{option}] section")
         self.url = config["url"].rstrip("/")
         # Optional authentication url
         if "auth_url" in config:
@@ -227,17 +227,15 @@ class ConfluenceStats(StatsGroup):
         if "auth_type" in config:
             if config["auth_type"] not in AUTH_TYPES:
                 raise ReportError(
-                    "Unsupported authentication type: {0}".format(
-                        config["auth_type"]))
+                    f"Unsupported authentication type: {
+                        config["auth_type"]}")
             self.auth_type = config["auth_type"]
         else:
             self.auth_type = "gss"
         # Authentication credentials
         if self.auth_type == "basic":
             if "auth_username" not in config:
-                raise ReportError(
-                    "`auth_username` not set in the [{0}] section".format(
-                        option))
+                raise ReportError(f"`auth_username` not set in the [{option}] section")
             self.auth_username = config["auth_username"]
             if "auth_password" in config:
                 self.auth_password = config["auth_password"]
@@ -248,16 +246,16 @@ class ConfluenceStats(StatsGroup):
             else:
                 raise ReportError(
                     "`auth_password` or `auth_password_file` must be set "
-                    "in the [{0}] section".format(option))
+                    "in the [{option}] section")
         else:
             if "auth_username" in config:
                 raise ReportError(
                     "`auth_username` is only valid for basic authentication"
-                    + " (section [{0}])".format(option))
+                    f" (section [{option}])")
             if "auth_password" in config or "auth_password_file" in config:
                 raise ReportError(
                     "`auth_password` and `auth_password_file` are only valid "
-                    "for basic authentication (section [{0}])".format(option))
+                    f"for basic authentication (section [{option}])")
         if self.auth_type == "token":
             self.token = get_token(config)
             if self.token is None:
@@ -268,15 +266,15 @@ class ConfluenceStats(StatsGroup):
                 try:
                     self.token_expiration = int(config["token_expiration"])
                     self.token_name = config["token_name"]
-                except KeyError:
+                except KeyError as exc:
                     raise ReportError(
                         "The ``token_name`` and ``token_expiration`` "
                         "must be set at the same time in "
-                        "[{0}] section.".format(option))
-                except ValueError:
+                        f"[{option}] section.") from exc
+                except ValueError as val_err:
                     raise ReportError(
                         "The ``token_expiration`` must contain number, used in "
-                        "[{0}] section.".format(option))
+                        f"[{option}] section.") from val_err
             else:
                 self.token_expiration = self.token_name = None
         # SSL verification
@@ -286,7 +284,7 @@ class ConfluenceStats(StatsGroup):
                     config["ssl_verify"])
             except Exception as error:
                 raise ReportError(
-                    "Error when parsing 'ssl_verify': {0}".format(error))
+                    f"Error when parsing 'ssl_verify': {error}") from error
         else:
             self.ssl_verify = SSL_VERIFY
 
@@ -296,13 +294,13 @@ class ConfluenceStats(StatsGroup):
         # Create the list of stats
         self.stats = [
             PageCreated(
-                option=option + "-pages",
+                option=f"{option}-pages",
                 parent=self,
-                name="Pages created in {}".format(option)),
+                name=f"Pages created in {option}"),
             CommentAdded(
-                option=option + "-comments",
+                option=f"{option}-comments",
                 parent=self,
-                name="Comments added in {}".format(option)),
+                name=f"Comments added in {option}"),
             ]
 
     @property
@@ -322,7 +320,7 @@ class ConfluenceStats(StatsGroup):
             elif self.auth_type == "token":
                 self.session.headers["Authorization"] = f"Bearer {self.token}"
                 response = self._session.get(
-                    "{0}/rest/api/content".format(self.url),
+                    f"{self.url}/rest/api/content",
                     verify=self.ssl_verify)
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
@@ -333,10 +331,10 @@ class ConfluenceStats(StatsGroup):
             except requests.exceptions.HTTPError as error:
                 log.error(error)
                 raise ReportError(
-                    "Confluence authentication failed. Try kinit.")
+                    "Confluence authentication failed. Try kinit.") from error
             if self.token_expiration:
                 response = self._session.get(
-                    "{0}/rest/pat/latest/tokens".format(self.url),
+                    f"{self.url}/rest/pat/latest/tokens",
                     verify=self.ssl_verify)
                 try:
                     response.raise_for_status()

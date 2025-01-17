@@ -53,9 +53,8 @@ def test_invalid_token():
 def test_sentry_resolved():
     """ Check expected resolved issues """
     did.base.Config(OK_CONFIG)
-    stats = did.cli.main("""
-        --sentry-resolved {0}""".format(
-        INTERVAL))[0][0].stats[0].stats[0].stats
+    stats = did.cli.main(f"""
+        --sentry-resolved {INTERVAL}""")[0][0].stats[0].stats[0].stats
     assert len(stats) == 1
     assert "PYTHON-E - AttributeError" in stats[0]
 
@@ -63,9 +62,8 @@ def test_sentry_resolved():
 def test_sentry_commented():
     """ Check expected commented issues """
     did.base.Config(OK_CONFIG)
-    stats = did.cli.main("""
-        --sentry-commented {0}""".format(
-        INTERVAL))[0][0].stats[0].stats[1].stats
+    stats = did.cli.main(f"""
+        --sentry-commented {INTERVAL}""")[0][0].stats[0].stats[1].stats
     assert len(stats) == 1
     assert "PYTHON-F - IndexError" in stats[0]
 

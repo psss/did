@@ -107,7 +107,7 @@ class Config(object):
             log.debug(error)
             Config.parser = None
             raise ConfigFileError(
-                "Unable to read the config file '{0}'.".format(path))
+                f"Unable to read the config file '{path}'.") from error
 
     @property
     def plugins(self):
@@ -123,9 +123,9 @@ class Config(object):
         month = self.parser.get("general", "quarter", fallback=1)
         try:
             month = int(month) % 3
-        except ValueError:
+        except ValueError as exc:
             raise ConfigError(
-                f"Invalid quarter start '{month}', should be integer.")
+                f"Invalid quarter start '{month}', should be integer.") from exc
         return month
 
     @property
@@ -136,11 +136,11 @@ class Config(object):
         except NoSectionError as error:
             log.debug(error)
             raise ConfigFileError(
-                "No general section found in the config file.")
+                "No general section found in the config file.") from error
         except NoOptionError as error:
             log.debug(error)
             raise ConfigFileError(
-                "No email address defined in the config file.")
+                "No email address defined in the config file.") from error
 
     @property
     def width(self):
@@ -193,8 +193,7 @@ class Config(object):
         for key, value in self.section(section, skip=[]):
             if key == it:
                 return value
-        raise ConfigError(
-            "Item '{0}' not found in section '{1}'".format(it, section))
+        raise ConfigError(f"Item '{it}' not found in section '{section}'")
 
     @staticmethod
     def path():
@@ -240,7 +239,7 @@ class Date(object):
             except ValueError as error:
                 log.debug(error)
                 raise OptionError(
-                    "Invalid date format: '{0}', use YYYY-MM-DD.".format(date))
+                    f"Invalid date format: '{date}', use YYYY-MM-DD.") from error
         self.datetime = datetime.datetime(
             self.date.year, self.date.month, self.date.day, 0, 0, 0)
 
@@ -391,7 +390,7 @@ class Date(object):
                 since, until = Date.last_week()
             else:
                 since, until = Date.this_week()
-            period = "the week {0}".format(since.datetime.strftime("%V"))
+            period = f"the week {since.datetime.strftime("%V")}"
         return since, until, period
 
 
@@ -445,7 +444,7 @@ class User(object):
         # Extract everything from the email string provided
         parts = utils.EMAIL_REGEXP.search(email)
         if parts is None:
-            raise ConfigError("Invalid email address '{0}'".format(email))
+            raise ConfigError(f"Invalid email address '{email}'")
         self.name = parts.groups()[0]
         self.email = parts.groups()[1]
         self.login = self.email.split('@')[0]
@@ -456,7 +455,7 @@ class User(object):
         """ Use name & email for string representation. """
         if not self.name:
             return self.email
-        return "{0} <{1}>".format(self.name, self.email)
+        return f"{self.name} <{self.email}>"
 
     def clone(self, stats):
         """ Create a user copy with alias enabled for given stats. """
@@ -486,9 +485,8 @@ class User(object):
                 aliases = dict([
                     re.split(r"\s*:\s*", definition, 1)
                     for definition in re.split(r"\s*;\s*", aliases.strip())])
-            except ValueError:
-                raise ConfigError(
-                    "Invalid alias definition: '{0}'".format(aliases))
+            except ValueError as exc:
+                raise ConfigError(f"Invalid alias definition: '{aliases}'") from exc
             if stats in aliases:
                 if "@" in aliases[stats]:
                     email = aliases[stats]

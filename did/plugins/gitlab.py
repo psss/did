@@ -86,7 +86,7 @@ class GitLab(object):
                 sleep(GITLAB_INTERVAL)
 
     def _get_gitlab_api(self, endpoint):
-        url = '{0}/api/v{1}/{2}'.format(self.url, GITLAB_API, endpoint)
+        url = f'{self.url}/api/v{GITLAB_API}/{endpoint}'
         return self._get_gitlab_api_raw(url)
 
     def _get_gitlab_api_json(self, endpoint):
@@ -115,7 +115,7 @@ class GitLab(object):
         return results
 
     def get_user(self, username):
-        query = 'users?username={0}'.format(username)
+        query = f'users?username={username}'
         try:
             result = self._get_gitlab_api_json(query)
         except requests.exceptions.JSONDecodeError as jde:
@@ -124,13 +124,14 @@ class GitLab(object):
                 ) from jde
         try:
             return result[0]
-        except (IndexError, KeyError):
+        except (IndexError, KeyError) as exc:
             raise ReportError(
-                f"Unable to find user '{username}' on {self.url}.")
+                f"Unable to find user '{username}' on {
+                    self.url}.") from exc
 
     def get_project(self, project_id):
         if project_id not in self.projects:
-            query = 'projects/{0}'.format(project_id)
+            query = f'projects/{project_id}'
             self.projects[project_id] = self._get_gitlab_api_json(query)
         return self.projects[project_id]
 
@@ -141,7 +142,7 @@ class GitLab(object):
 
     def get_project_mrs(self, project_id):
         if project_id not in self.project_mrs:
-            query = 'projects/{0}/merge_requests'.format(project_id)
+            query = f'projects/{project_id}/merge_requests'
             self.project_mrs[project_id] = self._get_gitlab_api_list(
                 query, get_all_results=True)
         return self.project_mrs[project_id]
@@ -153,15 +154,14 @@ class GitLab(object):
 
     def get_project_issues(self, project_id):
         if project_id not in self.project_issues:
-            query = 'projects/{0}/issues'.format(project_id)
+            query = f'projects/{project_id}/issues'
             self.project_issues[project_id] = self._get_gitlab_api_list(
                 query, get_all_results=True)
         return self.project_issues[project_id]
 
     def user_events(self, user_id, since, until):
         if GITLAB_API >= 4:
-            query = 'users/{0}/events?after={1}&before={2}'.format(
-                user_id, since - 1, until)
+            query = f'users/{user_id}/events?after={since - 1}&before={until}'
             return self._get_gitlab_api_list(query, since, True)
         else:
             return []
@@ -211,15 +211,19 @@ class Issue(object):
                     and self.data['note']['noteable_type'] == 'Issue'
                     ):
                 endpoint = "issues"
-            return "[{1}#{3}]({0}/{1}/-/{2}/{3}) - {4}".format(
-                self.gitlabapi.url,
-                self.project['path_with_namespace'],
-                endpoint,
-                str(self.id), self.title)
+            label = f"{self.project['path_with_namespace']}#{str(self.id)}"
+            href = f"{
+                self.gitlabapi.url}/{
+                self.project['path_with_namespace']}/-/{endpoint}/{
+                str(
+                    self.id)}"
+            return f"[{label}]({href}) - {self.title}"
         else:
-            return "{0}#{1} - {2}".format(
-                self.project['path_with_namespace'],
-                str(self.id).zfill(PADDING), self.title)
+            return f"{
+                self.project['path_with_namespace']}#{
+                str(
+                    self.id).zfill(PADDING)} - {
+                self.title}"
 
 
 class MergeRequest(Issue):
@@ -363,14 +367,12 @@ class GitLabStats(StatsGroup):
         # Check server url
         try:
             self.url = config["url"]
-        except KeyError:
-            raise ReportError(
-                "No GitLab url set in the [{0}] section".format(option))
+        except KeyError as exc:
+            raise ReportError(f"No GitLab url set in the [{option}] section") from exc
         # Check authorization token
         self.token = get_token(config)
         if self.token is None:
-            raise ReportError(
-                "No GitLab token set in the [{0}] section".format(option))
+            raise ReportError(f"No GitLab token set in the [{option}] section")
         # Check SSL verification
         try:
             self.ssl_verify = bool(strtobool(
@@ -383,24 +385,24 @@ class GitLabStats(StatsGroup):
         # Create the list of stats
         self.stats = [
             IssuesCreated(
-                option=option + "-issues-created", parent=self,
-                name="Issues created on {0}".format(option)),
+                option=f"{option}-issues-created", parent=self,
+                name=f"Issues created on {option}"),
             IssuesCommented(
-                option=option + "-issues-commented", parent=self,
-                name="Issues commented on {0}".format(option)),
+                option=f"{option}-issues-commented", parent=self,
+                name=f"Issues commented on {option}"),
             IssuesClosed(
-                option=option + "-issues-closed", parent=self,
-                name="Issues closed on {0}".format(option)),
+                option=f"{option}-issues-closed", parent=self,
+                name=f"Issues closed on {option}"),
             MergeRequestsCreated(
-                option=option + "-merge-requests-created", parent=self,
-                name="Merge requests created on {0}".format(option)),
+                option=f"{option}-merge-requests-created", parent=self,
+                name=f"Merge requests created on {option}"),
             MergeRequestsCommented(
-                option=option + "-merge-requests-commented", parent=self,
-                name="Merge requests commented on {0}".format(option)),
+                option=f"{option}-merge-requests-commented", parent=self,
+                name=f"Merge requests commented on {option}"),
             MergeRequestsApproved(
-                option=option + "-merge-requests-approved", parent=self,
-                name="Merge requests approved on {0}".format(option)),
+                option=f"{option}-merge-requests-approved", parent=self,
+                name=f"Merge requests approved on {option}"),
             MergeRequestsClosed(
-                option=option + "-merge-requests-closed", parent=self,
-                name="Merge requests closed on {0}".format(option)),
+                option=f"{option}-merge-requests-closed", parent=self,
+                name=f"Merge requests closed on {option}"),
             ]

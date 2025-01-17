@@ -92,12 +92,14 @@ class PublicInbox(object):
         return urllib.parse.urljoin(self.url, path)
 
     def _get_message_url(self, msg: Message) -> str:
-        return self.__get_url("/r/%s/" % msg.id())
+        return self.__get_url(f"/r/{msg.id()}/")
 
     def _print_msg(self, options, msg: Message) -> None:
         if options.format == 'markdown':
-            item("[{0}]({1})".format(msg.subject(), self._get_message_url(msg)),
-                 level=1, options=options)
+            item(f"[{msg.subject()}]({self._get_message_url(msg)})",
+                 level=1,
+                 options=options
+                 )
 
         else:
             item(msg.subject(), level=1, options=options)
@@ -133,7 +135,7 @@ class PublicInbox(object):
 
     def __fetch_thread_root(self, msg: Message) -> Message:
         msg_id = msg.id()
-        url = self.__get_url("/all/%s/t.mbox.gz" % msg_id)
+        url = self.__get_url(f"/all/{msg_id}/t.mbox.gz")
 
         log.debug("Fetching message %s thread (%s)", msg_id, url)
         resp = requests.get(url, headers={'User-Agent': USER_AGENT})
@@ -179,8 +181,7 @@ class PublicInbox(object):
             self.__get_url("/all/"),
             headers={"Content-Length": "0", "User-Agent": USER_AGENT},
             params={
-                "q": "(f:%s AND d:%s..%s)"
-                % (self.user.email, since_str, until_str),
+                "q": f"(f:{self.user.email} AND d:{since_str}..{until_str})",
                 "x": "m",
                 },
             )
@@ -280,8 +281,8 @@ class PublicInboxStats(StatsGroup):
         config = dict(Config().section(option))
         try:
             self.url = config["url"]
-        except KeyError:
-            raise ReportError("No url in the [{0}] section.".format(option))
+        except KeyError as key_err:
+            raise ReportError(f"No url in the [{option}] section.") from key_err
 
         self.public_inbox = PublicInbox(self.parent, self.user, self.url)
         self.stats = [

@@ -40,7 +40,7 @@ class Activity(object):
 
     def __str__(self):
         """ String representation """
-        return "{0}".format(self.title)
+        return str(self.title)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,9 +56,10 @@ class RedmineActivity(Stats):
 
         from_date = self.options.until.date
         while from_date > self.options.since.date:
-            feed_url = '{0}/activity.atom?user_id={1}&from={2}'.format(
-                self.parent.url, self.user.login,
-                from_date.strftime('%Y-%m-%d'))
+            feed_url = f'{
+                self.parent.url}/activity.atom?user_id={
+                self.user.login}&from={
+                from_date.strftime('%Y-%m-%d')}'
             log.debug("Feed url: %s", feed_url)
             feed = feedparser.parse(feed_url)
             for entry in feed.entries:
@@ -81,7 +82,7 @@ class RedmineStats(StatsGroup):
     order = 550
 
     def __init__(self, option, name=None, parent=None, user=None):
-        name = "Redmine activity on {0}".format(option)
+        name = f"Redmine activity on {option}"
         super(RedmineStats, self).__init__(
             option=option, name=name, parent=parent, user=user)
         StatsGroup.__init__(self, option, name, parent, user)
@@ -89,9 +90,8 @@ class RedmineStats(StatsGroup):
         # Check server url
         try:
             self.url = config["url"]
-        except KeyError:
-            raise ReportError(
-                "No Redmine url set in the [{0}] section".format(option))
+        except KeyError as exc:
+            raise ReportError(f"No Redmine url set in the [{option}] section") from exc
         try:
             self.activity_days = datetime.timedelta(config["activity_days"])
         except KeyError:
@@ -100,6 +100,6 @@ class RedmineStats(StatsGroup):
         # Create the list of stats
         self.stats = [
             RedmineActivity(
-                option="{0}-activity".format(option), parent=self,
-                name="Redmine activity on {0}".format(option)),
+                option=f"{option}-activity", parent=self,
+                name=f"Redmine activity on {option}"),
             ]

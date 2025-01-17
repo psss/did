@@ -43,8 +43,7 @@ class Change(object):
 
     def __str__(self):
         """ Consistent identifier, project & subject for displaying """
-        return "{0}#{1} - {2} - {3}".format(
-            self.prefix, self.id, self.project, self.subject)
+        return f"{self.prefix}#{self.id} - {self.project} - {self.subject}"
 
     def __eq__(self, other):
         return str(self) == str(other)
@@ -77,8 +76,7 @@ class Gerrit(object):
         log.debug('url = %s', url)
         res = self.opener.open(url)
         if res.getcode() != 200:
-            raise IOError(
-                'Cannot retrieve list of changes ({0})'.format(res.getcode()))
+            raise IOError(f'Cannot retrieve list of changes ({res.getcode()})')
 
         # see https://code.google.com/p/gerrit/issues/detail?id=2006
         # for explanation of skipping first four characters
@@ -94,7 +92,7 @@ class Gerrit(object):
 
     def get_changelog(self, chg):
         messages_url = self.join_URL_frags(
-            self.baseurl, '/changes/{0}/detail'.format(chg.change_id))
+            self.baseurl, f'/changes/{chg.change_id}/detail')
         changelog = self.get_query_result(messages_url)
         log.debug("changelog = %s", changelog)
         return changelog
@@ -172,15 +170,15 @@ class GerritUnit(Stats):
             # GREATER than the given age.
             # For age SMALLER we need -age:<time>
 
-            common_query_options = '+owner:{0}'.format(
-                self.user.login)
+            common_query_options = f'+owner:{self.user.login}'
             if not limit_since:
                 age = (TODAY - self.since_date).days
-                common_query_options += '+-age:{0}d'.format(age)
+                common_query_options += f'+-age:{age}d'
 
-        common_query_options += '+since:{0}+until:{1}'.format(
-            self.get_gerrit_date(self.options.since),
-            self.get_gerrit_date(self.options.until))
+        common_query_options += (
+            f"+since:{self.get_gerrit_date(self.options.since)}"
+            f"+until:{self.get_gerrit_date(self.options.until)}"
+            )
 
         if isinstance(common_query_options, str) and \
                 len(common_query_options) > 0:
@@ -283,8 +281,7 @@ class AddedPatches(GerritUnit):
         reviewer = self.user.login
         self.stats = []
         tickets = GerritUnit.fetch(
-            self, 'owner:{0}+is:closed&q=owner:{0}+is:open'.format(
-                reviewer),
+            self, f'owner:{reviewer}+is:closed&q=owner:{reviewer}+is:open',
             '')
         for tck in tickets:
             log.debug("ticket = %s", tck)
@@ -338,8 +335,7 @@ class ReviewedChanges(GerritUnit):
         self.stats = []
         reviewer = self.user.login
         tickets = GerritUnit.fetch(
-            self, 'reviewer:{0}+-owner:{0}'.format(
-                self.user.login),
+            self, f'reviewer:{self.user.login}+-owner:{self.user.login}',
             '', limit_since=True)
         for tck in tickets:
             log.debug("ticket = %s", tck)
@@ -398,14 +394,12 @@ class GerritStats(StatsGroup):
         StatsGroup.__init__(self, option, name, parent, user)
         self.config = dict(Config().section(option))
         if 'url' not in self.config:
-            raise IOError(
-                'No gerrit URL set in the [{0}] section'.format(option))
+            raise IOError(f'No gerrit URL set in the [{option}] section')
         self.repo_url = self.config['url']
         log.debug('repo_url = %s', self.repo_url)
 
         if "prefix" not in self.config:
-            raise ReportError(
-                "No prefix set in the [{0}] section".format(option))
+            raise ReportError(f"No prefix set in the [{option}] section")
 
         self.server_features = []
         if self.config.get('wip', True):

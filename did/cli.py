@@ -145,11 +145,13 @@ class Options(object):
         # Validate the date range
         if not opt.since.date < opt.until.date:
             raise RuntimeError(
-                "Invalid date range ({0} to {1})".format(
-                    opt.since, opt.until.date - delta(days=1)))
+                f"Invalid date range ({opt.since} to {opt.until.date - delta(days=1)})")
 
-        header = "Status report for {0} ({1} to {2})".format(
-            period, opt.since, opt.until.date - delta(days=1))
+        header = f"Status report for {period} ({
+            opt.since} to {
+            opt.until.date -
+            delta(
+                days=1)})"
         if opt.format == "markdown":
             # In markdown the first line must be a header
             # using alternate syntax allowing to use did's
@@ -173,8 +175,7 @@ class Options(object):
             'week', 'month', 'quarter', 'year']
         for argument in self.arg:
             if argument not in keywords:
-                raise did.base.OptionError(
-                    "Invalid argument: '{0}'".format(argument))
+                raise did.base.OptionError(f"Invalid argument: '{argument}'")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -222,7 +223,7 @@ def main(arguments=None):
                 "Total Report",
                 separator=did.base.Config().separator,
                 separator_width=did.base.Config().separator_width)
-            utils.item("Users: {0}".format(len(users)), options=options)
+            utils.item(f"Users: {len(users)}", options=options)
 
         # Check individual user stats
         for user in users:
@@ -251,6 +252,8 @@ def main(arguments=None):
         return gathered_stats, team_stats
 
     except did.base.ConfigFileError:
-        utils.info("Create at least a minimum config file {0}:\n{1}".format(
-            did.base.Config.path(), did.base.Config.example().strip()))
+        utils.info(
+            f"Create at least a minimum config file {
+                did.base.Config.path()}:\n{
+                did.base.Config.example().strip()}")
         raise

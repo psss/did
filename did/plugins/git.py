@@ -41,9 +41,9 @@ class GitRepo(object):
     def commits(self, user, options):
         """ List commits for given user. """
         # Prepare the command
-        command = "git log --all --author={0}".format(user.login).split()
-        command.append("--since='{0} 00:00:00'".format(options.since))
-        command.append("--until='{0} 00:00:00'".format(options.until))
+        command = f"git log --all --author={user.login}".split()
+        command.append(f"--since='{options.since} 00:00:00'")
+        command.append(f"--until='{options.until} 00:00:00'")
         if options.verbose:
             command.append("--name-only")
             # Need an extra new line to separate merge commits otherwise
@@ -61,8 +61,7 @@ class GitRepo(object):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         except OSError as error:
             log.debug(error)
-            raise did.base.ReportError(
-                "Unable to access git repo '{0}'".format(self.path))
+            raise did.base.ReportError(f"Unable to access git repo '{self.path}'")
         output, errors = process.communicate()
         output = output.strip()
         log.debug("git log output:")
@@ -89,7 +88,7 @@ class GitRepo(object):
                 # all? Or at least more? With a maximum limit?
                 else:
                     directory = re.sub("/[^/]+$", "", lines[1])
-                    commits.append("{0}\n{1}* {2}".format(lines[0], 8 * " ", directory))
+                    commits.append(f"{lines[0]}\n        * {directory}")
             return commits
         else:
             log.debug(errors.strip())
@@ -116,10 +115,10 @@ class GitCommits(Stats):
     def header(self):
         """ Show summary header. """
         # A bit different header for git stats: Work on xxx: x commit(s)
+        # FIXME: better handling for `commit` plural
         item(
-            "{0}: {1} commit{2}".format(
-                self.name, len(self.stats),
-                "" if len(self.stats) == 1 else "s"),
+            f'{self.name}: {len(self.stats)} '
+            f'commit{"" if len(self.stats) == 1 else "s"}',
             level=0, options=self.options)
 
 
@@ -134,7 +133,7 @@ class GitStats(StatsGroup):
     order = 300
 
     def __init__(self, option, name=None, parent=None, user=None):
-        name = "Work on {0}".format(option)
+        name = f"Work on {option}"
         StatsGroup.__init__(self, option, name, parent, user)
         for repo, path in did.base.Config().section(option):
             path = os.path.expanduser(path)
@@ -144,7 +143,7 @@ class GitStats(StatsGroup):
                 except OSError as error:
                     log.error(error)
                     raise did.base.ConfigError(
-                        "Invalid path in the [{0}] section".format(option))
+                        f"Invalid path in the [{option}] section")
                 for repo_dir in sorted(directories):
                     repo_path = path.replace('*', repo_dir)
                     # Check directories only
@@ -154,11 +153,14 @@ class GitStats(StatsGroup):
                     if not os.path.exists(os.path.join(repo_path, ".git")):
                         log.debug("Skipping non-git directory '%s'.", repo_path)
                         continue
-                    self.stats.append(GitCommits(
-                        option="{0}-{1}".format(repo, repo_dir),
-                        parent=self, path=repo_path,
-                        name="Work on {0}/{1}".format(repo, repo_dir)))
+                    self.stats.append(
+                        GitCommits(
+                            option=f"{repo}-{repo_dir}",
+                            parent=self, path=repo_path,
+                            name=f"Work on {repo}/{repo_dir}"
+                            )
+                        )
             else:
                 self.stats.append(GitCommits(
                     option=option + "-" + repo, parent=self, path=path,
-                    name="Work on {0}".format(repo)))
+                    name=f"Work on {repo}"))

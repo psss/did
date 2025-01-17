@@ -62,7 +62,7 @@ class GitHub(object):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         if token is not None:
-            self.headers = {'Authorization': 'token {0}'.format(token)}
+            self.headers = {'Authorization': f'token {token}'}
         else:
             self.headers = {}
 
@@ -91,7 +91,7 @@ class GitHub(object):
                 log.debug(f"Response headers:\n{response.headers}")
             except requests.exceptions.RequestException as error:
                 log.debug(error)
-                raise ReportError(f"GitHub search on {self.url} failed.")
+                raise ReportError(f"GitHub search on {self.url} failed.") from error
 
             # Check if credentials are valid
             log.debug(f"GitHub status code: {response.status_code}")
@@ -117,7 +117,7 @@ class GitHub(object):
                 result.extend(data)
             except requests.exceptions.JSONDecodeError as error:
                 log.debug(error)
-                raise ReportError(f"GitHub JSON failed: {response.text}.")
+                raise ReportError(f"GitHub JSON failed: {response.text}.") from error
 
             # Update url to the next page, break if no next page
             # provided
@@ -150,14 +150,11 @@ class Issue(object):
 
     def __str__(self):
         """ String representation """
+        label = f"{self.owner}/{self.project}#{str(self.id).zfill(PADDING)}"
         if self.options.format == "markdown":
-            return "[{0}/{1}#{2}]({3}) - {4}".format(
-                self.owner, self.project,
-                str(self.id), self.data["html_url"], self.data["title"].strip())
+            return f"[{label}]({self.data["html_url"]}) - {self.data["title"].strip()}"
         else:
-            return "{0}/{1}#{2} - {3}".format(
-                self.owner, self.project,
-                str(self.id).zfill(PADDING), self.data["title"])
+            return f"{label} - {self.data["title"]}"
 
     def __eq__(self, other):
         """ Equality comparison """
@@ -182,9 +179,11 @@ class IssuesCreated(Stats):
 
     def fetch(self):
         log.info("Searching for issues created by %s", self.user)
-        query = "search/issues?q=author:{0}+created:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:issue"
+        query = (
+            f"search/issues?q=author:{self.user.login}"
+            f"+created:{self.options.since}..{self.options.until}"
+            "+type:issue"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -194,9 +193,11 @@ class IssuesClosed(Stats):
 
     def fetch(self):
         log.info("Searching for issues closed by %s", self.user)
-        query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:issue"
+        query = (
+            f"search/issues?q=assignee:{self.user.login}"
+            f"+closed:{self.options.since}..{self.options.until}"
+            "+type:issue"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -206,9 +207,11 @@ class IssueCommented(Stats):
 
     def fetch(self):
         log.info("Searching for issues commented on by %s", self.user)
-        query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:issue"
+        query = (
+            f"search/issues?q=commenter:{self.user.login}"
+            f"+updated:{self.options.since}..{self.options.until}"
+            "+type:issue"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -218,9 +221,11 @@ class PullRequestsCreated(Stats):
 
     def fetch(self):
         log.info("Searching for pull requests created by %s", self.user)
-        query = "search/issues?q=author:{0}+created:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:pr"
+        query = (
+            f"search/issues?q=author:{self.user.login}"
+            f"+created:{self.options.since}..{self.options.until}"
+            "+type:pr"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -230,9 +235,11 @@ class PullRequestsCommented(Stats):
 
     def fetch(self):
         log.info("Searching for pull requests commented on by %s", self.user)
-        query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:pr"
+        query = (
+            f"search/issues?q=commenter:{self.user.login}"
+            f"+updated:{self.options.since}..{self.options.until}"
+            "+type:pr"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -242,9 +249,11 @@ class PullRequestsClosed(Stats):
 
     def fetch(self):
         log.info("Searching for pull requests closed by %s", self.user)
-        query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:pr"
+        query = (
+            f"search/issues?q=assignee:{self.user.login}"
+            f"+closed:{self.options.since}..{self.options.until}"
+            "+type:pr"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -254,9 +263,12 @@ class PullRequestsReviewed(Stats):
 
     def fetch(self):
         log.info("Searching for pull requests reviewed by %s", self.user)
-        query = "search/issues?q=reviewed-by:{0}+-author:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:pr"
+        query = (
+            f"search/issues?q=reviewed-by:{self.user.login}"
+            f"+-author:{self.user.login}"
+            f"+closed:{self.options.since}..{self.options.until}"
+            "+type:pr"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -278,9 +290,9 @@ class GitHubStats(StatsGroup):
         # Check server url
         try:
             self.url = config["url"]
-        except KeyError:
+        except KeyError as keyerr:
             raise ReportError(
-                "No github url set in the [{0}] section".format(option))
+                f"No github url set in the [{option}] section") from keyerr
 
         # Check authorization token
         self.token = get_token(config)
@@ -294,24 +306,24 @@ class GitHubStats(StatsGroup):
         # Create the list of stats
         self.stats = [
             IssuesCreated(
-                option=option + "-issues-created", parent=self,
-                name="Issues created on {0}".format(option)),
+                option=f"{option}-issues-created", parent=self,
+                name=f"Issues created on {option}"),
             IssueCommented(
                 option=option + "-issues-commented", parent=self,
-                name="Issues commented on {0}".format(option)),
+                name=f"Issues commented on {option}"),
             IssuesClosed(
                 option=option + "-issues-closed", parent=self,
-                name="Issues closed on {0}".format(option)),
+                name=f"Issues closed on {option}"),
             PullRequestsCreated(
                 option=option + "-pull-requests-created", parent=self,
-                name="Pull requests created on {0}".format(option)),
+                name=f"Pull requests created on {option}"),
             PullRequestsCommented(
                 option=option + "-pull-requests-commented", parent=self,
-                name="Pull requests commented on {0}".format(option)),
+                name=f"Pull requests commented on {option}"),
             PullRequestsClosed(
                 option=option + "-pull-requests-closed", parent=self,
-                name="Pull requests closed on {0}".format(option)),
+                name=f"Pull requests closed on {option}"),
             PullRequestsReviewed(
                 option=option + "-pull-requests-reviewed", parent=self,
-                name="Pull requests reviewed on {0}".format(option)),
+                name=f"Pull requests reviewed on {option}"),
             ]

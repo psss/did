@@ -27,7 +27,7 @@ class ItemStats(Stats):
         # Prepare sorted item content from the config section
         items = Config().section(option, skip=["type", "header", "order"])
         self._items = [
-            "{0}{1}".format(value, "" if "-" in value else " - ")
+            f"{value}{"" if "-" in value else " - "}"
             for _, value in sorted(items, key=lambda x: x[0])]
         Stats.__init__(self, option, name, parent)
 

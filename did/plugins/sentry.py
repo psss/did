@@ -41,7 +41,7 @@ class Issue(object):
 
     def __str__(self):
         """ Unicode representation """
-        return "{0} - {1}".format(self.identifier, self.title)
+        return f"{self.identifier} - {self.title}"
 
 
 class Activity(object):
@@ -57,7 +57,7 @@ class Activity(object):
 
     def __str__(self):
         """ Unicode representation """
-        return "{0} [{1}] {2}".format(self.created, self.kind, self.issue)
+        return f"{self.created} [{self.kind}] {self.issue}"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,7 +71,7 @@ class Sentry(object):
         """ Initialize API """
         self.url = config['url'].rstrip('/')
         self.organization = config['organization']
-        self.headers = {'Authorization': 'Bearer {0}'.format(config['token'])}
+        self.headers = {'Authorization': f'Bearer {config["token"]}'}
         self._activities = None
         self.stats = stats
 
@@ -92,8 +92,7 @@ class Sentry(object):
         """ Get organization activity, handle pagination """
         activities = []
         # Prepare url of the first page
-        url = '{0}/organizations/{1}/activity/'.format(
-            self.url, self.organization)
+        url = f'{self.url}/organizations/{self.organization}/activity/'
         while url:
             # Fetch one page of activities
             try:
@@ -103,8 +102,7 @@ class Sentry(object):
                     log.error(response.text)
                     raise ReportError('Failed to fetch Sentry activities.')
                 data = response.json()
-                log.data("Response headers:\n{0}".format(
-                    pretty(response.headers)))
+                log.data(f"Response headers:\n{pretty(response.headers)}")
                 log.debug("Fetched %s.", listed(len(data), 'activity'))
                 log.data(pretty(data))
                 for activity in [Activity(item) for item in data]:
@@ -114,12 +112,12 @@ class Sentry(object):
                         return activities
                     # Store only relevant activites (before until date)
                     if activity.created < self.stats.options.until.date:
-                        log.details("Activity: {0}".format(activity))
+                        log.details(f"Activity: {activity}")
                         activities.append(activity)
             except requests.RequestException as error:
                 log.debug(error)
                 raise ReportError(
-                    'Failed to fetch Sentry activities from {0}'.format(url))
+                    f'Failed to fetch Sentry activities from {url}') from error
             # Check for possible next page
             try:
                 url = NEXT_PAGE.search(response.headers['Link']).groups()[0]
