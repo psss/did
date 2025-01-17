@@ -31,6 +31,5 @@ def set_name_email(configurator, question, answer):
     prepare "Full Name" <email@eg.com>" string
     '''
     name = configurator.variables['author.name']
-    configurator.variables['author.name_email'] = '"{0}" <{1}>'.format(
-        name, answer)
+    configurator.variables['author.name_email'] = f'"{name}" <{answer}>'
     return answer

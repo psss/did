@@ -15,7 +15,7 @@ import did.utils
 # Prepare interval and config file with real path to our git repo
 INTERVAL = "--since 2015-09-07 --until 2015-09-11"
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
-GIT_PATH = os.path.realpath('{0}/../../'.format(SCRIPT_PATH))
+GIT_PATH = os.path.realpath(f'{SCRIPT_PATH}/../../')
 CONFIG = """
 [general]
 email = "Petr Splichal" <psplicha@redhat.com>
@@ -95,8 +95,8 @@ def test_git_invalid():
     did.base.Config(CONFIG.format("/tmp"))
     try:
         did.cli.main(INTERVAL)
-    except SystemExit:
-        raise RuntimeError("Expected warning only")
+    except SystemExit as exc:
+        raise RuntimeError("Expected warning only") from exc
 
 
 def test_git_non_existent():

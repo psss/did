@@ -43,36 +43,38 @@ class Trac(object):
         """ Consistent identifier and summary for displaying """
         # Show only interesting resolutions to be more concise
         if self.resolution and self.resolution in INTERESTING_RESOLUTIONS:
-            resolution = " ({0})".format(self.resolution)
+            resolution = f" ({self.resolution})"
         else:
             resolution = ""
         # Urlify the identifier when using the wiki format
         if self.options.format == "wiki":
-            identifier = "[[{0}/ticket/{1}|{2}#{3}]]".format(
-                self.parent.url, self.id,
-                self.parent.prefix, str(self.id).zfill(4))
+            identifier = f"[[{
+                self.parent.url}/ticket/{
+                self.id}|{
+                self.parent.prefix}#{
+                str(
+                    self.id).zfill(4)}]]"
         else:
-            identifier = "{0}#{1}".format(
-                self.parent.prefix, str(self.id).zfill(4))
+            identifier = f"{self.parent.prefix}#{str(self.id).zfill(4)}"
         # Join identifier with summary and optional resolution
-        return "{0} - {1}{2}".format(identifier, self.summary, resolution)
+        return f"{identifier} - {self.summary}{resolution}"
 
     @staticmethod
     def search(query, parent, options):
         """ Perform Trac search """
         # Extend the default max number of tickets to be fetched
-        query = "{0}&max={1}".format(query, MAX_TICKETS)
+        query = f"{query}&max={MAX_TICKETS}"
         log.debug("Search query: %s", query)
         try:
             result = parent.proxy.ticket.query(query)
         except xmlrpc.client.Fault as error:
             log.error("An error encountered, while searching for tickets.")
-            raise ReportError(error)
+            raise ReportError(error) from error
         except xmlrpc.client.ProtocolError as error:
             log.debug(error)
             log.error("Trac url: %s", parent.url)
             raise ReportError(
-                "Unable to contact Trac server. Is the url above correct?")
+                "Unable to contact Trac server. Is the url above correct?") from error
         log.debug("Search result: %s", result)
         # Fetch tickets and their history using multicall
         multicall = xmlrpc.client.MultiCall(parent.proxy)
@@ -146,8 +148,10 @@ class TracCreated(TracCommon):
 
     def fetch(self):
         log.info("Searching for tickets created by %s", self.user)
-        query = "reporter=~{0}&time={1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+        query = f"reporter=~{
+            self.user.login}&time={
+            self.options.since}..{
+            self.options.until}"
         self.stats = Trac.search(query, self.parent, self.options)
 
 
@@ -156,8 +160,10 @@ class TracAccepted(TracCommon):
 
     def fetch(self):
         log.info("Searching for tickets accepted by %s", self.user)
-        query = "time=..{2}&modified={1}..&owner=~{0}".format(
-                self.user.login, self.options.since, self.options.until)
+        query = f"time=..{
+            self.options.until}&modified={
+            self.options.since}..&owner=~{
+            self.user.login}"
         self.stats = [
             ticket for ticket in Trac.search(query, self.parent, self.options)
             if ticket.accepted(self.user)]
@@ -168,8 +174,7 @@ class TracUpdated(TracCommon):
 
     def fetch(self):
         log.info("Searching for tickets updated by %s", self.user)
-        query = "time=..{1}&modified={0}..".format(
-            self.options.since, self.options.until)
+        query = f"time=..{self.options.until}&modified={self.options.since}.."
         self.stats = [
             ticket for ticket in Trac.search(query, self.parent, self.options)
             if ticket.updated(self.user)]
@@ -180,8 +185,10 @@ class TracClosed(TracCommon):
 
     def fetch(self):
         log.info("Searching for tickets closed by %s", self.user)
-        query = "owner=~{0}&time=..{2}&modified={1}..".format(
-            self.user.login, self.options.since, self.options.until)
+        query = f"owner=~{
+            self.user.login}&time=..{
+            self.options.until}&modified={
+            self.options.since}.."
         self.stats = [
             ticket for ticket in Trac.search(query, self.parent, self.options)
             if ticket.closed()]
@@ -198,32 +205,30 @@ class TracStats(StatsGroup):
     order = 400
 
     def __init__(self, option, name=None, parent=None, user=None):
-        name = "Tickets in {0}".format(option)
+        name = f"Tickets in {option}"
         StatsGroup.__init__(self, option, name, parent, user)
         # Initialize the server proxy
         config = dict(Config().section(option))
         if "url" not in config:
-            raise ReportError(
-                "No trac url set in the [{0}] section".format(option))
+            raise ReportError(f"No trac url set in the [{option}] section")
         self.url = re.sub("/rpc$", "", config["url"])
         self.proxy = xmlrpc.client.ServerProxy(self.url + "/rpc")
         # Make sure we have prefix set
         if "prefix" not in config:
-            raise ReportError(
-                "No prefix set in the [{0}] section".format(option))
+            raise ReportError(f"No prefix set in the [{option}] section")
         self.prefix = config["prefix"]
         # Create the list of stats
         self.stats = [
             TracCreated(
-                option=option + "-created", parent=self,
-                name="Tickets created in {0}".format(option)),
+                option=f"{option}-created", parent=self,
+                name=f"Tickets created in {option}"),
             TracAccepted(
-                option=option + "-accepted", parent=self,
-                name="Tickets accepted in {0}".format(option)),
+                option=f"{option}-accepted", parent=self,
+                name=f"Tickets accepted in {option}"),
             TracUpdated(
-                option=option + "-updated", parent=self,
-                name="Tickets updated in {0}".format(option)),
+                option=f"{option}-updated", parent=self,
+                name=f"Tickets updated in {option}"),
             TracClosed(
-                option=option + "-closed", parent=self,
-                name="Tickets closed in {0}".format(option)),
+                option=f"{option}-closed", parent=self,
+                name=f"Tickets closed in {option}"),
             ]

@@ -64,7 +64,7 @@ class Update(object):
         self.identifier = data['alias']
         self.created = data['date_submitted']
         self.url = data['url']
-        log.details('[{0}] {1}'.format(self.created, self))
+        log.details(f'[{self.created}] {self}')
 
     def __str__(self):
         """ String representation """
@@ -85,10 +85,13 @@ class UpdatesCreated(Stats):
         self.stats = [
             Update(update, self.parent.options.format)
             for update in self.parent.bodhi.search(
-                query='updates/?user={0}&submitted_before={1}'
-                '&submitted_since={2}'.format(
-                      self.user.login, self.options.until.date,
-                      self.options.since.date))]
+                query=(
+                    f'updates/?user={self.user.login}'
+                    f'&submitted_before={self.options.until.date}'
+                    f'&submitted_since={self.options.since.date}'
+                    )
+                )
+            ]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -107,13 +110,13 @@ class BodhiStats(StatsGroup):
         # Check server url
         try:
             self.url = config['url']
-        except KeyError:
+        except KeyError as key_err:
             raise ReportError(
-                'No Bodhi url set in the [{0}] section'.format(option))
+                f'No Bodhi url set in the [{option}] section') from key_err
         self.bodhi = Bodhi(self.url)
         # Create the list of stats
         self.stats = [
             UpdatesCreated(
-                option=option + '-updates-created', parent=self,
-                name='Updates created on {0}'.format(option)),
+                option=f'{option}-updates-created', parent=self,
+                name=f'Updates created on {option}'),
             ]

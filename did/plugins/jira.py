@@ -129,15 +129,11 @@ class Issue(object):
 
     def __str__(self):
         """ Jira key and summary for displaying """
+        label = f"{self.prefix}-{self.identifier}"
         if self.options.format == "markdown":
-            return "[{0}-{1}]({2}) - {3}".format(
-                self.prefix,
-                self.identifier,
-                f"{self.parent.url}/browse/{self.issue['key']}",
-                self.summary
-                )
-        return "{0}-{1} - {2}".format(
-            self.prefix, self.identifier, self.summary)
+            href = f"{self.parent.url}/browse/{self.issue['key']}"
+            return f"[{label}]({href}) - {self.summary}"
+        return f"{label} - {self.summary}"
 
     def __eq__(self, other):
         """ Compare issues by key """
@@ -150,13 +146,16 @@ class Issue(object):
         issues = []
         # Fetch data from the server in batches of MAX_RESULTS issues
         for batch in range(MAX_BATCHES):
+            encoded_query = urllib.parse.urlencode(
+                {
+                    "jql": query,
+                    "fields": "summary,comment",
+                    "maxResults": MAX_RESULTS,
+                    "startAt": batch * MAX_RESULTS
+                    }
+                )
             response = stats.parent.session.get(
-                "{0}/rest/api/latest/search?{1}".format(
-                    stats.parent.url, urllib.parse.urlencode({
-                        "jql": query,
-                        "fields": "summary,comment",
-                        "maxResults": MAX_RESULTS,
-                        "startAt": batch * MAX_RESULTS})))
+                f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
             data = response.json()
             if not response.ok:
                 try:
@@ -210,13 +209,12 @@ class JiraCreated(Stats):
             "Searching for issues created in %s by %s",
             self.parent.project,
             self.user)
-        query = (
-            "creator = '{0}' AND "
-            "created >= {1} AND created <= {2}".format(
-                self.user.login or self.user.email,
-                self.options.since, self.options.until))
+        query = f"creator = '{
+            self.user.login or self.user.email}' AND created >= {
+            self.options.since} AND created <= {
+            self.options.until}"
         if self.parent.project:
-            query = query + " AND project = '{0}'".format(self.parent.project)
+            query = query + f" AND project = '{self.parent.project}'"
         self.stats = Issue.search(query, stats=self)
 
 
@@ -229,21 +227,18 @@ class JiraUpdated(Stats):
             self.parent.project,
             self.user)
         if self.parent.use_scriptrunner:
-            query = (
-                "issueFunction in commented"
-                "('by {0} after {1} before {2}')".format(
-                    self.user.login or self.user.email,
-                    self.options.since, self.options.until))
+            query = f"issueFunction in commented('by {
+                self.user.login or self.user.email} after {
+                self.options.since} before {
+                self.options.until}')"
             if self.parent.project:
-                query = query + " AND project = '{0}'".format(
-                    self.parent.project)
+                query = query + f" AND project = '{self.parent.project}'"
             self.stats = Issue.search(query, stats=self)
         else:
-            query = (
-                "project = '{0}' AND "
-                "updated >= {1} AND created <= {2}".format(
-                    self.parent.project, self.options.since,
-                    self.options.until))
+            query = f"project = '{
+                self.parent.project}' AND updated >= {
+                self.options.since} AND created <= {
+                self.options.until}"
             # Filter only issues commented by given user
             self.stats = [
                 issue for issue in Issue.search(query, stats=self)
@@ -258,14 +253,12 @@ class JiraResolved(Stats):
             "Searching for issues resolved in %s by %s",
             self.parent.project,
             self.user)
-        query = (
-            "assignee = '{0}' AND "
-            "resolved >= {1} AND resolved <= {2}".format(
-                self.user.login or self.user.email,
-                self.options.since, self.options.until))
+        query = f"assignee = '{
+            self.user.login or self.user.email}' AND resolved >= {
+            self.options.since} AND resolved <= {
+            self.options.until}"
         if self.parent.project:
-            query = query + " AND project = '{0}'".format(
-                self.parent.project)
+            query = query + f" AND project = '{self.parent.project}'"
         self.stats = Issue.search(query, stats=self)
 
 
@@ -285,8 +278,7 @@ class JiraStats(StatsGroup):
         # Make sure there is an url provided
         config = dict(Config().section(option))
         if "url" not in config:
-            raise ReportError(
-                "No Jira url set in the [{0}] section".format(option))
+            raise ReportError(f"No Jira url set in the [{option}] section")
         self.url = config["url"].rstrip("/")
         # Optional authentication url
         if "auth_url" in config:
@@ -297,17 +289,15 @@ class JiraStats(StatsGroup):
         if "auth_type" in config:
             if config["auth_type"] not in AUTH_TYPES:
                 raise ReportError(
-                    "Unsupported authentication type: {0}"
-                    .format(config["auth_type"]))
+                    f"Unsupported authentication type: {
+                        config["auth_type"]}")
             self.auth_type = config["auth_type"]
         else:
             self.auth_type = "gss"
         # Authentication credentials
         if self.auth_type == "basic":
             if "auth_username" not in config:
-                raise ReportError(
-                    "`auth_username` not set in the [{0}] section"
-                    .format(option))
+                raise ReportError(f"`auth_username` not set in the [{option}] section")
             self.auth_username = config["auth_username"]
             if "auth_password" in config:
                 self.auth_password = config["auth_password"]
@@ -318,38 +308,37 @@ class JiraStats(StatsGroup):
             else:
                 raise ReportError(
                     "`auth_password` or `auth_password_file` must be set "
-                    "in the [{0}] section.".format(option))
+                    f"in the [{option}] section.")
         # Token
         elif self.auth_type == "token":
             self.token = get_token(config)
             if self.token is None:
                 raise ReportError(
                     "The `token` or `token_file` key must be set "
-                    "in the [{0}] section.".format(option))
+                    f"in the [{option}] section.")
             if "token_expiration" in config or "token_name" in config:
                 try:
                     self.token_expiration = int(config["token_expiration"])
                     self.token_name = config["token_name"]
-                except KeyError:
+                except KeyError as key_err:
                     raise ReportError(
-                        "The ``token_name`` and ``token_expiration`` "
-                        "must be set at the same time in "
-                        "[{0}] section.".format(option))
-                except ValueError:
+                        "The ``token_name`` and ``token_expiration`` must be set at"
+                        f" the same time in [{option}] section.") from key_err
+                except ValueError as val_err:
                     raise ReportError(
-                        "The ``token_expiration`` must contain number, used in "
-                        "[{0}] section.".format(option))
+                        "The ``token_expiration`` must contain number, "
+                        f"used in [{option}] section.") from val_err
             else:
                 self.token_expiration = self.token_name = None
         else:
             if "auth_username" in config:
                 raise ReportError(
-                    "`auth_username` is only valid for basic authentication"
-                    + " (section [{0}])".format(option))
+                    "`auth_username` is only valid for basic authentication "
+                    f"(section [{option}])")
             if "auth_password" in config or "auth_password_file" in config:
                 raise ReportError(
-                    "`auth_password` and `auth_password_file` are only valid "
-                    "for basic authentication (section [{0}])".format(option))
+                    "`auth_password` and `auth_password_file` are only valid for"
+                    f" basic authentication (section [{option}])")
         # SSL verification
         if "ssl_verify" in config:
             try:
@@ -357,7 +346,7 @@ class JiraStats(StatsGroup):
                     config["ssl_verify"])
             except Exception as error:
                 raise ReportError(
-                    "Error when parsing 'ssl_verify': {0}".format(error))
+                    f"Error when parsing 'ssl_verify': {error}") from error
         else:
             self.ssl_verify = SSL_VERIFY
 
@@ -380,14 +369,14 @@ class JiraStats(StatsGroup):
         # Create the list of stats
         self.stats = [
             JiraCreated(
-                option=option + "-created", parent=self,
-                name="Issues created in {0}".format(option)),
+                option=f"{option}-created", parent=self,
+                name=f"Issues created in {option}"),
             JiraUpdated(
-                option=option + "-updated", parent=self,
-                name="Issues updated in {0}".format(option)),
+                option=f"{option}-updated", parent=self,
+                name=f"Issues updated in {option}"),
             JiraResolved(
-                option=option + "-resolved", parent=self,
-                name="Issues resolved in {0}".format(option)),
+                option=f"{option}-resolved", parent=self,
+                name=f"Issues resolved in {option}"),
             ]
 
     @property
@@ -407,7 +396,7 @@ class JiraStats(StatsGroup):
             elif self.auth_type == "token":
                 self.session.headers["Authorization"] = f"Bearer {self.token}"
                 response = self._session.get(
-                    "{0}/rest/api/2/myself".format(self.url),
+                    f"{self.url}/rest/api/2/myself",
                     verify=self.ssl_verify)
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
@@ -418,10 +407,11 @@ class JiraStats(StatsGroup):
             except requests.exceptions.HTTPError as error:
                 log.error(error)
                 raise ReportError(
-                    "Jira authentication failed. Check credentials or kinit.")
+                    "Jira authentication failed. Check credentials or kinit."
+                    ) from error
             if self.token_expiration:
                 response = self._session.get(
-                    "{0}/rest/pat/latest/tokens".format(self.url),
+                    f"{self.url}/rest/pat/latest/tokens",
                     verify=self.ssl_verify)
                 try:
                     response.raise_for_status()

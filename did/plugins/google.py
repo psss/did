@@ -101,7 +101,7 @@ def authorized_http(client_id, client_secret, apps, file=None):
     credentials = storage.get()
 
     scopes = set([
-        "https://www.googleapis.com/auth/{0}.readonly".format(app)
+        f"https://www.googleapis.com/auth/{app}.readonly"
         for app in apps
         ])
 

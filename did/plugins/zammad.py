@@ -37,7 +37,7 @@ class Zammad(object):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         if token is not None:
-            self.headers = {'Authorization': 'Token token={0}'.format(token)}
+            self.headers = {'Authorization': 'Token token={token}'}
         else:
             self.headers = {}
 
@@ -54,7 +54,7 @@ class Zammad(object):
         except urllib.error.URLError as error:
             log.debug(error)
             raise ReportError(
-                "Zammad search on {0} failed.".format(self.url))
+                f"Zammad search on {self.url} failed.") from error
         result = json.loads(response.read())["assets"]
         try:
             result = result["Ticket"]
@@ -79,8 +79,7 @@ class Ticket(object):
 
     def __str__(self):
         """ String representation """
-        return "{0} - {1}".format(
-            str(self.id).zfill(PADDING), self.title)
+        return f"{str(self.id).zfill(PADDING)} - {self.title}"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -92,9 +91,11 @@ class TicketsUpdated(Stats):
 
     def fetch(self):
         log.info("Searching for tickets updated by %s", self.user)
-        search = "article.from:\"{0}\" and article.created_at:[{1} TO {2}]".format(
-            self.user.name, self.options.since, self.options.until)
-        query = "tickets/search?query={0}".format(urllib.parse.quote(search))
+        search = f"article.from:\"{
+            self.user.name}\" and article.created_at:[{
+            self.options.since} TO {
+            self.options.until}]"
+        query = f"tickets/search?query={urllib.parse.quote(search)}"
         self.stats = [
             Ticket(ticket) for id,
             ticket in self.parent.zammad.search(query).items()]
@@ -116,15 +117,15 @@ class ZammadStats(StatsGroup):
         # Check server url
         try:
             self.url = config["url"]
-        except KeyError:
-            raise ReportError(
-                "No zammad url set in the [{0}] section".format(option))
+        except KeyError as exc:
+            raise ReportError(f"No zammad url set in the [{option}] section") from exc
         # Check authorization token
         self.token = get_token(config)
         self.zammad = Zammad(self.url, self.token)
         # Create the list of stats
         self.stats = [
             TicketsUpdated(
-                option=option + "-tickets-updated", parent=self,
-                name="Tickets updated on {0}".format(option)),
+                option=f"{option}-tickets-updated",
+                parent=self,
+                name=f"Tickets updated on {option}"),
             ]

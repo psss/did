@@ -36,7 +36,7 @@ class WikiChanges(Stats):
         self.url = url
         self.api = api or DEFAULT_API
         self.changes = 0
-        self.proxy = xmlrpc.client.ServerProxy("{0}{1}".format(url, self.api))
+        self.proxy = xmlrpc.client.ServerProxy(f"{url}{self.api}")
         Stats.__init__(self, option, name, parent)
 
     def fetch(self):
@@ -45,7 +45,7 @@ class WikiChanges(Stats):
         except (xmlrpc.client.Error, OSError) as error:
             raise ReportError(
                 f"Unable to fetch wiki changes from '{self.url}' "
-                f"because of '{error}'.")
+                f"because of '{error}'.") from error
         for change in changes:
             if (change["author"] == self.user.login
                     and change["lastModified"] < self.options.until.date):
@@ -60,10 +60,16 @@ class WikiChanges(Stats):
         # Different header for wiki:
         # Updates on xxx: x changes of y pages
         item(
-            "{0}: {1} change{2} of {3} page{4}".format(
-                self.name, self.changes, "" if self.changes == 1 else "s",
-                len(self.stats), "" if len(self.stats) == 1 else "s"),
-            level=0, options=self.options)
+            f'{
+                self.name}: {
+                self.changes} change{
+                "" if self.changes == 1 else "s"} of {
+                    len(
+                        self.stats)} page{
+                            "" if len(
+                                self.stats) == 1 else "s"}',
+            level=0,
+            options=self.options)
 
     def merge(self, other):
         """ Merge another stats. """
@@ -90,4 +96,4 @@ class WikiStats(StatsGroup):
         for wiki, url in Config().section(option, skip=['type', 'api']):
             self.stats.append(WikiChanges(
                 option=wiki, parent=self, url=url, api=api,
-                name="Updates on {0}".format(wiki)))
+                name=f"Updates on {wiki}"))

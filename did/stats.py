@@ -49,8 +49,7 @@ class Stats(object):
 
     def add_option(self, group):
         """ Add option for self to the parser group object. """
-        group.add_argument(
-            "--{0}".format(self.option), action="store_true", help=self.name)
+        group.add_argument(f"--{self.option}", action="store_true", help=self.name)
 
     def enabled(self):
         """ Check whether we're enabled (or if parent is). """
@@ -87,7 +86,7 @@ class Stats(object):
         """ Show summary header. """
         # Show question mark instead of count when errors encountered
         count = "? (error encountered)" if self._error else len(self.stats)
-        utils.item("{0}: {1}".format(self.name, count), options=self.options)
+        utils.item(f"{self.name}: {count}", options=self.options)
 
     def show(self):
         """ Display indented statistics. """
@@ -146,8 +145,7 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
         for stat in self.stats:
             stat.add_option(group)
 
-        group.add_argument(
-            "--{0}".format(self.option), action="store_true", help="All above")
+        group.add_argument(f"--{self.option}", action="store_true", help="All above")
 
     def check(self):
         """ Check all children stats. """
@@ -222,8 +220,7 @@ class UserStats(StatsGroup):
 
             if type_ not in StatsGroupPlugin.registry:
                 raise did.base.ConfigError(
-                    "Invalid plugin type '{0}' in section '{1}'.".format(
-                        type_, section))
+                    "Invalid plugin type '{type_}' in section '{section}'.")
 
             user = self.user.clone(section) if self.user else None
             statsgroup = StatsGroupPlugin.registry[type_]
@@ -232,10 +229,10 @@ class UserStats(StatsGroup):
             if 'order' in data:
                 try:
                     obj.order = int(data['order'])
-                except ValueError:
+                except ValueError as exc:
                     raise did.base.GeneralError(
                         f"Invalid order '{data['order']}' "
-                        f"in the '{section}' section.")
+                        f"in the '{section}' section.") from exc
             results.append(obj)
         return sorted(results, key=lambda x: x.order)
 
