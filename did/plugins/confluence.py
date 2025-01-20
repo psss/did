@@ -89,7 +89,7 @@ SSL_VERIFY = True
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Confluence(object):
+class Confluence():
     """ Confluence investigator """
 
     @staticmethod

@@ -28,7 +28,7 @@ from did.utils import listed, log, pretty
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Pagure(object):
+class Pagure():
     """ Pagure Investigator """
 
     def __init__(self, url, token):
@@ -69,7 +69,7 @@ class Pagure(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Issue(object):
+class Issue():
     """ Pagure Issue or Pull Request """
 
     def __init__(self, data, options):

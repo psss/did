@@ -24,7 +24,7 @@ MAX_TICKETS = 1000000
 #  Trac Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Trac(object):
+class Trac():
     """ Trac investigator """
 
     def __init__(

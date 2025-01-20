@@ -31,7 +31,7 @@ from did.utils import item, log, pretty
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class GitRepo(object):
+class GitRepo():
     """ Git repository investigator """
 
     def __init__(self, path):

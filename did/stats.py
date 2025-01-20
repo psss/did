@@ -12,7 +12,7 @@ from did.utils import log
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Stats(object):
+class Stats():
     """ General statistics """
     _name = None
     _error = None

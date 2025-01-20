@@ -55,7 +55,7 @@ PER_PAGE = 100
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class GitHub(object):
+class GitHub():
     """ GitHub Investigator """
 
     def __init__(self, url, token=None, user=None, org=None, repo=None):
@@ -135,7 +135,7 @@ class GitHub(object):
 #  Issue
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Issue(object):
+class Issue():
     """ GitHub Issue """
 
     def __init__(self, data, parent):

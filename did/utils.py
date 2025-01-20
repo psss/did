@@ -334,7 +334,7 @@ def info(message, newline=True):
 #  Logging
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Logging(object):
+class Logging():
     """ Logging Configuration """
 
     # Color mapping
@@ -481,7 +481,7 @@ def color(text, color=None, background=None, light=False, enabled=True):
     return "".join([start, text, finish])
 
 
-class Coloring(object):
+class Coloring():
     """ Coloring configuration """
 
     # Default color mode is auto-detected from the terminal presence

@@ -24,7 +24,7 @@ from did.utils import log, pretty
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class RequestTracker(object):
+class RequestTracker():
     """ Request Tracker Investigator """
 
     def __init__(self, parent):
@@ -76,7 +76,7 @@ class RequestTracker(object):
 #  Ticket
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Ticket(object):
+class Ticket():
     """ Request tracker ticket """
 
     def __init__(self, record, parent):

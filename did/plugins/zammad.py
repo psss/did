@@ -30,7 +30,7 @@ PADDING = 3
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Zammad(object):
+class Zammad():
     """ Zammad Investigator """
 
     def __init__(self, url, token):
@@ -69,7 +69,7 @@ class Zammad(object):
 #  Ticket
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Ticket(object):
+class Ticket():
     """ Zammad Ticket """
 
     def __init__(self, data):

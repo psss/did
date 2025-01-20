@@ -107,7 +107,7 @@ SSL_VERIFY = True
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Issue(object):
+class Issue():
     """ Jira issue investigator """
 
     def __init__(self, issue=None, parent=None):

@@ -31,7 +31,7 @@ from did.utils import log
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Activity(object):
+class Activity():
     """ Redmine Activity """
 
     def __init__(self, data):

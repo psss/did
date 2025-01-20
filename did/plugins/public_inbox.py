@@ -27,7 +27,7 @@ from did.utils import item, log
 USER_AGENT = "did/{}".format(version('did'))
 
 
-class Message(object):
+class Message():
     def __init__(self, msg: mailbox.mboxMessage) -> None:
         self.msg = msg
 
@@ -80,7 +80,7 @@ def _unique_messages(mbox: mailbox.mbox) -> typing.Iterable[Message]:
             yield msg
 
 
-class PublicInbox(object):
+class PublicInbox():
     def __init__(self, parent, user: User, url: str) -> None:
         self.parent = parent
         self.threads_cache = dict()

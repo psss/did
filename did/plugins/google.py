@@ -125,7 +125,7 @@ def authorized_http(client_id, client_secret, apps, file=None):
 #  Google Calendar
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class GoogleCalendar(object):
+class GoogleCalendar():
     """ Google Calendar functions """
 
     def __init__(self, http, parent):
@@ -143,7 +143,7 @@ class GoogleCalendar(object):
 #  Event
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Event(object):
+class Event():
     """ Google Calendar Event """
 
     def __init__(self, in_dict, out_format):
@@ -186,7 +186,7 @@ class Event(object):
 #  Google Tasks
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class GoogleTasks(object):
+class GoogleTasks():
     """ Google Tasks functions """
 
     def __init__(self, http, parent):
@@ -204,7 +204,7 @@ class GoogleTasks(object):
 #  Task
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Task(object):
+class Task():
     """ Google Tasks task """
 
     def __init__(self, in_dict, out_format):
