@@ -21,7 +21,7 @@ from did.utils import listed, log, pretty
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Bodhi(object):
+class Bodhi():
     """ Bodhi """
 
     def __init__(self, url):
@@ -53,7 +53,7 @@ class Bodhi(object):
 #  Update
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Update(object):
+class Update():
     """ Bodhi update """
 
     def __init__(self, data, format):

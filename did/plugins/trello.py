@@ -73,7 +73,7 @@ class TrelloStats(Stats):
 #  Trello API
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class TrelloAPI(object):
+class TrelloAPI():
     """ Trello API """
 
     def __init__(self, stats, config):

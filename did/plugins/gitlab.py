@@ -48,7 +48,7 @@ PADDING = 3
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class GitLab(object):
+class GitLab():
     """ GitLab Investigator """
 
     def __init__(self, url, token, ssl_verify=GITLAB_SSL_VERIFY):
@@ -187,7 +187,7 @@ class GitLab(object):
 #  Issue
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Issue(object):
+class Issue():
     """ GitLab Issue """
 
     def __init__(self, data, parent):

@@ -31,7 +31,7 @@ stats for this week are reported.
 #  Options
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Options(object):
+class Options():
     """ Command line options parser """
 
     def __init__(self, arguments=None):

@@ -63,7 +63,7 @@ SSL_VERIFY = True
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Bugzilla(object):
+class Bugzilla():
     """ Bugzilla investigator """
 
     def __init__(self, parent):
@@ -128,7 +128,7 @@ class Bugzilla(object):
 #  Bug
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Bug(object):
+class Bug():
     """ Bugzilla search """
 
     def __init__(self, bug, history, comments, parent):

@@ -26,7 +26,7 @@ from did.utils import log, pretty
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Change(object):
+class Change():
     """ Request gerrit change """
 
     def __init__(self, ticket, prefix, changelog=None):
@@ -56,7 +56,7 @@ class Change(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Gerrit(object):
+class Gerrit():
     """
      curl -s 'https://REPOURL/gerrit/changes/?q=is:abandoned+age:7d'
     """

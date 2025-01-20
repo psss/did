@@ -72,7 +72,7 @@ class ReportError(GeneralError):
 #  Config
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Config(object):
+class Config():
     """ User config file """
 
     parser = None
@@ -222,7 +222,7 @@ class Config(object):
 #  Date
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Date(object):
+class Date():
     """ Date parsing for common word formats """
 
     def __init__(self, date=None):
@@ -398,7 +398,7 @@ class Date(object):
 #  User
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class User(object):
+class User():
     """
     User information
 

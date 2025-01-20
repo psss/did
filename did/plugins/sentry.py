@@ -31,7 +31,7 @@ NEXT_PAGE = re.compile('<([^>]+)>; rel="next"; results="true"')
 #  Issue & Activity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Issue(object):
+class Issue():
     """ Sentry Issue """
 
     def __init__(self, issue):
@@ -44,7 +44,7 @@ class Issue(object):
         return f"{self.identifier} - {self.title}"
 
 
-class Activity(object):
+class Activity():
     """ Sentry Activity """
 
     def __init__(self, activity):
@@ -64,7 +64,7 @@ class Activity(object):
 #  Sentry Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Sentry(object):
+class Sentry():
     """ Sentry API """
 
     def __init__(self, config, stats):
