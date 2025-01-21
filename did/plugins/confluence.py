@@ -354,8 +354,10 @@ class ConfluenceStats(StatsGroup):
                         expiring_at.astimezone() - datetime.now().astimezone())
                     if delta.days < self.token_expiration:
                         log.warning(
-                            f"Confluence token '{self.token_name}' "
-                            f"expires in {delta.days} days.")
+                            "Confluence token '%s' expires in %s days.",
+                            self.token_name,
+                            delta.days
+                            )
                 except (requests.exceptions.HTTPError,
                         KeyError, ValueError) as error:
                     log.warning(error)

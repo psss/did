@@ -176,8 +176,8 @@ class Phabricator:
         try:
             response = requests.post(url, data=data_dict)
             log.debug("Response headers: %s", response.headers)
-            log.debug(f"MANUAL REQ: curl -sL -X POST {url} -d '"
-                      f"{urlencode(data_dict)}' | jq .")
+            log.debug("MANUAL REQ: curl -sL -X POST %s -d '%s' | jq .",
+                      url, urlencode(data_dict))
         except requests.exceptions.RequestException as error:
             log.debug(error)
             raise ReportError(
