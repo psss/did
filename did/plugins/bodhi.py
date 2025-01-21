@@ -56,9 +56,9 @@ class Bodhi():
 class Update():
     """ Bodhi update """
 
-    def __init__(self, data, format):
+    def __init__(self, data, output_format):
         self.data = data
-        self.format = format
+        self.format = output_format
         self.title = data['title']
         self.project = data['release']['name']
         self.identifier = data['alias']
