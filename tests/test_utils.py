@@ -44,7 +44,7 @@ def test_email_re():
 def test_log():
     from did.utils import log
     assert log
-    log.name == 'did'
+    assert log.name == 'did'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

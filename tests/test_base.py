@@ -29,10 +29,10 @@ def test_Config_email():
 def test_Config_email_missing():
     config = Config("[general]\n")
     with pytest.raises(did.base.ConfigError):
-        config.email == "email@example.com"
+        _ = config.email
     config = Config("[missing]")
     with pytest.raises(did.base.ConfigError):
-        config.email == "email@example.com"
+        _ = config.email
 
 
 def test_Config_width():
