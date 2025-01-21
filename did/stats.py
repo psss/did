@@ -164,7 +164,6 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
 
     def fetch(self):
         """ Stats groups do not fetch anything """
-        pass
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -261,7 +260,6 @@ class EmptyStats(Stats):
 
     def fetch(self):
         """ Nothing to do for empty stats """
-        pass
 
 
 class EmptyStatsGroup(StatsGroup):

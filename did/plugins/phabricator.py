@@ -472,7 +472,6 @@ class DifferentialsBaseStats(Stats):
 
     def fetch(self):
         """ To be implemented by subclasses """
-        pass
 
     def fetch_all_relevant_diffs(self):
         """
