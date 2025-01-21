@@ -437,7 +437,7 @@ class User():
         self._original = email.strip()
         # Separate aliases if provided
         try:
-            email, aliases = re.split(r"\s*;\s*", self._original, 1)
+            email, aliases = re.split(r"\s*;\s*", self._original, maxsplit=1)
         except ValueError:
             email = self._original
             aliases = None
@@ -483,7 +483,7 @@ class User():
         if aliases is not None:
             try:
                 aliases = dict([
-                    re.split(r"\s*:\s*", definition, 1)
+                    re.split(r"\s*:\s*", definition, maxsplit=1)
                     for definition in re.split(r"\s*;\s*", aliases.strip())])
             except ValueError as exc:
                 raise ConfigError(f"Invalid alias definition: '{aliases}'") from exc
