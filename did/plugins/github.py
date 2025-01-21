@@ -85,16 +85,16 @@ class GitHub():
 
         while True:
             # Fetch the query
-            log.debug(f"GitHub query: {url}")
+            log.debug("GitHub query: %s", url)
             try:
                 response = requests.get(url, headers=self.headers)
-                log.debug(f"Response headers:\n{response.headers}")
+                log.debug("Response headers:\n%s", response.headers)
             except requests.exceptions.RequestException as error:
                 log.debug(error)
                 raise ReportError(f"GitHub search on {self.url} failed.") from error
 
             # Check if credentials are valid
-            log.debug(f"GitHub status code: {response.status_code}")
+            log.debug("GitHub status code: %s", response.status_code)
             if response.status_code == 401:
                 raise ReportError(
                     "Defined token is not valid. "
@@ -106,7 +106,7 @@ class GitHub():
                     reset_time = int(response.headers["X-RateLimit-Reset"])
                     sleep_time = int(max(reset_time - time.time(), 0)) + 1
                     log.warning("GitHub rate limit exceeded, use token to speed up.")
-                    log.warning(f"Sleeping now for {listed(sleep_time, 'second')}.")
+                    log.warning("Sleeping now for %s.", listed(sleep_time, 'second'))
                     time.sleep(sleep_time)
                     continue
                 raise ReportError(f"GitHub query failed: {response.text}")
