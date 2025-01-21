@@ -109,18 +109,11 @@ def test_listed():
     assert listed(range(1)) == "0"
     assert listed(range(2)) == "0 and 1"
     assert listed(range(3), quote='"') == '"0", "1" and "2"'
-    assert listed(range(4), max=3) == "0, 1, 2 and 1 more"
-    assert listed(range(5), 'number', max=3) == "0, 1, 2 and 2 more numbers"
+    assert listed(range(4), maximum=3) == "0, 1, 2 and 1 more"
+    assert listed(range(5), 'number', maximum=3) == "0, 1, 2 and 2 more numbers"
     assert listed(range(6), 'category') == "6 categories"
     assert listed(7, "leaf", "leaves") == "7 leaves"
-    assert listed([], "item", max=0) == "0 items"
-
-
-def test_ascii():
-    from did.utils import ascii
-    assert ascii
-    assert ascii("ěščřžýáíé") == "escrzyaie"
-    assert ascii(0) == "0"
+    assert listed([], "item", maximum=0) == "0 items"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

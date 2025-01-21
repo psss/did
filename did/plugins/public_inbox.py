@@ -73,10 +73,10 @@ def _unique_messages(mbox: mailbox.mbox) -> typing.Iterable[Message]:
     msgs = dict()
     for msg in mbox.values():
         msg = Message(msg)
-        id = msg.id()
+        msg_id = msg.id()
 
-        if id not in msgs:
-            msgs[id] = msg
+        if msg_id not in msgs:
+            msgs[msg_id] = msg
             yield msg
 
 

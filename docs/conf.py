@@ -50,7 +50,7 @@ master_man = 'man.1'
 
 # General information about the project.
 project = u'did'
-copyright = u'2015, Petr Šplíchal'
+project_copyright = u'2015, Petr Šplíchal'
 author = u'Petr Šplíchal'
 
 # The version info for the project you're documenting, acts as replacement for

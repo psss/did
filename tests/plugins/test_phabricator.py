@@ -142,10 +142,10 @@ def test_differentials(options, expectations):
     did.base.Config(CONFIG_OK)
     stats = get_named_stat(options)
     assert len(expectations) == len(stats)
-    for i, id in enumerate(expectations):
-        pattern = f"{id} \\S+"
+    for i, exp_id in enumerate(expectations):
+        pattern = f"{exp_id} \\S+"
         if "--verbose" in options:
-            pattern = f"https://reviews\\.llvm\\.org/{id} \\S+"
+            pattern = f"https://reviews\\.llvm\\.org/{exp_id} \\S+"
         regex = re.compile(pattern)
         assert regex
         assert regex.match(str(stats[i]))

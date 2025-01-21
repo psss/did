@@ -6,7 +6,6 @@ import os
 import pkgutil
 import re
 import sys
-import unicodedata
 from pprint import pformat as pretty  # noqa: F401 (used by other modules)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -245,7 +244,7 @@ def pluralize(singular=None):
     return plural
 
 
-def listed(items, singular=None, plural=None, max=None, quote=""):
+def listed(items, singular=None, plural=None, maximum=None, quote=""):
     """
     Convert an iterable into a nice, human readable list or
     description::
@@ -253,14 +252,15 @@ def listed(items, singular=None, plural=None, max=None, quote=""):
         listed(range(1)) .................... 0
         listed(range(2)) .................... 0 and 1
         listed(range(3), quote='"') ......... "0", "1" and "2"
-        listed(range(4), max=3) ............. 0, 1, 2 and 1 more
+        listed(range(4), maximum=3) ............. 0, 1, 2 and 1 more
         listed(range(5), 'number', max=3) ... 0, 1, 2 and 2 more numbers
         listed(range(6), 'category') ........ 6 categories
         listed(7, "leaf", "leaves") ......... 7 leaves
 
-    If singular form is provided but max not set the description-only
-    mode is activated as shown in the last two examples. Also, an int
-    can be used in this case to get a simple inflection functionality.
+    If singular form is provided but maximum not set the
+    description-only mode is activated as shown in the last
+    two examples. Also, an int can be used in this case
+    to get a simple inflection functionality.
     """
 
     # Convert items to list if necessary
@@ -268,8 +268,8 @@ def listed(items, singular=None, plural=None, max=None, quote=""):
     more = " more"
     # Description mode expected when singular provided
     # but no maximum set
-    if singular is not None and max is None:
-        max = 0
+    if singular is not None and maximum is None:
+        maximum = 0
         more = ""
     # Set the default plural form
     if singular is not None and plural is None:
@@ -277,15 +277,16 @@ def listed(items, singular=None, plural=None, max=None, quote=""):
     # Convert to strings and optionally quote each item
     items = [f"{quote}{item}{quote}" for item in items]
 
-    # Select the maximum of items and describe the rest if max provided
-    if max is not None:
+    # Select the maximum of items and describe the rest
+    # if maximum provided
+    if maximum is not None:
         # Special case when the list is empty (0 items)
-        if max == 0 and len(items) == 0:
+        if maximum == 0 and len(items) == 0:
             return f"0 {plural}"
         # Cut the list if maximum exceeded
-        if len(items) > max:
-            rest = len(items[max:])
-            items = items[:max]
+        if len(items) > maximum:
+            rest = len(items[maximum:])
+            items = items[:maximum]
             if singular is not None:
                 more += f" {singular if rest == 1 else plural}"
             items.append(f"{rest}{more}")
@@ -315,14 +316,6 @@ def split(values, separator=re.compile("[ ,]+")):
     if not isinstance(values, list):
         values = [values]
     return sum([separator.split(value) for value in values], [])
-
-
-def ascii(text):
-    """ Transliterate special unicode characters into pure ascii """
-    if not isinstance(text, str):
-        text = str(text)
-    return unicodedata.normalize(
-        'NFKD', text).encode('ascii', 'ignore').decode('utf-8')
 
 
 def info(message, newline=True):
