@@ -6,6 +6,7 @@ import os
 import pkgutil
 import re
 import sys
+# pylint:disable=unused-import
 from pprint import pformat as pretty  # noqa: F401 (used by other modules)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
