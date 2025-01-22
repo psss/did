@@ -13,6 +13,12 @@ Use ``login`` to override the default email address for searching.
 See the :doc:`config` documentation for details on using aliases.
 The authentication token is optional and can be stored in a file
 pointed to by ``token_file`` instead of ``token``.
+
+It's also possible to set a timeout, if not specified it defaults to
+60 seconds.
+
+    timeout = 10
+
 """
 
 import datetime
@@ -23,6 +29,9 @@ from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
+# Default number of seconds waiting on Pagure before giving up
+TIMEOUT = 60
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,10 +40,11 @@ from did.utils import listed, log, pretty
 class Pagure():
     """ Pagure Investigator """
 
-    def __init__(self, url, token):
+    def __init__(self, url, token, timeout=TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         self.token = token
+        self.timeout = timeout
         if token is not None:
             self.headers = {'Authorization': f'token {token}'}
         else:
@@ -47,7 +57,7 @@ class Pagure():
         while url:
             log.debug("Pagure query: %s", url)
             try:
-                response = requests.get(url, headers=self.headers)
+                response = requests.get(url, headers=self.headers, timeout=self.timeout)
                 log.data(f"Response headers:\n{response.headers}")
             except requests.RequestException as error:
                 log.error(error)
@@ -183,7 +193,7 @@ class PagureStats(StatsGroup):
                 f'No Pagure url set in the [{option}] section') from key_err
         # Check authorization token
         self.token = get_token(config)
-        self.pagure = Pagure(self.url, self.token)
+        self.pagure = Pagure(self.url, self.token, timeout=config.get("timeout"))
         # Create the list of stats
         self.stats = [
             IssuesCreated(

@@ -19,6 +19,12 @@ Use ``login`` to override user name detected from the email address.
 See the :doc:`config` documentation for details on using aliases.
 Use ``ssl_verify`` to enable/disable SSL verification (default: true)
 
+It's also possible to set a timeout, if not specified it defaults to 60
+seconds.
+
+    timeout = 10
+
+
 __ https://docs.gitlab.com/ce/api/
 
 """
@@ -43,6 +49,9 @@ GITLAB_INTERVAL = 5
 # Identifier padding
 PADDING = 3
 
+# Default number of seconds waiting on GitLab before giving up
+TIMEOUT = 60
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
@@ -51,7 +60,7 @@ PADDING = 3
 class GitLab():
     """ GitLab Investigator """
 
-    def __init__(self, url, token, ssl_verify=GITLAB_SSL_VERIFY):
+    def __init__(self, url, token, ssl_verify=GITLAB_SSL_VERIFY, timeout=TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         self.headers = {'PRIVATE-TOKEN': token}
@@ -62,6 +71,7 @@ class GitLab():
         self.projects = {}
         self.project_mrs = {}
         self.project_issues = {}
+        self.timeout = timeout
 
     def _get_gitlab_api_raw(self, url):
         log.debug("Connecting to GitLab API at '%s'.", url)
@@ -69,7 +79,8 @@ class GitLab():
         while True:
             try:
                 api_raw = requests.get(
-                    url, headers=self.headers, verify=self.ssl_verify)
+                    url, headers=self.headers, verify=self.ssl_verify,
+                    timeout=self.timeout)
                 return api_raw
             except requests.exceptions.ConnectionError as connection_error:
                 retries += 1
@@ -381,7 +392,8 @@ class GitLabStats(StatsGroup):
             self.ssl_verify = GITLAB_SSL_VERIFY
         if not self.ssl_verify:
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-        self.gitlab = GitLab(self.url, self.token, self.ssl_verify)
+        self.gitlab = GitLab(
+            self.url, self.token, self.ssl_verify, timeout=config.get("timeout"))
         # Create the list of stats
         self.stats = [
             IssuesCreated(

@@ -22,6 +22,12 @@ We use these endpoints for the most part:
 * https://secure.phabricator.com/conduit/method/transaction.search/
 * https://secure.phabricator.com/conduit/method/user.search/
 
+
+It's also possible to set a timeout, if not specified it defaults to
+60 seconds.
+
+    timeout = 10
+
 """  # noqa: W505
 
 import datetime
@@ -38,6 +44,9 @@ from did.base import Config, ConfigError, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
+# Default number of seconds waiting on Phabricator before giving up
+TIMEOUT = 60
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,12 +60,13 @@ class Phabricator:
     # https://reviews.llvm.org/conduit/method/differential.revision.search/
     MAX_PAGE_SIZE = 100
 
-    def __init__(self, url, token, logins):
+    def __init__(self, url, token, logins, timeout=TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         self.token = token
         self.logins = logins
         self._login_phids = []
+        self.timeout = timeout
 
     @property
     def login_phids(self) -> List[str]:
@@ -174,7 +184,7 @@ class Phabricator:
         if "api.token" not in data_dict:
             data_dict['api.token'] = self.token
         try:
-            response = requests.post(url, data=data_dict)
+            response = requests.post(url, data=data_dict, timeout=self.timeout)
             log.debug("Response headers: %s", response.headers)
             log.debug("MANUAL REQ: curl -sL -X POST %s -d '%s' | jq .",
                       url, urlencode(data_dict))
@@ -621,7 +631,8 @@ class PhabricatorStats(StatsGroup):
                 config["login"]).split(",")]
         if self.logins == []:
             raise ConfigError(f"Empty login found in [{option}] setion")
-        self.phabricator = Phabricator(self.url, self.token, self.logins)
+        self.phabricator = Phabricator(self.url, self.token, self.logins,
+                                       timeout=config.get("timeout"))
 
         # Create the list of stats
         self.stats = [
