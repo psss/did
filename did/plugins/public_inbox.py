@@ -6,6 +6,12 @@ Config example::
     [inbox]
     type = public-inbox
     url = https://lore.kernel.org
+
+It's also possible to set a timeout, if not specified it defaults to
+60 seconds.
+
+    timeout = 10
+
 """
 
 import copy
@@ -25,6 +31,9 @@ from did.stats import Stats, StatsGroup
 from did.utils import item, log
 
 USER_AGENT = "did/{}".format(version('did'))
+
+# Default number of seconds waiting on inbox before giving up
+TIMEOUT = 60
 
 
 class Message():
@@ -81,12 +90,13 @@ def _unique_messages(mbox: mailbox.mbox) -> typing.Iterable[Message]:
 
 
 class PublicInbox():
-    def __init__(self, parent, user: User, url: str) -> None:
+    def __init__(self, parent, user: User, url: str, timeout: int = TIMEOUT) -> None:
         self.parent = parent
         self.threads_cache = dict()
         self.messages_cache = dict()
         self.url = url
         self.user = user
+        self.timeout = timeout
 
     def __get_url(self, path: str) -> str:
         return urllib.parse.urljoin(self.url, path)
@@ -138,7 +148,7 @@ class PublicInbox():
         url = self.__get_url(f"/all/{msg_id}/t.mbox.gz")
 
         log.debug("Fetching message %s thread (%s)", msg_id, url)
-        resp = requests.get(url, headers={'User-Agent': USER_AGENT})
+        resp = requests.get(url, headers={'User-Agent': USER_AGENT}, timeout=self.timeout)
         mbox = self.__get_mbox_from_content(resp.content)
         for msg in self.__get_msgs_from_mbox(mbox):
             if msg.is_thread_root():
@@ -184,6 +194,7 @@ class PublicInbox():
                 "q": f"(f:{self.user.email} AND d:{since_str}..{until_str})",
                 "x": "m",
                 },
+            timeout=self.timeout
             )
 
         if not resp.ok:
@@ -284,7 +295,8 @@ class PublicInboxStats(StatsGroup):
         except KeyError as key_err:
             raise ReportError(f"No url in the [{option}] section.") from key_err
 
-        self.public_inbox = PublicInbox(self.parent, self.user, self.url)
+        self.public_inbox = PublicInbox(self.parent, self.user, self.url,
+                                        timeout=config.get("timeout"))
         self.stats = [
             ThreadsStarted(option=option + "-started", parent=self),
             ThreadsInvolved(option=option + "-involved", parent=self),

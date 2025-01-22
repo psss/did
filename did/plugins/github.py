@@ -32,6 +32,11 @@ token stored in a file rather than in your did config file.
 
 __ https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
 
+
+It's also possible to set a timeout, if not specified it defaults to 60 seconds.
+
+    timeout = 10
+
 """  # noqa: W505,E501
 
 import json
@@ -50,6 +55,9 @@ PADDING = 3
 # Number of issues to be fetched per page
 PER_PAGE = 100
 
+# Default number of seconds waiting on GitHub before giving up
+TIMEOUT = 60
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
@@ -58,9 +66,11 @@ PER_PAGE = 100
 class GitHub():
     """ GitHub Investigator """
 
-    def __init__(self, url, token=None, user=None, org=None, repo=None):
+    def __init__(self, url, token=None, user=None,
+                 org=None, repo=None, timeout=TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
+        self.timeout = timeout
         if token is not None:
             self.headers = {'Authorization': f'token {token}'}
         else:
@@ -87,7 +97,7 @@ class GitHub():
             # Fetch the query
             log.debug("GitHub query: %s", url)
             try:
-                response = requests.get(url, headers=self.headers)
+                response = requests.get(url, headers=self.headers, timeout=self.timeout)
                 log.debug("Response headers:\n%s", response.headers)
             except requests.exceptions.RequestException as error:
                 log.debug(error)
@@ -301,7 +311,8 @@ class GitHubStats(StatsGroup):
             token=self.token,
             org=config.get("org"),
             user=config.get("user"),
-            repo=config.get("repo"))
+            repo=config.get("repo"),
+            timeout=config.get("timeout"))
 
         # Create the list of stats
         self.stats = [

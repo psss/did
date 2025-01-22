@@ -13,6 +13,11 @@ You need to generate authentication token at the server. The only
 scope you need to enable is `org:read`. If you prefer to store the
 token in a file, use ``token_file`` to point to the file that has
 your token.
+
+It's also possible to set a timeout, if not specified it defaults to
+60 seconds.
+
+    timeout = 10
 """
 
 import re
@@ -25,6 +30,9 @@ from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
 NEXT_PAGE = re.compile('<([^>]+)>; rel="next"; results="true"')
+
+# Default number of seconds waiting on Sentry before giving up
+TIMEOUT = 60
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -67,13 +75,14 @@ class Activity():
 class Sentry():
     """ Sentry API """
 
-    def __init__(self, config, stats):
+    def __init__(self, config, stats, timeout=TIMEOUT):
         """ Initialize API """
         self.url = config['url'].rstrip('/')
         self.organization = config['organization']
         self.headers = {'Authorization': f'Bearer {config["token"]}'}
         self._activities = None
         self.stats = stats
+        self.timeout = timeout
 
     def activities(self):
         """ Return all activites (fetch only once) """
@@ -97,7 +106,7 @@ class Sentry():
             # Fetch one page of activities
             try:
                 log.debug('Fetching activity data: %s', url)
-                response = requests.get(url, headers=self.headers)
+                response = requests.get(url, headers=self.headers, timeout=self.timeout)
                 if not response.ok:
                     log.error(response.text)
                     raise ReportError('Failed to fetch Sentry activities.')
@@ -170,7 +179,7 @@ class SentryStats(StatsGroup):
             raise ConfigError(
                 f"No token or token_file set in the [{option}] section")
         # Set up the Sentry API and construct the list of stats
-        self.sentry = Sentry(config=config, stats=self)
+        self.sentry = Sentry(config=config, stats=self, timeout=config.get("timeout"))
         self.stats = [
             ResolvedIssues(option=option + '-resolved', parent=self),
             CommentedIssues(option=option + '-commented', parent=self),
