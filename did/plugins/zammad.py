@@ -49,13 +49,13 @@ class Zammad():
         log.debug("Zammad query: %s", url)
         try:
             request = urllib.request.Request(url, headers=self.headers)
-            response = urllib.request.urlopen(request)
-            log.debug("Response headers:\n%s", str(response.info()).strip())
+            with urllib.request.urlopen(request) as response:
+                log.debug("Response headers:\n%s", str(response.info()).strip())
+                result = json.loads(response.read())["assets"]
         except urllib.error.URLError as error:
             log.debug(error)
             raise ReportError(
                 f"Zammad search on {self.url} failed.") from error
-        result = json.loads(response.read())["assets"]
         try:
             result = result["Ticket"]
         except KeyError:
