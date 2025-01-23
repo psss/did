@@ -56,44 +56,48 @@ class GitRepo():
 
         # Get the commit messages
         try:
-            process = subprocess.Popen(
-                command, cwd=self.path, encoding='utf-8',
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            with subprocess.Popen(
+                    command,
+                    cwd=self.path,
+                    encoding='utf-8',
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                    ) as process:
+                output, errors = process.communicate()
+                output = output.strip()
+                log.debug("git log output:")
+                log.debug(output)
+                if process.returncode != 0:
+                    log.debug(errors.strip())
+                    log.warning("Unable to check commits in '%s'", self.path)
+                    return []
         except OSError as error:
             log.debug(error)
             raise did.base.ReportError(f"Unable to access git repo '{self.path}'")
-        output, errors = process.communicate()
-        output = output.strip()
-        log.debug("git log output:")
-        log.debug(output)
-        if process.returncode == 0:
-            if not output:
-                return []
 
-            # Single commit per line in non-verbose mode
-            if not options.verbose:
-                return output.split("\n")
-
-            # In verbose mode commits separated by two empty lines
-            commits = []
-            for commit in re.split("\n\n+", output):
-                lines = commit.split("\n")
-
-                # Use a single line if no files changed (e.g. merges)
-                if len(lines) == 1:
-                    commits.append(lines[0])
-
-                # Show the first directory with modified files
-                # FIXME: But why just the first one? Shouldn't we show
-                # all? Or at least more? With a maximum limit?
-                else:
-                    directory = re.sub("/[^/]+$", "", lines[1])
-                    commits.append(f"{lines[0]}\n        * {directory}")
-            return commits
-        else:
-            log.debug(errors.strip())
-            log.warning("Unable to check commits in '%s'", self.path)
+        if not output:
             return []
+
+        # Single commit per line in non-verbose mode
+        if not options.verbose:
+            return output.split("\n")
+
+        # In verbose mode commits separated by two empty lines
+        commits = []
+        for commit in re.split("\n\n+", output):
+            lines = commit.split("\n")
+
+            # Use a single line if no files changed (e.g. merges)
+            if len(lines) == 1:
+                commits.append(lines[0])
+
+            # Show the first directory with modified files
+            # FIXME: But why just the first one? Shouldn't we show
+            # all? Or at least more? With a maximum limit?
+            else:
+                directory = re.sub("/[^/]+$", "", lines[1])
+                commits.append(f"{lines[0]}\n        * {directory}")
+        return commits
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
