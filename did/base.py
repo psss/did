@@ -182,7 +182,7 @@ class Config():
             result.append(section)
         return result
 
-    def section(self, section, skip=['type', 'order']):
+    def section(self, section, skip=('type', 'order')):
         """
         Return section items, skip selected (type/order by default)
         """
