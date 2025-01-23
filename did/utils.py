@@ -149,8 +149,7 @@ def load_components(*paths, **kwargs):
                 if continue_on_error:
                     log.info(msg)
                     continue
-                else:
-                    raise ImportError(path)
+                raise ImportError(path)
             if base not in sys.path:
                 sys.path.insert(0, base)
 
