@@ -62,7 +62,6 @@ class Gerrit():
     """
 
     def __init__(self, baseurl, prefix):
-        self.opener = urllib.request.FancyURLopener()
         self.baseurl = baseurl
         self.prefix = prefix
 
@@ -74,19 +73,18 @@ class Gerrit():
 
     def get_query_result(self, url):
         log.debug('url = %s', url)
-        res = self.opener.open(url)
-        if res.getcode() != 200:
-            raise IOError(f'Cannot retrieve list of changes ({res.getcode()})')
+        with urllib.request.urlopen(url) as res:
+            if res.getcode() != 200:
+                raise IOError(f'Cannot retrieve list of changes ({res.getcode()})')
 
-        # see https://code.google.com/p/gerrit/issues/detail?id=2006
-        # for explanation of skipping first four characters
-        json_str = res.read()[4:].strip()
-        try:
-            data = json.loads(json_str)
-        except ValueError:
-            log.exception('Cannot parse JSON data:\n%s', json_str)
-            raise
-        res.close()
+            # see https://code.google.com/p/gerrit/issues/detail?id=2006
+            # for explanation of skipping first four characters
+            json_str = res.read()[4:].strip()
+            try:
+                data = json.loads(json_str)
+            except ValueError:
+                log.exception('Cannot parse JSON data:\n%s', json_str)
+                raise
 
         return data
 
@@ -246,7 +244,7 @@ class SubmitedChanges(GerritUnit):
     def fetch(self):
         log.info("Searching for changes opened by %s", self.user)
         if 'wip' in self.server_features:
-            query_string = 'status:open -is:wip'
+            query_string = 'status:open+-is:wip'
         else:
             query_string = 'status:open'
         self.stats = GerritUnit.fetch(self, query_string,
