@@ -129,7 +129,7 @@ class PublicInbox():
             return mailbox.mbox(tmp.name)
 
     def __get_msgs_from_mbox(self, mbox: mailbox.mbox) -> list[Message]:
-        msgs = list()
+        msgs = []
 
         for msg in _unique_messages(mbox):
             msg_id = msg.id()
@@ -209,7 +209,7 @@ class PublicInbox():
 
         assert (since, until) in self.threads_cache
 
-        found = list()
+        found = []
         for msg in self.threads_cache[(since, until)]:
             msg_id = msg.id()
             if msg_id in found:
