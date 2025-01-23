@@ -94,7 +94,7 @@ def _load_components(
     if not hasattr(package, "__path__"):
         return num_loaded
 
-    prefix = package.__name__ + "."
+    prefix = f"{package.__name__}."
     for _, name, is_pkg in pkgutil.iter_modules(
             path=package.__path__, prefix=prefix):
         if not name.startswith(prefix):
@@ -237,11 +237,11 @@ def item(text, level=0, options=None):
 def pluralize(singular=None):
     """ Naively pluralize words """
     if singular.endswith("y") and not singular.endswith("ay"):
-        plural = singular[:-1] + "ies"
+        plural = f"{singular[:-1]}ies"
     elif singular.endswith("s"):
-        plural = singular + "es"
+        plural = f"{singular}es"
     else:
-        plural = singular + "s"
+        plural = f"{singular}s"
     return plural
 
 
@@ -388,7 +388,7 @@ class Logging():
                 colour = "black"
             # Color the log level, use brackets when coloring off
             if Coloring().enabled():
-                level = color(" " + levelname + " ", "lightwhite", colour)
+                level = color(f" {levelname} ", "lightwhite", colour)
             else:
                 level = f"[{levelname}]"
             return f"{level} {record.getMessage()}"

@@ -23,7 +23,8 @@ url = https://gitlab.com
 login = did.tester
 """
 
-CONFIG = CONFIG_NOTOKEN + """
+CONFIG = f"""
+{CONFIG_NOTOKEN}
 token = vh1tNyke5KzWCynzyAKt
 """
 

@@ -116,7 +116,7 @@ def test_github_issues_commented():
 
 def test_github_invalid_token():
     """ Invalid token """
-    did.base.Config(CONFIG + "\ntoken = bad-token")
+    did.base.Config(f"{CONFIG}\ntoken = bad-token")
     with pytest.raises(did.base.ReportError):
         did.cli.main(INTERVAL)
 

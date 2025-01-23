@@ -8,7 +8,8 @@ import did.cli
 #  Constants
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-CONFIG = did.base.Config.example() + """
+CONFIG = f"""
+{did.base.Config.example()}
 [trac]
 type = trac
 url = https://fedorahosted.org/design-team/rpc

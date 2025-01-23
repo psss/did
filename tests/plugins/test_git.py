@@ -39,24 +39,24 @@ def test_git_smoke():
 def test_git_verbosity():
     """ Brief git stats """
     did.base.Config(CONFIG.format(GIT_PATH))
-    did.cli.main(INTERVAL + " --brief")
-    did.cli.main(INTERVAL + " --verbose")
+    did.cli.main(f"{INTERVAL} --brief")
+    did.cli.main(f"{INTERVAL} --verbose")
 
 
 def test_git_format():
     """ Wiki format """
     did.base.Config(CONFIG.format(GIT_PATH))
-    did.cli.main(INTERVAL + " --format text")
-    did.cli.main(INTERVAL + " --format wiki")
+    did.cli.main(f"{INTERVAL} --format text")
+    did.cli.main(f"{INTERVAL} --format wiki")
 
 
 def test_git_team():
     """ Team report """
     emails = " --email psplicha@redhat.com,cward@redhat.com"
     did.base.Config(CONFIG.format(GIT_PATH))
-    did.cli.main(INTERVAL + emails)
-    did.cli.main(INTERVAL + emails + "--total")
-    did.cli.main(INTERVAL + emails + "--merge")
+    did.cli.main(f"{INTERVAL} {emails}")
+    did.cli.main(f"{INTERVAL} {emails} --total")
+    did.cli.main(f"{INTERVAL} {emails} --merge")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,7 +75,7 @@ def test_git_regular():
 def test_git_verbose():
     """ Verbose git stats """
     did.base.Config(CONFIG.format(GIT_PATH))
-    stats = did.cli.main(INTERVAL + " --verbose")[0][0].stats[0].stats[0].stats
+    stats = did.cli.main(f"{INTERVAL} --verbose")[0][0].stats[0].stats[0].stats
     assert any(["tests/plugins" in stat for stat in stats])
 
 

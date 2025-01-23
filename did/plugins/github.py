@@ -91,7 +91,7 @@ class GitHub():
     def search(self, query):
         """ Perform GitHub query """
         result = []
-        url = self.url + "/" + query + self.filter + f"&per_page={PER_PAGE}"
+        url = f"{self.url}/{query}{self.filter}&per_page={PER_PAGE}"
 
         while True:
             # Fetch the query
@@ -320,21 +320,21 @@ class GitHubStats(StatsGroup):
                 option=f"{option}-issues-created", parent=self,
                 name=f"Issues created on {option}"),
             IssueCommented(
-                option=option + "-issues-commented", parent=self,
+                option=f"{option}-issues-commented", parent=self,
                 name=f"Issues commented on {option}"),
             IssuesClosed(
-                option=option + "-issues-closed", parent=self,
+                option=f"{option}-issues-closed", parent=self,
                 name=f"Issues closed on {option}"),
             PullRequestsCreated(
-                option=option + "-pull-requests-created", parent=self,
+                option=f"{option}-pull-requests-created", parent=self,
                 name=f"Pull requests created on {option}"),
             PullRequestsCommented(
-                option=option + "-pull-requests-commented", parent=self,
+                option=f"{option}-pull-requests-commented", parent=self,
                 name=f"Pull requests commented on {option}"),
             PullRequestsClosed(
-                option=option + "-pull-requests-closed", parent=self,
+                option=f"{option}-pull-requests-closed", parent=self,
                 name=f"Pull requests closed on {option}"),
             PullRequestsReviewed(
-                option=option + "-pull-requests-reviewed", parent=self,
+                option=f"{option}-pull-requests-reviewed", parent=self,
                 name=f"Pull requests reviewed on {option}"),
             ]

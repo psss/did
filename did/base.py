@@ -210,7 +210,7 @@ class Config():
             filepath, filename = os.path.split(matched.groups()[0])
             if filepath:
                 directory = filepath
-        return directory.rstrip("/") + "/" + filename
+        return os.path.join(directory.rstrip("/"), filename)
 
     @staticmethod
     def example():

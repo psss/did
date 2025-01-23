@@ -162,5 +162,5 @@ class GitStats(StatsGroup):
                         )
             else:
                 self.stats.append(GitCommits(
-                    option=option + "-" + repo, parent=self, path=path,
+                    option=f"{option}-{repo}", parent=self, path=path,
                     name=f"Work on {repo}"))

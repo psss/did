@@ -212,7 +212,7 @@ class TracStats(StatsGroup):
         if "url" not in config:
             raise ReportError(f"No trac url set in the [{option}] section")
         self.url = re.sub("/rpc$", "", config["url"])
-        self.proxy = xmlrpc.client.ServerProxy(self.url + "/rpc")
+        self.proxy = xmlrpc.client.ServerProxy(f"{self.url}/rpc")
         # Make sure we have prefix set
         if "prefix" not in config:
             raise ReportError(f"No prefix set in the [{option}] section")

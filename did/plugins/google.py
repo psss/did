@@ -233,8 +233,8 @@ class GoogleStatsBase(Stats):
         super(GoogleStatsBase, self).__init__(
             option=option, name=name, parent=parent)
         try:
-            self.since = self.options.since.datetime.isoformat() + "Z"
-            self.until = self.options.until.datetime.isoformat() + "Z"
+            self.since = f"{self.options.since.datetime.isoformat()}Z"
+            self.until = f"{self.options.until.datetime.isoformat()}Z"
         except AttributeError:
             log.debug("Failed to initialize time range, skipping")
         self._events = None
@@ -326,9 +326,9 @@ class GoogleStatsGroup(StatsGroup):
 
         self.stats = [
             GoogleEventsOrganized(
-                option=option + "-events-organized", parent=self),
+                option=f"{option}-events-organized", parent=self),
             GoogleEventsAttended(
-                option=option + "-events-attended", parent=self),
+                option=f"{option}-events-attended", parent=self),
             GoogleTasksCompleted(
-                option=option + "-tasks-completed", parent=self),
+                option=f"{option}-tasks-completed", parent=self),
             ]

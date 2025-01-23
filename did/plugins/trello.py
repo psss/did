@@ -318,7 +318,7 @@ class TrelloStatsGroup(StatsGroup):
                 self.stats.append(filter_map[filt_group][filt](
                     trello=trello,
                     filt=filt,
-                    option=option + "-" + filt,
+                    option=f"{option}-{filt}",
                     parent=self))
 
     @property

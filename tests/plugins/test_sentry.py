@@ -16,10 +16,15 @@ url = https://sentry.io/api/0/
 organization = did-tester
 """
 
-BAD_TOKEN_CONFIG = BASIC_CONFIG + "\ntoken = bad-token"
+BAD_TOKEN_CONFIG = f"""
+{BASIC_CONFIG}
+token = bad-token
+"""
 # test token for <the.did.tester@gmail.com>
-OK_CONFIG = BASIC_CONFIG + "\ntoken = " + \
-    "40163646c3aa42d898674d836a1f17595217ccf5f50c409fbd343be72be351b0"
+OK_CONFIG = f"""
+{BASIC_CONFIG}
+token = 40163646c3aa42d898674d836a1f17595217ccf5f50c409fbd343be72be351b0
+"""
 
 # Three issues should be present
 INTERVAL = "--since 2023-01-20 --until 2023-01-20"

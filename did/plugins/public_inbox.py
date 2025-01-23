@@ -298,6 +298,6 @@ class PublicInboxStats(StatsGroup):
         self.public_inbox = PublicInbox(self.parent, self.user, self.url,
                                         timeout=config.get("timeout"))
         self.stats = [
-            ThreadsStarted(option=option + "-started", parent=self),
-            ThreadsInvolved(option=option + "-involved", parent=self),
+            ThreadsStarted(option=f"{option}-started", parent=self),
+            ThreadsInvolved(option=f"{option}-involved", parent=self),
             ]
