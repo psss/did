@@ -47,9 +47,9 @@ class Stats():
             line.strip() for line in self.__doc__.split("\n")
             if line.strip()][0]
 
-    def add_option(self, group):
+    def add_option(self, parser):
         """ Add option for self to the parser group object. """
-        group.add_argument(f"--{self.option}", action="store_true", help=self.name)
+        parser.add_argument(f"--{self.option}", action="store_true", help=self.name)
 
     def enabled(self):
         """ Check whether we're enabled (or if parent is). """
@@ -157,10 +157,10 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
         for stat in self.stats:
             stat.show()
 
-    def merge(self, children):
+    def merge(self, other):
         """ Merge all children stats. """
-        for this, other in zip(self.stats, children.stats):
-            this.merge(other)
+        for this, other_stats in zip(self.stats, other.stats):
+            this.merge(other_stats)
 
     def fetch(self):
         """ Stats groups do not fetch anything """
