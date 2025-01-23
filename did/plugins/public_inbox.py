@@ -143,8 +143,8 @@ class PublicInbox():
 
         return msgs
 
-    def __fetch_thread_root(self, msg: Message) -> Message:
-        msg_id = msg.id()
+    def __fetch_thread_root(self, initial_msg: Message) -> Message:
+        msg_id = initial_msg.id()
         url = self.__get_url(f"/all/{msg_id}/t.mbox.gz")
 
         log.debug("Fetching message %s thread (%s)", msg_id, url)

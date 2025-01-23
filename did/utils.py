@@ -393,7 +393,7 @@ class Logging():
             return f"{level} {record.getMessage()}"
 
     @staticmethod
-    def _create_logger(name='did', level=None):
+    def _create_logger(name='did'):
         """ Create did logger """
         # Create logger, handler and formatter
         logger = logging.getLogger(name)

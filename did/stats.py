@@ -157,9 +157,9 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
         for stat in self.stats:
             stat.show()
 
-    def merge(self, other):
+    def merge(self, children):
         """ Merge all children stats. """
-        for this, other in zip(self.stats, other.stats):
+        for this, other in zip(self.stats, children.stats):
             this.merge(other)
 
     def fetch(self):
@@ -266,6 +266,6 @@ class EmptyStatsGroup(StatsGroup):
 
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
-        for opt, name in sorted(did.base.Config().section(option)):
+        for opt, opt_name in sorted(did.base.Config().section(option)):
             self.stats.append(
-                EmptyStats(f"{option}-{opt}", name, parent=self))
+                EmptyStats(f"{option}-{opt}", opt_name, parent=self))
