@@ -204,8 +204,7 @@ class UserStats(StatsGroup):
             if type_ == 'items':
                 if items_created:
                     continue
-                else:
-                    items_created = True
+                items_created = True
 
             # Some plugins (like public-inbox) need to have underscores
             # in their names to follow python modules conventions, but
