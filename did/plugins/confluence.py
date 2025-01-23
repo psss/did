@@ -185,6 +185,25 @@ class PageCreated(Stats):
             ]
 
 
+class PageModified(Stats):
+    """ Modified pages """
+
+    def fetch(self):
+        log.info("Searching for pages modified by %s", self.user)
+        query = (
+            f"type=page AND contributor = '{self.user.login}' "
+            f"AND lastmodified >= {self.options.since} "
+            f"AND lastmodified < {self.options.until}")
+        result = Confluence.search(query, self)
+        self.stats = [
+            ConfluencePage(
+                page,
+                self.parent.url,
+                self.options.format
+                ) for page in result
+            ]
+
+
 class CommentAdded(Stats):
     def fetch(self):
         log.info("Searching for comments added by %s", self.user)
@@ -298,6 +317,10 @@ class ConfluenceStats(StatsGroup):
                 option=f"{option}-pages",
                 parent=self,
                 name=f"Pages created in {option}"),
+            PageModified(
+                option=f"{option}-pages-updated",
+                parent=self,
+                name=f"Pages updated in {option}"),
             CommentAdded(
                 option=f"{option}-comments",
                 parent=self,
