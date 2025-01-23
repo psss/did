@@ -159,7 +159,7 @@ class Options():
             header = f"{header}\n{'=' * len(header)}"
         else:
             # In markdown no trailing punctuation is allowed in headings
-            header = header + "."
+            header = f"{header}."
 
         # Finito
         log.debug("Gathered options:")

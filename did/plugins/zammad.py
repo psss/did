@@ -45,7 +45,7 @@ class Zammad():
 
     def search(self, query):
         """ Perform Zammad query """
-        url = self.url + "/" + query
+        url = f"{self.url}/{query}"
         log.debug("Zammad query: %s", url)
         try:
             request = urllib.request.Request(url, headers=self.headers)

@@ -23,7 +23,8 @@ Notes:
 * Optional parameter ``ssl_verify`` can be used to enable/disable
   SSL verification (default: true)
 * ``auth_url`` parameter is optional. If not provided,
-  ``url + "/step-auth-gss"`` will be used for authentication.
+  ``/step-auth-gss`` endpoint on ``url`` will be used
+  for authentication.
 * ``auth_type`` parameter is optional, default value is ``gss``.
 * ``auth_username``, ``auth_password`` and ``auth_password_file`` are
   only valid for basic authentication, ``auth_password`` or
@@ -222,7 +223,7 @@ class ConfluenceStats(StatsGroup):
         if "auth_url" in config:
             self.auth_url = config["auth_url"]
         else:
-            self.auth_url = self.url + "/step-auth-gss"
+            self.auth_url = f"{self.url}/step-auth-gss"
         # Authentication type
         if "auth_type" in config:
             if config["auth_type"] not in AUTH_TYPES:

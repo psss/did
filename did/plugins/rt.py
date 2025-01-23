@@ -148,6 +148,6 @@ class RequestTrackerStats(StatsGroup):
         self.request_tracker = RequestTracker(parent=self)
         # Construct the list of stats
         self.stats = [
-            ReportedTickets(option=option + "-reported", parent=self),
-            ResolvedTickets(option=option + "-resolved", parent=self),
+            ReportedTickets(option=f"{option}-reported", parent=self),
+            ResolvedTickets(option=f"{option}-resolved", parent=self),
             ]

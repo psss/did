@@ -91,12 +91,12 @@ class NitrateStats(StatsGroup):
         StatsGroup.__init__(self, option, name, parent, user)
         self._cases = self._copies = None
         self.stats = [
-            TestPlans(option=option + "-plans", parent=self),
-            TestRuns(option=option + "-runs", parent=self),
-            AutomatedCases(option=option + "-automated", parent=self),
-            ManualCases(option=option + "-manual", parent=self),
-            AutoproposedCases(option=option + "-proposed", parent=self),
-            CopiedCases(option=option + "-copied", parent=self),
+            TestPlans(option=f"{option}-plans", parent=self),
+            TestRuns(option=f"{option}-runs", parent=self),
+            AutomatedCases(option=f"{option}-automated", parent=self),
+            ManualCases(option=f"{option}-manual", parent=self),
+            AutoproposedCases(option=f"{option}-proposed", parent=self),
+            CopiedCases(option=f"{option}-copied", parent=self),
             ]
 
     @property

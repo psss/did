@@ -264,7 +264,7 @@ class WIPChanges(GerritUnit):
         if 'wip' not in self.server_features:
             log.debug("WIP reviews are not supported by this server")
             return []
-        self.stats = GerritUnit.fetch(self, 'status:open is:wip',
+        self.stats = GerritUnit.fetch(self, 'status:open+is:wip',
                                       limit_since=True)
         log.debug("self.stats = %s", self.stats)
 

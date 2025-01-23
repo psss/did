@@ -680,13 +680,13 @@ class BugzillaStats(StatsGroup):
         self.bugzilla = Bugzilla(parent=self)
         # Construct the list of stats
         self.stats = [
-            FiledBugs(option=option + "-filed", parent=self),
-            PatchedBugs(option=option + "-patched", parent=self),
-            PostedBugs(option=option + "-posted", parent=self),
-            FixedBugs(option=option + "-fixed", parent=self),
-            ReturnedBugs(option=option + "-returned", parent=self),
-            VerifiedBugs(option=option + "-verified", parent=self),
-            CommentedBugs(option=option + "-commented", parent=self),
-            SubscribedBugs(option=option + "-subscribed", parent=self),
-            ClosedBugs(option=option + "-closed", parent=self),
+            FiledBugs(option=f"{option}-filed", parent=self),
+            PatchedBugs(option=f"{option}-patched", parent=self),
+            PostedBugs(option=f"{option}-posted", parent=self),
+            FixedBugs(option=f"{option}-fixed", parent=self),
+            ReturnedBugs(option=f"{option}-returned", parent=self),
+            VerifiedBugs(option=f"{option}-verified", parent=self),
+            CommentedBugs(option=f"{option}-commented", parent=self),
+            SubscribedBugs(option=f"{option}-subscribed", parent=self),
+            ClosedBugs(option=f"{option}-closed", parent=self),
             ]
