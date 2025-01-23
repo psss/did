@@ -304,7 +304,7 @@ class JiraStats(StatsGroup):
                 self.auth_password = config["auth_password"]
             elif "auth_password_file" in config:
                 file_path = os.path.expanduser(config["auth_password_file"])
-                with open(file_path) as password_file:
+                with open(file_path, encoding="utf-8") as password_file:
                     self.auth_password = password_file.read().strip()
             else:
                 raise ReportError(
