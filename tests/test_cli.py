@@ -17,7 +17,9 @@ import did.utils
 # Prepare path and config examples
 PATH = os.path.dirname(os.path.realpath(__file__))
 MINIMAL = did.base.Config.example()
-EXAMPLE = "".join(open(os.path.join(PATH, "..", "examples", "config")).readlines())
+EXAMPLE = ""
+with open(os.path.join(PATH, "..", "examples", "config"), encoding="utf-8") as example:
+    EXAMPLE = "".join(example.readlines())
 # Substitute example git paths for real life directories
 EXAMPLE = re.sub(r"\S+/git/[a-z]+", PATH, EXAMPLE)
 

@@ -5,7 +5,7 @@ import re
 from setuptools import setup
 
 # Parse version and release from the spec file
-with open('did.spec') as specfile:
+with open('did.spec', encoding="utf-8") as specfile:
     lines = "\n".join(line.rstrip() for line in specfile)
     version = re.search('Version: (.+)', lines).group(1).rstrip()
     release = re.search('Release: (\\d+)', lines).group(1).rstrip()
@@ -33,7 +33,7 @@ extras_require['all'] = [
     for dependency in extra]
 
 # Prepare the long description from readme
-with open('README.rst') as readme:
+with open('README.rst', encoding="utf-8") as readme:
     description = readme.read()
 
 setup(
