@@ -101,7 +101,7 @@ class Trac():
         Return relevant who-did-what logs from the ticket history
         """
         for event in self.changelog:
-            when, who, what, old, new, ignore = event
+            when, who, what, old, new, _ignore = event
             if (when >= self.options.since.date and
                     when <= self.options.until.date):
                 if user is None or who.startswith(user.login):
@@ -109,7 +109,7 @@ class Trac():
 
     def accepted(self, user):
         """ True if ticket was accepted in given time frame """
-        for who, what, old, new in self.history(user):
+        for _who, what, _old, new in self.history(user):
             if what == "status" and new == "accepted":
                 return True
         return False
@@ -118,14 +118,14 @@ class Trac():
         """
         True if the user commented the ticket in given time frame
         """
-        for who, what, old, new in self.history(user):
+        for _who, what, _old, new in self.history(user):
             if (what == "comment" or what == "description") and new != "":
                 return True
         return False
 
     def closed(self):
         """ True if ticket was closed in given time frame """
-        for who, what, old, new in self.history():
+        for _who, what, _old, new in self.history():
             if what == "status" and new == "closed":
                 return True
         return False
