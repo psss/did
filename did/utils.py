@@ -203,10 +203,9 @@ def strtobool(val):
     val = val.lower()
     if val in ('y', 'yes', 't', 'true', 'on', '1'):
         return 1
-    elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+    if val in ('n', 'no', 'f', 'false', 'off', '0'):
         return 0
-    else:
-        raise ValueError(f"invalid truth value {val!r}")
+    raise ValueError(f"invalid truth value {val!r}")
 
 
 def item(text, level=0, options=None):
@@ -288,11 +287,10 @@ def listed(items, singular=None, plural=None, maximum=None, quote=""):
                 more += f" {singular if rest == 1 else plural}"
             items.append(f"{rest}{more}")
 
-    # For two and more items use 'and' instead of the last comma
     if len(items) < 2:
         return "".join(items)
-    else:
-        return ", ".join(items[0:-2] + [" and ".join(items[-2:])])
+    # For two and more items use 'and' instead of the last comma
+    return ", ".join(items[0:-2] + [" and ".join(items[-2:])])
 
 
 def split(values, separator=re.compile("[ ,]+")):

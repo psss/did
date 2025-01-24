@@ -145,15 +145,15 @@ class Bug():
         """ Consistent identifier and summary for displaying """
         if self.options.format == "wiki":
             return f"<<Bug({self.id})>> - {self.summary}"
-        elif self.options.format == "markdown":
+        if self.options.format == "markdown":
             link = self.parent.url.replace("xmlrpc.cgi", "show_bug.cgi?id=")
             return (
                 f"[{self.prefix}#{str(self.id)}]"
                 f"({link}{str(self.id)})"
                 f" - {self.summary}"
                 )
-        else:
-            return f"{self.prefix}#{str(self.id).rjust(7, "0")} - {self.summary}"
+        # plain text format
+        return f"{self.prefix}#{str(self.id).rjust(7, "0")} - {self.summary}"
 
     def __eq__(self, other):
         """ Compare bugs by their id """

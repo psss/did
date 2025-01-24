@@ -163,8 +163,8 @@ class Issue():
         label = f"{self.owner}/{self.project}#{str(self.id).zfill(PADDING)}"
         if self.options.format == "markdown":
             return f"[{label}]({self.data["html_url"]}) - {self.data["title"].strip()}"
-        else:
-            return f"{label} - {self.data["title"]}"
+        # plain text format
+        return f"{label} - {self.data["title"]}"
 
     def __eq__(self, other):
         """ Equality comparison """
