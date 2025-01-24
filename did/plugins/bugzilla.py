@@ -184,7 +184,7 @@ class Bug():
 
     def verified(self):
         """ True if bug was verified in given time frame """
-        for who, record in self.logs:
+        for _who, record in self.logs:
             if record["field_name"] == "status" \
                     and record["added"] == "VERIFIED":
                 return True
@@ -250,7 +250,7 @@ class Bug():
 
     def posted(self):
         """ True if bug was moved to POST in given time frame """
-        for who, record in self.logs:
+        for _who, record in self.logs:
             if record["field_name"] == "status" and record["added"] == "POST":
                 return True
         return False
@@ -277,7 +277,7 @@ class Bug():
 
     def subscribed(self, user):
         """ True if CC was added in given time frame """
-        for who, record in self.logs:
+        for _who, record in self.logs:
             if (record["field_name"] == "cc" and
                     user.email in record["added"]):
                 return True
