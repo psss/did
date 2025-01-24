@@ -102,8 +102,8 @@ class Issue():
         label = f"{self.project}#{self.identifier}"
         if self.options.format == "markdown":
             return f"[{label}]({self.data["full_url"]}) - {self.title}"
-        else:
-            return f'{label} - {self.title}'
+        # plain text
+        return f'{label} - {self.title}'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats

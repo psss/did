@@ -291,11 +291,10 @@ def listed(items, singular=None, plural=None, maximum=None, quote=""):
                 more += f" {singular if rest == 1 else plural}"
             items.append(f"{rest}{more}")
 
-    # For two and more items use 'and' instead of the last comma
     if len(items) < 2:
         return "".join(items)
-    else:
-        return ", ".join(items[0:-2] + [" and ".join(items[-2:])])
+    # For two and more items use 'and' instead of the last comma
+    return ", ".join(items[0:-2] + [" and ".join(items[-2:])])
 
 
 def split(values, separator=re.compile("[ ,]+")):

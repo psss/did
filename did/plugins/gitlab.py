@@ -171,11 +171,11 @@ class GitLab():
         return self.project_issues[project_id]
 
     def user_events(self, user_id, since, until):
-        if GITLAB_API >= 4:
-            query = f'users/{user_id}/events?after={since - 1}&before={until}'
-            return self._get_gitlab_api_list(query, since, True)
-        else:
+        if GITLAB_API < 4:
+            # Not supported
             return []
+        query = f'users/{user_id}/events?after={since - 1}&before={until}'
+        return self._get_gitlab_api_list(query, since, True)
 
     def search(self, user, since, until, target_type, action_name):
         """ Perform GitLab query """
@@ -229,12 +229,12 @@ class Issue():
                 str(
                     self.id)}"
             return f"[{label}]({href}) - {self.title}"
-        else:
-            return f"{
-                self.project['path_with_namespace']}#{
-                str(
-                    self.id).zfill(PADDING)} - {
-                self.title}"
+        # plain text
+        return f"{
+            self.project['path_with_namespace']}#{
+            str(
+                self.id).zfill(PADDING)} - {
+            self.title}"
 
 
 class MergeRequest(Issue):
@@ -257,12 +257,11 @@ class Note(Issue):
             if issue is not None:
                 return issue['iid']
             return 'unknown'
-        elif self.data['note']['noteable_type'] == 'MergeRequest':
+        if self.data['note']['noteable_type'] == 'MergeRequest':
             return self.gitlabapi.get_project_mr(
                 self.data['project_id'],
                 self.data['note']['noteable_id'])['iid']
-        else:
-            return "unknown"
+        return "unknown"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

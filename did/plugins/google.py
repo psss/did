@@ -153,14 +153,15 @@ class Event():
 
     def __str__(self):
         """ String representation """
-        date = (
-            self.start["date"] if "date" in self.start
-            else self.start["dateTime"][:10]
-            )
         if self._format == "markdown":
+            date = (
+                self.start["date"]
+                if "date" in self.start
+                else self.start["dateTime"][:10]
+                )
             return f"{date} - *{self.summary}*"
-        else:
-            return self.summary
+        # plain text
+        return self.summary
 
     def __getitem__(self, name):
         return self.__dict__.get(name, None)
