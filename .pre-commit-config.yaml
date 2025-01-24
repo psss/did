@@ -51,14 +51,10 @@ repos:
           - --pytest-test-first
         exclude: disable_test_trac.py
 
-  - repo: local
+  - repo: https://github.com/pylint-dev/pylint
+    rev: "v3.3.3"
     hooks:
       - id: pylint
-        name: pylint
-        entry: pylint
-        language: system
-        types: [python]
-        require_serial: true
         args:
           [
             "-rn", # Only display messages
