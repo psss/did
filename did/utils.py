@@ -67,7 +67,7 @@ def _import(path, continue_on_error):
     try:
         # importlib is available in stdlib from 2.7+
         return importlib.import_module(path)
-    except Exception as ex:
+    except ImportError as ex:
         log.info(ex)
         if not continue_on_error:
             raise
