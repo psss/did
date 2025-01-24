@@ -115,7 +115,8 @@ class Config():
         """ Custom plugins """
         try:
             return self.parser.get("general", "plugins")
-        except BaseException:
+        except configparser.Error:
+            # No custom plugin listed within the configuration
             return None
 
     @property
