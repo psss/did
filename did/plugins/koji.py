@@ -26,9 +26,9 @@ from did.utils import log
 class KojiBuilds(Stats):
     """ Finished koji builds """
 
-    def __init__(self, option, name=None, parent=None, user=None, options=None,
+    def __init__(self, *, option, name=None, parent=None, user=None, options=None,
                  server=None, userinfo=None):
-        Stats.__init__(self, option, name, parent, userinfo, options)
+        Stats.__init__(self, option, name, parent, user=userinfo, options=options)
         self.server = server
         self.userinfo = userinfo
 

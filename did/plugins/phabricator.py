@@ -94,7 +94,7 @@ class Phabricator:
         return self._login_phids
 
     def search_diffs(
-            self,
+            self, *,
             since: datetime.date = None,
             until: datetime.date = None,
             author_phids: List[str] = None,

@@ -66,7 +66,7 @@ TIMEOUT = 60
 class GitHub():
     """ GitHub Investigator """
 
-    def __init__(self, url, token=None, user=None,
+    def __init__(self, *, url, token=None, user=None,
                  org=None, repo=None, timeout=TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")

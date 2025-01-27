@@ -121,7 +121,7 @@ class GerritUnit(Stats):
     """
 
     def __init__(
-            self, option, name=None, parent=None, base_url=None, prefix=None):
+            self, *, option, name=None, parent=None, base_url=None, prefix=None):
         self.base_url = base_url if base_url is not None else parent.repo_url
         self.prefix = prefix if prefix is not None else parent.config['prefix']
         self.repo = Gerrit(baseurl=self.base_url, prefix=self.prefix)
