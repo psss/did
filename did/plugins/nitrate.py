@@ -119,10 +119,9 @@ class NitrateStats(StatsGroup):
         import nitrate
         if self._copies is None:
             log.info("Searching for cases copied by %s", self.user)
-            self._copies = [
-                case for case in nitrate.TestCase.search(
-                    author__email=self.user.email,
-                    create_date__gt=str(self.options.since),
-                    create_date__lt=str(self.options.until),
-                    tag__name=TEST_CASE_COPY_TAG)]
+            self._copies = list(nitrate.TestCase.search(
+                author__email=self.user.email,
+                create_date__gt=str(self.options.since),
+                create_date__lt=str(self.options.until),
+                tag__name=TEST_CASE_COPY_TAG))
         return self._copies
