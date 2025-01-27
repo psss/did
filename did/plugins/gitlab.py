@@ -177,7 +177,7 @@ class GitLab():
         query = f'users/{user_id}/events?after={since - 1}&before={until}'
         return self._get_gitlab_api_list(query, since, True)
 
-    def search(self, user, since, until, target_type, action_name):
+    def search(self, user, since, until, *, target_type, action_name):
         """ Perform GitLab query """
         if not self.user:
             self.user = self.get_user(user)
@@ -275,7 +275,8 @@ class IssuesCreated(Stats):
         log.info("Searching for Issues created by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
-            'Issue', 'opened')
+            target_type='Issue',
+            action_name='opened')
         self.stats = [
             Issue(issue, self.parent)
             for issue in results]
@@ -288,7 +289,8 @@ class IssuesCommented(Stats):
         log.info("Searching for Issues commented by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
-            'Note', 'commented on')
+            target_type='Note',
+            action_name='commented on')
         self.stats = [
             Note(issue, self.parent)
             for issue in results
@@ -302,7 +304,8 @@ class IssuesClosed(Stats):
         log.info("Searching for Issues closed by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
-            'Issue', 'closed')
+            target_type='Issue',
+            action_name='closed')
         self.stats = [
             Issue(issue, self.parent)
             for issue in results]
@@ -315,7 +318,8 @@ class MergeRequestsCreated(Stats):
         log.info("Searching for Merge requests created by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
-            'MergeRequest', 'opened')
+            target_type='MergeRequest',
+            action_name='opened')
         self.stats = [
             MergeRequest(mr, self.parent)
             for mr in results]
@@ -328,7 +332,8 @@ class MergeRequestsCommented(Stats):
         log.info("Searching for MergeRequests commented by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
-            'Note', 'commented on')
+            target_type='Note',
+            action_name='commented on')
         self.stats = [
             Note(issue, self.parent)
             for issue in results
@@ -342,7 +347,8 @@ class MergeRequestsClosed(Stats):
         log.info("Searching for Merge requests closed by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
-            'MergeRequest', 'accepted')
+            target_type='MergeRequest',
+            action_name='accepted')
         self.stats = [
             MergeRequest(mr, self.parent)
             for mr in results]
@@ -355,7 +361,8 @@ class MergeRequestsApproved(Stats):
         log.info("Searching for Merge requests approved by %s", self.user)
         results = self.parent.gitlab.search(
             self.user.login, self.options.since, self.options.until,
-            'MergeRequest', 'approved')
+            target_type='MergeRequest',
+            action_name='approved')
         self.stats = [
             MergeRequest(mr, self.parent)
             for mr in results]

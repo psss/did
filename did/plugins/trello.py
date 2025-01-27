@@ -61,7 +61,7 @@ DEFAULT_FILTERS = [
 class TrelloStats(Stats):
     """ Trello stats """
 
-    def __init__(self, trello, filt, option, name=None, parent=None):
+    def __init__(self, *, trello, filt, option, name=None, parent=None):
         super().__init__(option=option, name=name, parent=parent)
         self.options = parent.options
         self.filt = filt

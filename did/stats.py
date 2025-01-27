@@ -23,7 +23,7 @@ class Stats():
     stats = None
 
     def __init__(
-            self, option, name=None, parent=None, user=None, options=None):
+            self, /, option, name=None, parent=None, user=None, *, options=None):
         """ Set the name, indent level and initialize data.  """
         self.option = option.replace(" ", "-")
         self.dest = self.option.replace("-", "_")
