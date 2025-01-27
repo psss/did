@@ -576,9 +576,7 @@ class PatchedBugs(Stats):
             "o5": "changedto",
             "v5": "Patch",
             }
-        self.stats += [
-            bug for bug in self.parent.bugzilla.search(
-                query, options=self.options)]
+        self.stats += list(self.parent.bugzilla.search(query, options=self.options))
 
 
 class CommentedBugs(Stats):
