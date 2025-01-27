@@ -101,7 +101,7 @@ class PublicInbox():
     def _get_message_url(self, msg: Message) -> str:
         return self.__get_url(f"/r/{msg.id()}/")
 
-    def _print_msg(self, options, msg: Message) -> None:
+    def print_msg(self, options, msg: Message) -> None:
         if options.format == 'markdown':
             item(f"[{msg.subject()}]({self._get_message_url(msg)})",
                  level=1,
@@ -246,12 +246,12 @@ class ThreadsStarted(Stats):
             ]
 
     def show(self):
-        if not self._error and not self.stats:
+        if not self.error and not self.stats:
             return
 
         self.header()
         for msg in self.stats:
-            self.parent.public_inbox._print_msg(self.options, msg)
+            self.parent.public_inbox.print_msg(self.options, msg)
 
 
 class ThreadsInvolved(Stats):
@@ -272,12 +272,12 @@ class ThreadsInvolved(Stats):
             ]
 
     def show(self):
-        if not self._error and not self.stats:
+        if not self.error and not self.stats:
             return
 
         self.header()
         for msg in self.stats:
-            self.parent.public_inbox._print_msg(self.options, msg)
+            self.parent.public_inbox.print_msg(self.options, msg)
 
 
 class PublicInboxStats(StatsGroup):

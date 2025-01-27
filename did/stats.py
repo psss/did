@@ -15,7 +15,7 @@ from did.utils import log
 class Stats():
     """ General statistics """
     _name = None
-    _error = None
+    error = None
     _enabled = None
     option = None
     dest = None
@@ -74,7 +74,7 @@ class Stats():
             self.fetch()
         except (xmlrpc.client.Fault, did.base.ConfigError) as error:
             log.error(error)
-            self._error = True
+            self.error = True
             # Raise the exception if debugging
             if not self.options or self.options.debug:
                 raise
@@ -85,12 +85,12 @@ class Stats():
     def header(self):
         """ Show summary header. """
         # Show question mark instead of count when errors encountered
-        count = "? (error encountered)" if self._error else len(self.stats)
+        count = "? (error encountered)" if self.error else len(self.stats)
         utils.item(f"{self.name}: {count}", options=self.options)
 
     def show(self):
         """ Display indented statistics. """
-        if not self._error and not self.stats:
+        if not self.error and not self.stats:
             return
         self.header()
         for stat in self.stats:
@@ -101,8 +101,8 @@ class Stats():
         for other_stat in other.stats:
             if other_stat not in self.stats:
                 self.stats.append(other_stat)
-        if other._error:
-            self._error = True
+        if other.error:
+            self.error = True
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
