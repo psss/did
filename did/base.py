@@ -333,10 +333,9 @@ class Date():
             until = Date("yesterday")
             until.date += delta(days=1)
             period = "yesterday"
-        elif "monday" in argument or "tuesday" in argument or \
-             "wednesday" in argument or "thursday" in argument or \
-             "friday" in argument or "saturday" in argument or \
-             "sunday" in argument:
+        elif any(day in argument for day in (
+                "monday", "tuesday", "wednesday", "thursday",
+                "friday", "saturday", "sunday")):
             today = Date("today")
             since = Date("today")
             until = Date()
