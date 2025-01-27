@@ -121,7 +121,7 @@ class IssuesCreated(Stats):
                 f'&created={self.options.since}..{self.options.until}'),
             pagination='pagination_issues_created',
             result_field='issues_created')]
-        self.stats = sorted(issues, key=lambda i: str(i))
+        self.stats = sorted(issues, key=str)
 
 
 class IssuesClosed(Stats):
@@ -140,7 +140,7 @@ class IssuesClosed(Stats):
             if issue.closed
             and issue.closed < self.options.until.date
             and issue.closed >= self.options.since.date],
-            key=lambda i: str(i))
+            key=str)
 
 
 class PullRequestsCreated(Stats):
@@ -154,7 +154,7 @@ class PullRequestsCreated(Stats):
                 f'status=all&created={self.options.since}..{self.options.until}'),
             pagination='pagination',
             result_field='requests')]
-        self.stats = sorted(issues, key=lambda i: str(i))
+        self.stats = sorted(issues, key=str)
 
 # FIXME: Blocked by https://pagure.io/pagure/issue/4329
 # class PullRequestsClosed(Stats):
