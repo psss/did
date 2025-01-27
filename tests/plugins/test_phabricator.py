@@ -95,6 +95,7 @@ def get_named_stat(options: str):
             assert stat.stats is not None
             return stat.stats
     pytest.fail(reason=f"No stat found with options {options}")
+    return None
 
 
 def expect(key: str) -> List[str]:

@@ -71,6 +71,8 @@ def _import(path, continue_on_error):
         log.info(ex)
         if not continue_on_error:
             raise
+    # it has been asked to continue on error but import failed
+    return None
 
 
 def _load_components(
