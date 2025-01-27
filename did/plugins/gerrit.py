@@ -261,7 +261,7 @@ class WIPChanges(GerritUnit):
         log.info("Searching for WIP changes opened by %s", self.user)
         if 'wip' not in self.server_features:
             log.debug("WIP reviews are not supported by this server")
-            return []
+            return
         self.stats = GerritUnit.fetch(self, 'status:open+is:wip',
                                       limit_since=True)
         log.debug("self.stats = %s", self.stats)
