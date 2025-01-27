@@ -37,7 +37,7 @@ It's also possible to set a timeout, if not specified it defaults to 60 seconds.
 
     timeout = 10
 
-"""  # noqa: W505,E501
+"""  # noqa: W505,E501 # pylint:disable=line-too-long
 
 import json
 import re
