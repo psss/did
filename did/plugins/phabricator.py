@@ -446,7 +446,7 @@ class TransactionEvent:
 
     def __str__(self):
         """ String representation """
-        return f"{self.author_phid} - {self.event_type} - {self._dateModified}"
+        return f"{self.author_phid} - {self.event_type} - {self._date_modified}"
 
     def __hash__(self):
         return hash(self._id)

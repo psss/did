@@ -150,6 +150,8 @@ class Event():
 
     def __str__(self):
         """ String representation """
+        # undefined properties are provided via __getitem__
+        # pylint: disable=E1101
         if self._format == "markdown":
             date = (
                 self.start["date"]
