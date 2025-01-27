@@ -62,8 +62,7 @@ class TrelloStats(Stats):
     """ Trello stats """
 
     def __init__(self, trello, filt, option, name=None, parent=None):
-        super(TrelloStats, self).__init__(
-            option=option, name=name, parent=parent)
+        super().__init__(option=option, name=name, parent=parent)
         self.options = parent.options
         self.filt = filt
         self.trello = trello
@@ -266,8 +265,7 @@ class TrelloStatsGroup(StatsGroup):
 
     def __init__(self, option, name=None, parent=None, user=None):
         name = f"Trello updates for {option}"
-        super(TrelloStatsGroup, self).__init__(
-            option=option, name=name, parent=parent, user=user)
+        super().__init__(option=option, name=name, parent=parent, user=user)
 
         # map appropriate API methods to Classes
         filter_map = {

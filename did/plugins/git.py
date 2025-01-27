@@ -108,8 +108,7 @@ class GitCommits(Stats):
     """ Git commits """
 
     def __init__(self, option, name=None, parent=None, path=None):
-        super(GitCommits, self).__init__(
-            option=option, name=name, parent=parent)
+        super().__init__(option=option, name=name, parent=parent)
         self.path = path
         self.repo = GitRepo(self.path)
 

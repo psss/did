@@ -175,8 +175,7 @@ class UserStats(StatsGroup):
 
     def __init__(self, user=None, options=None, config=None):
         """ Initialize stats objects. """
-        super(UserStats, self).__init__(
-            option="all", user=user, options=options)
+        super().__init__(option="all", user=user, options=options)
         config = config or did.base.Config()
         try:
             self.stats = self.configured_plugins(config)
