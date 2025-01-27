@@ -230,6 +230,55 @@ class ConfluenceStats(StatsGroup):
     # Default order
     order = 600
 
+    def _basic_auth(self, option, config):
+        if "auth_username" not in config:
+            raise ReportError(f"`auth_username` not set in the [{option}] section")
+        self.auth_username = config["auth_username"]
+        if "auth_password" in config:
+            self.auth_password = config["auth_password"]
+        elif "auth_password_file" in config:
+            file_path = os.path.expanduser(config["auth_password_file"])
+            with open(file_path, encoding="utf-8") as password_file:
+                self.auth_password = password_file.read().strip()
+        else:
+            raise ReportError(
+                "`auth_password` or `auth_password_file` must be set "
+                "in the [{option}] section")
+
+    def _token_auth(self, option, config):
+        self.token = get_token(config)
+        if self.token is None:
+            raise ReportError(
+                "The `token` or `token_file` key must be set "
+                f"in the [{option}] section.")
+        if "token_expiration" in config or "token_name" in config:
+            try:
+                self.token_expiration = int(config["token_expiration"])
+                self.token_name = config["token_name"]
+            except KeyError as exc:
+                raise ReportError(
+                    "The ``token_name`` and ``token_expiration`` "
+                    "must be set at the same time in "
+                    f"[{option}] section.") from exc
+            except ValueError as val_err:
+                raise ReportError(
+                    "The ``token_expiration`` must contain number, used in "
+                    f"[{option}] section.") from val_err
+        else:
+            self.token_expiration = self.token_name = None
+
+    def _set_ssl_verification(self, config):
+        # SSL verification
+        if "ssl_verify" in config:
+            try:
+                self.ssl_verify = strtobool(
+                    config["ssl_verify"])
+            except Exception as error:
+                raise ReportError(
+                    f"Error when parsing 'ssl_verify': {error}") from error
+        else:
+            self.ssl_verify = SSL_VERIFY
+
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
         self._session = None
@@ -254,19 +303,7 @@ class ConfluenceStats(StatsGroup):
             self.auth_type = "gss"
         # Authentication credentials
         if self.auth_type == "basic":
-            if "auth_username" not in config:
-                raise ReportError(f"`auth_username` not set in the [{option}] section")
-            self.auth_username = config["auth_username"]
-            if "auth_password" in config:
-                self.auth_password = config["auth_password"]
-            elif "auth_password_file" in config:
-                file_path = os.path.expanduser(config["auth_password_file"])
-                with open(file_path, encoding="utf-8") as password_file:
-                    self.auth_password = password_file.read().strip()
-            else:
-                raise ReportError(
-                    "`auth_password` or `auth_password_file` must be set "
-                    "in the [{option}] section")
+            self._basic_auth(option, config)
         else:
             if "auth_username" in config:
                 raise ReportError(
@@ -277,37 +314,8 @@ class ConfluenceStats(StatsGroup):
                     "`auth_password` and `auth_password_file` are only valid "
                     f"for basic authentication (section [{option}])")
         if self.auth_type == "token":
-            self.token = get_token(config)
-            if self.token is None:
-                raise ReportError(
-                    "The `token` or `token_file` key must be set "
-                    f"in the [{option}] section.")
-            if "token_expiration" in config or "token_name" in config:
-                try:
-                    self.token_expiration = int(config["token_expiration"])
-                    self.token_name = config["token_name"]
-                except KeyError as exc:
-                    raise ReportError(
-                        "The ``token_name`` and ``token_expiration`` "
-                        "must be set at the same time in "
-                        f"[{option}] section.") from exc
-                except ValueError as val_err:
-                    raise ReportError(
-                        "The ``token_expiration`` must contain number, used in "
-                        f"[{option}] section.") from val_err
-            else:
-                self.token_expiration = self.token_name = None
-        # SSL verification
-        if "ssl_verify" in config:
-            try:
-                self.ssl_verify = strtobool(
-                    config["ssl_verify"])
-            except Exception as error:
-                raise ReportError(
-                    f"Error when parsing 'ssl_verify': {error}") from error
-        else:
-            self.ssl_verify = SSL_VERIFY
-
+            self._token_auth(option, config)
+        self._set_ssl_verification(config)
         self.login = config.get("login", None)
         # Check for custom prefix
         self.prefix = config["prefix"] if "prefix" in config else None

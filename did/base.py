@@ -26,6 +26,16 @@ from did.utils import DEFAULT_SEPARATOR, MAX_WIDTH, log
 #  Constants
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+WEEKDAY_MAP = {
+    "monday": MONDAY(-1),
+    "tuesday": TUESDAY(-1),
+    "wednesday": WEDNESDAY(-1),
+    "thursday": THURSDAY(-1),
+    "friday": FRIDAY(-1),
+    "saturday": SATURDAY(-1),
+    "sunday": SUNDAY(-1),
+    }
+
 # Config file location
 CONFIG = os.path.expanduser("~/.did")
 
@@ -258,140 +268,106 @@ class Date():
         return self.date - timedelta(days=subtrahend)
 
     @staticmethod
-    def this_week():
-        """ Return start and end date of the current week. """
+    def get_week(last):
+        # Return start and end date of the current week.
         since = TODAY + delta(weekday=MONDAY(-1))
         until = since + delta(weeks=1)
-        return Date(since), Date(until)
+        if last:
+            # Return start and end date of the last week instead.
+            since = TODAY + delta(weekday=MONDAY(-2))
+            until = since + delta(weeks=1)
+        period = f"the week {since.strftime('%V')}"
+        return Date(since), Date(until), period
 
     @staticmethod
-    def last_week():
-        """ Return start and end date of the last week. """
-        since = TODAY + delta(weekday=MONDAY(-2))
-        until = since + delta(weeks=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def this_month():
-        """ Return start and end date of this month. """
+    def get_month(last):
+        # Return start and end date of this month.
         since = TODAY + delta(day=1)
         until = since + delta(months=1)
-        return Date(since), Date(until)
+        if last:
+            # Return start and end date of this month.
+            since = TODAY + delta(day=1, months=-1)
+            until = since + delta(months=1)
+        period = since.strftime("%B")
+        return Date(since), Date(until), period
 
     @staticmethod
-    def last_month():
-        """ Return start and end date of this month. """
-        since = TODAY + delta(day=1, months=-1)
-        until = since + delta(months=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def this_quarter():
-        """ Return start and end date of this quarter. """
+    def get_quarter(last):
+        # Return start and end date of this quarter.
         since = TODAY + delta(day=1)
         while since.month % 3 != Config().quarter:
             since -= delta(months=1)
         until = since + delta(months=3)
-        return Date(since), Date(until)
+        period = "this quarter"
+        if last:
+            # Return start and end date of last quarter instead
+            since = since - delta(months=3)
+            until = until - delta(months=3)
+            period = "the last quarter"
+        return Date(since), Date(until), period
 
     @staticmethod
-    def last_quarter():
-        """ Return start and end date of this quarter. """
-        since, until = Date.this_quarter()
-        since = since.date - delta(months=3)
-        until = until.date - delta(months=3)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def this_year():
-        """ Return start and end date of this year """
+    def get_year(last):
+        # Return start and end date of this year
         since = TODAY
         while since.month != 1 or since.day != 1:
             since -= delta(days=1)
         until = since + delta(years=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def last_year():
-        """ Return start and end date of the last year """
-        since, until = Date.this_year()
-        since = since.date - delta(years=1)
-        until = until.date - delta(years=1)
-        return Date(since), Date(until)
+        period = "this year"
+        if last:
+            # Return start and end date of the last year instead
+            since = since - delta(years=1)
+            until = until - delta(years=1)
+            period = "the last year"
+        return Date(since), Date(until), period
 
     @staticmethod
     def period(argument):
         """ Detect desired time period for the argument """
-        since, until, period = None, None, None
-        if "today" in argument:
-            since = Date("today")
-            until = Date("today")
-            until.date += delta(days=1)
-            period = "today"
-        elif "yesterday" in argument:
-            since = Date("yesterday")
-            until = Date("yesterday")
-            until.date += delta(days=1)
-            period = "yesterday"
-        elif any(day in argument for day in (
-                "monday", "tuesday", "wednesday", "thursday",
-                "friday", "saturday", "sunday")):
+        def get_weekday_details(arg):
+            for day, weekday in WEEKDAY_MAP.items():
+                if day in arg:
+                    return weekday, f"the last {day}"
+            return None, None
+
+        def calculate_since_until_for_weekday(weekday):
             today = Date("today")
             since = Date("today")
             until = Date()
-            if "monday" in argument:
-                weekday = MONDAY(-1)
-                period = "the last monday"
-            elif "tuesday" in argument:
-                weekday = TUESDAY(-1)
-                period = "the last tuesday"
-            elif "wednesday" in argument:
-                weekday = WEDNESDAY(-1)
-                period = "the last wednesday"
-            elif "thursday" in argument:
-                weekday = THURSDAY(-1)
-                period = "the last thursday"
-            elif "friday" in argument:
-                weekday = FRIDAY(-1)
-                period = "the last friday"
-            elif "saturday" in argument:
-                weekday = SATURDAY(-1)
-                period = "the last saturday"
-            else:
-                weekday = SUNDAY(-1)
-                period = "the last sunday"
             since.date += delta(weekday=weekday)
             if since.date == today.date:
-                # technically last dayofweek is today, but we want
-                # the one week ago
                 since.date -= delta(days=7)
             until.date = since.date + delta(days=1)
+            return since, until
+
+        since, until, period = None, None, None
+
+        if "today" in argument:
+            since, until = Date("today"), Date("today")
+            until.date += delta(days=1)
+            period = "today"
+
+        elif "yesterday" in argument:
+            since, until = Date("yesterday"), Date("yesterday")
+            until.date += delta(days=1)
+            period = "yesterday"
+
+        elif any(day in argument for day in WEEKDAY_MAP):
+            weekday, period = get_weekday_details(argument)
+            since, until = calculate_since_until_for_weekday(weekday)
+
         elif "year" in argument:
-            if "last" in argument:
-                since, until = Date.last_year()
-                period = "the last year"
-            else:
-                since, until = Date.this_year()
-                period = "this year"
+            since, until, period = Date.get_year("last" in argument)
+
         elif "quarter" in argument:
-            if "last" in argument:
-                since, until = Date.last_quarter()
-                period = "the last quarter"
-            else:
-                since, until = Date.this_quarter()
-                period = "this quarter"
+            since, until, period = Date.get_quarter("last" in argument)
+
         elif "month" in argument:
-            if "last" in argument:
-                since, until = Date.last_month()
-            else:
-                since, until = Date.this_month()
-            period = since.datetime.strftime("%B")
-        else:
-            if "last" in argument:
-                since, until = Date.last_week()
-            else:
-                since, until = Date.this_week()
-            period = f"the week {since.datetime.strftime("%V")}"
+            since, until, period = Date.get_month("last" in argument)
+
+        else:  # Default to week
+            since, until, period = Date.get_week("last" in argument)
+
         return since, until, period
 
 
