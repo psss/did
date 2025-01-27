@@ -92,10 +92,10 @@ class Sentry():
 
     def issues(self, kind, email):
         """ Filter unique issues for given activity type and email """
-        return list(set([
+        return list({
             str(activity.issue)
             for activity in self.activities()
-            if kind == activity.kind and activity.user['email'] == email]))
+            if kind == activity.kind and activity.user['email'] == email})
 
     def _fetch_activities(self):
         """ Get organization activity, handle pagination """

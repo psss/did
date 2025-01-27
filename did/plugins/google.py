@@ -100,10 +100,7 @@ def authorized_http(client_id, client_secret, apps, file=None):
     storage = Storage(credential_path)
     credentials = storage.get()
 
-    scopes = set([
-        f"https://www.googleapis.com/auth/{app}.readonly"
-        for app in apps
-        ])
+    scopes = {f"https://www.googleapis.com/auth/{app}.readonly" for app in apps}
 
     if (not credentials or credentials.invalid
             or not scopes <= credentials.scopes):
