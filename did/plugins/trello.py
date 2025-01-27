@@ -67,6 +67,10 @@ class TrelloStats(Stats):
         self.filt = filt
         self.trello = trello
 
+    def fetch(self):
+        """ Fetch the stats (to be implemented by respective class). """
+        raise NotImplementedError()
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Trello API
