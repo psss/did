@@ -83,9 +83,7 @@ class RedmineStats(StatsGroup):
 
     def __init__(self, option, name=None, parent=None, user=None):
         name = f"Redmine activity on {option}"
-        super(RedmineStats, self).__init__(
-            option=option, name=name, parent=parent, user=user)
-        StatsGroup.__init__(self, option, name, parent, user)
+        super().__init__(option=option, name=name, parent=parent, user=user)
         config = dict(Config().section(option))
         # Check server url
         try:

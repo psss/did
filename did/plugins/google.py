@@ -231,8 +231,7 @@ class GoogleStatsBase(Stats):
     """ Base class containing common code """
 
     def __init__(self, option, name=None, parent=None):
-        super(GoogleStatsBase, self).__init__(
-            option=option, name=name, parent=parent)
+        super().__init__(option=option, name=name, parent=parent)
         try:
             self.since = f"{self.options.since.datetime.isoformat()}Z"
             self.until = f"{self.options.until.datetime.isoformat()}Z"
@@ -304,7 +303,7 @@ class GoogleStatsGroup(StatsGroup):
     order = 50
 
     def __init__(self, option, name=None, parent=None, user=None):
-        super(GoogleStatsGroup, self).__init__(option, name, parent, user)
+        super().__init__(option, name, parent, user)
         config = dict(Config().section(option))
         client_id = get_token(
             config, token_key="client_id", token_file_key="client_id_file")
