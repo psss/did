@@ -142,6 +142,10 @@ class TracCommon(Stats):
         self.parent = parent
         Stats.__init__(self, option, name, parent)
 
+    def fetch(self):
+        """ Fetch the stats (to be implemented by respective class). """
+        raise NotImplementedError()
+
 
 class TracCreated(TracCommon):
     """ Created tickets """

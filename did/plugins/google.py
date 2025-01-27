@@ -260,6 +260,10 @@ class GoogleStatsBase(Stats):
         log.info("NB TASKS %s", len(self._tasks))
         return self._tasks
 
+    def fetch(self):
+        """ Fetch the stats (to be implemented by respective class). """
+        raise NotImplementedError()
+
 
 class GoogleEventsOrganized(GoogleStatsBase):
     """ Events organized """
