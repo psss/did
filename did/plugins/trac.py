@@ -119,7 +119,7 @@ class Trac():
         True if the user commented the ticket in given time frame
         """
         for _who, what, _old, new in self.history(user):
-            if (what == "comment" or what == "description") and new != "":
+            if (what in {"comment", "description"}) and (new != ""):
                 return True
         return False
 
