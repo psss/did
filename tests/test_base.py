@@ -17,7 +17,6 @@ from did.base import Config, ConfigError, get_token
 
 
 def test_Config():
-    from did.base import Config
     assert Config
 
 
@@ -225,8 +224,6 @@ def test_User():
 
 def test_ConfigError():
     ''' Confirm ConfigError exception is defined '''
-    from did.base import ConfigError
-
     try:
         raise ConfigError
     except ConfigError:
