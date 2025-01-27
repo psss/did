@@ -143,7 +143,7 @@ class Options():
             period = "given date range"
 
         # Validate the date range
-        if not opt.since.date < opt.until.date:
+        if opt.since.date >= opt.until.date:
             raise RuntimeError(
                 f"Invalid date range ({opt.since} to {opt.until.date - delta(days=1)})")
 
