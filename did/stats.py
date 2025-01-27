@@ -122,7 +122,7 @@ class StatsGroupPlugin(type):
         if name in StatsGroupPlugin.ignore:
             return
 
-        plugin_name = cls.__module__.split(".")[-1]
+        plugin_name = cls.__module__.rsplit(".", maxsplit=1)[-1]
         registry = StatsGroupPlugin.registry
 
         if plugin_name in registry:
