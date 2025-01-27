@@ -55,11 +55,10 @@ def test_Date_period():
     today = did.base.TODAY
     did.base.TODAY = datetime.date(2015, 10, 3)
     # yesterday
-    for argument in ["yesterday"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-10-02"
-        assert str(until) == "2015-10-03"
-        assert period == "yesterday"
+    since, until, period = Date.period("yesterday")
+    assert str(since) == "2015-10-02"
+    assert str(until) == "2015-10-03"
+    assert period == "yesterday"
     # This week
     for argument in ["", "week", "this week"]:
         since, until, period = Date.period(argument)
@@ -73,35 +72,30 @@ def test_Date_period():
         assert str(until) == "2015-09-28"
         assert period == "the week 39"
     # Last Monday
-    for argument in ["last monday"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-09-28"
-        assert str(until) == "2015-09-29"
-        assert period == "the last monday"
+    since, until, period = Date.period("last monday")
+    assert str(since) == "2015-09-28"
+    assert str(until) == "2015-09-29"
+    assert period == "the last monday"
     # Last Tuesday
-    for argument in ["last tuesday"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-09-29"
-        assert str(until) == "2015-09-30"
-        assert period == "the last tuesday"
+    since, until, period = Date.period("last tuesday")
+    assert str(since) == "2015-09-29"
+    assert str(until) == "2015-09-30"
+    assert period == "the last tuesday"
     # Last Wednesday
-    for argument in ["last wednesday"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-09-30"
-        assert str(until) == "2015-10-01"
-        assert period == "the last wednesday"
+    since, until, period = Date.period("last wednesday")
+    assert str(since) == "2015-09-30"
+    assert str(until) == "2015-10-01"
+    assert period == "the last wednesday"
     # Last Thursday
-    for argument in ["last thursday"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-10-01"
-        assert str(until) == "2015-10-02"
-        assert period == "the last thursday"
+    since, until, period = Date.period("last thursday")
+    assert str(since) == "2015-10-01"
+    assert str(until) == "2015-10-02"
+    assert period == "the last thursday"
     # Last Friday
-    for argument in ["last friday"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-10-02"
-        assert str(until) == "2015-10-03"
-        assert period == "the last friday"
+    since, until, period = Date.period("last friday")
+    assert str(since) == "2015-10-02"
+    assert str(until) == "2015-10-03"
+    assert period == "the last friday"
     # This month
     for argument in ["month", "this month"]:
         since, until, period = Date.period(argument)
@@ -109,11 +103,10 @@ def test_Date_period():
         assert str(until) == "2015-11-01"
         assert period == "October"
     # Last month
-    for argument in ["last month"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-09-01"
-        assert str(until) == "2015-10-01"
-        assert period == "September"
+    since, until, period = Date.period("last month")
+    assert str(since) == "2015-09-01"
+    assert str(until) == "2015-10-01"
+    assert period == "September"
     # This quarter
     for argument in ["quarter", "this quarter"]:
         since, until, period = Date.period(argument)
@@ -121,11 +114,10 @@ def test_Date_period():
         assert str(until) == "2016-01-01"
         assert period == "this quarter"
     # Last quarter
-    for argument in ["last quarter"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-07-01"
-        assert str(until) == "2015-10-01"
-        assert period == "the last quarter"
+    since, until, period = Date.period("last quarter")
+    assert str(since) == "2015-07-01"
+    assert str(until) == "2015-10-01"
+    assert period == "the last quarter"
     # This year
     for argument in ["year", "this year"]:
         since, until, period = Date.period(argument)
@@ -133,11 +125,10 @@ def test_Date_period():
         assert str(until) == "2016-01-01"
         assert period == "this year"
     # Last year
-    for argument in ["last year"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2014-01-01"
-        assert str(until) == "2015-01-01"
-        assert period == "the last year"
+    since, until, period = Date.period("last year")
+    assert str(since) == "2014-01-01"
+    assert str(until) == "2015-01-01"
+    assert period == "the last year"
     # Adding and subtracting days
     assert str(Date('2018-11-29') + 1) == '2018-11-30'
     assert str(Date('2018-11-29') + 2) == '2018-12-01'

@@ -273,6 +273,66 @@ class JiraStats(StatsGroup):
     # Default order
     order = 600
 
+    def _basic_auth(self, option, config):
+        if "auth_username" not in config:
+            raise ReportError(f"`auth_username` not set in the [{option}] section")
+        self.auth_username = config["auth_username"]
+        if "auth_password" in config:
+            self.auth_password = config["auth_password"]
+        elif "auth_password_file" in config:
+            file_path = os.path.expanduser(config["auth_password_file"])
+            with open(file_path, encoding="utf-8") as password_file:
+                self.auth_password = password_file.read().strip()
+        else:
+            raise ReportError(
+                "`auth_password` or `auth_password_file` must be set "
+                f"in the [{option}] section.")
+
+    def _token_auth(self, option, config):
+        self.token = get_token(config)
+        if self.token is None:
+            raise ReportError(
+                "The `token` or `token_file` key must be set "
+                f"in the [{option}] section.")
+        if "token_expiration" in config or "token_name" in config:
+            try:
+                self.token_expiration = int(config["token_expiration"])
+                self.token_name = config["token_name"]
+            except KeyError as key_err:
+                raise ReportError(
+                    "The ``token_name`` and ``token_expiration`` must be set at"
+                    f" the same time in [{option}] section.") from key_err
+            except ValueError as val_err:
+                raise ReportError(
+                    "The ``token_expiration`` must contain number, "
+                    f"used in [{option}] section.") from val_err
+        else:
+            self.token_expiration = self.token_name = None
+
+    def _set_ssl_verification(self, config):
+        # SSL verification
+        if "ssl_verify" in config:
+            try:
+                self.ssl_verify = strtobool(
+                    config["ssl_verify"])
+            except Exception as error:
+                raise ReportError(
+                    f"Error when parsing 'ssl_verify': {error}") from error
+        else:
+            self.ssl_verify = SSL_VERIFY
+
+    def _handle_scriptrunner(self, config):
+        if "use_scriptrunner" in config:
+            self.use_scriptrunner = strtobool(
+                config["use_scriptrunner"])
+        else:
+            self.use_scriptrunner = True
+
+        if not self.use_scriptrunner and not self.project:
+            raise ReportError(
+                "When scriptrunner is disabled with 'use_scriptrunner=False', "
+                "'project' has to be defined for each JIRA section.")
+
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
         self._session = None
@@ -297,40 +357,7 @@ class JiraStats(StatsGroup):
             self.auth_type = "gss"
         # Authentication credentials
         if self.auth_type == "basic":
-            if "auth_username" not in config:
-                raise ReportError(f"`auth_username` not set in the [{option}] section")
-            self.auth_username = config["auth_username"]
-            if "auth_password" in config:
-                self.auth_password = config["auth_password"]
-            elif "auth_password_file" in config:
-                file_path = os.path.expanduser(config["auth_password_file"])
-                with open(file_path, encoding="utf-8") as password_file:
-                    self.auth_password = password_file.read().strip()
-            else:
-                raise ReportError(
-                    "`auth_password` or `auth_password_file` must be set "
-                    f"in the [{option}] section.")
-        # Token
-        elif self.auth_type == "token":
-            self.token = get_token(config)
-            if self.token is None:
-                raise ReportError(
-                    "The `token` or `token_file` key must be set "
-                    f"in the [{option}] section.")
-            if "token_expiration" in config or "token_name" in config:
-                try:
-                    self.token_expiration = int(config["token_expiration"])
-                    self.token_name = config["token_name"]
-                except KeyError as key_err:
-                    raise ReportError(
-                        "The ``token_name`` and ``token_expiration`` must be set at"
-                        f" the same time in [{option}] section.") from key_err
-                except ValueError as val_err:
-                    raise ReportError(
-                        "The ``token_expiration`` must contain number, "
-                        f"used in [{option}] section.") from val_err
-            else:
-                self.token_expiration = self.token_name = None
+            self._basic_auth(option, config)
         else:
             if "auth_username" in config:
                 raise ReportError(
@@ -340,29 +367,14 @@ class JiraStats(StatsGroup):
                 raise ReportError(
                     "`auth_password` and `auth_password_file` are only valid for"
                     f" basic authentication (section [{option}])")
-        # SSL verification
-        if "ssl_verify" in config:
-            try:
-                self.ssl_verify = strtobool(
-                    config["ssl_verify"])
-            except Exception as error:
-                raise ReportError(
-                    f"Error when parsing 'ssl_verify': {error}") from error
-        else:
-            self.ssl_verify = SSL_VERIFY
+        # Token
+        if self.auth_type == "token":
+            self._token_auth(option, config)
+        self._set_ssl_verification(config)
 
         # Make sure we have project set
         self.project = config.get("project", None)
-        if "use_scriptrunner" in config:
-            self.use_scriptrunner = strtobool(
-                config["use_scriptrunner"])
-        else:
-            self.use_scriptrunner = True
-
-        if not self.use_scriptrunner and not self.project:
-            raise ReportError(
-                "When scriptrunner is disabled with 'use_scriptrunner=False', "
-                "'project' has to be defined for each JIRA section.")
+        self._handle_scriptrunner(config)
         self.login = config.get("login", None)
 
         # Check for custom prefix
