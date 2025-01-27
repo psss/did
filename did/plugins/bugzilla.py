@@ -107,12 +107,17 @@ class Bugzilla():
         bugs = dict((bug.id, bug) for bug in result)
         # Fetch bug history
         log.debug("Fetching bug history")
+        # pylint: disable=protected-access
+        # Bugzilla._proxy is considered part of the API
+        # See within https://github.com/python-bugzilla:
+        # python-bugzilla/blob/35c4510314ee62cc4b7dfd50acfbaca0c8baa366/bugzilla/base.py#L535
         result = self.server._proxy.Bug.history({'ids': list(bugs.keys())})
         log.debug(pretty(result))
         history = dict((bug["id"], bug["history"]) for bug in result["bugs"])
         # Fetch bug comments
         log.debug("Fetching bug comments")
         result = self.server._proxy.Bug.comments({'ids': list(bugs.keys())})
+        # pylint: enable=protected-access
         log.debug(pretty(result))
         comments = dict(
             (int(bug), data["comments"])

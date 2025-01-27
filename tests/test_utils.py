@@ -64,6 +64,8 @@ def test_import_success():
 
 def test_find_base():
     top = os.path.dirname(os.path.dirname(did.__file__))
+    # pylint: disable=protected-access
+    # we are testing the protected method _find_base
     assert top == did.utils._find_base(__file__)
     assert top == did.utils._find_base(os.path.dirname(__file__))
 
