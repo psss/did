@@ -468,7 +468,7 @@ def color(text, color=None, background=None, light=False, enabled=True):
         color = color[5:]
     color = color and f";{colors[color]}" or ""
     background = background and f";{colors[background] + 10}" or ""
-    light = light and 1 or 0
+    light = (1 if light else 0)
     # Starting and finishing sequence
     start = f"\033[{light}{color}{background}m"
     finish = "\033[1;m"
