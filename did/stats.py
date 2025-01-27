@@ -118,7 +118,7 @@ class StatsGroupPlugin(type):
         "UserStats",
         ])
 
-    def __init__(cls, name, bases, attrs):
+    def __init__(cls, name, _bases, _attrs):
         if name in StatsGroupPlugin.ignore:
             return
 

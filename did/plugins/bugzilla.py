@@ -81,7 +81,7 @@ class Bugzilla():
                 )
         return self._server
 
-    def search(self, query, options):
+    def search(self, query):
         """ Perform Bugzilla search """
         query["query_format"] = "advanced"
         query["limit"] = "0"
@@ -324,16 +324,14 @@ class VerifiedBugs(Stats):
             "o4": "equals",
             "v4": self.user.email,
             })
-        bugs_by_contact = self.parent.bugzilla.search(
-            query, options=self.options)
+        bugs_by_contact = self.parent.bugzilla.search(query)
         # User changed the bug state
         query.update({
             "f4": "bug_status",
             "o4": "changedby",
             "v4": self.user.email,
             })
-        bugs_by_changer = self.parent.bugzilla.search(
-            query, options=self.options)
+        bugs_by_changer = self.parent.bugzilla.search(query)
         # Merge the two queries
         self.stats = list(set(
             bug for bug in bugs_by_contact + bugs_by_changer
@@ -374,8 +372,7 @@ class ReturnedBugs(Stats):
             "v4": str(self.options.until),
             }
         self.stats = [
-            bug for bug in self.parent.bugzilla.search(
-                query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(query)
             if bug.returned(self.user)]
 
 
@@ -402,7 +399,7 @@ class FiledBugs(Stats):
             "o3": "lessthan",
             "v3": str(self.options.until),
             }
-        self.stats = self.parent.bugzilla.search(query, options=self.options)
+        self.stats = self.parent.bugzilla.search(query)
 
 
 class FixedBugs(Stats):
@@ -435,8 +432,7 @@ class FixedBugs(Stats):
             "v4": str(self.options.until),
             }
         self.stats = [
-            bug for bug in self.parent.bugzilla.search(
-                query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(query)
             if bug.fixed()]
 
 
@@ -475,8 +471,7 @@ class ClosedBugs(Stats):
             "v5": "CLOSED",
             }
         self.stats = [
-            bug for bug in self.parent.bugzilla.search(
-                query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(query)
             if bug.closed(self.user)]
 
 
@@ -509,8 +504,7 @@ class PostedBugs(Stats):
             "v4": str(self.options.until),
             }
         self.stats = [
-            bug for bug in self.parent.bugzilla.search(
-                query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(query)
             if bug.posted()]
 
 
@@ -544,8 +538,7 @@ class PatchedBugs(Stats):
             "v4": str(self.options.until),
             }
         self.stats = [
-            bug for bug in self.parent.bugzilla.search(
-                query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(query)
             if bug.patched(self.user)]
 
         # When user adds the Patch keyword when creating a bug, there is
@@ -576,7 +569,7 @@ class PatchedBugs(Stats):
             "o5": "changedto",
             "v5": "Patch",
             }
-        self.stats += list(self.parent.bugzilla.search(query, options=self.options))
+        self.stats += list(self.parent.bugzilla.search(query))
 
 
 class CommentedBugs(Stats):
@@ -603,8 +596,7 @@ class CommentedBugs(Stats):
             "v4": str(self.options.until),
             }
         self.stats = [
-            bug for bug in self.parent.bugzilla.search(
-                query, options=self.options)
+            bug for bug in self.parent.bugzilla.search(query)
             if bug.commented(self.user)]
 
 
@@ -635,7 +627,7 @@ class SubscribedBugs(Stats):
             "o4": "changedby",
             "v4": self.user.email,
             }
-        bugs = self.parent.bugzilla.search(query, options=self.options)
+        bugs = self.parent.bugzilla.search(query)
         self.stats = [bug for bug in bugs if bug.subscribed(self.user)]
 
 

@@ -31,7 +31,7 @@ login = psss
 # Let's have a short nap after each test
 
 
-def teardown_function(function):
+def teardown_function():
     time.sleep(7)
 
 
