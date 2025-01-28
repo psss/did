@@ -2,8 +2,10 @@
 
 import codecs
 import configparser
+import contextlib
 import datetime
 import io
+import locale
 import os
 import re
 import sys
@@ -76,6 +78,17 @@ class OptionError(GeneralError):
 
 class ReportError(GeneralError):
     """ Report generation error """
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Functions
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+@contextlib.contextmanager
+def setlocale(*args, **kw):
+    saved = locale.setlocale(locale.LC_ALL)
+    yield locale.setlocale(*args, **kw)
+    locale.setlocale(locale.LC_ALL, saved)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -288,7 +301,8 @@ class Date():
             # Return start and end date of this month.
             since = TODAY + delta(day=1, months=-1)
             until = since + delta(months=1)
-        period = since.strftime("%B")
+        with setlocale(locale.LC_TIME, "C"):
+            period = since.strftime("%B")
         return Date(since), Date(until), period
 
     @staticmethod
