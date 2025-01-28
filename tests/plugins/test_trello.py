@@ -27,6 +27,7 @@ user = didtester
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.skip("HTTP Error 401: Unauthorized")
 def test_trello_cards_commented():
     """ Commented cards """
     did.base.Config(CONFIG)
@@ -36,6 +37,7 @@ def test_trello_cards_commented():
         in str(stat) for stat in stats])
 
 
+@pytest.mark.skip("HTTP Error 401: Unauthorized")
 def test_trello_cards_created():
     """ Created cards """
     did.base.Config(CONFIG)
@@ -44,6 +46,7 @@ def test_trello_cards_created():
         "CreatedCard" in str(stat) for stat in stats])
 
 
+@pytest.mark.skip("HTTP Error 401: Unauthorized")
 def test_trello_cards_updated():
     """ Updated cards """
     did.base.Config(CONFIG)
@@ -53,6 +56,7 @@ def test_trello_cards_updated():
         in str(stat) for stat in stats])
 
 
+@pytest.mark.skip("HTTP Error 401: Unauthorized")
 def test_trello_cards_closed():
     """ Closed cards """
     did.base.Config(CONFIG)
@@ -62,6 +66,7 @@ def test_trello_cards_closed():
         in str(stat) for stat in stats])
 
 
+@pytest.mark.skip("HTTP Error 401: Unauthorized")
 def test_trello_cards_moved():
     """ Moved cards """
     did.base.Config(CONFIG)
@@ -71,6 +76,7 @@ def test_trello_cards_moved():
         in str(stat) for stat in stats])
 
 
+@pytest.mark.skip("HTTP Error 401: Unauthorized")
 def test_trello_checklists_checkitem():
     """ Completed Checkitems in checklists """
     did.base.Config(CONFIG)
