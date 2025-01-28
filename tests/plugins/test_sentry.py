@@ -55,6 +55,7 @@ def test_invalid_token():
 #  Acceptance tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.skip("did-tester organization doesn't exist?")
 def test_sentry_resolved():
     """ Check expected resolved issues """
     did.base.Config(OK_CONFIG)
@@ -64,6 +65,7 @@ def test_sentry_resolved():
     assert "PYTHON-E - AttributeError" in stats[0]
 
 
+@pytest.mark.skip("did-tester organization doesn't exist?")
 def test_sentry_commented():
     """ Check expected commented issues """
     did.base.Config(OK_CONFIG)
@@ -73,6 +75,7 @@ def test_sentry_commented():
     assert "PYTHON-F - IndexError" in stats[0]
 
 
+@pytest.mark.skip("did-tester organization doesn't exist?")
 def test_sentry_no_issues():
     """ Check for no issues """
     did.base.Config(OK_CONFIG)
