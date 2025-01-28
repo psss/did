@@ -1,6 +1,8 @@
 # coding: utf-8
 """ Tests for the Google plugin """
 
+import pytest
+
 import did.base
 import did.cli
 
@@ -28,6 +30,8 @@ storage = tests/plugins/google-api-credentials.json
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+@pytest.mark.skip("Opens browser requiring authentication")
 def test_google_events_organized():
     did.base.Config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0].stats
@@ -35,6 +39,7 @@ def test_google_events_organized():
     assert summaries == ['Pick up dry cleaning', 'Dentist']
 
 
+@pytest.mark.skip("Opens browser requiring authentication")
 def test_google_events_attended():
     did.base.Config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[1].stats
@@ -42,6 +47,7 @@ def test_google_events_attended():
     assert summaries == ['Party!']
 
 
+@pytest.mark.skip("Opens browser requiring authentication")
 def test_google_tasks_completed():
     did.base.Config(CONFIG)
     stats = did.cli.main(INTERVAL2)[0][0].stats[0].stats[2].stats
