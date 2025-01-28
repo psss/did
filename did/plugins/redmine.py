@@ -33,6 +33,7 @@ from did.utils import log
 
 class Activity():
     """ Redmine Activity """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, data):
         self.data = data

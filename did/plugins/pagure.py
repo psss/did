@@ -39,6 +39,7 @@ TIMEOUT = 60
 
 class Pagure():
     """ Pagure Investigator """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, url, token, timeout=TIMEOUT):
         """ Initialize url and headers """
@@ -81,6 +82,7 @@ class Pagure():
 
 class Issue():
     """ Pagure Issue or Pull Request """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, data, options):
         self.options = options

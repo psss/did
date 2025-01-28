@@ -32,6 +32,7 @@ PADDING = 3
 
 class Zammad():
     """ Zammad Investigator """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, url, token):
         """ Initialize url and headers """
@@ -71,6 +72,7 @@ class Zammad():
 
 class Ticket():
     """ Zammad Ticket """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, data):
         self.data = data
