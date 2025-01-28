@@ -1,6 +1,8 @@
 # coding: utf-8
 """ Tests for the GitLab plugin """
 
+import os
+
 import pytest
 
 import did.base
@@ -25,7 +27,7 @@ login = did.tester
 
 CONFIG = f"""
 {CONFIG_NOTOKEN}
-token = vh1tNyke5KzWCynzyAKt
+token = {os.getenv(key="GITLAB_TOKEN", default="NoTokenSpecified")}
 """
 
 
@@ -33,6 +35,8 @@ token = vh1tNyke5KzWCynzyAKt
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
+                    reason="No GITLAB_TOKEN environment variable found")
 def test_gitlab_issues_created():
     """ Created issues """
     did.base.Config(CONFIG)
@@ -43,6 +47,8 @@ def test_gitlab_issues_created():
         in str(stat) for stat in stats])
 
 
+@pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
+                    reason="No GITLAB_TOKEN environment variable found")
 def test_gitlab_issues_commented():
     """ Commented issues """
     did.base.Config(CONFIG)
@@ -53,6 +59,8 @@ def test_gitlab_issues_commented():
         in str(stat) for stat in stats])
 
 
+@pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
+                    reason="No GITLAB_TOKEN environment variable found")
 def test_gitlab_issues_closed():
     """ Closed issues """
     did.base.Config(CONFIG)
@@ -63,6 +71,8 @@ def test_gitlab_issues_closed():
         in str(stat) for stat in stats])
 
 
+@pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
+                    reason="No GITLAB_TOKEN environment variable found")
 def test_gitlab_merge_requests_created():
     """ Created merge requests """
     did.base.Config(CONFIG)
@@ -73,6 +83,8 @@ def test_gitlab_merge_requests_created():
         for stat in stats])
 
 
+@pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
+                    reason="No GITLAB_TOKEN environment variable found")
 def test_gitlab_merge_requests_commented():
     """ Commented merge requests """
     did.base.Config(CONFIG)
@@ -83,6 +95,8 @@ def test_gitlab_merge_requests_commented():
         for stat in stats])
 
 
+@pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
+                    reason="No GITLAB_TOKEN environment variable found")
 def test_gitlab_merge_requests_closed():
     """ Closed merge requests """
     did.base.Config(CONFIG)
@@ -93,6 +107,8 @@ def test_gitlab_merge_requests_closed():
         for stat in stats])
 
 
+@pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
+                    reason="No GITLAB_TOKEN environment variable found")
 def test_gitlab_merge_requests_approved():
     """ Approved merge requests """
     did.base.Config(CONFIG)
@@ -107,5 +123,5 @@ def test_gitlab_merge_requests_approved():
 def test_github_invalid_token():
     """ Invalid token """
     did.base.Config(CONFIG_NOTOKEN)
-    with pytest.raises(did.base.ReportError):
+    with pytest.raises(did.base.ReportError, match="No GitLab token set in .*"):
         did.cli.main(INTERVAL)
