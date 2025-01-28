@@ -57,7 +57,7 @@ def mock_today():
     did.base.TODAY = original_today
 
 
-def test_date_period(mock_today):  # pylint:disable=unused-argument
+def test_date_period(mock_today):  # pylint:disable=unused-argument,redefined-outer-name
     test_cases = [
         # Single day periods
         ("yesterday", "2015-10-02", "2015-10-03", "yesterday"),

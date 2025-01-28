@@ -3,4 +3,4 @@ ignore-paths=^bin/.*$
 init-hook='import sys; sys.path.append("./.venv/lib64/python3.13/site-packages"); sys.path.append("/usr/lib/python3.13/site-packages")'
 
 [MESSAGES]
-disable=R0801,C0116,I1101,R1729,C0415,C0114,C0103,C0115,W0621,R0903,W0511,R0913,R1735,R1716,R0902
+disable=R0801,C0116,I1101,R1729,C0415,C0114,C0103,C0115,R0903,W0511,R0913,R1735,R1716,R0902
