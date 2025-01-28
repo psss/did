@@ -9,7 +9,7 @@ from uuid import uuid4
 import pytest
 
 import did.base
-from did.base import Config, ConfigError, get_token
+from did.base import Config, ConfigError, Date, get_token
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Config
@@ -46,95 +46,75 @@ def test_Config_width():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_Date():
-    from did.base import Date
     assert Date
 
 
-def test_Date_period():
-    from did.base import Date
-    today = did.base.TODAY
+@pytest.fixture
+def mock_today():
+    original_today = datetime.date.today()
     did.base.TODAY = datetime.date(2015, 10, 3)
-    # yesterday
-    since, until, period = Date.period("yesterday")
-    assert str(since) == "2015-10-02"
-    assert str(until) == "2015-10-03"
-    assert period == "yesterday"
-    # This week
-    for argument in ["", "week", "this week"]:
+    yield
+    did.base.TODAY = original_today
+
+
+def test_date_period(mock_today):  # pylint:disable=unused-argument
+    test_cases = [
+        # Single day periods
+        ("yesterday", "2015-10-02", "2015-10-03", "yesterday"),
+        ("last monday", "2015-09-28", "2015-09-29", "the last monday"),
+        ("last tuesday", "2015-09-29", "2015-09-30", "the last tuesday"),
+        ("last wednesday", "2015-09-30", "2015-10-01", "the last wednesday"),
+        ("last thursday", "2015-10-01", "2015-10-02", "the last thursday"),
+        ("last friday", "2015-10-02", "2015-10-03", "the last friday"),
+        ("last month", "2015-09-01", "2015-10-01", "September"),
+        ("last quarter", "2015-07-01", "2015-10-01", "the last quarter"),
+        ("last year", "2014-01-01", "2015-01-01", "the last year"),
+        ]
+
+    # Week periods
+    week_cases = [
+        ("", "2015-09-28", "2015-10-05", "the week 40"),
+        ("week", "2015-09-28", "2015-10-05", "the week 40"),
+        ("this week", "2015-09-28", "2015-10-05", "the week 40"),
+        ("last", "2015-09-21", "2015-09-28", "the week 39"),
+        ("last week", "2015-09-21", "2015-09-28", "the week 39"),
+        ]
+    test_cases.extend(week_cases)
+
+    # Month periods
+    month_cases = [
+        ("month", "2015-10-01", "2015-11-01", "October"),
+        ("this month", "2015-10-01", "2015-11-01", "October"),
+        ]
+    test_cases.extend(month_cases)
+
+    # Quarter periods
+    quarter_cases = [
+        ("quarter", "2015-10-01", "2016-01-01", "this quarter"),
+        ("this quarter", "2015-10-01", "2016-01-01", "this quarter"),
+        ]
+    test_cases.extend(quarter_cases)
+
+    # Year periods
+    year_cases = [
+        ("year", "2015-01-01", "2016-01-01", "this year"),
+        ("this year", "2015-01-01", "2016-01-01", "this year"),
+        ]
+    test_cases.extend(year_cases)
+
+    # Run all test cases
+    for argument, expected_since, expected_until, expected_period in test_cases:
         since, until, period = Date.period(argument)
-        assert str(since) == "2015-09-28"
-        assert str(until) == "2015-10-05"
-        assert period == "the week 40"
-    # Last week
-    for argument in ["last", "last week"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-09-21"
-        assert str(until) == "2015-09-28"
-        assert period == "the week 39"
-    # Last Monday
-    since, until, period = Date.period("last monday")
-    assert str(since) == "2015-09-28"
-    assert str(until) == "2015-09-29"
-    assert period == "the last monday"
-    # Last Tuesday
-    since, until, period = Date.period("last tuesday")
-    assert str(since) == "2015-09-29"
-    assert str(until) == "2015-09-30"
-    assert period == "the last tuesday"
-    # Last Wednesday
-    since, until, period = Date.period("last wednesday")
-    assert str(since) == "2015-09-30"
-    assert str(until) == "2015-10-01"
-    assert period == "the last wednesday"
-    # Last Thursday
-    since, until, period = Date.period("last thursday")
-    assert str(since) == "2015-10-01"
-    assert str(until) == "2015-10-02"
-    assert period == "the last thursday"
-    # Last Friday
-    since, until, period = Date.period("last friday")
-    assert str(since) == "2015-10-02"
-    assert str(until) == "2015-10-03"
-    assert period == "the last friday"
-    # This month
-    for argument in ["month", "this month"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-10-01"
-        assert str(until) == "2015-11-01"
-        assert period == "October"
-    # Last month
-    since, until, period = Date.period("last month")
-    assert str(since) == "2015-09-01"
-    assert str(until) == "2015-10-01"
-    assert period == "September"
-    # This quarter
-    for argument in ["quarter", "this quarter"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-10-01"
-        assert str(until) == "2016-01-01"
-        assert period == "this quarter"
-    # Last quarter
-    since, until, period = Date.period("last quarter")
-    assert str(since) == "2015-07-01"
-    assert str(until) == "2015-10-01"
-    assert period == "the last quarter"
-    # This year
-    for argument in ["year", "this year"]:
-        since, until, period = Date.period(argument)
-        assert str(since) == "2015-01-01"
-        assert str(until) == "2016-01-01"
-        assert period == "this year"
-    # Last year
-    since, until, period = Date.period("last year")
-    assert str(since) == "2014-01-01"
-    assert str(until) == "2015-01-01"
-    assert period == "the last year"
-    # Adding and subtracting days
+        assert str(since) == expected_since
+        assert str(until) == expected_until
+        assert period == expected_period
+
+
+def test_date_addition_subtraction():
     assert str(Date('2018-11-29') + 1) == '2018-11-30'
     assert str(Date('2018-11-29') + 2) == '2018-12-01'
     assert str(Date('2018-12-02') - 1) == '2018-12-01'
     assert str(Date('2018-12-02') - 2) == '2018-11-30'
-    did.base.TODAY = today
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
