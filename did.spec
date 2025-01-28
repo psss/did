@@ -23,6 +23,7 @@ Requires: python3-httplib2
 Requires: python3-nitrate
 Requires: python3-requests-gssapi
 Requires: python3-feedparser
+Requires: python3-tenacity
 
 %?python_enable_dependency_generator
 
