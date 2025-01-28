@@ -210,7 +210,8 @@ class AbandonedChanges(GerritUnit):
     Changes abandoned
     """
 
-    def fetch(self):
+    def fetch(self, query_string="", common_query_options=None,
+              limit_since=False):
         log.info("Searching for changes abandoned by %s", self.user)
         self.stats = GerritUnit.fetch(self, 'status:abandoned')
         log.debug("self.stats = %s", self.stats)
@@ -222,7 +223,8 @@ class MergedChanges(GerritUnit):
     Changes successfully merged
     """
 
-    def fetch(self):
+    def fetch(self, query_string="", common_query_options=None,
+              limit_since=False):
         log.info("Searching for changes merged by %s", self.user)
         self.stats = GerritUnit.fetch(self, 'status:merged')
         log.debug("self.stats = %s", self.stats)
@@ -241,7 +243,8 @@ class SubmitedChanges(GerritUnit):
     Changes submitted for review
     """
 
-    def fetch(self):
+    def fetch(self, query_string="", common_query_options=None,
+              limit_since=False):
         log.info("Searching for changes opened by %s", self.user)
         if 'wip' in self.server_features:
             query_string = 'status:open+-is:wip'
@@ -257,7 +260,8 @@ class WIPChanges(GerritUnit):
     Work in progress changes
     """
 
-    def fetch(self):
+    def fetch(self, query_string="", common_query_options=None,
+              limit_since=False):
         log.info("Searching for WIP changes opened by %s", self.user)
         if 'wip' not in self.server_features:
             log.debug("WIP reviews are not supported by this server")
@@ -274,7 +278,8 @@ class AddedPatches(GerritUnit):
     Additional patches added to existing changes
     """
 
-    def fetch(self):
+    def fetch(self, query_string="", common_query_options=None,
+              limit_since=False):
         log.info("Searching for patches added to changes by %s", self.user)
         reviewer = self.user.login
         self.stats = []
@@ -323,7 +328,8 @@ class ReviewedChanges(GerritUnit):
     Review of a change (for reviewers)
     """
 
-    def fetch(self):
+    def fetch(self, query_string="", common_query_options=None,
+              limit_since=False):
         log.info("Searching for changes reviewed by %s", self.user)
         # Collect ALL changes opened (and perhaps now closed) after
         # given date and collect all reviews from them ... then limit by
