@@ -78,6 +78,7 @@ class RequestTracker():
 
 class Ticket():
     """ Request tracker ticket """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, record, parent):
         """ Initialize the ticket from the record """

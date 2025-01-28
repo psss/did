@@ -124,6 +124,7 @@ def authorized_http(client_id, client_secret, apps, file=None):
 
 class GoogleCalendar():
     """ Google Calendar functions """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, http, parent):
         self.service = discovery.build("calendar", "v3", http=http)
@@ -191,6 +192,7 @@ class Event():
 
 class GoogleTasks():
     """ Google Tasks functions """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, http, parent):
         self.service = discovery.build("tasks", "v1", http=http)

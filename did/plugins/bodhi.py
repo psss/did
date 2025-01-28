@@ -23,6 +23,7 @@ from did.utils import listed, log, pretty
 
 class Bodhi():
     """ Bodhi """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, url):
         """ Initialize url """
@@ -55,6 +56,7 @@ class Bodhi():
 
 class Update():
     """ Bodhi update """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, data, output_format):
         self.data = data

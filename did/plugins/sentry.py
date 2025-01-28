@@ -41,6 +41,7 @@ TIMEOUT = 60
 
 class Issue():
     """ Sentry Issue """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, issue):
         """ Initialize issue """
@@ -54,6 +55,7 @@ class Issue():
 
 class Activity():
     """ Sentry Activity """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, activity):
         """ Initialize issue """

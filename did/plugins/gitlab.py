@@ -238,6 +238,7 @@ class Issue():
 
 
 class MergeRequest(Issue):
+    # pylint: disable=too-few-public-methods
 
     def iid(self):
         return self.gitlabapi.get_project_mr(
@@ -245,6 +246,7 @@ class MergeRequest(Issue):
 
 
 class Note(Issue):
+    # pylint: disable=too-few-public-methods
 
     def iid(self):
         if self.data['note']['noteable_type'] == 'Issue':

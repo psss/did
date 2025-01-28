@@ -33,6 +33,7 @@ from did.utils import item, log, pretty
 
 class GitRepo():
     """ Git repository investigator """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, path):
         """ Initialize the path. """

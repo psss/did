@@ -92,6 +92,7 @@ SSL_VERIFY = True
 
 class Confluence():
     """ Confluence investigator """
+    # pylint: disable=too-few-public-methods
 
     @staticmethod
     def search(query, stats, expand=None):

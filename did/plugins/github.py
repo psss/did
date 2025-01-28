@@ -65,6 +65,7 @@ TIMEOUT = 60
 
 class GitHub():
     """ GitHub Investigator """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, *, url, token=None, user=None,
                  org=None, repo=None, timeout=TIMEOUT):
