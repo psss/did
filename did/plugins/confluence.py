@@ -66,8 +66,8 @@ import re
 import urllib.parse
 
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
+from urllib3.exceptions import InsecureRequestWarning
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
