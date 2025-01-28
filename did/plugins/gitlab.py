@@ -33,7 +33,7 @@ from time import sleep
 
 import dateutil
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from urllib3.exceptions import InsecureRequestWarning
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
