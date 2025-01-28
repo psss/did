@@ -110,7 +110,7 @@ def test_github_issues_commented():
     CUSTOM_INTERVAL = "--since 2023-01-10 --until 2023-01-23"
     stats = did.cli.main(option + CUSTOM_INTERVAL)[0][0].stats[0].stats[1].stats
     assert any([
-        "teemtee/tmt#1788 - Allow modification of imported plans"
+        "teemtee/tmt#1787 - tmt does not run test with local changes applied"
         in str(stat) for stat in stats])
 
 
