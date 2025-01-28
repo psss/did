@@ -44,6 +44,8 @@ import re
 import time
 
 import requests
+from tenacity import (RetryError, Retrying, retry_if_exception_type,
+                      stop_after_attempt)
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
@@ -98,9 +100,18 @@ class GitHub():
             # Fetch the query
             log.debug("GitHub query: %s", url)
             try:
-                response = requests.get(url, headers=self.headers, timeout=self.timeout)
+                for attempt in Retrying(
+                        stop=stop_after_attempt(3),
+                        retry=retry_if_exception_type(
+                            requests.exceptions.ConnectionError),
+                        before_sleep=log.debug("Trying to connect to GitHUb..."),
+                        reraise=True):
+                    with attempt:
+                        response = requests.get(
+                            url, headers=self.headers, timeout=self.timeout
+                            )
                 log.debug("Response headers:\n%s", response.headers)
-            except requests.exceptions.RequestException as error:
+            except (requests.exceptions.RequestException, RetryError) as error:
                 log.debug(error)
                 raise ReportError(f"GitHub search on {self.url} failed.") from error
 

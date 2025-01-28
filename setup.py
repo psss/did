@@ -15,6 +15,7 @@ version = '.'.join([version, release])
 install_requires = [
     'python_dateutil',
     'requests',
+    'tenacity'
     ]
 extras_require = {
     'bodhi': ['bodhi-client'],
