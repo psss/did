@@ -1,6 +1,8 @@
 # coding: utf-8
 """ Tests for the Gerrit plugin """
 
+import pytest
+
 import did.base
 import did.cli
 
@@ -42,6 +44,7 @@ def test_gerrit_merged():
         for change in stats])
 
 
+@pytest.mark.skip("Gerrit returns an empty set")
 def test_gerrit_reviewed():
     """ Check reviewed changes """
     did.base.Config(CONFIG)
@@ -54,6 +57,7 @@ def test_gerrit_reviewed():
         for change in stats])
 
 
+@pytest.mark.skip("Gerrit returns an empty set")
 def test_gerrit_submitted_for_review():
     """ Check changes submitted for review """
     did.base.Config(CONFIG)
@@ -66,6 +70,7 @@ def test_gerrit_submitted_for_review():
         for change in stats])
 
 
+@pytest.mark.skip("Gerrit returns an empty set")
 def test_gerrit_wip():
     """ Check wip changes """
     did.base.Config(CONFIG)
