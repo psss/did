@@ -383,12 +383,12 @@ class Logging():
                 levelname = record.levelname
             # Map log level to appropriate color
             try:
-                colour = Logging.COLORS[record.levelno]
+                text_color = Logging.COLORS[record.levelno]
             except KeyError:
-                colour = "black"
+                text_color = "black"
             # Color the log level, use brackets when coloring off
             if Coloring().enabled():
-                level = color(f" {levelname} ", "lightwhite", colour)
+                level = color(f" {levelname} ", "lightwhite", text_color)
             else:
                 level = f"[{levelname}]"
             return f"{level} {record.getMessage()}"
@@ -450,7 +450,7 @@ class Logging():
 #  Coloring
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def color(text, color=None, background=None, light=False, enabled=True):
+def color(text, text_color=None, background=None, light=False, enabled=True):
     """
     Return text in desired color if coloring enabled
 
@@ -463,14 +463,14 @@ def color(text, color=None, background=None, light=False, enabled=True):
     if not enabled:
         return text
     # Prepare colors (strip 'light' if present in color)
-    if color and color.startswith("light"):
+    if text_color and text_color.startswith("light"):
         light = True
-        color = color[5:]
-    color = color and f";{colors[color]}" or ""
+        text_color = text_color[5:]
+    text_color = text_color and f";{colors[text_color]}" or ""
     background = background and f";{colors[background] + 10}" or ""
     light = (1 if light else 0)
     # Starting and finishing sequence
-    start = f"\033[{light}{color}{background}m"
+    start = f"\033[{light}{text_color}{background}m"
     finish = "\033[1;m"
     return "".join([start, text, finish])
 
