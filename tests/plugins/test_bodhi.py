@@ -1,7 +1,6 @@
 # coding: utf-8
 """
 Tests for the Bodhi plugin
-
 """
 
 import pytest
@@ -32,7 +31,7 @@ login = mikelo2
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def test_pagure_issues_created():
+def test_bodhi_updates_created():
     """ Created issues """
     did.base.Config(CONFIG)
     option = "--bodhi-updates-created "
@@ -45,7 +44,7 @@ def test_pagure_issues_created():
     assert not stats
 
 
-def test_pagure_missing_url():
+def test_bodhi_missing_url():
     """ Missing url """
     did.base.Config("[bodhi]\ntype = bodhi")
     with pytest.raises(did.base.ReportError):
