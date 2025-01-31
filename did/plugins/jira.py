@@ -208,7 +208,7 @@ class JiraCreated(Stats):
     def fetch(self):
         log.info(
             "Searching for issues created in %s by %s",
-            self.parent.project,
+            self.parent.project if self.parent.project is not None else "any project",
             self.user)
         query = f"creator = '{
             self.user.login or self.user.email}' AND created >= {
@@ -225,7 +225,7 @@ class JiraUpdated(Stats):
     def fetch(self):
         log.info(
             "Searching for issues updated in %s by %s",
-            self.parent.project,
+            self.parent.project if self.parent.project is not None else "any project",
             self.user)
         if self.parent.use_scriptrunner:
             query = f"issueFunction in commented('by {
@@ -252,7 +252,7 @@ class JiraResolved(Stats):
     def fetch(self):
         log.info(
             "Searching for issues resolved in %s by %s",
-            self.parent.project,
+            self.parent.project if self.parent.project is not None else "any project",
             self.user)
         query = f"assignee = '{
             self.user.login or self.user.email}' AND resolved >= {
