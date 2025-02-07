@@ -133,7 +133,7 @@ class GoogleCalendar():
     def events(self, **kwargs):
         """ Fetch events meeting specified criteria """
         # pylint: disable=no-member
-        # self.service events is dinamically added as member by schema
+        # self.service events is dynamically added as member by schema
         events_result = self.service.events().list(**kwargs).execute()
         # pylint: enable=no-member
         return [Event(event, self.parent.options.format)
@@ -201,7 +201,7 @@ class GoogleTasks():
     def tasks(self, **kwargs):
         """ Fetch tasks specified criteria """
         # pylint: disable=no-member
-        # self.service tasks is dinamically added as member by schema
+        # self.service tasks is dynamically added as member by schema
         tasks_result = self.service.tasks().list(**kwargs).execute()
         # pylint: enable=no-member
         return [Task(task, self.parent.options.format)

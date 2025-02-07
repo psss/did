@@ -300,7 +300,7 @@ class AddedPatches(GerritUnit):
             cmnts_by_user = []
             for chg in changes['messages']:
                 # TODO This is a very bad algorithm for recognising
-                # patch setts added by the owner of the change, but
+                # patch sets added by the owner of the change, but
                 # I don’t know how to find a list of all revisions for
                 # the particular change.
                 if 'author' not in chg:

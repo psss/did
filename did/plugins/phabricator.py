@@ -161,7 +161,7 @@ class Phabricator:
                 del data_dict['after']
             res = self._get_page(url, data_dict)
             if "result" not in res:
-                raise ReportError("Mising key Phabricator dict: result")
+                raise ReportError("Missing key Phabricator dict: result")
             results.extend(res["result"]["data"])
             # Define offset of next differentials to fetch
             if "cursor" in res["result"]:
@@ -411,7 +411,7 @@ class TransactionEvent:
             since: datetime.date = None,
             until: datetime.date = None) -> bool:
         """
-        Returns true if the event happend in the given timestamp range,
+        Returns true if the event happened in the given timestamp range,
         including the boundaries.
         """
         date_modified = datetime.date.fromtimestamp(self._date_modified)
@@ -630,7 +630,7 @@ class PhabricatorStats(StatsGroup):
             login.strip() for login in str(
                 config["login"]).split(",")]
         if self.logins == []:
-            raise ConfigError(f"Empty login found in [{option}] setion")
+            raise ConfigError(f"Empty login found in [{option}] section")
         self.phabricator = Phabricator(self.url, self.token, self.logins,
                                        timeout=config.get("timeout"))
 

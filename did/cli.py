@@ -72,7 +72,7 @@ class Options():
         log.info("Default command line: did %s",
                  (" ".join([f'--{stat.option}' for stat in self.sample_stats.stats])))
 
-        # Formating options
+        # Formatting options
         group = self.parser.add_argument_group("Format")
         group.add_argument(
             "--format", default="text", choices=["text", "markdown", "wiki"],
