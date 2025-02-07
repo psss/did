@@ -51,6 +51,54 @@ class Pagure():
         else:
             self.headers = {}
 
+    def get_activities(self,
+                       username: str,
+                       date: str,
+                       grouped: bool = False) -> list:
+        """
+        Get activities for days in requested range
+        :param username: (mandatory) the username of the user whose
+                         activity you are interested in.
+        :type username:	str
+        :param date: (mandatory) the date of interest
+                     in ISO format: YYYY-MM-DD
+        :type date: str
+        :param grouped: (optional) whether or not to group the commits.
+                        Default to False.
+        :type grouped: bool
+        :returns: a list with activities done on the given date
+        Sample response:
+            [
+                {
+                    "date": "<iso date>",
+                    "date_created": "<timestamp>",
+                    "description_mk": "<some markdown text>",
+                    "id": <action id>,
+                    "ref_id": "<ref id>",
+                    "type": "commented",
+                    "user": {
+                        "full_url": "<pagure url>/user/<user>",
+                        "fullname": "<user full name>",
+                        "name": "<user>",
+                        "url_path": "user/<user>"
+                    }
+                }
+            ]
+
+        """
+        query = f"{self.url}/user/{username}/activity/{date}"
+        if grouped:
+            query = f"{query}?grouped=true"
+        log.debug("Pagure get_activities query: %s", query)
+        try:
+            response = requests.get(query, headers=self.headers, timeout=self.timeout)
+            log.data(f"Response headers:\n{response.headers}")
+        except requests.RequestException as error:
+            log.error(error)
+            raise ReportError(f"Pagure get_activities {self.url} failed.") from error
+        data = response.json()
+        return data.get("activities", [])
+
     def search(self, query, pagination, result_field):
         """ Perform Pagure query """
         result = []
@@ -107,6 +155,26 @@ class Issue():
         # plain text
         return f'{label} - {self.title}'
 
+
+class Comment():
+    """ Pagure comment activity """
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, data, options, url):
+        self.options = options
+        self.date = data["date"]
+        self.text = data["description_mk"].replace(
+            'href="',
+            f'href="{url.replace('/api/0', '')}').replace(
+            '<div class="markdown"><p>',
+            '').replace(
+            '</p></div>',
+            '')
+
+    def __str__(self):
+        """ String representation """
+        return f'{self.date} - {self.text}'
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -158,6 +226,32 @@ class PullRequestsCreated(Stats):
             result_field='requests')]
         self.stats = sorted(issues, key=str)
 
+
+class Commented(Stats):
+    """ Commented """
+
+    def fetch(self):
+        log.info('Searching for comments by %s', self.user)
+        log.debug('Search activity stats for %s', self.user)
+        requested_range = [
+            self.options.since.date + datetime.timedelta(days=x)
+            for x in range((self.options.until.date - self.options.since.date).days)
+            ]
+        activity_stats = []
+        for current_date in requested_range:
+            activity_stats += self.parent.pagure.get_activities(
+                self.user.login, current_date)
+        for activity in activity_stats:
+            if activity["type"] != "commented":
+                continue
+
+        self.stats = sorted([
+            Comment(activity, self.options, self.parent.pagure.url)
+            for activity in activity_stats
+            if activity["type"] == "commented"
+            ], key=str)
+
+
 # FIXME: Blocked by https://pagure.io/pagure/issue/4329
 # class PullRequestsClosed(Stats):
 #    """ Pull requests closed """
@@ -207,6 +301,9 @@ class PagureStats(StatsGroup):
             PullRequestsCreated(
                 option=f'{option}-pull-requests-created', parent=self,
                 name=f'Pull requests created on {option}'),
+            Commented(
+                option=f'{option}-commented', parent=self,
+                name=f'Pull requests commented on {option}'),
             # FIXME: Blocked by https://pagure.io/pagure/issue/4329
             # PullRequestsClosed(
             #     option=f'{option}-pull-requests-closed', parent=self,
