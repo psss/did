@@ -127,7 +127,7 @@ def load_components(*paths, **kwargs):
     Keyword Args:
         include (str): A regular expression of packages and modules to
             include. Defaults to '.*'
-        exclude (str): A regular expression of packges and modules to
+        exclude (str): A regular expression of packages and modules to
             exclude. Defaults to 'test'
         continue_on_error (bool): If True, continue importing even if
             something raises an ImportError. If False, raise the first

@@ -154,7 +154,7 @@ class PublicInbox():
             if msg.is_thread_root():
                 log.debug("Found message %s thread root: %s.", msg_id, msg.id())
                 return msg
-        # if root is not found, return intial message as root.
+        # if root is not found, return initial message as root.
         return initial_msg
 
     def __get_thread_root(self, msg: Message) -> Message:

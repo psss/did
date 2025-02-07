@@ -45,7 +45,7 @@ as something that will be pasted into release notes:
 Why should I care?
 
 * It helps others (and yourself) find relevant commits quickly.
-* The summary line will be re-used later (e.g. for rpm changelog).
+* The summary line will be reused later (e.g. for rpm changelog).
 * Some tools do not handle wrapping, so it is then hard to read.
 * You will make the maintainers happy to read beautiful commits :)
 

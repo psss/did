@@ -87,7 +87,7 @@ class Sentry():
         self.timeout = timeout
 
     def activities(self):
-        """ Return all activites (fetch only once) """
+        """ Return all activities (fetch only once) """
         if self._activities is None:
             self._activities = self._fetch_activities()
         return self._activities
@@ -121,7 +121,7 @@ class Sentry():
                     # relevant
                     if activity.created < self.stats.options.since.date:
                         return activities
-                    # Store only relevant activites (before until date)
+                    # Store only relevant activities (before until date)
                     if activity.created < self.stats.options.until.date:
                         log.details(f"Activity: {activity}")
                         activities.append(activity)

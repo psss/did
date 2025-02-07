@@ -106,7 +106,7 @@ class Config():
 
         Parse config from given string (config) or file (path).
         If no config or path given, default to "~/.did/config" which
-        can be overrided by the ``DID_DIR`` environment variable.
+        can be overridden by the ``DID_DIR`` environment variable.
         """
         # Read the config only once (unless explicitly provided)
         if self.parser is not None and config is None and path is None:

@@ -4,7 +4,7 @@
 =====================
 
 This is **did**, a command line tool which will help you to easily
-gather data for your weekly, monthly or yearly reports. It suports
+gather data for your weekly, monthly or yearly reports. It supports
 plugins for various data sources such as git, trac, wiki, bugzilla
 and more. It can be used to gather stats for a single user as well
 as for the whole team and merging them together. It saves you from
