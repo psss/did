@@ -149,14 +149,13 @@ Note that this will overwrite existing hooks.
 Tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To run tests using pytest::
+To run tests using pytest with xdist plugin::
 
-    coverage run --source=did -m pytest tests
-    coverage report
+    pytest --cov-report html:cov_html --cov-report annotate:cov_annotate --cov=did -n auto tests
 
 Install pytest and coverage using yum::
 
-    yum install pytest python-coverage
+    dnf install pytest python3-pytest-xdist python3-pytest-cov
 
 or pip::
 
