@@ -1,6 +1,11 @@
 # coding: utf-8
 """ Tests for the Bugzilla plugin """
 
+import logging
+
+import pytest
+from _pytest.logging import LogCaptureFixture
+
 import did.base
 import did.cli
 
@@ -139,3 +144,37 @@ def test_bugzilla_verified_qecontact():
         "--until", "2010-07-20"])[0][0].stats[0].stats[5].stats
     # Bug changed by user
     assert any([bug.id == 604724 for bug in stats])
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Other tests
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+def test_bugzilla_missing_url(caplog: LogCaptureFixture):
+    """ Missing url """
+    did.base.Config("""
+                    [general]
+                    email = psplicha@redhat.com
+                    [bz]
+                    type = bugzilla
+                    prefix = BZ
+                    """)
+    with caplog.at_level(logging.ERROR):
+        did.cli.main("today")
+        assert "No bugzilla url set" in caplog.text
+
+
+def test_bugzilla_wrong_url(caplog: LogCaptureFixture):
+    """ Wrong url """
+    did.base.Config("""
+                    [general]
+                    email = psplicha@redhat.com
+                    [bz]
+                    type = bugzilla
+                    prefix = BZ
+                    url = https://localhost
+                    """)
+    with pytest.raises(did.base.ReportError,
+                       match=r"Connection to bugzilla server failed"):
+        did.cli.main("today")
+        assert "No bugzilla url set" in caplog.text
