@@ -13,6 +13,7 @@ Config example::
 """
 
 import koji
+import requests.exceptions
 
 import did.base
 from did.stats import Stats, StatsGroup
@@ -86,6 +87,10 @@ class KojiStats(StatsGroup):
             raise did.base.ReportError(
                 f"Non-existent koji user set in the [{option}] section"
                 ) from ge_err
+        except requests.exceptions.HTTPError as httperr:
+            raise did.base.ReportError(
+                f"Connection to koji server failed for [{option}] section"
+                ) from httperr
 
         name = self.config.get('name', url)
 
