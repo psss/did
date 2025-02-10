@@ -44,6 +44,7 @@ Available options:
 import xmlrpc.client
 
 import bugzilla
+import requests.exceptions
 
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
@@ -75,10 +76,16 @@ class Bugzilla():
     def server(self):
         """ Connection to the server """
         if self._server is None:
-            self._server = bugzilla.Bugzilla(
-                url=self.parent.url,
-                sslverify=self.parent.ssl_verify
-                )
+            try:
+                self._server = bugzilla.Bugzilla(
+                    url=self.parent.url,
+                    sslverify=self.parent.ssl_verify
+                    )
+            except requests.exceptions.ConnectionError as conn_err:
+                raise ReportError(
+                    "Connection to bugzilla server failed "
+                    f"for [{self.parent.option}] section"
+                    ) from conn_err
         return self._server
 
     def search(self, query):
