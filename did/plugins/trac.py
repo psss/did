@@ -70,7 +70,7 @@ class Trac():
         except xmlrpc.client.Fault as error:
             log.error("An error encountered, while searching for tickets.")
             raise ReportError(error) from error
-        except xmlrpc.client.ProtocolError as error:
+        except (xmlrpc.client.ProtocolError, ConnectionError) as error:
             log.debug(error)
             log.error("Trac url: %s", parent.url)
             raise ReportError(
