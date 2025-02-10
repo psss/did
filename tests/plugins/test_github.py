@@ -1,11 +1,13 @@
 # coding: utf-8
 """ Tests for the GitHub plugin """
 
+import logging
 import os
 import time
 from tempfile import NamedTemporaryFile
 
 import pytest
+from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
@@ -121,11 +123,17 @@ def test_github_invalid_token():
         did.cli.main(INTERVAL)
 
 
-def test_github_missing_url():
+def test_github_missing_url(caplog: LogCaptureFixture):
     """ Missing url """
-    did.base.Config("[gh]\ntype = github")
-    with pytest.raises(did.base.ReportError):
+    did.base.Config("""
+                    [general]
+                    email = "Petr Splichal" <psplicha@redhat.com>
+                    [gh]
+                    type = github
+                    """)
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Skipping section gh due to error: No github url set" in caplog.text
 
 
 def test_github_unicode():

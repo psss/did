@@ -3,7 +3,10 @@
 
 """ Tests for the Trello plugin """
 
+import logging
+
 import pytest
+from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
@@ -86,8 +89,14 @@ def test_trello_checklists_checkitem():
         in str(stat) for stat in stats])
 
 
-def test_trello_missing_username():
+def test_trello_missing_username(caplog: LogCaptureFixture):
     """ Missing username """
-    did.base.Config("[trello]\ntype = trello")
-    with pytest.raises(did.base.ReportError):
+    did.base.Config("""
+                [general]
+                email = "Did Tester" <the.did.tester@gmail.com>
+                [trello]
+                type = trello
+                """)
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "No ('apikey' and 'token') or 'user' set" in caplog.text
