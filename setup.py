@@ -26,7 +26,7 @@ extras_require = {
     'koji': ['koji'],
     'redmine': ['feedparser'],
     'rt': ['gssapi'],
-    'tests': ['pytest', 'python-coveralls', 'pre-commit'],
+    'tests': ['pytest', 'pytest-xdist', 'pytest-cov', 'python-coveralls', 'pre-commit'],
     }
 extras_require['all'] = [
     dependency
