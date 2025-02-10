@@ -117,7 +117,7 @@ def test_bugzilla_closed():
 #  Verified Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_bugzilla_verified_chagedby():
+def test_bugzilla_verified_changedby():
     """ Check verified bugs based on changedby """
     did.base.Config(CONFIG)
     stats = did.cli.main([
