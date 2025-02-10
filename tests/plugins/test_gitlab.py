@@ -1,9 +1,11 @@
 # coding: utf-8
 """ Tests for the GitLab plugin """
 
+import logging
 import os
 
 import pytest
+from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
@@ -120,8 +122,9 @@ def test_gitlab_merge_requests_approved():
         for stat in stats])
 
 
-def test_github_invalid_token():
+def test_gitlab_invalid_token(caplog: LogCaptureFixture):
     """ Invalid token """
     did.base.Config(CONFIG_NOTOKEN)
-    with pytest.raises(did.base.ReportError, match="No GitLab token set in .*"):
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Skipping section gitlab due to error: No GitLab token" in caplog.text

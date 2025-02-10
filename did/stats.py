@@ -221,16 +221,19 @@ class UserStats(StatsGroup):
 
             user = self.user.clone(section) if self.user else None
             statsgroup = StatsGroupPlugin.registry[type_]
-            obj = statsgroup(option=section, parent=self, user=user)
-            # Override default order if requested
-            if 'order' in data:
-                try:
-                    obj.order = int(data['order'])
-                except ValueError as exc:
-                    raise did.base.GeneralError(
-                        f"Invalid order '{data['order']}' "
-                        f"in the '{section}' section.") from exc
-            results.append(obj)
+            try:
+                obj = statsgroup(option=section, parent=self, user=user)
+                # Override default order if requested
+                if 'order' in data:
+                    try:
+                        obj.order = int(data['order'])
+                    except ValueError as exc:
+                        raise did.base.GeneralError(
+                            f"Invalid order '{data['order']}' "
+                            f"in the '{section}' section.") from exc
+                results.append(obj)
+            except did.base.ReportError as re_err:
+                log.error("Skipping section %s due to error: %s", section, re_err)
         return sorted(results, key=lambda x: x.order)
 
     def add_option(self, parser):

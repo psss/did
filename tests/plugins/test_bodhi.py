@@ -3,7 +3,9 @@
 Tests for the Bodhi plugin
 """
 
-import pytest
+import logging
+
+from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
@@ -44,8 +46,14 @@ def test_bodhi_updates_created():
     assert not stats
 
 
-def test_bodhi_missing_url():
+def test_bodhi_missing_url(caplog: LogCaptureFixture):
     """ Missing url """
-    did.base.Config("[bodhi]\ntype = bodhi")
-    with pytest.raises(did.base.ReportError):
+    did.base.Config("""
+                    [general]
+                    email = "Mikel Olasagasti Uranga" <mikel@olasagasti.info>
+                    [bodhi]
+                    type = bodhi
+                    """)
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Skipping section bodhi due to error: No Bodhi url set" in caplog.text

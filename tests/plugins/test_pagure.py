@@ -5,7 +5,9 @@ Tests for the Pagure plugin
 Test project: https://pagure.io/did
 """
 
-import pytest
+import logging
+
+from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
@@ -91,8 +93,14 @@ def test_pagure_comments():
         ["2018-11-27 - psss commented on issue" in str(stat) for stat in stats])
 
 
-def test_pagure_missing_url():
+def test_pagure_missing_url(caplog: LogCaptureFixture):
     """ Missing url """
-    did.base.Config("[pagure]\ntype = pagure")
-    with pytest.raises(did.base.ReportError):
+    did.base.Config("""
+                [general]
+                email = "Petr Splichal" <psplicha@redhat.com>
+                [pagure]
+                type = pagure
+                """)
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Skipping section pagure due to error: No Pagure url set" in caplog.text

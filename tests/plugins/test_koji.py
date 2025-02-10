@@ -3,7 +3,9 @@
 Tests for the Koji plugin
 """
 
-import pytest
+import logging
+
+from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
@@ -52,8 +54,14 @@ def test_koji_build():
     assert not stats
 
 
-def test_koji_missing_url():
+def test_koji_missing_url(caplog: LogCaptureFixture):
     """ Missing url """
-    did.base.Config("[koji]\ntype = koji")
-    with pytest.raises(did.base.ReportError):
+    did.base.Config("""
+                    [general]
+                    email = "Mikel Olasagasti Uranga" <mikel@olasagasti.info>
+                    [koji]
+                    type = koji
+                    """)
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Skipping section koji due to error: No koji url set" in caplog.text
