@@ -72,7 +72,11 @@ class Stats():
             return
         try:
             self.fetch()
-        except (xmlrpc.client.Fault, did.base.ConfigError) as error:
+        except (
+                xmlrpc.client.Fault,
+                did.base.ConfigError,
+                ConnectionError
+                ) as error:
             log.error(error)
             self.error = True
             # Raise the exception if debugging
