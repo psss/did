@@ -394,10 +394,15 @@ class GitLabStats(StatsGroup):
             raise ReportError(f"No GitLab token set in the [{option}] section")
         # Check SSL verification
         try:
-            self.ssl_verify = bool(strtobool(
-                config["ssl_verify"]))
-        except KeyError:
-            self.ssl_verify = GITLAB_SSL_VERIFY
+            self.ssl_verify = bool(
+                strtobool(
+                    config.get("ssl_verify", str(GITLAB_SSL_VERIFY))
+                    )
+                )
+        except ValueError as ve:
+            raise ReportError(
+                f"Invalid ssl_verify option for GitLab in [{option}] section"
+                ) from ve
         if not self.ssl_verify:
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
         self.gitlab = GitLab(

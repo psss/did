@@ -64,12 +64,12 @@ def test_gitlab_issues_commented():
 @pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
                     reason="No GITLAB_TOKEN environment variable found")
 def test_gitlab_issues_closed():
-    """ Closed issues """
+    """ Closed issues in markdown format """
     did.base.Config(CONFIG)
-    option = "--gitlab-issues-closed "
+    option = "--gitlab-issues-closed --format=markdown "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[2].stats
     assert any([
-        "did.tester/test-project#003 - the readme is almost empty"
+        "[did.tester/test-project#3]"
         in str(stat) for stat in stats])
 
 
@@ -128,3 +128,31 @@ def test_gitlab_invalid_token(caplog: LogCaptureFixture):
     with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
         assert "Skipping section gitlab due to error: No GitLab token" in caplog.text
+
+
+def test_gitlab_missing_url(caplog: LogCaptureFixture):
+    """ Missing url """
+    did.base.Config(CONFIG.replace("url = https://gitlab.com\n", ""))
+    with caplog.at_level(logging.ERROR):
+        did.cli.main(INTERVAL)
+        assert "Skipping section gitlab due to error: No GitLab url set" in caplog.text
+
+
+def test_gitlab_wrong_url():
+    """ Wrong url """
+    did.base.Config(
+        CONFIG.replace("url = https://gitlab.com\n", "url = https://localhost\n")
+        )
+    with pytest.raises(did.base.ReportError, match=r"Unable to connect"):
+        did.cli.main(INTERVAL)
+
+
+def test_gitlab_config_invaliad_ssl_verify(caplog: LogCaptureFixture):
+    """  Test ssl_verify with wrong bool value """
+    did.base.Config(f"""
+{CONFIG}
+ssl_verify = ss
+""")
+    with caplog.at_level(logging.ERROR):
+        did.cli.main(INTERVAL)
+        assert "Invalid ssl_verify option for GitLab" in caplog.text
