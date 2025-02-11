@@ -85,7 +85,7 @@ import urllib.parse
 import dateutil.parser
 import requests
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
-from urllib3.exceptions import InsecureRequestWarning
+from urllib3.exceptions import InsecureRequestWarning, NewConnectionError
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
@@ -368,6 +368,7 @@ class JiraStats(StatsGroup):
                     "`auth_password` and `auth_password_file` are only valid for"
                     f" basic authentication (section [{option}])")
         # Token
+        self.token_expiration = None
         if self.auth_type == "token":
             self._token_auth(option, config)
         self._set_ssl_verification(config)
@@ -395,57 +396,66 @@ class JiraStats(StatsGroup):
     @property
     def session(self):
         """ Initialize the session """
-        if self._session is None:
-            self._session = requests.Session()
-            log.debug("Connecting to %s", self.auth_url)
-            # Disable SSL warning when ssl_verify is False
-            if not self.ssl_verify:
-                requests.packages.urllib3.disable_warnings(
-                    InsecureRequestWarning)
-            if self.auth_type == 'basic':
-                basic_auth = (self.auth_username, self.auth_password)
-                response = self._session.get(
-                    self.auth_url, auth=basic_auth, verify=self.ssl_verify)
-            elif self.auth_type == "token":
-                self.session.headers["Authorization"] = f"Bearer {self.token}"
-                response = self._session.get(
-                    f"{self.url}/rest/api/2/myself",
-                    verify=self.ssl_verify)
-            else:
-                gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
+        # pylint: disable=too-many-branches
+        if self._session is not None:
+            return self._session
+        self._session = requests.Session()
+        log.debug("Connecting to %s", self.auth_url)
+        # Disable SSL warning when ssl_verify is False
+        if not self.ssl_verify:
+            requests.packages.urllib3.disable_warnings(
+                InsecureRequestWarning)
+        if self.auth_type == 'basic':
+            basic_auth = (self.auth_username, self.auth_password)
+            response = self._session.get(
+                self.auth_url, auth=basic_auth, verify=self.ssl_verify)
+        elif self.auth_type == "token":
+            self.session.headers["Authorization"] = f"Bearer {self.token}"
+            response = self._session.get(
+                f"{self.url}/rest/api/2/myself",
+                verify=self.ssl_verify)
+        else:
+            gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
+            try:
                 response = self._session.get(
                     self.auth_url, auth=gssapi_auth, verify=self.ssl_verify)
-            try:
-                response.raise_for_status()
-            except requests.exceptions.HTTPError as error:
+            except (requests.exceptions.ConnectionError,
+                    NewConnectionError) as error:
                 log.error(error)
                 raise ReportError(
-                    "Jira authentication failed. Check credentials or kinit."
+                    f"Failed to connect to Jira at {self.auth_url}."
                     ) from error
-            if self.token_expiration:
-                response = self._session.get(
-                    f"{self.url}/rest/pat/latest/tokens",
-                    verify=self.ssl_verify)
-                try:
-                    response.raise_for_status()
-                    token_found = None
-                    for token in response.json():
-                        if token["name"] == self.token_name:
-                            token_found = token
-                            break
-                    if token_found is None:
-                        raise ValueError(
-                            f"Can't check validity for the '{self.token_name}' "
-                            f"token as it doesn't exist.")
-                    from datetime import datetime
-                    expiring_at = datetime.strptime(
-                        token_found["expiringAt"], r"%Y-%m-%dT%H:%M:%S.%f%z")
-                    delta = (
-                        expiring_at.astimezone() - datetime.now().astimezone())
-                    if delta.days < self.token_expiration:
-                        log.warning("Jira token '%s' expires in %s days.",
-                                    self.token_name, delta.days)
-                except (requests.exceptions.HTTPError,
-                        KeyError, ValueError) as error:
-                    log.warning(error)
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as error:
+            log.error(error)
+            raise ReportError(
+                "Jira authentication failed. Check credentials or kinit."
+                ) from error
+        if self.token_expiration:
+            response = self._session.get(
+                f"{self.url}/rest/pat/latest/tokens",
+                verify=self.ssl_verify)
+            try:
+                response.raise_for_status()
+                token_found = None
+                for token in response.json():
+                    if token["name"] == self.token_name:
+                        token_found = token
+                        break
+                if token_found is None:
+                    raise ValueError(
+                        f"Can't check validity for the '{self.token_name}' "
+                        f"token as it doesn't exist.")
+                from datetime import datetime
+                expiring_at = datetime.strptime(
+                    token_found["expiringAt"], r"%Y-%m-%dT%H:%M:%S.%f%z")
+                delta = (
+                    expiring_at.astimezone() - datetime.now().astimezone())
+                if delta.days < self.token_expiration:
+                    log.warning("Jira token '%s' expires in %s days.",
+                                self.token_name, delta.days)
+            except (requests.exceptions.HTTPError,
+                    KeyError, ValueError) as error:
+                log.warning(error)
         return self._session
