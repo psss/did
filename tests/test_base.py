@@ -1,9 +1,12 @@
 # coding: utf-8
 
+import configparser
 import datetime
+import sys
 import unittest
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -17,12 +20,49 @@ from did.base import Config, ConfigError, Date, get_token
 
 
 def test_Config():
-    assert Config
+    assert Config.example() == "[general]\nemail = Name Surname <email@example.org>\n"
+
+
+def test_Config_file_missing():
+    with pytest.raises(
+            did.base.ConfigFileError,
+            match=r"Unable to read the config file"
+            ):
+        Config(path="/tmp/does_not_exist")
 
 
 def test_Config_email():
     config = Config("[general]\nemail = email@example.com\n")
     assert config.email == "email@example.com"
+
+
+def test_Config_missing_sections():
+    with pytest.raises(configparser.MissingSectionHeaderError):
+        Config("email = email@example.com\n")
+
+
+def test_Config_properties():
+    config = Config(Config.example())
+    assert config.plugins is None
+    config = Config("""
+[general]
+email = email@example.com
+plugins = custom
+[test1]
+type = git
+[test2]
+type = github
+""")
+    assert config.separator == did.base.DEFAULT_SEPARATOR
+    assert config.separator_width == did.base.MAX_WIDTH
+    assert config.plugins == "custom"
+    assert config.sections() == ["general", "test1", "test2"]
+    assert config.sections(kind="git") == ["test1"]
+    assert str(config.item("test1", "type")) == "git"
+    with pytest.raises(ConfigError):
+        config.item("test1", "bad_typo")
+    with patch.object(sys, 'argv', ["did", "--config", "/tmp/does_not_exist"]):
+        assert config.path() == "/tmp/does_not_exist"
 
 
 def test_Config_email_missing():
@@ -46,7 +86,9 @@ def test_Config_width():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_Date():
-    assert Date
+    assert str(Date('2018-12-01')) == '2018-12-01'
+    with pytest.raises(did.base.OptionError, match=r"Invalid date format"):
+        Date('2018-12-broken')
 
 
 @pytest.fixture
@@ -57,10 +99,47 @@ def mock_today():
     did.base.TODAY = original_today
 
 
+@pytest.fixture
+def mock_today_quarter():
+    original_today = datetime.date.today()
+    did.base.TODAY = datetime.date(2015, 9, 3)
+    yield
+    did.base.TODAY = original_today
+
+
+def test_middle_q(mock_today_quarter):
+    """ Quarter periods with today in middle of a quarter """
+    # pylint:disable=unused-argument,redefined-outer-name
+    quarter_cases = [
+        ("quarter", "2015-07-01", "2015-10-01", "this quarter"),
+        ("this quarter", "2015-07-01", "2015-10-01", "this quarter"),
+        ]
+    # Run all test cases
+    for argument, expected_since, expected_until, expected_period in quarter_cases:
+        since, until, period = Date.period(argument)
+        assert str(since) == expected_since
+        assert str(until) == expected_until
+        assert period == expected_period
+
+
+def test_ofsetted_quarters(mock_today):
+    """ quarters not starting on first month of the year """
+    # pylint:disable=unused-argument,redefined-outer-name
+    config = Config("[general]\nquarter = 2")
+    assert config.quarter == 2
+    with pytest.raises(did.base.ConfigError, match=r"Invalid quarter start"):
+        config = Config("[general]\nquarter = broken")
+        _ = config.quarter
+
+
 def test_date_period(mock_today):  # pylint:disable=unused-argument,redefined-outer-name
+    Config(Config.example())
     test_cases = [
         # Single day periods
+        ("today", "2015-10-03", "2015-10-04", "today"),
         ("yesterday", "2015-10-02", "2015-10-03", "yesterday"),
+        ("monday", "2015-09-28", "2015-09-29", "the last monday"),
+        ("saturday", "2015-09-26", "2015-09-27", "the last saturday"),
         ("last monday", "2015-09-28", "2015-09-29", "the last monday"),
         ("last tuesday", "2015-09-29", "2015-09-30", "the last tuesday"),
         ("last wednesday", "2015-09-30", "2015-10-01", "the last wednesday"),
@@ -74,6 +153,7 @@ def test_date_period(mock_today):  # pylint:disable=unused-argument,redefined-ou
     # Week periods
     week_cases = [
         ("", "2015-09-28", "2015-10-05", "the week 40"),
+        ("broken", "2015-09-28", "2015-10-05", "the week 40"),
         ("week", "2015-09-28", "2015-10-05", "the week 40"),
         ("this week", "2015-09-28", "2015-10-05", "the week 40"),
         ("last", "2015-09-21", "2015-09-28", "the week 39"),
@@ -167,6 +247,8 @@ def test_User():
     user = User("some@email.org; bz: bugzilla@email.org", stats="bz")
     assert user.email == "bugzilla@email.org"
     assert user.login == "bugzilla"
+    # section doesn't exist
+    assert user.alias("bz: bugzilla@email.org", stats="broken") is None
 
     # Custom login alias
     user = User("some@email.org; bz: bzlogin", stats="bz")
@@ -199,8 +281,6 @@ def test_ConfigError():
         raise ConfigError
     except ConfigError:
         pass
-    else:
-        raise RuntimeError("ConfigError exception failing!")
 
 
 def test_ReportError():
@@ -211,8 +291,6 @@ def test_ReportError():
         raise ReportError
     except ReportError:
         pass
-    else:
-        raise RuntimeError("ReportError exception failing!")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -223,7 +301,7 @@ class TestGetToken(unittest.TestCase):
     """ Tests for the `get_token` function """
 
     @contextmanager
-    def get_token_as_file(self, token: str) -> str:
+    def get_token_as_file(self, token):
         """
         Returns a temporary filename with the given token written to it.
         Use this as a context manager:
