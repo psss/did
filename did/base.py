@@ -342,7 +342,7 @@ class Date():
             for day, weekday in WEEKDAY_MAP.items():
                 if day in arg:
                     return weekday, f"the last {day}"
-            return None, None
+            return None, None  # pragma: no cover
 
         def calculate_since_until_for_weekday(weekday):
             today = Date("today")
