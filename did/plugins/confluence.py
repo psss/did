@@ -67,7 +67,7 @@ import urllib.parse
 
 import requests
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
-from urllib3.exceptions import InsecureRequestWarning
+from urllib3.exceptions import InsecureRequestWarning, NewConnectionError
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
@@ -339,26 +339,38 @@ class ConfluenceStats(StatsGroup):
     @property
     def session(self):
         """ Initialize the session """
+        # pylint: disable=too-many-branches
         if self._session is None:
             self._session = requests.Session()
-            log.debug("Connecting to %s", self.auth_url)
             # Disable SSL warning when ssl_verify is False
             if not self.ssl_verify:
                 requests.packages.urllib3.disable_warnings(
                     InsecureRequestWarning)
             if self.auth_type == "basic":
                 basic_auth = (self.auth_username, self.auth_password)
+                log.debug("Connecting to %s for basic auth", self.auth_url)
                 response = self._session.get(
                     self.auth_url, auth=basic_auth, verify=self.ssl_verify)
             elif self.auth_type == "token":
+                log.debug("Connecting to %s/rest/api/content for token auth", self.url)
                 self.session.headers["Authorization"] = f"Bearer {self.token}"
                 response = self._session.get(
                     f"{self.url}/rest/api/content",
                     verify=self.ssl_verify)
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
-                response = self._session.get(
-                    self.auth_url, auth=gssapi_auth, verify=self.ssl_verify)
+                try:
+                    log.debug("Connecting to %s for gssapi auth", self.auth_url)
+                    response = self._session.get(
+                        self.auth_url, auth=gssapi_auth, verify=self.ssl_verify)
+                except (
+                        requests.exceptions.ConnectionError,
+                        NewConnectionError
+                        ) as error:
+                    log.error(error)
+                    raise ReportError(
+                        f"Failed to connect to Confluence at {
+                            self.auth_url}.") from error
             try:
                 response.raise_for_status()
             except requests.exceptions.HTTPError as error:
