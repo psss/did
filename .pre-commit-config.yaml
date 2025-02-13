@@ -15,7 +15,7 @@ repos:
           - --max-line-length=88
 
   - repo: https://github.com/PyCQA/isort
-    rev: "5.13.2"
+    rev: "6.0.0"
     hooks:
       - id: isort
 
@@ -52,7 +52,7 @@ repos:
         exclude: disable_test_trac.py
 
   - repo: https://github.com/pylint-dev/pylint
-    rev: "v3.3.3"
+    rev: "v3.3.4"
     hooks:
       - id: pylint
         args:
