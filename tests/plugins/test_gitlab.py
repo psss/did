@@ -16,6 +16,7 @@ import did.cli
 
 INTERVAL = "--since 2023-01-20 --until 2023-01-20"
 APPROVED_INTERVAL = "--since 2021-04-08 --until 2021-04-09"
+PAGINATED_INTERVAL = "--since 2025-01-01 --until 2025-02-28"
 
 CONFIG_NOTOKEN = """
 [general]
@@ -99,6 +100,20 @@ def test_gitlab_merge_requests_commented():
 
 @pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
                     reason="No GITLAB_TOKEN environment variable found")
+def test_gitlab_paginated_merge_requests_commented(caplog: LogCaptureFixture):
+    """ Approved merge requests """
+    did.base.Config(CONFIG.replace("did.tester", "sandrobonazzola"))
+    option = "--gitlab-merge-requests-commented "
+    with caplog.at_level(logging.DEBUG, logger=did.base.log.name):
+        stats = did.cli.main(option + PAGINATED_INTERVAL)[0][0].stats[0].stats[4].stats
+        assert "Fetching more paginated data" in caplog.text
+    assert any([
+        "CentOS/automotive/src/automotive-image-builder#220" in str(stat)
+        for stat in stats])
+
+
+@pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
+                    reason="No GITLAB_TOKEN environment variable found")
 def test_gitlab_merge_requests_closed():
     """ Closed merge requests """
     did.base.Config(CONFIG)
@@ -122,12 +137,19 @@ def test_gitlab_merge_requests_approved():
         for stat in stats])
 
 
-def test_gitlab_invalid_token(caplog: LogCaptureFixture):
-    """ Invalid token """
+def test_gitlab_missing_token(caplog: LogCaptureFixture):
+    """ Missing token """
     did.base.Config(CONFIG_NOTOKEN)
     with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
         assert "Skipping section gitlab due to error: No GitLab token" in caplog.text
+
+
+def test_gitlab_invalid_token():
+    """ Invalid token """
+    did.base.Config(CONFIG_NOTOKEN + "\ntoken = bad-token")
+    with pytest.raises(did.base.ReportError, match=r"Unable to access"):
+        did.cli.main(INTERVAL)
 
 
 def test_gitlab_missing_url(caplog: LogCaptureFixture):
@@ -156,3 +178,14 @@ ssl_verify = ss
     with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
         assert "Invalid ssl_verify option for GitLab" in caplog.text
+
+
+@pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
+                    reason="No GITLAB_TOKEN environment variable found")
+def test_gitlab_config_disabled_ssl_verify():
+    """  Test ssl_verify disabled """
+    did.base.Config(f"""
+{CONFIG}
+ssl_verify = False
+""")
+    did.cli.main(INTERVAL)
