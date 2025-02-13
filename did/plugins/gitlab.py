@@ -81,7 +81,18 @@ class GitLab():
                 api_raw = requests.get(
                     url, headers=self.headers, verify=self.ssl_verify,
                     timeout=self.timeout)
+                api_raw.raise_for_status()
                 return api_raw
+            except requests.exceptions.HTTPError as http_err:
+                result = api_raw.json()
+                if "error" in result:
+                    raise ReportError(
+                        f"Error '{result["error"]}' "
+                        f"connecting to GitLab: {result["error_description"]}"
+                        ) from http_err
+                raise ReportError(
+                    f"Unable to access '{url}'. Error: {http_err}"
+                    ) from http_err
             except requests.exceptions.ConnectionError as connection_error:
                 retries += 1
                 if retries > GITLAB_ATTEMPTS:
@@ -114,6 +125,7 @@ class GitLab():
         results.extend(result.json())
         while ('next' in result.links and 'url' in result.links['next'] and
                 get_all_results):
+            log.debug("-> Fetching more paginated data")
             result = self._get_gitlab_api_raw(result.links['next']['url'])
             json_result = result.json()
             results.extend(json_result)
