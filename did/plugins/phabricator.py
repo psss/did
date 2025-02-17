@@ -629,7 +629,7 @@ class PhabricatorStats(StatsGroup):
         self.logins = [
             login.strip() for login in str(
                 config["login"]).split(",")]
-        if self.logins == []:
+        if self.logins == ['']:
             raise ConfigError(f"Empty login found in [{option}] section")
         self.phabricator = Phabricator(self.url, self.token, self.logins,
                                        timeout=config.get("timeout"))
