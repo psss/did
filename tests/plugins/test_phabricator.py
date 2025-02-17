@@ -68,10 +68,17 @@ def test_missing_url():
         did.cli.main(INTERVAL)
 
 
+def test_empty_logins():
+    """ Empty phabricator logins results in Exception """
+    did.base.Config(f"{CONFIG_BAD_MISSING_LOGINS}\nlogin=\n")
+    with pytest.raises(did.base.ConfigError, match=r"Empty login found"):
+        did.cli.main(INTERVAL)
+
+
 def test_missing_logins():
     """ Missing phabricator logins results in Exception """
     did.base.Config(CONFIG_BAD_MISSING_LOGINS)
-    with pytest.raises(did.base.ConfigError):
+    with pytest.raises(did.base.ConfigError, match=r"No login set"):
         did.cli.main(INTERVAL)
 
 
