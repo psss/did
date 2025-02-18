@@ -57,9 +57,9 @@ plain text within your config file, use ``client_id_file`` and
 import os
 
 import httplib2
+import oauth2client.client
 from googleapiclient import discovery
 from oauth2client import tools
-from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 
 from did.base import CONFIG, Config, get_token
@@ -104,7 +104,7 @@ def authorized_http(client_id, client_secret, apps, file=None):
 
     if (not credentials or credentials.invalid
             or not scopes <= credentials.scopes):
-        flow = OAuth2WebServerFlow(
+        flow = oauth2client.client.OAuth2WebServerFlow(
             client_id=client_id,
             client_secret=client_secret,
             scope=scopes,
@@ -126,15 +126,16 @@ class GoogleCalendar():
     """ Google Calendar functions """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, http, parent):
-        self.service = discovery.build("calendar", "v3", http=http)
+    def __init__(self, http_credentials, parent):
+        self._credentials = http_credentials
         self.parent = parent
 
     def events(self, **kwargs):
         """ Fetch events meeting specified criteria """
+        http = authorized_http(*self._credentials)
+        service = discovery.build("calendar", "v3", http=http)
         # pylint: disable=no-member
-        # self.service events is dynamically added as member by schema
-        events_result = self.service.events().list(**kwargs).execute()
+        events_result = service.events().list(**kwargs).execute()
         # pylint: enable=no-member
         return [Event(event, self.parent.options.format)
                 for event in events_result.get("items", [])]
@@ -147,7 +148,7 @@ class GoogleCalendar():
 class Event():
     """ Google Calendar Event """
 
-    def __init__(self, in_dict, out_format):
+    def __init__(self, in_dict: dict, out_format: str):
         """ Create Event object from dict returned by Google API """
         self.__dict__ = in_dict
         self._format = out_format
@@ -166,18 +167,18 @@ class Event():
         # plain text
         return self.summary
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str):
         return self.__dict__.get(name, None)
 
-    def created_by(self, email):
+    def created_by(self, email: str) -> bool:
         """ Check if user created the event """
         return self["creator"]["email"] == email
 
-    def organized_by(self, email):
+    def organized_by(self, email: str) -> bool:
         """ Check if user created the event """
         return self["organizer"]["email"] == email
 
-    def attended_by(self, email):
+    def attended_by(self, email: str) -> bool:
         """ Check if user attended the event """
         for attendee in self["attendees"] or []:
             if (attendee["email"] == email
@@ -194,15 +195,16 @@ class GoogleTasks():
     """ Google Tasks functions """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, http, parent):
-        self.service = discovery.build("tasks", "v1", http=http)
+    def __init__(self, http_credentials, parent):
+        self._credentials = http_credentials
         self.parent = parent
 
     def tasks(self, **kwargs):
         """ Fetch tasks specified criteria """
+        http = authorized_http(*self._credentials)
+        service = discovery.build("tasks", "v1", http=http)
         # pylint: disable=no-member
-        # self.service tasks is dynamically added as member by schema
-        tasks_result = self.service.tasks().list(**kwargs).execute()
+        tasks_result = service.tasks().list(**kwargs).execute()
         # pylint: enable=no-member
         return [Task(task, self.parent.options.format)
                 for task in tasks_result.get("items", [])]
@@ -215,7 +217,7 @@ class GoogleTasks():
 class Task():
     """ Google Tasks task """
 
-    def __init__(self, in_dict, out_format):
+    def __init__(self, in_dict: dict, out_format: str):
         """ Create Task object from dict returned by Google API """
         self.__dict__ = in_dict
         self._format = out_format
@@ -226,7 +228,7 @@ class Task():
         #       to return in markdown
         return self.title if hasattr(self, "title") else "(No title)"
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str):
         return self.__dict__.get(name, None)
 
 
@@ -237,7 +239,7 @@ class Task():
 class GoogleStatsBase(Stats):
     """ Base class containing common code """
 
-    def __init__(self, option, name=None, parent=None):
+    def __init__(self, option: str, name=None, parent: StatsGroup | None = None):
         super().__init__(option=option, name=name, parent=parent)
         try:
             self.since = f"{self.options.since.datetime.isoformat()}Z"
@@ -250,7 +252,7 @@ class GoogleStatsBase(Stats):
     @property
     def events(self):
         """ All events in calendar within specified time range """
-        if self._events is None:
+        if self._events is None and self.parent is not None:
             self._events = self.parent.calendar.events(
                 calendarId="primary", singleEvents=True, orderBy="startTime",
                 timeMin=self.since, timeMax=self.until)
@@ -261,11 +263,12 @@ class GoogleStatsBase(Stats):
     @property
     def tasks(self):
         """ All completed tasks within specified time range """
-        if self._tasks is None:
+        if self._tasks is None and self.parent is not None:
             self._tasks = self.parent.tasks.tasks(
                 tasklist="@default", showCompleted="true", showHidden="true",
                 completedMin=self.since, completedMax=self.until)
-        log.info("NB TASKS %s", len(self._tasks))
+        if self._tasks is not None:
+            log.info("NB TASKS %s", len(self._tasks))
         return self._tasks
 
     def fetch(self):
@@ -331,9 +334,9 @@ class GoogleStatsGroup(StatsGroup):
             apps = DEFAULT_APPS
         self.skip = config.get("skip", [])
 
-        http = authorized_http(client_id, client_secret, apps, storage)
-        self.calendar = GoogleCalendar(http, self)
-        self.tasks = GoogleTasks(http, self)
+        http_credentials = (client_id, client_secret, apps, storage)
+        self.calendar = GoogleCalendar(http_credentials, self)
+        self.tasks = GoogleTasks(http_credentials, self)
 
         self.stats = [
             GoogleEventsOrganized(
