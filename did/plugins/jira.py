@@ -81,6 +81,7 @@ Notes:
 import os
 import re
 import urllib.parse
+from datetime import datetime
 
 import dateutil.parser
 import requests
@@ -446,7 +447,6 @@ class JiraStats(StatsGroup):
                     raise ValueError(
                         f"Can't check validity for the '{self.token_name}' "
                         f"token as it doesn't exist.")
-                from datetime import datetime
                 expiring_at = datetime.strptime(
                     token_found["expiringAt"], r"%Y-%m-%dT%H:%M:%S.%f%z")
                 delta = (

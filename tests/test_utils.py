@@ -1,10 +1,12 @@
 # coding: utf-8
 
 import os
+import sys
 
 import pytest
 
 import did
+import did.utils
 from did.utils import strtobool
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -15,36 +17,33 @@ from did.utils import strtobool
 def test_email_re():
     ''' Confirm regex works as we would expect for extracting
         name, login and email from standard email strings'''
-    from did.utils import EMAIL_REGEXP
-
     # good
     x = '"Chris Ward" <cward@redhat.com>'
-    groups = EMAIL_REGEXP.search(x).groups()
+    groups = did.utils.EMAIL_REGEXP.search(x).groups()
     assert len(groups) == 2
     assert groups[0] == 'Chris Ward'
     assert groups[1] == 'cward@redhat.com'
 
     x = 'cward@redhat.com'
-    groups = EMAIL_REGEXP.search(x).groups()
+    groups = did.utils.EMAIL_REGEXP.search(x).groups()
     assert len(groups) == 2
     assert groups[0] is None
     assert groups[1] == 'cward@redhat.com'
 
     # bad
     x = 'cward'
-    groups = EMAIL_REGEXP.search(x)
+    groups = did.utils.EMAIL_REGEXP.search(x)
     assert groups is None
 
     # ugly
     x = '"" <>'
-    groups = EMAIL_REGEXP.search(x)
+    groups = did.utils.EMAIL_REGEXP.search(x)
     assert groups is None
 
 
 def test_log():
-    from did.utils import log
-    assert log
-    assert log.name == 'did'
+    assert did.utils.log
+    assert did.utils.log.name == 'did'
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,13 +51,11 @@ def test_log():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_import_success():
-    import sys
-
-    from did.utils import _import
-    s = _import("sys", True)
+    # pylint: disable=protected-access
+    s = did.utils._import("sys", True)
     assert s is sys
 
-    s = _import("blah", True)
+    s = did.utils._import("blah", True)
     assert s is None
 
 
@@ -77,28 +74,25 @@ def test_load_components():
 
 
 def test_import_failure():
-    from did.utils import _import
     with pytest.raises(ImportError):
-        _import("blah", False)
+        # pylint: disable=protected-access
+        did.utils._import("blah", False)
 
 
 def test_header():
-    from did.utils import header
-    assert header
+    assert did.utils.header
 
 
 def test_shorted():
-    from did.utils import shorted
-    assert shorted
+    assert did.utils.shorted
 
 
 def test_item():
-    from did.utils import item
-    assert item
+    assert did.utils.item
 
 
 def test_pluralize():
-    from did.utils import pluralize
+    pluralize = did.utils.pluralize
     assert pluralize
     assert pluralize("word") == "words"
     assert pluralize("bounty") == "bounties"
@@ -106,7 +100,7 @@ def test_pluralize():
 
 
 def test_listed():
-    from did.utils import listed
+    listed = did.utils.listed
     assert listed
     assert listed(range(1)) == "0"
     assert listed(range(2)) == "0 and 1"
@@ -123,15 +117,13 @@ def test_listed():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_info():
-    from did.utils import info
-    assert info
-    info("something")
-    info("no-new-line", newline=False)
+    assert did.utils.info
+    did.utils.info("something")
+    did.utils.info("no-new-line", newline=False)
 
 
 def test_Logging():
-    from did.utils import Logging
-    assert Logging
+    assert did.utils.Logging
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -139,13 +131,11 @@ def test_Logging():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_Coloring():
-    from did.utils import Coloring
-    assert Coloring
+    assert did.utils.Coloring
 
 
 def test_color():
-    from did.utils import color
-    assert color
+    assert did.utils.color
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -7,6 +7,8 @@ Config example::
     type = nitrate
 """
 
+import nitrate
+
 from did.stats import Stats, StatsGroup
 from did.utils import log
 
@@ -21,7 +23,6 @@ class TestPlans(Stats):
     """ Test plans created """
 
     def fetch(self):
-        import nitrate
         log.info("Searching for test plans created by %s", self.user)
         self.stats.extend(nitrate.TestPlan.search(
             is_active=True,
@@ -34,7 +35,6 @@ class TestRuns(Stats):
     """ Test runs finished """
 
     def fetch(self):
-        import nitrate
         log.info("Searching for test runs finished by %s", self.user)
         self.stats.extend(nitrate.TestRun.search(
             default_tester__email=self.user.email,
@@ -102,7 +102,6 @@ class NitrateStats(StatsGroup):
     @property
     def cases(self):
         """ All test cases created by the user """
-        import nitrate
         if self._cases is None:
             log.info("Searching for cases created by %s", self.user)
             self._cases = [
@@ -116,7 +115,6 @@ class NitrateStats(StatsGroup):
     @property
     def copies(self):
         """ All test case copies created by the user """
-        import nitrate
         if self._copies is None:
             log.info("Searching for cases copied by %s", self.user)
             self._copies = list(nitrate.TestCase.search(
