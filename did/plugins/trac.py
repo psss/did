@@ -102,8 +102,7 @@ class Trac():
         """
         for event in self.changelog:
             when, who, what, old, new, _ignore = event
-            if (when >= self.options.since.date and
-                    when <= self.options.until.date):
+            if self.options.since.date <= when <= self.options.until.date:
                 if user is None or who.startswith(user.login):
                     yield who, what, old, new
 

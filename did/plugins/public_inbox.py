@@ -75,7 +75,7 @@ class Message():
     def is_between_dates(self, since: Date, until: Date) -> bool:
         msg_date = self.date().date()
 
-        return msg_date >= since.date and msg_date <= until.date
+        return since.date <= msg_date <= until.date
 
 
 def _unique_messages(mbox: mailbox.mbox) -> typing.Iterable[Message]:
