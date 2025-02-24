@@ -35,6 +35,7 @@ ISSUE_CREATED = 0
 ISSUE_CLOSED = 1
 PR_CREATED = 2
 COMMENTS = 3
+PR_CLOSED = 4
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -76,6 +77,19 @@ def test_pagure_pull_requests_created():
     assert not stats
     stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[PR_CREATED].stats
     assert not stats
+
+
+def test_pagure_pull_requests_closed():
+    """ Closed pull requests """
+    did.base.Config(CONFIG)
+    option = "--pagure-pull-requests-closed "
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[PR_CLOSED].stats
+    assert not stats
+    stats = did.cli.main(option + BEFORE)[0][0].stats[0].stats[PR_CLOSED].stats
+    assert not stats
+    stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[PR_CLOSED].stats
+    assert any('fedora-ci/messages#19 - Add compose_type to productmd.compose messages'
+               in str(stat) for stat in stats)
 
 
 def test_pagure_comments():
