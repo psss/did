@@ -38,8 +38,7 @@ def test_bodhi_updates_created():
     did.base.Config(CONFIG)
     option = "--bodhi-updates-created "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
-    assert any(["FEDORA-2021-7b8832fad4 - doctl" in str(stat)
-               for stat in stats])
+    assert any("FEDORA-2021-7b8832fad4 - doctl" in str(stat) for stat in stats)
     stats = did.cli.main(option + BEFORE)[0][0].stats[0].stats[0].stats
     assert not stats
     stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[0].stats

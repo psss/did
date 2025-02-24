@@ -46,8 +46,8 @@ def test_github_issues_created():
     did.base.Config(CONFIG)
     option = "--gh-issues-created "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
-    assert any([
-        "psss/did#017 - What did you do" in str(stat) for stat in stats])
+    assert any(
+        "psss/did#017 - What did you do" in str(stat) for stat in stats)
 
 
 def test_github_issues_closed():
@@ -55,8 +55,8 @@ def test_github_issues_closed():
     did.base.Config(CONFIG)
     option = "--gh-issues-closed "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[2].stats
-    assert any([
-        "psss/did#017 - What did you do" in str(stat) for stat in stats])
+    assert any(
+        "psss/did#017 - What did you do" in str(stat) for stat in stats)
 
 
 def test_github_pull_requests_created():
@@ -67,9 +67,9 @@ def test_github_pull_requests_created():
     EMAIL = " --email mfrodl@redhat.com"
     stats = did.cli.main(
         option + CUSTOM_INTERVAL + EMAIL)[0][0].stats[0].stats[3].stats
-    assert any([
+    assert any(
         "psss/did#112 - Fixed test for Trac plugin" in str(stat)
-        for stat in stats])
+        for stat in stats)
 
 
 def test_github_pull_requests_closed():
@@ -78,8 +78,8 @@ def test_github_pull_requests_closed():
     option = "--gh-pull-requests-closed "
     CUSTOM_INTERVAL = "--since 2015-09-22 --until 2015-09-22"
     stats = did.cli.main(option + CUSTOM_INTERVAL)[0][0].stats[0].stats[5].stats
-    assert any([
-        "psss/did#037 - Skip CI users" in str(stat) for stat in stats])
+    assert any(
+        "psss/did#037 - Skip CI users" in str(stat) for stat in stats)
 
 
 def test_github_pull_requests_reviewed():
@@ -88,8 +88,8 @@ def test_github_pull_requests_reviewed():
     option = "--gh-pull-requests-reviewed "
     CUSTOM_INTERVAL = "--since 2017-02-22 --until 2017-02-23"
     stats = did.cli.main(option + CUSTOM_INTERVAL)[0][0].stats[0].stats[6].stats
-    assert any(["Katello/katello-client-bootstrap#164" in str(stat)
-                for stat in stats])
+    assert any("Katello/katello-client-bootstrap#164" in str(stat)
+               for stat in stats)
 
 
 def test_github_pull_requests_commented():
@@ -100,9 +100,9 @@ def test_github_pull_requests_commented():
     stats = did.cli.main(option + CUSTOM_INTERVAL)[0][0].stats[0].stats[4].stats
     for stat in stats:
         print(stat)
-    assert any([
+    assert any(
         "psss/did#285 - Fix error when building SRPM in copr"
-        in str(stat) for stat in stats])
+        in str(stat) for stat in stats)
 
 
 def test_github_issues_commented():
@@ -111,9 +111,9 @@ def test_github_issues_commented():
     option = "--gh-issues-commented "
     CUSTOM_INTERVAL = "--since 2023-01-10 --until 2023-01-23"
     stats = did.cli.main(option + CUSTOM_INTERVAL)[0][0].stats[0].stats[1].stats
-    assert any([
+    assert any(
         "teemtee/tmt#1787 - tmt does not run test with local changes applied"
-        in str(stat) for stat in stats])
+        in str(stat) for stat in stats)
 
 
 def test_github_invalid_token():
@@ -144,9 +144,9 @@ def test_github_unicode():
     option = "--gh-pull-requests-created "
     stats = did.cli.main(
         option + CUSTOM_INTERVAL + EMAIL)[0][0].stats[0].stats[3].stats
-    assert any([
+    assert any(
         "Boundary events lose it’s documentation" in str(stat)
-        for stat in stats])
+        for stat in stats)
 
 
 @pytest.mark.skipif("GITHUB_TOKEN" not in os.environ,
@@ -161,5 +161,5 @@ def test_github_issues_created_with_token_file():
         did.base.Config(config)
         option = "--gh-issues-created "
         stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
-        assert any([
-            "psss/did#017 - What did you do" in str(stat) for stat in stats])
+        assert any(
+            "psss/did#017 - What did you do" in str(stat) for stat in stats)

@@ -39,15 +39,13 @@ def test_koji_build():
     did.base.Config(CONFIG)
     option = "--koji-builds "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
-    assert any(["doctl-1.65.0-1.fc34" in str(stat)
-               for stat in stats])
+    assert any("doctl-1.65.0-1.fc34" in str(stat) for stat in stats)
     stats = did.cli.main(
         option + INTERVAL + " --format=markdown"
         )[0][0].stats[0].stats[0].stats
-    assert any([
+    assert any(
         "[doctl-1.65.0-1.fc34](https://koji.fedoraproject.org/"
-        in str(stat)
-        for stat in stats])
+        in str(stat) for stat in stats)
     stats = did.cli.main(option + BEFORE)[0][0].stats[0].stats[0].stats
     assert not stats
     stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[0].stats
