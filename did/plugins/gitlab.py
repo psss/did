@@ -198,9 +198,11 @@ class GitLab():
         result = []
         for event in self.events:
             created_at = dateutil.parser.parse(event['created_at']).date()
-            if (event['target_type'] == target_type and
-                    event['action_name'] == action_name and
-                    since.date <= created_at and until.date >= created_at):
+            if (
+                event['target_type'] == target_type and
+                event['action_name'] == action_name and
+                since.date <= created_at <= until.date
+                    ):
                 result.append(event)
         log.debug("Result: %s fetched", listed(len(result), "item"))
         return result

@@ -190,8 +190,7 @@ class Issue():
             created = dateutil.parser.parse(comment["created"]).date()
             try:
                 if (comment["author"]["emailAddress"] == user.email and
-                        created >= options.since.date and
-                        created < options.until.date):
+                        options.since.date < created < options.until.date):
                     return True
             except KeyError:
                 pass
