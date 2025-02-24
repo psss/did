@@ -115,8 +115,6 @@ class Pagure():
             objects = data[result_field]
             log.debug("Result: %s fetched", listed(len(objects), "item"))
             log.data(pretty(data))
-            # FIXME later:
-            # Work around https://pagure.io/pagure/issue/4057
             if not objects:
                 break
             result.extend(objects)
@@ -132,7 +130,7 @@ class Issue():
     """ Pagure Issue or Pull Request """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, data, options):
+    def __init__(self, data: dict, options):
         self.options = options
         self.data = data
         self.title = data['title']
@@ -145,6 +143,11 @@ class Issue():
                 float(data['closed_at'])).date()
         except TypeError:
             self.closed = None
+        try:
+            self.closed_by = data["closed_by"]["name"]
+        except TypeError:
+            self.closed_by = None
+
         log.details(f'[{self.created}] {self}')
 
     def __str__(self):
@@ -252,20 +255,25 @@ class Commented(Stats):
             ], key=str)
 
 
-# FIXME: Blocked by https://pagure.io/pagure/issue/4329
-# class PullRequestsClosed(Stats):
-#    """ Pull requests closed """
-#    def fetch(self):
-#        log.info(u'Searching for pull requests closed by {0}'.format(
-#            self.user))
-#        issues = [Issue(issue) for issue in self.parent.pagure.search(
-#            query='user/{0}/requests/actionable?'
-#                'status=all&closed={1}..{2}'.format(
-#                self.user.login, self.options.since,
-#                self.options.until),
-#            pagination='pagination',
-#            result_field='requests')]
-#        self.stats = sorted(issues, key=lambda i: unicode(i))
+class PullRequestsClosed(Stats):
+    """
+    Pull requests closed.
+    Results may be incomplete due to unfixed issue
+    https://pagure.io/pagure/issue/4329.
+    """
+
+    def fetch(self):
+        log.info('Searching for pull requests closed by %s', self.user)
+        issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
+            query=(f'user/{self.user.login}/requests/actionable?'
+                  f'status=all&closed={self.options.since}..{self.options.until}'),
+            pagination='pagination',
+            result_field='requests')
+            ]
+        self.stats = sorted(
+            [stat for stat in issues if stat.closed_by == self.user.login],
+            key=str
+            )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
@@ -304,8 +312,7 @@ class PagureStats(StatsGroup):
             Commented(
                 option=f'{option}-commented', parent=self,
                 name=f'Pull requests commented on {option}'),
-            # FIXME: Blocked by https://pagure.io/pagure/issue/4329
-            # PullRequestsClosed(
-            #     option=f'{option}-pull-requests-closed', parent=self,
-            #     name=f'Pull requests closed on {option}'),
+            PullRequestsClosed(
+                option=f'{option}-pull-requests-closed', parent=self,
+                name=f'Pull requests closed on {option}'),
             ]
