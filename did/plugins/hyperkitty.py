@@ -84,7 +84,7 @@ class Message():
 
 
 def _unique_messages(mbox: mailbox.mbox) -> typing.Iterable[Message]:
-    msgs = dict()
+    msgs = {}
     for msg in mbox.values():
         msg = Message(msg)
         msg_id = msg.id()
@@ -97,8 +97,8 @@ def _unique_messages(mbox: mailbox.mbox) -> typing.Iterable[Message]:
 class Hyperkitty():
     def __init__(self, parent, user: User, url: str, timeout: int = TIMEOUT) -> None:
         self.parent = parent
-        self.threads_cache = dict()
-        self.messages_cache = dict()
+        self.threads_cache: dict = {}
+        self.messages_cache: dict = {}
         self.url = url
         self.user = user
         self.timeout = timeout
