@@ -356,7 +356,7 @@ class Logging():
     _level = LOG_WARN
 
     # Already initialized loggers by their name
-    _loggers = dict()
+    _loggers: dict = {}
 
     def __init__(self, name='did'):
         # Use existing logger if already initialized

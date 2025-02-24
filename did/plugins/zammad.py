@@ -44,7 +44,7 @@ class Zammad():
 
         self.token = token
 
-    def search(self, query):
+    def search(self, query: str) -> dict:
         """ Perform Zammad query """
         url = f"{self.url}/{query}"
         log.debug("Zammad query: %s", url)
@@ -60,7 +60,7 @@ class Zammad():
         try:
             result = result["Ticket"]
         except KeyError:
-            result = dict()
+            result = {}
         log.debug("Result: %s fetched", listed(len(result), "item"))
         log.data(pretty(result))
         return result
