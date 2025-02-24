@@ -55,9 +55,9 @@ def test_started():
         "--until", "2025-02-15"])[0][0].stats[0].stats[0].stats
 
     assert len(stats) == 2
-    assert any([
+    assert any(
         msg.id() == "173943744689.530355.3614994439616108884@mmx1.rdu2.centos.org"
-        for msg in stats])
+        for msg in stats)
 
 
 def test_markdown(capsys):
@@ -70,9 +70,9 @@ def test_markdown(capsys):
         "--since", "2025-02-01",
         "--until", "2025-02-15"])
     captured = capsys.readouterr()
-    assert any([
+    assert any(
         "[[CentOS-virt] Proposing to drop CentOS Virt SIG meeting](https://lis" in c
-        for c in captured])
+        for c in captured)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

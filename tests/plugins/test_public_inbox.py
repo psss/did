@@ -51,9 +51,9 @@ def test_lore_started():
         "--until", "2023-12-10"])[0][0].stats[0].stats[0].stats
 
     assert len(stats) == 3
-    assert any([
+    assert any(
         msg.id() == "20231204121707.3647961-1-mripard@kernel.org"
-        for msg in stats])
+        for msg in stats)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -70,9 +70,9 @@ def test_lore_involved():
         "--until", "2023-12-10"])[0][0].stats[0].stats[1].stats
 
     assert len(stats) == 35
-    assert any([
+    assert any(
         msg.id() == "20231204073231.1164163-1-arnd@kernel.org"
-        for msg in stats])
+        for msg in stats)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

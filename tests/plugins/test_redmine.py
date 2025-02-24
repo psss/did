@@ -31,5 +31,4 @@ def test_redmine_activity():
     option = "--redmine-activity "
     stats = did.cli.main(
         option + INTERVAL)[0][0].stats[0].stats[0].stats
-    assert any(
-        ["Foreman Remote Execution" in str(stat) for stat in stats])
+    assert any("Foreman Remote Execution" in str(stat) for stat in stats)

@@ -127,10 +127,10 @@ class Options():
         self.check()
 
         # Enable --all if no particular stat or group selected
-        opt.all = not any([
+        opt.all = not any(
             getattr(opt, stat.dest) or getattr(opt, group.dest)
             for group in self.sample_stats.stats
-            for stat in group.stats])
+            for stat in group.stats)
 
         # Time period handling
         if opt.since is None and opt.until is None:
