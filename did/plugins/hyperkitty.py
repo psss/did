@@ -158,7 +158,7 @@ class Hyperkitty():
 
     def __fetch_thread_root(self, initial_msg: Message) -> Message:
         """
-        Given a message from a thread, thry to find the root message
+        Given a message from a thread, try to find the root message
         of the thread within the mbox.
         :param intial_msg: the message we want to process.
         :returns: the root message of the thread `initial_msg`
@@ -281,6 +281,7 @@ class ThreadsStarted(Stats):
                 self.options.since, self.options.until)
             if msg.is_from_user(self.user.email)
             and msg.is_between_dates(self.options.since, self.options.until)
+            and msg.is_thread_root()
             ]
 
     def show(self):
@@ -305,8 +306,9 @@ class ThreadsInvolved(Stats):
             msg
             for msg in self.parent.hyperkitty.get_all_threads(
                 self.options.since, self.options.until)
-            if not msg.is_from_user(self.user.email)
-            or not msg.is_between_dates(self.options.since, self.options.until)
+            if msg.is_from_user(self.user.email)
+            and msg.is_between_dates(self.options.since, self.options.until)
+            and not msg.is_thread_root()
             ]
 
     def show(self):
