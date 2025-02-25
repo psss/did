@@ -20,7 +20,7 @@ install_requires = [
 extras_require = {
     'bodhi': ['bodhi-client'],
     'bugzilla': ['python-bugzilla'],
-    'docs': ['sphinx==8.1.3', 'sphinx-rtd-theme==3.0.2'],
+    'docs': ['sphinx==8.2.3', 'sphinx-rtd-theme==3.0.2'],
     'google': ['google-api-python-client', 'oauth2client'],
     'jira': ['requests_gssapi'],
     'koji': ['koji'],
@@ -65,6 +65,7 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Topic :: Office/Business',
         'Topic :: Utilities',
         ],
