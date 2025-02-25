@@ -89,9 +89,13 @@ def test_virt_involved():
         "--since", "2018-05-10",
         "--until", "2018-05-27"])[0][0].stats[0].stats[1].stats
 
-    assert len(stats) == 1
+    assert len(stats) == 3
     assert stats[0].id() == \
-        "CAORfjXRhzitjwGPw-7jG0nsNp13sa3mLQjQvGwTJy473ipMrPA@mail.gmail.com"
+        "CAPQRNTmfUReU3DatNjzeBk28T7fdypos4D1+mZ5y0pg4z_xoug@mail.gmail.com"
+    assert stats[1].id() == \
+        "CAPQRNTmZo-0akxz6+7MHCxMbVD1i3SjKBTRxR-mCpQ_0LWXYxA@mail.gmail.com"
+    assert stats[2].id() == \
+        "CAPQRNTn8tnW48QHJ=Lnb-5bOtOi14rYrc84knon4nRVuBAaj=w@mail.gmail.com"
 
 
 def test_missing_url(caplog: LogCaptureFixture):
