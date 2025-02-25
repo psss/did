@@ -57,33 +57,38 @@ class Pagure():
                        grouped: bool = False) -> list:
         """
         Get activities for days in requested range
-        :param username: (mandatory) the username of the user whose
-                         activity you are interested in.
+
+        :param username: (mandatory) the username of the user
+                         whose activity you are interested in.
         :type username:	str
-        :param date: (mandatory) the date of interest
-                     in ISO format: YYYY-MM-DD
+        :param date: (mandatory) the date of interest in ISO
+                     format: YYYY-MM-DD
         :type date: str
         :param grouped: (optional) whether or not to group the commits.
                         Default to False.
         :type grouped: bool
-        :returns: a list with activities done on the given date
-        Sample response:
-            [
-                {
-                    "date": "<iso date>",
-                    "date_created": "<timestamp>",
-                    "description_mk": "<some markdown text>",
-                    "id": <action id>,
-                    "ref_id": "<ref id>",
-                    "type": "commented",
-                    "user": {
-                        "full_url": "<pagure url>/user/<user>",
-                        "fullname": "<user full name>",
-                        "name": "<user>",
-                        "url_path": "user/<user>"
-                    }
-                }
-            ]
+        :returns: a list with activities done on the given date.
+                  Sample response:
+
+                  .. code-block:: python
+
+                    [
+                        {
+                            "date": "<iso date>",
+                            "date_created": "<timestamp>",
+                            "description_mk": "<some markdown text>",
+                            "id": <action id>,
+                            "ref_id": "<ref id>",
+                            "type": "commented",
+                            "user": {
+                                "full_url": "<pagure url>/user/<user>",
+                                "fullname": "<user full name>",
+                                "name": "<user>",
+                                "url_path": "user/<user>"
+                            }
+                        }
+                    ]
+
 
         """
         query = f"{self.url}/user/{username}/activity/{date}"
