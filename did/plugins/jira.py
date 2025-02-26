@@ -10,6 +10,7 @@ Configuration example (token)::
     token_file = ~/.did/jira-token
     token_expiration = 7
     token_name = did-token
+    login = username
 
 Notes:
 Either ``token`` or ``token_file`` has to be defined.
