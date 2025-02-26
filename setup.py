@@ -6,10 +6,11 @@ from setuptools import setup
 
 # Parse version and release from the spec file
 with open('did.spec', encoding="utf-8") as specfile:
+    # pylint: disable=invalid-name
     lines = "\n".join(line.rstrip() for line in specfile)
     version = re.search('Version: (.+)', lines).group(1).rstrip()
     release = re.search('Release: (\\d+)', lines).group(1).rstrip()
-version = '.'.join([version, release])
+VERSION = '.'.join([version, release])
 
 # Prepare install requires and extra requires
 install_requires = [
@@ -44,7 +45,7 @@ setup(
     url='https://github.com/psss/did',
     download_url='https://github.com/psss/did/archive/master.zip',
 
-    version=version,
+    version=VERSION,
     provides=['did'],
     packages=['did', 'did.plugins'],
     scripts=['bin/did'],

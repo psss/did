@@ -62,11 +62,10 @@ def test_github_issues_closed():
 def test_github_pull_requests_created():
     """ Created pull requests """
     did.base.Config("[gh]\ntype = github\nurl = https://api.github.com/")
-    option = "--gh-pull-requests-created "
-    CUSTOM_INTERVAL = "--since 2016-10-26 --until 2016-10-26"
-    EMAIL = " --email mfrodl@redhat.com"
-    stats = did.cli.main(
-        option + CUSTOM_INTERVAL + EMAIL)[0][0].stats[0].stats[3].stats
+    option = ("--gh-pull-requests-created "
+              "--since 2016-10-26 --until 2016-10-26 "
+              "--email mfrodl@redhat.com")
+    stats = did.cli.main(option)[0][0].stats[0].stats[3].stats
     assert any(
         "psss/did#112 - Fixed test for Trac plugin" in str(stat)
         for stat in stats)
@@ -75,9 +74,8 @@ def test_github_pull_requests_created():
 def test_github_pull_requests_closed():
     """ Closed pull requests """
     did.base.Config(CONFIG)
-    option = "--gh-pull-requests-closed "
-    CUSTOM_INTERVAL = "--since 2015-09-22 --until 2015-09-22"
-    stats = did.cli.main(option + CUSTOM_INTERVAL)[0][0].stats[0].stats[5].stats
+    option = "--gh-pull-requests-closed --since 2015-09-22 --until 2015-09-22"
+    stats = did.cli.main(option)[0][0].stats[0].stats[5].stats
     assert any(
         "psss/did#037 - Skip CI users" in str(stat) for stat in stats)
 
@@ -85,9 +83,8 @@ def test_github_pull_requests_closed():
 def test_github_pull_requests_reviewed():
     """ Reviewed pull requests """
     did.base.Config(CONFIG.replace('psss', 'evgeni'))
-    option = "--gh-pull-requests-reviewed "
-    CUSTOM_INTERVAL = "--since 2017-02-22 --until 2017-02-23"
-    stats = did.cli.main(option + CUSTOM_INTERVAL)[0][0].stats[0].stats[6].stats
+    option = "--gh-pull-requests-reviewed --since 2017-02-22 --until 2017-02-23"
+    stats = did.cli.main(option)[0][0].stats[0].stats[6].stats
     assert any("Katello/katello-client-bootstrap#164" in str(stat)
                for stat in stats)
 
@@ -95,9 +92,8 @@ def test_github_pull_requests_reviewed():
 def test_github_pull_requests_commented():
     """ Commented pull requests """
     did.base.Config(CONFIG)
-    option = "--gh-pull-requests-commented "
-    CUSTOM_INTERVAL = "--since 2023-01-10 --until 2023-01-23"
-    stats = did.cli.main(option + CUSTOM_INTERVAL)[0][0].stats[0].stats[4].stats
+    option = "--gh-pull-requests-commented --since 2023-01-10 --until 2023-01-23"
+    stats = did.cli.main(option)[0][0].stats[0].stats[4].stats
     for stat in stats:
         print(stat)
     assert any(
@@ -108,9 +104,8 @@ def test_github_pull_requests_commented():
 def test_github_issues_commented():
     """ Commented issues """
     did.base.Config(CONFIG)
-    option = "--gh-issues-commented "
-    CUSTOM_INTERVAL = "--since 2023-01-10 --until 2023-01-23"
-    stats = did.cli.main(option + CUSTOM_INTERVAL)[0][0].stats[0].stats[1].stats
+    option = "--gh-issues-commented --since 2023-01-10 --until 2023-01-23"
+    stats = did.cli.main(option)[0][0].stats[0].stats[1].stats
     assert any(
         "teemtee/tmt#1787 - tmt does not run test with local changes applied"
         in str(stat) for stat in stats)
@@ -138,12 +133,11 @@ def test_github_missing_url(caplog: LogCaptureFixture):
 
 def test_github_unicode():
     """ Created issues with Unicode characters """
-    CUSTOM_INTERVAL = "--since 2016-02-23 --until 2016-02-23"
-    EMAIL = " --email hasys@example.org"
     did.base.Config("[gh]\ntype = github\nurl = https://api.github.com/")
-    option = "--gh-pull-requests-created "
-    stats = did.cli.main(
-        option + CUSTOM_INTERVAL + EMAIL)[0][0].stats[0].stats[3].stats
+    option = ("--gh-pull-requests-created "
+              "--since 2016-02-23 --until 2016-02-23 "
+              "--email hasys@example.org")
+    stats = did.cli.main(option)[0][0].stats[0].stats[3].stats
     assert any(
         "Boundary events lose it’s documentation" in str(stat)
         for stat in stats)
