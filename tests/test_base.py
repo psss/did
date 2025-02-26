@@ -107,7 +107,8 @@ def _mock_today_quarter():
     did.base.TODAY = original_today
 
 
-def test_middle_q(mock_today_quarter):
+@pytest.mark.usefixtures("_mock_today_quarter")
+def test_middle_q():
     """ Quarter periods with today in middle of a quarter """
     # pylint:disable=unused-argument,redefined-outer-name
     quarter_cases = [
@@ -122,17 +123,19 @@ def test_middle_q(mock_today_quarter):
         assert period == expected_period
 
 
-def test_ofsetted_quarters(mock_today):
+@pytest.mark.usefixtures("_mock_today")
+def test_ofsetted_quarters():
     """ quarters not starting on first month of the year """
     # pylint:disable=unused-argument,redefined-outer-name
     config = did.base.Config("[general]\nquarter = 2")
     assert config.quarter == 2
+    config = did.base.Config("[general]\nquarter = broken")
     with pytest.raises(did.base.ConfigError, match=r"Invalid quarter start"):
-        config = did.base.Config("[general]\nquarter = broken")
         _ = config.quarter
 
 
-def test_date_period(mock_today):  # pylint:disable=unused-argument,redefined-outer-name
+@pytest.mark.usefixtures("_mock_today")
+def test_date_period():  # pylint:disable=redefined-outer-name
     did.base.Config(did.base.Config.example())
     test_cases = [
         # Single day periods
@@ -205,20 +208,12 @@ def test_user_class():
     assert did.base.User
 
     # No email provided
-    try:
-        user = did.base.User("")
-    except did.base.ConfigError:
-        pass
-    else:
-        raise RuntimeError("No exception for missing email")
+    with pytest.raises(did.base.ConfigError, match="Email required"):
+        did.base.User("")
 
     # Invalid email address
-    try:
-        user = did.base.User("bad-email")
-    except did.base.ConfigError:
-        pass
-    else:
-        raise RuntimeError("No exception for invalid email")
+    with pytest.raises(did.base.ConfigError, match="Invalid email address"):
+        did.base.User("bad-email")
 
     # Short email format
     user = did.base.User("some@email.org")
@@ -235,12 +230,8 @@ def test_user_class():
     assert str(user) == "Some Body <some@email.org>"
 
     # Invalid alias definition
-    try:
-        user = did.base.User("some@email.org; bad-alias", stats="bz")
-    except did.base.ConfigError:
-        pass
-    else:
-        raise RuntimeError("No exception for invalid alias definition")
+    with pytest.raises(did.base.ConfigError, match="Invalid alias definition"):
+        did.base.User("some@email.org; bad-alias", stats="bz")
 
     # Custom email alias
     user = did.base.User("some@email.org; bz: bugzilla@email.org", stats="bz")
@@ -316,39 +307,39 @@ class TestGetToken(unittest.TestCase):
 
     def test_get_token_none(self):
         """ Test getting a token when none is specified """
-        self.assertIsNone(did.base.get_token({}))
+        assert did.base.get_token({}) is None
 
     def test_get_token_plain(self):
         """ Test getting a token when specified in plain config file """
         token = str(uuid4())
         config = {"token": token}
-        self.assertEqual(did.base.get_token(config), token)
+        assert did.base.get_token(config) == token
 
     def test_get_token_plain_empty(self):
         """ Test getting a token when it is empty or just whitespace """
         config = {"token": "   "}
-        self.assertIsNone(did.base.get_token(config))
+        assert did.base.get_token(config) is None
 
     def test_get_token_plain_different_name(self):
         """ Test getting a plain token under a different name """
         token = str(uuid4())
         config = {"mytoken": token}
-        self.assertIsNone(did.base.get_token(config))
-        self.assertEqual(did.base.get_token(config, token_key="mytoken"), token)
+        assert did.base.get_token(config) is None
+        assert did.base.get_token(config, token_key="mytoken") == token
 
     def test_get_token_file(self):
         """ Test getting a token from a file """
         token_in_file = str(uuid4())
         with self.get_token_as_file(token_in_file) as filename:
             config = {"token_file": filename}
-            self.assertEqual(did.base.get_token(config), token_in_file)
+            assert did.base.get_token(config) == token_in_file
 
     def test_get_token_file_empty(self):
         """ Test getting a token from a file with just whitespace. """
         token_in_file = "   "
         with self.get_token_as_file(token_in_file) as filename:
             config = {"token_file": filename}
-            self.assertIsNone(did.base.get_token(config))
+            assert did.base.get_token(config) is None
 
     def test_get_token_precedence(self):
         """ Test plain token precedence over file one """
@@ -356,15 +347,12 @@ class TestGetToken(unittest.TestCase):
         token_in_file = str(uuid4())
         with self.get_token_as_file(token_in_file) as filename:
             config = {"token_file": filename, "token": token_plain}
-            self.assertEqual(did.base.get_token(config), token_plain)
+            assert did.base.get_token(config) == token_plain
 
     def test_get_token_file_different_name(self):
         """ Test getting a token from a file under different name """
         token_in_file = str(uuid4())
         with self.get_token_as_file(token_in_file) as filename:
             config = {"mytoken_file": filename}
-            self.assertEqual(
-                did.base.get_token(
-                    config,
-                    token_file_key="mytoken_file"),
-                token_in_file)
+            assert did.base.get_token(
+                config, token_file_key="mytoken_file") == token_in_file

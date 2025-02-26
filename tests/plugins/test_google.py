@@ -115,7 +115,7 @@ def test_authorized_http(mock_run_flow, mock_flow):
     with tempfile.TemporaryDirectory() as new_cred_dir:
         google.CREDENTIAL_DIR = os.path.join(new_cred_dir, "missing")
         assert not os.path.exists(google.CREDENTIAL_DIR)
-        service = google.authorized_http(client_id, client_secret, apps)
+        google.authorized_http(client_id, client_secret, apps)
         assert os.path.exists(google.CREDENTIAL_DIR)
 
 
@@ -156,7 +156,7 @@ class MockedService:
 @patch('oauth2client.client.OAuth2WebServerFlow')
 @patch("oauth2client.tools.run_flow")
 @patch('googleapiclient.discovery.build')
-def test_google_events_organized(mock_build, _mock_run_flow, _mock_flow):
+def test_google_events_organized(mock_build, _mock_flow, _mock_run_flow):  # noqa: PT019
     mock_build.return_value = MockedService()
     did.base.Config(CONFIG)
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0].stats

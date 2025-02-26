@@ -132,7 +132,7 @@ def expect(key: str) -> List[str]:
 
 
 @pytest.mark.parametrize(
-    "options,expectations",
+    ("options", "expectations"),
     [
         ("--ph-differentials-created", expect("created")),
         ("--ph-differentials-closed", expect("closed")),

@@ -164,7 +164,7 @@ def test_bugzilla_missing_url(caplog: LogCaptureFixture):
         assert "No bugzilla url set" in caplog.text
 
 
-def test_bugzilla_wrong_url(caplog: LogCaptureFixture):
+def test_bugzilla_wrong_url():
     """ Wrong url """
     did.base.Config("""
                     [general]
@@ -177,4 +177,3 @@ def test_bugzilla_wrong_url(caplog: LogCaptureFixture):
     with pytest.raises(did.base.ReportError,
                        match=r"Connection to bugzilla server failed"):
         did.cli.main("today")
-        assert "No bugzilla url set" in caplog.text
