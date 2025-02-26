@@ -18,12 +18,12 @@ import did.base
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def test_Config():
+def test_config_example():
     assert did.base.Config.example() == \
         "[general]\nemail = Name Surname <email@example.org>\n"
 
 
-def test_Config_file_missing():
+def test_config_file_error_raised_if_file_is_missing():
     with pytest.raises(
             did.base.ConfigFileError,
             match=r"Unable to read the config file"
@@ -31,17 +31,17 @@ def test_Config_file_missing():
         did.base.Config(path="/tmp/does_not_exist")
 
 
-def test_Config_email():
+def test_config_correctly_parses_email():
     config = did.base.Config("[general]\nemail = email@example.com\n")
     assert config.email == "email@example.com"
 
 
-def test_Config_missing_sections():
+def test_config_raises_error_with_missing_sections():
     with pytest.raises(configparser.MissingSectionHeaderError):
         did.base.Config("email = email@example.com\n")
 
 
-def test_Config_properties():
+def test_config_properties():
     config = did.base.Config(did.base.Config.example())
     assert config.plugins is None
     config = did.base.Config("""
@@ -65,7 +65,7 @@ type = github
         assert config.path() == "/tmp/does_not_exist"
 
 
-def test_Config_email_missing():
+def test_config_raise_error_if_email_is_missing():
     config = did.base.Config("[general]\n")
     with pytest.raises(did.base.ConfigError):
         _ = config.email
@@ -74,7 +74,7 @@ def test_Config_email_missing():
         _ = config.email
 
 
-def test_Config_width():
+def test_config_sets_width_properly():
     config = did.base.Config("[general]\n")
     assert config.width == did.base.MAX_WIDTH
     config = did.base.Config("[general]\nwidth = 123\n")
@@ -85,14 +85,14 @@ def test_Config_width():
 #  Date
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_Date():
+def test_date_works_properly():
     assert str(did.base.Date('2018-12-01')) == '2018-12-01'
     with pytest.raises(did.base.OptionError, match=r"Invalid date format"):
         did.base.Date('2018-12-broken')
 
 
 @pytest.fixture
-def mock_today():
+def _mock_today():
     original_today = datetime.date.today()
     did.base.TODAY = datetime.date(2015, 10, 3)
     yield
@@ -100,7 +100,7 @@ def mock_today():
 
 
 @pytest.fixture
-def mock_today_quarter():
+def _mock_today_quarter():
     original_today = datetime.date.today()
     did.base.TODAY = datetime.date(2015, 9, 3)
     yield
@@ -201,7 +201,7 @@ def test_date_addition_subtraction():
 #  User
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_User():
+def test_user_class():
     assert did.base.User
 
     # No email provided
@@ -274,7 +274,7 @@ def test_User():
 #  Exceptions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_ConfigError():
+def test_configerror_exception():
     ''' Confirm ConfigError exception is defined '''
     try:
         raise did.base.ConfigError
@@ -282,7 +282,7 @@ def test_ConfigError():
         pass
 
 
-def test_ReportError():
+def test_reporterror_exception():
     ''' Confirm ReportError exception is defined '''
     try:
         raise did.base.ReportError

@@ -121,7 +121,7 @@ def test_info():
     did.utils.info("no-new-line", newline=False)
 
 
-def test_Logging():
+def test_logging_class_exists():
     assert did.utils.Logging
 
 
@@ -129,9 +129,9 @@ def test_Logging():
 #  Coloring
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_Coloring():
+def test_coloring_class_exists():
     assert did.utils.Coloring
 
 
-def test_color():
+def test_color_function_exists():
     assert did.utils.color

@@ -85,8 +85,7 @@ def test_gerrit_wip():
 
 def test_gerrit_wip_disabled():
     """ Check wip changes when the wip feature is disabled """
-    CONFIG_NO_WIP = CONFIG + 'wip = False\n'
-    did.base.Config(CONFIG_NO_WIP)
+    did.base.Config(CONFIG + 'wip = False\n')
     stats = did.cli.main([
         "--gerrit-wip",
         "--since", "2020-06-01",

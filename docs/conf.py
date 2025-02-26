@@ -11,6 +11,9 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+#
+# Disabling because constant names are defined in sphinx tooling
+# pylint: disable=invalid-name
 
 import os
 import sys

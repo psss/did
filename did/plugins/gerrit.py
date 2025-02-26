@@ -66,7 +66,7 @@ class Gerrit():
         self.prefix = prefix
 
     @staticmethod
-    def join_URL_frags(base, query):
+    def join_url_frags(base, query):
         split = list(urllib.parse.urlsplit(base))
         split[2] = (split[2] + query).replace('//', '/')
         return urllib.parse.urlunsplit(split)
@@ -89,14 +89,14 @@ class Gerrit():
         return data
 
     def get_changelog(self, chg):
-        messages_url = self.join_URL_frags(
+        messages_url = self.join_url_frags(
             self.baseurl, f'/changes/{chg.change_id}/detail')
         changelog = self.get_query_result(messages_url)
         log.debug("changelog = %s", changelog)
         return changelog
 
     def search(self, query):
-        full_url = self.join_URL_frags(self.baseurl, '/changes/?q=' + query)
+        full_url = self.join_url_frags(self.baseurl, '/changes/?q=' + query)
         log.debug('full_url = %s', full_url)
         tickets = []
 

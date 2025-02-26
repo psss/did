@@ -3,21 +3,21 @@
 import did.stats
 
 
-def test_Stats():
+def test_stats_class_exists():
     assert did.stats.Stats
 
 
-def test_StatsGroup():
+def test_statsgroup_class_exists():
     assert did.stats.StatsGroup
 
 
-def test_UserStats():
+def test_userstats_class_exists():
     assert did.stats.UserStats
 
 
-def test_EmptyStats():
+def test_emptystats_class_exists():
     assert did.stats.EmptyStats
 
 
-def test_EmptyStatsGroup():
+def test_emptystatsgroup_class_exists():
     assert did.stats.EmptyStatsGroup
