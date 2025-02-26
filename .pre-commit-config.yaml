@@ -23,6 +23,10 @@ repos:
     rev: "7.1.2"
     hooks:
       - id: flake8
+        additional_dependencies:
+          [
+            flake8-pytest-style == 2.1.0,
+          ]
         args:
           - --config
           - .flake8
