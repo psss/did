@@ -195,65 +195,62 @@ def main(arguments=None):
     with the list of all gathered stats objects.
     """
     try:
-        # Load standard and custom plugins
-        utils.load_components("did.plugins", continue_on_error=True)
-        try:
-            custom_plugins = did.base.Config().plugins
-            if custom_plugins:
-                custom_plugins = [
-                    plugin.strip() for plugin in utils.split(custom_plugins)]
-                utils.load_components(*custom_plugins, continue_on_error=True)
-        except did.base.ConfigFileError:
-            pass
-
-        # Parse options, initialize gathered stats
-        options, header = Options(arguments).parse()
-        gathered_stats = []
-
-        # Check for user email addresses (command line or config)
-        emails = options.emails or did.base.Config().email
-        emails = utils.split(emails, separator=re.compile(r"\s*,\s*"))
-        users = [did.base.User(email=email) for email in emails]
-
-        # Print header and prepare team stats object for data merging
-        print(header)
-        team_stats = UserStats(options=options)
-        if options.merge:
-            utils.header(
-                "Total Report",
-                separator=did.base.Config().separator,
-                separator_width=did.base.Config().separator_width)
-            utils.item(f"Users: {len(users)}", options=options)
-
-        # Check individual user stats
-        for user in users:
-            if options.merge:
-                utils.item(user, 1, options=options)
-            else:
-                utils.header(
-                    user,
-                    separator=did.base.Config().separator,
-                    separator_width=did.base.Config().separator_width)
-            user_stats = UserStats(user=user, options=options)
-            user_stats.check()
-            team_stats.merge(user_stats)
-            gathered_stats.append(user_stats)
-
-        # Display merged team report
-        if options.merge or options.total:
-            if options.total:
-                utils.header(
-                    "Total Report",
-                    separator=did.base.Config().separator,
-                    separator_width=did.base.Config().separator_width)
-            team_stats.show()
-
-        # Return all gathered stats objects
-        return gathered_stats, team_stats
-
+        config = did.base.Config()
     except did.base.ConfigFileError:
         utils.info(
             f"Create at least a minimum config file {
                 did.base.Config.path()}:\n{
                 did.base.Config.example().strip()}")
         raise
+    # Load standard and custom plugins
+    utils.load_components("did.plugins", continue_on_error=True)
+    custom_plugins = config.plugins
+    if custom_plugins:
+        custom_plugins = [
+            plugin.strip() for plugin in utils.split(custom_plugins)]
+        utils.load_components(*custom_plugins, continue_on_error=True)
+
+    # Parse options, initialize gathered stats
+    options, header = Options(arguments).parse()
+    gathered_stats = []
+
+    # Check for user email addresses (command line or config)
+    emails = options.emails or config.email
+    emails = utils.split(emails, separator=re.compile(r"\s*,\s*"))
+    users = [did.base.User(email=email) for email in emails]
+
+    # Print header and prepare team stats object for data merging
+    print(header)
+    team_stats = UserStats(options=options)
+    if options.merge:
+        utils.header(
+            "Total Report",
+            separator=config.separator,
+            separator_width=config.separator_width)
+        utils.item(f"Users: {len(users)}", options=options)
+
+    # Check individual user stats
+    for user in users:
+        if options.merge:
+            utils.item(user, 1, options=options)
+        else:
+            utils.header(
+                user,
+                separator=config.separator,
+                separator_width=config.separator_width)
+        user_stats = UserStats(user=user, options=options)
+        user_stats.check()
+        team_stats.merge(user_stats)
+        gathered_stats.append(user_stats)
+
+    # Display merged team report
+    if options.merge or options.total:
+        if options.total:
+            utils.header(
+                "Total Report",
+                separator=config.separator,
+                separator_width=config.separator_width)
+        team_stats.show()
+
+    # Return all gathered stats objects
+    return gathered_stats, team_stats
