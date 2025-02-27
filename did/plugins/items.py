@@ -23,13 +23,18 @@ from did.utils import item
 class ItemStats(Stats):
     """ Custom section with given items """
 
-    def __init__(self, option, name=None, parent=None):
+    def __init__(self, option: str, name: str = None, parent: StatsGroup = None):
         # Prepare sorted item content from the config section
-        items = Config().section(option, skip=["type", "header", "order"])
+        items = Config().section(
+            option.replace("-item", ""), skip=["type", "header", "order"]
+            )
+        super().__init__(option, name, parent)
+        # items can use '|' as first character to preserve
+        # indentation in multiline values
         self._items = [
-            value
-            for _, value in sorted(items, key=lambda x: x[0])]
-        Stats.__init__(self, option, name, parent)
+            value.replace("\n|", "\n")
+            for _, value in sorted(items, key=lambda x: x[0])
+            ]
 
     def header(self):
         """ Simple header for custom stats (no item count) """
@@ -46,8 +51,11 @@ class CustomStats(StatsGroup):
     order = 800
 
     def __init__(self, option, name=None, parent=None, user=None):
-        StatsGroup.__init__(self, "custom", name, parent, user)
-        for section in Config().sections(kind="items"):
-            self.stats.append(ItemStats(
-                option=section, parent=self,
-                name=Config().item(section, "header")))
+        super().__init__(option, name, parent, user)
+        self.stats.append(
+            ItemStats(
+                option=f"{option}-item",
+                name=Config().item(option, "header"),
+                parent=self
+                )
+            )

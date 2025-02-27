@@ -177,7 +177,7 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
 class UserStats(StatsGroup):
     """ User statistics in one place """
 
-    def __init__(self, user=None, options=None, config=None):
+    def __init__(self, user: did.base.User | None = None, options=None, config=None):
         """ Initialize stats objects. """
         super().__init__(option="all", user=user, options=options)
         config = config or did.base.Config()
@@ -195,19 +195,12 @@ class UserStats(StatsGroup):
     def configured_plugins(self, config):
         """ Create a StatsGroup instance for each configured plugin """
         results = []
-        items_created = False
         for section in config.sections():
             if section == "general":
                 continue
 
             data = dict(config.section(section, skip=set()))
             type_ = data.get("type")
-
-            # All 'items' stats are gathered under a single group
-            if type_ == 'items':
-                if items_created:
-                    continue
-                items_created = True
 
             # Some plugins (like public-inbox) need to have underscores
             # in their names to follow python modules conventions, but
@@ -227,6 +220,7 @@ class UserStats(StatsGroup):
             statsgroup = StatsGroupPlugin.registry[type_]
             try:
                 obj = statsgroup(option=section, parent=self, user=user)
+                orig_order = obj.order
                 # Override default order if requested
                 if 'order' in data:
                     try:
@@ -235,6 +229,9 @@ class UserStats(StatsGroup):
                         raise did.base.GeneralError(
                             f"Invalid order '{data['order']}' "
                             f"in the '{section}' section.") from exc
+                if orig_order != obj.order:
+                    log.debug("Reordered %s from %s to %s",
+                              repr(obj), orig_order, obj.order)
                 results.append(obj)
             except did.base.ReportError as re_err:
                 log.error("Skipping section %s due to error: %s", section, re_err)
