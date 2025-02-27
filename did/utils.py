@@ -217,19 +217,22 @@ def strtobool(value):
 def item(text, level=0, options=None):
     """ Print indented item. """
     # Extra line before in each section (unless brief)
-    if level == 0 and not options.brief:
+    if level == 0 and options is not None and not options.brief:
         print('')
     # Only top-level items displayed in brief mode
     if level == 1 and options.brief:
         return
     # Four space for each level, additional space for wiki format
     indent = level * 4
-    if options.format == "markdown":
-        indent = level * 2
-    if options.format == "wiki" and level == 0:
-        indent = 1
+    if options is not None:
+        if options.format == "markdown":
+            indent = level * 2
+        if options.format == "wiki" and level == 0:
+            indent = 1
     # Shorten the text if necessary to match the desired maximum width
-    width = options.width - indent - 2 if options.width else 333
+    width = 333
+    if options is not None and options.width:
+        width = options.width - indent - 2
     spaces = " " * indent
     short_text = shorted(str(text), width)
     print(f"{spaces}* {short_text}")
