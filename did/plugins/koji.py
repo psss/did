@@ -27,15 +27,30 @@ from did.utils import log
 class KojiBuilds(Stats):
     """ Finished koji builds """
 
-    def __init__(self, *, option, name=None, parent=None, user=None, options=None,
-                 server=None, userinfo=None):
-        Stats.__init__(self, option, name, parent, user=userinfo, options=options)
-        self.server = server
-        self.userinfo = userinfo
+    def __init__(self, *, option, name=None,
+                 parent=None, options=None):
+        Stats.__init__(self, option, name, parent, options=options)
 
     def fetch(self):
         log.info("Searching for builds by %s", self.user)
-        builds = self.server.listBuilds(
+        server = koji.ClientSession(self.parent.url, opts=self.parent.config)
+        try:
+            self.user = server.getUser(self.parent.config['login'], strict=True)
+        except KeyError as keyerr:
+            raise did.base.ReportError(
+                f"No koji user set in the [{self.option}] section") from keyerr
+        except koji.GenericError as ge_err:
+            raise did.base.ReportError(
+                f"Non-existent koji user set in the [{self.option}] section"
+                ) from ge_err
+        except (requests.exceptions.HTTPError,
+                requests.exceptions.ConnectionError) as req_error:
+            raise did.base.ReportError(
+                f"Connection to koji server {self.parent.url} "
+                f"failed for [{self.option}] section"
+                ) from req_error
+
+        builds = server.listBuilds(
             userID=self.user['id'],
             completeAfter=str(self.options.since),
             completeBefore=str(self.options.until))
@@ -73,31 +88,14 @@ class KojiStats(StatsGroup):
         StatsGroup.__init__(self, option, name, parent, user)
         self.config = dict(did.base.Config().section(option))
         try:
-            url = self.config['url']
+            self.url = self.config['url']
         except KeyError as exc:
             raise did.base.ReportError(
                 f"No koji url set in the [{option}] section") from exc
-        server = koji.ClientSession(url, opts=self.config)
-        try:
-            user = server.getUser(self.config['login'], strict=True)
-        except KeyError as keyerr:
-            raise did.base.ReportError(
-                f"No koji user set in the [{option}] section") from keyerr
-        except koji.GenericError as ge_err:
-            raise did.base.ReportError(
-                f"Non-existent koji user set in the [{option}] section"
-                ) from ge_err
-        except requests.exceptions.HTTPError as httperr:
-            raise did.base.ReportError(
-                f"Connection to koji server failed for [{option}] section"
-                ) from httperr
-
-        name = self.config.get('name', url)
+        name = self.config.get('name', self.url)
 
         self.stats = [
             KojiBuilds(option=f"{option}-builds",
                        name=f'Completed builds in {name}',
-                       server=server,
-                       userinfo=user,
                        parent=self)
             ]
