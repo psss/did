@@ -101,16 +101,6 @@ def test_github_pull_requests_commented():
         in str(stat) for stat in stats)
 
 
-def test_github_issues_commented():
-    """ Commented issues """
-    did.base.Config(CONFIG)
-    option = "--gh-issues-commented --since 2023-01-10 --until 2023-01-23"
-    stats = did.cli.main(option)[0][0].stats[0].stats[1].stats
-    assert any(
-        "teemtee/tmt#1787 - tmt does not run test with local changes applied"
-        in str(stat) for stat in stats)
-
-
 def test_github_invalid_token():
     """ Invalid token """
     did.base.Config(f"{CONFIG}\ntoken = bad-token")
@@ -157,3 +147,23 @@ def test_github_issues_created_with_token_file():
         stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
         assert any(
             "psss/did#017 - What did you do" in str(stat) for stat in stats)
+
+
+@pytest.mark.skipif("GITHUB_TOKEN" not in os.environ,
+                    reason="No GITHUB_TOKEN environment variable found")
+def test_github_issues_commented():
+    """
+    Commented issues.
+    Requires the use of a GitHub token due to the amount
+    of queries needed.
+    """
+    did.base.Config(f"""
+{CONFIG}
+token = {os.getenv(key="GITHUB_TOKEN")}
+"""
+        )
+    option = "--gh-issues-commented --since 2023-01-10 --until 2023-01-23"
+    stats = did.cli.main(option)[0][0].stats[0].stats[1].stats
+    assert any(
+        "teemtee/tmt#1787 - tmt does not run test with local changes applied"
+        in str(stat) for stat in stats)

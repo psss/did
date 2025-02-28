@@ -42,6 +42,7 @@ It's also possible to set a timeout, if not specified it defaults to 60 seconds.
 import json
 import re
 import time
+from datetime import datetime
 
 import requests
 from tenacity import (RetryError, Retrying, retry_if_exception_type,
@@ -91,14 +92,33 @@ class GitHub():
             condition("org", org) +
             condition("repo", repo))
 
-    def search(self, query):
-        """ Perform GitHub query """
-        result = []
-        url = f"{self.url}/{query}{self.filter}&per_page={PER_PAGE}"
+    def commented_in_range(self,
+                           commented_issues: list,
+                           since: datetime,
+                           until: datetime,
+                           login: str) -> list:
+        valid_issues = []
+        for issue in commented_issues:
+            comments = json.loads(
+                self.request(issue["comments_url"]).text
+                )
+            log.debug("Comments fetched for %s", issue["html_url"])
+            log.data(pretty(comments))
+            for comment in comments:
+                created_at = datetime.strptime(
+                    comment["created_at"],
+                    r"%Y-%m-%dT%H:%M:%SZ"
+                    )
+                if (
+                        comment["user"]["login"] == login and
+                        (since <= created_at <= until)
+                        ):
+                    valid_issues.append(issue)
+                    break
+        return valid_issues
 
+    def request(self, url):
         while True:
-            # Fetch the query
-            log.debug("GitHub query: %s", url)
             try:
                 for attempt in Retrying(
                         stop=stop_after_attempt(3),
@@ -113,8 +133,7 @@ class GitHub():
                 log.debug("Response headers:\n%s", response.headers)
             except (requests.exceptions.RequestException, RetryError) as error:
                 log.debug(error)
-                raise ReportError(f"GitHub search on {self.url} failed.") from error
-
+                raise ReportError(f"GitHub request on {self.url} failed.") from error
             # Check if credentials are valid
             log.debug("GitHub status code: %s", response.status_code)
             if response.status_code == 401:
@@ -132,7 +151,20 @@ class GitHub():
                     time.sleep(sleep_time)
                     continue
                 raise ReportError(f"GitHub query failed: {response.text}")
+            # all good!
+            break
 
+        return response
+
+    def search(self, query):
+        """ Perform GitHub query """
+        result = []
+        url = f"{self.url}/{query}{self.filter}&per_page={PER_PAGE}"
+
+        while True:
+            # Fetch the query
+            log.debug("GitHub query: %s", url)
+            response = self.request(url)
             # Parse fetched json data
             try:
                 data = json.loads(response.text)["items"]
@@ -234,8 +266,15 @@ class IssueCommented(Stats):
             f"+updated:{self.options.since}..{self.options.until}"
             "+type:issue"
             )
+        commented_issues = self.parent.github.search(query)
+        valid_issues = self.parent.github.commented_in_range(
+            commented_issues,
+            self.options.since.datetime,
+            self.options.until.datetime,
+            self.user.login
+            )
         self.stats = [
-            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in valid_issues]
 
 
 class PullRequestsCreated(Stats):
@@ -262,8 +301,15 @@ class PullRequestsCommented(Stats):
             f"+updated:{self.options.since}..{self.options.until}"
             "+type:pr"
             )
+        commented_issues = self.parent.github.search(query)
+        valid_issues = self.parent.github.commented_in_range(
+            commented_issues,
+            self.options.since.datetime,
+            self.options.until.datetime,
+            self.user.login
+            )
         self.stats = [
-            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in valid_issues]
 
 
 class PullRequestsClosed(Stats):
