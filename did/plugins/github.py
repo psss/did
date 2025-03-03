@@ -22,6 +22,10 @@ well. Use ``,`` as the separator, for example::
 
     org = one,two,three
 
+It's also possible to exclude organizations:
+
+    exclude_org = four,five
+
 The authentication token is optional. However, unauthenticated
 queries are limited. For more details see `GitHub API`__ docs.
 Use ``login`` to override the default email address for searching.
@@ -71,7 +75,7 @@ class GitHub():
     # pylint: disable=too-few-public-methods
 
     def __init__(self, *, url, token=None, user=None,
-                 org=None, repo=None, timeout=TIMEOUT):
+                 org=None, repo=None, exclude_org=None, timeout=TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         self.timeout = timeout
@@ -85,12 +89,14 @@ class GitHub():
             """ Prepare one or more conditions for given key & names """
             if not names:
                 return []
-            return [f"+{key}:{name}" for name in re.split(r"\s*,\s*", names)]
+            return [f"{key}:{name}" for name in re.split(r"\s*,\s*", names)]
 
         self.filter = "".join(
-            condition("user", user) +
-            condition("org", org) +
-            condition("repo", repo))
+            condition("+user", user) +
+            condition("+org", org) +
+            condition("+repo", repo) +
+            condition("-org", exclude_org)
+            )
 
     def commented_in_range(self,
                            commented_issues: list,
@@ -370,6 +376,7 @@ class GitHubStats(StatsGroup):
             org=config.get("org"),
             user=config.get("user"),
             repo=config.get("repo"),
+            exclude_org=config.get("exclude_org"),
             timeout=config.get("timeout"))
 
         # Create the list of stats
