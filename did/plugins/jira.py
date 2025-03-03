@@ -80,6 +80,7 @@ Notes:
 
 import os
 import re
+import time
 import urllib.parse
 from datetime import datetime
 
@@ -156,8 +157,19 @@ class Issue():
                     "startAt": batch * MAX_RESULTS
                     }
                 )
-            response = stats.parent.session.get(
-                f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
+            while True:
+                response = stats.parent.session.get(
+                    f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
+                # Handle the exceeded rate limit
+                if response.status_code == 429:
+                    if response.headers.get("X-RateLimit-Remaining") == "0":
+                        retry_after = int(response.headers["retry-after"])
+                        log.warning("Jira rate limit exceeded.")
+                        log.warning("Sleeping now for %s.",
+                                    listed(retry_after, 'second'))
+                        time.sleep(retry_after)
+                        continue
+                break
             data = response.json()
             if not response.ok:
                 try:
@@ -171,9 +183,8 @@ class Issue():
             log.debug(
                 "Batch %s result: %s fetched",
                 batch,
-                listed(
-                    data["issues"],
-                    "issue"))
+                listed(data["issues"], "issue")
+                )
             log.data(pretty(data))
             issues.extend(data["issues"])
             # If all issues fetched, we're done
