@@ -51,12 +51,12 @@ only valid for ``basic`` authentication. Either ``auth_password`` or
 ``auth_password_file`` must be provided, ``auth_password`` has a higher
 priority.
 
-Configuration example limiting report only to a single project, using an
-alternative username and a custom identifier prefix::
+Configuration example limiting report only to a list of projects, using
+an alternative username and a custom identifier prefix::
 
     [issues]
     type = jira
-    project = ORG
+    project = ORG1, ORG2
     prefix = JIRA
     login = alt_username
     url = https://issues.redhat.org/
@@ -123,6 +123,10 @@ class Issue():
         self.key = issue["key"]
         self.summary = issue["fields"]["summary"]
         self.comments = issue["fields"]["comment"]["comments"]
+        if "changelog" in issue:
+            self.histories = issue["changelog"]["histories"]
+        else:
+            self.histories = {}
         matched = re.match(r"(\w+)-(\d+)", self.key)
         self.identifier = matched.groups()[1]
         if parent.prefix is not None:
@@ -143,7 +147,7 @@ class Issue():
         return self.key == other.key
 
     @staticmethod
-    def search(query, stats):
+    def search(query, stats, expand=""):
         """ Perform issue search for given stats instance """
         log.debug("Search query: %s", query)
         issues = []
@@ -154,9 +158,12 @@ class Issue():
                     "jql": query,
                     "fields": "summary,comment",
                     "maxResults": MAX_RESULTS,
-                    "startAt": batch * MAX_RESULTS
+                    "startAt": batch * MAX_RESULTS,
+                    "expand": expand
                     }
                 )
+            log.debug("Fetching %s",
+                      f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
             while True:
                 response = stats.parent.session.get(
                     f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
@@ -190,13 +197,15 @@ class Issue():
             # If all issues fetched, we're done
             if len(issues) >= data["total"]:
                 break
+            log.info("Batch %s: fetched %s issues out of %s",
+                     batch, len(issues), data["total"])
         # Return the list of issue objects
         return [
             Issue(issue, parent=stats.parent)
             for issue in issues
             ]
 
-    def updated(self, user, options):
+    def commented(self, user, options):
         """ True if the issue was commented by given user """
         for comment in self.comments:
             created = dateutil.parser.parse(comment["created"]).date()
@@ -205,10 +214,22 @@ class Issue():
                 return True
         return False
 
+    def changed(self, user, options):
+        """ True if the issue was commented by given user """
+        for history in self.histories:
+            created = dateutil.parser.parse(history["created"]).date()
+            if (
+                    "author" in history and
+                    history["author"]["emailAddress"] == user.email and
+                    options.since.date < created < options.until.date
+                    ):
+                return True
+        return False
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class JiraCreated(Stats):
     """ Created issues """
@@ -223,16 +244,16 @@ class JiraCreated(Stats):
             self.options.since} AND created <= {
             self.options.until}"
         if self.parent.project:
-            query = query + f" AND project = '{self.parent.project}'"
+            query = query + f" AND project in ({self.parent.project})"
         self.stats = Issue.search(query, stats=self)
 
 
-class JiraUpdated(Stats):
-    """ Updated issues """
+class JiraCommented(Stats):
+    """ Commented issues """
 
     def fetch(self):
         log.info(
-            "Searching for issues updated in %s by %s",
+            "Searching for issues commented in %s by %s",
             self.parent.project if self.parent.project is not None else "any project",
             self.user)
         if self.parent.use_scriptrunner:
@@ -241,17 +262,38 @@ class JiraUpdated(Stats):
                 self.options.since} before {
                 self.options.until}')"
             if self.parent.project:
-                query = query + f" AND project = '{self.parent.project}'"
+                query = query + f" AND project in ({self.parent.project})"
             self.stats = Issue.search(query, stats=self)
         else:
-            query = f"project = '{
-                self.parent.project}' AND updated >= {
-                self.options.since} AND created <= {
+            query = f"project in ({
+                self.parent.project}) AND updated >= {
+                self.options.since} AND updated <= {
                 self.options.until}"
             # Filter only issues commented by given user
             self.stats = [
                 issue for issue in Issue.search(query, stats=self)
-                if issue.updated(self.user, self.options)]
+                if issue.commented(self.user, self.options)]
+
+
+class JiraUpdated(Stats):
+    """ Updated issues """
+
+    def fetch(self):
+        if self.parent.project is None:
+            log.warning(
+                "Skipping searching for issues updated as not restricting "
+                "to a project will lead to an excessive amount of data")
+            self.stats = []
+            return
+        log.info("Searching for issues updated in %s by %s",
+                 self.parent.project, self.user)
+        query = f"updated >= {self.options.since} AND updated <= {self.options.until}"
+        if self.parent.project:
+            query = query + f" AND project in ({self.parent.project})"
+        # Filter only issues updated by given user
+        self.stats = [issue for issue
+                      in Issue.search(query, stats=self, expand="changelog")
+                      if issue.changed(self.user, self.options)]
 
 
 class JiraResolved(Stats):
@@ -267,7 +309,7 @@ class JiraResolved(Stats):
             self.options.since} AND resolved <= {
             self.options.until}"
         if self.parent.project:
-            query = query + f" AND project = '{self.parent.project}'"
+            query = query + f" AND project in ({self.parent.project})"
         self.stats = Issue.search(query, stats=self)
 
 
@@ -393,12 +435,15 @@ class JiraStats(StatsGroup):
             JiraCreated(
                 option=f"{option}-created", parent=self,
                 name=f"Issues created in {option}"),
-            JiraUpdated(
-                option=f"{option}-updated", parent=self,
-                name=f"Issues updated in {option}"),
+            JiraCommented(
+                option=f"{option}-commented", parent=self,
+                name=f"Issues commented in {option}"),
             JiraResolved(
                 option=f"{option}-resolved", parent=self,
                 name=f"Issues resolved in {option}"),
+            JiraUpdated(
+                option=f"{option}-updated", parent=self,
+                name=f"Issues updated in {option}"),
             ]
 
     @property
