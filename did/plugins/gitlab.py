@@ -215,12 +215,14 @@ class GitLab():
 class Issue():
     """ GitLab Issue """
 
-    def __init__(self, data, parent):
+    def __init__(self, data, parent, set_id=None):
         self.parent = parent
         self.data = data
-        self.gitlabapi = parent.gitlab
+        self.gitlabapi: GitLab = parent.gitlab
         self.project = self.gitlabapi.get_project(data['project_id'])
-        self.id = self.iid()
+        self.id = set_id
+        if set_id is None:
+            self.id = self.iid()
         self.title = data['target_title']
 
     def iid(self):
@@ -254,29 +256,36 @@ class Issue():
 class MergeRequest(Issue):
     # pylint: disable=too-few-public-methods
 
-    def iid(self):
-        return self.gitlabapi.get_project_mr(
-            self.data['project_id'], self.data['target_id'])['iid']
+    def __init__(self, data, parent, set_id=None):
+        if set_id is None:
+            set_id = parent.gitlab.get_project_mr(
+                data['project_id'], data['target_id'])['iid']
+        super().__init__(data, parent, set_id)
 
 
 class Note(Issue):
     # pylint: disable=too-few-public-methods
 
-    def iid(self):
-        if self.data['note']['noteable_type'] == 'Issue':
-            issue = self.gitlabapi.get_project_issue(
-                self.data['project_id'],
-                self.data['note']['noteable_id'])
+    def __init__(self, data, parent, set_id=None):
+        if set_id is None:
+            set_id = self.note_iid(data, parent.gitlab)
+        super().__init__(data, parent, set_id)
+
+    def note_iid(self, data, gitlabapi):
+        if data['note']['noteable_type'] == 'Issue':
+            issue = gitlabapi.get_project_issue(
+                data['project_id'],
+                data['note']['noteable_id'])
 
             # `noteable_type` is `Issue` even for `WorkItem`s, which
             # aren't returned by `get_project_issue()`
             if issue is not None:
                 return issue['iid']
             return 'unknown'
-        if self.data['note']['noteable_type'] == 'MergeRequest':
-            return self.gitlabapi.get_project_mr(
-                self.data['project_id'],
-                self.data['note']['noteable_id'])['iid']
+        if data['note']['noteable_type'] == 'MergeRequest':
+            return gitlabapi.get_project_mr(
+                data['project_id'],
+                data['note']['noteable_id'])['iid']
         return "unknown"
 
 
