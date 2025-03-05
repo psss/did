@@ -240,6 +240,9 @@ def main(arguments=None):
                 separator_width=config.separator_width)
         user_stats = UserStats(user=user, options=options)
         user_stats.check()
+        # Show the results stats (unless merging)
+        if not options.merge:
+            user_stats.show()
         team_stats.merge(user_stats)
         gathered_stats.append(user_stats)
 
