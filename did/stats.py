@@ -2,6 +2,7 @@
 
 import re
 import xmlrpc.client
+from concurrent.futures import ThreadPoolExecutor
 
 import did.base
 from did import utils
@@ -82,9 +83,6 @@ class Stats():
             # Raise the exception if debugging
             if not self.options or self.options.debug:
                 raise
-        # Show the results stats (unless merging)
-        if self.options and not self.options.merge:
-            self.show()
 
     def header(self):
         """ Show summary header. """
@@ -153,8 +151,8 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
 
     def check(self):
         """ Check all children stats. """
-        for stat in self.stats:
-            stat.check()
+        with ThreadPoolExecutor() as executor:
+            executor.map(lambda stat: stat.check(), self.stats)
 
     def show(self):
         """ List all children stats. """
