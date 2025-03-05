@@ -460,16 +460,11 @@ class User():
         # Attempt to use alias directly from the config section
         try:
             config = dict(Config().section(stats))
-            try:
-                email = config["email"]
-            except KeyError:
-                pass
-            try:
-                login = config["login"]
-            except KeyError:
-                pass
-        except (ConfigFileError, NoSectionError):
-            pass
+            email = config.get("email", None)
+            login = config.get("login", None)
+        except (ConfigFileError, NoSectionError) as e:
+            log.error("Error accessing config section for stats '%s': %s",
+                      stats, str(e))
         # Check for aliases specified in the email string
         if aliases is not None:
             try:
