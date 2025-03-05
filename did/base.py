@@ -354,8 +354,6 @@ class Date():
             until.date = since.date + delta(days=1)
             return since, until
 
-        since, until, period = None, None, None
-
         if "today" in argument:
             since, until = Date("today"), Date("today")
             until.date += delta(days=1)
