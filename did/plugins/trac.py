@@ -138,7 +138,6 @@ class TracCommon(Stats):
     """ Common Trac Stats object for saving prefix & proxy """
 
     def __init__(self, option, name=None, parent=None):
-        self.parent = parent
         Stats.__init__(self, option, name, parent)
 
     def fetch(self):
