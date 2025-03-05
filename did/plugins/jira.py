@@ -236,7 +236,8 @@ class JiraCreated(Stats):
 
     def fetch(self):
         log.info(
-            "Searching for issues created in %s by %s",
+            "[%s] Searching for issues created in %s by %s",
+            self.option,
             self.parent.project if self.parent.project is not None else "any project",
             self.user)
         query = f"creator = '{
@@ -246,6 +247,7 @@ class JiraCreated(Stats):
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
         self.stats = Issue.search(query, stats=self)
+        log.info("[%s] done issues created", self.option)
 
 
 class JiraCommented(Stats):
@@ -253,7 +255,8 @@ class JiraCommented(Stats):
 
     def fetch(self):
         log.info(
-            "Searching for issues commented in %s by %s",
+            "[%s] Searching for issues commented in %s by %s",
+            self.option,
             self.parent.project if self.parent.project is not None else "any project",
             self.user)
         if self.parent.use_scriptrunner:
@@ -273,6 +276,7 @@ class JiraCommented(Stats):
             self.stats = [
                 issue for issue in Issue.search(query, stats=self)
                 if issue.commented(self.user, self.options)]
+        log.info("[%s] done issues commented", self.option)
 
 
 class JiraUpdated(Stats):
@@ -285,8 +289,8 @@ class JiraUpdated(Stats):
                 "to a project will lead to an excessive amount of data")
             self.stats = []
             return
-        log.info("Searching for issues updated in %s by %s",
-                 self.parent.project, self.user)
+        log.info("[%s] Searching for issues updated in %s by %s",
+                 self.option, self.parent.project, self.user)
         query = f"updated >= {self.options.since} AND updated <= {self.options.until}"
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
@@ -294,6 +298,7 @@ class JiraUpdated(Stats):
         self.stats = [issue for issue
                       in Issue.search(query, stats=self, expand="changelog")
                       if issue.changed(self.user, self.options)]
+        log.info("[%s] done issues updated", self.option)
 
 
 class JiraResolved(Stats):
@@ -301,7 +306,8 @@ class JiraResolved(Stats):
 
     def fetch(self):
         log.info(
-            "Searching for issues resolved in %s by %s",
+            "[%s] Searching for issues resolved in %s by %s",
+            self.option,
             self.parent.project if self.parent.project is not None else "any project",
             self.user)
         query = f"assignee = '{
@@ -311,6 +317,7 @@ class JiraResolved(Stats):
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
         self.stats = Issue.search(query, stats=self)
+        log.info("[%s] done issues resolved", self.option)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
