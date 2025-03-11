@@ -21,6 +21,7 @@ url = https://bugzilla.redhat.com/xmlrpc.cgi
 #  Linus Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.functional
 def test_bugzilla_linus():
     """ Check bugs filed by Linus :-) """
     did.base.Config(CONFIG)
@@ -34,6 +35,7 @@ def test_bugzilla_linus():
 #  Week Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.functional
 def test_bugzilla_week():
     """ Check all stats for given week """
     did.base.Config(CONFIG)
@@ -45,6 +47,7 @@ def test_bugzilla_week():
 #  Fixed Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.functional
 def test_bugzilla_fixed():
     """ Check fixed bugs on BZ#1174186"""
     did.base.Config(CONFIG)
@@ -68,6 +71,7 @@ def test_bugzilla_fixed():
 #  Returned Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.functional
 def test_bugzilla_returned():
     """ Check returned bugs """
     did.base.Config(CONFIG)
@@ -91,6 +95,7 @@ def test_bugzilla_returned():
 #  Subscribed Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.functional
 def test_bugzilla_subscribed():
     """ Check subscribed bugs """
     did.base.Config(CONFIG)
@@ -106,6 +111,7 @@ def test_bugzilla_subscribed():
 #  Closed Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.functional
 def test_bugzilla_closed():
     """ Check closed bugs """
     did.base.Config(CONFIG)
@@ -122,6 +128,7 @@ def test_bugzilla_closed():
 #  Verified Bugs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.functional
 def test_bugzilla_verified_changedby():
     """ Check verified bugs based on changedby """
     did.base.Config(CONFIG)
@@ -134,6 +141,7 @@ def test_bugzilla_verified_changedby():
     assert any(bug.id == 547529 for bug in stats)
 
 
+@pytest.mark.functional
 def test_bugzilla_verified_qecontact():
     """ Check verified bugs based on qe contact """
     did.base.Config(CONFIG)
