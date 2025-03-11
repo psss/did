@@ -76,6 +76,11 @@ Notes:
   Its value is ignored for ``token`` auth_type.
 * The ``auth_type`` parameter is optional, default value is ``gss``.
   Other values are ``basic`` and ``token``.
+
+It's also possible to set a timeout, if not specified it defaults to
+60 seconds.
+
+    timeout = 10
 """
 
 import os
@@ -104,6 +109,9 @@ AUTH_TYPES = ["gss", "basic", "token"]
 
 # Enable ssl verify
 SSL_VERIFY = True
+
+# Default number of seconds waiting on Sentry before giving up
+TIMEOUT = 60
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
@@ -147,7 +155,7 @@ class Issue():
         return self.key == other.key
 
     @staticmethod
-    def search(query, stats, expand=""):
+    def search(query, stats, expand="", timeout=TIMEOUT):
         """ Perform issue search for given stats instance """
         log.debug("Search query: %s", query)
         issues = []
@@ -166,7 +174,8 @@ class Issue():
                       f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
             while True:
                 response = stats.parent.session.get(
-                    f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
+                    f"{stats.parent.url}/rest/api/latest/search?{encoded_query}",
+                    timeout=timeout)
                 # Handle the exceeded rate limit
                 if response.status_code == 429:
                     if response.headers.get("X-RateLimit-Remaining") == "0":
@@ -221,7 +230,7 @@ class Issue():
             if (
                     "author" in history and
                     history["author"]["emailAddress"] == user.email and
-                    options.since.date < created < options.until.date
+                    options.since.date <= created <= options.until.date
                     ):
                 return True
         return False
@@ -246,7 +255,7 @@ class JiraCreated(Stats):
             self.options.until}"
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
-        self.stats = Issue.search(query, stats=self)
+        self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
         log.info("[%s] done issues created", self.option)
 
 
@@ -266,7 +275,7 @@ class JiraCommented(Stats):
                 self.options.until}')"
             if self.parent.project:
                 query = query + f" AND project in ({self.parent.project})"
-            self.stats = Issue.search(query, stats=self)
+            self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
         else:
             query = f"project in ({
                 self.parent.project}) AND updated >= {
@@ -274,7 +283,8 @@ class JiraCommented(Stats):
                 self.options.until}"
             # Filter only issues commented by given user
             self.stats = [
-                issue for issue in Issue.search(query, stats=self)
+                issue for issue in Issue.search(query, stats=self,
+                                                timeout=self.parent.timeout)
                 if issue.commented(self.user, self.options)]
         log.info("[%s] done issues commented", self.option)
 
@@ -296,7 +306,8 @@ class JiraUpdated(Stats):
             query = query + f" AND project in ({self.parent.project})"
         # Filter only issues updated by given user
         self.stats = [issue for issue
-                      in Issue.search(query, stats=self, expand="changelog")
+                      in Issue.search(query, stats=self, expand="changelog",
+                                      timeout=self.parent.timeout)
                       if issue.changed(self.user, self.options)]
         log.info("[%s] done issues updated", self.option)
 
@@ -316,7 +327,7 @@ class JiraResolved(Stats):
             self.options.until}"
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
-        self.stats = Issue.search(query, stats=self)
+        self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
         log.info("[%s] done issues resolved", self.option)
 
 
@@ -395,6 +406,7 @@ class JiraStats(StatsGroup):
         self._session = None
         # Make sure there is an url provided
         config = dict(Config().section(option))
+        self.timeout = config.get("timeout", TIMEOUT)
         if "url" not in config:
             raise ReportError(f"No Jira url set in the [{option}] section")
         self.url = config["url"].rstrip("/")
@@ -460,25 +472,30 @@ class JiraStats(StatsGroup):
         if self._session is not None:
             return self._session
         self._session = requests.Session()
-        log.debug("Connecting to %s", self.auth_url)
         # Disable SSL warning when ssl_verify is False
         if not self.ssl_verify:
             requests.packages.urllib3.disable_warnings(
                 InsecureRequestWarning)
         if self.auth_type == 'basic':
+            log.debug("Connecting to %s", self.auth_url)
             basic_auth = (self.auth_username, self.auth_password)
             response = self._session.get(
-                self.auth_url, auth=basic_auth, verify=self.ssl_verify)
+                self.auth_url, auth=basic_auth, verify=self.ssl_verify,
+                timeout=self.timeout)
         elif self.auth_type == "token":
+            log.debug("Connecting to %s", f"{self.url}/rest/api/2/myself")
             self.session.headers["Authorization"] = f"Bearer {self.token}"
             response = self._session.get(
                 f"{self.url}/rest/api/2/myself",
-                verify=self.ssl_verify)
+                verify=self.ssl_verify,
+                timeout=self.timeout)
         else:
+            log.debug("Connecting to %s", self.auth_url)
             gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
             try:
                 response = self._session.get(
-                    self.auth_url, auth=gssapi_auth, verify=self.ssl_verify)
+                    self.auth_url, auth=gssapi_auth, verify=self.ssl_verify,
+                    timeout=self.timeout)
             except (requests.exceptions.ConnectionError,
                     NewConnectionError) as error:
                 log.error(error)
@@ -495,7 +512,8 @@ class JiraStats(StatsGroup):
         if self.token_expiration:
             response = self._session.get(
                 f"{self.url}/rest/pat/latest/tokens",
-                verify=self.ssl_verify)
+                verify=self.ssl_verify,
+                timeout=self.timeout)
             try:
                 response.raise_for_status()
                 token_found = None
