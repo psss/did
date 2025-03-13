@@ -99,10 +99,10 @@ from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty, strtobool
 
 # Maximum number of results fetched at once
-MAX_RESULTS = 1000
+MAX_RESULTS = 200
 
 # Maximum number of batches
-MAX_BATCHES = 100
+MAX_BATCHES = 500
 
 # Supported authentication types
 AUTH_TYPES = ["gss", "basic", "token"]
@@ -173,18 +173,26 @@ class Issue():
             log.debug("Fetching %s",
                       f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
             while True:
-                response = stats.parent.session.get(
-                    f"{stats.parent.url}/rest/api/latest/search?{encoded_query}",
-                    timeout=timeout)
-                # Handle the exceeded rate limit
-                if response.status_code == 429:
-                    if response.headers.get("X-RateLimit-Remaining") == "0":
-                        retry_after = int(response.headers["retry-after"])
-                        log.warning("Jira rate limit exceeded.")
-                        log.warning("Sleeping now for %s.",
-                                    listed(retry_after, 'second'))
-                        time.sleep(retry_after)
-                        continue
+                try:
+                    response = stats.parent.session.get(
+                        f"{stats.parent.url}/rest/api/latest/search?{encoded_query}",
+                        timeout=timeout)
+                    # Handle the exceeded rate limit
+                    if response.status_code == 429:
+                        if response.headers.get("X-RateLimit-Remaining") == "0":
+                            retry_after = int(response.headers["retry-after"])
+                            log.warning("Jira rate limit exceeded.")
+                            log.warning("Sleeping now for %s.",
+                                        listed(retry_after, 'second'))
+                            time.sleep(retry_after)
+                            continue
+
+                    response.raise_for_status()
+                except requests.Timeout:
+                    log.warning(
+                        "Timed out fetching %s",
+                        f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
+                    continue
                 break
             data = response.json()
             if not response.ok:
@@ -479,16 +487,33 @@ class JiraStats(StatsGroup):
         if self.auth_type == 'basic':
             log.debug("Connecting to %s", self.auth_url)
             basic_auth = (self.auth_username, self.auth_password)
-            response = self._session.get(
-                self.auth_url, auth=basic_auth, verify=self.ssl_verify,
-                timeout=self.timeout)
+            try:
+                response = self._session.get(
+                    self.auth_url, auth=basic_auth, verify=self.ssl_verify,
+                    timeout=self.timeout)
+            except (requests.exceptions.ConnectionError,
+                    NewConnectionError,
+                    requests.Timeout) as error:
+                log.error(error)
+                raise ReportError(
+                    f"Failed to connect to Jira at {self.auth_url}."
+                    ) from error
+
         elif self.auth_type == "token":
             log.debug("Connecting to %s", f"{self.url}/rest/api/2/myself")
             self.session.headers["Authorization"] = f"Bearer {self.token}"
-            response = self._session.get(
-                f"{self.url}/rest/api/2/myself",
-                verify=self.ssl_verify,
-                timeout=self.timeout)
+            try:
+                response = self._session.get(
+                    f"{self.url}/rest/api/2/myself",
+                    verify=self.ssl_verify,
+                    timeout=self.timeout)
+            except (requests.exceptions.ConnectionError,
+                    NewConnectionError,
+                    requests.Timeout) as error:
+                log.error(error)
+                raise ReportError(
+                    f"Failed to connect to Jira at {self.auth_url}."
+                    ) from error
         else:
             log.debug("Connecting to %s", self.auth_url)
             gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
@@ -497,7 +522,8 @@ class JiraStats(StatsGroup):
                     self.auth_url, auth=gssapi_auth, verify=self.ssl_verify,
                     timeout=self.timeout)
             except (requests.exceptions.ConnectionError,
-                    NewConnectionError) as error:
+                    NewConnectionError,
+                    requests.Timeout) as error:
                 log.error(error)
                 raise ReportError(
                     f"Failed to connect to Jira at {self.auth_url}."
@@ -510,11 +536,12 @@ class JiraStats(StatsGroup):
                 "Jira authentication failed. Check credentials or kinit."
                 ) from error
         if self.token_expiration:
-            response = self._session.get(
-                f"{self.url}/rest/pat/latest/tokens",
-                verify=self.ssl_verify,
-                timeout=self.timeout)
             try:
+                response = self._session.get(
+                    f"{self.url}/rest/pat/latest/tokens",
+                    verify=self.ssl_verify,
+                    timeout=self.timeout)
+
                 response.raise_for_status()
                 token_found = None
                 for token in response.json():
@@ -533,6 +560,6 @@ class JiraStats(StatsGroup):
                     log.warning("Jira token '%s' expires in %s days.",
                                 self.token_name, delta.days)
             except (requests.exceptions.HTTPError,
-                    KeyError, ValueError) as error:
+                    KeyError, ValueError, requests.Timeout) as error:
                 log.warning(error)
         return self._session
