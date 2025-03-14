@@ -111,8 +111,15 @@ class Confluence():
                     "start": batch * MAX_RESULTS
                     }
                 )
-            response = stats.parent.session.get(
-                f"{stats.parent.url}/rest/api/content/search?{encoded_query}")
+            try:
+                response = stats.parent.session.get(
+                    f"{stats.parent.url}/rest/api/content/search?{encoded_query}")
+            except (requests.exceptions.ConnectionError,
+                    NewConnectionError) as error:
+                log.error(error)
+                raise ReportError(
+                    f"Failed to connect to Confluence at {stats.parent.url}."
+                    ) from error
             data = response.json()
             log.debug(
                 "Batch %s result: %s fetched",
@@ -355,9 +362,17 @@ class ConfluenceStats(StatsGroup):
             elif self.auth_type == "token":
                 log.debug("Connecting to %s/rest/api/content for token auth", self.url)
                 self.session.headers["Authorization"] = f"Bearer {self.token}"
-                response = self._session.get(
-                    f"{self.url}/rest/api/content",
-                    verify=self.ssl_verify)
+                try:
+                    response = self._session.get(
+                        f"{self.url}/rest/api/content",
+                        verify=self.ssl_verify)
+                except (
+                        requests.exceptions.ConnectionError,
+                        NewConnectionError) as error:
+                    log.error(error)
+                    raise ReportError(
+                        f"Failed to connect to Confluence at {
+                            self.auth_url}.") from error
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
                 try:
