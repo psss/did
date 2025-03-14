@@ -212,7 +212,7 @@ class UserStats(StatsGroup):
 
             if type_ not in StatsGroupPlugin.registry:
                 raise did.base.ConfigError(
-                    "Invalid plugin type '{type_}' in section '{section}'.")
+                    f"Invalid plugin type '{type_}' in section '{section}'.")
 
             user = self.user.clone(section) if self.user else None
             statsgroup = StatsGroupPlugin.registry[type_]
