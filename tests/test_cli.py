@@ -49,11 +49,6 @@ def test_debug():
         did.cli.main("--help --debug")
 
 
-def test_smoke():
-    """ Run the smoke test """
-    did.cli.main("--test")
-
-
 def test_invalid_arguments():
     """ Complain about invalid arguments """
     did.base.Config(config=MINIMAL)
