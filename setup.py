@@ -26,6 +26,7 @@ extras_require = {
     'jira': ['requests_gssapi'],
     'koji': ['koji'],
     'redmine': ['feedparser'],
+    'nitrate': ['nitrate'],
     'rt': ['gssapi'],
     'tests': ['pytest', 'pytest-xdist', 'pytest-cov', 'python-coveralls', 'pre-commit'],
     }
