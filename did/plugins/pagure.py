@@ -112,11 +112,19 @@ class Pagure():
             log.debug("Pagure query: %s", url)
             try:
                 response = requests.get(url, headers=self.headers, timeout=self.timeout)
+                response.raise_for_status()
                 log.data(f"Response headers:\n{response.headers}")
             except requests.RequestException as error:
                 log.error(error)
                 raise ReportError(f"Pagure search {self.url} failed.") from error
-            data = response.json()
+            try:
+                data = response.json()
+            except requests.JSONDecodeError as error:
+                log.error(error)
+                raise ReportError(
+                    f"Pagure invalid response from search {self.url} failed."
+                    ) from error
+
             objects = data[result_field]
             log.debug("Result: %s fetched", listed(len(objects), "item"))
             log.data(pretty(data))
