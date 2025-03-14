@@ -2,7 +2,7 @@
 
 import re
 import xmlrpc.client
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import did.base
 from did import utils
@@ -152,7 +152,12 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
     def check(self):
         """ Check all children stats. """
         with ThreadPoolExecutor() as executor:
-            executor.map(lambda stat: stat.check(), self.stats)
+            result_futures = []
+            for stat in self.stats:
+                result_futures.append(executor.submit(stat.check))
+            for f in as_completed(result_futures):
+                # Raise exceptions if raised within the executor.
+                f.result()
 
     def show(self):
         """ List all children stats. """
