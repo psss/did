@@ -1,6 +1,7 @@
 """ Stats & StatsGroup, the core of the data gathering """
 
 import re
+import sys
 import xmlrpc.client
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -157,7 +158,12 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
                 result_futures.append(executor.submit(stat.check))
             for f in as_completed(result_futures):
                 # Raise exceptions if raised within the executor.
-                f.result()
+                try:
+                    f.result()
+                except did.base.ReportError as error:
+                    log.error("Skipping %s due to %s", f, error)
+                    sys.stdout.flush()
+                    sys.stderr.flush()
 
     def show(self):
         """ List all children stats. """
