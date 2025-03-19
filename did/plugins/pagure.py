@@ -98,9 +98,11 @@ class Pagure():
         try:
             response = requests.get(query, headers=self.headers, timeout=self.timeout)
             log.data(f"Response headers:\n{response.headers}")
-        except requests.RequestException as error:
+        except (requests.Timeout, requests.RequestException) as error:
             log.error(error)
-            raise ReportError(f"Pagure get_activities {self.url} failed.") from error
+            raise ReportError(
+                f"Pagure get_activities {self.url} failed with error:{error}."
+                ) from error
         data = response.json()
         return data.get("activities", [])
 
@@ -114,9 +116,11 @@ class Pagure():
                 response = requests.get(url, headers=self.headers, timeout=self.timeout)
                 response.raise_for_status()
                 log.data(f"Response headers:\n{response.headers}")
-            except requests.RequestException as error:
+            except (requests.Timeout, requests.RequestException) as error:
                 log.error(error)
-                raise ReportError(f"Pagure search {self.url} failed.") from error
+                raise ReportError(
+                    f"Pagure search {self.url} failed with error {error}."
+                    ) from error
             try:
                 data = response.json()
             except requests.JSONDecodeError as error:
@@ -310,7 +314,12 @@ class PagureStats(StatsGroup):
                 f'No Pagure url set in the [{option}] section') from key_err
         # Check authorization token
         self.token = get_token(config)
-        self.pagure = Pagure(self.url, self.token, timeout=config.get("timeout"))
+        self.pagure = Pagure(
+            self.url,
+            self.token,
+            timeout=config.get(
+                "timeout",
+                TIMEOUT))
         # Create the list of stats
         self.stats = [
             IssuesCreated(
