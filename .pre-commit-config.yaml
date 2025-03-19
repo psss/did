@@ -56,7 +56,7 @@ repos:
         exclude: disable_test_trac.py
 
   - repo: https://github.com/pylint-dev/pylint
-    rev: "v3.3.4"
+    rev: "v3.3.5"
     hooks:
       - id: pylint
         args:
