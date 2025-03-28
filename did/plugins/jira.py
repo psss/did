@@ -91,8 +91,8 @@ from datetime import datetime
 
 import dateutil.parser
 import requests
+import urllib3.exceptions
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
-from urllib3.exceptions import InsecureRequestWarning, NewConnectionError
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
@@ -170,12 +170,12 @@ class Issue():
                     "expand": expand
                     }
                 )
-            log.debug("Fetching %s",
-                      f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
+            current_url = f"{stats.parent.url}/rest/api/latest/search?{encoded_query}"
+            log.debug("Fetching %s", current_url)
             while True:
                 try:
                     response = stats.parent.session.get(
-                        f"{stats.parent.url}/rest/api/latest/search?{encoded_query}",
+                        current_url,
                         timeout=timeout)
                     # Handle the exceeded rate limit
                     if response.status_code == 429:
@@ -191,8 +191,10 @@ class Issue():
                 except requests.Timeout:
                     log.warning(
                         "Timed out fetching %s",
-                        f"{stats.parent.url}/rest/api/latest/search?{encoded_query}")
+                        current_url)
                     continue
+                except requests.exceptions.HTTPError as error:
+                    log.error("Error fetching '%s': %s", current_url, error)
                 break
             data = response.json()
             if not response.ok:
@@ -473,6 +475,61 @@ class JiraStats(StatsGroup):
                 name=f"Issues updated in {option}"),
             ]
 
+    def _basic_auth_session(self):
+        log.debug("Connecting to %s", self.auth_url)
+        basic_auth = (self.auth_username, self.auth_password)
+        try:
+            response = self._session.get(
+                self.auth_url, auth=basic_auth, verify=self.ssl_verify,
+                timeout=self.timeout)
+        except (requests.exceptions.ConnectionError,
+                urllib3.exceptions.NewConnectionError,
+                requests.Timeout) as error:
+            log.error(error)
+            raise ReportError(
+                f"Failed to connect to Jira at {self.auth_url}."
+                ) from error
+        return response
+
+    def _token_auth_session(self):
+        log.debug("Connecting to %s", f"{self.url}/rest/api/2/myself")
+        self.session.headers["Authorization"] = f"Bearer {self.token}"
+        while True:
+            try:
+                response = self._session.get(
+                    f"{self.url}/rest/api/2/myself",
+                    verify=self.ssl_verify,
+                    timeout=self.timeout)
+            except urllib3.exceptions.ProtocolError as error:
+                log.warning(
+                    "Jira server dropped connection with %s, retrying", error)
+                continue
+            except (requests.exceptions.ConnectionError,
+                    urllib3.exceptions.NewConnectionError,
+                    requests.Timeout) as error:
+                log.error(error)
+                raise ReportError(
+                    f"Failed to connect to Jira at {self.auth_url}."
+                    ) from error
+            break
+        return response
+
+    def _gss_api_auth_session(self):
+        log.debug("Connecting to %s", self.auth_url)
+        gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
+        try:
+            response = self._session.get(
+                self.auth_url, auth=gssapi_auth, verify=self.ssl_verify,
+                timeout=self.timeout)
+        except (requests.exceptions.ConnectionError,
+                urllib3.exceptions.NewConnectionError,
+                requests.Timeout) as error:
+            log.error(error)
+            raise ReportError(
+                f"Failed to connect to Jira at {self.auth_url}."
+                ) from error
+        return response
+
     @property
     def session(self):
         """ Initialize the session """
@@ -483,51 +540,13 @@ class JiraStats(StatsGroup):
         # Disable SSL warning when ssl_verify is False
         if not self.ssl_verify:
             requests.packages.urllib3.disable_warnings(
-                InsecureRequestWarning)
+                urllib3.exceptions.InsecureRequestWarning)
         if self.auth_type == 'basic':
-            log.debug("Connecting to %s", self.auth_url)
-            basic_auth = (self.auth_username, self.auth_password)
-            try:
-                response = self._session.get(
-                    self.auth_url, auth=basic_auth, verify=self.ssl_verify,
-                    timeout=self.timeout)
-            except (requests.exceptions.ConnectionError,
-                    NewConnectionError,
-                    requests.Timeout) as error:
-                log.error(error)
-                raise ReportError(
-                    f"Failed to connect to Jira at {self.auth_url}."
-                    ) from error
-
+            response = self._basic_auth_session()
         elif self.auth_type == "token":
-            log.debug("Connecting to %s", f"{self.url}/rest/api/2/myself")
-            self.session.headers["Authorization"] = f"Bearer {self.token}"
-            try:
-                response = self._session.get(
-                    f"{self.url}/rest/api/2/myself",
-                    verify=self.ssl_verify,
-                    timeout=self.timeout)
-            except (requests.exceptions.ConnectionError,
-                    NewConnectionError,
-                    requests.Timeout) as error:
-                log.error(error)
-                raise ReportError(
-                    f"Failed to connect to Jira at {self.auth_url}."
-                    ) from error
+            response = self._token_auth_session()
         else:
-            log.debug("Connecting to %s", self.auth_url)
-            gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
-            try:
-                response = self._session.get(
-                    self.auth_url, auth=gssapi_auth, verify=self.ssl_verify,
-                    timeout=self.timeout)
-            except (requests.exceptions.ConnectionError,
-                    NewConnectionError,
-                    requests.Timeout) as error:
-                log.error(error)
-                raise ReportError(
-                    f"Failed to connect to Jira at {self.auth_url}."
-                    ) from error
+            response = self._gss_api_auth_session()
         try:
             response.raise_for_status()
         except requests.exceptions.HTTPError as error:
@@ -536,30 +555,34 @@ class JiraStats(StatsGroup):
                 "Jira authentication failed. Check credentials or kinit."
                 ) from error
         if self.token_expiration:
-            try:
-                response = self._session.get(
-                    f"{self.url}/rest/pat/latest/tokens",
-                    verify=self.ssl_verify,
-                    timeout=self.timeout)
+            while True:
+                try:
+                    response = self._session.get(
+                        f"{self.url}/rest/pat/latest/tokens",
+                        verify=self.ssl_verify,
+                        timeout=self.timeout)
 
-                response.raise_for_status()
-                token_found = None
-                for token in response.json():
-                    if token["name"] == self.token_name:
-                        token_found = token
-                        break
-                if token_found is None:
-                    raise ValueError(
-                        f"Can't check validity for the '{self.token_name}' "
-                        f"token as it doesn't exist.")
-                expiring_at = datetime.strptime(
-                    token_found["expiringAt"], r"%Y-%m-%dT%H:%M:%S.%f%z")
-                delta = (
-                    expiring_at.astimezone() - datetime.now().astimezone())
-                if delta.days < self.token_expiration:
-                    log.warning("Jira token '%s' expires in %s days.",
-                                self.token_name, delta.days)
-            except (requests.exceptions.HTTPError,
-                    KeyError, ValueError, requests.Timeout) as error:
-                log.warning(error)
+                    response.raise_for_status()
+                    token_found = None
+                    for token in response.json():
+                        if token["name"] == self.token_name:
+                            token_found = token
+                            break
+                    if token_found is None:
+                        raise ValueError(
+                            f"Can't check validity for the '{self.token_name}' "
+                            f"token as it doesn't exist.")
+                    expiring_at = datetime.strptime(
+                        token_found["expiringAt"], r"%Y-%m-%dT%H:%M:%S.%f%z")
+                    delta = (
+                        expiring_at.astimezone() - datetime.now().astimezone())
+                    if delta.days < self.token_expiration:
+                        log.warning("Jira token '%s' expires in %s days.",
+                                    self.token_name, delta.days)
+                except (requests.exceptions.HTTPError,
+                        KeyError, ValueError, requests.Timeout) as error:
+                    log.warning(error)
+                    time.sleep(1)
+                    continue
+                break
         return self._session
