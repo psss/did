@@ -21,10 +21,10 @@ did = /home/psss/git/did
 edd = /home/psss/git/edd
 fmf = /home/psss/git/fmf
 
-[github]
-type = github
-url = https://api.github.com/
-login = psss
+#[github]
+#type = github
+#url = https://api.github.com/
+#login = psss
 
 [gerrit]
 type = gerrit
