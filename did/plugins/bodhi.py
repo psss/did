@@ -25,19 +25,25 @@ class Bodhi():
     """ Bodhi """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         """ Initialize url """
         self.url = url
+        self.client: BodhiClient
 
-    def search(self, query):
+    def connect(self):
+        """
+        Establish connection to Bodhi and make the client available.
+        """
+        self.client = BodhiClient(self.url)
+
+    def search(self, query: str) -> list:
         """ Perform Bodhi query """
         result = []
-        current_page = 1
-        original_query = query
+        current_page: int = 1
+        original_query: str = query
         while current_page:
             log.debug("Bodhi query: %s", query)
-            client = BodhiClient(self.url)
-            data = client.send_request(query, verb='GET')
+            data = self.client.send_request(query, verb='GET')
             objects = data['updates']
             log.debug("Result: %s fetched", listed(len(objects), "item"))
             log.data(pretty(data))
@@ -46,7 +52,7 @@ class Bodhi():
                 current_page = current_page + 1
                 query = f"{original_query}&page={current_page}"
             else:
-                current_page = None
+                current_page = 0
         return result
 
 
@@ -110,11 +116,9 @@ class BodhiStats(StatsGroup):
         StatsGroup.__init__(self, option, name, parent, user)
         config = dict(Config().section(option))
         # Check server url
-        try:
-            self.url = config['url']
-        except KeyError as key_err:
-            raise ReportError(
-                f'No Bodhi url set in the [{option}] section') from key_err
+        self.url = config.get('url')
+        if not self.url:
+            raise ReportError(f'No Bodhi url set in the [{option}] section')
         self.bodhi = Bodhi(self.url)
         # Create the list of stats
         self.stats = [
@@ -122,3 +126,10 @@ class BodhiStats(StatsGroup):
                 option=f'{option}-updates-created', parent=self,
                 name=f'Updates created on {option}'),
             ]
+
+    def check(self):
+        """
+        Connects to bodhi and check stats
+        """
+        self.bodhi.connect()
+        super().check()
