@@ -9,7 +9,18 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - run: sudo apt-get install -y python3-pytest
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
-    - uses: pre-commit/action@v3.0.1
+      with:
+        python-version: '3.x'
+    # ensure all dependencies are available to satisfy pylint pre-commit hook checks
+    - run: sudo apt-get install -y libkrb5-dev python3-pytest
+    - run: python -m venv --system-site-packages .venv
+    - run: source .venv/bin/activate
+    - run: python -m pip install pre-commit
+    - run: python -m pip install --upgrade '.[all]'  --upgrade-strategy eager
+    - uses: actions/cache@v4
+      with:
+        path: ~/.cache/pre-commit
+        key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+    - run: pre-commit run --show-diff-on-failure --color=always --all-files
