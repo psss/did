@@ -19,6 +19,7 @@ BuildRequires: python3-pytest
 BuildRequires: python3-pytest-xdist
 BuildRequires: python3-requests-gssapi
 BuildRequires: python3-setuptools
+BuildRequires: python3-nitrate
 Requires: python3-bugzilla
 Requires: python3-httplib2
 Requires: python3-nitrate
