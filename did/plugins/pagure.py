@@ -103,7 +103,11 @@ class Pagure():
             raise ReportError(
                 f"Pagure get_activities {self.url} failed with error:{error}."
                 ) from error
-        data = response.json()
+        try:
+            data = response.json()
+        except requests.exceptions.JSONDecodeError as error:
+            log.debug(error)
+            raise ReportError(f"Pagure JSON failed: {response.text}.") from error
         return data.get("activities", [])
 
     def search(self, query, pagination, result_field):
