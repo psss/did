@@ -3,7 +3,6 @@
 
 import logging
 
-import pytest
 from _pytest.logging import LogCaptureFixture
 
 import did.base
@@ -33,12 +32,12 @@ def test_missing_url(caplog: LogCaptureFixture):
         assert "Skipping section zammad due to error: No zammad url set" in caplog.text
 
 
-def test_wrong_url():
+def test_wrong_url(caplog: LogCaptureFixture):
     """ Giving a non-Zammad url results in Exception """
     did.base.Config(BASIC_CONFIG + "url=https://www.google.com")
-    with pytest.raises(did.base.ReportError,
-                       match="Zammad search on https://www.google.com failed."):
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Zammad search on https://www.google.com failed." in caplog.text
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

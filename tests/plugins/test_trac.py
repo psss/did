@@ -3,7 +3,6 @@
 
 import logging
 
-import pytest
 from _pytest.logging import LogCaptureFixture
 
 import did.base
@@ -42,12 +41,13 @@ url = https://localhost
         assert "Skipping section trac due to error: No prefix set" in caplog.text
 
 
-def test_wrong_url():
+def test_wrong_url(caplog: LogCaptureFixture):
     """ Connecting to wrong URL """
     did.base.Config(f"""
 {CONFIG}
 url = https://localhost
 prefix = DT
     """)
-    with pytest.raises(did.base.ReportError, match=r".*Is the url above correct?"):
+    with caplog.at_level(logging.ERROR):
         did.cli.main("today")
+        assert "Is the url above correct?" in caplog.text

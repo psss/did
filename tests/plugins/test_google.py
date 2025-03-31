@@ -113,10 +113,12 @@ def test_authorized_http(mock_run_flow, mock_flow):
         mock_run_flow.assert_called_once()
         assert service
     with tempfile.TemporaryDirectory() as new_cred_dir:
+        old_cred_dir = google.CREDENTIAL_DIR
         google.CREDENTIAL_DIR = os.path.join(new_cred_dir, "missing")
         assert not os.path.exists(google.CREDENTIAL_DIR)
         google.authorized_http(client_id, client_secret, apps)
         assert os.path.exists(google.CREDENTIAL_DIR)
+        google.CREDENTIAL_DIR = old_cred_dir
 
 
 def test_google_calendar():

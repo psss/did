@@ -1,7 +1,10 @@
 # coding: utf-8
 """ Tests for the Sentry plugin """
 
+import logging
+
 import pytest
+from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
@@ -44,11 +47,12 @@ def test_missing_token():
         did.cli.main(INTERVAL)
 
 
-def test_invalid_token():
+def test_invalid_token(caplog: LogCaptureFixture):
     """ Invalid Sentry token """
     did.base.Config(BAD_TOKEN_CONFIG)
-    with pytest.raises(did.base.ReportError):
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Failed to fetch Sentry activities" in caplog.text
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

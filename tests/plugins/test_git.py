@@ -1,9 +1,10 @@
 # coding: utf-8
 """ Tests for the git plugin """
 
+import logging
 import os
 
-import pytest
+from _pytest.logging import LogCaptureFixture
 
 import did.cli
 import did.utils
@@ -99,8 +100,9 @@ def test_git_invalid():
         raise RuntimeError("Expected warning only") from exc
 
 
-def test_git_non_existent():
+def test_git_non_existent(caplog: LogCaptureFixture):
     """ Non-existent git repo """
     did.base.Config(CONFIG.format("i-do-not-exist"))
-    with pytest.raises(did.base.ReportError):
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Unable to access git repo" in caplog.text

@@ -101,11 +101,12 @@ def test_github_pull_requests_commented():
         in str(stat) for stat in stats)
 
 
-def test_github_invalid_token():
+def test_github_invalid_token(caplog: LogCaptureFixture):
     """ Invalid token """
     did.base.Config(f"{CONFIG}\ntoken = bad-token")
-    with pytest.raises(did.base.ReportError):
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Defined token is not valid" in caplog.text
 
 
 def test_github_missing_url(caplog: LogCaptureFixture):
