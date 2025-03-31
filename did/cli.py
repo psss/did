@@ -193,24 +193,29 @@ def main(arguments=None):
 
     with the list of all gathered stats objects.
     """
+    config = None
     try:
         config = did.base.Config()
     except did.base.ConfigFileError:
         utils.info(
             f"Create at least a minimum config file {did.base.Config.path()}:"
             f"\n{did.base.Config.example().strip()}")
-        raise
+
     # Load standard and custom plugins
     utils.load_components("did.plugins", continue_on_error=True)
-    custom_plugins = config.plugins
-    if custom_plugins:
-        custom_plugins = [
-            plugin.strip() for plugin in utils.split(custom_plugins)]
-        utils.load_components(*custom_plugins, continue_on_error=True)
+    if config:
+        custom_plugins = config.plugins
+        if custom_plugins:
+            custom_plugins = [
+                plugin.strip() for plugin in utils.split(custom_plugins)]
+            utils.load_components(*custom_plugins, continue_on_error=True)
 
     # Parse options, initialize gathered stats
     options, header = Options(arguments).parse()
     gathered_stats = []
+
+    # at this point if `--test` was used, Config() is filled.
+    config = did.base.Config()
 
     # Check for user email addresses (command line or config)
     emails = options.emails or config.email
