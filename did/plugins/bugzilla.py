@@ -165,7 +165,7 @@ class Bug():
                 f" - {self.summary}"
                 )
         # plain text format
-        return f"{self.prefix}#{str(self.id).rjust(7, "0")} - {self.summary}"
+        return f'{self.prefix}#{str(self.id).rjust(7, "0")} - {self.summary}'
 
     def __eq__(self, other):
         """ Compare bugs by their id """

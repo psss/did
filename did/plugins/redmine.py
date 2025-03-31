@@ -57,10 +57,11 @@ class RedmineActivity(Stats):
 
         from_date = self.options.until.date
         while from_date > self.options.since.date:
-            feed_url = f'{
-                self.parent.url}/activity.atom?user_id={
-                self.user.login}&from={
-                from_date.strftime('%Y-%m-%d')}'
+            feed_url = (
+                f"{self.parent.url}/activity.atom?"
+                f"user_id={self.user.login}"
+                f"&from={from_date.strftime('%Y-%m-%d')}"
+                )
             log.debug("Feed url: %s", feed_url)
             feed = feedparser.parse(feed_url)
             for entry in feed.entries:

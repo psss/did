@@ -147,11 +147,10 @@ class Options():
             raise RuntimeError(
                 f"Invalid date range ({opt.since} to {opt.until.date - delta(days=1)})")
 
-        header = f"Status report for {period} ({
-            opt.since} to {
-            opt.until.date -
-            delta(
-                days=1)})"
+        header = (
+            f"Status report for {period} ({opt.since} "
+            f"to {opt.until.date - delta(days=1)})"
+            )
         if opt.format == "markdown":
             # In markdown the first line must be a header
             # using alternate syntax allowing to use did's
@@ -198,9 +197,8 @@ def main(arguments=None):
         config = did.base.Config()
     except did.base.ConfigFileError:
         utils.info(
-            f"Create at least a minimum config file {
-                did.base.Config.path()}:\n{
-                did.base.Config.example().strip()}")
+            f"Create at least a minimum config file {did.base.Config.path()}:"
+            f"\n{did.base.Config.example().strip()}")
         raise
     # Load standard and custom plugins
     utils.load_components("did.plugins", continue_on_error=True)

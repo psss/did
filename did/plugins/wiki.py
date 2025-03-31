@@ -60,14 +60,9 @@ class WikiChanges(Stats):
         # Different header for wiki:
         # Updates on xxx: x changes of y pages
         item(
-            f'{
-                self.name}: {
-                self.changes} change{
-                "" if self.changes == 1 else "s"} of {
-                    len(
-                        self.stats)} page{
-                            "" if len(
-                                self.stats) == 1 else "s"}',
+            f'{self.name}: {self.changes} '
+            f'change{"" if self.changes == 1 else "s"} '
+            f'of {len(self.stats)} page{"" if len(self.stats) == 1 else "s"}',
             level=0,
             options=self.options)
 

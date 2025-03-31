@@ -93,10 +93,10 @@ class TicketsUpdated(Stats):
 
     def fetch(self):
         log.info("Searching for tickets updated by %s", self.user)
-        search = f"article.from:\"{
-            self.user.name}\" and article.created_at:[{
-            self.options.since} TO {
-            self.options.until}]"
+        search = (
+            f"article.from:\"{self.user.name}\" and "
+            f"article.created_at:[{self.options.since} TO {self.options.until}]"
+            )
         query = f"tickets/search?query={urllib.parse.quote(search)}"
         self.stats = [
             Ticket(ticket) for id,

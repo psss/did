@@ -259,10 +259,11 @@ class JiraCreated(Stats):
             self.option,
             self.parent.project if self.parent.project is not None else "any project",
             self.user)
-        query = f"creator = '{
-            self.user.login or self.user.email}' AND created >= {
-            self.options.since} AND created <= {
-            self.options.until}"
+        query = (
+            f"creator = '{self.user.login or self.user.email}' "
+            f"AND created >= {self.options.since} "
+            f"AND created <= {self.options.until}"
+            )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
         self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
@@ -279,18 +280,20 @@ class JiraCommented(Stats):
             self.parent.project if self.parent.project is not None else "any project",
             self.user)
         if self.parent.use_scriptrunner:
-            query = f"issueFunction in commented('by {
-                self.user.login or self.user.email} after {
-                self.options.since} before {
-                self.options.until}')"
+            query = (
+                f"issueFunction in commented('by {self.user.login or self.user.email} "
+                f"after {self.options.since} "
+                f"before {self.options.until}')"
+                )
             if self.parent.project:
                 query = query + f" AND project in ({self.parent.project})"
             self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
         else:
-            query = f"project in ({
-                self.parent.project}) AND updated >= {
-                self.options.since} AND updated <= {
-                self.options.until}"
+            query = (
+                f"project in ({self.parent.project}) "
+                f"AND updated >= {self.options.since} "
+                f"AND updated <= {self.options.until}"
+                )
             # Filter only issues commented by given user
             self.stats = [
                 issue for issue in Issue.search(query, stats=self,
@@ -331,10 +334,11 @@ class JiraResolved(Stats):
             self.option,
             self.parent.project if self.parent.project is not None else "any project",
             self.user)
-        query = f"assignee = '{
-            self.user.login or self.user.email}' AND resolved >= {
-            self.options.since} AND resolved <= {
-            self.options.until}"
+        query = (
+            f"assignee = '{self.user.login or self.user.email}' "
+            f"AND resolved >= {self.options.since} "
+            f"AND resolved <= {self.options.until}"
+            )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
         self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
@@ -429,8 +433,7 @@ class JiraStats(StatsGroup):
         if "auth_type" in config:
             if config["auth_type"] not in AUTH_TYPES:
                 raise ReportError(
-                    f"Unsupported authentication type: {
-                        config["auth_type"]}")
+                    f'Unsupported authentication type: {config["auth_type"]}')
             self.auth_type = config["auth_type"]
         else:
             self.auth_type = "gss"

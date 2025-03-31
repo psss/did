@@ -186,7 +186,7 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
 class UserStats(StatsGroup):
     """ User statistics in one place """
 
-    def __init__(self, user: did.base.User | None = None, options=None, config=None):
+    def __init__(self, user=None, options=None, config=None):
         """ Initialize stats objects. """
         super().__init__(option="all", user=user, options=options)
         config = config or did.base.Config()

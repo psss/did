@@ -96,18 +96,15 @@ class TrelloAPI():
         if limit > 1000:
             raise NotImplementedError(
                 "Fetching more than 1000 items is not implemented")
+        actions = urllib.parse.urlencode({
+            "key": self.key,
+            "token": self.token,
+            "filter": filters,
+            "limit": limit,
+            "since": str(since),
+            "before": str(before)})
         resp = self.stats.session.open(
-            f"{
-                self.stats.url}/members/{
-                self.username}/actions?{
-                urllib.parse.urlencode(
-                    {
-                        "key": self.key,
-                        "token": self.token,
-                        "filter": filters,
-                        "limit": limit,
-                        "since": str(since),
-                        "before": str(before)})}")
+            f"{self.stats.url}/members/{self.username}/actions?{actions}")
 
         actions = json.loads(resp.read())
         log.data(pretty(actions))
@@ -292,11 +289,9 @@ class TrelloStatsGroup(StatsGroup):
         positional_args = ['apikey', 'token']
         if (not set(positional_args).issubset(set(config.keys()))
                 and "user" not in config):
+            listed_args = listed(positional_args, quote="'")
             raise ReportError(
-                f"No ({
-                    listed(
-                        positional_args,
-                        quote="'")}) or 'user' set in the [{option}] section")
+                f"No ({listed_args}) or 'user' set in the [{option}] section")
 
         optional_args = ["board_links", "apikey"]
         for arg in optional_args:
