@@ -48,12 +48,10 @@ class Trac():
             resolution = ""
         # Urlify the identifier when using the wiki format
         if self.options.format == "wiki":
-            identifier = f"[[{
-                self.parent.url}/ticket/{
-                self.id}|{
-                self.parent.prefix}#{
-                str(
-                    self.id).zfill(4)}]]"
+            identifier = (
+                f"[[{self.parent.url}/ticket/{self.id}|"
+                f"{self.parent.prefix}#{str(self.id).zfill(4)}]]"
+                )
         else:
             identifier = f"{self.parent.prefix}#{str(self.id).zfill(4)}"
         # Join identifier with summary and optional resolution
@@ -150,10 +148,10 @@ class TracCreated(TracCommon):
 
     def fetch(self):
         log.info("Searching for tickets created by %s", self.user)
-        query = f"reporter=~{
-            self.user.login}&time={
-            self.options.since}..{
-            self.options.until}"
+        query = (
+            f"reporter=~{self.user.login}"
+            f"&time={self.options.since}..{self.options.until}"
+            )
         self.stats = Trac.search(query, self.parent, self.options)
 
 
@@ -162,10 +160,11 @@ class TracAccepted(TracCommon):
 
     def fetch(self):
         log.info("Searching for tickets accepted by %s", self.user)
-        query = f"time=..{
-            self.options.until}&modified={
-            self.options.since}..&owner=~{
-            self.user.login}"
+        query = (
+            f"time=..{self.options.until}"
+            f"&modified={self.options.since}.."
+            f"&owner=~{self.user.login}"
+            )
         self.stats = [
             ticket for ticket in Trac.search(query, self.parent, self.options)
             if ticket.accepted(self.user)]
@@ -187,10 +186,11 @@ class TracClosed(TracCommon):
 
     def fetch(self):
         log.info("Searching for tickets closed by %s", self.user)
-        query = f"owner=~{
-            self.user.login}&time=..{
-            self.options.until}&modified={
-            self.options.since}.."
+        query = (
+            f"owner=~{self.user.login}"
+            f"&time=..{self.options.until}"
+            f"&modified={self.options.since}.."
+            )
         self.stats = [
             ticket for ticket in Trac.search(query, self.parent, self.options)
             if ticket.closed()]

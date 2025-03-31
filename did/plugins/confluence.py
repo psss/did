@@ -305,8 +305,7 @@ class ConfluenceStats(StatsGroup):
         if "auth_type" in config:
             if config["auth_type"] not in AUTH_TYPES:
                 raise ReportError(
-                    f"Unsupported authentication type: {
-                        config["auth_type"]}")
+                    f'Unsupported authentication type: {config["auth_type"]}')
             self.auth_type = config["auth_type"]
         else:
             self.auth_type = "gss"
@@ -371,8 +370,8 @@ class ConfluenceStats(StatsGroup):
                         NewConnectionError) as error:
                     log.error(error)
                     raise ReportError(
-                        f"Failed to connect to Confluence at {
-                            self.auth_url}.") from error
+                        f"Failed to connect to Confluence at {self.auth_url}."
+                        ) from error
             else:
                 gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
                 try:
@@ -385,8 +384,8 @@ class ConfluenceStats(StatsGroup):
                         ) as error:
                     log.error(error)
                     raise ReportError(
-                        f"Failed to connect to Confluence at {
-                            self.auth_url}.") from error
+                        f"Failed to connect to Confluence at {self.auth_url}."
+                        ) from error
             try:
                 response.raise_for_status()
             except requests.exceptions.HTTPError as error:

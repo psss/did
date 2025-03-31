@@ -171,7 +171,7 @@ class Issue():
         """ String representation """
         label = f"{self.project}#{self.identifier}"
         if self.options.format == "markdown":
-            return f"[{label}]({self.data["full_url"]}) - {self.title}"
+            return f'[{label}]({self.data["full_url"]}) - {self.title}'
         # plain text
         return f'{label} - {self.title}'
 
@@ -185,7 +185,7 @@ class Comment():
         self.date = data["date"]
         self.text = data["description_mk"].replace(
             'href="',
-            f'href="{url.replace('/api/0', '')}').replace(
+            f'href="{url.replace("/api/0", "")}').replace(
             '<div class="markdown"><p>',
             '').replace(
             '</p></div>',

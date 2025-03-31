@@ -99,10 +99,11 @@ class ReportedTickets(Stats):
 
     def fetch(self):
         log.info("Searching for tickets reported by %s", self.user)
-        query = f"Requestor.EmailAddress = '{
-            self.user.email}' AND Created > '{
-            self.options.since}' AND Created < '{
-            self.options.until}'"
+        query = (
+            f"Requestor.EmailAddress = '{self.user.email}' "
+            f"AND Created > '{self.options.since}' "
+            f"AND Created < '{self.options.until}'"
+            )
         self.stats = self.parent.request_tracker.search(query)
 
 
@@ -111,10 +112,11 @@ class ResolvedTickets(Stats):
 
     def fetch(self):
         log.info("Searching for tickets resolved by %s", self.user)
-        query = f"Owner.EmailAddress = '{
-            self.user.email}' AND Resolved > '{
-            self.options.since}' AND Resolved < '{
-            self.options.until}'"
+        query = (
+            f"Owner.EmailAddress = '{self.user.email}' "
+            f"AND Resolved > '{self.options.since}' "
+            f"AND Resolved < '{self.options.until}'"
+            )
         self.stats = self.parent.request_tracker.search(query)
 
 

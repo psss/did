@@ -87,8 +87,8 @@ class GitLab():
                 result = api_raw.json()
                 if "error" in result:
                     raise ReportError(
-                        f"Error '{result["error"]}' "
-                        f"connecting to GitLab: {result["error_description"]}"
+                        f'Error \"{result["error"]}\" '
+                        f'connecting to GitLab: {result["error_description"]}'
                         ) from http_err
                 raise ReportError(
                     f"Unable to access '{url}'. Error: {http_err}"
@@ -149,8 +149,7 @@ class GitLab():
             return result[0]
         except (IndexError, KeyError) as exc:
             raise ReportError(
-                f"Unable to find user '{username}' on {
-                    self.url}.") from exc
+                f"Unable to find user '{username}' on {self.url}.") from exc
 
     def get_project(self, project_id):
         if project_id not in self.projects:
@@ -239,18 +238,16 @@ class Issue():
                     ):
                 endpoint = "issues"
             label = f"{self.project['path_with_namespace']}#{str(self.id)}"
-            href = f"{
-                self.gitlabapi.url}/{
-                self.project['path_with_namespace']}/-/{endpoint}/{
-                str(
-                    self.id)}"
+            href = (
+                f"{self.gitlabapi.url}/{self.project['path_with_namespace']}"
+                f"/-/{endpoint}/{str(self.id)}"
+                )
             return f"[{label}]({href}) - {self.title}"
         # plain text
-        return f"{
-            self.project['path_with_namespace']}#{
-            str(
-                self.id).zfill(PADDING)} - {
-            self.title}"
+        return (
+            f"{self.project['path_with_namespace']}"
+            f"#{str(self.id).zfill(PADDING)} - {self.title}"
+            )
 
 
 class MergeRequest(Issue):
