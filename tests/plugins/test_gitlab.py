@@ -143,11 +143,12 @@ def test_gitlab_missing_token(caplog: LogCaptureFixture):
         assert "Skipping section gitlab due to error: No GitLab token" in caplog.text
 
 
-def test_gitlab_invalid_token():
+def test_gitlab_invalid_token(caplog: LogCaptureFixture):
     """ Invalid token """
     did.base.Config(CONFIG_NOTOKEN + "\ntoken = bad-token")
-    with pytest.raises(did.base.ReportError, match=r"Unable to access"):
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Unable to access" in caplog.text
 
 
 def test_gitlab_missing_url(caplog: LogCaptureFixture):
@@ -158,13 +159,14 @@ def test_gitlab_missing_url(caplog: LogCaptureFixture):
         assert "Skipping section gitlab due to error: No GitLab url set" in caplog.text
 
 
-def test_gitlab_wrong_url():
+def test_gitlab_wrong_url(caplog: LogCaptureFixture):
     """ Wrong url """
     did.base.Config(
         CONFIG.replace("url = https://gitlab.com\n", "url = https://localhost\n")
         )
-    with pytest.raises(did.base.ReportError, match=r"Unable to connect"):
+    with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
+        assert "Unable to connect" in caplog.text
 
 
 def test_gitlab_config_invaliad_ssl_verify(caplog: LogCaptureFixture):

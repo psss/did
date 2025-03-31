@@ -1,7 +1,10 @@
 # coding: utf-8
 """ Tests for the Confluence plugin """
 
+import logging
+
 import pytest
+from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
@@ -117,16 +120,17 @@ ssl_verify = ss
 """)
 
 
-def test_confluence_ssl_verify():
+def test_confluence_ssl_verify(caplog: LogCaptureFixture):
     """Test ssl_verify """
     did.base.Config(f"""
 {CONFIG}
 ssl_verify = False
 """)
-    with pytest.raises(did.base.ReportError, match=r"Confluence authentication failed"):
+    with caplog.at_level(logging.ERROR):
         # expected to fail authentication as we are not providing valid
         # credentials
         did.cli.main("today")
+        assert "Confluence authentication failed" in caplog.text
 
 
 def test_confluence_missing_url():
@@ -137,15 +141,16 @@ def test_confluence_missing_url():
             ""))
 
 
-def test_confluence_wrong_url():
+def test_confluence_wrong_url(caplog: LogCaptureFixture):
     """ Missing URL """
     did.base.Config(f"""{did.base.Config.example()}
 [confluence]
 type = confluence
 url = https://localhost
 """)
-    with pytest.raises(did.base.ReportError, match=r"Failed to connect to Confluence"):
+    with caplog.at_level(logging.ERROR):
         did.cli.main("today")
+        assert "Failed to connect to Confluence" in caplog.text
 
 
 def test_missing_token():

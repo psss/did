@@ -1,10 +1,13 @@
 # coding: utf-8
 """ Tests for the Jira plugin """
 
+import logging
 import os
 import tempfile
 
 import pytest
+import requests
+from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
@@ -123,16 +126,17 @@ ssl_verify = ss
 """)
 
 
-def test_ssl_verify():
+def test_ssl_verify(caplog: LogCaptureFixture):
     """Test ssl_verify """
     did.base.Config(f"""
 {CONFIG}
 ssl_verify = False
 """)
-    with pytest.raises(did.base.ReportError, match=r"Jira authentication failed"):
+    with caplog.at_level(logging.ERROR):
         # expected to fail authentication as we are not providing valid
         # credentials
         did.cli.main("today")
+        assert "Jira authentication failed" in caplog.text
 
 
 def test_jira_missing_url():
@@ -140,7 +144,7 @@ def test_jira_missing_url():
     assert_conf_error(CONFIG.replace("url = https://issues.redhat.com/\n", ""))
 
 
-def test_jira_wrong_url():
+def test_jira_wrong_url(caplog: LogCaptureFixture):
     """ Missing URL """
     did.base.Config(f"""{did.base.Config.example()}
 [jira]
@@ -149,8 +153,11 @@ prefix = JBEAP
 project = JBEAP
 url = https://localhost
 """)
-    with pytest.raises(did.base.ReportError, match=r"Failed to connect to Jira"):
-        did.cli.main("today")
+    with caplog.at_level(logging.ERROR):
+        with pytest.raises(requests.exceptions.ConnectionError,
+                           match="Max retries exceeded"):
+            did.cli.main("today")
+        assert "Failed to connect to Jira" in caplog.text
 
 
 def test_jira_use_scriptrunner_config_error():

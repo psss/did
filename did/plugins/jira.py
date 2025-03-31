@@ -243,6 +243,7 @@ class Issue():
             created = dateutil.parser.parse(history["created"]).date()
             if (
                     "author" in history and
+                    "emailAddress" in history["author"] and
                     history["author"]["emailAddress"] == user.email and
                     options.since.date <= created <= options.until.date
                     ):
