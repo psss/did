@@ -196,7 +196,11 @@ class Issue():
                 except requests.exceptions.HTTPError as error:
                     log.error("Error fetching '%s': %s", current_url, error)
                 break
-            data = response.json()
+            try:
+                data = response.json()
+            except requests.exceptions.JSONDecodeError as error:
+                log.debug(error)
+                raise ReportError(f"JIRA JSON failed: {response.text}.") from error
             if not response.ok:
                 try:
                     error = " ".join(data["errorMessages"])
@@ -544,19 +548,30 @@ class JiraStats(StatsGroup):
         if not self.ssl_verify:
             requests.packages.urllib3.disable_warnings(
                 urllib3.exceptions.InsecureRequestWarning)
-        if self.auth_type == 'basic':
-            response = self._basic_auth_session()
-        elif self.auth_type == "token":
-            response = self._token_auth_session()
-        else:
-            response = self._gss_api_auth_session()
-        try:
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as error:
-            log.error(error)
-            raise ReportError(
-                "Jira authentication failed. Check credentials or kinit."
-                ) from error
+        while True:
+            if self.auth_type == 'basic':
+                response = self._basic_auth_session()
+            elif self.auth_type == "token":
+                response = self._token_auth_session()
+            else:
+                response = self._gss_api_auth_session()
+            if response.status_code == 429:
+                retry_after = 1
+                if response.headers.get("X-RateLimit-Remaining") == "0":
+                    retry_after = int(response.headers["retry-after"])
+                    log.warning("Jira rate limit exceeded.")
+                    log.warning("Sleeping now for %s.",
+                                listed(retry_after, 'second'))
+                time.sleep(retry_after)
+                continue
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as error:
+                log.error(error)
+                raise ReportError(
+                    "Jira authentication failed. Check credentials or kinit."
+                    ) from error
+            break
         if self.token_expiration:
             while True:
                 try:
