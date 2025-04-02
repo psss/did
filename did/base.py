@@ -49,10 +49,12 @@ TEST_CONFIG = """
 width = 79
 email = Petr Šplíchal <psplicha@redhat.com>
 
-[github]
-type = github
-url = https://api.github.com/
+[koji]
+type = koji
+url = https://koji.fedoraproject.org/kojihub
+weburl = https://koji.fedoraproject.org/koji
 login = psss
+name = Fedora Build System
 """
 
 
