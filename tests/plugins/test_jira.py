@@ -6,7 +6,6 @@ import os
 import tempfile
 
 import pytest
-import requests
 from _pytest.logging import LogCaptureFixture
 
 import did.base
@@ -154,9 +153,7 @@ project = JBEAP
 url = https://localhost
 """)
     with caplog.at_level(logging.ERROR):
-        with pytest.raises(requests.exceptions.ConnectionError,
-                           match="Max retries exceeded"):
-            did.cli.main("today")
+        did.cli.main("today")
         assert "Failed to connect to Jira" in caplog.text
 
 
