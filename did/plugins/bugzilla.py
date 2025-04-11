@@ -84,7 +84,7 @@ class Bugzilla():
             except requests.exceptions.ConnectionError as conn_err:
                 raise ReportError(
                     "Connection to bugzilla server failed "
-                    f"for [{self.parent.option}] section"
+                    f"for [{self.parent.option}] section: {conn_err}"
                     ) from conn_err
         return self._server
 
