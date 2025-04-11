@@ -59,32 +59,41 @@ token_expiration
 token_name
     Name of the token to check for expiration in ``token_expiration``
     days. This has to match the name as seen in your Confluence profile.
+
+It's also possible to set a timeout, if not specified it defaults to
+60 seconds.
+
+    timeout = 10
 """
 
 import os
 import re
+import time
 import urllib.parse
 from datetime import datetime
 
 import requests
+import urllib3.exceptions
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
-from urllib3.exceptions import InsecureRequestWarning, NewConnectionError
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty, strtobool
 
 # Maximum number of results fetched at once
-MAX_RESULTS = 100
+MAX_RESULTS = 200
 
 # Maximum number of batches
-MAX_BATCHES = 100
+MAX_BATCHES = 500
 
 # Supported authentication types
 AUTH_TYPES = ["gss", "basic", "token"]
 
 # Enable ssl verify
 SSL_VERIFY = True
+
+# Default number of seconds waiting on Sentry before giving up
+TIMEOUT = 60
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
@@ -96,11 +105,10 @@ class Confluence():
     # pylint: disable=too-few-public-methods
 
     @staticmethod
-    def search(query, stats, expand=None):
+    def search(query, stats, expand=None, timeout=TIMEOUT):
         """ Perform page/comment search for given stats instance """
         log.debug("Search query: %s", query)
         content = []
-
         # Fetch data from the server in batches of MAX_RESULTS issues
         for batch in range(MAX_BATCHES):
             encoded_query = urllib.parse.urlencode(
@@ -111,22 +119,60 @@ class Confluence():
                     "start": batch * MAX_RESULTS
                     }
                 )
+            current_url = f"{stats.parent.url}/rest/api/content/search?{encoded_query}"
+            log.debug("Fetching %s", current_url)
+            while True:
+                try:
+                    response = stats.parent.session.get(
+                        current_url,
+                        timeout=timeout)
+                    # Handle the exceeded rate limit
+                    if response.status_code == 429:
+                        if response.headers.get("X-RateLimit-Remaining") == "0":
+                            # Wait at least a second.
+                            retry_after = max(int(response.headers["retry-after"]), 1)
+                            log.warning("Confluence rate limit exceeded.")
+                            log.warning("Sleeping now for %s.",
+                                        listed(retry_after, 'second'))
+                            time.sleep(retry_after)
+                            continue
+
+                    response.raise_for_status()
+                except requests.Timeout:
+                    log.warning(
+                        "Timed out fetching %s",
+                        current_url)
+                    continue
+                except (requests.exceptions.ConnectionError,
+                        urllib3.exceptions.NewConnectionError,
+                        requests.exceptions.HTTPError
+                        ) as error:
+                    log.error("Error fetching '%s': %s", current_url, error)
+                    raise ReportError(
+                        f"Failed to connect to Confluence at {stats.parent.url}."
+                        ) from error
+                break
             try:
-                response = stats.parent.session.get(
-                    f"{stats.parent.url}/rest/api/content/search?{encoded_query}")
-            except (requests.exceptions.ConnectionError,
-                    NewConnectionError) as error:
-                log.error(error)
+                data = response.json()
+            except requests.exceptions.JSONDecodeError as error:
+                log.debug(error)
                 raise ReportError(
-                    f"Failed to connect to Confluence at {stats.parent.url}."
+                    f"Confluence JSON failed: {response.text}."
                     ) from error
-            data = response.json()
+            if not response.ok:
+                try:
+                    error = " ".join(data["errorMessages"])
+                except KeyError:
+                    error = "unknown"
+                raise ReportError(
+                    f"Failed to fetch confluence data for query '{query}'. "
+                    f"The reason was '{response.reason}' "
+                    f"and the error was '{error}'.")
             log.debug(
                 "Batch %s result: %s fetched",
                 batch,
-                listed(
-                    data["results"],
-                    "object"))
+                listed(data["results"], "object")
+                )
             log.data(pretty(data))
             content.extend(data["results"])
             # If all issues fetched, we're done
@@ -184,7 +230,7 @@ class PageCreated(Stats):
         query = (
             f"type=page AND creator = '{self.user.login}' "
             f"AND created >= {self.options.since} AND created < {self.options.until}")
-        result = Confluence.search(query, self)
+        result = Confluence.search(query, self, timeout=self.parent.timeout)
         self.stats = [
             ConfluencePage(
                 page,
@@ -203,7 +249,7 @@ class PageModified(Stats):
             f"type=page AND contributor = '{self.user.login}' "
             f"AND lastmodified >= {self.options.since} "
             f"AND lastmodified < {self.options.until}")
-        result = Confluence.search(query, self)
+        result = Confluence.search(query, self, timeout=self.parent.timeout)
         self.stats = [
             ConfluencePage(
                 page,
@@ -225,13 +271,12 @@ class CommentAdded(Stats):
                 self.parent.url,
                 self.options.format
                 ) for comment in Confluence.search(
-                query, self, expand="body.editor")]
+                query, self, expand="body.editor", timeout=self.parent.timeout)]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 class ConfluenceStats(StatsGroup):
     """ Confluence stats """
@@ -252,7 +297,7 @@ class ConfluenceStats(StatsGroup):
         else:
             raise ReportError(
                 "`auth_password` or `auth_password_file` must be set "
-                "in the [{option}] section")
+                f"in the [{option}] section.")
 
     def _token_auth(self, option, config):
         self.token = get_token(config)
@@ -264,15 +309,14 @@ class ConfluenceStats(StatsGroup):
             try:
                 self.token_expiration = int(config["token_expiration"])
                 self.token_name = config["token_name"]
-            except KeyError as exc:
+            except KeyError as key_err:
                 raise ReportError(
-                    "The ``token_name`` and ``token_expiration`` "
-                    "must be set at the same time in "
-                    f"[{option}] section.") from exc
+                    "The ``token_name`` and ``token_expiration`` must be set at"
+                    f" the same time in [{option}] section.") from key_err
             except ValueError as val_err:
                 raise ReportError(
-                    "The ``token_expiration`` must contain number, used in "
-                    f"[{option}] section.") from val_err
+                    "The ``token_expiration`` must contain number, "
+                    f"used in [{option}] section.") from val_err
         else:
             self.token_expiration = self.token_name = None
 
@@ -293,6 +337,7 @@ class ConfluenceStats(StatsGroup):
         self._session = None
         # Make sure there is an url provided
         config = dict(Config().section(option))
+        self.timeout = config.get("timeout", TIMEOUT)
         if "url" not in config:
             raise ReportError(f"No Confluence url set in the [{option}] section")
         self.url = config["url"].rstrip("/")
@@ -315,16 +360,19 @@ class ConfluenceStats(StatsGroup):
         else:
             if "auth_username" in config:
                 raise ReportError(
-                    "`auth_username` is only valid for basic authentication"
-                    f" (section [{option}])")
+                    "`auth_username` is only valid for basic authentication "
+                    f"(section [{option}])")
             if "auth_password" in config or "auth_password_file" in config:
                 raise ReportError(
-                    "`auth_password` and `auth_password_file` are only valid "
-                    f"for basic authentication (section [{option}])")
+                    "`auth_password` and `auth_password_file` are only valid for"
+                    f" basic authentication (section [{option}])")
+        # Token
+        self.token_expiration = None
         if self.auth_type == "token":
             self._token_auth(option, config)
         self._set_ssl_verification(config)
         self.login = config.get("login", None)
+
         # Check for custom prefix
         self.prefix = config["prefix"] if "prefix" in config else None
         # Create the list of stats
@@ -343,60 +391,104 @@ class ConfluenceStats(StatsGroup):
                 name=f"Comments added in {option}"),
             ]
 
+    def _basic_auth_session(self):
+        log.debug("Connecting to %s for basic auth", self.auth_url)
+        basic_auth = (self.auth_username, self.auth_password)
+        try:
+            response = self._session.get(
+                self.auth_url, auth=basic_auth, verify=self.ssl_verify,
+                timeout=self.timeout)
+        except (requests.exceptions.ConnectionError,
+                urllib3.exceptions.NewConnectionError,
+                requests.Timeout) as error:
+            log.error(error)
+            raise ReportError(
+                f"Failed to connect to Confluence at {self.auth_url}."
+                ) from error
+        return response
+
+    def _token_auth_session(self):
+        log.debug("Connecting to %s/rest/api/content for token auth", self.url)
+        self.session.headers["Authorization"] = f"Bearer {self.token}"
+        while True:
+            try:
+                response = self._session.get(
+                    f"{self.url}/rest/api/content",
+                    verify=self.ssl_verify,
+                    timeout=self.timeout)
+            except urllib3.exceptions.ProtocolError as error:
+                log.warning(
+                    "Confluence server dropped connection with %s, retrying", error)
+                continue
+            except (requests.exceptions.ConnectionError,
+                    urllib3.exceptions.NewConnectionError,
+                    requests.Timeout) as error:
+                log.error(error)
+                raise ReportError(
+                    f"Failed to connect to Confluence at {self.auth_url}."
+                    ) from error
+            break
+        return response
+
+    def _gss_api_auth_session(self):
+        log.debug("Connecting to %s for gssapi auth", self.auth_url)
+        gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
+        try:
+            response = self._session.get(
+                self.auth_url, auth=gssapi_auth, verify=self.ssl_verify,
+                timeout=self.timeout)
+        except (requests.exceptions.ConnectionError,
+                urllib3.exceptions.NewConnectionError,
+                requests.Timeout) as error:
+            log.error(error)
+            raise ReportError(
+                f"Failed to connect to Confluence at {self.auth_url}."
+                ) from error
+        return response
+
     @property
     def session(self):
         """ Initialize the session """
         # pylint: disable=too-many-branches
-        if self._session is None:
-            self._session = requests.Session()
-            # Disable SSL warning when ssl_verify is False
-            if not self.ssl_verify:
-                requests.packages.urllib3.disable_warnings(
-                    InsecureRequestWarning)
-            if self.auth_type == "basic":
-                basic_auth = (self.auth_username, self.auth_password)
-                log.debug("Connecting to %s for basic auth", self.auth_url)
-                response = self._session.get(
-                    self.auth_url, auth=basic_auth, verify=self.ssl_verify)
+        if self._session is not None:
+            return self._session
+        self._session = requests.Session()
+        # Disable SSL warning when ssl_verify is False
+        if not self.ssl_verify:
+            requests.packages.urllib3.disable_warnings(
+                urllib3.exceptions.InsecureRequestWarning)
+        while True:
+            if self.auth_type == 'basic':
+                response = self._basic_auth_session()
             elif self.auth_type == "token":
-                log.debug("Connecting to %s/rest/api/content for token auth", self.url)
-                self.session.headers["Authorization"] = f"Bearer {self.token}"
-                try:
-                    response = self._session.get(
-                        f"{self.url}/rest/api/content",
-                        verify=self.ssl_verify)
-                except (
-                        requests.exceptions.ConnectionError,
-                        NewConnectionError) as error:
-                    log.error(error)
-                    raise ReportError(
-                        f"Failed to connect to Confluence at {self.auth_url}."
-                        ) from error
+                response = self._token_auth_session()
             else:
-                gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
-                try:
-                    log.debug("Connecting to %s for gssapi auth", self.auth_url)
-                    response = self._session.get(
-                        self.auth_url, auth=gssapi_auth, verify=self.ssl_verify)
-                except (
-                        requests.exceptions.ConnectionError,
-                        NewConnectionError
-                        ) as error:
-                    log.error(error)
-                    raise ReportError(
-                        f"Failed to connect to Confluence at {self.auth_url}."
-                        ) from error
+                response = self._gss_api_auth_session()
+            if response.status_code == 429:
+                retry_after = 1
+                if response.headers.get("X-RateLimit-Remaining") == "0":
+                    retry_after = max(int(response.headers["retry-after"]), 1)
+                    log.warning("Confluence rate limit exceeded.")
+                    log.warning("Sleeping now for %s.",
+                                listed(retry_after, 'second'))
+                time.sleep(retry_after)
+                continue
             try:
                 response.raise_for_status()
             except requests.exceptions.HTTPError as error:
                 log.error(error)
                 raise ReportError(
-                    "Confluence authentication failed. Try kinit.") from error
-            if self.token_expiration:
-                response = self._session.get(
-                    f"{self.url}/rest/pat/latest/tokens",
-                    verify=self.ssl_verify)
+                    "Confluence authentication failed. Check credentials or kinit."
+                    ) from error
+            break
+        if self.token_expiration:
+            while True:
                 try:
+                    response = self._session.get(
+                        f"{self.url}/rest/pat/latest/tokens",
+                        verify=self.ssl_verify,
+                        timeout=self.timeout)
+
                     response.raise_for_status()
                     token_found = None
                     for token in response.json():
@@ -412,12 +504,12 @@ class ConfluenceStats(StatsGroup):
                     delta = (
                         expiring_at.astimezone() - datetime.now().astimezone())
                     if delta.days < self.token_expiration:
-                        log.warning(
-                            "Confluence token '%s' expires in %s days.",
-                            self.token_name,
-                            delta.days
-                            )
+                        log.warning("Confluence token '%s' expires in %s days.",
+                                    self.token_name, delta.days)
                 except (requests.exceptions.HTTPError,
-                        KeyError, ValueError) as error:
+                        KeyError, ValueError, requests.Timeout) as error:
                     log.warning(error)
+                    time.sleep(1)
+                    continue
+                break
         return self._session
