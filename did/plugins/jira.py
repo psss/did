@@ -181,7 +181,8 @@ class Issue():
                     # Handle the exceeded rate limit
                     if response.status_code == 429:
                         if response.headers.get("X-RateLimit-Remaining") == "0":
-                            retry_after = int(response.headers["retry-after"])
+                            # Wait at least a second.
+                            retry_after = max(int(response.headers["retry-after"]), 1)
                             log.warning("Jira rate limit exceeded.")
                             log.warning("Sleeping now for %s.",
                                         listed(retry_after, 'second'))
@@ -491,7 +492,7 @@ class JiraStats(StatsGroup):
             ]
 
     def _basic_auth_session(self):
-        log.debug("Connecting to %s", self.auth_url)
+        log.debug("Connecting to %s for basic auth", self.auth_url)
         basic_auth = (self.auth_username, self.auth_password)
         try:
             response = self._session.get(
@@ -530,7 +531,7 @@ class JiraStats(StatsGroup):
         return response
 
     def _gss_api_auth_session(self):
-        log.debug("Connecting to %s", self.auth_url)
+        log.debug("Connecting to %s for gssapi auth", self.auth_url)
         gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
         try:
             response = self._session.get(
@@ -566,7 +567,7 @@ class JiraStats(StatsGroup):
             if response.status_code == 429:
                 retry_after = 1
                 if response.headers.get("X-RateLimit-Remaining") == "0":
-                    retry_after = int(response.headers["retry-after"])
+                    retry_after = max(int(response.headers["retry-after"]), 1)
                     log.warning("Jira rate limit exceeded.")
                     log.warning("Sleeping now for %s.",
                                 listed(retry_after, 'second'))
