@@ -11,6 +11,7 @@ Configuration example (token)::
     token_expiration = 7
     token_name = did-token
 
+Notes:
 Either ``token`` or ``token_file`` has to be defined.
 
 token
@@ -193,8 +194,14 @@ class Issue():
                         "Timed out fetching %s",
                         current_url)
                     continue
-                except requests.exceptions.HTTPError as error:
+                except (requests.exceptions.ConnectionError,
+                        urllib3.exceptions.NewConnectionError,
+                        requests.exceptions.HTTPError
+                        ) as error:
                     log.error("Error fetching '%s': %s", current_url, error)
+                    raise ReportError(
+                        f"Failed to connect to Jira at {stats.parent.url}."
+                        ) from error
                 break
             try:
                 data = response.json()
