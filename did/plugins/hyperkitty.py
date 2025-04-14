@@ -8,7 +8,7 @@ Config example::
     url = https://lists.centos.org/hyperkitty/list/virt@lists.centos.org
 
 It's also possible to set a timeout, if not specified it defaults to
-60 seconds.
+60 seconds. Example::
 
     timeout = 10
 

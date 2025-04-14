@@ -8,10 +8,14 @@ Config example::
     url = https://lore.kernel.org
 
 It's also possible to set a timeout, if not specified it defaults to
-60 seconds.
+60 seconds. Example::
 
     timeout = 10
 
+.. warning::
+    Starting with April 2025 lore.kernel.org is using
+    `Anubis <https://anubis.techaro.lol/>`_
+    so this plugin doesn't work with that public inbox anymore.
 """
 
 import copy
@@ -96,6 +100,7 @@ class PublicInbox():
         self.timeout = timeout
 
     def __get_url(self, path: str) -> str:
+        log.debug("Getting %s", urllib.parse.urljoin(self.url, path))
         return urllib.parse.urljoin(self.url, path)
 
     def _get_message_url(self, msg: Message) -> str:
@@ -146,6 +151,7 @@ class PublicInbox():
 
         log.debug("Fetching message %s thread (%s)", msg_id, url)
         resp = requests.get(url, timeout=self.timeout)
+        log.data("Got: %s", resp.text)
         mbox = self.__get_mbox_from_content(resp.content)
         for msg in self.__get_msgs_from_mbox(mbox):
             if msg.is_thread_root():
@@ -195,6 +201,7 @@ class PublicInbox():
                 },
             timeout=self.timeout
             )
+        log.error("Got: %s", resp.headers)
 
         if not resp.ok:
             return []
