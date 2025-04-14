@@ -77,6 +77,13 @@ header
     :members:
     :undoc-members:
 
+hyperkitty
+----------
+
+.. automodule:: did.plugins.hyperkitty
+    :members:
+    :undoc-members:
+
 items
 -----
 
@@ -116,6 +123,13 @@ phabricator
 -----------
 
 .. automodule:: did.plugins.phabricator
+    :members:
+    :undoc-members:
+
+public-inbox
+------------
+
+.. automodule:: did.plugins.public_inbox
     :members:
     :undoc-members:
 

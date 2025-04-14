@@ -8,10 +8,9 @@ Config example::
     url = https://lore.kernel.org
 
 It's also possible to set a timeout, if not specified it defaults to
-60 seconds.
+60 seconds. Example::
 
     timeout = 10
-
 """
 
 import copy
@@ -99,6 +98,7 @@ class PublicInbox():
         self.timeout = timeout
 
     def __get_url(self, path: str) -> str:
+        log.debug("Getting %s", urllib.parse.urljoin(self.url, path))
         return urllib.parse.urljoin(self.url, path)
 
     def _get_message_url(self, msg: Message) -> str:
@@ -198,6 +198,7 @@ class PublicInbox():
                 },
             timeout=self.timeout
             )
+        log.debug("Got: %s", resp.headers)
 
         if not resp.ok:
             return []
