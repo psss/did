@@ -1,8 +1,15 @@
 # coding: utf-8
 """ Tests for the Public Inbox plugin """
 
+import pytest
+
 import did.base
 import did.cli
+
+pytestmark = pytest.mark.skip(
+    "Skipping as lore.kernel.org is now using Anubis preventing scraping"
+    )
+
 
 CONFIG = """
 [lore]
