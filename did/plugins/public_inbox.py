@@ -26,6 +26,7 @@ import mailbox
 import tempfile
 import typing
 import urllib.parse
+from importlib.metadata import version
 
 import requests
 
@@ -35,6 +36,8 @@ from did.utils import item, log
 
 # Default number of seconds waiting on inbox before giving up
 TIMEOUT = 60
+
+USER_AGENT = f"did/{version('did')}"
 
 
 class Message():
@@ -150,8 +153,9 @@ class PublicInbox():
         url = self.__get_url(f"/all/{msg_id}/t.mbox.gz")
 
         log.debug("Fetching message %s thread (%s)", msg_id, url)
-        resp = requests.get(url, timeout=self.timeout)
-        log.data("Got: %s", resp.text)
+        resp = requests.get(
+            url, timeout=self.timeout, headers={
+                'User-Agent': USER_AGENT})
         mbox = self.__get_mbox_from_content(resp.content)
         for msg in self.__get_msgs_from_mbox(mbox):
             if msg.is_thread_root():
@@ -194,7 +198,7 @@ class PublicInbox():
                  self.url, self.user, since_str, until_str)
         resp = requests.post(
             self.__get_url("/all/"),
-            headers={"Content-Length": "0"},
+            headers={"Content-Length": "0", "User-Agent": USER_AGENT},
             params={
                 "q": f"(f:{self.user.email} AND d:{since_str}..{until_str})",
                 "x": "m",
