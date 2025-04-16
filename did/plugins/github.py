@@ -95,7 +95,7 @@ class GitHub():
             condition("+user", user) +
             condition("+org", org) +
             condition("+repo", repo) +
-            condition("-org", exclude_org)
+            condition("+-org", exclude_org)
             )
 
     def commented_in_range(self,
