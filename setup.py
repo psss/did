@@ -15,6 +15,8 @@ version = '.'.join([version, release])
 install_requires = [
     'python_dateutil',
     'requests',
+    'requests-gssapi',
+    'urllib3'
     ]
 extras_require = {
     'bodhi': ['bodhi-client'],

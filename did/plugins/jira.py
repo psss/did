@@ -84,7 +84,8 @@ import urllib.parse
 
 import dateutil.parser
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+import urllib3
+from urllib3.exceptions import InsecureRequestWarning
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
 
 from did.base import Config, ReportError, get_token
@@ -389,8 +390,7 @@ class JiraStats(StatsGroup):
             log.debug("Connecting to {0}".format(self.auth_url))
             # Disable SSL warning when ssl_verify is False
             if not self.ssl_verify:
-                requests.packages.urllib3.disable_warnings(
-                    InsecureRequestWarning)
+                urllib3.disable_warnings(InsecureRequestWarning)
             if self.auth_type == 'basic':
                 basic_auth = (self.auth_username, self.auth_password)
                 response = self._session.get(
