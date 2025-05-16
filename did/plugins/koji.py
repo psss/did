@@ -6,6 +6,7 @@ Config example::
     [koji]
     type = koji
     url = https://koji.example.org/kojihub
+    weburl = https://koji.example.org/koji
     login = testuser
     name = Example koji server
 
@@ -37,7 +38,24 @@ class KojiBuilds(Stats):
             userID=self.user['id'],
             completeAfter=str(self.options.since),
             completeBefore=str(self.options.until))
+        if self.options.format == "markdown":
+            try:
+                weburl = f"{self.parent.config['weburl']}/buildinfo?buildID="
+                self.stats = [
+                    f"[{build['nvr']}]({weburl}{build['build_id']})"
+                    for build in builds
+                    ]
+            except KeyError as ke:
+                log.warning(
+                    "Missing `%s` option, markdown unavailable for '%s' section",
+                    ke.args[0],
+                    self.name
+                    )
+            else:
+                return
+        # else
         self.stats = [build['nvr'] for build in builds]
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
@@ -52,15 +70,15 @@ class KojiStats(StatsGroup):
 
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
-        config = dict(did.base.Config().section(option))
+        self.config = dict(did.base.Config().section(option))
         try:
-            url = config['url']
+            url = self.config['url']
         except KeyError:
             raise did.base.ReportError(
                 "No koji url set in the [{0}] section".format(option))
-        server = koji.ClientSession(url, opts=config)
+        server = koji.ClientSession(url, opts=self.config)
         try:
-            user = server.getUser(config['login'], strict=True)
+            user = server.getUser(self.config['login'], strict=True)
         except KeyError:
             raise did.base.ReportError(
                 "No koji user set in the [{0}] section".format(option))
@@ -68,7 +86,7 @@ class KojiStats(StatsGroup):
             raise did.base.ReportError(
                 "Non-existent koji user set in the [{0}] section".format(option))
 
-        name = config.get('name', url)
+        name = self.config.get('name', url)
 
         self.stats = [
             KojiBuilds(option=option + "-builds",
