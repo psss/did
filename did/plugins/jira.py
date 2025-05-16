@@ -107,7 +107,6 @@ SSL_VERIFY = True
 #  Issue Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 class Issue(object):
     """ Jira issue investigator """
 
@@ -121,6 +120,10 @@ class Issue(object):
         self.key = issue["key"]
         self.summary = issue["fields"]["summary"]
         self.comments = issue["fields"]["comment"]["comments"]
+
+        # Extract Story Points (check your Jira's field ID)
+        self.story_points = issue["fields"].get("customfield_10002", 0)  # Default to 0 if missing
+
         matched = re.match(r"(\w+)-(\d+)", self.key)
         self.identifier = matched.groups()[1]
         if parent.prefix is not None:
@@ -131,69 +134,15 @@ class Issue(object):
     def __str__(self):
         """ Jira key and summary for displaying """
         if self.options.format == "markdown":
-            return "[{0}-{1}]({2}) - {3}".format(
+            return "[{0}-{1}]({2}) - {3} (Story Points: {4})".format(
                 self.prefix,
                 self.identifier,
                 f"{self.parent.url}/browse/{self.issue['key']}",
-                self.summary
-                )
-        return "{0}-{1} - {2}".format(
-            self.prefix, self.identifier, self.summary)
-
-    def __eq__(self, other):
-        """ Compare issues by key """
-        return self.key == other.key
-
-    @staticmethod
-    def search(query, stats):
-        """ Perform issue search for given stats instance """
-        log.debug("Search query: {0}".format(query))
-        issues = []
-        # Fetch data from the server in batches of MAX_RESULTS issues
-        for batch in range(MAX_BATCHES):
-            response = stats.parent.session.get(
-                "{0}/rest/api/latest/search?{1}".format(
-                    stats.parent.url, urllib.parse.urlencode({
-                        "jql": query,
-                        "fields": "summary,comment",
-                        "maxResults": MAX_RESULTS,
-                        "startAt": batch * MAX_RESULTS})))
-            data = response.json()
-            if not response.ok:
-                try:
-                    error = " ".join(data["errorMessages"])
-                except KeyError:
-                    error = "unknown"
-                raise ReportError(
-                    f"Failed to fetch jira issues for query '{query}'. "
-                    f"The reason was '{response.reason}' "
-                    f"and the error was '{error}'.")
-            log.debug("Batch {0} result: {1} fetched".format(
-                batch, listed(data["issues"], "issue")))
-            log.data(pretty(data))
-            issues.extend(data["issues"])
-            # If all issues fetched, we're done
-            if len(issues) >= data["total"]:
-                break
-        # Return the list of issue objects
-        return [
-            Issue(issue, parent=stats.parent)
-            for issue in issues
-            ]
-
-    def updated(self, user, options):
-        """ True if the issue was commented by given user """
-        for comment in self.comments:
-            created = dateutil.parser.parse(comment["created"]).date()
-            try:
-                if (comment["author"]["emailAddress"] == user.email and
-                        created >= options.since.date and
-                        created < options.until.date):
-                    return True
-            except KeyError:
-                pass
-        return False
-
+                self.summary,
+                self.story_points
+            )
+        return "{0}-{1} - {2} (Story Points: {3})".format(
+            self.prefix, self.identifier, self.summary, self.story_points)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
