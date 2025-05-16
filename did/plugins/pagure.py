@@ -13,6 +13,12 @@ Use ``login`` to override the default email address for searching.
 See the :doc:`config` documentation for details on using aliases.
 The authentication token is optional and can be stored in a file
 pointed to by ``token_file`` instead of ``token``.
+
+It's also possible to set a timeout, if not specified it defaults to
+60 seconds.
+
+    timeout = 10
+
 """
 
 import datetime
@@ -23,42 +29,113 @@ from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
+# Default number of seconds waiting on Pagure before giving up
+TIMEOUT = 60
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Pagure(object):
+class Pagure():
     """ Pagure Investigator """
+    # pylint: disable=too-few-public-methods
 
-    def __init__(self, url, token):
+    def __init__(self, url, token, timeout=TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         self.token = token
+        self.timeout = timeout
         if token is not None:
-            self.headers = {'Authorization': 'token {0}'.format(token)}
+            self.headers = {'Authorization': f'token {token}'}
         else:
             self.headers = {}
+
+    def get_activities(self,
+                       username: str,
+                       date: str,
+                       grouped: bool = False) -> list:
+        """
+        Get activities for days in requested range
+
+        :param username: (mandatory) the username of the user
+                         whose activity you are interested in.
+        :type username:	str
+        :param date: (mandatory) the date of interest in ISO
+                     format: YYYY-MM-DD
+        :type date: str
+        :param grouped: (optional) whether or not to group the commits.
+                        Default to False.
+        :type grouped: bool
+        :returns: a list with activities done on the given date.
+                  Sample response:
+
+                  .. code-block:: python
+
+                    [
+                        {
+                            "date": "<iso date>",
+                            "date_created": "<timestamp>",
+                            "description_mk": "<some markdown text>",
+                            "id": <action id>,
+                            "ref_id": "<ref id>",
+                            "type": "commented",
+                            "user": {
+                                "full_url": "<pagure url>/user/<user>",
+                                "fullname": "<user full name>",
+                                "name": "<user>",
+                                "url_path": "user/<user>"
+                            }
+                        }
+                    ]
+
+
+        """
+        query = f"{self.url}/user/{username}/activity/{date}"
+        if grouped:
+            query = f"{query}?grouped=true"
+        log.debug("Pagure get_activities query: %s", query)
+        try:
+            response = requests.get(query, headers=self.headers, timeout=self.timeout)
+            log.data(f"Response headers:\n{response.headers}")
+        except (requests.Timeout, requests.RequestException) as error:
+            log.error(error)
+            raise ReportError(
+                f"Pagure get_activities {self.url} failed with error:{error}."
+                ) from error
+        try:
+            data = response.json()
+        except requests.exceptions.JSONDecodeError as error:
+            log.debug(error)
+            raise ReportError(f"Pagure JSON failed: {response.text}.") from error
+        return data.get("activities", [])
 
     def search(self, query, pagination, result_field):
         """ Perform Pagure query """
         result = []
         url = "/".join((self.url, query))
         while url:
-            log.debug("Pagure query: {0}".format(url))
+            log.debug("Pagure query: %s", url)
             try:
-                response = requests.get(url, headers=self.headers)
-                log.data("Response headers:\n{0}".format(response.headers))
-            except requests.RequestException as error:
+                response = requests.get(url, headers=self.headers, timeout=self.timeout)
+                response.raise_for_status()
+                log.data(f"Response headers:\n{response.headers}")
+            except (requests.Timeout, requests.RequestException) as error:
                 log.error(error)
-                raise ReportError("Pagure search {0} failed.".format(self.url))
-            data = response.json()
+                raise ReportError(
+                    f"Pagure search {self.url} failed with error {error}."
+                    ) from error
+            try:
+                data = response.json()
+            except requests.JSONDecodeError as error:
+                log.error(error)
+                raise ReportError(
+                    f"Pagure invalid response from search {self.url} failed."
+                    ) from error
+
             objects = data[result_field]
-            log.debug("Result: {0} fetched".format(
-                listed(len(objects), "item")))
+            log.debug("Result: %s fetched", listed(len(objects), "item"))
             log.data(pretty(data))
-            # FIXME later:
-            # Work around https://pagure.io/pagure/issue/4057
             if not objects:
                 break
             result.extend(objects)
@@ -70,10 +147,11 @@ class Pagure(object):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Issue(object):
+class Issue():
     """ Pagure Issue or Pull Request """
+    # pylint: disable=too-few-public-methods
 
-    def __init__(self, data, options):
+    def __init__(self, data: dict, options):
         self.options = options
         self.data = data
         self.title = data['title']
@@ -86,19 +164,40 @@ class Issue(object):
                 float(data['closed_at'])).date()
         except TypeError:
             self.closed = None
-        log.details('[{0}] {1}'.format(self.created, self))
+        try:
+            self.closed_by = data["closed_by"]["name"]
+        except TypeError:
+            self.closed_by = None
+
+        log.details(f'[{self.created}] {self}')
 
     def __str__(self):
         """ String representation """
+        label = f"{self.project}#{self.identifier}"
         if self.options.format == "markdown":
-            return "[{0}#{1}]({2}) - {3}".format(
-                self.project,
-                self.identifier,
-                self.data["full_url"],
-                self.title)
-        else:
-            return '{0}#{1} - {2}'.format(
-                self.project, self.identifier, self.title)
+            return f'[{label}]({self.data["full_url"]}) - {self.title}'
+        # plain text
+        return f'{label} - {self.title}'
+
+
+class Comment():
+    """ Pagure comment activity """
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, data, options, url):
+        self.options = options
+        self.date = data["date"]
+        self.text = data["description_mk"].replace(
+            'href="',
+            f'href="{url.replace("/api/0", "")}').replace(
+            '<div class="markdown"><p>',
+            '').replace(
+            '</p></div>',
+            '')
+
+    def __str__(self):
+        """ String representation """
+        return f'{self.date} - {self.text}'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
@@ -109,23 +208,25 @@ class IssuesCreated(Stats):
     """ Issues created """
 
     def fetch(self):
-        log.info('Searching for issues created by {0}'.format(self.user))
+        log.info('Searching for issues created by %s', self.user)
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
-            query='user/{0}/issues?assignee=false&created={1}..{2}'.format(
-                self.user.login, self.options.since, self.options.until),
+            query=(
+                f'user/{self.user.login}/issues?status=all'
+                f'&created={self.options.since}..{self.options.until}'),
             pagination='pagination_issues_created',
             result_field='issues_created')]
-        self.stats = sorted(issues, key=lambda i: str(i))
+        self.stats = sorted(issues, key=str)
 
 
 class IssuesClosed(Stats):
     """ Issues closed """
 
     def fetch(self):
-        log.info('Searching for issues closed by {0}'.format(self.user))
+        log.info('Searching for issues closed by %s', self.user)
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
-            query='user/{0}/issues?status=all&author=false&since={1}'.format(
-                self.user.login, self.options.since),
+            query=(
+                f'user/{self.user.login}/issues?status=all'
+                f'&author=false&since={self.options.since}'),
             pagination='pagination_issues_assigned',
             result_field='issues_assigned')]
         self.stats = sorted([
@@ -133,36 +234,67 @@ class IssuesClosed(Stats):
             if issue.closed
             and issue.closed < self.options.until.date
             and issue.closed >= self.options.since.date],
-            key=lambda i: str(i))
+            key=str)
 
 
 class PullRequestsCreated(Stats):
     """ Pull requests created """
 
     def fetch(self):
-        log.info('Searching for pull requests created by {0}'.format(
-            self.user))
+        log.info('Searching for pull requests created by %s', self.user)
         issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
-            query='user/{0}/requests/filed?status=all&created={1}..{2}'.format(
-                self.user.login, self.options.since, self.options.until),
+            query=(
+                f'user/{self.user.login}/requests/filed?'
+                f'status=all&created={self.options.since}..{self.options.until}'),
             pagination='pagination',
             result_field='requests')]
-        self.stats = sorted(issues, key=lambda i: str(i))
+        self.stats = sorted(issues, key=str)
 
-# FIXME: Blocked by https://pagure.io/pagure/issue/4329
-# class PullRequestsClosed(Stats):
-#    """ Pull requests closed """
-#    def fetch(self):
-#        log.info(u'Searching for pull requests closed by {0}'.format(
-#            self.user))
-#        issues = [Issue(issue) for issue in self.parent.pagure.search(
-#            query='user/{0}/requests/actionable?'
-#                'status=all&closed={1}..{2}'.format(
-#                self.user.login, self.options.since,
-#                self.options.until),
-#            pagination='pagination',
-#            result_field='requests')]
-#        self.stats = sorted(issues, key=lambda i: unicode(i))
+
+class Commented(Stats):
+    """ Commented """
+
+    def fetch(self):
+        log.info('Searching for comments by %s', self.user)
+        log.debug('Search activity stats for %s', self.user)
+        requested_range = [
+            self.options.since.date + datetime.timedelta(days=x)
+            for x in range((self.options.until.date - self.options.since.date).days)
+            ]
+        activity_stats = []
+        for current_date in requested_range:
+            activity_stats += self.parent.pagure.get_activities(
+                self.user.login, current_date)
+        for activity in activity_stats:
+            if activity["type"] != "commented":
+                continue
+
+        self.stats = sorted([
+            Comment(activity, self.options, self.parent.pagure.url)
+            for activity in activity_stats
+            if activity["type"] == "commented"
+            ], key=str)
+
+
+class PullRequestsClosed(Stats):
+    """
+    Pull requests closed.
+    Results may be incomplete due to unfixed issue
+    https://pagure.io/pagure/issue/4329.
+    """
+
+    def fetch(self):
+        log.info('Searching for pull requests closed by %s', self.user)
+        issues = [Issue(issue, self.options) for issue in self.parent.pagure.search(
+            query=(f'user/{self.user.login}/requests/actionable?'
+                  f'status=all&closed={self.options.since}..{self.options.until}'),
+            pagination='pagination',
+            result_field='requests')
+            ]
+        self.stats = sorted(
+            [stat for stat in issues if stat.closed_by == self.user.login],
+            key=str
+            )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
@@ -181,25 +313,32 @@ class PagureStats(StatsGroup):
         # Check server url
         try:
             self.url = config['url']
-        except KeyError:
+        except KeyError as key_err:
             raise ReportError(
-                'No Pagure url set in the [{0}] section'.format(option))
+                f'No Pagure url set in the [{option}] section') from key_err
         # Check authorization token
         self.token = get_token(config)
-        self.pagure = Pagure(self.url, self.token)
+        self.pagure = Pagure(
+            self.url,
+            self.token,
+            timeout=config.get(
+                "timeout",
+                TIMEOUT))
         # Create the list of stats
         self.stats = [
             IssuesCreated(
-                option=option + '-issues-created', parent=self,
-                name='Issues created on {0}'.format(option)),
+                option=f'{option}-issues-created', parent=self,
+                name=f'Issues created on {option}'),
             IssuesClosed(
-                option=option + '-issues-closed', parent=self,
-                name='Issues closed on {0}'.format(option)),
+                option=f'{option}-issues-closed', parent=self,
+                name=f'Issues closed on {option}'),
             PullRequestsCreated(
-                option=option + '-pull-requests-created', parent=self,
-                name='Pull requests created on {0}'.format(option)),
-            # FIXME: Blocked by https://pagure.io/pagure/issue/4329
-            # PullRequestsClosed(
-            #     option=option + '-pull-requests-closed', parent=self,
-            #     name='Pull requests closed on {0}'.format(option)),
+                option=f'{option}-pull-requests-created', parent=self,
+                name=f'Pull requests created on {option}'),
+            Commented(
+                option=f'{option}-commented', parent=self,
+                name=f'Pull requests commented on {option}'),
+            PullRequestsClosed(
+                option=f'{option}-pull-requests-closed', parent=self,
+                name=f'Pull requests closed on {option}'),
             ]

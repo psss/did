@@ -6,7 +6,7 @@ import os
 import pkgutil
 import re
 import sys
-import unicodedata
+# pylint:disable=unused-import
 from pprint import pformat as pretty  # noqa: F401 (used by other modules)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -63,14 +63,16 @@ def _import(path, continue_on_error):
     """
     Eats or raises import exceptions based on ``continue_on_error``.
     """
-    log.debug("Importing %s" % path)
+    log.debug("Importing %s", path)
     try:
         # importlib is available in stdlib from 2.7+
         return importlib.import_module(path)
-    except Exception as ex:
+    except ImportError as ex:
         log.info(ex)
         if not continue_on_error:
             raise
+    # it has been asked to continue on error but import failed
+    return None
 
 
 def _load_components(
@@ -94,7 +96,7 @@ def _load_components(
     if not hasattr(package, "__path__"):
         return num_loaded
 
-    prefix = package.__name__ + "."
+    prefix = f"{package.__name__}."
     for _, name, is_pkg in pkgutil.iter_modules(
             path=package.__path__, prefix=prefix):
         if not name.startswith(prefix):
@@ -125,7 +127,7 @@ def load_components(*paths, **kwargs):
     Keyword Args:
         include (str): A regular expression of packages and modules to
             include. Defaults to '.*'
-        exclude (str): A regular expression of packges and modules to
+        exclude (str): A regular expression of packages and modules to
             exclude. Defaults to 'test'
         continue_on_error (bool): If True, continue importing even if
             something raises an ImportError. If False, raise the first
@@ -145,12 +147,11 @@ def load_components(*paths, **kwargs):
         if os.path.exists(fs_path):
             base = _find_base(fs_path)
             if not base:
-                msg = "%s is not a valid python module or package." % path
+                msg = f"{path} is not a valid python module or package."
                 if continue_on_error:
                     log.info(msg)
                     continue
-                else:
-                    raise ImportError(path)
+                raise ImportError(path)
             if base not in sys.path:
                 sys.path.insert(0, base)
 
@@ -163,7 +164,8 @@ def load_components(*paths, **kwargs):
 
 def header(text, separator=DEFAULT_SEPARATOR, separator_width=MAX_WIDTH):
     """ Show text as a header. """
-    print("\n{0}\n {1}\n{0}".format(separator_width * separator, text))
+    hr = separator_width * separator
+    print(f"\n{hr}\n {text}\n{hr}")
 
 
 def shorted(text, width=MAX_WIDTH):
@@ -185,37 +187,65 @@ def shorted(text, width=MAX_WIDTH):
     return "\n".join(lines)
 
 
+def strtobool(val):
+    """
+    Convert a string representation of truth to true (1) or false (0).
+    Reimplemented following instructions at
+    https://peps.python.org/pep-0632/#migration-advice
+    This is a copy of
+    https://github.com/pypa/distutils/blob/ee021a1c58b43607ccc75447159bd90f502c6bea/distutils/util.py#L340
+    Which is under MIT license.
+
+    Returns:
+      1 if val is within 'y', 'yes', 't', 'true', 'on', and '1'.
+      0 if val is within 'n', 'no', 'f', 'false', 'off', and '0'.
+    Raises:
+       ValueError if 'val' is anything else.
+    """
+    val = val.lower()
+    if val in ('y', 'yes', 't', 'true', 'on', '1'):
+        return 1
+    if val in ('n', 'no', 'f', 'false', 'off', '0'):
+        return 0
+    raise ValueError(f"invalid truth value {val!r}")
+
+
 def item(text, level=0, options=None):
     """ Print indented item. """
     # Extra line before in each section (unless brief)
-    if level == 0 and not options.brief:
+    if level == 0 and options is not None and not options.brief:
         print('')
     # Only top-level items displayed in brief mode
     if level == 1 and options.brief:
         return
     # Four space for each level, additional space for wiki format
     indent = level * 4
-    if options.format == "markdown":
-        indent = level * 2
-    if options.format == "wiki" and level == 0:
-        indent = 1
+    if options is not None:
+        if options.format == "markdown":
+            indent = level * 2
+        if options.format == "wiki" and level == 0:
+            indent = 1
     # Shorten the text if necessary to match the desired maximum width
-    width = options.width - indent - 2 if options.width else 333
-    print("{0}* {1}".format(" " * indent, shorted(str(text), width)))
+    width = 333
+    if options is not None and options.width:
+        width = options.width - indent - 2
+    spaces = " " * indent
+    short_text = shorted(str(text), width)
+    print(f"{spaces}* {short_text}")
 
 
 def pluralize(singular=None):
     """ Naively pluralize words """
     if singular.endswith("y") and not singular.endswith("ay"):
-        plural = singular[:-1] + "ies"
+        plural = f"{singular[:-1]}ies"
     elif singular.endswith("s"):
-        plural = singular + "es"
+        plural = f"{singular}es"
     else:
-        plural = singular + "s"
+        plural = f"{singular}s"
     return plural
 
 
-def listed(items, singular=None, plural=None, max=None, quote=""):
+def listed(items, singular=None, plural=None, maximum=None, quote=""):
     """
     Convert an iterable into a nice, human readable list or
     description::
@@ -223,14 +253,15 @@ def listed(items, singular=None, plural=None, max=None, quote=""):
         listed(range(1)) .................... 0
         listed(range(2)) .................... 0 and 1
         listed(range(3), quote='"') ......... "0", "1" and "2"
-        listed(range(4), max=3) ............. 0, 1, 2 and 1 more
+        listed(range(4), maximum=3) ............. 0, 1, 2 and 1 more
         listed(range(5), 'number', max=3) ... 0, 1, 2 and 2 more numbers
         listed(range(6), 'category') ........ 6 categories
         listed(7, "leaf", "leaves") ......... 7 leaves
 
-    If singular form is provided but max not set the description-only
-    mode is activated as shown in the last two examples. Also, an int
-    can be used in this case to get a simple inflection functionality.
+    If singular form is provided but maximum not set the
+    description-only mode is activated as shown in the last
+    two examples. Also, an int can be used in this case
+    to get a simple inflection functionality.
     """
 
     # Convert items to list if necessary
@@ -238,33 +269,33 @@ def listed(items, singular=None, plural=None, max=None, quote=""):
     more = " more"
     # Description mode expected when singular provided
     # but no maximum set
-    if singular is not None and max is None:
-        max = 0
+    if singular is not None and maximum is None:
+        maximum = 0
         more = ""
     # Set the default plural form
     if singular is not None and plural is None:
         plural = pluralize(singular)
     # Convert to strings and optionally quote each item
-    items = ["{0}{1}{0}".format(quote, item) for item in items]
+    items = [f"{quote}{item}{quote}" for item in items]
 
-    # Select the maximum of items and describe the rest if max provided
-    if max is not None:
+    # Select the maximum of items and describe the rest
+    # if maximum provided
+    if maximum is not None:
         # Special case when the list is empty (0 items)
-        if max == 0 and len(items) == 0:
-            return "0 {0}".format(plural)
+        if maximum == 0 and len(items) == 0:
+            return f"0 {plural}"
         # Cut the list if maximum exceeded
-        if len(items) > max:
-            rest = len(items[max:])
-            items = items[:max]
+        if len(items) > maximum:
+            rest = len(items[maximum:])
+            items = items[:maximum]
             if singular is not None:
-                more += " {0}".format(singular if rest == 1 else plural)
-            items.append("{0}{1}".format(rest, more))
+                more += f" {singular if rest == 1 else plural}"
+            items.append(f"{rest}{more}")
 
-    # For two and more items use 'and' instead of the last comma
     if len(items) < 2:
         return "".join(items)
-    else:
-        return ", ".join(items[0:-2] + [" and ".join(items[-2:])])
+    # For two and more items use 'and' instead of the last comma
+    return ", ".join(items[0:-2] + [" and ".join(items[-2:])])
 
 
 def split(values, separator=re.compile("[ ,]+")):
@@ -287,14 +318,6 @@ def split(values, separator=re.compile("[ ,]+")):
     return sum([separator.split(value) for value in values], [])
 
 
-def ascii(text):
-    """ Transliterate special unicode characters into pure ascii """
-    if not isinstance(text, str):
-        text = str(text)
-    return unicodedata.normalize(
-        'NFKD', text).encode('ascii', 'ignore').decode('utf-8')
-
-
 def info(message, newline=True):
     """ Log provided info message to the standard error output """
     sys.stderr.write(message + ("\n" if newline else ""))
@@ -304,7 +327,7 @@ def info(message, newline=True):
 #  Logging
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Logging(object):
+class Logging():
     """ Logging Configuration """
 
     # Color mapping
@@ -332,7 +355,7 @@ class Logging(object):
     _level = LOG_WARN
 
     # Already initialized loggers by their name
-    _loggers = dict()
+    _loggers: dict = {}
 
     def __init__(self, name='did'):
         # Use existing logger if already initialized
@@ -359,18 +382,18 @@ class Logging(object):
                 levelname = record.levelname
             # Map log level to appropriate color
             try:
-                colour = Logging.COLORS[record.levelno]
+                text_color = Logging.COLORS[record.levelno]
             except KeyError:
-                colour = "black"
+                text_color = "black"
             # Color the log level, use brackets when coloring off
             if Coloring().enabled():
-                level = color(" " + levelname + " ", "lightwhite", colour)
+                level = color(f" {levelname} ", "lightwhite", text_color)
             else:
-                level = "[{0}]".format(levelname)
-            return "{0} {1}".format(level, record.getMessage())
+                level = f"[{levelname}]"
+            return f"{level} {record.getMessage()}"
 
     @staticmethod
-    def _create_logger(name='did', level=None):
+    def _create_logger(name='did'):
         """ Create did logger """
         # Create logger, handler and formatter
         logger = logging.getLogger(name)
@@ -426,7 +449,7 @@ class Logging(object):
 #  Coloring
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def color(text, color=None, background=None, light=False, enabled=True):
+def color(text, text_color=None, background=None, light=False, enabled=True):
     """
     Return text in desired color if coloring enabled
 
@@ -439,19 +462,19 @@ def color(text, color=None, background=None, light=False, enabled=True):
     if not enabled:
         return text
     # Prepare colors (strip 'light' if present in color)
-    if color and color.startswith("light"):
+    if text_color and text_color.startswith("light"):
         light = True
-        color = color[5:]
-    color = color and ";{0}".format(colors[color]) or ""
-    background = background and ";{0}".format(colors[background] + 10) or ""
-    light = light and 1 or 0
+        text_color = text_color[5:]
+    text_color = text_color and f";{colors[text_color]}" or ""
+    background = background and f";{colors[background] + 10}" or ""
+    light = (1 if light else 0)
     # Starting and finishing sequence
-    start = "\033[{0}{1}{2}m".format(light, color, background)
+    start = f"\033[{light}{text_color}{background}m"
     finish = "\033[1;m"
     return "".join([start, text, finish])
 
 
-class Coloring(object):
+class Coloring():
     """ Coloring configuration """
 
     # Default color mode is auto-detected from the terminal presence
@@ -501,12 +524,13 @@ class Coloring(object):
             except KeyError:
                 mode = COLOR_AUTO
         elif mode < 0 or mode > 2:
-            raise RuntimeError("Invalid color mode '{0}'".format(mode))
+            raise RuntimeError(f"Invalid color mode '{mode}'")
         self._mode = mode
         log.debug(
-            "Coloring {0} ({1})".format(
-                "enabled" if self.enabled() else "disabled",
-                self.MODES[self._mode]))
+            "Coloring %s (%s)",
+            "enabled" if self.enabled() else "disabled",
+            self.MODES[self._mode]
+            )
 
     def get(self):
         """ Get the current color mode """

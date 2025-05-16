@@ -1,22 +1,18 @@
 """
-Public-Inbox stats about mailing lists threads
+Hyperkitty stats about mailing lists threads
 
 Config example::
 
-    [inbox]
-    type = public-inbox
-    url = https://lore.kernel.org
+    [centos-virt-list]
+    type = hyperkitty
+    url = https://lists.centos.org/hyperkitty/list/virt@lists.centos.org
 
 It's also possible to set a timeout, if not specified it defaults to
 60 seconds. Example::
 
     timeout = 10
 
-.. warning::
-    Starting with April 2025 lore.kernel.org is using
-    `Anubis <https://anubis.techaro.lol/>`_
-    so this plugin doesn't work with that public inbox anymore.
-"""
+"""  # noqa: W505
 
 import copy
 import datetime
@@ -26,7 +22,8 @@ import mailbox
 import tempfile
 import typing
 import urllib.parse
-from importlib.metadata import version
+from base64 import b32encode
+from hashlib import sha1
 
 import requests
 
@@ -36,8 +33,6 @@ from did.utils import item, log
 
 # Default number of seconds waiting on inbox before giving up
 TIMEOUT = 60
-
-USER_AGENT = f"did/{version('did')}"
 
 
 class Message():
@@ -53,6 +48,9 @@ class Message():
 
     def id(self) -> str:
         return self.__msg_id("Message-Id")
+
+    def id_hash(self) -> str:
+        return b32encode(sha1(self.id().encode()).digest()).decode()
 
     def parent_id(self) -> str:
         return self.__msg_id("In-Reply-To")
@@ -71,10 +69,13 @@ class Message():
     def is_thread_root(self) -> bool:
         return self.parent_id() is None
 
-    def is_from_user(self, user: str) -> bool:
-        msg_from = email.utils.parseaddr(self.msg["From"])[1]
+    def mail_from(self) -> str:
+        return email.utils.parseaddr(self.msg["From"])[1]
 
-        return email.utils.parseaddr(user)[1] == msg_from
+    def is_from_user(self, user: str) -> bool:
+        original = email.utils.parseaddr(user)[1]
+        masked = original.replace("@", " at ")
+        return self.mail_from() in (original, masked)
 
     def is_between_dates(self, since: Date, until: Date) -> bool:
         msg_date = self.date().date()
@@ -93,7 +94,7 @@ def _unique_messages(mbox: mailbox.mbox) -> typing.Iterable[Message]:
             yield msg
 
 
-class PublicInbox():
+class Hyperkitty():
     def __init__(self, parent, user: User, url: str, timeout: int = TIMEOUT) -> None:
         self.parent = parent
         self.threads_cache: dict = {}
@@ -103,11 +104,10 @@ class PublicInbox():
         self.timeout = timeout
 
     def __get_url(self, path: str) -> str:
-        log.debug("Getting %s", urllib.parse.urljoin(self.url, path))
         return urllib.parse.urljoin(self.url, path)
 
     def _get_message_url(self, msg: Message) -> str:
-        return self.__get_url(f"/r/{msg.id()}/")
+        return self.__get_url(f"message/{msg.id_hash()}/")
 
     def print_msg(self, options, msg: Message) -> None:
         if options.format == 'markdown':
@@ -125,6 +125,10 @@ class PublicInbox():
                 item(self._get_message_url(msg), level=2, options=opt)
 
     def __get_mbox_from_content(self, content: bytes) -> mailbox.mbox:
+        """
+        :param content: a blob of data compressed with gzip algorithm
+        :returns: a mailbox.mbox object built from the given content
+        """
         content = gzip.decompress(content)
 
         with tempfile.NamedTemporaryFile() as tmp:
@@ -134,6 +138,10 @@ class PublicInbox():
             return mailbox.mbox(tmp.name)
 
     def __get_msgs_from_mbox(self, mbox: mailbox.mbox) -> list[Message]:
+        """
+        :param mbox: a mailbox object
+        :returns: a list of messages
+        """
         msgs = []
 
         for msg in _unique_messages(mbox):
@@ -149,13 +157,19 @@ class PublicInbox():
         return msgs
 
     def __fetch_thread_root(self, initial_msg: Message) -> Message:
+        """
+        Given a message from a thread, try to find the root message
+        of the thread within the mbox.
+        :param intial_msg: the message we want to process.
+        :returns: the root message of the thread `initial_msg`
+                  belongs to.
+        """
         msg_id = initial_msg.id()
-        url = self.__get_url(f"/all/{msg_id}/t.mbox.gz")
-
+        msg_hash = initial_msg.id_hash()
+        url = self.__get_url(f"export/thread.mbox.gz?thread={msg_hash}")
         log.debug("Fetching message %s thread (%s)", msg_id, url)
-        resp = requests.get(
-            url, timeout=self.timeout, headers={
-                'User-Agent': USER_AGENT})
+        resp = requests.get(url, timeout=self.timeout)
+        resp.raise_for_status()
         mbox = self.__get_mbox_from_content(resp.content)
         for msg in self.__get_msgs_from_mbox(mbox):
             if msg.is_thread_root():
@@ -173,7 +187,11 @@ class PublicInbox():
         parent_id = msg.parent_id()
         if parent_id not in self.messages_cache:
             root = self.__fetch_thread_root(msg)
-            log.debug("Found root message %s for message %s", root.id(), msg.id())
+            if msg.id() != root.id():
+                log.debug("Found root message %s for message %s", root.id(), msg.id())
+            else:
+                log.debug(
+                    "Couldn't find root message for %s, using it as root", msg.id())
             return root
 
         while True:
@@ -187,7 +205,12 @@ class PublicInbox():
             parent_id = parent.parent_id()
             if parent_id not in self.messages_cache:
                 root = self.__fetch_thread_root(msg)
-                log.debug("Found root message %s for message %s", root.id(), msg.id())
+                if msg.id() != root.id():
+                    log.debug(
+                        "Found root message %s for message %s", root.id(), msg.id())
+                else:
+                    log.debug(
+                        "Couldn't find root message for %s, using it as root", msg.id())
                 return root
 
     def __fetch_all_threads(self, since: Date, until: Date) -> list[Message]:
@@ -196,24 +219,25 @@ class PublicInbox():
 
         log.info("Fetching all mails on server %s from %s between %s and %s",
                  self.url, self.user, since_str, until_str)
-        resp = requests.post(
-            self.__get_url("/all/"),
-            headers={"Content-Length": "0", "User-Agent": USER_AGENT},
-            params={
-                "q": f"(f:{self.user.email} AND d:{since_str}..{until_str})",
-                "x": "m",
-                },
+        mbox_url = self.__get_url(
+            f"export/latest.mbox.gz?start={since_str}&end={until_str}"
+            )
+        log.debug("Downloading mbox at %s", mbox_url)
+        resp = requests.get(
+            mbox_url,
             timeout=self.timeout
             )
-        log.error("Got: %s", resp.headers)
+        resp.raise_for_status()
 
         if not resp.ok:
+            log.error("Response is not ok: %s", str(resp))
             return []
 
         mbox = self.__get_mbox_from_content(resp.content)
         return self.__get_msgs_from_mbox(mbox)
 
     def get_all_threads(self, since: Date, until: Date):
+        log.debug("Fetching all threads since %s until %s.", since, until)
         if (since, until) not in self.threads_cache:
             self.threads_cache[(since, until)] = self.__fetch_all_threads(since, until)
 
@@ -223,6 +247,9 @@ class PublicInbox():
         for msg in self.threads_cache[(since, until)]:
             msg_id = msg.id()
             if msg_id in found:
+                continue
+
+            if not msg.is_from_user(self.user.email):
                 continue
 
             if not msg.is_thread_root():
@@ -250,10 +277,11 @@ class ThreadsStarted(Stats):
 
         self.stats = [
             msg
-            for msg in self.parent.public_inbox.get_all_threads(
+            for msg in self.parent.hyperkitty.get_all_threads(
                 self.options.since, self.options.until)
             if msg.is_from_user(self.user.email)
             and msg.is_between_dates(self.options.since, self.options.until)
+            and msg.is_thread_root()
             ]
 
     def show(self):
@@ -262,7 +290,7 @@ class ThreadsStarted(Stats):
 
         self.header()
         for msg in self.stats:
-            self.parent.public_inbox.print_msg(self.options, msg)
+            self.parent.hyperkitty.print_msg(self.options, msg)
 
 
 class ThreadsInvolved(Stats):
@@ -276,10 +304,11 @@ class ThreadsInvolved(Stats):
 
         self.stats = [
             msg
-            for msg in self.parent.public_inbox.get_all_threads(
+            for msg in self.parent.hyperkitty.get_all_threads(
                 self.options.since, self.options.until)
-            if not msg.is_from_user(self.user.email)
-            or not msg.is_between_dates(self.options.since, self.options.until)
+            if msg.is_from_user(self.user.email)
+            and msg.is_between_dates(self.options.since, self.options.until)
+            and not msg.is_thread_root()
             ]
 
     def show(self):
@@ -288,13 +317,13 @@ class ThreadsInvolved(Stats):
 
         self.header()
         for msg in self.stats:
-            self.parent.public_inbox.print_msg(self.options, msg)
+            self.parent.hyperkitty.print_msg(self.options, msg)
 
 
-class PublicInboxStats(StatsGroup):
-    """ Public-Inbox Mailing List Archive """
+class HyperkittyStats(StatsGroup):
+    """ Hyperkitty Mailing List Archive """
 
-    order = 750
+    order = 760
 
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
@@ -305,8 +334,8 @@ class PublicInboxStats(StatsGroup):
         except KeyError as key_err:
             raise ReportError(f"No url in the [{option}] section.") from key_err
 
-        self.public_inbox = PublicInbox(self.parent, self.user, self.url,
-                                        timeout=config.get("timeout"))
+        self.hyperkitty = Hyperkitty(self.parent, self.user, self.url,
+                                     timeout=config.get("timeout"))
         self.stats = [
             ThreadsStarted(option=f"{option}-started", parent=self),
             ThreadsInvolved(option=f"{option}-involved", parent=self),

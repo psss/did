@@ -13,6 +13,11 @@ You need to generate authentication token at the server. The only
 scope you need to enable is `org:read`. If you prefer to store the
 token in a file, use ``token_file`` to point to the file that has
 your token.
+
+It's also possible to set a timeout, if not specified it defaults to
+60 seconds.
+
+    timeout = 10
 """
 
 import re
@@ -26,13 +31,17 @@ from did.utils import listed, log, pretty
 
 NEXT_PAGE = re.compile('<([^>]+)>; rel="next"; results="true"')
 
+# Default number of seconds waiting on Sentry before giving up
+TIMEOUT = 60
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue & Activity
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Issue(object):
+class Issue():
     """ Sentry Issue """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, issue):
         """ Initialize issue """
@@ -41,11 +50,12 @@ class Issue(object):
 
     def __str__(self):
         """ Unicode representation """
-        return "{0} - {1}".format(self.identifier, self.title)
+        return f"{self.identifier} - {self.title}"
 
 
-class Activity(object):
+class Activity():
     """ Sentry Activity """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, activity):
         """ Initialize issue """
@@ -57,69 +67,68 @@ class Activity(object):
 
     def __str__(self):
         """ Unicode representation """
-        return "{0} [{1}] {2}".format(self.created, self.kind, self.issue)
+        return f"{self.created} [{self.kind}] {self.issue}"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Sentry Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Sentry(object):
+class Sentry():
     """ Sentry API """
 
-    def __init__(self, config, stats):
+    def __init__(self, config, stats, timeout=TIMEOUT):
         """ Initialize API """
         self.url = config['url'].rstrip('/')
         self.organization = config['organization']
-        self.headers = {'Authorization': 'Bearer {0}'.format(config['token'])}
+        self.headers = {'Authorization': f'Bearer {config["token"]}'}
         self._activities = None
         self.stats = stats
+        self.timeout = timeout
 
     def activities(self):
-        """ Return all activites (fetch only once) """
+        """ Return all activities (fetch only once) """
         if self._activities is None:
             self._activities = self._fetch_activities()
         return self._activities
 
     def issues(self, kind, email):
         """ Filter unique issues for given activity type and email """
-        return list(set([
+        return list({
             str(activity.issue)
             for activity in self.activities()
-            if kind == activity.kind and activity.user['email'] == email]))
+            if kind == activity.kind and activity.user['email'] == email})
 
     def _fetch_activities(self):
         """ Get organization activity, handle pagination """
         activities = []
         # Prepare url of the first page
-        url = '{0}/organizations/{1}/activity/'.format(
-            self.url, self.organization)
+        url = f'{self.url}/organizations/{self.organization}/activity/'
         while url:
             # Fetch one page of activities
             try:
-                log.debug('Fetching activity data: {0}'.format(url))
-                response = requests.get(url, headers=self.headers)
+                log.debug('Fetching activity data: %s', url)
+                response = requests.get(url, headers=self.headers, timeout=self.timeout)
                 if not response.ok:
                     log.error(response.text)
                     raise ReportError('Failed to fetch Sentry activities.')
                 data = response.json()
-                log.data("Response headers:\n{0}".format(
-                    pretty(response.headers)))
-                log.debug("Fetched {0}.".format(listed(len(data), 'activity')))
+                log.data(f"Response headers:\n{pretty(response.headers)}")
+                log.debug("Fetched %s.", listed(len(data), 'activity'))
                 log.data(pretty(data))
                 for activity in [Activity(item) for item in data]:
                     # We've reached the last page, older records not
                     # relevant
                     if activity.created < self.stats.options.since.date:
                         return activities
-                    # Store only relevant activites (before until date)
+                    # Store only relevant activities (before until date)
                     if activity.created < self.stats.options.until.date:
-                        log.details("Activity: {0}".format(activity))
+                        log.details(f"Activity: {activity}")
                         activities.append(activity)
             except requests.RequestException as error:
                 log.debug(error)
                 raise ReportError(
-                    'Failed to fetch Sentry activities from {0}'.format(url))
+                    f'Failed to fetch Sentry activities from {url}') from error
             # Check for possible next page
             try:
                 url = NEXT_PAGE.search(response.headers['Link']).groups()[0]
@@ -136,7 +145,7 @@ class ResolvedIssues(Stats):
     """ Issues resolved """
 
     def fetch(self):
-        log.info("Searching for issues resolved by {0}".format(self.user))
+        log.info("Searching for issues resolved by %s", self.user)
         self.stats = self.parent.sentry.issues(
             kind='set_resolved', email=self.user.email)
 
@@ -145,7 +154,7 @@ class CommentedIssues(Stats):
     """ Issues commented """
 
     def fetch(self):
-        log.info("Searching issues commented by {0}".format(self.user))
+        log.info("Searching issues commented by %s", self.user)
         self.stats = self.parent.sentry.issues(
             kind='note', email=self.user.email)
 
@@ -172,7 +181,7 @@ class SentryStats(StatsGroup):
             raise ConfigError(
                 f"No token or token_file set in the [{option}] section")
         # Set up the Sentry API and construct the list of stats
-        self.sentry = Sentry(config=config, stats=self)
+        self.sentry = Sentry(config=config, stats=self, timeout=config.get("timeout"))
         self.stats = [
             ResolvedIssues(option=option + '-resolved', parent=self),
             CommentedIssues(option=option + '-commented', parent=self),

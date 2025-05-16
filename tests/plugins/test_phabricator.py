@@ -68,10 +68,17 @@ def test_missing_url():
         did.cli.main(INTERVAL)
 
 
+def test_empty_logins():
+    """ Empty phabricator logins results in Exception """
+    did.base.Config(f"{CONFIG_BAD_MISSING_LOGINS}\nlogin=\n")
+    with pytest.raises(did.base.ConfigError, match=r"Empty login found"):
+        did.cli.main(INTERVAL)
+
+
 def test_missing_logins():
     """ Missing phabricator logins results in Exception """
     did.base.Config(CONFIG_BAD_MISSING_LOGINS)
-    with pytest.raises(did.base.ConfigError):
+    with pytest.raises(did.base.ConfigError, match=r"No login set"):
         did.cli.main(INTERVAL)
 
 
@@ -95,6 +102,7 @@ def get_named_stat(options: str):
             assert stat.stats is not None
             return stat.stats
     pytest.fail(reason=f"No stat found with options {options}")
+    return None
 
 
 def expect(key: str) -> List[str]:
@@ -124,7 +132,7 @@ def expect(key: str) -> List[str]:
 
 
 @pytest.mark.parametrize(
-    "options,expectations",
+    ("options", "expectations"),
     [
         ("--ph-differentials-created", expect("created")),
         ("--ph-differentials-closed", expect("closed")),
@@ -142,10 +150,10 @@ def test_differentials(options, expectations):
     did.base.Config(CONFIG_OK)
     stats = get_named_stat(options)
     assert len(expectations) == len(stats)
-    for i, id in enumerate(expectations):
-        pattern = f"{id} \\S+"
+    for i, exp_id in enumerate(expectations):
+        pattern = f"{exp_id} \\S+"
         if "--verbose" in options:
-            pattern = f"https://reviews\\.llvm\\.org/{id} \\S+"
+            pattern = f"https://reviews\\.llvm\\.org/{exp_id} \\S+"
         regex = re.compile(pattern)
         assert regex
         assert regex.match(str(stats[i]))

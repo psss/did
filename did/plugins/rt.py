@@ -24,7 +24,7 @@ from did.utils import log, pretty
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class RequestTracker(object):
+class RequestTracker():
     """ Request Tracker Investigator """
 
     def __init__(self, parent):
@@ -36,16 +36,16 @@ class RequestTracker(object):
     def get(self, path):
         """ Perform a GET request with GSSAPI authentication """
         # Generate token
-        service_name = gssapi.Name('HTTP@{0}'.format(self.url.netloc),
-                                   gssapi.NameType.hostbased_service)
+        service_name = gssapi.Name(
+            f'HTTP@{self.url.netloc}', gssapi.NameType.hostbased_service)
         ctx = gssapi.SecurityContext(usage="initiate", name=service_name)
         data = b64encode(ctx.step()).decode()
 
         # Make the connection
         connection = http.client.HTTPSConnection(self.url.netloc, 443)
-        log.debug("GET {0}".format(path))
+        log.debug("GET %s", path)
         connection.putrequest("GET", path)
-        connection.putheader("Authorization", "Negotiate {0}".format(data))
+        connection.putheader("Authorization", f"Negotiate {data}")
         connection.putheader("Referer", self.url_string)
         connection.endheaders()
 
@@ -53,7 +53,7 @@ class RequestTracker(object):
         response = connection.getresponse()
         if response.status != 200:
             raise ReportError(
-                "Failed to fetch tickets: {0}".format(response.status))
+                f"Failed to fetch tickets: {response.status}")
         lines = response.read().decode("utf8").strip().split("\n")[1:]
         log.debug("Tickets fetched:")
         log.debug(pretty(lines))
@@ -62,13 +62,13 @@ class RequestTracker(object):
     def search(self, query):
         """ Perform request tracker search """
         # Prepare the path
-        log.debug("Query: {0}".format(query))
+        log.debug("Query: %s", query)
         path = self.url.path + '?Format=__id__+__Subject__'
         path += "&Order=ASC&OrderBy=id&Query=" + urllib.parse.quote(query)
 
         # Get the tickets
         lines = self.get(path)
-        log.info("Fetched tickets: {0}".format(len(lines)))
+        log.info("Fetched tickets: %s", len(lines))
         return [self.parent.ticket(line, self.parent) for line in lines]
 
 
@@ -76,8 +76,9 @@ class RequestTracker(object):
 #  Ticket
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Ticket(object):
+class Ticket():
     """ Request tracker ticket """
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, record, parent):
         """ Initialize the ticket from the record """
@@ -86,8 +87,7 @@ class Ticket(object):
 
     def __str__(self):
         """ Consistent identifier and subject for displaying """
-        return "{0}#{1} - {2}".format(
-            self.parent.prefix, self.id, self.subject)
+        return f"{self.parent.prefix}#{self.id} - {self.subject}"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -98,10 +98,12 @@ class ReportedTickets(Stats):
     """ Tickets reported """
 
     def fetch(self):
-        log.info("Searching for tickets reported by {0}".format(self.user))
-        query = "Requestor.EmailAddress = '{0}'".format(self.user.email)
-        query += " AND Created > '{0}'".format(self.options.since)
-        query += " AND Created < '{0}'".format(self.options.until)
+        log.info("Searching for tickets reported by %s", self.user)
+        query = (
+            f"Requestor.EmailAddress = '{self.user.email}' "
+            f"AND Created > '{self.options.since}' "
+            f"AND Created < '{self.options.until}'"
+            )
         self.stats = self.parent.request_tracker.search(query)
 
 
@@ -109,10 +111,12 @@ class ResolvedTickets(Stats):
     """ Tickets resolved """
 
     def fetch(self):
-        log.info("Searching for tickets resolved by {0}".format(self.user))
-        query = "Owner.EmailAddress = '{0}'".format(self.user.email)
-        query += "AND Resolved > '{0}'".format(self.options.since)
-        query += "AND Resolved < '{0}'".format(self.options.until)
+        log.info("Searching for tickets resolved by %s", self.user)
+        query = (
+            f"Owner.EmailAddress = '{self.user.email}' "
+            f"AND Resolved > '{self.options.since}' "
+            f"AND Resolved < '{self.options.until}'"
+            )
         self.stats = self.parent.request_tracker.search(query)
 
 
@@ -134,14 +138,12 @@ class RequestTrackerStats(StatsGroup):
         config = dict(Config().section(option))
         try:
             self.url = config["url"]
-        except KeyError:
-            raise ReportError(
-                "No url in the [{0}] section".format(option))
+        except KeyError as exc:
+            raise ReportError(f"No url in the [{option}] section") from exc
         try:
             self.prefix = config["prefix"]
-        except KeyError:
-            raise ReportError(
-                "No prefix set in the [{0}] section".format(option))
+        except KeyError as exc:
+            raise ReportError(f"No prefix set in the [{option}] section") from exc
 
         # Save Ticket class as attribute to allow customizations by
         # descendant class and set up the RequestTracker investigator
@@ -149,6 +151,6 @@ class RequestTrackerStats(StatsGroup):
         self.request_tracker = RequestTracker(parent=self)
         # Construct the list of stats
         self.stats = [
-            ReportedTickets(option=option + "-reported", parent=self),
-            ResolvedTickets(option=option + "-resolved", parent=self),
+            ReportedTickets(option=f"{option}-reported", parent=self),
+            ResolvedTickets(option=f"{option}-resolved", parent=self),
             ]

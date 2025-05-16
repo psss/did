@@ -57,9 +57,9 @@ plain text within your config file, use ``client_id_file`` and
 import os
 
 import httplib2
+import oauth2client.client
 from googleapiclient import discovery
 from oauth2client import tools
-from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 
 from did.base import CONFIG, Config, get_token
@@ -100,14 +100,11 @@ def authorized_http(client_id, client_secret, apps, file=None):
     storage = Storage(credential_path)
     credentials = storage.get()
 
-    scopes = set([
-        "https://www.googleapis.com/auth/{0}.readonly".format(app)
-        for app in apps
-        ])
+    scopes = {f"https://www.googleapis.com/auth/{app}.readonly" for app in apps}
 
     if (not credentials or credentials.invalid
             or not scopes <= credentials.scopes):
-        flow = OAuth2WebServerFlow(
+        flow = oauth2client.client.OAuth2WebServerFlow(
             client_id=client_id,
             client_secret=client_secret,
             scope=scopes,
@@ -125,45 +122,63 @@ def authorized_http(client_id, client_secret, apps, file=None):
 #  Google Calendar
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class GoogleCalendar(object):
+class GoogleCalendar():
     """ Google Calendar functions """
+    # pylint: disable=too-few-public-methods
 
-    def __init__(self, http):
-        self.service = discovery.build("calendar", "v3", http=http)
+    def __init__(self, http_credentials, parent):
+        self._credentials = http_credentials
+        self.parent = parent
 
     def events(self, **kwargs):
         """ Fetch events meeting specified criteria """
-        events_result = self.service.events().list(**kwargs).execute()
-        return [Event(event) for event in events_result.get("items", [])]
+        http = authorized_http(*self._credentials)
+        service = discovery.build("calendar", "v3", http=http)
+        # pylint: disable=no-member
+        events_result = service.events().list(**kwargs).execute()
+        # pylint: enable=no-member
+        return [Event(event, self.parent.options.format)
+                for event in events_result.get("items", [])]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Event
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Event(object):
+class Event():
     """ Google Calendar Event """
 
-    def __init__(self, dict):
+    def __init__(self, in_dict: dict, out_format: str):
         """ Create Event object from dict returned by Google API """
-        self.__dict__ = dict
+        self.__dict__ = in_dict
+        self._format = out_format
 
     def __str__(self):
         """ String representation """
-        return self.summary if hasattr(self, "summary") else "(No title)"
+        # undefined properties are provided via __getitem__
+        # pylint: disable=E1101
+        if self._format == "markdown":
+            date = (
+                self.start["date"]
+                if "date" in self.start
+                else self.start["dateTime"][:10]
+                )
+            return f"{date} - *{self.summary}*"
+        # plain text
+        return self.summary
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str):
         return self.__dict__.get(name, None)
 
-    def created_by(self, email):
+    def created_by(self, email: str) -> bool:
         """ Check if user created the event """
         return self["creator"]["email"] == email
 
-    def organized_by(self, email):
+    def organized_by(self, email: str) -> bool:
         """ Check if user created the event """
         return self["organizer"]["email"] == email
 
-    def attended_by(self, email):
+    def attended_by(self, email: str) -> bool:
         """ Check if user attended the event """
         for attendee in self["attendees"] or []:
             if (attendee["email"] == email
@@ -176,34 +191,44 @@ class Event(object):
 #  Google Tasks
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class GoogleTasks(object):
+class GoogleTasks():
     """ Google Tasks functions """
+    # pylint: disable=too-few-public-methods
 
-    def __init__(self, http):
-        self.service = discovery.build("tasks", "v1", http=http)
+    def __init__(self, http_credentials, parent):
+        self._credentials = http_credentials
+        self.parent = parent
 
     def tasks(self, **kwargs):
         """ Fetch tasks specified criteria """
-        tasks_result = self.service.tasks().list(**kwargs).execute()
-        return [Task(task) for task in tasks_result.get("items", [])]
+        http = authorized_http(*self._credentials)
+        service = discovery.build("tasks", "v1", http=http)
+        # pylint: disable=no-member
+        tasks_result = service.tasks().list(**kwargs).execute()
+        # pylint: enable=no-member
+        return [Task(task, self.parent.options.format)
+                for task in tasks_result.get("items", [])]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Task
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Task(object):
+class Task():
     """ Google Tasks task """
 
-    def __init__(self, dict):
+    def __init__(self, in_dict: dict, out_format: str):
         """ Create Task object from dict returned by Google API """
-        self.__dict__ = dict
+        self.__dict__ = in_dict
+        self._format = out_format
 
     def __str__(self):
         """ String representation """
+        # TODO: decide if there's something different we want
+        #       to return in markdown
         return self.title if hasattr(self, "title") else "(No title)"
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: str):
         return self.__dict__.get(name, None)
 
 
@@ -214,12 +239,11 @@ class Task(object):
 class GoogleStatsBase(Stats):
     """ Base class containing common code """
 
-    def __init__(self, option, name=None, parent=None):
-        super(GoogleStatsBase, self).__init__(
-            option=option, name=name, parent=parent)
+    def __init__(self, option: str, name=None, parent: StatsGroup | None = None):
+        super().__init__(option=option, name=name, parent=parent)
         try:
-            self.since = self.options.since.datetime.isoformat() + "Z"
-            self.until = self.options.until.datetime.isoformat() + "Z"
+            self.since = f"{self.options.since.datetime.isoformat()}Z"
+            self.until = f"{self.options.until.datetime.isoformat()}Z"
         except AttributeError:
             log.debug("Failed to initialize time range, skipping")
         self._events = None
@@ -228,30 +252,35 @@ class GoogleStatsBase(Stats):
     @property
     def events(self):
         """ All events in calendar within specified time range """
-        if self._events is None:
+        if self._events is None and self.parent is not None:
             self._events = self.parent.calendar.events(
                 calendarId="primary", singleEvents=True, orderBy="startTime",
                 timeMin=self.since, timeMax=self.until)
             self._events = [event for event in self._events
-                            if str(event) not in self.parent.skip]
+                            if str(event.summary) not in self.parent.skip]
         return self._events
 
     @property
     def tasks(self):
         """ All completed tasks within specified time range """
-        if self._tasks is None:
+        if self._tasks is None and self.parent is not None:
             self._tasks = self.parent.tasks.tasks(
                 tasklist="@default", showCompleted="true", showHidden="true",
                 completedMin=self.since, completedMax=self.until)
-        log.info("NB TASKS {0}".format(len(self._tasks)))
+        if self._tasks is not None:
+            log.info("NB TASKS %s", len(self._tasks))
         return self._tasks
+
+    def fetch(self):
+        """ Fetch the stats (to be implemented by respective class). """
+        raise NotImplementedError()
 
 
 class GoogleEventsOrganized(GoogleStatsBase):
     """ Events organized """
 
     def fetch(self):
-        log.info("Searching for events organized by {0}".format(self.user))
+        log.info("Searching for events organized by %s", self.user)
         self.stats = [
             event for event in self.events
             if event.organized_by(self.user.email)
@@ -262,7 +291,7 @@ class GoogleEventsAttended(GoogleStatsBase):
     """ Events attended """
 
     def fetch(self):
-        log.info("Searching for events attended by {0}".format(self.user))
+        log.info("Searching for events attended by %s", self.user)
         self.stats = [
             event for event in self.events
             if event.attended_by(self.user.email)
@@ -273,7 +302,7 @@ class GoogleTasksCompleted(GoogleStatsBase):
     """ Tasks completed """
 
     def fetch(self):
-        log.info("Searching for completed tasks by {0}".format(self.user))
+        log.info("Searching for completed tasks by %s", self.user)
         self.stats = self.tasks
 
 
@@ -288,7 +317,7 @@ class GoogleStatsGroup(StatsGroup):
     order = 50
 
     def __init__(self, option, name=None, parent=None, user=None):
-        super(GoogleStatsGroup, self).__init__(option, name, parent, user)
+        super().__init__(option, name, parent, user)
         config = dict(Config().section(option))
         client_id = get_token(
             config, token_key="client_id", token_file_key="client_id_file")
@@ -305,15 +334,15 @@ class GoogleStatsGroup(StatsGroup):
             apps = DEFAULT_APPS
         self.skip = config.get("skip", [])
 
-        http = authorized_http(client_id, client_secret, apps, storage)
-        self.calendar = GoogleCalendar(http)
-        self.tasks = GoogleTasks(http)
+        http_credentials = (client_id, client_secret, apps, storage)
+        self.calendar = GoogleCalendar(http_credentials, self)
+        self.tasks = GoogleTasks(http_credentials, self)
 
         self.stats = [
             GoogleEventsOrganized(
-                option=option + "-events-organized", parent=self),
+                option=f"{option}-events-organized", parent=self),
             GoogleEventsAttended(
-                option=option + "-events-attended", parent=self),
+                option=f"{option}-events-attended", parent=self),
             GoogleTasksCompleted(
-                option=option + "-tasks-completed", parent=self),
+                option=f"{option}-tasks-completed", parent=self),
             ]
