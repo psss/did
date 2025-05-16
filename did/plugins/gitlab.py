@@ -40,6 +40,7 @@ GITLAB_API = 4
 # Retry fetching
 GITLAB_ATTEMPTS = 5
 GITLAB_INTERVAL = 5
+GITLAB_MAX_PAGE_LIST = 20
 
 # Identifier padding
 PADDING = 3
@@ -143,6 +144,17 @@ class GitLab(object):
     def get_project_mrs(self, project_id):
         if project_id not in self.project_mrs:
             query = 'projects/{0}/merge_requests'.format(project_id)
+
+            # Check that this will not return more then 20 pages; if it does,
+            # skip rather than spending a large amount of time to query all of
+            # the results.
+            result = self._get_gitlab_api(query)
+            result.raise_for_status()
+            log.debug("Page count for {0}: {1}".format(query, result.headers.get('x-total-pages')))
+            if int(result.headers.get('x-total-pages', GITLAB_MAX_PAGE_LIST + 1)) > GITLAB_MAX_PAGE_LIST:
+                self.project_mrs[project_id] = []
+                return []
+
             self.project_mrs[project_id] = self._get_gitlab_api_list(
                 query, get_all_results=True)
         return self.project_mrs[project_id]
@@ -155,6 +167,17 @@ class GitLab(object):
     def get_project_issues(self, project_id):
         if project_id not in self.project_issues:
             query = 'projects/{0}/issues'.format(project_id)
+
+            # Check that this will not return more then 20 pages; if it does,
+            # skip rather than spending a large amount of time to query all of
+            # the results.
+            result = self._get_gitlab_api(query)
+            result.raise_for_status()
+            log.debug("Page count for {0}: {1}".format(query, result.headers.get('x-total-pages')))
+            if int(result.headers.get('x-total-pages', GITLAB_MAX_PAGE_LIST + 1)) > GITLAB_MAX_PAGE_LIST:
+                self.project_issues[project_id] = []
+                return []
+
             self.project_issues[project_id] = self._get_gitlab_api_list(
                 query, get_all_results=True)
         return self.project_issues[project_id]
@@ -200,8 +223,12 @@ class Issue(object):
         self.title = data['target_title']
 
     def iid(self):
-        return self.gitlabapi.get_project_issue(
-            self.data['project_id'], self.data['target_id'])['iid']
+        issue = self.gitlabapi.get_project_issue(
+            self.data['project_id'], self.data['target_id'])
+
+        if issue is not None:
+            return issue['iid']
+        return "unknown"
 
     def __str__(self):
         """ String representation """
@@ -226,8 +253,12 @@ class Issue(object):
 class MergeRequest(Issue):
 
     def iid(self):
-        return self.gitlabapi.get_project_mr(
-            self.data['project_id'], self.data['target_id'])['iid']
+        merge_request = self.gitlabapi.get_project_mr(
+            self.data['project_id'], self.data['target_id'])
+        if merge_request is not None:
+            return merge_request['iid']
+
+        return "unknown"
 
 
 class Note(Issue):
@@ -244,9 +275,13 @@ class Note(Issue):
                 return issue['iid']
             return 'unknown'
         elif self.data['note']['noteable_type'] == 'MergeRequest':
-            return self.gitlabapi.get_project_mr(
+            merge_request = self.gitlabapi.get_project_mr(
                 self.data['project_id'],
-                self.data['note']['noteable_id'])['iid']
+                self.data['note']['noteable_id'])
+
+            if merge_request is not None:
+                return merge_request['iid']
+            return "unknown"
         else:
             return "unknown"
 
