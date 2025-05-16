@@ -47,7 +47,7 @@ from did.utils import listed, log, pretty
 # Identifier padding
 PADDING = 3
 
-# Number of issues to be fetched per page
+# Number of GH items to be fetched per page
 PER_PAGE = 100
 
 
@@ -77,6 +77,11 @@ class GitHub(object):
             condition("user", user) +
             condition("org", org) +
             condition("repo", repo))
+
+    @staticmethod
+    def until(until):
+        """Issue #362: until for GH should have - delta(day=1)"""
+        return until - 1
 
     def search(self, query):
         """ Perform GitHub query """
@@ -182,8 +187,11 @@ class IssuesCreated(Stats):
 
     def fetch(self):
         log.info("Searching for issues created by {0}".format(self.user))
+        user = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            user, since, until)
         query += "+type:issue"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
@@ -194,8 +202,11 @@ class IssuesClosed(Stats):
 
     def fetch(self):
         log.info("Searching for issues closed by {0}".format(self.user))
+        user = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            user, since, until)
         query += "+type:issue"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
@@ -206,8 +217,11 @@ class IssueCommented(Stats):
 
     def fetch(self):
         log.info("Searching for issues commented on by {0}".format(self.user))
+        user = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
         query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            user, since, until)
         query += "+type:issue"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
@@ -219,8 +233,11 @@ class PullRequestsCreated(Stats):
     def fetch(self):
         log.info("Searching for pull requests created by {0}".format(
             self.user))
+        user = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
         query = "search/issues?q=author:{0}+created:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            user, since, until)
         query += "+type:pr"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
@@ -232,8 +249,11 @@ class PullRequestsCommented(Stats):
     def fetch(self):
         log.info("Searching for pull requests commented on by {0}".format(
             self.user))
+        user = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
         query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            user, since, until)
         query += "+type:pr"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
@@ -245,8 +265,11 @@ class PullRequestsClosed(Stats):
     def fetch(self):
         log.info("Searching for pull requests closed by {0}".format(
             self.user))
+        user = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
         query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            user, since, until)
         query += "+type:pr"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
@@ -258,8 +281,11 @@ class PullRequestsReviewed(Stats):
     def fetch(self):
         log.info("Searching for pull requests reviewed by {0}".format(
             self.user))
+        user = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
         query = "search/issues?q=reviewed-by:{0}+-author:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
+            user, since, until)
         query += "+type:pr"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
