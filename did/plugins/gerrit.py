@@ -63,7 +63,6 @@ class Gerrit(object):
     """
 
     def __init__(self, baseurl, prefix):
-        self.opener = urllib.request.FancyURLopener()
         self.baseurl = baseurl
         self.prefix = prefix
 
@@ -74,21 +73,19 @@ class Gerrit(object):
         return urllib.parse.urlunsplit(split)
 
     def get_query_result(self, url):
-        log.debug('url = {0}'.format(url))
-        res = self.opener.open(url)
-        if res.getcode() != 200:
-            raise IOError(
-                'Cannot retrieve list of changes ({0})'.format(res.getcode()))
+        log.debug('url = %s', url)
+        with urllib.request.urlopen(url) as res:
+            if res.getcode() != 200:
+                raise IOError(f'Cannot retrieve list of changes ({res.getcode()})')
 
-        # see https://code.google.com/p/gerrit/issues/detail?id=2006
-        # for explanation of skipping first four characters
-        json_str = res.read()[4:].strip()
-        try:
-            data = json.loads(json_str)
-        except ValueError:
-            log.exception('Cannot parse JSON data:\n%s', json_str)
-            raise
-        res.close()
+            # see https://code.google.com/p/gerrit/issues/detail?id=2006
+            # for explanation of skipping first four characters
+            json_str = res.read()[4:].strip()
+            try:
+                data = json.loads(json_str)
+            except ValueError:
+                log.exception('Cannot parse JSON data:\n%s', json_str)
+                raise
 
         return data
 
