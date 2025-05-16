@@ -17,6 +17,8 @@ import urllib.parse
 import urllib.request
 from datetime import datetime
 
+import requests
+
 from did.base import TODAY, Config, ReportError
 from did.stats import Stats, StatsGroup
 from did.utils import log, pretty
@@ -63,7 +65,6 @@ class Gerrit(object):
     """
 
     def __init__(self, baseurl, prefix):
-        self.opener = urllib.request.FancyURLopener()
         self.baseurl = baseurl
         self.prefix = prefix
 
@@ -75,20 +76,19 @@ class Gerrit(object):
 
     def get_query_result(self, url):
         log.debug('url = {0}'.format(url))
-        res = self.opener.open(url)
-        if res.getcode() != 200:
+        res = requests.get(url)
+        if res.status_code() != 200:
             raise IOError(
-                'Cannot retrieve list of changes ({0})'.format(res.getcode()))
+                'Cannot retrieve list of changes ({0})'.format(res.status_code))
 
         # see https://code.google.com/p/gerrit/issues/detail?id=2006
         # for explanation of skipping first four characters
-        json_str = res.read()[4:].strip()
+        json_str = res.text[4:].strip()
         try:
             data = json.loads(json_str)
         except ValueError:
             log.exception('Cannot parse JSON data:\n%s', json_str)
             raise
-        res.close()
 
         return data
 
