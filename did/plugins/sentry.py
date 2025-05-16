@@ -97,7 +97,7 @@ class Sentry(object):
         while url:
             # Fetch one page of activities
             try:
-                log.debug('Fetching activity data: {0}'.format(url))
+                log.debug('Fetching activity data: %s', url)
                 response = requests.get(url, headers=self.headers)
                 if not response.ok:
                     log.error(response.text)
@@ -105,7 +105,7 @@ class Sentry(object):
                 data = response.json()
                 log.data("Response headers:\n{0}".format(
                     pretty(response.headers)))
-                log.debug("Fetched {0}.".format(listed(len(data), 'activity')))
+                log.debug("Fetched %s.", listed(len(data), 'activity'))
                 log.data(pretty(data))
                 for activity in [Activity(item) for item in data]:
                     # We've reached the last page, older records not
@@ -136,7 +136,7 @@ class ResolvedIssues(Stats):
     """ Issues resolved """
 
     def fetch(self):
-        log.info("Searching for issues resolved by {0}".format(self.user))
+        log.info("Searching for issues resolved by %s", self.user)
         self.stats = self.parent.sentry.issues(
             kind='set_resolved', email=self.user.email)
 
@@ -145,7 +145,7 @@ class CommentedIssues(Stats):
     """ Issues commented """
 
     def fetch(self):
-        log.info("Searching issues commented by {0}".format(self.user))
+        log.info("Searching issues commented by %s", self.user)
         self.stats = self.parent.sentry.issues(
             kind='note', email=self.user.email)
 

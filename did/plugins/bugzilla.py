@@ -289,7 +289,7 @@ class VerifiedBugs(Stats):
     """
 
     def fetch(self):
-        log.info("Searching for bugs verified by {0}".format(self.user))
+        log.info("Searching for bugs verified by %s", self.user)
         # Common query options
         query = {
             # Status changed to VERIFIED
@@ -337,7 +337,7 @@ class ReturnedBugs(Stats):
     """
 
     def fetch(self):
-        log.info("Searching for bugs returned by {0}".format(self.user))
+        log.info("Searching for bugs returned by %s", self.user)
         query = {
             # User is not the assignee
             "f1": "assigned_to",
@@ -374,7 +374,7 @@ class FiledBugs(Stats):
     """
 
     def fetch(self):
-        log.info("Searching for bugs filed by {0}".format(self.user))
+        log.info("Searching for bugs filed by %s", self.user)
         query = {
             # User is the reporter
             "f1": "reporter",
@@ -402,7 +402,7 @@ class FixedBugs(Stats):
     """
 
     def fetch(self):
-        log.info("Searching for bugs fixed by {0}".format(self.user))
+        log.info("Searching for bugs fixed by %s", self.user)
         query = {
             # User is the assignee
             "f1": "assigned_to",
@@ -438,7 +438,7 @@ class ClosedBugs(Stats):
     """
 
     def fetch(self):
-        log.info("Searching for bugs closed by {0}".format(self.user))
+        log.info("Searching for bugs closed by %s", self.user)
         query = {
             # Status changed by the user
             "f1": "bug_status",
@@ -476,7 +476,7 @@ class PostedBugs(Stats):
     """
 
     def fetch(self):
-        log.info("Searching for bugs posted by {0}".format(self.user))
+        log.info("Searching for bugs posted by %s", self.user)
         query = {
             # User is the assignee
             "f1": "assigned_to",
@@ -511,7 +511,7 @@ class PatchedBugs(Stats):
     """
 
     def fetch(self):
-        log.info("Searching for bugs patched by {0}".format(self.user))
+        log.info("Searching for bugs patched by %s", self.user)
         query = {
             # Keywords field changed by the user
             "f1": "keywords",
@@ -576,7 +576,7 @@ class CommentedBugs(Stats):
     """
 
     def fetch(self):
-        log.info("Searching for bugs commented by {0}".format(self.user))
+        log.info("Searching for bugs commented by %s", self.user)
         query = {
             # Commented by the user
             "f1": "longdesc",
@@ -605,7 +605,7 @@ class SubscribedBugs(Stats):
     """
 
     def fetch(self):
-        log.info("Searching for bugs subscribed by {0}".format(self.user))
+        log.info("Searching for bugs subscribed by %s", self.user)
         query = {
             # Subscribed by the user
             "f1": "cc",

@@ -147,7 +147,7 @@ class Issue(object):
     @staticmethod
     def search(query, stats):
         """ Perform issue search for given stats instance """
-        log.debug("Search query: {0}".format(query))
+        log.debug("Search query: %s", query)
         issues = []
         # Fetch data from the server in batches of MAX_RESULTS issues
         for batch in range(MAX_BATCHES):
@@ -168,8 +168,12 @@ class Issue(object):
                     f"Failed to fetch jira issues for query '{query}'. "
                     f"The reason was '{response.reason}' "
                     f"and the error was '{error}'.")
-            log.debug("Batch {0} result: {1} fetched".format(
-                batch, listed(data["issues"], "issue")))
+            log.debug(
+                "Batch %s result: %s fetched",
+                batch,
+                listed(
+                    data["issues"],
+                    "issue"))
             log.data(pretty(data))
             issues.extend(data["issues"])
             # If all issues fetched, we're done
@@ -203,8 +207,10 @@ class JiraCreated(Stats):
     """ Created issues """
 
     def fetch(self):
-        log.info("Searching for issues created in {0} by {1}".format(
-            self.parent.project, self.user))
+        log.info(
+            "Searching for issues created in %s by %s",
+            self.parent.project,
+            self.user)
         query = (
             "creator = '{0}' AND "
             "created >= {1} AND created <= {2}".format(
@@ -219,8 +225,10 @@ class JiraUpdated(Stats):
     """ Updated issues """
 
     def fetch(self):
-        log.info("Searching for issues updated in {0} by {1}".format(
-            self.parent.project, self.user))
+        log.info(
+            "Searching for issues updated in %s by %s",
+            self.parent.project,
+            self.user)
         if self.parent.use_scriptrunner:
             query = (
                 "issueFunction in commented"
@@ -247,8 +255,10 @@ class JiraResolved(Stats):
     """ Resolved issues """
 
     def fetch(self):
-        log.info("Searching for issues resolved in {0} by {1}".format(
-            self.parent.project, self.user))
+        log.info(
+            "Searching for issues resolved in %s by %s",
+            self.parent.project,
+            self.user)
         query = (
             "assignee = '{0}' AND "
             "resolved >= {1} AND resolved <= {2}".format(
@@ -386,7 +396,7 @@ class JiraStats(StatsGroup):
         """ Initialize the session """
         if self._session is None:
             self._session = requests.Session()
-            log.debug("Connecting to {0}".format(self.auth_url))
+            log.debug("Connecting to %s", self.auth_url)
             # Disable SSL warning when ssl_verify is False
             if not self.ssl_verify:
                 requests.packages.urllib3.disable_warnings(

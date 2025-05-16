@@ -243,7 +243,7 @@ class GoogleStatsBase(Stats):
             self._tasks = self.parent.tasks.tasks(
                 tasklist="@default", showCompleted="true", showHidden="true",
                 completedMin=self.since, completedMax=self.until)
-        log.info("NB TASKS {0}".format(len(self._tasks)))
+        log.info("NB TASKS %s", len(self._tasks))
         return self._tasks
 
 
@@ -251,7 +251,7 @@ class GoogleEventsOrganized(GoogleStatsBase):
     """ Events organized """
 
     def fetch(self):
-        log.info("Searching for events organized by {0}".format(self.user))
+        log.info("Searching for events organized by %s", self.user)
         self.stats = [
             event for event in self.events
             if event.organized_by(self.user.email)
@@ -262,7 +262,7 @@ class GoogleEventsAttended(GoogleStatsBase):
     """ Events attended """
 
     def fetch(self):
-        log.info("Searching for events attended by {0}".format(self.user))
+        log.info("Searching for events attended by %s", self.user)
         self.stats = [
             event for event in self.events
             if event.attended_by(self.user.email)
@@ -273,7 +273,7 @@ class GoogleTasksCompleted(GoogleStatsBase):
     """ Tasks completed """
 
     def fetch(self):
-        log.info("Searching for completed tasks by {0}".format(self.user))
+        log.info("Searching for completed tasks by %s", self.user)
         self.stats = self.tasks
 
 

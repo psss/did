@@ -32,7 +32,7 @@ class KojiBuilds(Stats):
         self.userinfo = userinfo
 
     def fetch(self):
-        log.info("Searching for builds by {0}".format(self.user))
+        log.info("Searching for builds by %s", self.user)
         builds = self.server.listBuilds(
             userID=self.user['id'],
             completeAfter=str(self.options.since),

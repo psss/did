@@ -46,12 +46,11 @@ class Zammad(object):
     def search(self, query):
         """ Perform Zammad query """
         url = self.url + "/" + query
-        log.debug("Zammad query: {0}".format(url))
+        log.debug("Zammad query: %s", url)
         try:
             request = urllib.request.Request(url, headers=self.headers)
             response = urllib.request.urlopen(request)
-            log.debug("Response headers:\n{0}".format(
-                str(response.info()).strip()))
+            log.debug("Response headers:\n%s", str(response.info()).strip())
         except urllib.error.URLError as error:
             log.debug(error)
             raise ReportError(
@@ -61,7 +60,7 @@ class Zammad(object):
             result = result["Ticket"]
         except KeyError:
             result = dict()
-        log.debug("Result: {0} fetched".format(listed(len(result), "item")))
+        log.debug("Result: %s fetched", listed(len(result), "item"))
         log.data(pretty(result))
         return result
 
@@ -92,7 +91,7 @@ class TicketsUpdated(Stats):
     """ Tickets updated """
 
     def fetch(self):
-        log.info("Searching for tickets updated by {0}".format(self.user))
+        log.info("Searching for tickets updated by %s", self.user)
         search = "article.from:\"{0}\" and article.created_at:[{1} TO {2}]".format(
             self.user.name, self.options.since, self.options.until)
         query = "tickets/search?query={0}".format(urllib.parse.quote(search))
