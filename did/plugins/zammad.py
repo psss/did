@@ -18,6 +18,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from datetime import datetime
+
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
@@ -60,7 +62,25 @@ class Zammad(object):
         try:
             result = result["Ticket"]
         except KeyError:
-            result = dict()
+            result = {}
+        log.debug("Result: {0} fetched".format(listed(len(result), "item")))
+        log.data(pretty(result))
+        return result
+
+    def get_articles(self, ticket_id):
+        """ Perform Zammad query """
+        url = self.url + "/ticket_articles/by_ticket/" + str(ticket_id)
+        log.debug("Zammad query: {0}".format(url))
+        try:
+            request = urllib.request.Request(url, headers=self.headers)
+            response = urllib.request.urlopen(request)
+            log.debug("Response headers:\n{0}".format(
+                str(response.info()).strip()))
+        except urllib.error.URLError as error:
+            log.debug(error)
+            raise ReportError(
+                "Zammad search on {0} failed.".format(self.url))
+        result = json.loads(response.read())
         log.debug("Result: {0} fetched".format(listed(len(result), "item")))
         log.data(pretty(result))
         return result
@@ -96,10 +116,13 @@ class TicketsUpdated(Stats):
         search = "article.from:\"{0}\" and article.created_at:[{1} TO {2}]".format(
             self.user.name, self.options.since, self.options.until)
         query = "tickets/search?query={0}".format(urllib.parse.quote(search))
-        self.stats = [
-            Ticket(ticket) for id,
-            ticket in self.parent.zammad.search(query).items()]
-
+        self.stats = []
+        for _,ticket in self.parent.zammad.search(query).items():
+            for article in self.parent.zammad.get_articles(ticket["id"]):
+                updated_at = datetime.fromisoformat(article["updated_at"].replace('Z', '+00:00')).date()
+                if (article["created_by"] == self.user.email) and (updated_at >= self.options.since.date) and (updated_at <= self.options.until.date):
+                    self.stats.append(Ticket(ticket))
+                    break
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
