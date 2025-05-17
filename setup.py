@@ -5,27 +5,30 @@ import re
 from setuptools import setup
 
 # Parse version and release from the spec file
-with open('did.spec') as specfile:
+with open('did.spec', encoding="utf-8") as specfile:
+    # pylint: disable=invalid-name
     lines = "\n".join(line.rstrip() for line in specfile)
     version = re.search('Version: (.+)', lines).group(1).rstrip()
     release = re.search('Release: (\\d+)', lines).group(1).rstrip()
-version = '.'.join([version, release])
+VERSION = '.'.join([version, release])
 
 # Prepare install requires and extra requires
 install_requires = [
     'python_dateutil',
     'requests',
+    'tenacity'
     ]
 extras_require = {
     'bodhi': ['bodhi-client'],
     'bugzilla': ['python-bugzilla'],
-    'docs': ['sphinx==7.2.4', 'sphinx-rtd-theme==1.3.0'],
+    'docs': ['sphinx==8.2.3', 'sphinx-rtd-theme==3.0.2'],
     'google': ['google-api-python-client', 'oauth2client'],
     'jira': ['requests_gssapi'],
     'koji': ['koji'],
     'redmine': ['feedparser'],
+    'nitrate': ['nitrate'],
     'rt': ['gssapi'],
-    'tests': ['pytest', 'python-coveralls', 'pre-commit'],
+    'tests': ['pytest', 'pytest-xdist', 'pytest-cov', 'python-coveralls', 'pre-commit'],
     }
 extras_require['all'] = [
     dependency
@@ -33,7 +36,7 @@ extras_require['all'] = [
     for dependency in extra]
 
 # Prepare the long description from readme
-with open('README.rst') as readme:
+with open('README.rst', encoding="utf-8") as readme:
     description = readme.read()
 
 setup(
@@ -43,7 +46,7 @@ setup(
     url='https://github.com/psss/did',
     download_url='https://github.com/psss/did/archive/master.zip',
 
-    version=version,
+    version=VERSION,
     provides=['did'],
     packages=['did', 'did.plugins'],
     scripts=['bin/did'],
@@ -64,6 +67,7 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Topic :: Office/Business',
         'Topic :: Utilities',
         ],

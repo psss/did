@@ -29,6 +29,7 @@ pip-log.txt
 
 # coveralls code coverage
 .coverage
+*,cover
 
 # sphinx docs
 _build

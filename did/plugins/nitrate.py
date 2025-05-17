@@ -7,6 +7,8 @@ Config example::
     type = nitrate
 """
 
+import nitrate
+
 from did.stats import Stats, StatsGroup
 from did.utils import log
 
@@ -21,8 +23,7 @@ class TestPlans(Stats):
     """ Test plans created """
 
     def fetch(self):
-        import nitrate
-        log.info("Searching for test plans created by {0}".format(self.user))
+        log.info("Searching for test plans created by %s", self.user)
         self.stats.extend(nitrate.TestPlan.search(
             is_active=True,
             author__email=self.user.email,
@@ -34,8 +35,7 @@ class TestRuns(Stats):
     """ Test runs finished """
 
     def fetch(self):
-        import nitrate
-        log.info("Searching for test runs finished by {0}".format(self.user))
+        log.info("Searching for test runs finished by %s", self.user)
         self.stats.extend(nitrate.TestRun.search(
             default_tester__email=self.user.email,
             stop_date__gt=str(self.options.since),
@@ -91,20 +91,19 @@ class NitrateStats(StatsGroup):
         StatsGroup.__init__(self, option, name, parent, user)
         self._cases = self._copies = None
         self.stats = [
-            TestPlans(option=option + "-plans", parent=self),
-            TestRuns(option=option + "-runs", parent=self),
-            AutomatedCases(option=option + "-automated", parent=self),
-            ManualCases(option=option + "-manual", parent=self),
-            AutoproposedCases(option=option + "-proposed", parent=self),
-            CopiedCases(option=option + "-copied", parent=self),
+            TestPlans(option=f"{option}-plans", parent=self),
+            TestRuns(option=f"{option}-runs", parent=self),
+            AutomatedCases(option=f"{option}-automated", parent=self),
+            ManualCases(option=f"{option}-manual", parent=self),
+            AutoproposedCases(option=f"{option}-proposed", parent=self),
+            CopiedCases(option=f"{option}-copied", parent=self),
             ]
 
     @property
     def cases(self):
         """ All test cases created by the user """
-        import nitrate
         if self._cases is None:
-            log.info("Searching for cases created by {0}".format(self.user))
+            log.info("Searching for cases created by %s", self.user)
             self._cases = [
                 case for case in nitrate.TestCase.search(
                     author__email=self.user.email,
@@ -116,13 +115,11 @@ class NitrateStats(StatsGroup):
     @property
     def copies(self):
         """ All test case copies created by the user """
-        import nitrate
         if self._copies is None:
-            log.info("Searching for cases copied by {0}".format(self.user))
-            self._copies = [
-                case for case in nitrate.TestCase.search(
-                    author__email=self.user.email,
-                    create_date__gt=str(self.options.since),
-                    create_date__lt=str(self.options.until),
-                    tag__name=TEST_CASE_COPY_TAG)]
+            log.info("Searching for cases copied by %s", self.user)
+            self._copies = list(nitrate.TestCase.search(
+                author__email=self.user.email,
+                create_date__gt=str(self.options.since),
+                create_date__lt=str(self.options.until),
+                tag__name=TEST_CASE_COPY_TAG))
         return self._copies

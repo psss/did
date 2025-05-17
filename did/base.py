@@ -2,8 +2,10 @@
 
 import codecs
 import configparser
+import contextlib
 import datetime
 import io
+import locale
 import os
 import re
 import sys
@@ -26,6 +28,16 @@ from did.utils import DEFAULT_SEPARATOR, MAX_WIDTH, log
 #  Constants
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+WEEKDAY_MAP = {
+    "monday": MONDAY(-1),
+    "tuesday": TUESDAY(-1),
+    "wednesday": WEDNESDAY(-1),
+    "thursday": THURSDAY(-1),
+    "friday": FRIDAY(-1),
+    "saturday": SATURDAY(-1),
+    "sunday": SUNDAY(-1),
+    }
+
 # Config file location
 CONFIG = os.path.expanduser("~/.did")
 
@@ -37,10 +49,12 @@ TEST_CONFIG = """
 width = 79
 email = Petr Šplíchal <psplicha@redhat.com>
 
-[github]
-type = github
-url = https://api.github.com/
+[koji]
+type = koji
+url = https://koji.fedoraproject.org/kojihub
+weburl = https://koji.fedoraproject.org/koji
 login = psss
+name = Fedora Build System
 """
 
 
@@ -67,12 +81,23 @@ class OptionError(GeneralError):
 class ReportError(GeneralError):
     """ Report generation error """
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Functions
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+@contextlib.contextmanager
+def setlocale(*args, **kw):
+    saved = locale.setlocale(locale.LC_ALL)
+    yield locale.setlocale(*args, **kw)
+    locale.setlocale(locale.LC_ALL, saved)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Config
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Config(object):
+class Config():
     """ User config file """
 
     parser = None
@@ -83,7 +108,7 @@ class Config(object):
 
         Parse config from given string (config) or file (path).
         If no config or path given, default to "~/.did/config" which
-        can be overrided by the ``DID_DIR`` environment variable.
+        can be overridden by the ``DID_DIR`` environment variable.
         """
         # Read the config only once (unless explicitly provided)
         if self.parser is not None and config is None and path is None:
@@ -101,20 +126,22 @@ class Config(object):
             path = Config.path()
         # Parse the config from file
         try:
-            log.info("Inspecting config file '{0}'.".format(path))
-            self.parser.read_file(codecs.open(path, "r", "utf8"))
+            log.info("Inspecting config file '%s'.", path)
+            with codecs.open(path, "r", "utf8") as config_file:
+                self.parser.read_file(config_file)
         except IOError as error:
             log.debug(error)
             Config.parser = None
             raise ConfigFileError(
-                "Unable to read the config file '{0}'.".format(path))
+                f"Unable to read the config file '{path}'.") from error
 
     @property
     def plugins(self):
         """ Custom plugins """
         try:
             return self.parser.get("general", "plugins")
-        except BaseException:
+        except configparser.Error:
+            # No custom plugin listed within the configuration
             return None
 
     @property
@@ -123,9 +150,9 @@ class Config(object):
         month = self.parser.get("general", "quarter", fallback=1)
         try:
             month = int(month) % 3
-        except ValueError:
+        except ValueError as exc:
             raise ConfigError(
-                f"Invalid quarter start '{month}', should be integer.")
+                f"Invalid quarter start '{month}', should be integer.") from exc
         return month
 
     @property
@@ -136,11 +163,11 @@ class Config(object):
         except NoSectionError as error:
             log.debug(error)
             raise ConfigFileError(
-                "No general section found in the config file.")
+                "No general section found in the config file.") from error
         except NoOptionError as error:
             log.debug(error)
             raise ConfigFileError(
-                "No email address defined in the config file.")
+                "No email address defined in the config file.") from error
 
     @property
     def width(self):
@@ -181,7 +208,7 @@ class Config(object):
             result.append(section)
         return result
 
-    def section(self, section, skip=['type', 'order']):
+    def section(self, section, skip=('type', 'order')):
         """
         Return section items, skip selected (type/order by default)
         """
@@ -193,8 +220,7 @@ class Config(object):
         for key, value in self.section(section, skip=[]):
             if key == it:
                 return value
-        raise ConfigError(
-            "Item '{0}' not found in section '{1}'".format(it, section))
+        raise ConfigError(f"Item '{it}' not found in section '{section}'")
 
     @staticmethod
     def path():
@@ -211,7 +237,7 @@ class Config(object):
             filepath, filename = os.path.split(matched.groups()[0])
             if filepath:
                 directory = filepath
-        return directory.rstrip("/") + "/" + filename
+        return os.path.join(directory.rstrip("/"), filename)
 
     @staticmethod
     def example():
@@ -223,7 +249,7 @@ class Config(object):
 #  Date
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Date(object):
+class Date():
     """ Date parsing for common word formats """
 
     def __init__(self, date=None):
@@ -240,7 +266,7 @@ class Date(object):
             except ValueError as error:
                 log.debug(error)
                 raise OptionError(
-                    "Invalid date format: '{0}', use YYYY-MM-DD.".format(date))
+                    f"Invalid date format: '{date}', use YYYY-MM-DD.") from error
         self.datetime = datetime.datetime(
             self.date.year, self.date.month, self.date.day, 0, 0, 0)
 
@@ -257,141 +283,105 @@ class Date(object):
         return self.date - timedelta(days=subtrahend)
 
     @staticmethod
-    def this_week():
-        """ Return start and end date of the current week. """
+    def get_week(last):
+        # Return start and end date of the current week.
         since = TODAY + delta(weekday=MONDAY(-1))
         until = since + delta(weeks=1)
-        return Date(since), Date(until)
+        if last:
+            # Return start and end date of the last week instead.
+            since = TODAY + delta(weekday=MONDAY(-2))
+            until = since + delta(weeks=1)
+        period = f"the week {since.strftime('%V')}"
+        return Date(since), Date(until), period
 
     @staticmethod
-    def last_week():
-        """ Return start and end date of the last week. """
-        since = TODAY + delta(weekday=MONDAY(-2))
-        until = since + delta(weeks=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def this_month():
-        """ Return start and end date of this month. """
+    def get_month(last):
+        # Return start and end date of this month.
         since = TODAY + delta(day=1)
         until = since + delta(months=1)
-        return Date(since), Date(until)
+        if last:
+            # Return start and end date of this month.
+            since = TODAY + delta(day=1, months=-1)
+            until = since + delta(months=1)
+        with setlocale(locale.LC_TIME, "C"):
+            period = since.strftime("%B")
+        return Date(since), Date(until), period
 
     @staticmethod
-    def last_month():
-        """ Return start and end date of this month. """
-        since = TODAY + delta(day=1, months=-1)
-        until = since + delta(months=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def this_quarter():
-        """ Return start and end date of this quarter. """
+    def get_quarter(last):
+        # Return start and end date of this quarter.
         since = TODAY + delta(day=1)
         while since.month % 3 != Config().quarter:
             since -= delta(months=1)
         until = since + delta(months=3)
-        return Date(since), Date(until)
+        period = "this quarter"
+        if last:
+            # Return start and end date of last quarter instead
+            since = since - delta(months=3)
+            until = until - delta(months=3)
+            period = "the last quarter"
+        return Date(since), Date(until), period
 
     @staticmethod
-    def last_quarter():
-        """ Return start and end date of this quarter. """
-        since, until = Date.this_quarter()
-        since = since.date - delta(months=3)
-        until = until.date - delta(months=3)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def this_year():
-        """ Return start and end date of this year """
+    def get_year(last):
+        # Return start and end date of this year
         since = TODAY
         while since.month != 1 or since.day != 1:
             since -= delta(days=1)
         until = since + delta(years=1)
-        return Date(since), Date(until)
-
-    @staticmethod
-    def last_year():
-        """ Return start and end date of the last year """
-        since, until = Date.this_year()
-        since = since.date - delta(years=1)
-        until = until.date - delta(years=1)
-        return Date(since), Date(until)
+        period = "this year"
+        if last:
+            # Return start and end date of the last year instead
+            since = since - delta(years=1)
+            until = until - delta(years=1)
+            period = "the last year"
+        return Date(since), Date(until), period
 
     @staticmethod
     def period(argument):
         """ Detect desired time period for the argument """
-        since, until, period = None, None, None
-        if "today" in argument:
-            since = Date("today")
-            until = Date("today")
-            until.date += delta(days=1)
-            period = "today"
-        elif "yesterday" in argument:
-            since = Date("yesterday")
-            until = Date("yesterday")
-            until.date += delta(days=1)
-            period = "yesterday"
-        elif "monday" in argument or "tuesday" in argument or \
-             "wednesday" in argument or "thursday" in argument or \
-             "friday" in argument or "saturday" in argument or \
-             "sunday" in argument:
+        def get_weekday_details(arg):
+            for day, weekday in WEEKDAY_MAP.items():
+                if day in arg:
+                    return weekday, f"the last {day}"
+            return None, None  # pragma: no cover
+
+        def calculate_since_until_for_weekday(weekday):
             today = Date("today")
             since = Date("today")
             until = Date()
-            if "monday" in argument:
-                weekday = MONDAY(-1)
-                period = "the last monday"
-            elif "tuesday" in argument:
-                weekday = TUESDAY(-1)
-                period = "the last tuesday"
-            elif "wednesday" in argument:
-                weekday = WEDNESDAY(-1)
-                period = "the last wednesday"
-            elif "thursday" in argument:
-                weekday = THURSDAY(-1)
-                period = "the last thursday"
-            elif "friday" in argument:
-                weekday = FRIDAY(-1)
-                period = "the last friday"
-            elif "saturday" in argument:
-                weekday = SATURDAY(-1)
-                period = "the last saturday"
-            else:
-                weekday = SUNDAY(-1)
-                period = "the last sunday"
             since.date += delta(weekday=weekday)
             if since.date == today.date:
-                # technically last dayofweek is today, but we want
-                # the one week ago
                 since.date -= delta(days=7)
             until.date = since.date + delta(days=1)
+            return since, until
+
+        if "today" in argument:
+            since, until = Date("today"), Date("today")
+            until.date += delta(days=1)
+            period = "today"
+
+        elif "yesterday" in argument:
+            since, until = Date("yesterday"), Date("yesterday")
+            until.date += delta(days=1)
+            period = "yesterday"
+
+        elif any(day in argument for day in WEEKDAY_MAP):
+            weekday, period = get_weekday_details(argument)
+            since, until = calculate_since_until_for_weekday(weekday)
+
         elif "year" in argument:
-            if "last" in argument:
-                since, until = Date.last_year()
-                period = "the last year"
-            else:
-                since, until = Date.this_year()
-                period = "this year"
+            since, until, period = Date.get_year("last" in argument)
+
         elif "quarter" in argument:
-            if "last" in argument:
-                since, until = Date.last_quarter()
-                period = "the last quarter"
-            else:
-                since, until = Date.this_quarter()
-                period = "this quarter"
+            since, until, period = Date.get_quarter("last" in argument)
+
         elif "month" in argument:
-            if "last" in argument:
-                since, until = Date.last_month()
-            else:
-                since, until = Date.this_month()
-            period = since.datetime.strftime("%B")
-        else:
-            if "last" in argument:
-                since, until = Date.last_week()
-            else:
-                since, until = Date.this_week()
-            period = "the week {0}".format(since.datetime.strftime("%V"))
+            since, until, period = Date.get_month("last" in argument)
+
+        else:  # Default to week
+            since, until, period = Date.get_week("last" in argument)
+
         return since, until, period
 
 
@@ -399,7 +389,7 @@ class Date(object):
 #  User
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class User(object):
+class User():
     """
     User information
 
@@ -438,14 +428,14 @@ class User(object):
         self._original = email.strip()
         # Separate aliases if provided
         try:
-            email, aliases = re.split(r"\s*;\s*", self._original, 1)
+            email, aliases = re.split(r"\s*;\s*", self._original, maxsplit=1)
         except ValueError:
             email = self._original
             aliases = None
         # Extract everything from the email string provided
         parts = utils.EMAIL_REGEXP.search(email)
         if parts is None:
-            raise ConfigError("Invalid email address '{0}'".format(email))
+            raise ConfigError(f"Invalid email address '{email}'")
         self.name = parts.groups()[0]
         self.email = parts.groups()[1]
         self.login = self.email.split('@')[0]
@@ -456,7 +446,7 @@ class User(object):
         """ Use name & email for string representation. """
         if not self.name:
             return self.email
-        return "{0} <{1}>".format(self.name, self.email)
+        return f"{self.name} <{self.email}>"
 
     def clone(self, stats):
         """ Create a user copy with alias enabled for given stats. """
@@ -470,25 +460,19 @@ class User(object):
         # Attempt to use alias directly from the config section
         try:
             config = dict(Config().section(stats))
-            try:
-                email = config["email"]
-            except KeyError:
-                pass
-            try:
-                login = config["login"]
-            except KeyError:
-                pass
-        except (ConfigFileError, NoSectionError):
-            pass
+            email = config.get("email", None)
+            login = config.get("login", None)
+        except (ConfigFileError, NoSectionError) as e:
+            log.error("Error accessing config section for stats '%s': %s",
+                      stats, str(e))
         # Check for aliases specified in the email string
         if aliases is not None:
             try:
                 aliases = dict([
-                    re.split(r"\s*:\s*", definition, 1)
+                    re.split(r"\s*:\s*", definition, maxsplit=1)
                     for definition in re.split(r"\s*;\s*", aliases.strip())])
-            except ValueError:
-                raise ConfigError(
-                    "Invalid alias definition: '{0}'".format(aliases))
+            except ValueError as exc:
+                raise ConfigError(f"Invalid alias definition: '{aliases}'") from exc
             if stats in aliases:
                 if "@" in aliases[stats]:
                     email = aliases[stats]
@@ -497,12 +481,12 @@ class User(object):
         # Update login/email if alias detected
         if email is not None:
             self.email = email
-            log.info("Using email alias '{0}' for '{1}'".format(email, stats))
+            log.info("Using email alias '%s' for '%s'", email, stats)
             if login is None:
                 login = email.split("@")[0]
         if login is not None:
             self.login = login
-            log.info("Using login alias '{0}' for '{1}'".format(login, stats))
+            log.info("Using login alias '%s' for '%s'", login, stats)
 
 
 def get_token(

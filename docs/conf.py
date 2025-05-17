@@ -11,6 +11,9 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+#
+# Disabling because constant names are defined in sphinx tooling
+# pylint: disable=invalid-name
 
 import os
 import sys
@@ -49,9 +52,9 @@ master_doc = 'index'
 master_man = 'man.1'
 
 # General information about the project.
-project = u'did'
-copyright = u'2015, Petr Šplíchal'
-author = u'Petr Šplíchal'
+project = 'did'
+project_copyright = '2015, Petr Šplíchal'
+author = 'Petr Šplíchal'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -218,7 +221,7 @@ htmlhelp_basename = 'diddoc'
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_man, 'did', u'did Documentation',
+    (master_man, 'did', 'did Documentation',
      [author], 1)
     ]
 

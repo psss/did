@@ -20,14 +20,11 @@ tmp:
 
 # Run the test suite, optionally with coverage
 test: tmp
-	DID_DIR=$(TMP) pytest tests
+	DID_DIR=$(TMP) pytest -n auto tests
 smoke: tmp
-	DID_DIR=$(TMP) pytest tests/test_cli.py
+	DID_DIR=$(TMP) pytest -n auto tests/test_cli.py
 coverage: tmp
-	DID_DIR=$(TMP) coverage run --source=did,bin -m pytest tests
-	coverage report
-	coverage annotate
-
+	DID_DIR=$(TMP) pytest --cov-report html:cov_html --cov-report annotate:cov_annotate --cov=did -n auto tests
 
 # Build documentation, prepare man page
 docs: man
@@ -77,6 +74,8 @@ clean:
 	rm -rf docs/_build
 	rm -f .coverage tags
 	rm -rf .cache .pytest_cache
+	rm -rf cov_annotate
+	rm -rf cov_html
 
 
 # Docker

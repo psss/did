@@ -1,3 +1,4 @@
+---
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
@@ -14,14 +15,18 @@ repos:
           - --max-line-length=88
 
   - repo: https://github.com/PyCQA/isort
-    rev: "5.13.2"
+    rev: "6.0.1"
     hooks:
       - id: isort
 
   - repo: https://github.com/pycqa/flake8
-    rev: "7.1.1"
+    rev: "7.1.2"
     hooks:
       - id: flake8
+        additional_dependencies:
+          [
+            flake8-pytest-style == 2.1.0,
+          ]
         args:
           - --config
           - .flake8
@@ -49,3 +54,29 @@ repos:
         args:
           - --pytest-test-first
         exclude: disable_test_trac.py
+
+  - repo: https://github.com/pylint-dev/pylint
+    rev: "v3.3.5"
+    hooks:
+      - id: pylint
+        args:
+          [
+            "-rn", # Only display messages
+            "-sn", # Don't display the score
+            "--rcfile=.pylintrc", # Link to config file
+          ]
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        args: [
+            # Pass skip configuration as command line arguments rather than in the
+            # config file because neither cfg nor TOML support splitting this argument
+            # across multiple lines.
+            # Globs must match the Python `glob` module's format:
+            # https://docs.python.org/3/library/glob.html#module-glob
+            "-I .codespell/ignore_words.txt",
+            # Write changes in place
+            "-w",
+          ]

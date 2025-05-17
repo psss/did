@@ -16,13 +16,16 @@ BuildRequires: python3-dateutil
 BuildRequires: python3-devel
 BuildRequires: python3-httplib2
 BuildRequires: python3-pytest
+BuildRequires: python3-pytest-xdist
 BuildRequires: python3-requests-gssapi
 BuildRequires: python3-setuptools
+BuildRequires: python3-nitrate
 Requires: python3-bugzilla
 Requires: python3-httplib2
 Requires: python3-nitrate
 Requires: python3-requests-gssapi
 Requires: python3-feedparser
+Requires: python3-tenacity
 
 %?python_enable_dependency_generator
 

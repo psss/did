@@ -1,7 +1,9 @@
 """ Stats & StatsGroup, the core of the data gathering """
 
 import re
+import sys
 import xmlrpc.client
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import did.base
 from did import utils
@@ -12,10 +14,10 @@ from did.utils import log
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Stats(object):
+class Stats():
     """ General statistics """
     _name = None
-    _error = None
+    error = None
     _enabled = None
     option = None
     dest = None
@@ -23,7 +25,7 @@ class Stats(object):
     stats = None
 
     def __init__(
-            self, option, name=None, parent=None, user=None, options=None):
+            self, /, option, name=None, parent=None, user=None, *, options=None):
         """ Set the name, indent level and initialize data.  """
         self.option = option.replace(" ", "-")
         self.dest = self.option.replace("-", "_")
@@ -36,8 +38,7 @@ class Stats(object):
             self.user = self.parent.user
         else:
             self.user = user
-        log.debug(
-            'Loading {0} Stats instance for {1}'.format(option, self.user))
+        log.debug('Loading %s Stats instance for %s', option, self.user)
 
     @property
     def name(self):
@@ -48,10 +49,9 @@ class Stats(object):
             line.strip() for line in self.__doc__.split("\n")
             if line.strip()][0]
 
-    def add_option(self, group):
+    def add_option(self, parser):
         """ Add option for self to the parser group object. """
-        group.add_argument(
-            "--{0}".format(self.option), action="store_true", help=self.name)
+        parser.add_argument(f"--{self.option}", action="store_true", help=self.name)
 
     def enabled(self):
         """ Check whether we're enabled (or if parent is). """
@@ -74,25 +74,26 @@ class Stats(object):
             return
         try:
             self.fetch()
-        except (xmlrpc.client.Fault, did.base.ConfigError) as error:
+        except (
+                xmlrpc.client.Fault,
+                did.base.ConfigError,
+                ConnectionError
+                ) as error:
             log.error(error)
-            self._error = True
+            self.error = True
             # Raise the exception if debugging
             if not self.options or self.options.debug:
                 raise
-        # Show the results stats (unless merging)
-        if self.options and not self.options.merge:
-            self.show()
 
     def header(self):
         """ Show summary header. """
         # Show question mark instead of count when errors encountered
-        count = "? (error encountered)" if self._error else len(self.stats)
-        utils.item("{0}: {1}".format(self.name, count), options=self.options)
+        count = "? (error encountered)" if self.error else len(self.stats)
+        utils.item(f"{self.name}: {count}", options=self.options)
 
     def show(self):
         """ Display indented statistics. """
-        if not self._error and not self.stats:
+        if not self.error and not self.stats:
             return
         self.header()
         for stat in self.stats:
@@ -103,8 +104,8 @@ class Stats(object):
         for other_stat in other.stats:
             if other_stat not in self.stats:
                 self.stats.append(other_stat)
-        if other._error:
-            self._error = True
+        if other.error:
+            self.error = True
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -120,16 +121,16 @@ class StatsGroupPlugin(type):
         "UserStats",
         ])
 
-    def __init__(cls, name, bases, attrs):
+    def __init__(cls, name, _bases, _attrs):
         if name in StatsGroupPlugin.ignore:
             return
 
-        plugin_name = cls.__module__.split(".")[-1]
+        plugin_name = cls.__module__.rsplit(".", maxsplit=1)[-1]
         registry = StatsGroupPlugin.registry
 
         if plugin_name in registry:
             orig = registry[plugin_name]
-            log.warning("%s overriding %s" % (cls.__module__, orig.__module__))
+            log.warning("%s overriding %s", cls.__module__, orig.__module__)
 
         registry[plugin_name] = cls
 
@@ -147,13 +148,22 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
         for stat in self.stats:
             stat.add_option(group)
 
-        group.add_argument(
-            "--{0}".format(self.option), action="store_true", help="All above")
+        group.add_argument(f"--{self.option}", action="store_true", help="All above")
 
     def check(self):
         """ Check all children stats. """
-        for stat in self.stats:
-            stat.check()
+        with ThreadPoolExecutor() as executor:
+            result_futures = []
+            for stat in self.stats:
+                result_futures.append(executor.submit(stat.check))
+            for f in as_completed(result_futures):
+                # Raise exceptions if raised within the executor.
+                try:
+                    f.result()
+                except did.base.ReportError as error:
+                    log.error("Skipping %s due to %s", f, error)
+                    sys.stdout.flush()
+                    sys.stderr.flush()
 
     def show(self):
         """ List all children stats. """
@@ -162,12 +172,11 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
 
     def merge(self, other):
         """ Merge all children stats. """
-        for this, other in zip(self.stats, other.stats):
-            this.merge(other)
+        for this, other_stats in zip(self.stats, other.stats):
+            this.merge(other_stats)
 
     def fetch(self):
         """ Stats groups do not fetch anything """
-        pass
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -179,14 +188,13 @@ class UserStats(StatsGroup):
 
     def __init__(self, user=None, options=None, config=None):
         """ Initialize stats objects. """
-        super(UserStats, self).__init__(
-            option="all", user=user, options=options)
+        super().__init__(option="all", user=user, options=options)
         config = config or did.base.Config()
         try:
             self.stats = self.configured_plugins(config)
         except did.base.ConfigFileError as error:
             # Missing config file is OK if building options (--help).
-            # Otherwise raise the expection to suggest config example.
+            # Otherwise raise the exception to suggest config example.
             if options is None:
                 log.debug(error)
                 log.debug("This is OK for now as we're just building options.")
@@ -196,20 +204,12 @@ class UserStats(StatsGroup):
     def configured_plugins(self, config):
         """ Create a StatsGroup instance for each configured plugin """
         results = []
-        items_created = False
         for section in config.sections():
             if section == "general":
                 continue
 
             data = dict(config.section(section, skip=set()))
             type_ = data.get("type")
-
-            # All 'items' stats are gathered under a single group
-            if type_ == 'items':
-                if items_created:
-                    continue
-                else:
-                    items_created = True
 
             # Some plugins (like public-inbox) need to have underscores
             # in their names to follow python modules conventions, but
@@ -223,21 +223,27 @@ class UserStats(StatsGroup):
 
             if type_ not in StatsGroupPlugin.registry:
                 raise did.base.ConfigError(
-                    "Invalid plugin type '{0}' in section '{1}'.".format(
-                        type_, section))
+                    f"Invalid plugin type '{type_}' in section '{section}'.")
 
             user = self.user.clone(section) if self.user else None
             statsgroup = StatsGroupPlugin.registry[type_]
-            obj = statsgroup(option=section, parent=self, user=user)
-            # Override default order if requested
-            if 'order' in data:
-                try:
-                    obj.order = int(data['order'])
-                except ValueError:
-                    raise did.base.GeneralError(
-                        f"Invalid order '{data['order']}' "
-                        f"in the '{section}' section.")
-            results.append(obj)
+            try:
+                obj = statsgroup(option=section, parent=self, user=user)
+                orig_order = obj.order
+                # Override default order if requested
+                if 'order' in data:
+                    try:
+                        obj.order = int(data['order'])
+                    except ValueError as exc:
+                        raise did.base.GeneralError(
+                            f"Invalid order '{data['order']}' "
+                            f"in the '{section}' section.") from exc
+                if orig_order != obj.order:
+                    log.debug("Reordered %s from %s to %s",
+                              repr(obj), orig_order, obj.order)
+                results.append(obj)
+            except did.base.ReportError as re_err:
+                log.error("Skipping section %s due to error: %s", section, re_err)
         return sorted(results, key=lambda x: x.order)
 
     def add_option(self, parser):
@@ -265,7 +271,6 @@ class EmptyStats(Stats):
 
     def fetch(self):
         """ Nothing to do for empty stats """
-        pass
 
 
 class EmptyStatsGroup(StatsGroup):
@@ -273,6 +278,6 @@ class EmptyStatsGroup(StatsGroup):
 
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
-        for opt, name in sorted(did.base.Config().section(option)):
+        for opt, opt_name in sorted(did.base.Config().section(option)):
             self.stats.append(
-                EmptyStats(option + "-" + opt, name, parent=self))
+                EmptyStats(f"{option}-{opt}", opt_name, parent=self))

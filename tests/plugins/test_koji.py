@@ -1,6 +1,6 @@
 # coding: utf-8
 """
-Tests for the Bodhi plugin
+Tests for the Koji plugin
 """
 
 import logging
@@ -22,9 +22,10 @@ CONFIG = """
 [general]
 email = "Mikel Olasagasti Uranga" <mikel@olasagasti.info>
 
-[bodhi]
-type = bodhi
-url = https://bodhi.fedoraproject.org/
+[koji]
+type = koji
+url = https://koji.fedoraproject.org/kojihub
+weburl = https://koji.fedoraproject.org/koji
 login = mikelo2
 """
 
@@ -33,26 +34,32 @@ login = mikelo2
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def test_bodhi_updates_created():
+def test_koji_build():
     """ Created issues """
     did.base.Config(CONFIG)
-    option = "--bodhi-updates-created "
+    option = "--koji-builds "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[0].stats
-    assert any("FEDORA-2021-7b8832fad4 - doctl" in str(stat) for stat in stats)
+    assert any("doctl-1.65.0-1.fc34" in str(stat) for stat in stats)
+    stats = did.cli.main(
+        option + INTERVAL + " --format=markdown"
+        )[0][0].stats[0].stats[0].stats
+    assert any(
+        "[doctl-1.65.0-1.fc34](https://koji.fedoraproject.org/"
+        in str(stat) for stat in stats)
     stats = did.cli.main(option + BEFORE)[0][0].stats[0].stats[0].stats
     assert not stats
     stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[0].stats
     assert not stats
 
 
-def test_bodhi_missing_url(caplog: LogCaptureFixture):
+def test_koji_missing_url(caplog: LogCaptureFixture):
     """ Missing url """
     did.base.Config("""
                     [general]
                     email = "Mikel Olasagasti Uranga" <mikel@olasagasti.info>
-                    [bodhi]
-                    type = bodhi
+                    [koji]
+                    type = koji
                     """)
     with caplog.at_level(logging.ERROR):
         did.cli.main(INTERVAL)
-        assert "Skipping section bodhi due to error: No Bodhi url set" in caplog.text
+        assert "Skipping section koji due to error: No koji url set" in caplog.text

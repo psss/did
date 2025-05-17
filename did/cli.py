@@ -31,7 +31,7 @@ stats for this week are reported.
 #  Options
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Options(object):
+class Options():
     """ Command line options parser """
 
     def __init__(self, arguments=None):
@@ -69,10 +69,10 @@ class Options(object):
         log.debug("Loading Sample Stats group to build Options")
         self.sample_stats = UserStats()
         self.sample_stats.add_option(self.parser)
-        log.info("Default command line: did {0}".format(" ".join(
-            [f'--{stat.option}' for stat in self.sample_stats.stats])))
+        log.info("Default command line: did %s",
+                 (" ".join([f'--{stat.option}' for stat in self.sample_stats.stats])))
 
-        # Formating options
+        # Formatting options
         group = self.parser.add_argument_group("Format")
         group.add_argument(
             "--format", default="text", choices=["text", "markdown", "wiki"],
@@ -127,10 +127,10 @@ class Options(object):
         self.check()
 
         # Enable --all if no particular stat or group selected
-        opt.all = not any([
+        opt.all = not any(
             getattr(opt, stat.dest) or getattr(opt, group.dest)
             for group in self.sample_stats.stats
-            for stat in group.stats])
+            for stat in group.stats)
 
         # Time period handling
         if opt.since is None and opt.until is None:
@@ -143,13 +143,14 @@ class Options(object):
             period = "given date range"
 
         # Validate the date range
-        if not opt.since.date < opt.until.date:
+        if opt.since.date >= opt.until.date:
             raise RuntimeError(
-                "Invalid date range ({0} to {1})".format(
-                    opt.since, opt.until.date - delta(days=1)))
+                f"Invalid date range ({opt.since} to {opt.until.date - delta(days=1)})")
 
-        header = "Status report for {0} ({1} to {2})".format(
-            period, opt.since, opt.until.date - delta(days=1))
+        header = (
+            f"Status report for {period} ({opt.since} "
+            f"to {opt.until.date - delta(days=1)})"
+            )
         if opt.format == "markdown":
             # In markdown the first line must be a header
             # using alternate syntax allowing to use did's
@@ -157,11 +158,11 @@ class Options(object):
             header = f"{header}\n{'=' * len(header)}"
         else:
             # In markdown no trailing punctuation is allowed in headings
-            header = header + "."
+            header = f"{header}."
 
         # Finito
         log.debug("Gathered options:")
-        log.debug('options = {0}'.format(opt))
+        log.debug('options = %s', opt)
         return opt, header
 
     def check(self):
@@ -173,8 +174,7 @@ class Options(object):
             'week', 'month', 'quarter', 'year']
         for argument in self.arg:
             if argument not in keywords:
-                raise did.base.OptionError(
-                    "Invalid argument: '{0}'".format(argument))
+                raise did.base.OptionError(f"Invalid argument: '{argument}'")
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -193,64 +193,70 @@ def main(arguments=None):
 
     with the list of all gathered stats objects.
     """
+    config = None
     try:
-        # Load standard and custom plugins
-        utils.load_components("did.plugins", continue_on_error=True)
-        try:
-            custom_plugins = did.base.Config().plugins
-            if custom_plugins:
-                custom_plugins = [
-                    plugin.strip() for plugin in utils.split(custom_plugins)]
-                utils.load_components(*custom_plugins, continue_on_error=True)
-        except did.base.ConfigFileError:
-            pass
+        config = did.base.Config()
+    except did.base.ConfigFileError:
+        utils.info(
+            f"Create at least a minimum config file {did.base.Config.path()}:"
+            f"\n{did.base.Config.example().strip()}")
 
-        # Parse options, initialize gathered stats
-        options, header = Options(arguments).parse()
-        gathered_stats = []
+    # Load standard and custom plugins
+    utils.load_components("did.plugins", continue_on_error=True)
+    if config:
+        custom_plugins = config.plugins
+        if custom_plugins:
+            custom_plugins = [
+                plugin.strip() for plugin in utils.split(custom_plugins)]
+            utils.load_components(*custom_plugins, continue_on_error=True)
 
-        # Check for user email addresses (command line or config)
-        emails = options.emails or did.base.Config().email
-        emails = utils.split(emails, separator=re.compile(r"\s*,\s*"))
-        users = [did.base.User(email=email) for email in emails]
+    # Parse options, initialize gathered stats
+    options, header = Options(arguments).parse()
+    gathered_stats = []
 
-        # Print header and prepare team stats object for data merging
-        print(header)
-        team_stats = UserStats(options=options)
+    # at this point if `--test` was used, Config() is filled.
+    config = did.base.Config()
+
+    # Check for user email addresses (command line or config)
+    emails = options.emails or config.email
+    emails = utils.split(emails, separator=re.compile(r"\s*,\s*"))
+    users = [did.base.User(email=email) for email in emails]
+
+    # Print header and prepare team stats object for data merging
+    print(header)
+    team_stats = UserStats(options=options)
+    if options.merge:
+        utils.header(
+            "Total Report",
+            separator=config.separator,
+            separator_width=config.separator_width)
+        utils.item(f"Users: {len(users)}", options=options)
+
+    # Check individual user stats
+    for user in users:
         if options.merge:
+            utils.item(user, 1, options=options)
+        else:
+            utils.header(
+                user,
+                separator=config.separator,
+                separator_width=config.separator_width)
+        user_stats = UserStats(user=user, options=options)
+        user_stats.check()
+        # Show the results stats (unless merging)
+        if not options.merge:
+            user_stats.show()
+        team_stats.merge(user_stats)
+        gathered_stats.append(user_stats)
+
+    # Display merged team report
+    if options.merge or options.total:
+        if options.total:
             utils.header(
                 "Total Report",
-                separator=did.base.Config().separator,
-                separator_width=did.base.Config().separator_width)
-            utils.item("Users: {0}".format(len(users)), options=options)
+                separator=config.separator,
+                separator_width=config.separator_width)
+        team_stats.show()
 
-        # Check individual user stats
-        for user in users:
-            if options.merge:
-                utils.item(user, 1, options=options)
-            else:
-                utils.header(
-                    user,
-                    separator=did.base.Config().separator,
-                    separator_width=did.base.Config().separator_width)
-            user_stats = UserStats(user=user, options=options)
-            user_stats.check()
-            team_stats.merge(user_stats)
-            gathered_stats.append(user_stats)
-
-        # Display merged team report
-        if options.merge or options.total:
-            if options.total:
-                utils.header(
-                    "Total Report",
-                    separator=did.base.Config().separator,
-                    separator_width=did.base.Config().separator_width)
-            team_stats.show()
-
-        # Return all gathered stats objects
-        return gathered_stats, team_stats
-
-    except did.base.ConfigFileError:
-        utils.info("Create at least a minimum config file {0}:\n{1}".format(
-            did.base.Config.path(), did.base.Config.example().strip()))
-        raise
+    # Return all gathered stats objects
+    return gathered_stats, team_stats

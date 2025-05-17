@@ -22,6 +22,12 @@ We use these endpoints for the most part:
 * https://secure.phabricator.com/conduit/method/transaction.search/
 * https://secure.phabricator.com/conduit/method/user.search/
 
+
+It's also possible to set a timeout, if not specified it defaults to
+60 seconds.
+
+    timeout = 10
+
 """  # noqa: W505
 
 import datetime
@@ -38,6 +44,9 @@ from did.base import Config, ConfigError, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
+# Default number of seconds waiting on Phabricator before giving up
+TIMEOUT = 60
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,12 +60,13 @@ class Phabricator:
     # https://reviews.llvm.org/conduit/method/differential.revision.search/
     MAX_PAGE_SIZE = 100
 
-    def __init__(self, url, token, logins):
+    def __init__(self, url, token, logins, timeout=TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         self.token = token
         self.logins = logins
         self._login_phids = []
+        self.timeout = timeout
 
     @property
     def login_phids(self) -> List[str]:
@@ -74,7 +84,7 @@ class Phabricator:
             log.debug("Resolving logins to Phabricator PHIDs: %s", self.logins)
             # Resolve logins to phids for users
             # see https://reviews.llvm.org/conduit/method/user.search/
-            url = self.url + "/user.search"
+            url = f"{self.url}/user.search"
             data_dict = {}
             for idx, login in enumerate(self.logins):
                 data_dict[f'constraints[usernames][{idx}]'] = login
@@ -84,7 +94,7 @@ class Phabricator:
         return self._login_phids
 
     def search_diffs(
-            self,
+            self, *,
             since: datetime.date = None,
             until: datetime.date = None,
             author_phids: List[str] = None,
@@ -92,7 +102,7 @@ class Phabricator:
             responsible_phids: List[str] = None,
             reviewer_phids: List[str] = None) -> Set["Differential"]:
         """ Find Phabricator Differentials """
-        url = self.url + "/differential.revision.search"
+        url = f"{self.url}/differential.revision.search"
         data_dict = {}
         if author_phids is not None:
             for idx, phid in enumerate(author_phids):
@@ -126,7 +136,7 @@ class Phabricator:
         Returns all the transaction events for a given differential
         object. If given you can search for events by certain authors.
         """
-        url = self.url + "/transaction.search"
+        url = f"{self.url}/transaction.search"
         data_dict = {}
         data_dict["objectIdentifier"] = diff.phid
         if author_phids is not None:
@@ -151,7 +161,7 @@ class Phabricator:
                 del data_dict['after']
             res = self._get_page(url, data_dict)
             if "result" not in res:
-                raise ReportError("Mising key Phabricator dict: result")
+                raise ReportError("Missing key Phabricator dict: result")
             results.extend(res["result"]["data"])
             # Define offset of next differentials to fetch
             if "cursor" in res["result"]:
@@ -174,10 +184,10 @@ class Phabricator:
         if "api.token" not in data_dict:
             data_dict['api.token'] = self.token
         try:
-            response = requests.post(url, data=data_dict)
+            response = requests.post(url, data=data_dict, timeout=self.timeout)
             log.debug("Response headers: %s", response.headers)
-            log.debug(f"MANUAL REQ: curl -sL -X POST {url} -d '"
-                      f"{urlencode(data_dict)}' | jq .")
+            log.debug("MANUAL REQ: curl -sL -X POST %s -d '%s' | jq .",
+                      url, urlencode(data_dict))
         except requests.exceptions.RequestException as error:
             log.debug(error)
             raise ReportError(
@@ -401,7 +411,7 @@ class TransactionEvent:
             since: datetime.date = None,
             until: datetime.date = None) -> bool:
         """
-        Returns true if the event happend in the given timestamp range,
+        Returns true if the event happened in the given timestamp range,
         including the boundaries.
         """
         date_modified = datetime.date.fromtimestamp(self._date_modified)
@@ -436,7 +446,7 @@ class TransactionEvent:
 
     def __str__(self):
         """ String representation """
-        return f"{self.author_phid} - {self.event_type} - {self._dateModified}"
+        return f"{self.author_phid} - {self.event_type} - {self._date_modified}"
 
     def __hash__(self):
         return hash(self._id)
@@ -472,7 +482,6 @@ class DifferentialsBaseStats(Stats):
 
     def fetch(self):
         """ To be implemented by subclasses """
-        pass
 
     def fetch_all_relevant_diffs(self):
         """
@@ -620,25 +629,26 @@ class PhabricatorStats(StatsGroup):
         self.logins = [
             login.strip() for login in str(
                 config["login"]).split(",")]
-        if self.logins == []:
-            raise ConfigError(f"Empty login found in [{option}] setion")
-        self.phabricator = Phabricator(self.url, self.token, self.logins)
+        if self.logins == ['']:
+            raise ConfigError(f"Empty login found in [{option}] section")
+        self.phabricator = Phabricator(self.url, self.token, self.logins,
+                                       timeout=config.get("timeout"))
 
         # Create the list of stats
         self.stats = [
             DifferentialsCreated(
-                option=option + "-differentials-created", parent=self,
+                option=f"{option}-differentials-created", parent=self,
                 name=f"Differentials created on {option}"),
             DifferentialsAccepted(
-                option=option + "-differentials-accepted", parent=self,
+                option=f"{option}-differentials-accepted", parent=self,
                 name=f"Differentials accepted on {option}"),
             DifferentialsCommented(
-                option=option + "-differentials-commented", parent=self,
+                option=f"{option}-differentials-commented", parent=self,
                 name=f"Differentials commented on {option}"),
             DifferentialsRequestedChanges(
-                option=option + "-differentials-changes-requested", parent=self,
+                option=f"{option}-differentials-changes-requested", parent=self,
                 name=f"Differentials for which changes were requested on {option}"),
             DifferentialsClosed(
-                option=option + "-differentials-closed", parent=self,
+                option=f"{option}-differentials-closed", parent=self,
                 name=f"Differentials closed on {option}"),
             ]

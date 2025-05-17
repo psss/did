@@ -21,32 +21,38 @@ from did.utils import listed, log, pretty
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class Bodhi(object):
+class Bodhi():
     """ Bodhi """
+    # pylint: disable=too-few-public-methods
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         """ Initialize url """
         self.url = url
+        self.client: BodhiClient
 
-    def search(self, query):
+    def connect(self):
+        """
+        Establish connection to Bodhi and make the client available.
+        """
+        self.client = BodhiClient(self.url)
+
+    def search(self, query: str) -> list:
         """ Perform Bodhi query """
         result = []
-        current_page = 1
-        original_query = query
+        current_page: int = 1
+        original_query: str = query
         while current_page:
-            log.debug("Bodhi query: {0}".format(query))
-            client = BodhiClient(self.url)
-            data = client.send_request(query, verb='GET')
+            log.debug("Bodhi query: %s", query)
+            data = self.client.send_request(query, verb='GET')
             objects = data['updates']
-            log.debug("Result: {0} fetched".format(
-                listed(len(objects), "item")))
+            log.debug("Result: %s fetched", listed(len(objects), "item"))
             log.data(pretty(data))
             result.extend(objects)
             if current_page < data['pages']:
                 current_page = current_page + 1
                 query = f"{original_query}&page={current_page}"
             else:
-                current_page = None
+                current_page = 0
         return result
 
 
@@ -54,18 +60,19 @@ class Bodhi(object):
 #  Update
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Update(object):
+class Update():
     """ Bodhi update """
+    # pylint: disable=too-few-public-methods
 
-    def __init__(self, data, format):
+    def __init__(self, data, output_format):
         self.data = data
-        self.format = format
+        self.format = output_format
         self.title = data['title']
         self.project = data['release']['name']
         self.identifier = data['alias']
         self.created = data['date_submitted']
         self.url = data['url']
-        log.details('[{0}] {1}'.format(self.created, self))
+        log.details(f'[{self.created}] {self}')
 
     def __str__(self):
         """ String representation """
@@ -82,14 +89,17 @@ class UpdatesCreated(Stats):
     """ Updates created """
 
     def fetch(self):
-        log.info('Searching for updates created by {0}'.format(self.user))
+        log.info('Searching for updates created by %s', self.user)
         self.stats = [
             Update(update, self.parent.options.format)
             for update in self.parent.bodhi.search(
-                query='updates/?user={0}&submitted_before={1}'
-                '&submitted_since={2}'.format(
-                      self.user.login, self.options.until.date,
-                      self.options.since.date))]
+                query=(
+                    f'updates/?user={self.user.login}'
+                    f'&submitted_before={self.options.until.date}'
+                    f'&submitted_since={self.options.since.date}'
+                    )
+                )
+            ]
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -106,15 +116,20 @@ class BodhiStats(StatsGroup):
         StatsGroup.__init__(self, option, name, parent, user)
         config = dict(Config().section(option))
         # Check server url
-        try:
-            self.url = config['url']
-        except KeyError:
-            raise ReportError(
-                'No Bodhi url set in the [{0}] section'.format(option))
+        self.url = config.get('url')
+        if not self.url:
+            raise ReportError(f'No Bodhi url set in the [{option}] section')
         self.bodhi = Bodhi(self.url)
         # Create the list of stats
         self.stats = [
             UpdatesCreated(
-                option=option + '-updates-created', parent=self,
-                name='Updates created on {0}'.format(option)),
+                option=f'{option}-updates-created', parent=self,
+                name=f'Updates created on {option}'),
             ]
+
+    def check(self):
+        """
+        Connects to bodhi and check stats
+        """
+        self.bodhi.connect()
+        super().check()

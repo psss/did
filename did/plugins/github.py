@@ -22,6 +22,10 @@ well. Use ``,`` as the separator, for example::
 
     org = one,two,three
 
+It's also possible to exclude organizations:
+
+    exclude_org = four,five
+
 The authentication token is optional. However, unauthenticated
 queries are limited. For more details see `GitHub API`__ docs.
 Use ``login`` to override the default email address for searching.
@@ -32,13 +36,21 @@ token stored in a file rather than in your did config file.
 
 __ https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
 
-"""  # noqa: W505,E501
+
+It's also possible to set a timeout, if not specified it defaults to 60 seconds.
+
+    timeout = 10
+
+"""  # noqa: W505,E501 # pylint:disable=line-too-long
 
 import json
 import re
 import time
+from datetime import datetime
 
 import requests
+from tenacity import (RetryError, Retrying, retry_if_exception_type,
+                      stop_after_attempt)
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup
@@ -50,19 +62,25 @@ PADDING = 3
 # Number of issues to be fetched per page
 PER_PAGE = 100
 
+# Default number of seconds waiting on GitHub before giving up
+TIMEOUT = 60
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Investigator
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class GitHub(object):
+class GitHub():
     """ GitHub Investigator """
+    # pylint: disable=too-few-public-methods
 
-    def __init__(self, url, token=None, user=None, org=None, repo=None):
+    def __init__(self, *, url, token=None, user=None,
+                 org=None, repo=None, exclude_org=None, timeout=TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
+        self.timeout = timeout
         if token is not None:
-            self.headers = {'Authorization': 'token {0}'.format(token)}
+            self.headers = {'Authorization': f'token {token}'}
         else:
             self.headers = {}
 
@@ -71,30 +89,59 @@ class GitHub(object):
             """ Prepare one or more conditions for given key & names """
             if not names:
                 return []
-            return [f"+{key}:{name}" for name in re.split(r"\s*,\s*", names)]
+            return [f"{key}:{name}" for name in re.split(r"\s*,\s*", names)]
 
         self.filter = "".join(
-            condition("user", user) +
-            condition("org", org) +
-            condition("repo", repo))
+            condition("+user", user) +
+            condition("+org", org) +
+            condition("+repo", repo) +
+            condition("+-org", exclude_org)
+            )
 
-    def search(self, query):
-        """ Perform GitHub query """
-        result = []
-        url = self.url + "/" + query + self.filter + f"&per_page={PER_PAGE}"
+    def commented_in_range(self,
+                           commented_issues: list,
+                           since: datetime,
+                           until: datetime,
+                           login: str) -> list:
+        valid_issues = []
+        for issue in commented_issues:
+            comments = json.loads(
+                self.request(issue["comments_url"]).text
+                )
+            log.debug("Comments fetched for %s", issue["html_url"])
+            log.data(pretty(comments))
+            for comment in comments:
+                created_at = datetime.strptime(
+                    comment["created_at"],
+                    r"%Y-%m-%dT%H:%M:%SZ"
+                    )
+                if (
+                        comment["user"]["login"] == login and
+                        (since <= created_at <= until)
+                        ):
+                    valid_issues.append(issue)
+                    break
+        return valid_issues
 
+    def request(self, url):
         while True:
-            # Fetch the query
-            log.debug(f"GitHub query: {url}")
             try:
-                response = requests.get(url, headers=self.headers)
-                log.debug(f"Response headers:\n{response.headers}")
-            except requests.exceptions.RequestException as error:
+                for attempt in Retrying(
+                        stop=stop_after_attempt(3),
+                        retry=retry_if_exception_type(
+                            requests.exceptions.ConnectionError),
+                        before_sleep=log.debug("Trying to connect to GitHUb..."),
+                        reraise=True):
+                    with attempt:
+                        response = requests.get(
+                            url, headers=self.headers, timeout=self.timeout
+                            )
+                log.debug("Response headers:\n%s", response.headers)
+            except (requests.exceptions.RequestException, RetryError) as error:
                 log.debug(error)
-                raise ReportError(f"GitHub search on {self.url} failed.")
-
+                raise ReportError(f"GitHub request on {self.url} failed.") from error
             # Check if credentials are valid
-            log.debug(f"GitHub status code: {response.status_code}")
+            log.debug("GitHub status code: %s", response.status_code)
             if response.status_code == 401:
                 raise ReportError(
                     "Defined token is not valid. "
@@ -106,18 +153,31 @@ class GitHub(object):
                     reset_time = int(response.headers["X-RateLimit-Reset"])
                     sleep_time = int(max(reset_time - time.time(), 0)) + 1
                     log.warning("GitHub rate limit exceeded, use token to speed up.")
-                    log.warning(f"Sleeping now for {listed(sleep_time, 'second')}.")
+                    log.warning("Sleeping now for %s.", listed(sleep_time, 'second'))
                     time.sleep(sleep_time)
                     continue
                 raise ReportError(f"GitHub query failed: {response.text}")
+            # all good!
+            break
 
+        return response
+
+    def search(self, query):
+        """ Perform GitHub query """
+        result = []
+        url = f"{self.url}/{query}{self.filter}&per_page={PER_PAGE}"
+
+        while True:
+            # Fetch the query
+            log.debug("GitHub query: %s", url)
+            response = self.request(url)
             # Parse fetched json data
             try:
                 data = json.loads(response.text)["items"]
                 result.extend(data)
             except requests.exceptions.JSONDecodeError as error:
                 log.debug(error)
-                raise ReportError(f"GitHub JSON failed: {response.text}.")
+                raise ReportError(f"GitHub JSON failed: {response.text}.") from error
 
             # Update url to the next page, break if no next page
             # provided
@@ -126,7 +186,7 @@ class GitHub(object):
             else:
                 break
 
-        log.debug("Result: {0} fetched".format(listed(len(result), "item")))
+        log.debug("Result: %s fetched", listed(len(result), "item"))
         log.data(pretty(result))
         return result
 
@@ -135,7 +195,7 @@ class GitHub(object):
 #  Issue
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Issue(object):
+class Issue():
     """ GitHub Issue """
 
     def __init__(self, data, parent):
@@ -150,14 +210,11 @@ class Issue(object):
 
     def __str__(self):
         """ String representation """
+        label = f"{self.owner}/{self.project}#{str(self.id).zfill(PADDING)}"
         if self.options.format == "markdown":
-            return "[{0}/{1}#{2}]({3}) - {4}".format(
-                self.owner, self.project,
-                str(self.id), self.data["html_url"], self.data["title"].strip())
-        else:
-            return "{0}/{1}#{2} - {3}".format(
-                self.owner, self.project,
-                str(self.id).zfill(PADDING), self.data["title"])
+            return f'[{label}]({self.data["html_url"]}) - {self.data["title"].strip()}'
+        # plain text format
+        return f'{label} - {self.data["title"]}'
 
     def __eq__(self, other):
         """ Equality comparison """
@@ -181,10 +238,12 @@ class IssuesCreated(Stats):
     """ Issues created """
 
     def fetch(self):
-        log.info("Searching for issues created by {0}".format(self.user))
-        query = "search/issues?q=author:{0}+created:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:issue"
+        log.info("Searching for issues created by %s", self.user)
+        query = (
+            f"search/issues?q=author:{self.user.login}"
+            f"+created:{self.options.since}..{self.options.until}"
+            "+type:issue"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -193,10 +252,12 @@ class IssuesClosed(Stats):
     """ Issues closed """
 
     def fetch(self):
-        log.info("Searching for issues closed by {0}".format(self.user))
-        query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:issue"
+        log.info("Searching for issues closed by %s", self.user)
+        query = (
+            f"search/issues?q=assignee:{self.user.login}"
+            f"+closed:{self.options.since}..{self.options.until}"
+            "+type:issue"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -205,23 +266,33 @@ class IssueCommented(Stats):
     """ Issues commented """
 
     def fetch(self):
-        log.info("Searching for issues commented on by {0}".format(self.user))
-        query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:issue"
+        log.info("Searching for issues commented on by %s", self.user)
+        query = (
+            f"search/issues?q=commenter:{self.user.login}"
+            f"+updated:{self.options.since}..{self.options.until}"
+            "+type:issue"
+            )
+        commented_issues = self.parent.github.search(query)
+        valid_issues = self.parent.github.commented_in_range(
+            commented_issues,
+            self.options.since.datetime,
+            self.options.until.datetime,
+            self.user.login
+            )
         self.stats = [
-            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in valid_issues]
 
 
 class PullRequestsCreated(Stats):
     """ Pull requests created """
 
     def fetch(self):
-        log.info("Searching for pull requests created by {0}".format(
-            self.user))
-        query = "search/issues?q=author:{0}+created:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:pr"
+        log.info("Searching for pull requests created by %s", self.user)
+        query = (
+            f"search/issues?q=author:{self.user.login}"
+            f"+created:{self.options.since}..{self.options.until}"
+            "+type:pr"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -230,24 +301,33 @@ class PullRequestsCommented(Stats):
     """ Pull requests commented """
 
     def fetch(self):
-        log.info("Searching for pull requests commented on by {0}".format(
-            self.user))
-        query = "search/issues?q=commenter:{0}+updated:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:pr"
+        log.info("Searching for pull requests commented on by %s", self.user)
+        query = (
+            f"search/issues?q=commenter:{self.user.login}"
+            f"+updated:{self.options.since}..{self.options.until}"
+            "+type:pr"
+            )
+        commented_issues = self.parent.github.search(query)
+        valid_issues = self.parent.github.commented_in_range(
+            commented_issues,
+            self.options.since.datetime,
+            self.options.until.datetime,
+            self.user.login
+            )
         self.stats = [
-            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in valid_issues]
 
 
 class PullRequestsClosed(Stats):
     """ Pull requests closed """
 
     def fetch(self):
-        log.info("Searching for pull requests closed by {0}".format(
-            self.user))
-        query = "search/issues?q=assignee:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:pr"
+        log.info("Searching for pull requests closed by %s", self.user)
+        query = (
+            f"search/issues?q=assignee:{self.user.login}"
+            f"+closed:{self.options.since}..{self.options.until}"
+            "+type:pr"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -256,11 +336,13 @@ class PullRequestsReviewed(Stats):
     """ Pull requests reviewed """
 
     def fetch(self):
-        log.info("Searching for pull requests reviewed by {0}".format(
-            self.user))
-        query = "search/issues?q=reviewed-by:{0}+-author:{0}+closed:{1}..{2}".format(
-            self.user.login, self.options.since, self.options.until)
-        query += "+type:pr"
+        log.info("Searching for pull requests reviewed by %s", self.user)
+        query = (
+            f"search/issues?q=reviewed-by:{self.user.login}"
+            f"+-author:{self.user.login}"
+            f"+closed:{self.options.since}..{self.options.until}"
+            "+type:pr"
+            )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -282,9 +364,9 @@ class GitHubStats(StatsGroup):
         # Check server url
         try:
             self.url = config["url"]
-        except KeyError:
+        except KeyError as keyerr:
             raise ReportError(
-                "No github url set in the [{0}] section".format(option))
+                f"No github url set in the [{option}] section") from keyerr
 
         # Check authorization token
         self.token = get_token(config)
@@ -293,29 +375,31 @@ class GitHubStats(StatsGroup):
             token=self.token,
             org=config.get("org"),
             user=config.get("user"),
-            repo=config.get("repo"))
+            repo=config.get("repo"),
+            exclude_org=config.get("exclude_org"),
+            timeout=config.get("timeout"))
 
         # Create the list of stats
         self.stats = [
             IssuesCreated(
-                option=option + "-issues-created", parent=self,
-                name="Issues created on {0}".format(option)),
+                option=f"{option}-issues-created", parent=self,
+                name=f"Issues created on {option}"),
             IssueCommented(
-                option=option + "-issues-commented", parent=self,
-                name="Issues commented on {0}".format(option)),
+                option=f"{option}-issues-commented", parent=self,
+                name=f"Issues commented on {option}"),
             IssuesClosed(
-                option=option + "-issues-closed", parent=self,
-                name="Issues closed on {0}".format(option)),
+                option=f"{option}-issues-closed", parent=self,
+                name=f"Issues closed on {option}"),
             PullRequestsCreated(
-                option=option + "-pull-requests-created", parent=self,
-                name="Pull requests created on {0}".format(option)),
+                option=f"{option}-pull-requests-created", parent=self,
+                name=f"Pull requests created on {option}"),
             PullRequestsCommented(
-                option=option + "-pull-requests-commented", parent=self,
-                name="Pull requests commented on {0}".format(option)),
+                option=f"{option}-pull-requests-commented", parent=self,
+                name=f"Pull requests commented on {option}"),
             PullRequestsClosed(
-                option=option + "-pull-requests-closed", parent=self,
-                name="Pull requests closed on {0}".format(option)),
+                option=f"{option}-pull-requests-closed", parent=self,
+                name=f"Pull requests closed on {option}"),
             PullRequestsReviewed(
-                option=option + "-pull-requests-reviewed", parent=self,
-                name="Pull requests reviewed on {0}".format(option)),
+                option=f"{option}-pull-requests-reviewed", parent=self,
+                name=f"Pull requests reviewed on {option}"),
             ]
