@@ -185,6 +185,33 @@ def shorted(text, width=MAX_WIDTH):
     return "\n".join(lines)
 
 
+def strtobool(value):
+    """
+    Convert various boolean formats to True (1) or False (0).
+    """
+
+    value = str(value).lower()
+    mapping = {
+        "y": 1,
+        "yes": 1,
+        "t": 1,
+        "true": 1,
+        "on": 1,
+        "1": 1,
+        "n": 0,
+        "no": 0,
+        "f": 0,
+        "false": 0,
+        "off": 0,
+        "0": 0,
+        }
+
+    try:
+        return mapping[value]
+    except KeyError:
+        raise ValueError(f"Invalid boolean value '{value}'.")
+
+
 def item(text, level=0, options=None):
     """ Print indented item. """
     # Extra line before in each section (unless brief)
