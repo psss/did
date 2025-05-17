@@ -210,8 +210,8 @@ def strtobool(value):
 
     try:
         return mapping[value]
-    except KeyError:
-        raise ValueError(f"Invalid boolean value '{value}'.")
+    except KeyError as exception:
+        raise ValueError(f"Invalid boolean value '{value}'.") from exception
 
 
 def item(text, level=0, options=None):

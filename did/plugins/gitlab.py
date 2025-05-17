@@ -33,6 +33,7 @@ from time import sleep
 
 import dateutil
 import requests
+import urllib3
 from urllib3.exceptions import InsecureRequestWarning
 
 from did.base import Config, ReportError, get_token
@@ -424,7 +425,7 @@ class GitLabStats(StatsGroup):
                 f"Invalid ssl_verify option for GitLab in [{option}] section"
                 ) from ve
         if not self.ssl_verify:
-            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+            urllib3.disable_warnings(InsecureRequestWarning)
         self.gitlab = GitLab(
             self.url, self.token, self.ssl_verify, timeout=config.get("timeout"))
         # Create the list of stats

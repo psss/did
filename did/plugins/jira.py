@@ -92,6 +92,7 @@ from datetime import datetime
 
 import dateutil.parser
 import requests
+import urllib3
 import urllib3.exceptions
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
 
@@ -555,8 +556,7 @@ class JiraStats(StatsGroup):
         self._session = requests.Session()
         # Disable SSL warning when ssl_verify is False
         if not self.ssl_verify:
-            requests.packages.urllib3.disable_warnings(
-                urllib3.exceptions.InsecureRequestWarning)
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         while True:
             if self.auth_type == 'basic':
                 response = self._basic_auth_session()

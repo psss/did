@@ -29,7 +29,7 @@ from did.base import Config, Date, ReportError, User
 from did.stats import Stats, StatsGroup
 from did.utils import item, log
 
-USER_AGENT = "did/{}".format(version('did'))
+USER_AGENT = f"did/{version('did')}"
 
 # Default number of seconds waiting on inbox before giving up
 TIMEOUT = 60
@@ -148,7 +148,10 @@ class PublicInbox():
         url = self.__get_url(f"/all/{msg_id}/t.mbox.gz")
 
         log.debug("Fetching message %s thread (%s)", msg_id, url)
-        resp = requests.get(url, headers={'User-Agent': USER_AGENT}, timeout=self.timeout)
+        resp = requests.get(
+            url,
+            headers={'User-Agent': USER_AGENT},
+            timeout=self.timeout)
         mbox = self.__get_mbox_from_content(resp.content)
         for msg in self.__get_msgs_from_mbox(mbox):
             if msg.is_thread_root():

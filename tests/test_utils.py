@@ -7,7 +7,6 @@ import pytest
 
 import did
 import did.utils
-from did.utils import strtobool
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -144,21 +143,21 @@ def test_color_function_exists():
 
 def test_strtobool():
     # True
-    assert strtobool("yes") == 1
-    assert strtobool("y") == 1
-    assert strtobool("on") == 1
-    assert strtobool("true") == 1
-    assert strtobool("True") == 1
-    assert strtobool("TRUE") == 1
-    assert strtobool("1") == 1
-    assert strtobool(1) == 1
+    assert did.utils.strtobool("yes") == 1
+    assert did.utils.strtobool("y") == 1
+    assert did.utils.strtobool("on") == 1
+    assert did.utils.strtobool("true") == 1
+    assert did.utils.strtobool("True") == 1
+    assert did.utils.strtobool("TRUE") == 1
+    assert did.utils.strtobool("1") == 1
+    assert did.utils.strtobool(1) == 1
 
     # False
-    assert strtobool("no") == 0
-    assert strtobool("n") == 0
-    assert strtobool("off") == 0
-    assert strtobool("false") == 0
-    assert strtobool("False") == 0
-    assert strtobool("FALSE") == 0
-    assert strtobool("0") == 0
-    assert strtobool(0) == 0
+    assert did.utils.strtobool("no") == 0
+    assert did.utils.strtobool("n") == 0
+    assert did.utils.strtobool("off") == 0
+    assert did.utils.strtobool("false") == 0
+    assert did.utils.strtobool("False") == 0
+    assert did.utils.strtobool("FALSE") == 0
+    assert did.utils.strtobool("0") == 0
+    assert did.utils.strtobool(0) == 0
