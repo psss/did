@@ -5,6 +5,7 @@ import os
 import pytest
 
 import did
+from did.utils import strtobool
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -150,3 +151,29 @@ def test_Coloring():
 def test_color():
     from did.utils import color
     assert color
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  strtobool
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def test_strtobool():
+    # True
+    assert strtobool("yes") == 1
+    assert strtobool("y") == 1
+    assert strtobool("on") == 1
+    assert strtobool("true") == 1
+    assert strtobool("True") == 1
+    assert strtobool("TRUE") == 1
+    assert strtobool("1") == 1
+    assert strtobool(1) == 1
+
+    # False
+    assert strtobool("no") == 0
+    assert strtobool("n") == 0
+    assert strtobool("off") == 0
+    assert strtobool("false") == 0
+    assert strtobool("False") == 0
+    assert strtobool("FALSE") == 0
+    assert strtobool("0") == 0
+    assert strtobool(0) == 0
