@@ -16,12 +16,15 @@ import mailbox
 import tempfile
 import typing
 import urllib.parse
+from importlib.metadata import version
 
 import requests
 
 from did.base import Config, Date, ReportError, User
 from did.stats import Stats, StatsGroup
 from did.utils import item, log
+
+USER_AGENT = "did/{}".format(version('did'))
 
 
 class Message(object):
@@ -133,7 +136,7 @@ class PublicInbox(object):
         url = self.__get_url("/all/%s/t.mbox.gz" % msg_id)
 
         log.debug("Fetching message %s thread (%s)" % (msg_id, url))
-        resp = requests.get(url)
+        resp = requests.get(url, headers={'User-Agent': USER_AGENT})
         mbox = self.__get_mbox_from_content(resp.content)
         for msg in self.__get_msgs_from_mbox(mbox):
             if msg.is_thread_root():
@@ -176,7 +179,7 @@ class PublicInbox(object):
                  (self.url, self.user, since_str, until_str))
         resp = requests.post(
             self.__get_url("/all/"),
-            headers={"Content-Length": "0"},
+            headers={"Content-Length": "0", "User-Agent": USER_AGENT},
             params={
                 "q": "(f:%s AND d:%s..%s)"
                 % (self.user.email, since_str, until_str),
