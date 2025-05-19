@@ -53,7 +53,7 @@ def test_git_format():
 
 def test_git_team():
     """ Team report """
-    emails = " --email psplicha@redhat.com,cward@redhat.com"
+    emails = "--email psplicha@redhat.com,cward@redhat.com"
     did.base.Config(CONFIG.format(GIT_PATH))
     did.cli.main(f"{INTERVAL} {emails}")
     did.cli.main(f"{INTERVAL} {emails} --total")
