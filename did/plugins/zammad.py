@@ -38,7 +38,7 @@ class Zammad():
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         if token is not None:
-            self.headers = {'Authorization': 'Token token={token}'}
+            self.headers = {'Authorization': f'Token token={token}'}
         else:
             self.headers = {}
 

@@ -379,7 +379,7 @@ class ConfluenceStats(StatsGroup):
         # Create the list of stats
         self.stats = [
             PageCreated(
-                option=f"{option}-pages",
+                option=f"{option}-pages-created",
                 parent=self,
                 name=f"Pages created in {option}"),
             PageModified(

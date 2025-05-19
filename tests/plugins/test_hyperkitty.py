@@ -1,5 +1,5 @@
 # coding: utf-8
-""" Tests for the Public Inbox plugin """
+""" Tests for the HyperKitty plugin """
 
 import logging
 

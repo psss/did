@@ -257,7 +257,7 @@ def listed(items, singular=None, plural=None, maximum=None, quote=""):
         listed(range(1)) .................... 0
         listed(range(2)) .................... 0 and 1
         listed(range(3), quote='"') ......... "0", "1" and "2"
-        listed(range(4), maximum=3) ............. 0, 1, 2 and 1 more
+        listed(range(4), maximum=3) ......... 0, 1, 2 and 1 more
         listed(range(5), 'number', max=3) ... 0, 1, 2 and 2 more numbers
         listed(range(6), 'category') ........ 6 categories
         listed(7, "leaf", "leaves") ......... 7 leaves
