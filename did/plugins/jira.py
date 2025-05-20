@@ -93,7 +93,7 @@ from datetime import datetime
 import dateutil.parser
 import requests
 import urllib3
-import urllib3.exceptions
+from urllib3.exceptions import InsecureRequestWarning
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
 
 from did.base import Config, ReportError, get_token
