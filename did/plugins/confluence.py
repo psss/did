@@ -74,7 +74,6 @@ from datetime import datetime
 
 import requests
 import urllib3
-import urllib3.exceptions
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
 
 from did.base import Config, ReportError, get_token
