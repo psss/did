@@ -42,7 +42,7 @@ class Message():
     def __msg_id(self, keyid: str) -> typing.Optional[str]:
         msgid = self.msg[keyid]
         if msgid is None:
-            log.debug("Missing header %s" % keyid)
+            log.debug("Missing header %s", keyid)
             return None
 
         return msgid.lstrip("<").rstrip(">")
