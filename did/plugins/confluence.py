@@ -72,6 +72,7 @@ import time
 import urllib.parse
 from datetime import datetime
 
+import dateutil.parser
 import requests
 import urllib3
 from requests_gssapi import DISABLED, HTTPSPNEGOAuth
@@ -105,6 +106,79 @@ class Confluence():
     # pylint: disable=too-few-public-methods
 
     @staticmethod
+    def fetch_ratelimited_url(session, current_url, timeout):
+        log.debug("Fetching %s", current_url)
+        while True:
+            try:
+                response = session.get(
+                    current_url,
+                    timeout=timeout)
+                # Handle the exceeded rate limit
+                if response.status_code == 429:
+                    if response.headers.get("X-RateLimit-Remaining") == "0":
+                        # Wait at least a second.
+                        retry_after = max(int(response.headers["retry-after"]), 1)
+                        log.warning("Confluence rate limit exceeded.")
+                        log.warning("Sleeping now for %s.",
+                                    listed(retry_after, 'second'))
+                        time.sleep(retry_after)
+                        continue
+
+                response.raise_for_status()
+            except requests.Timeout:
+                log.warning(
+                    "Timed out fetching %s",
+                    current_url)
+                continue
+            except (requests.exceptions.ConnectionError,
+                    urllib3.exceptions.NewConnectionError,
+                    requests.exceptions.HTTPError
+                    ) as error:
+                log.error("Error fetching '%s': %s", current_url, error)
+                raise ReportError(
+                    f"Failed to connect to Confluence at {current_url}."
+                    ) from error
+            break
+        try:
+            data = response.json()
+        except requests.exceptions.JSONDecodeError as error:
+            log.debug(error)
+            raise ReportError(
+                f"Confluence JSON failed: {response.text}."
+                ) from error
+        if not response.ok:
+            try:
+                error = " ".join(data["errorMessages"])
+            except KeyError:
+                error = "unknown"
+            raise ReportError(
+                f"Failed to fetch confluence data at '{current_url}'. "
+                f"The reason was '{response.reason}' "
+                f"and the error was '{error}'.")
+        log.data(pretty(data))
+        return data
+
+    @staticmethod
+    def get_page_versions(page_id, stats):
+        "Fetch all versions of the given page"
+        version_url = f"{stats.parent.url}/rest/experimental/content/{page_id}/version"
+        versions = []
+        start = 0
+        limit = 50
+        while True:
+            encoded_query = urllib.parse.urlencode({"start": start, "limit": limit})
+
+            data = Confluence.fetch_ratelimited_url(
+                stats.parent.session,
+                f"{version_url}?{encoded_query}",
+                stats.parent.timeout)
+            versions.extend(data.get("results", []))
+            if len(data.get("results", [])) < limit:
+                break
+            start += limit
+        return versions
+
+    @staticmethod
     def search(query, stats, expand=None, timeout=TIMEOUT):
         """ Perform page/comment search for given stats instance """
         log.debug("Search query: %s", query)
@@ -120,54 +194,9 @@ class Confluence():
                     }
                 )
             current_url = f"{stats.parent.url}/rest/api/content/search?{encoded_query}"
-            log.debug("Fetching %s", current_url)
-            while True:
-                try:
-                    response = stats.parent.session.get(
-                        current_url,
-                        timeout=timeout)
-                    # Handle the exceeded rate limit
-                    if response.status_code == 429:
-                        if response.headers.get("X-RateLimit-Remaining") == "0":
-                            # Wait at least a second.
-                            retry_after = max(int(response.headers["retry-after"]), 1)
-                            log.warning("Confluence rate limit exceeded.")
-                            log.warning("Sleeping now for %s.",
-                                        listed(retry_after, 'second'))
-                            time.sleep(retry_after)
-                            continue
-
-                    response.raise_for_status()
-                except requests.Timeout:
-                    log.warning(
-                        "Timed out fetching %s",
-                        current_url)
-                    continue
-                except (requests.exceptions.ConnectionError,
-                        urllib3.exceptions.NewConnectionError,
-                        requests.exceptions.HTTPError
-                        ) as error:
-                    log.error("Error fetching '%s': %s", current_url, error)
-                    raise ReportError(
-                        f"Failed to connect to Confluence at {stats.parent.url}."
-                        ) from error
-                break
-            try:
-                data = response.json()
-            except requests.exceptions.JSONDecodeError as error:
-                log.debug(error)
-                raise ReportError(
-                    f"Confluence JSON failed: {response.text}."
-                    ) from error
-            if not response.ok:
-                try:
-                    error = " ".join(data["errorMessages"])
-                except KeyError:
-                    error = "unknown"
-                raise ReportError(
-                    f"Failed to fetch confluence data for query '{query}'. "
-                    f"The reason was '{response.reason}' "
-                    f"and the error was '{error}'.")
+            data = Confluence.fetch_ratelimited_url(
+                stats.parent.session, current_url, timeout
+                )
             log.debug(
                 "Batch %s result: %s fetched",
                 batch,
@@ -250,12 +279,27 @@ class PageModified(Stats):
             f"AND lastmodified >= {self.options.since} "
             f"AND lastmodified < {self.options.until}")
         result = Confluence.search(query, self, timeout=self.parent.timeout)
+        filtered_result = []
+
+        for page in result:
+            versions = Confluence.get_page_versions(page["id"], self)
+            for version in versions:
+                by = version.get("by", {}).get("username", "")
+                when = dateutil.parser.parse(version["when"]).date()
+                if by != self.user.login:
+                    continue
+                if self.options.since.date < when < self.options.until.date:
+                    log.info(
+                        "found version %s authored by %s on %s",
+                        version["number"], by, when
+                        )
+                    filtered_result.append(page)
         self.stats = [
             ConfluencePage(
                 page,
                 self.parent.url,
                 self.options.format
-                ) for page in result
+                ) for page in filtered_result
             ]
 
 
