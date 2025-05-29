@@ -63,3 +63,11 @@ def test_invalid_date():
     for argument in ["--since x", "--since 2015-16-17"]:
         with pytest.raises(did.base.OptionError):
             did.cli.main(argument)
+
+
+def test_conflicting_options():
+    """ Complain about conflicting options """
+    did.base.Config(config=MINIMAL)
+    for argument in ["last week --since 2025-05-29", "last week --until 2025-05-29"]:
+        with pytest.raises(did.base.OptionError):
+            did.cli.main(argument)
