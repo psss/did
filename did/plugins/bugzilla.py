@@ -45,6 +45,8 @@ import xmlrpc.client
 
 import bugzilla
 import requests.exceptions
+from tenacity import (RetryError, Retrying, retry_if_exception_type,
+                      stop_after_attempt)
 
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
@@ -95,8 +97,21 @@ class Bugzilla():
         log.debug("Search query:")
         log.debug(pretty(query))
         # Fetch bug info
+
         try:
-            result = self.server.query(query)
+            for attempt in Retrying(
+                    stop=stop_after_attempt(3),
+                    retry=retry_if_exception_type(
+                        requests.exceptions.ConnectionError),
+                    before_sleep=log.debug("Trying to connect to Bugzilla..."),
+                    reraise=True):
+                with attempt:
+                    result = self.server.query(query)
+        except (requests.exceptions.RequestException, RetryError) as error:
+            log.debug(error)
+            raise ReportError(
+                f"Bugzilla search for [{self.parent.option}] section failed."
+                ) from error
         except xmlrpc.client.Fault as error:
             # Ignore non-existent users (this is necessary for users
             # with several email aliases to allow them using
