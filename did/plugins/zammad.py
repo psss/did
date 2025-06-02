@@ -17,7 +17,6 @@ import json
 import urllib.error
 import urllib.parse
 import urllib.request
-
 from datetime import datetime
 
 from did.base import Config, ReportError, get_token
@@ -46,7 +45,7 @@ class Zammad():
 
         self.token = token
 
-    def search(self, query: str) -> dict:
+    def perform_search(self, query: str) -> dict:
         """ Perform Zammad query """
         url = f"{self.url}/{query}"
         log.debug("Zammad query: %s", url)
@@ -54,11 +53,14 @@ class Zammad():
             request = urllib.request.Request(url, headers=self.headers)
             with urllib.request.urlopen(request) as response:
                 log.debug("Response headers:\n%s", str(response.info()).strip())
-                result = json.loads(response.read())["assets"]
+                return json.loads(response.read())
         except urllib.error.URLError as error:
             log.debug(error)
             raise ReportError(
                 f"Zammad search on {self.url} failed.") from error
+
+    def search(self, query: str) -> dict:
+        result = self.perform_search(query)["assets"]
         try:
             result = result["Ticket"]
         except KeyError:
@@ -68,19 +70,7 @@ class Zammad():
         return result
 
     def get_articles(self, ticket_id):
-        """ Perform Zammad query """
-        url = self.url + "/ticket_articles/by_ticket/" + str(ticket_id)
-        log.debug("Zammad query: {0}".format(url))
-        try:
-            request = urllib.request.Request(url, headers=self.headers)
-            response = urllib.request.urlopen(request)
-            log.debug("Response headers:\n{0}".format(
-                str(response.info()).strip()))
-        except urllib.error.URLError as error:
-            log.debug(error)
-            raise ReportError(
-                "Zammad search on {0} failed.".format(self.url))
-        result = json.loads(response.read())
+        result = self.perform_search("/ticket_articles/by_ticket/" + str(ticket_id))
         log.debug("Result: %s fetched", listed(len(result), "item"))
         log.data(pretty(result))
         return result
@@ -119,16 +109,19 @@ class TicketsUpdated(Stats):
             )
         query = f"tickets/search?query={urllib.parse.quote(search)}"
         self.stats = []
-        for _,ticket in self.parent.zammad.search(query).items():
+        for _, ticket in self.parent.zammad.search(query).items():
             for article in self.parent.zammad.get_articles(ticket["id"]):
-                updated_at = datetime.fromisoformat(article["updated_at"].replace('Z', '+00:00')).date()
-                if (article["created_by"] == self.user.email) and (updated_at >= self.options.since.date) and (updated_at <= self.options.until.date):
+                updated_at = datetime.fromisoformat(
+                    article["updated_at"].replace('Z', '+00:00')).date()
+                if (article["created_by"] == self.user.email and
+                        self.options.since.date <= updated_at <= self.options.until.date):
                     self.stats.append(Ticket(ticket))
                     break
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class ZammadStats(StatsGroup):
     """ Zammad work """
