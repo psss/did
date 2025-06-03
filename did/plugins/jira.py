@@ -416,15 +416,12 @@ class JiraTransition(Stats):
             self.parent.transition_to,
             self.user.login or self.user.email)
         query = (
-            "status changed to '{0}' and status changed by '{1}' "
-            "after {2} before {3}".format(
-                self.parent.transition_to,
-                self.user.login or self.user.email,
-                self.options.since,
-                self.options.until))
+            f"status changed to '{self.parent.transition_to}' "
+            f"and status changed by '{self.user.login or self.user.email}' "
+            f"after {self.options.since} before {self.options.until}"
+            )
         if self.parent.project:
-            query = query + " AND project = '{0}'".format(
-                self.parent.project)
+            query = query + f" AND project = '{self.parent.project}'"
         self.stats = Issue.search(query, stats=self)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -571,7 +568,7 @@ class JiraStats(StatsGroup):
                 name=f"Issues updated in {option}"),
             JiraTransition(
                 option=option + "-transitioned", parent=self,
-                name="Issues transitioned in {0}".format(option)),
+                name=f"Issues transitioned in {option}"),
             ]
 
     def _basic_auth_session(self):
