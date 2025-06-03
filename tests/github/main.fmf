@@ -2,6 +2,12 @@
     summary: Check the help message and option sanity
     test: ./help.sh
 
+/basic:
+    summary: Check stats for the last week
+    description: Ensures that all stats are sane
+    framework: shell
+    test: did --config ./config-default.ini
+
 /pulls:
     summary: Verify pull request stats
     test: ./pulls.sh
