@@ -27,7 +27,6 @@ Requires: python3-requests-gssapi
 Requires: python3-feedparser
 Requires: python3-tenacity
 
-%?python_enable_dependency_generator
 
 %description
 Comfortably gather status report data (e.g. list of committed
@@ -37,23 +36,26 @@ range. By default all available stats for this week are reported.
 %prep
 %autosetup -S git
 
+%generate_buildrequires
+%pyproject_buildrequires
+
+
 %build
-%py3_build
+%pyproject_wheel
 
 %install
-%py3_install
+%pyproject_install
+%pyproject_save_files did
 mkdir -p %{buildroot}%{_mandir}/man1
 install -pm 644 did.1.gz %{buildroot}%{_mandir}/man1
 
 %check
 export LANG=en_US.utf-8
-%{__python3} -m pytest -vv tests/test*.py -k 'not smoke'
+%pytest -vv tests/test*.py -k 'not smoke'
 
-%files
+%files -f %{pyproject_files}
 %{_mandir}/man1/*
 %{_bindir}/did
-%{python3_sitelib}/%{name}/
-%{python3_sitelib}/%{name}-*.egg-info/
 %doc README.rst examples
 %license LICENSE
 
