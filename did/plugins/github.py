@@ -59,7 +59,7 @@ from did.utils import listed, log, pretty
 # Identifier padding
 PADDING = 3
 
-# Number of issues to be fetched per page
+# Number of GH items to be fetched per page
 PER_PAGE = 100
 
 # Default number of seconds waiting on GitHub before giving up
@@ -122,6 +122,11 @@ class GitHub():
                     valid_issues.append(issue)
                     break
         return valid_issues
+
+    @staticmethod
+    def until(until):
+        """Issue #362: until for GH should have - delta(day=1)"""
+        return until - 1
 
     def request(self, url):
         while True:
@@ -239,11 +244,10 @@ class IssuesCreated(Stats):
 
     def fetch(self):
         log.info("Searching for issues created by %s", self.user)
-        query = (
-            f"search/issues?q=author:{self.user.login}"
-            f"+created:{self.options.since}..{self.options.until}"
-            "+type:issue"
-            )
+        login = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
+        query = f"search/issues?q=author:{login}+created:{since}..{until}+type:issue"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -253,11 +257,10 @@ class IssuesClosed(Stats):
 
     def fetch(self):
         log.info("Searching for issues closed by %s", self.user)
-        query = (
-            f"search/issues?q=assignee:{self.user.login}"
-            f"+closed:{self.options.since}..{self.options.until}"
-            "+type:issue"
-            )
+        login = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
+        query = f"search/issues?q=assignee:{login}+closed:{since}..{until}+type:issue"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -267,17 +270,13 @@ class IssueCommented(Stats):
 
     def fetch(self):
         log.info("Searching for issues commented on by %s", self.user)
-        query = (
-            f"search/issues?q=commenter:{self.user.login}"
-            f"+updated:{self.options.since}..{self.options.until}"
-            "+type:issue"
-            )
+        login = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
+        query = f"search/issues?q=commenter:{login}+updated:{since}..{until}+type:issue"
         commented_issues = self.parent.github.search(query)
         valid_issues = self.parent.github.commented_in_range(
-            commented_issues,
-            self.options.since.datetime,
-            self.options.until.datetime,
-            self.user.login
+            commented_issues, since.datetime, until.datetime, login
             )
         self.stats = [
             Issue(issue, self.parent) for issue in valid_issues]
@@ -288,11 +287,10 @@ class PullRequestsCreated(Stats):
 
     def fetch(self):
         log.info("Searching for pull requests created by %s", self.user)
-        query = (
-            f"search/issues?q=author:{self.user.login}"
-            f"+created:{self.options.since}..{self.options.until}"
-            "+type:pr"
-            )
+        login = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
+        query = f"search/issues?q=author:{login}+created:{since}..{until}+type:pr"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -302,17 +300,13 @@ class PullRequestsCommented(Stats):
 
     def fetch(self):
         log.info("Searching for pull requests commented on by %s", self.user)
-        query = (
-            f"search/issues?q=commenter:{self.user.login}"
-            f"+updated:{self.options.since}..{self.options.until}"
-            "+type:pr"
-            )
+        login = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
+        query = f"search/issues?q=commenter:{login}+updated:{since}..{until}+type:pr"
         commented_issues = self.parent.github.search(query)
         valid_issues = self.parent.github.commented_in_range(
-            commented_issues,
-            self.options.since.datetime,
-            self.options.until.datetime,
-            self.user.login
+            commented_issues, since.datetime, until.datetime, login
             )
         self.stats = [
             Issue(issue, self.parent) for issue in valid_issues]
@@ -323,11 +317,10 @@ class PullRequestsClosed(Stats):
 
     def fetch(self):
         log.info("Searching for pull requests closed by %s", self.user)
-        query = (
-            f"search/issues?q=assignee:{self.user.login}"
-            f"+closed:{self.options.since}..{self.options.until}"
-            "+type:pr"
-            )
+        login = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
+        query = f"search/issues?q=assignee:{login}+closed:{since}..{until}+type:pr"
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
@@ -337,11 +330,12 @@ class PullRequestsReviewed(Stats):
 
     def fetch(self):
         log.info("Searching for pull requests reviewed by %s", self.user)
+        login = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
         query = (
-            f"search/issues?q=reviewed-by:{self.user.login}"
-            f"+-author:{self.user.login}"
-            f"+closed:{self.options.since}..{self.options.until}"
-            "+type:pr"
+            f"search/issues?q=reviewed-by:{login}+-author:{login}"
+            f"+closed:{since}..{until}+type:pr"
             )
         self.stats = [
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
