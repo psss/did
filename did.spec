@@ -1,5 +1,5 @@
 Name: did
-Version: 0.21
+Version: 0.22
 Release: 1%{?dist}
 
 Summary: What did you do last week, month, year?
@@ -60,6 +60,54 @@ export LANG=en_US.utf-8
 %license LICENSE
 
 %changelog
+* Tue Jun 03 2025 Petr Šplíchal <psplicha@redhat.com> - 0.22-1
+- Implement `transition` stats for the `jira` plugin (#352)
+- Fix issue with wrong `until` in GitHub search (#376)
+- List resolved jira by tester and contributor field
+- Fix `zammad` token bug, some minor adjustments
+- Better handling auth max retry in jira plugin
+- Handle JSON decode errors in pagure plugin
+- Reuse bodhi connection instead of opening new ones
+- Properly handle timeout in pagure plugin
+- Complete report even on plugin error
+- Better handling on server errors for pagure plugin
+- Better handling of wrong url in confluence plugin
+- Handle timeout fetching batches in jira plugin
+- Fixed Jira updated issues and support timeout
+- Collect stats in parallel
+- Add stats for updated jira tickets
+- Handle rate limiting in Jira plugin
+- Allow to filter out orgs in GitHub plugin
+- Properly collect comments in GitHub
+- Improve items plugin
+- Enable pagure closed PRs stats collection
+- Add hyperkitty support
+- Handle better the GitLab expired token case
+- Increased test coverage
+- Use pytest-xdist for parallelizing test execution
+- Add collection of comments for Pagure
+- Cover markdown format while testing Koji
+- Use tenacity handling retry connection to GitHub
+- Added stats for modified pages in Confluence
+- Allow to skip SSL verification in bugzilla plugin
+- Added markdown support to google plugin
+- Add token authentication to confluence plugin
+- Add markdown support to koji plugin
+- Fetch all created issues correctly in `pagure` (#379)
+- Use custom `user-agent` in the `public_inbox` plugin (#392)
+- Fix dockerfile executable path, add git to container (#354)
+- Support `user`, `org`, `repo` in the `github` plugin (#373)
+- Handle the GitHub rate limit in a better way (#374)
+- Create a Public Inbox Plugin
+- Implement `did last [monday..sunday]`
+- Correctly handle merge commits in verbose mode
+- Prevent duplicates in github issue stats
+- Retry connecting to GitLab API on error
+- Add a `Toolbelt Catalog` entry for `did`
+- Allow skipping events that are not reportable
+- Add a team report example using login aliases
+- Migrate to the `SPDX` identifier
+
 * Fri Nov 10 2023 Petr Šplíchal <psplicha@redhat.com> - 0.21-1
 - Pass plugin configuration to koji `ClientSession`
 - Add `markdown` format output to `bodhi` plugin
