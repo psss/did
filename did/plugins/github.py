@@ -52,7 +52,7 @@ import requests
 from tenacity import (RetryError, Retrying, retry_if_exception_type,
                       stop_after_attempt)
 
-from did.base import Config, ReportError, get_token
+from did.base import Config, Date, ReportError, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
@@ -126,7 +126,7 @@ class GitHub():
     @staticmethod
     def until(until):
         """Issue #362: until for GH should have - delta(day=1)"""
-        return until - 1
+        return Date(until - 1)
 
     def request(self, url):
         while True:
