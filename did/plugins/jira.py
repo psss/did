@@ -29,7 +29,7 @@ token_name
     Name of the token to check for expiration in ``token_expiration``
     days. This has to match the name as seen in your Jira profile.
 
-transition_to
+transition_status
     Name of the issue status we want to report transitions to.
     Defaults to ``Release Pending`` (marking "verified" issues).
 
@@ -413,10 +413,10 @@ class JiraTransition(Stats):
         log.info(
             "[%s] Searching for issues transitioned to '%s' by '%s'",
             self.option,
-            self.parent.transition_to,
+            self.parent.transition_status,
             self.user.login or self.user.email)
         query = (
-            f"status changed to '{self.parent.transition_to}' "
+            f"status changed to '{self.parent.transition_status}' "
             f"and status changed by '{self.user.login or self.user.email}' "
             f"after {self.options.since} before {self.options.until}"
             )
@@ -544,7 +544,7 @@ class JiraStats(StatsGroup):
         self.prefix = config["prefix"] if "prefix" in config else None
 
         # State transition to count
-        self.transition_to = config.get("transition_to", DEFAULT_TRANSITION_TO)
+        self.transition_status = config.get("transition_status", DEFAULT_TRANSITION_TO)
 
         # Create the list of stats
         self.stats = [
