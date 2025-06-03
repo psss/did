@@ -231,7 +231,9 @@ Zapletal, Maryna Nalbandian, Dominika Hoďovská, Jakub Haruda,
 Han Han, Štěpán Němec, Evgeny Fedin, Mikel Olasagasti Uranga,
 Miloš Malík, Jeffrey Bastian, Côme Chilliet, Marcin Juszkiewicz,
 Tomáš Kopeček, Konrad Kleine, Sandro Bonazzola, Morgan Weetman,
-Jakub Rozek and Petr Matyáš.
+Jakub Rozek, Petr Matyáš, Miroslav Suchý, Max Rydahl Andersen,
+Maxime Ripard, Wayne Sun, Morgan Bazalgette, Adriano Machado,
+Jakub Stejskal and Mikhail Shiryaev.
 
 
 Copyright
