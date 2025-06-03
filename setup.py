@@ -63,7 +63,6 @@ setup(
 
     keywords=['status', 'report', 'tasks', 'work'],
     classifiers=[
-        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
         'Natural Language :: English',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
