@@ -29,6 +29,10 @@ token_name
     Name of the token to check for expiration in ``token_expiration``
     days. This has to match the name as seen in your Jira profile.
 
+transition_status
+    Name of the issue status we want to report transitions to.
+    Defaults to ``Release Pending`` (marking "verified" issues).
+
 Configuration example (GSS authentication)::
 
     [issues]
@@ -113,6 +117,10 @@ SSL_VERIFY = True
 
 # Default number of seconds waiting on Sentry before giving up
 TIMEOUT = 60
+
+# State we are interested in
+DEFAULT_TRANSITION_TO = "Release Pending"
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
@@ -397,6 +405,25 @@ class JiraContributed(Stats):
         self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
         log.info("[%s] done issues contributed to", self.option)
 
+
+class JiraTransition(Stats):
+    """ Issues transitioned to specified state """
+
+    def fetch(self):
+        log.info(
+            "[%s] Searching for issues transitioned to '%s' by '%s'",
+            self.option,
+            self.parent.transition_status,
+            self.user.login or self.user.email)
+        query = (
+            f"status changed to '{self.parent.transition_status}' "
+            f"and status changed by '{self.user.login or self.user.email}' "
+            f"after {self.options.since} before {self.options.until}"
+            )
+        if self.parent.project:
+            query = query + f" AND project = '{self.parent.project}'"
+        self.stats = Issue.search(query, stats=self)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -515,6 +542,10 @@ class JiraStats(StatsGroup):
 
         # Check for custom prefix
         self.prefix = config["prefix"] if "prefix" in config else None
+
+        # State transition to count
+        self.transition_status = config.get("transition_status", DEFAULT_TRANSITION_TO)
+
         # Create the list of stats
         self.stats = [
             JiraCreated(
@@ -535,6 +566,9 @@ class JiraStats(StatsGroup):
             JiraUpdated(
                 option=f"{option}-updated", parent=self,
                 name=f"Issues updated in {option}"),
+            JiraTransition(
+                option=option + "-transitioned", parent=self,
+                name=f"Issues transitioned in {option}"),
             ]
 
     def _basic_auth_session(self):
