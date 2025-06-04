@@ -421,7 +421,7 @@ class JiraTransition(Stats):
             f"after {self.options.since} before {self.options.until}"
             )
         if self.parent.project:
-            query = query + f" AND project = '{self.parent.project}'"
+            query = query + f" AND project in ({self.parent.project})"
         self.stats = Issue.search(query, stats=self)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
