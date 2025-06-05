@@ -136,6 +136,10 @@ class Options():
         if opt.since is None and opt.until is None:
             opt.since, opt.until, period = did.base.Date.period(arg)
         else:
+            if self.arg:
+                raise did.base.OptionError(
+                    f'Can\'t use --since or --until with \'{" ".join(self.arg)}\''
+                    )
             opt.since = did.base.Date(opt.since or "1993-01-01")
             opt.until = did.base.Date(opt.until or "today")
             # Make the 'until' limit inclusive
