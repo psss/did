@@ -122,6 +122,25 @@ def test_github_missing_url(caplog: LogCaptureFixture):
         assert "Skipping section gh due to error: No github url set" in caplog.text
 
 
+def test_github_wrong_user(caplog: LogCaptureFixture):
+    """
+    Test non existing user error reporting
+    @see: https://github.com/psss/did/issues/101
+    """
+    did.base.Config("""
+                    [general]
+                    email = "Petr Splichal" <psplicha@redhat.com>
+
+                    [gh]
+                    type = github
+                    url = https://api.github.com/
+                    login = nonexistantuser
+                    """)
+    with caplog.at_level(logging.ERROR):
+        did.cli.main(INTERVAL)
+        assert "The listed users cannot be searched" in caplog.text
+
+
 def test_github_unicode():
     """ Created issues with Unicode characters """
     did.base.Config("[gh]\ntype = github\nurl = https://api.github.com/")
