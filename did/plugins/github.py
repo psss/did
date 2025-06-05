@@ -176,9 +176,20 @@ class GitHub():
             # Fetch the query
             log.debug("GitHub query: %s", url)
             response = self.request(url)
+            if not response.ok:
+                try:
+                    error = json.loads(response.text)["errors"][0]["message"]
+                except KeyError:
+                    error = "unknown"
+                raise ReportError(
+                    f"Failed to fetch GitHub data at '{url}'. "
+                    f"The reason was '{response.reason}' "
+                    f"and the error was '{error}'.")
+            log.data(pretty(response.text))
             # Parse fetched json data
             try:
                 data = json.loads(response.text)["items"]
+                log.debug(data)
                 result.extend(data)
             except requests.exceptions.JSONDecodeError as error:
                 log.debug(error)
