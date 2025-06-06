@@ -109,12 +109,14 @@ class TicketsUpdated(Stats):
             )
         query = f"tickets/search?query={urllib.parse.quote(search)}"
         self.stats = []
+        since = self.options.since.date
+        until = self.options.until.date
         for _, ticket in self.parent.zammad.search(query).items():
             for article in self.parent.zammad.get_articles(ticket["id"]):
                 updated_at = datetime.fromisoformat(
                     article["updated_at"].replace('Z', '+00:00')).date()
                 if (article["created_by"] == self.user.email and
-                        self.options.since.date <= updated_at <= self.options.until.date):
+                        since <= updated_at <= until):
                     self.stats.append(Ticket(ticket))
                     break
 
