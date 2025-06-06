@@ -10,6 +10,7 @@ Config example::
     token_file = <authentication-token-file>
     login = <username>
     ssl_verify = true
+    proxy = <proxy-url>
 
 The authentication token is required. Create it in the GitLab web
 interface (select ``api`` as the desired scope). See the `GitLab API`__
@@ -27,6 +28,10 @@ seconds.
 
 __ https://docs.gitlab.com/ce/api/
 
+Use ``proxy`` to configure the proxy. See the `Proxies`__ documentation
+for the format of proxy url.
+
+__ https://requests.readthedocs.io/en/latest/user/advanced/#proxies
 """
 
 from time import sleep
@@ -61,7 +66,13 @@ TIMEOUT = 60
 class GitLab():
     """ GitLab Investigator """
 
-    def __init__(self, url, token, ssl_verify=GITLAB_SSL_VERIFY, timeout=TIMEOUT):
+    def __init__(
+            self,
+            url,
+            token,
+            ssl_verify=GITLAB_SSL_VERIFY,
+            timeout=TIMEOUT,
+            proxy=None):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         self.headers = {'PRIVATE-TOKEN': token}
@@ -73,6 +84,7 @@ class GitLab():
         self.project_mrs = {}
         self.project_issues = {}
         self.timeout = timeout
+        self.proxy = {"all": proxy}
 
     def _get_gitlab_api_raw(self, url):
         log.debug("Connecting to GitLab API at '%s'.", url)
@@ -81,7 +93,7 @@ class GitLab():
             try:
                 api_raw = requests.get(
                     url, headers=self.headers, verify=self.ssl_verify,
-                    timeout=self.timeout)
+                    timeout=self.timeout, proxies=self.proxy)
                 api_raw.raise_for_status()
                 return api_raw
             except requests.exceptions.HTTPError as http_err:
@@ -427,7 +439,11 @@ class GitLabStats(StatsGroup):
         if not self.ssl_verify:
             urllib3.disable_warnings(InsecureRequestWarning)
         self.gitlab = GitLab(
-            self.url, self.token, self.ssl_verify, timeout=config.get("timeout"))
+            self.url,
+            self.token,
+            self.ssl_verify,
+            timeout=config.get("timeout"),
+            proxy=config.get("proxy"))
         # Create the list of stats
         self.stats = [
             IssuesCreated(
