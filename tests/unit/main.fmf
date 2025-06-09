@@ -1,0 +1,11 @@
+summary: Python unit tests
+description:
+    Run all available python unit tests using pytest.
+test: python3 -m pytest -vvv -ra --showlocals
+duration: 15m
+framework: shell
+require:
+  - python3-pytest
+environment:
+    LANG: en_US.UTF-8
+tier: 0
