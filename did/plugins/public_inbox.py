@@ -24,6 +24,8 @@ import urllib.parse
 from importlib.metadata import version
 
 import requests
+from tenacity import (RetryError, Retrying, retry_if_exception_type,
+                      stop_after_attempt, wait_exponential)
 
 from did.base import Config, Date, ReportError, User
 from did.stats import Stats, StatsGroup
@@ -148,11 +150,28 @@ class PublicInbox():
         url = self.__get_url(f"/all/{msg_id}/t.mbox.gz")
 
         log.debug("Fetching message %s thread (%s)", msg_id, url)
-        resp = requests.get(
-            url,
-            headers={'User-Agent': USER_AGENT},
-            timeout=self.timeout)
-        mbox = self.__get_mbox_from_content(resp.content)
+
+        try:
+            for attempt in Retrying(
+                    stop=stop_after_attempt(5),
+                    wait=wait_exponential(),
+                    retry=retry_if_exception_type(requests.exceptions.HTTPError),
+                    before_sleep=log.debug("Try to connect to public inbox..."),
+                    reraise=True):
+                with attempt:
+                    response = requests.get(
+                        url,
+                        headers={'User-Agent': USER_AGENT},
+                        timeout=self.timeout)
+                    response.raise_for_status()
+
+        except (requests.exceptions.RequestException, RetryError) as error:
+            log.debug(error)
+            raise ReportError(
+                f"The public inbox search failed ({response.reason})."
+                ) from error
+
+        mbox = self.__get_mbox_from_content(response.content)
         for msg in self.__get_msgs_from_mbox(mbox):
             if msg.is_thread_root():
                 log.debug("Found message %s thread root: %s.", msg_id, msg.id())
