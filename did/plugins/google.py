@@ -55,6 +55,7 @@ plain text within your config file, use ``client_id_file`` and
 """  # noqa: W505
 
 import os
+from typing import Optional
 
 import httplib2
 import oauth2client.client
@@ -239,7 +240,7 @@ class Task():
 class GoogleStatsBase(Stats):
     """ Base class containing common code """
 
-    def __init__(self, option: str, name=None, parent: StatsGroup | None = None):
+    def __init__(self, option: str, name=None, parent: Optional[StatsGroup] = None):
         super().__init__(option=option, name=name, parent=parent)
         try:
             self.since = f"{self.options.since.datetime.isoformat()}Z"
