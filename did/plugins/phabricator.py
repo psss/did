@@ -35,7 +35,7 @@ from enum import Enum
 from functools import total_ordering
 from multiprocessing import cpu_count
 from threading import Thread
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 from urllib.parse import urlencode
 
 import requests
@@ -95,12 +95,12 @@ class Phabricator:
 
     def search_diffs(
             self, *,
-            since: datetime.date = None,
-            until: datetime.date = None,
-            author_phids: List[str] = None,
-            subscriber_phids: List[str] = None,
-            responsible_phids: List[str] = None,
-            reviewer_phids: List[str] = None) -> Set["Differential"]:
+            since: Optional[datetime.date] = None,
+            until: Optional[datetime.date] = None,
+            author_phids: Optional[List[str]] = None,
+            subscriber_phids: Optional[List[str]] = None,
+            responsible_phids: Optional[List[str]] = None,
+            reviewer_phids: Optional[List[str]] = None) -> Set["Differential"]:
         """ Find Phabricator Differentials """
         url = f"{self.url}/differential.revision.search"
         data_dict = {}
@@ -131,7 +131,7 @@ class Phabricator:
     def search_transactions(
             self,
             diff: "Differential",
-            author_phids: List[str] = None) -> Set["TransactionEvent"]:
+            author_phids: Optional[List[str]] = None) -> Set["TransactionEvent"]:
         """
         Returns all the transaction events for a given differential
         object. If given you can search for events by certain authors.
@@ -408,8 +408,8 @@ class TransactionEvent:
 
     def is_in_date_range(
             self,
-            since: datetime.date = None,
-            until: datetime.date = None) -> bool:
+            since: Optional[datetime.date] = None,
+            until: Optional[datetime.date] = None) -> bool:
         """
         Returns true if the event happened in the given timestamp range,
         including the boundaries.
