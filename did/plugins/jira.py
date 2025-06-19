@@ -219,13 +219,13 @@ class Issue():
                 raise ReportError(f"JIRA JSON failed: {response.text}.") from error
             if not response.ok:
                 try:
-                    error = " ".join(data["errorMessages"])
+                    response_error = " ".join(data["errorMessages"])
                 except KeyError:
-                    error = "unknown"
+                    response_error = "unknown"
                 raise ReportError(
                     f"Failed to fetch jira issues for query '{query}'. "
                     f"The reason was '{response.reason}' "
-                    f"and the error was '{error}'.")
+                    f"and the error was '{response_error}'.")
             log.debug(
                 "Batch %s result: %s fetched",
                 batch,

@@ -148,13 +148,13 @@ class Confluence():
                 ) from error
         if not response.ok:
             try:
-                error = " ".join(data["errorMessages"])
+                response_error = " ".join(data["errorMessages"])
             except KeyError:
-                error = "unknown"
+                response_error = "unknown"
             raise ReportError(
                 f"Failed to fetch confluence data at '{current_url}'. "
                 f"The reason was '{response.reason}' "
-                f"and the error was '{error}'.")
+                f"and the error was '{response_error}'.")
         log.data(pretty(data))
         return data
 
