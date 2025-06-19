@@ -124,7 +124,7 @@ class Phabricator:
             # createdEnd: Find revisions created at
             #             or before a particular time.
             data_dict['constraints[createdEnd]'] = until.strftime("%s")
-        result = (Differential(diff) for diff in self._get_all_pages(url, data_dict))
+        result = set(Differential(diff) for diff in self._get_all_pages(url, data_dict))
         log.data(pretty(result))
         return result
 
@@ -145,7 +145,7 @@ class Phabricator:
         log.data(pretty(url))
         log.data(pretty(data_dict))
         events = self._get_all_pages(url, data_dict)
-        return (TransactionEvent(event) for event in events)
+        return set(TransactionEvent(event) for event in events)
 
     def _get_all_pages(self, url: str, data_dict: Dict[str, Any]):
         """
@@ -468,28 +468,33 @@ class DifferentialsBaseStats(Stats):
 
     # Shared state for all stats
     got_diffs = False
-    diffs_accepted = set()
-    diffs_requested_changes = set()
-    diffs_commented = set()
-    diffs_created = set()
-    diffs_closed = set()
+    diffs_accepted: Set[Differential] = set()
+    diffs_requested_changes: Set[Differential] = set()
+    diffs_commented: Set[Differential] = set()
+    diffs_created: Set[Differential] = set()
+    diffs_closed: Set[Differential] = set()
 
     # if stats are supposed to be printed in verbose mode or not.
-    verbose = False
+    verbose: bool = False
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
+        self.parent: PhabricatorStats
         super().__init__(**kwargs)
 
     def fetch(self):
         """ To be implemented by subclasses """
 
-    def fetch_all_relevant_diffs(self):
+    def fetch_all_relevant_diffs(self) -> None:
         """
         Fetches all differentials that we possibly need for all
         phabricator stats.
         """
 
         # Update verbosity
+        if self.options is None or self.parent is None:
+            raise RuntimeError(
+                "DifferentialsBaseStats requires both options and parent attributes set"
+                )
         DifferentialsBaseStats.verbose = self.options.verbose
 
         if DifferentialsBaseStats.got_diffs:
@@ -499,7 +504,7 @@ class DifferentialsBaseStats(Stats):
             "since": self.options.since.date,
             "until": self.options.until.date,
             }
-        phab = self.parent.phabricator
+        phab: Phabricator = self.parent.phabricator
         diffs = set()
         diffs.update(phab.search_diffs(**opts, author_phids=phab.login_phids))
         diffs.update(phab.search_diffs(**opts, subscriber_phids=phab.login_phids))
