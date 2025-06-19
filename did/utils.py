@@ -220,7 +220,7 @@ def item(text, level=0, options=None):
     if level == 0 and options is not None and not options.brief:
         print('')
     # Only top-level items displayed in brief mode
-    if level == 1 and options.brief:
+    if level == 1 and options is not None and options.brief:
         return
     # Four space for each level, additional space for wiki format
     indent = level * 4

@@ -1,9 +1,13 @@
 """ Stats & StatsGroup, the core of the data gathering """
 
+from __future__ import annotations
+
+import argparse
 import re
 import sys
 import xmlrpc.client
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Optional
 
 import did.base
 from did import utils
@@ -16,16 +20,21 @@ from did.utils import log
 
 class Stats():
     """ General statistics """
-    _name = None
-    error = None
+    _name: str | None
+    error: bool = False
     _enabled = None
-    option = None
-    dest = None
+    option: str
+    dest: str
     parent = None
-    stats = None
+    stats: list
 
     def __init__(
-            self, /, option, name=None, parent=None, user=None, *, options=None):
+            self, /,
+            option: str,
+            name: Optional[str] = None,
+            parent=None,
+            user=None, *,
+            options: Optional[argparse.Namespace] = None):
         """ Set the name, indent level and initialize data.  """
         self.option = option.replace(" ", "-")
         self.dest = self.option.replace("-", "_")
@@ -41,19 +50,19 @@ class Stats():
         log.debug('Loading %s Stats instance for %s', option, self.user)
 
     @property
-    def name(self):
+    def name(self) -> str:
         """ Use the first line of docs string unless name set. """
         if self._name:
             return self._name
         return [
-            line.strip() for line in self.__doc__.split("\n")
+            line.strip() for line in str(self.__doc__).split("\n")
             if line.strip()][0]
 
-    def add_option(self, parser):
+    def add_option(self, parser: argparse.ArgumentParser):
         """ Add option for self to the parser group object. """
         parser.add_argument(f"--{self.option}", action="store_true", help=self.name)
 
-    def enabled(self):
+    def enabled(self) -> bool:
         """ Check whether we're enabled (or if parent is). """
         # Cache into ._enabled
         if self._enabled is None:
@@ -64,11 +73,11 @@ class Stats():
                 self._enabled = getattr(self.options, self.dest, True)
         return self._enabled
 
-    def fetch(self):
+    def fetch(self) -> None:
         """ Fetch the stats (to be implemented by respective class). """
         raise NotImplementedError()
 
-    def check(self):
+    def check(self) -> None:
         """ Check the stats if enabled. """
         if not self.enabled():
             return
@@ -99,7 +108,7 @@ class Stats():
         for stat in self.stats:
             utils.item(stat, level=1, options=self.options)
 
-    def merge(self, other):
+    def merge(self, other: Stats):
         """ Merge another stats. """
         for other_stat in other.stats:
             if other_stat not in self.stats:
@@ -113,7 +122,7 @@ class Stats():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class StatsGroupPlugin(type):
-    registry = {}
+    registry: dict[str, "StatsGroupPlugin"] = {}
     ignore = set([
         "StatsGroupPlugin",
         "StatsGroup",
@@ -141,7 +150,7 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
     # Default order
     order = 500
 
-    def add_option(self, parser):
+    def add_option(self, parser: argparse.ArgumentParser):
         """ Add option group and all children options. """
 
         group = parser.add_argument_group(self.name)
@@ -150,7 +159,7 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
 
         group.add_argument(f"--{self.option}", action="store_true", help="All above")
 
-    def check(self):
+    def check(self) -> None:
         """ Check all children stats. """
         with ThreadPoolExecutor() as executor:
             result_futures = []
@@ -165,17 +174,19 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
                     sys.stdout.flush()
                     sys.stderr.flush()
 
-    def show(self):
+    def show(self) -> None:
         """ List all children stats. """
         for stat in self.stats:
             stat.show()
 
-    def merge(self, other):
+    def merge(self, other) -> None:
         """ Merge all children stats. """
         for this, other_stats in zip(self.stats, other.stats):
             this.merge(other_stats)
 
-    def fetch(self):
+        self.error = any(stat.error for stat in self.stats)
+
+    def fetch(self) -> None:
         """ Stats groups do not fetch anything """
 
 
@@ -211,15 +222,15 @@ class UserStats(StatsGroup):
             data = dict(config.section(section, skip=set()))
             type_ = data.get("type")
 
+            if not type_:
+                msg = "Plugin type not defined in section '{0}'."
+                raise did.base.ConfigError(msg.format(section))
+
             # Some plugins (like public-inbox) need to have underscores
             # in their names to follow python modules conventions, but
             # it's more user-friendly to have dashes instead, so let's
             # replace all the dashes by underscores.
             type_ = type_.replace('-', '_')
-
-            if not type_:
-                msg = "Plugin type not defined in section '{0}'."
-                raise did.base.ConfigError(msg.format(section))
 
             if type_ not in StatsGroupPlugin.registry:
                 raise did.base.ConfigError(
@@ -259,10 +270,10 @@ class UserStats(StatsGroup):
 class EmptyStats(Stats):
     """ Custom stats group for header & footer """
 
-    def __init__(self, option, name=None, parent=None, user=None):
+    def __init__(self, option: str, name: Optional[str] = None, parent=None, user=None):
         Stats.__init__(self, option, name, parent, user)
 
-    def show(self):
+    def show(self) -> None:
         """ Name only for empty stats """
         # Convert escaped new lines into real new lines
         # (in order to support custom subitems for each item)
