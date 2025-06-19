@@ -11,6 +11,7 @@ import re
 import sys
 from configparser import NoOptionError, NoSectionError
 from datetime import timedelta
+from typing import Optional
 
 from dateutil.relativedelta import FR as FRIDAY
 from dateutil.relativedelta import MO as MONDAY
@@ -492,7 +493,7 @@ class User():
 def get_token(
         config: dict,
         token_key: str = "token",
-        token_file_key: str = "token_file") -> str:
+        token_file_key: str = "token_file") -> Optional[str]:
     """
     Extract the authentication token from config or token file
 
