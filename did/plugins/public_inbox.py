@@ -19,13 +19,14 @@ import email.utils
 import gzip
 import mailbox
 import tempfile
-import typing
 import urllib.parse
 from importlib.metadata import version
+from typing import Iterable, Optional, Union
 
 import requests
-from tenacity import (RetryError, Retrying, retry_if_exception_type,
-                      stop_after_attempt, wait_exponential)
+from tenacity import (RetryCallState, RetryError, Retrying,
+                      retry_if_exception_type, stop_after_attempt,
+                      wait_exponential)
 
 from did.base import Config, Date, ReportError, User
 from did.stats import Stats, StatsGroup
@@ -41,17 +42,16 @@ class Message():
     def __init__(self, msg: mailbox.mboxMessage) -> None:
         self.msg = msg
 
-    def __msg_id(self, keyid: str) -> str:
+    def __msg_id(self, keyid: str) -> Optional[str]:
         msgid = self.msg[keyid]
         if msgid is None:
             return None
-
         return msgid.lstrip("<").rstrip(">")
 
-    def id(self) -> str:
+    def id(self) -> Optional[str]:
         return self.__msg_id("Message-Id")
 
-    def parent_id(self) -> str:
+    def parent_id(self) -> Optional[str]:
         return self.__msg_id("In-Reply-To")
 
     def subject(self) -> str:
@@ -79,13 +79,12 @@ class Message():
         return since.date <= msg_date <= until.date
 
 
-def _unique_messages(mbox: mailbox.mbox) -> typing.Iterable[Message]:
-    msgs = {}
-    for msg in mbox.values():
-        msg = Message(msg)
+def _unique_messages(mbox: mailbox.mbox) -> Iterable[Message]:
+    msgs: dict[str, Union[mailbox.mboxMessage, Message]] = {}
+    for mboxmsg in mbox.values():
+        msg: Message = Message(mboxmsg)
         msg_id = msg.id()
-
-        if msg_id not in msgs:
+        if msg_id is not None and msg_id not in msgs:
             msgs[msg_id] = msg
             yield msg
 
@@ -152,11 +151,13 @@ class PublicInbox():
         log.debug("Fetching message %s thread (%s)", msg_id, url)
 
         try:
+            def inbox_before_sleep(_retry_state: RetryCallState) -> None:
+                log.debug("Try to connect to public inbox...")
             for attempt in Retrying(
                     stop=stop_after_attempt(5),
                     wait=wait_exponential(),
                     retry=retry_if_exception_type(requests.exceptions.HTTPError),
-                    before_sleep=log.debug("Try to connect to public inbox..."),
+                    before_sleep=inbox_before_sleep,
                     reraise=True):
                 with attempt:
                     response = requests.get(

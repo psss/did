@@ -22,6 +22,7 @@ It's also possible to set a timeout, if not specified it defaults to
 """
 
 import datetime
+from typing import Any, Optional
 
 import requests
 
@@ -41,7 +42,7 @@ class Pagure():
     """ Pagure Investigator """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, url, token, timeout=TIMEOUT):
+    def __init__(self, url: str, token: Optional[str], timeout: int = TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         self.token = token
@@ -110,7 +111,7 @@ class Pagure():
             raise ReportError(f"Pagure JSON failed: {response.text}.") from error
         return data.get("activities", [])
 
-    def search(self, query, pagination, result_field):
+    def search(self, query: str, pagination: str, result_field: str):
         """ Perform Pagure query """
         result = []
         url = "/".join((self.url, query))
@@ -151,21 +152,21 @@ class Issue():
     """ Pagure Issue or Pull Request """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, data: dict, options):
+    def __init__(self, data: dict[str, Any], options):
         self.options = options
-        self.data = data
-        self.title = data['title']
-        self.project = data['project']['fullname']
-        self.identifier = data['id']
-        self.created = datetime.datetime.fromtimestamp(
+        self.data: dict[str, Any] = data
+        self.title: str = data['title']
+        self.project: str = data['project']['fullname']
+        self.identifier: str = data['id']
+        self.created: datetime.date = datetime.datetime.fromtimestamp(
             float(data['date_created'])).date()
         try:
-            self.closed = datetime.datetime.fromtimestamp(
+            self.closed: Optional[datetime.date] = datetime.datetime.fromtimestamp(
                 float(data['closed_at'])).date()
         except TypeError:
             self.closed = None
         try:
-            self.closed_by = data["closed_by"]["name"]
+            self.closed_by: Optional[str] = data["closed_by"]["name"]
         except TypeError:
             self.closed_by = None
 

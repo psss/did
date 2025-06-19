@@ -7,7 +7,7 @@ Config example::
     type = nitrate
 """
 
-import nitrate
+import nitrate  # type: ignore[import-untyped]
 
 from did.stats import Stats, StatsGroup
 from did.utils import log

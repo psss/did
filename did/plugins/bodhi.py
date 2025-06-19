@@ -10,7 +10,7 @@ Config example::
 
 """
 
-from bodhi.client.bindings import BodhiClient
+from bodhi.client.bindings import BodhiClient  # type: ignore[import-untyped]
 
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup
