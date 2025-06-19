@@ -41,6 +41,10 @@ It's also possible to set a timeout, if not specified it defaults to 60 seconds.
 
     timeout = 10
 
+Use ``proxy`` to configure the proxy. See the `Proxies`__ documentation
+for the format of proxy url.
+
+__ https://requests.readthedocs.io/en/latest/user/advanced/#proxies
 """  # noqa: W505,E501 # pylint:disable=line-too-long
 
 import json
@@ -75,10 +79,11 @@ class GitHub():
     # pylint: disable=too-few-public-methods
 
     def __init__(self, *, url, token=None, user=None,
-                 org=None, repo=None, exclude_org=None, timeout=TIMEOUT):
+                 org=None, repo=None, exclude_org=None, timeout=TIMEOUT, proxy=None):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         self.timeout = timeout
+        self.proxy = {"all": proxy}
         if token is not None:
             self.headers = {'Authorization': f'token {token}'}
         else:
@@ -139,8 +144,7 @@ class GitHub():
                         reraise=True):
                     with attempt:
                         response = requests.get(
-                            url, headers=self.headers, timeout=self.timeout
-                            )
+                            url, headers=self.headers, timeout=self.timeout, proxies=self.proxy)
                 log.debug("Response headers:\n%s", response.headers)
             except (requests.exceptions.RequestException, RetryError) as error:
                 log.debug(error)
@@ -382,7 +386,9 @@ class GitHubStats(StatsGroup):
             user=config.get("user"),
             repo=config.get("repo"),
             exclude_org=config.get("exclude_org"),
-            timeout=config.get("timeout"))
+            timeout=config.get("timeout"),
+            proxy=config.get("proxy"),
+            )
 
         # Create the list of stats
         self.stats = [
