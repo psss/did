@@ -11,6 +11,8 @@ Config example::
     item3 = Project Three
 """
 
+from typing import Optional
+
 from did.base import Config
 from did.stats import Stats, StatsGroup
 from did.utils import item
@@ -23,7 +25,11 @@ from did.utils import item
 class ItemStats(Stats):
     """ Custom section with given items """
 
-    def __init__(self, option: str, name: str = None, parent: StatsGroup = None):
+    def __init__(
+            self,
+            option: str,
+            name: Optional[str] = None,
+            parent: Optional[StatsGroup] = None):
         # Prepare sorted item content from the config section
         items = Config().section(
             option.replace("-item", ""), skip=["type", "header", "order"]
