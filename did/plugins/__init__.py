@@ -26,8 +26,6 @@ This is the default plugin order:
     +--------------+-----+
     | gerrit       | 350 |
     +--------------+-----+
-    | phabricator  | 360 |
-    +--------------+-----+
     | gitlab       | 380 |
     +--------------+-----+
     | pagure       | 390 |
