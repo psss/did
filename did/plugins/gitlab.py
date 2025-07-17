@@ -29,7 +29,10 @@ __ https://docs.gitlab.com/ce/api/
 
 """
 
+from __future__ import annotations
+
 from time import sleep
+from typing import Any, Optional
 
 import dateutil
 import requests
@@ -51,7 +54,7 @@ GITLAB_INTERVAL = 5
 PADDING = 3
 
 # Default number of seconds waiting on GitLab before giving up
-TIMEOUT = 60
+TIMEOUT = 60.0
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,17 +64,21 @@ TIMEOUT = 60
 class GitLab():
     """ GitLab Investigator """
 
-    def __init__(self, url, token, ssl_verify=GITLAB_SSL_VERIFY, timeout=TIMEOUT):
+    def __init__(self,
+                 url: str,
+                 token: str,
+                 ssl_verify: bool = GITLAB_SSL_VERIFY,
+                 timeout: float = TIMEOUT):
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         self.headers = {'PRIVATE-TOKEN': token}
         self.token = token
         self.ssl_verify = ssl_verify
-        self.user = None
-        self.events = None
-        self.projects = {}
-        self.project_mrs = {}
-        self.project_issues = {}
+        self.user: Optional[dict[str, Any]] = None
+        self.events: Optional[list[dict[str, Any]]] = None
+        self.projects: dict[str, list[dict[str, Any]]] = {}
+        self.project_mrs: dict[str, list[dict[str, Any]]] = {}
+        self.project_issues: dict[str, list[dict[str, Any]]] = {}
         self.timeout = timeout
 
     def _get_gitlab_api_raw(self, url):
@@ -215,7 +222,7 @@ class GitLab():
 class Issue():
     """ GitLab Issue """
 
-    def __init__(self, data, parent, set_id=None):
+    def __init__(self, data: dict, parent: "GitLabStats", set_id=None):
         self.parent = parent
         self.data = data
         self.gitlabapi: GitLab = parent.gitlab
@@ -427,7 +434,10 @@ class GitLabStats(StatsGroup):
         if not self.ssl_verify:
             urllib3.disable_warnings(InsecureRequestWarning)
         self.gitlab = GitLab(
-            self.url, self.token, self.ssl_verify, timeout=config.get("timeout"))
+            self.url,
+            self.token,
+            self.ssl_verify,
+            timeout=float(config.get("timeout", TIMEOUT)))
         # Create the list of stats
         self.stats = [
             IssuesCreated(
