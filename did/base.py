@@ -409,6 +409,12 @@ class User():
 
         some@email.org; bz: bugzilla@email.org; gh: githublogin
 
+    By default, the alias type is autodetected based on the presence of
+    "@" character (email if present, login otherwise). However, you can
+    explicitly specify the alias type using the extended syntax::
+
+        some@email.org; jira.login: user@example.com; gh.email: user
+
     Use config section name to identify stats where given alias should
     be used. The exactly same syntax can be used both in the config file
     and on the command line. Finally it's also possible to include the
@@ -469,16 +475,47 @@ class User():
         # Check for aliases specified in the email string
         if aliases is not None:
             try:
-                aliases = dict([
-                    re.split(r"\s*:\s*", definition, maxsplit=1)
-                    for definition in re.split(r"\s*;\s*", aliases.strip())])
+                explicit_aliases = {}  # For stats.type: value format
+                implicit_aliases = {}  # For stats: value format
+
+                for definition in re.split(r"\s*;\s*", aliases.strip()):
+                    parts = re.split(r"\s*:\s*", definition, 1)
+                    if len(parts) != 2:
+                        raise ValueError(f"Invalid alias format: '{definition}'")
+
+                    key, value = parts
+
+                    # Check if key contains type specification
+                    # (e.g., "jira.login")
+                    if "." in key:
+                        stats_name, alias_type = key.split(".", 1)
+                        if alias_type not in ("email", "login"):
+                            raise ValueError(f"Invalid alias type '{alias_type}', "
+                                             "must be 'email' or 'login'")
+                        if stats_name not in explicit_aliases:
+                            explicit_aliases[stats_name] = {}
+                        explicit_aliases[stats_name][alias_type] = value
+                    else:
+                        # Standard format: stats: value
+                        # (autodetect type)
+                        implicit_aliases[key] = value
+
+                # Apply explicit aliases first
+                if stats in explicit_aliases:
+                    if "email" in explicit_aliases[stats]:
+                        email = explicit_aliases[stats]["email"]
+                    if "login" in explicit_aliases[stats]:
+                        login = explicit_aliases[stats]["login"]
+                # Then apply implicit aliases
+                # (only if no explicit alias found)
+                elif stats in implicit_aliases:
+                    if "@" in implicit_aliases[stats]:
+                        email = implicit_aliases[stats]
+                    else:
+                        login = implicit_aliases[stats]
+
             except ValueError as exc:
                 raise ConfigError(f"Invalid alias definition: '{aliases}'") from exc
-            if stats in aliases:
-                if "@" in aliases[stats]:
-                    email = aliases[stats]
-                else:
-                    login = aliases[stats]
         # Update login/email if alias detected
         if email is not None:
             self.email = email
