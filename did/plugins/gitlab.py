@@ -6,7 +6,7 @@ Config example::
     [gitlab]
     type = gitlab
     url = https://gitlab.com/
-    token = <authentication-token>
+    token_name = <authentication-token>
     token_file = <authentication-token-file>
     login = <username>
     ssl_verify = true
