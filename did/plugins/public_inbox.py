@@ -41,17 +41,18 @@ class Message():
     def __init__(self, msg: mailbox.mboxMessage) -> None:
         self.msg = msg
 
-    def __msg_id(self, keyid: str) -> str:
+    def __msg_id(self, keyid: str) -> typing.Optional[str]:
         msgid = self.msg[keyid]
         if msgid is None:
+            log.debug("Missing header %s", keyid)
             return None
 
         return msgid.lstrip("<").rstrip(">")
 
-    def id(self) -> str:
+    def id(self) -> typing.Optional[str]:
         return self.__msg_id("Message-Id")
 
-    def parent_id(self) -> str:
+    def parent_id(self) -> typing.Optional[str]:
         return self.__msg_id("In-Reply-To")
 
     def subject(self) -> str:
@@ -145,7 +146,7 @@ class PublicInbox():
 
         return msgs
 
-    def __fetch_thread_root(self, initial_msg: Message) -> Message:
+    def __fetch_thread_root(self, initial_msg: Message) -> typing.Optional[Message]:
         msg_id = initial_msg.id()
         url = self.__get_url(f"/all/{msg_id}/t.mbox.gz")
 
@@ -176,8 +177,9 @@ class PublicInbox():
             if msg.is_thread_root():
                 log.debug("Found message %s thread root: %s.", msg_id, msg.id())
                 return msg
-        # if root is not found, return initial message as root.
-        return initial_msg
+
+        log.warning("Couldn't find message root")
+        return None
 
     def __get_thread_root(self, msg: Message) -> Message:
         log.debug("Looking for thread root of message %s", msg.id())
@@ -188,6 +190,10 @@ class PublicInbox():
         parent_id = msg.parent_id()
         if parent_id not in self.messages_cache:
             root = self.__fetch_thread_root(msg)
+            if root is None:
+                log.debug("Can't retrieve the thread root, returning.")
+                return msg
+
             log.debug("Found root message %s for message %s", root.id(), msg.id())
             return root
 
@@ -201,7 +207,11 @@ class PublicInbox():
 
             parent_id = parent.parent_id()
             if parent_id not in self.messages_cache:
-                root = self.__fetch_thread_root(msg)
+                root = self.__fetch_thread_root(parent)
+                if root is None:
+                    log.debug("Can't retrieve the message parent, returning.")
+                    return parent
+
                 log.debug("Found root message %s for message %s", root.id(), msg.id())
                 return root
 
