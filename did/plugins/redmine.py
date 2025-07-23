@@ -20,7 +20,7 @@ miss entries.
 import datetime
 
 import dateutil
-import feedparser
+import feedparser  # type: ignore[import-untyped]
 
 from did.base import Config, ReportError
 from did.stats import Stats, StatsGroup

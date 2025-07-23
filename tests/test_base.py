@@ -205,8 +205,6 @@ def test_date_addition_subtraction():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_user_class():
-    assert did.base.User
-
     # No email provided
     with pytest.raises(did.base.ConfigError, match="Email required"):
         did.base.User("")

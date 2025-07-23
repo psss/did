@@ -20,7 +20,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/pycqa/flake8
-    rev: "7.1.2"
+    rev: "7.3.0"
     hooks:
       - id: flake8
         additional_dependencies:
@@ -56,7 +56,7 @@ repos:
         exclude: disable_test_trac.py
 
   - repo: https://github.com/pylint-dev/pylint
-    rev: "v3.3.5"
+    rev: "v3.3.7"
     hooks:
       - id: pylint
         args:
@@ -80,3 +80,28 @@ repos:
             # Write changes in place
             "-w",
           ]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.17.0'
+    hooks:
+      - id: mypy
+        exclude: examples/.*|bin/did
+        additional_dependencies: [
+            bodhi-client,
+            feedparser,
+            google-api-python-client,
+            gssapi,
+            koji,
+            lxml,
+            nitrate,
+            oauth2client,
+            pytest,
+            python-bugzilla,
+            requests_gssapi,
+            tenacity,
+            types-httplib2,
+            types-python-dateutil,
+            types-requests,
+            types-setuptools,
+            types-urllib3,
+        ]

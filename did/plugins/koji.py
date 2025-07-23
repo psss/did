@@ -12,7 +12,7 @@ Config example::
 
 """
 
-import koji
+import koji  # type: ignore[import-untyped]
 import requests.exceptions
 
 import did.base
