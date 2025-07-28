@@ -260,6 +260,53 @@ def test_user_class():
     clone = user.clone("bz")
     assert clone.login == "bzlogin"
 
+    # Explicit email alias type
+    user = did.base.User("some@email.org; jira.email: jirauser", stats="jira")
+    assert user.email == "jirauser"
+    assert user.login == "jirauser"  # should update login from email
+
+    # Explicit login alias type
+    user = did.base.User("some@email.org; jira.login: user@example.com", stats="jira")
+    assert user.login == "user@example.com"
+    assert user.email == "some@email.org"  # original email unchanged
+
+    # Invalid alias type
+    with pytest.raises(did.base.ConfigError, match="Invalid alias definition"):
+        did.base.User("some@email.org; jira.invalid: value", stats="jira")
+
+    # Invalid alias format (missing colon)
+    with pytest.raises(did.base.ConfigError, match="Invalid alias definition"):
+        did.base.User("some@email.org; jira.login value", stats="jira")
+
+    # Case sensitive alias types - uppercase should fail
+    with pytest.raises(did.base.ConfigError, match="Invalid alias definition"):
+        did.base.User("some@email.org; jira.EMAIL: jirauser", stats="jira")
+
+    with pytest.raises(did.base.ConfigError, match="Invalid alias definition"):
+        did.base.User("some@email.org; jira.LOGIN: user@example.com", stats="jira")
+
+    # Both login and email aliases for the same stats service on same
+    # line When both are defined, both should be applied
+    user = did.base.User(
+        "some@email.org; jira.login: jirauser; jira.email: jira@example.com",
+        stats="jira")
+    assert user.login == "jirauser"
+    assert user.email == "jira@example.com"
+
+    # Test different order - email first, then login
+    user = did.base.User(
+        "some@email.org; jira.email: jira@example.com; jira.login: jirauser",
+        stats="jira")
+    assert user.login == "jirauser"
+    assert user.email == "jira@example.com"
+
+    # Explicit aliases take precedence over implicit ones
+    user = did.base.User(
+        "some@email.org; jira: implicit_value; jira.login: explicit_login",
+        stats="jira")
+    assert user.login == "explicit_login"
+    assert user.email == "some@email.org"  # original email unchanged
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Exceptions
