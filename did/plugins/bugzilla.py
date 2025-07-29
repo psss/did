@@ -43,7 +43,7 @@ Available options:
 
 import xmlrpc.client
 
-import bugzilla
+import bugzilla  # type: ignore[import-untyped]
 import requests.exceptions
 from tenacity import (RetryError, Retrying, retry_if_exception_type,
                       stop_after_attempt)

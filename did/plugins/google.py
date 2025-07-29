@@ -58,10 +58,11 @@ import os
 from typing import Optional
 
 import httplib2
-import oauth2client.client
-from googleapiclient import discovery
+# FIXME: https://github.com/psss/did/issues/415
+import oauth2client.client  # type: ignore[import-untyped]
+from googleapiclient import discovery  # type: ignore[import-untyped]
 from oauth2client import tools
-from oauth2client.file import Storage
+from oauth2client.file import Storage  # type: ignore[import-untyped]
 
 from did.base import CONFIG, Config, get_token
 from did.stats import Stats, StatsGroup
@@ -243,6 +244,8 @@ class GoogleStatsBase(Stats):
     def __init__(self, option: str, name=None, parent: Optional[StatsGroup] = None):
         super().__init__(option=option, name=name, parent=parent)
         try:
+            if self.options is None:
+                raise AttributeError("parent not ready yet")
             self.since = f"{self.options.since.datetime.isoformat()}Z"
             self.until = f"{self.options.until.datetime.isoformat()}Z"
         except AttributeError:
@@ -254,6 +257,8 @@ class GoogleStatsBase(Stats):
     def events(self):
         """ All events in calendar within specified time range """
         if self._events is None and self.parent is not None:
+            log.debug("Fetching calendar events since %s until %s",
+                      self.since, self.until)
             self._events = self.parent.calendar.events(
                 calendarId="primary", singleEvents=True, orderBy="startTime",
                 timeMin=self.since, timeMax=self.until)

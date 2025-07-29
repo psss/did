@@ -8,8 +8,12 @@ from setuptools import setup
 with open('did.spec', encoding="utf-8") as specfile:
     # pylint: disable=invalid-name
     lines = "\n".join(line.rstrip() for line in specfile)
-    version = re.search('Version: (.+)', lines).group(1).rstrip()
-    release = re.search('Release: (\\d+)', lines).group(1).rstrip()
+    version_match = re.search('Version: (.+)', lines)
+    release_match = re.search('Release: (\\d+)', lines)
+    if version_match is None or release_match is None:
+        raise ValueError("Could not find Version or Release in did.spec file")
+    version = version_match.group(1).rstrip()
+    release = release_match.group(1).rstrip()
 VERSION = '.'.join([version, release])
 
 # Prepare install requires and extra requires
@@ -31,6 +35,8 @@ extras_require = {
     'nitrate': ['nitrate'],
     'rt': ['gssapi'],
     'tests': ['pytest', 'pytest-xdist', 'pytest-cov', 'python-coveralls', 'pre-commit'],
+    'mypy': ['types-setuptools', 'types-python-dateutil', 'lxml',
+             'types-requests', 'types-urllib3', 'types-httplib2'],
     }
 extras_require['all'] = [
     dependency

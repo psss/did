@@ -97,7 +97,8 @@ from datetime import datetime
 import dateutil.parser
 import requests
 import urllib3
-from requests_gssapi import DISABLED, HTTPSPNEGOAuth
+from requests_gssapi import DISABLED  # type: ignore[import-untyped]
+from requests_gssapi import HTTPSPNEGOAuth
 
 from did.base import Config, ReportError, get_token
 from did.stats import Stats, StatsGroup

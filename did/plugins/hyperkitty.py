@@ -20,10 +20,10 @@ import email.utils
 import gzip
 import mailbox
 import tempfile
-import typing
 import urllib.parse
 from base64 import b32encode
 from hashlib import sha1
+from typing import Iterable, Optional
 
 import requests
 
@@ -37,22 +37,24 @@ TIMEOUT = 60
 
 class Message():
     def __init__(self, msg: mailbox.mboxMessage) -> None:
-        self.msg = msg
+        self.msg: mailbox.mboxMessage = msg
 
-    def __msg_id(self, keyid: str) -> str:
+    def __msg_id(self, keyid: str) -> Optional[str]:
         msgid = self.msg[keyid]
         if msgid is None:
             return None
-
         return msgid.lstrip("<").rstrip(">")
 
-    def id(self) -> str:
+    def id(self) -> Optional[str]:
         return self.__msg_id("Message-Id")
 
     def id_hash(self) -> str:
-        return b32encode(sha1(self.id().encode()).digest()).decode()
+        mid = self.id()
+        if mid is None:
+            raise RuntimeError("Got a message without id")
+        return b32encode(sha1(mid.encode()).digest()).decode()
 
-    def parent_id(self) -> str:
+    def parent_id(self) -> Optional[str]:
         return self.__msg_id("In-Reply-To")
 
     def subject(self) -> str:
@@ -83,13 +85,12 @@ class Message():
         return since.date <= msg_date <= until.date
 
 
-def _unique_messages(mbox: mailbox.mbox) -> typing.Iterable[Message]:
-    msgs = {}
-    for msg in mbox.values():
-        msg = Message(msg)
+def _unique_messages(mbox: mailbox.mbox) -> Iterable[Message]:
+    msgs: dict[str, Message] = {}
+    for mboxmsg in mbox.values():
+        msg = Message(mboxmsg)
         msg_id = msg.id()
-
-        if msg_id not in msgs:
+        if msg_id is not None and msg_id not in msgs:
             msgs[msg_id] = msg
             yield msg
 
