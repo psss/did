@@ -11,7 +11,7 @@ import re
 import sys
 from configparser import NoOptionError, NoSectionError
 from datetime import timedelta
-from typing import Optional
+from typing import Iterator, Optional, Union
 
 from dateutil.relativedelta import FR as FRIDAY
 from dateutil.relativedelta import MO as MONDAY
@@ -21,6 +21,7 @@ from dateutil.relativedelta import TH as THURSDAY
 from dateutil.relativedelta import TU as TUESDAY
 from dateutil.relativedelta import WE as WEDNESDAY
 from dateutil.relativedelta import relativedelta as delta
+from dateutil.relativedelta import weekday as wd
 
 from did import utils
 from did.utils import DEFAULT_SEPARATOR, MAX_WIDTH, log
@@ -29,7 +30,7 @@ from did.utils import DEFAULT_SEPARATOR, MAX_WIDTH, log
 #  Constants
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-WEEKDAY_MAP = {
+WEEKDAY_MAP: dict[str, wd] = {
     "monday": MONDAY(-1),
     "tuesday": TUESDAY(-1),
     "wednesday": WEDNESDAY(-1),
@@ -43,7 +44,7 @@ WEEKDAY_MAP = {
 CONFIG = os.path.expanduser("~/.did")
 
 # Today's date
-TODAY = datetime.date.today()
+TODAY: datetime.date = datetime.date.today()
 
 TEST_CONFIG = """
 [general]
@@ -88,9 +89,9 @@ class ReportError(GeneralError):
 
 
 @contextlib.contextmanager
-def setlocale(*args, **kw):
+def setlocale(category: int, value: Optional[str] = None) -> Iterator[str]:
     saved = locale.setlocale(locale.LC_ALL)
-    yield locale.setlocale(*args, **kw)
+    yield locale.setlocale(category, value)
     locale.setlocale(locale.LC_ALL, saved)
 
 
@@ -101,9 +102,9 @@ def setlocale(*args, **kw):
 class Config():
     """ User config file """
 
-    parser = None
+    parser: Optional[configparser.ConfigParser] = None
 
-    def __init__(self, config=None, path=None):
+    def __init__(self, config: Optional[str] = None, path: Optional[str] = None):
         """
         Read the config file
 
@@ -119,7 +120,7 @@ class Config():
         if config is not None:
             log.info("Inspecting config file from string")
             log.debug(utils.pretty(config))
-            self.parser.read_file(io.StringIO(config))
+            Config.parser.read_file(io.StringIO(config))
             return
         # Check the environment for config file override
         # (unless path is explicitly provided)
@@ -129,7 +130,7 @@ class Config():
         try:
             log.info("Inspecting config file '%s'.", path)
             with codecs.open(path, "r", "utf8") as config_file:
-                self.parser.read_file(config_file)
+                Config.parser.read_file(config_file)
         except IOError as error:
             log.debug(error)
             Config.parser = None
@@ -137,8 +138,10 @@ class Config():
                 f"Unable to read the config file '{path}'.") from error
 
     @property
-    def plugins(self):
+    def plugins(self) -> Optional[str]:
         """ Custom plugins """
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
         try:
             return self.parser.get("general", "plugins")
         except configparser.Error:
@@ -146,19 +149,24 @@ class Config():
             return None
 
     @property
-    def quarter(self):
+    def quarter(self) -> int:
         """ The first month of the quarter, 1 by default """
-        month = self.parser.get("general", "quarter", fallback=1)
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
+
+        month: str = self.parser.get("general", "quarter", fallback="1")
         try:
-            month = int(month) % 3
+            int_month = int(month) % 3
         except ValueError as exc:
             raise ConfigError(
                 f"Invalid quarter start '{month}', should be integer.") from exc
-        return month
+        return int_month
 
     @property
-    def email(self):
+    def email(self) -> str:
         """ User email(s) """
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
         try:
             return self.parser.get("general", "email")
         except NoSectionError as error:
@@ -171,31 +179,39 @@ class Config():
                 "No email address defined in the config file.") from error
 
     @property
-    def width(self):
+    def width(self) -> int:
         """ Maximum width of the report """
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
         try:
             return int(self.parser.get("general", "width"))
         except (NoOptionError, NoSectionError):
             return MAX_WIDTH
 
     @property
-    def separator(self):
+    def separator(self) -> str:
         """ Separator character to use for the report """
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
         try:
             return self.parser.get("general", "separator")
         except (NoOptionError, NoSectionError):
             return DEFAULT_SEPARATOR
 
     @property
-    def separator_width(self):
+    def separator_width(self) -> int:
         """ Number of separator characters to use for the report """
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
         try:
             return int(self.parser.get("general", "separator_width"))
         except (NoOptionError, NoSectionError):
             return MAX_WIDTH
 
-    def sections(self, kind=None):
+    def sections(self, kind: Optional[str] = None) -> list[str]:
         """ Return all sections (optionally of given kind only) """
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
         result = []
         for section in self.parser.sections():
             # Selected kind only if provided
@@ -209,22 +225,29 @@ class Config():
             result.append(section)
         return result
 
-    def section(self, section, skip=('type', 'order')):
+    def section(self,
+                section: str,
+                skip: tuple[str, ...] = ('type', 'order')) -> list[tuple[str, str]]:
         """
         Return section items, skip selected (type/order by default)
         """
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
         return [(key, val) for key, val in self.parser.items(section)
                 if key not in skip]
 
-    def item(self, section, it):
+    def item(self, section: str, it: str) -> str:
         """ Return content of given item in selected section """
-        for key, value in self.section(section, skip=[]):
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
+
+        for key, value in self.section(section, skip=()):
             if key == it:
                 return value
         raise ConfigError(f"Item '{it}' not found in section '{section}'")
 
     @staticmethod
-    def path():
+    def path() -> str:
         """ Detect config file path """
         # Detect config directory
         try:
@@ -241,7 +264,7 @@ class Config():
         return os.path.join(directory.rstrip("/"), filename)
 
     @staticmethod
-    def example():
+    def example() -> str:
         """ Return config example """
         return "[general]\nemail = Name Surname <email@example.org>\n"
 
@@ -253,10 +276,10 @@ class Config():
 class Date():
     """ Date parsing for common word formats """
 
-    def __init__(self, date=None):
+    def __init__(self, date: Union[datetime.date, str, None] = None):
         """ Parse the date string """
         if isinstance(date, datetime.date):
-            self.date = date
+            self.date: datetime.date = date
         elif date is None or date.lower() == "today":
             self.date = TODAY
         elif date.lower() == "yesterday":
@@ -271,20 +294,20 @@ class Date():
         self.datetime = datetime.datetime(
             self.date.year, self.date.month, self.date.day, 0, 0, 0)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ String format for printing """
         return str(self.date)
 
-    def __add__(self, addend):
+    def __add__(self, addend: float) -> datetime.date:
         """ 'addend' days after the date """
         return self.date + timedelta(days=addend)
 
-    def __sub__(self, subtrahend):
+    def __sub__(self, subtrahend: float) -> datetime.date:
         """ 'subtrahend' days before the date """
         return self.date - timedelta(days=subtrahend)
 
     @staticmethod
-    def get_week(last):
+    def get_week(last: bool) -> tuple["Date", "Date", str]:
         # Return start and end date of the current week.
         since = TODAY + delta(weekday=MONDAY(-1))
         until = since + delta(weeks=1)
@@ -296,7 +319,7 @@ class Date():
         return Date(since), Date(until), period
 
     @staticmethod
-    def get_month(last):
+    def get_month(last: bool) -> tuple["Date", "Date", str]:
         # Return start and end date of this month.
         since = TODAY + delta(day=1)
         until = since + delta(months=1)
@@ -309,7 +332,7 @@ class Date():
         return Date(since), Date(until), period
 
     @staticmethod
-    def get_quarter(last):
+    def get_quarter(last: bool) -> tuple["Date", "Date", str]:
         # Return start and end date of this quarter.
         since = TODAY + delta(day=1)
         while since.month % 3 != Config().quarter:
@@ -324,7 +347,7 @@ class Date():
         return Date(since), Date(until), period
 
     @staticmethod
-    def get_year(last):
+    def get_year(last: bool) -> tuple["Date", "Date", str]:
         # Return start and end date of this year
         since = TODAY
         while since.month != 1 or since.day != 1:
@@ -339,15 +362,17 @@ class Date():
         return Date(since), Date(until), period
 
     @staticmethod
-    def period(argument):
+    def period(argument: list[str]
+               ) -> tuple[Optional["Date"], Optional["Date"], Optional[str]]:
         """ Detect desired time period for the argument """
-        def get_weekday_details(arg):
+        def get_weekday_details(arg: list[str]) -> tuple[Optional[wd], Optional[str]]:
             for day, weekday in WEEKDAY_MAP.items():
                 if day in arg:
                     return weekday, f"the last {day}"
             return None, None  # pragma: no cover
 
-        def calculate_since_until_for_weekday(weekday):
+        def calculate_since_until_for_weekday(
+                weekday: Optional[wd]) -> tuple["Date", "Date"]:
             today = Date("today")
             since = Date("today")
             until = Date()
@@ -357,6 +382,7 @@ class Date():
             until.date = since.date + delta(days=1)
             return since, until
 
+        period: Optional[str]
         if "today" in argument:
             since, until = Date("today"), Date("today")
             until.date += delta(days=1)
@@ -420,7 +446,7 @@ class User():
         login = psss
     """
 
-    def __init__(self, email, stats=None):
+    def __init__(self, email: str, stats: Optional[str] = None):
         """ Detect name, login and email """
         # Make sure we received the email string, save the original for
         # cloning
@@ -443,42 +469,44 @@ class User():
         # Check for possible aliases
         self.alias(aliases, stats)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Use name & email for string representation. """
         if not self.name:
             return self.email
         return f"{self.name} <{self.email}>"
 
-    def clone(self, stats):
+    def clone(self, stats: str) -> "User":
         """ Create a user copy with alias enabled for given stats. """
         return User(self._original, stats)
 
-    def alias(self, aliases, stats):
+    def alias(self, aliases: Optional[str], stats: Optional[str]) -> None:
         """ Apply the login/email alias if configured. """
-        login = email = None
+        login: Optional[str] = None
+        email: Optional[str] = None
         if stats is None:
             return
         # Attempt to use alias directly from the config section
         try:
-            config = dict(Config().section(stats))
+            config: dict[str, str] = dict(Config().section(stats))
             email = config.get("email", None)
             login = config.get("login", None)
         except (ConfigFileError, NoSectionError) as e:
             log.error("Error accessing config section for stats '%s': %s",
                       stats, str(e))
+            return
         # Check for aliases specified in the email string
         if aliases is not None:
             try:
-                aliases = dict([
+                aliases_dict = dict([
                     re.split(r"\s*:\s*", definition, maxsplit=1)
                     for definition in re.split(r"\s*;\s*", aliases.strip())])
             except ValueError as exc:
                 raise ConfigError(f"Invalid alias definition: '{aliases}'") from exc
-            if stats in aliases:
-                if "@" in aliases[stats]:
-                    email = aliases[stats]
+            if stats in aliases_dict:
+                if "@" in aliases_dict[stats]:
+                    email = aliases_dict[stats]
                 else:
-                    login = aliases[stats]
+                    login = aliases_dict[stats]
         # Update login/email if alias detected
         if email is not None:
             self.email = email
@@ -491,7 +519,7 @@ class User():
 
 
 def get_token(
-        config: dict,
+        config: dict[str, str],
         token_key: str = "token",
         token_file_key: str = "token_file") -> Optional[str]:
     """
