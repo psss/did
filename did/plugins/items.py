@@ -32,7 +32,7 @@ class ItemStats(Stats):
             parent: Optional[StatsGroup] = None):
         # Prepare sorted item content from the config section
         items = Config().section(
-            option.replace("-item", ""), skip=["type", "header", "order"]
+            option.replace("-item", ""), skip=("type", "header", "order")
             )
         super().__init__(option, name, parent)
         # items can use '|' as first character to preserve
