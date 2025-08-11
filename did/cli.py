@@ -8,6 +8,7 @@ running the main loop which gathers all individual stats.
 import argparse
 import re
 import sys
+from typing import Optional, Union
 
 from dateutil.relativedelta import relativedelta as delta
 
@@ -31,14 +32,15 @@ stats for this week are reported.
 #  Options
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Options():
+class Options:
     """ Command line options parser """
 
-    def __init__(self, arguments=None):
+    def __init__(self, arguments: Union[None, str, list[str]] = None):
         """ Prepare the parser. """
         self.parser = argparse.ArgumentParser(usage=USAGE)
         self._prepare_arguments(arguments)
-        self.opt = self.arg = None
+        self.opt: argparse.Namespace
+        self.arg: Optional[list[str]]
 
         # Enable debugging output (even before options are parsed)
         if "--debug" in self.arguments:
@@ -51,7 +53,7 @@ class Options():
         try:
             width = did.base.Config().width
         except did.base.ConfigFileError:
-            width = did.utils.MAX_WIDTH
+            width = utils.MAX_WIDTH
 
         # Time & user selection
         group = self.parser.add_argument_group("Select")
@@ -106,7 +108,7 @@ class Options():
             "--test", action="store_true",
             help="Run a simple smoke test against the github server")
 
-    def _prepare_arguments(self, arguments):
+    def _prepare_arguments(self, arguments: Union[None, str, list[str]]) -> None:
         """ Prepare arguments (both direct and from command line) """
         # Split arguments if given as string
         if arguments is not None:
@@ -118,9 +120,11 @@ class Options():
         else:
             self.arguments = sys.argv[1:]
 
-    def parse(self):
+    def parse(self) -> tuple[argparse.Namespace, str]:
         """ Parse the options. """
         # Run the parser
+        opt: argparse.Namespace
+        arg: list[str]
         opt, arg = self.parser.parse_known_args(self.arguments)
         self.opt = opt
         self.arg = arg
@@ -146,6 +150,8 @@ class Options():
             opt.until.date += delta(days=1)
             period = "given date range"
 
+        if opt.since is None or opt.until is None:
+            raise RuntimeError("Date range not properly initialized")
         # Validate the date range
         if opt.since.date >= opt.until.date:
             raise RuntimeError(
@@ -169,13 +175,15 @@ class Options():
         log.debug('options = %s', opt)
         return opt, header
 
-    def check(self):
+    def check(self) -> None:
         """ Perform additional check for given options """
         keywords = [
             'today', 'yesterday', 'monday', 'tuesday', 'wednesday', 'thursday',
             'friday', 'saturday', 'sunday',
             'this', 'last',
             'week', 'month', 'quarter', 'year']
+        if self.arg is None:
+            raise RuntimeError("Programming error: call `parse` before `check`")
         for argument in self.arg:
             if argument not in keywords:
                 raise did.base.OptionError(f"Invalid argument: '{argument}'")
@@ -185,7 +193,8 @@ class Options():
 #  Main
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def main(arguments=None):
+def main(arguments: Union[None, str, list[str]] = None
+         ) -> tuple[list[UserStats], UserStats]:
     """
     Parse options, gather stats and show the results
 
@@ -210,9 +219,10 @@ def main(arguments=None):
     if config:
         custom_plugins = config.plugins
         if custom_plugins:
-            custom_plugins = [
-                plugin.strip() for plugin in utils.split(custom_plugins)]
-            utils.load_components(*custom_plugins, continue_on_error=True)
+            custom_plugins_list = [
+                plugin.strip()
+                for plugin in utils.split(custom_plugins)]
+            utils.load_components(*custom_plugins_list, continue_on_error=True)
 
     # Parse options, initialize gathered stats
     options, header = Options(arguments).parse()
@@ -239,10 +249,10 @@ def main(arguments=None):
     # Check individual user stats
     for user in users:
         if options.merge:
-            utils.item(user, 1, options=options)
+            utils.item(str(user), 1, options=options)
         else:
             utils.header(
-                user,
+                str(user),
                 separator=config.separator,
                 separator_width=config.separator_width)
         user_stats = UserStats(user=user, options=options)

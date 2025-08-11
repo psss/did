@@ -28,28 +28,28 @@ EXAMPLE = re.sub(r"\S+/git/[a-z]+", PATH, EXAMPLE)
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_help_minimal():
+def test_help_minimal() -> None:
     """ Help message with minimal config """
     did.base.Config(config=MINIMAL)
     with pytest.raises(SystemExit):
         did.cli.main(["--help"])
 
 
-def test_help_example():
+def test_help_example() -> None:
     """ Help message with example config """
     did.base.Config(config=EXAMPLE)
     with pytest.raises(SystemExit):
         did.cli.main(["--help"])
 
 
-def test_debug():
+def test_debug() -> None:
     """ Check the debug mode """
     did.base.Config(config=EXAMPLE)
     with pytest.raises(SystemExit):
         did.cli.main("--help --debug")
 
 
-def test_invalid_arguments():
+def test_invalid_arguments() -> None:
     """ Complain about invalid arguments """
     did.base.Config(config=MINIMAL)
     for argument in ["a", "b", "c", "something"]:
@@ -57,7 +57,7 @@ def test_invalid_arguments():
             did.cli.main(argument)
 
 
-def test_invalid_date():
+def test_invalid_date() -> None:
     """ Complain about invalid arguments """
     did.base.Config(config=MINIMAL)
     for argument in ["--since x", "--since 2015-16-17"]:
@@ -65,7 +65,7 @@ def test_invalid_date():
             did.cli.main(argument)
 
 
-def test_conflicting_options():
+def test_conflicting_options() -> None:
     """ Complain about conflicting options """
     did.base.Config(config=MINIMAL)
     for argument in ["last week --since 2025-05-29", "last week --until 2025-05-29"]:
