@@ -169,9 +169,9 @@ class Issue():
             worklogs += "\n\n"
             time_spent = ""
             if self.parent.worklog_show_time_spent:
-                time_spent = f" ({worklog["timeSpent"]})"
+                time_spent = f" ({worklog['timeSpent']})"
             worklogs += f"      * Worklog: {
-                created.strftime("%A, %B %d, %Y")}{time_spent}\n\n"
+                created.strftime('%A, %B %d, %Y')}{time_spent}\n\n"
             worklogs += "\n".join(
                 [f"        {line}" for line in worklog["comment"].splitlines()])
         if self.options.format == "markdown":
