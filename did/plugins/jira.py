@@ -1,5 +1,5 @@
 """
-Jira stats such as created, updated or resolved issues
+Jira stats such as created, updated or resolved issues, and worklogs
 
 Configuration example (token)::
 
@@ -32,6 +32,10 @@ token_name
 transition_status
     Name of the issue status we want to report transitions to.
     Defaults to ``Release Pending`` (marking "verified" issues).
+
+worklog_show_time_spent
+    Whether or not to show how much time was recorded for each
+    worklog.
 
 Configuration example (GSS authentication)::
 
@@ -141,6 +145,9 @@ class Issue():
         self.key = issue["key"]
         self.summary = issue["fields"]["summary"]
         self.comments = issue["fields"]["comment"]["comments"]
+        self.worklogs = []
+        if "worklog" in issue["fields"]:
+            self.worklogs = issue["fields"]["worklog"]["worklogs"]
         if "changelog" in issue:
             self.histories = issue["changelog"]["histories"]
         else:
@@ -154,32 +161,49 @@ class Issue():
 
     def __str__(self):
         """ Jira key and summary for displaying """
+        res = ""
         label = f"{self.prefix}-{self.identifier}"
+        worklogs = ""
+        for worklog in self.worklogs:
+            created = dateutil.parser.parse(worklog["created"])
+            worklogs += "\n\n"
+            time_spent = ""
+            if self.parent.worklog_show_time_spent:
+                time_spent = f" ({worklog["timeSpent"]})"
+            worklogs += f"      * Worklog: {
+                created.strftime("%A, %B %d, %Y")}{time_spent}\n\n"
+            worklogs += "\n".join(
+                [f"        {line}" for line in worklog["comment"].splitlines()])
         if self.options.format == "markdown":
             href = f"{self.parent.url}/browse/{self.issue['key']}"
-            return f"[{label}]({href}) - {self.summary}"
-        return f"{label} - {self.summary}"
+            res = f"[{label}]({href}) - {self.summary}"
+        else:
+            res = f"{label} - {self.summary}"
+
+        return res + worklogs
 
     def __eq__(self, other):
         """ Compare issues by key """
         return self.key == other.key
 
     @staticmethod
-    def search(query, stats, expand="", timeout=TIMEOUT):
+    def search(query, stats, expand="", timeout=TIMEOUT, with_worklog=False):
         """ Perform issue search for given stats instance """
         log.debug("Search query: %s", query)
         issues = []
         # Fetch data from the server in batches of MAX_RESULTS issues
+        fields = "summary,comment"
+        if with_worklog:
+            fields += ",worklog"
         for batch in range(MAX_BATCHES):
             encoded_query = urllib.parse.urlencode(
                 {
                     "jql": query,
-                    "fields": "summary,comment",
+                    "fields": fields,
                     "maxResults": MAX_RESULTS,
-                    "startAt": batch * MAX_RESULTS,
-                    "expand": expand
-                    }
-                )
+                    "startAt": batch *
+                    MAX_RESULTS,
+                    "expand": expand})
             current_url = f"{stats.parent.url}/rest/api/latest/search?{encoded_query}"
             log.debug("Fetching %s", current_url)
             while True:
@@ -425,6 +449,40 @@ class JiraTransition(Stats):
             query = query + f" AND project in ({self.parent.project})"
         self.stats = Issue.search(query, stats=self)
 
+
+class JiraWorklog(Stats):
+    """ Jira Issues for which a worklog entry was made """
+
+    def fetch(self):
+        log.info(
+            "[%s] Searching for issues for which work was logged by '%s'",
+            self.option,
+            self.user.login or self.user.email)
+        query = (
+            f"worklogAuthor = '{self.user.login or self.user.email}' "
+            f"and worklogDate > {self.options.since} "
+            f"and workLogDate < {self.options.until} "
+            )
+        if self.parent.project:
+            query = query + f" AND project in ({self.parent.project})"
+        issues = Issue.search(query, stats=self, with_worklog=True)
+        # Now we have just the issues which have work logs but we
+        # want to limit what worklogs we include in the report.
+        # Filter out worklogs that were not done in the given
+        # time frame.
+        log.debug("Found issues: %d", len(issues))
+        for issue in issues:
+            log.debug("Found worklogs: %s", len(issue.worklogs))
+            issue.worklogs = [wl for wl in issue.worklogs if
+                              (wl["author"]["name"] == self.user.login
+                               or wl["author"]["emailAddress"] == self.user.email)
+                              and dateutil.parser.parse(wl["created"]).date()
+                              > self.options.since.date
+                              and dateutil.parser.parse(wl["created"]).date()
+                              < self.options.until.date]
+            log.debug("Num worklogs after filterting: %d", len(issue.worklogs))
+        self.stats = issues
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -496,6 +554,7 @@ class JiraStats(StatsGroup):
                 "When scriptrunner is disabled with 'use_scriptrunner=False', "
                 "'project' has to be defined for each JIRA section.")
 
+    # pylint: disable=too-many-branches
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
         self._session = None
@@ -547,6 +606,16 @@ class JiraStats(StatsGroup):
         # State transition to count
         self.transition_status = config.get("transition_status", DEFAULT_TRANSITION_TO)
 
+        if "worklog_show_time_spent" in config:
+            try:
+                self.worklog_show_time_spent = strtobool(
+                    config["worklog_show_time_spent"])
+            except Exception as error:
+                raise ReportError(
+                    f"Error when parsing 'worklog_show_time_spent': {error}") from error
+        else:
+            self.worklog_show_time_spent = True
+
         # Create the list of stats
         self.stats = [
             JiraCreated(
@@ -570,6 +639,9 @@ class JiraStats(StatsGroup):
             JiraTransition(
                 option=option + "-transitioned", parent=self,
                 name=f"Issues transitioned in {option}"),
+            JiraWorklog(
+                option=f"{option}-worklog", parent=self,
+                name=f"Issues with worklogs in {option}")
             ]
 
     def _basic_auth_session(self):
