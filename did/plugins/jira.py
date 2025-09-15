@@ -165,13 +165,13 @@ class Issue():
         label = f"{self.prefix}-{self.identifier}"
         worklogs = ""
         for worklog in self.worklogs:
-            created = dateutil.parser.parse(worklog["created"])
+            created = dateutil.parser.parse(
+                worklog["created"]).strftime('%A, %B %d, %Y')
             worklogs += "\n\n"
             time_spent = ""
             if self.parent.worklog_show_time_spent:
                 time_spent = f" ({worklog['timeSpent']})"
-            worklogs += f"      * Worklog: {
-                created.strftime('%A, %B %d, %Y')}{time_spent}\n\n"
+            worklogs += f"      * Worklog: {created}{time_spent}\n\n"
             worklogs += "\n".join(
                 [f"        {line}" for line in worklog["comment"].splitlines()])
         if self.options.format == "markdown":
