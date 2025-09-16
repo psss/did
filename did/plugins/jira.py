@@ -460,8 +460,8 @@ class JiraWorklog(Stats):
             self.user.login or self.user.email)
         query = (
             f"worklogAuthor = '{self.user.login or self.user.email}' "
-            f"and worklogDate > {self.options.since} "
-            f"and workLogDate < {self.options.until} "
+            f"and worklogDate >= {self.options.since} "
+            f"and workLogDate <= {self.options.until} "
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
@@ -477,9 +477,9 @@ class JiraWorklog(Stats):
                               (wl["author"]["name"] == self.user.login
                                or wl["author"]["emailAddress"] == self.user.email)
                               and dateutil.parser.parse(wl["created"]).date()
-                              > self.options.since.date
+                              >= self.options.since.date
                               and dateutil.parser.parse(wl["created"]).date()
-                              < self.options.until.date]
+                              <= self.options.until.date]
             log.debug("Num worklogs after filterting: %d", len(issue.worklogs))
         self.stats = issues
 
