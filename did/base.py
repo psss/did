@@ -136,6 +136,10 @@ class Config():
             Config.parser = None
             raise ConfigFileError(
                 f"Unable to read the config file '{path}'.") from error
+        except configparser.Error as error:
+            log.error(error)
+            raise ConfigFileError(
+                f"Unable to parse the config file '{path}': {error}") from error
 
     @property
     def plugins(self) -> Optional[str]:
