@@ -10,9 +10,13 @@ Config example::
 
 """
 
-from bodhi.client.bindings import BodhiClient  # type: ignore[import-untyped]
+from argparse import Namespace
+from typing import Any, Optional
 
-from did.base import Config, ReportError
+from bodhi.client.bindings import BodhiClient  # type: ignore[import-untyped]
+from bodhi.client.bindings import BodhiClientException
+
+from did.base import Config, ReportError, User
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
@@ -30,21 +34,26 @@ class Bodhi():
         self.url = url
         self.client: BodhiClient
 
-    def connect(self):
+    def connect(self) -> None:
         """
         Establish connection to Bodhi and make the client available.
         """
         self.client = BodhiClient(self.url)
 
-    def search(self, query: str) -> list:
+    def search(self, query: str) -> list[dict[str, Any]]:
         """ Perform Bodhi query """
-        result = []
+        result: list[dict[str, Any]] = []
         current_page: int = 1
         original_query: str = query
         while current_page:
             log.debug("Bodhi query: %s", query)
-            data = self.client.send_request(query, verb='GET')
-            objects = data['updates']
+            try:
+                data: Any = self.client.send_request(
+                    query, verb='GET')
+            except BodhiClientException as e:
+                log.debug("Bodhi error: %s", e.errno)
+                raise ReportError('Error connecting to Bodhi server') from e
+            objects: list[dict[str, Any]] = data['updates']
             log.debug("Result: %s fetched", listed(len(objects), "item"))
             log.data(pretty(data))
             result.extend(objects)
@@ -64,7 +73,7 @@ class Update():
     """ Bodhi update """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, data, output_format):
+    def __init__(self, data: dict[str, Any], output_format: str) -> None:
         self.data = data
         self.format = output_format
         self.title = data['title']
@@ -74,7 +83,7 @@ class Update():
         self.url = data['url']
         log.details(f'[{self.created}] {self}')
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ String representation """
         if self.format == "markdown":
             return f'[{self.identifier}]({self.url}) - {self.title} [{self.project}]'
@@ -88,17 +97,32 @@ class Update():
 class UpdatesCreated(Stats):
     """ Updates created """
 
-    def fetch(self):
-        log.info('Searching for updates created by %s', self.user)
+    def __init__(self, /,
+                 option: str,
+                 name: Optional[str] = None,
+                 parent: Optional["BodhiStats"] = None,
+                 user: Optional[User] = None, *,
+                 options: Optional[Namespace] = None) -> None:
+        self.parent: BodhiStats
+        self.user: User
+        self.options: Namespace
+        super().__init__(option, name, parent, user, options=options)
+
+    def fetch(self) -> None:
+        if self.parent.options is None:
+            raise RuntimeError("BodhiStats not properly initialized")
+        try:
+            response: list[dict[str, Any]] = self.parent.bodhi.search(query=(
+                f'updates/?user={self.user.login}'
+                f'&submitted_before={self.options.until.date}'
+                f'&submitted_since={self.options.since.date}'
+                ))
+        except BodhiClientException as e:
+            log.debug("Bodhi error: %s", e.errno)
+            raise ReportError('Error connecting to Bodhi server') from e
         self.stats = [
             Update(update, self.parent.options.format)
-            for update in self.parent.bodhi.search(
-                query=(
-                    f'updates/?user={self.user.login}'
-                    f'&submitted_before={self.options.until.date}'
-                    f'&submitted_since={self.options.since.date}'
-                    )
-                )
+            for update in response
             ]
 
 
@@ -112,7 +136,11 @@ class BodhiStats(StatsGroup):
     # Default order
     order = 410
 
-    def __init__(self, option, name=None, parent=None, user=None):
+    def __init__(self,
+                 option: str,
+                 name: Optional[str] = None,
+                 parent: Optional[StatsGroup] = None,
+                 user: Optional[User] = None) -> None:
         StatsGroup.__init__(self, option, name, parent, user)
         config = dict(Config().section(option))
         # Check server url
@@ -127,7 +155,7 @@ class BodhiStats(StatsGroup):
                 name=f'Updates created on {option}'),
             ]
 
-    def check(self):
+    def check(self) -> None:
         """
         Connects to bodhi and check stats
         """

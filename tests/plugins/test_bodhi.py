@@ -33,7 +33,7 @@ login = mikelo2
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def test_bodhi_updates_created():
+def test_bodhi_updates_created() -> None:
     """ Created issues """
     did.base.Config(CONFIG)
     option = "--bodhi-updates-created "
@@ -45,7 +45,7 @@ def test_bodhi_updates_created():
     assert not stats
 
 
-def test_bodhi_missing_url(caplog: LogCaptureFixture):
+def test_bodhi_missing_url(caplog: LogCaptureFixture) -> None:
     """ Missing url """
     did.base.Config("""
                     [general]
