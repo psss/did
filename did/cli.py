@@ -213,6 +213,7 @@ def main(arguments: Union[None, str, list[str]] = None
         utils.info(
             f"Create at least a minimum config file {did.base.Config.path()}:"
             f"\n{did.base.Config.example().strip()}")
+        raise
 
     # Load standard and custom plugins
     utils.load_components("did.plugins", continue_on_error=True)
