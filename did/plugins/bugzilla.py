@@ -42,13 +42,16 @@ Available options:
 """
 
 import xmlrpc.client
+from argparse import Namespace
+from typing import Any, Generator, Optional, cast
 
 import bugzilla  # type: ignore[import-untyped]
+import bugzilla.bug  # type: ignore[import-untyped]
 import requests.exceptions
-from tenacity import (RetryError, Retrying, retry_if_exception_type,
-                      stop_after_attempt)
+from tenacity import (RetryCallState, RetryError, Retrying,
+                      retry_if_exception_type, stop_after_attempt)
 
-from did.base import Config, ReportError
+from did.base import Config, ReportError, User
 from did.stats import Stats, StatsGroup
 from did.utils import log, pretty, split, strtobool
 
@@ -69,18 +72,18 @@ SSL_VERIFY = True
 class Bugzilla():
     """ Bugzilla investigator """
 
-    def __init__(self, parent):
+    def __init__(self, parent: "BugzillaStatsGroup") -> None:
         """ Initialize url """
         self.parent = parent
-        self._server = None
+        self._server: Optional[bugzilla.Bugzilla] = None
 
     @property
-    def server(self):
+    def server(self) -> bugzilla.Bugzilla:
         """ Connection to the server """
         if self._server is None:
             try:
                 self._server = bugzilla.Bugzilla(
-                    url=self.parent.url,
+                    url=self.parent.url,  # pyright:ignore[reportArgumentType]
                     sslverify=self.parent.ssl_verify
                     )
             except requests.exceptions.ConnectionError as conn_err:
@@ -90,7 +93,7 @@ class Bugzilla():
                     ) from conn_err
         return self._server
 
-    def search(self, query):
+    def search(self, query: dict[str, str]) -> list["Bug"]:
         """ Perform Bugzilla search """
         query["query_format"] = "advanced"
         query["limit"] = "0"
@@ -98,12 +101,15 @@ class Bugzilla():
         log.debug(pretty(query))
         # Fetch bug info
 
+        def bugzilla_before_sleep(_retry_state: RetryCallState) -> None:
+            log.debug("Trying to connect to Bugzilla...")
+
         try:
             for attempt in Retrying(
                     stop=stop_after_attempt(3),
                     retry=retry_if_exception_type(
                         requests.exceptions.ConnectionError),
-                    before_sleep=log.debug("Trying to connect to Bugzilla..."),
+                    before_sleep=bugzilla_before_sleep,
                     reraise=True):
                 with attempt:
                     result = self.server.query(query)
@@ -133,17 +139,36 @@ class Bugzilla():
         # Bugzilla._proxy is considered part of the API
         # See within https://github.com/python-bugzilla:
         # python-bugzilla/blob/35c4510314ee62cc4b7dfd50acfbaca0c8baa366/bugzilla/base.py#L535
-        result = self.server._proxy.Bug.history({'ids': list(bugs.keys())})
+
+        for attempt in Retrying(
+                stop=stop_after_attempt(3),
+                retry=retry_if_exception_type(requests.exceptions.ConnectionError),
+                before_sleep=bugzilla_before_sleep,
+                reraise=True
+                ):
+            with attempt:
+                result_history: dict[str, Any] = cast(
+                    dict[str, Any],
+                    self.server._proxy.Bug.history({'ids': list(bugs.keys())}))
         log.debug(pretty(result))
-        history = dict((bug["id"], bug["history"]) for bug in result["bugs"])
+        history = dict((bug["id"], bug["history"]) for bug in result_history["bugs"])
         # Fetch bug comments
         log.debug("Fetching bug comments")
-        result = self.server._proxy.Bug.comments({'ids': list(bugs.keys())})
+        for attempt in Retrying(
+                stop=stop_after_attempt(3),
+                retry=retry_if_exception_type(requests.exceptions.ConnectionError),
+                before_sleep=bugzilla_before_sleep,
+                reraise=True
+                ):
+            with attempt:
+                result_comments: dict[str, Any] = cast(
+                    dict[str, Any],
+                    self.server._proxy.Bug.comments({'ids': list(bugs.keys())}))
         # pylint: enable=protected-access
-        log.debug(pretty(result))
+        log.debug(pretty(result_comments))
         comments = dict(
             (int(bug), data["comments"])
-            for bug, data in list(result["bugs"].items()))
+            for bug, data in list(result_comments["bugs"].items()))
         # Create bug objects
         return [
             self.parent.bug(
@@ -158,17 +183,23 @@ class Bugzilla():
 class Bug():
     """ Bugzilla search """
 
-    def __init__(self, bug, history, comments, parent):
+    def __init__(self,
+                 bug: "bugzilla.bug.Bug",
+                 history: list[dict[str, Any]],
+                 comments: list[dict[str, Any]],
+                 parent: "BugzillaStatsGroup") -> None:
         """ Initialize bug info and history """
-        self.id = bug.id
-        self.bug = bug
+        self.id: int = bug.id
+        self.bug: "bugzilla.bug.Bug" = bug
         self.history = history
         self.comments = comments
-        self.options = parent.options
+        if parent.options is None:
+            raise RuntimeError("BugzillaStatsGroup not properly initialized")
+        self.options: Namespace = parent.options
         self.prefix = parent.prefix
         self.parent = parent
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Consistent identifier and summary for displaying """
         if self.options.format == "wiki":
             return f"<<Bug({self.id})>> - {self.summary}"
@@ -182,26 +213,28 @@ class Bug():
         # plain text format
         return f'{self.prefix}#{str(self.id).rjust(7, "0")} - {self.summary}'
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """ Compare bugs by their id """
+        if not isinstance(other, Bug):
+            return NotImplemented
         return self.id == other.id
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """ Use bug id for hashing """
         return self.id
 
     @property
-    def summary(self):
+    def summary(self) -> str:
         """ Bug summary including resolution if enabled """
         if not self.bug.resolution:
-            return self.bug.summary
+            return str(self.bug.summary)
         if (self.bug.resolution.lower() in self.parent.resolutions
                 or "all" in self.parent.resolutions):
             return f"{self.bug.summary} [{self.bug.resolution.lower()}]"
-        return self.bug.summary
+        return str(self.bug.summary)
 
     @property
-    def logs(self):
+    def logs(self) -> Generator[tuple[str, dict[str, Any]], None, None]:
         """ Return relevant who-did-what pairs from the bug history """
         for record in self.history:
             if (record["when"] >= self.options.since.date
@@ -209,7 +242,7 @@ class Bug():
                 for change in record["changes"]:
                     yield record["who"], change
 
-    def verified(self):
+    def verified(self) -> bool:
         """ True if bug was verified in given time frame """
         for _who, record in self.logs:
             if record["field_name"] == "status" \
@@ -217,7 +250,7 @@ class Bug():
                 return True
         return False
 
-    def returned(self, user):
+    def returned(self, user: User) -> bool:
         """ Moved to ASSIGNED by given user (but not from NEW) """
         for who, record in self.logs:
             if (record["field_name"] == "status"
@@ -227,7 +260,7 @@ class Bug():
                 return True
         return False
 
-    def fixed(self):
+    def fixed(self) -> bool:
         """ Moved to MODIFIED and not later moved to ASSIGNED """
         decision = False
         for record in self.history:
@@ -251,7 +284,7 @@ class Bug():
                         decision = False
         return decision
 
-    def closed(self, user):
+    def closed(self, user: User) -> bool:
         """ Moved to CLOSED and not later moved to ASSIGNED """
         decision = False
         for record in self.history:
@@ -275,14 +308,14 @@ class Bug():
                         decision = False
         return decision
 
-    def posted(self):
+    def posted(self) -> bool:
         """ True if bug was moved to POST in given time frame """
         for _who, record in self.logs:
             if record["field_name"] == "status" and record["added"] == "POST":
                 return True
         return False
 
-    def patched(self, user):
+    def patched(self, user: User) -> bool:
         """ True if Patch was added to Keywords field by given user """
         for who, record in self.logs:
             if (record["field_name"] == "keywords" and
@@ -290,7 +323,7 @@ class Bug():
                 return True
         return False
 
-    def commented(self, user):
+    def commented(self, user: User) -> bool:
         """ True if comment was added in given time frame """
         for comment in self.comments:
             # Description (comment #0) is not considered as a comment
@@ -302,7 +335,7 @@ class Bug():
                 return True
         return False
 
-    def subscribed(self, user):
+    def subscribed(self, user: User) -> bool:
         """ True if CC was added in given time frame """
         for _who, record in self.logs:
             if (record["field_name"] == "cc" and
@@ -315,7 +348,27 @@ class Bug():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class VerifiedBugs(Stats):
+class BugzillaStats(Stats):
+    """
+    Abstract class for Bugzilla related Stats
+    """
+
+    def __init__(self, /,
+                 option: str,
+                 name: Optional[str] = None,
+                 parent: Optional["BugzillaStatsGroup"] = None,
+                 user: Optional[User] = None, *,
+                 options: Optional[Namespace] = None) -> None:
+        self.user: User
+        self.options: Namespace
+        self.parent: BugzillaStatsGroup
+        super().__init__(option, name, parent, user, options=options)
+
+    def fetch(self) -> None:
+        raise NotImplementedError()
+
+
+class VerifiedBugs(BugzillaStats):
     """
     Bugs verified
 
@@ -323,7 +376,7 @@ class VerifiedBugs(Stats):
     given user and having their status changed to ``VERIFIED``.
     """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for bugs verified by %s", self.user)
         # Common query options
         query = {
@@ -360,7 +413,7 @@ class VerifiedBugs(Stats):
             if bug.verified()))
 
 
-class ReturnedBugs(Stats):
+class ReturnedBugs(BugzillaStats):
     """
     Bugs returned
 
@@ -369,7 +422,7 @@ class ReturnedBugs(Stats):
     correct or complete.
     """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for bugs returned by %s", self.user)
         query = {
             # User is not the assignee
@@ -398,14 +451,14 @@ class ReturnedBugs(Stats):
             if bug.returned(self.user)]
 
 
-class FiledBugs(Stats):
+class FiledBugs(BugzillaStats):
     """
     Bugs filed
 
     Newly created bugs by given user, marked as the ``Reporter``.
     """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for bugs filed by %s", self.user)
         query = {
             # User is the reporter
@@ -424,7 +477,7 @@ class FiledBugs(Stats):
         self.stats = self.parent.bugzilla.search(query)
 
 
-class FixedBugs(Stats):
+class FixedBugs(BugzillaStats):
     """
     Bugs fixed
 
@@ -433,7 +486,7 @@ class FixedBugs(Stats):
     ``ASSIGNED`` state (which would suggest an incomplete fix).
     """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for bugs fixed by %s", self.user)
         query = {
             # User is the assignee
@@ -458,7 +511,7 @@ class FixedBugs(Stats):
             if bug.fixed()]
 
 
-class ClosedBugs(Stats):
+class ClosedBugs(BugzillaStats):
     """
     Bugs closed
 
@@ -468,7 +521,7 @@ class ClosedBugs(Stats):
     for a proper reason).
     """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for bugs closed by %s", self.user)
         query = {
             # Status changed by the user
@@ -497,7 +550,7 @@ class ClosedBugs(Stats):
             if bug.closed(self.user)]
 
 
-class PostedBugs(Stats):
+class PostedBugs(BugzillaStats):
     """
     Bugs posted
 
@@ -505,7 +558,7 @@ class PostedBugs(Stats):
     change to ``POST`` and given user set as ``Assignee``.
     """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for bugs posted by %s", self.user)
         query = {
             # User is the assignee
@@ -530,7 +583,7 @@ class PostedBugs(Stats):
             if bug.posted()]
 
 
-class PatchedBugs(Stats):
+class PatchedBugs(BugzillaStats):
     """
     Bugs patched
 
@@ -539,7 +592,7 @@ class PatchedBugs(Stats):
     to the bug or pushed to a feature git branch).
     """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for bugs patched by %s", self.user)
         query = {
             # Keywords field changed by the user
@@ -594,14 +647,14 @@ class PatchedBugs(Stats):
         self.stats += list(self.parent.bugzilla.search(query))
 
 
-class CommentedBugs(Stats):
+class CommentedBugs(BugzillaStats):
     """
     Bugs commented
 
     All bugs commented by given user in requested time frame.
     """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for bugs commented by %s", self.user)
         query = {
             # Commented by the user
@@ -622,14 +675,14 @@ class CommentedBugs(Stats):
             if bug.commented(self.user)]
 
 
-class SubscribedBugs(Stats):
+class SubscribedBugs(BugzillaStats):
     """
     Bugs subscribed
 
     All bugs subscribed by given user in requested time frame.
     """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for bugs subscribed by %s", self.user)
         query = {
             # Subscribed by the user
@@ -653,13 +706,17 @@ class SubscribedBugs(Stats):
         self.stats = [bug for bug in bugs if bug.subscribed(self.user)]
 
 
-class BugzillaStats(StatsGroup):
+class BugzillaStatsGroup(StatsGroup):
     """ Bugzilla stats """
 
     # Default order
     order = 200
 
-    def __init__(self, option, name=None, parent=None, user=None):
+    def __init__(self,
+                 option: str,
+                 name: Optional[str] = None,
+                 parent: Optional[StatsGroup] = None,
+                 user: Optional[User] = None) -> None:
         StatsGroup.__init__(self, option, name, parent, user)
         config = dict(Config().section(option))
         # Check Bugzilla instance url
@@ -671,8 +728,8 @@ class BugzillaStats(StatsGroup):
         # SSL verification
         if "ssl_verify" in config:
             try:
-                self.ssl_verify = strtobool(
-                    config["ssl_verify"])
+                self.ssl_verify = bool(strtobool(
+                    config["ssl_verify"]))
             except Exception as error:
                 raise ReportError(
                     f"Error when parsing 'ssl_verify': {error}") from error
