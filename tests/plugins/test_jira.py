@@ -10,7 +10,7 @@ from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
-from did.plugins.jira import JiraStats
+from did.plugins.jira import JiraStats, JiraWorklog
 
 CONFIG = """
 [general]
@@ -253,3 +253,37 @@ def assert_conf_error(config, expected_error=did.base.ReportError):
     did.base.Config(config)
     with pytest.raises(expected_error):
         JiraStats("jira")
+
+
+def has_worklog_stat() -> bool:
+    """ Returns true if a fresh initiated JiraStats
+    object would have a JiraWorklog object """
+    stats = JiraStats("jira")
+    for stat in stats.stats:
+        if isinstance(stat, JiraWorklog):
+            return True
+    return False
+
+
+@pytest.mark.parametrize(  # type: ignore[misc]
+    ("config_str", "expected_worklog_enable"),
+    [
+        (f"""
+{CONFIG}
+""", False),
+        (f"""
+{CONFIG}
+worklog_enable = on
+""", True),
+        (f"""
+{CONFIG}
+worklog_enable = off
+""", False),
+        ],
+    )
+def test_worklog_enabled(
+        config_str: str,
+        expected_worklog_enable: bool,
+        ) -> None:
+    did.base.Config(config_str)
+    assert has_worklog_stat() == expected_worklog_enable

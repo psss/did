@@ -33,9 +33,12 @@ transition_status
     Name of the issue status we want to report transitions to.
     Defaults to ``Release Pending`` (marking "verified" issues).
 
+worklog_enable
+    Whether or not to fetch worklogs. Default: off.
+
 worklog_show_time_spent
     Whether or not to show how much time was recorded for each
-    worklog.
+    worklog. (Requires ``worklog_enable = on``)
 
 Configuration example (GSS authentication)::
 
@@ -555,6 +558,7 @@ class JiraStats(StatsGroup):
                 "'project' has to be defined for each JIRA section.")
 
     # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
     def __init__(self, option, name=None, parent=None, user=None):
         StatsGroup.__init__(self, option, name, parent, user)
         self._session = None
@@ -606,6 +610,16 @@ class JiraStats(StatsGroup):
         # State transition to count
         self.transition_status = config.get("transition_status", DEFAULT_TRANSITION_TO)
 
+        if "worklog_enable" in config:
+            try:
+                self.worklog_enable = strtobool(
+                    config["worklog_enable"])
+            except Exception as error:
+                raise ReportError(
+                    f"Error when parsing 'worklog_enable': {error}") from error
+        else:
+            self.worklog_enable = False
+
         if "worklog_show_time_spent" in config:
             try:
                 self.worklog_show_time_spent = strtobool(
@@ -615,6 +629,11 @@ class JiraStats(StatsGroup):
                     f"Error when parsing 'worklog_show_time_spent': {error}") from error
         else:
             self.worklog_show_time_spent = True
+
+        if not self.worklog_enable and self.worklog_show_time_spent:
+            log.debug(
+                "'worklog_show_time_spent' is on but has no effect "
+                "because 'worklog_enable' is off")
 
         # Create the list of stats
         self.stats = [
@@ -638,11 +657,13 @@ class JiraStats(StatsGroup):
                 name=f"Issues updated in {option}"),
             JiraTransition(
                 option=option + "-transitioned", parent=self,
-                name=f"Issues transitioned in {option}"),
-            JiraWorklog(
-                option=f"{option}-worklog", parent=self,
-                name=f"Issues with worklogs in {option}")
+                name=f"Issues transitioned in {option}")
             ]
+
+        if self.worklog_enable:
+            self.stats.append(JiraWorklog(
+                option=f"{option}-worklog", parent=self,
+                name=f"Issues with worklogs in {option}"))
 
     def _basic_auth_session(self):
         log.debug("Connecting to %s for basic auth", self.auth_url)
