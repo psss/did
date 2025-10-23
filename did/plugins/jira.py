@@ -38,7 +38,7 @@ worklog_enable
 
 worklog_show_time_spent
     Whether or not to show how much time was recorded for each
-    worklog. (Requires ``worklog_enable = on``)
+    worklog. (Has no effect when ``worklog_enable`` is ``off``).
 
 Configuration example (GSS authentication)::
 
@@ -464,7 +464,7 @@ class JiraWorklog(Stats):
         query = (
             f"worklogAuthor = '{self.user.login or self.user.email}' "
             f"and worklogDate >= {self.options.since} "
-            f"and workLogDate <= {self.options.until} "
+            f"and workLogDate < {self.options.until} "
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
@@ -477,14 +477,16 @@ class JiraWorklog(Stats):
         for issue in issues:
             log.debug("Found worklogs: %s", len(issue.worklogs))
             issue.worklogs = [wl for wl in issue.worklogs if
-                              (wl["author"]["name"] == self.user.login
-                               or wl["author"]["emailAddress"] == self.user.email)
+                              (("name" in wl["author"]
+                                and wl["author"]["name"] == self.user.login)
+                               or ("emailAddress" in wl["author"]
+                                   and wl["author"]["emailAddress"] == self.user.email))
                               and dateutil.parser.parse(wl["created"]).date()
                               >= self.options.since.date
                               and dateutil.parser.parse(wl["created"]).date()
-                              <= self.options.until.date]
+                              < self.options.until.date]
             log.debug("Num worklogs after filterting: %d", len(issue.worklogs))
-        self.stats = issues
+        self.stats = [issue for issue in issues if len(issue.worklogs) > 0]
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
