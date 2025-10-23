@@ -372,8 +372,6 @@ worklog_enable = on
 
         # Check that the issue with the given ID was found
         id_pattern = f"{exp["id"]} \\S+"
-        # if "--verbose" in options:
-        #     pattern = f"https://reviews\\.llvm\\.org/{exp_id} \\S+"
         regex = re.compile(id_pattern)
         assert regex
         assert regex.match(stat_str)
