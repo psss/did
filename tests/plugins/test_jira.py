@@ -322,7 +322,6 @@ login = githubbot
 url = https://issues.apache.org/jira/
 worklog_enable = on
 """)
-    # auth_url = https://issues.apache.org/jira/rest/auth/latest/session
     options = "--jira-worklog --since 2021-05-07 --until 2021-05-07 --verbose"
     stats = get_named_stat(options)
     expectations = [
