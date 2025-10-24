@@ -22,7 +22,7 @@ url = https://bugzilla.redhat.com/xmlrpc.cgi
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @pytest.mark.functional
-def test_bugzilla_linus():
+def test_bugzilla_linus() -> None:
     """ Check bugs filed by Linus :-) """
     did.base.Config(CONFIG)
     stats = did.cli.main("""
@@ -36,7 +36,7 @@ def test_bugzilla_linus():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @pytest.mark.functional
-def test_bugzilla_week():
+def test_bugzilla_week() -> None:
     """ Check all stats for given week """
     did.base.Config(CONFIG)
     stats = did.cli.main("--email psplicha@redhat.com")
@@ -48,7 +48,7 @@ def test_bugzilla_week():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @pytest.mark.functional
-def test_bugzilla_fixed():
+def test_bugzilla_fixed() -> None:
     """ Check fixed bugs on BZ#1174186"""
     did.base.Config(CONFIG)
     # The first fix was not successful (bug later moved to ASSIGNED)
@@ -72,7 +72,7 @@ def test_bugzilla_fixed():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @pytest.mark.functional
-def test_bugzilla_returned():
+def test_bugzilla_returned() -> None:
     """ Check returned bugs """
     did.base.Config(CONFIG)
     # Moving bug to ASSIGNED from ON_QA (test on BZ#1174186)
@@ -96,7 +96,7 @@ def test_bugzilla_returned():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @pytest.mark.functional
-def test_bugzilla_subscribed():
+def test_bugzilla_subscribed() -> None:
     """ Check subscribed bugs """
     did.base.Config(CONFIG)
     stats = did.cli.main([
@@ -112,7 +112,7 @@ def test_bugzilla_subscribed():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @pytest.mark.functional
-def test_bugzilla_closed():
+def test_bugzilla_closed() -> None:
     """ Check closed bugs """
     did.base.Config(CONFIG)
     stats = did.cli.main([
@@ -129,7 +129,7 @@ def test_bugzilla_closed():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 @pytest.mark.functional
-def test_bugzilla_verified_changedby():
+def test_bugzilla_verified_changedby() -> None:
     """ Check verified bugs based on changedby """
     did.base.Config(CONFIG)
     stats = did.cli.main([
@@ -142,7 +142,7 @@ def test_bugzilla_verified_changedby():
 
 
 @pytest.mark.functional
-def test_bugzilla_verified_qecontact():
+def test_bugzilla_verified_qecontact() -> None:
     """ Check verified bugs based on qe contact """
     did.base.Config(CONFIG)
     stats = did.cli.main([
@@ -158,7 +158,7 @@ def test_bugzilla_verified_qecontact():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def test_bugzilla_missing_url(caplog: LogCaptureFixture):
+def test_bugzilla_missing_url(caplog: LogCaptureFixture) -> None:
     """ Missing url """
     did.base.Config("""
                     [general]
@@ -172,7 +172,7 @@ def test_bugzilla_missing_url(caplog: LogCaptureFixture):
         assert "No bugzilla url set" in caplog.text
 
 
-def test_bugzilla_wrong_url(caplog: LogCaptureFixture):
+def test_bugzilla_wrong_url(caplog: LogCaptureFixture) -> None:
     """ Wrong url """
     did.base.Config("""
                     [general]
