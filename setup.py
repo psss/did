@@ -34,7 +34,8 @@ extras_require = {
     'redmine': ['feedparser'],
     'nitrate': ['nitrate'],
     'rt': ['gssapi'],
-    'tests': ['pytest', 'pytest-xdist', 'pytest-cov', 'python-coveralls', 'pre-commit'],
+    'tests': ['pytest', 'pytest-xdist', 'pytest-cov', 'python-coveralls', 'pre-commit',
+              'setuptools'],
     'mypy': ['types-setuptools', 'types-python-dateutil', 'lxml',
              'types-requests', 'types-urllib3', 'types-httplib2'],
     }
@@ -75,6 +76,7 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
         'Topic :: Office/Business',
         'Topic :: Utilities',
         ],

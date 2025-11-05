@@ -1,6 +1,6 @@
 [MAIN]
 ignore-paths=^bin/.*$
-init-hook='import sys; import site; sys.path.extend(site.getsitepackages()); sys.path.append("./.venv/lib64/python3.13/site-packages"); sys.path.append("/usr/lib/python3.13/site-packages")'
+init-hook='import sys; import site; sys.path.extend(site.getsitepackages()); sys.path.append("./.venv/lib64/python3.14/site-packages"); sys.path.append("/usr/lib/python3.13/site-packages")'
 
 [MESSAGES]
 disable=duplicate-code,missing-function-docstring,missing-module-docstring,missing-class-docstring,fixme,too-many-arguments,too-many-instance-attributes
