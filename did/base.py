@@ -264,8 +264,8 @@ class Config():
             if matched:
                 if matched.groups()[0] is not None:
                     arg = matched.groups()[0]
-                elif i+1 < len(sys.argv):
-                    arg = sys.argv[i+1]
+                elif i + 1 < len(sys.argv):
+                    arg = sys.argv[i + 1]
                 else:
                     arg = ""
                 filepath, filename = os.path.split(arg)
