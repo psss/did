@@ -150,7 +150,8 @@ class Issue():
         self.comments = issue["fields"]["comment"]["comments"]
         self.worklogs = []
         if "worklog" in issue["fields"]:
-            self.worklogs = issue["fields"]["worklog"]["worklogs"]
+            worklog_data = issue["fields"].get("worklog", {})
+            self.worklogs = worklog_data.get("worklogs", [])
         if "changelog" in issue:
             self.histories = issue["changelog"]["histories"]
         else:
