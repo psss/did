@@ -173,7 +173,10 @@ class Issue():
             worklogs += "\n\n"
             time_spent = ""
             if self.parent.worklog_show_time_spent:
-                time_spent = f" ({worklog['timeSpent']})"
+                time_spent_value = worklog.get('timeSpent', '')
+                if time_spent_value:
+                    time_spent = f" ({time_spent_value})"
+
             worklogs += f"      * Worklog: {created}{time_spent}\n\n"
             comment = worklog.get("comment", "")
             if comment:
