@@ -487,9 +487,8 @@ class JiraWorklog(Stats):
                                 and wl["author"]["name"] == self.user.login)
                                or ("emailAddress" in wl["author"]
                                    and wl["author"]["emailAddress"] == self.user.email))
-                              and dateutil.parser.parse(wl["created"]).date()
-                              >= self.options.since.date
-                              and dateutil.parser.parse(wl["created"]).date()
+                              and self.options.since.date <=
+                              dateutil.parser.parse(wl["created"]).date()
                               < self.options.until.date]
             log.debug("Num worklogs after filterting: %d", len(issue.worklogs))
         self.stats = [issue for issue in issues if len(issue.worklogs) > 0]
