@@ -464,7 +464,7 @@ class JiraWorklog(Stats):
         query = (
             f"worklogAuthor = '{self.user.login or self.user.email}' "
             f"and worklogDate >= {self.options.since} "
-            f"and workLogDate < {self.options.until} "
+            f"and worklogDate < {self.options.until} "
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
