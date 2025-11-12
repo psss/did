@@ -175,8 +175,10 @@ class Issue():
             if self.parent.worklog_show_time_spent:
                 time_spent = f" ({worklog['timeSpent']})"
             worklogs += f"      * Worklog: {created}{time_spent}\n\n"
-            worklogs += "\n".join(
-                [f"        {line}" for line in worklog["comment"].splitlines()])
+            comment = worklog.get("comment", "")
+            if comment:
+                worklogs += "\n".join(
+                    [f"        {line}" for line in comment.splitlines()])
         if self.options.format == "markdown":
             href = f"{self.parent.url}/browse/{self.issue['key']}"
             res = f"[{label}]({href}) - {self.summary}"
