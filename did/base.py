@@ -1,6 +1,5 @@
 """ Config, Date, User and Exceptions """
 
-import codecs
 import configparser
 import contextlib
 import datetime
@@ -129,7 +128,7 @@ class Config():
         # Parse the config from file
         try:
             log.info("Inspecting config file '%s'.", path)
-            with codecs.open(path, "r", "utf8") as config_file:
+            with open(path, "r", encoding="utf8") as config_file:
                 Config.parser.read_file(config_file)
         except IOError as error:
             log.debug(error)

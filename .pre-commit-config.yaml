@@ -15,7 +15,7 @@ repos:
           - --max-line-length=88
 
   - repo: https://github.com/PyCQA/isort
-    rev: "6.0.1"
+    rev: "7.0.0"
     hooks:
       - id: isort
 
@@ -25,7 +25,8 @@ repos:
       - id: flake8
         additional_dependencies:
           [
-            flake8-pytest-style == 2.1.0,
+            # https://pypi.org/project/flake8-pytest-style/
+            flake8-pytest-style == 2.2.0,
           ]
         args:
           - --config
@@ -45,7 +46,7 @@ repos:
           )$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: "v5.0.0"
+    rev: "v6.0.0"
     hooks:
       - id: end-of-file-fixer
       - id: mixed-line-ending
@@ -56,7 +57,7 @@ repos:
         exclude: disable_test_trac.py
 
   - repo: https://github.com/pylint-dev/pylint
-    rev: "v3.3.7"
+    rev: "v4.0.2"
     hooks:
       - id: pylint
         args:
@@ -82,7 +83,7 @@ repos:
           ]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: 'v1.17.0'
+    rev: 'v1.18.2'
     hooks:
       - id: mypy
         exclude: examples/.*|bin/did
