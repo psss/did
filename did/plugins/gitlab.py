@@ -177,7 +177,7 @@ class GitLab():
         mr = next(filter(lambda x: x['id'] == mr_id, mrs), None)
         return mr
 
-    def get_user_mr(self, username, state, since, until):
+    def get_user_mr(self, username, state, since):
         """
         Fetch merge requests by user using GitLab's global
         merge_requests endpoint.
@@ -186,15 +186,20 @@ class GitLab():
         (not just admins) and returns merge requests based on
         the user's visibility permissions.
         See: https://docs.gitlab.com/ee/api/merge_requests.html
+
+        Note: GitLab API doesn't support filtering by merge date,
+        only by update date. We fetch by 'updated_after' to reduce
+        the dataset, but don't use 'updated_before' to avoid missing
+        MRs that were merged in the target range but had later updates
+        (e.g., comments after merge). Callers must filter by merged_at
+        timestamp client-side.
         """
-        since = since.date.strftime('%Y-%m-%dT%H:%M:%S.000Z')
-        until = until.date.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        since_str = since.date.strftime('%Y-%m-%dT%H:%M:%S.000Z')
         endpoint = 'merge_requests'
         return self._get_gitlab_api_list(endpoint, params={
             'author_username': username,
             'state': state,
-            'updated_after': since,
-            'updated_before': until
+            'updated_after': since_str
             }, get_all_results=True)
 
     def get_project_mrs(self, project_id):
@@ -456,11 +461,26 @@ class MergeRequestsMerged(Stats):
         log.info("Searching for Merged requests authored by %s", self.user)
         results = self.parent.gitlab.get_user_mr(
             self.user.login, 'merged',
-            self.options.since, self.options.until
+            self.options.since
             )
+        # Filter by merge date since GitLab API only supports filtering
+        # by update date. We want MRs merged in the date range, not
+        # MRs updated in the date range (which could include comments
+        # after merge).
+        since_date = self.options.since.date
+        until_date = self.options.until.date
+        filtered_results = []
+        for mr in results:
+            if mr.get('merged_at'):
+                merged_at = dateutil.parser.parse(mr['merged_at']).date()
+                if since_date <= merged_at <= until_date:
+                    filtered_results.append(mr)
+        log.debug(
+            "Filtered %s MRs by merge date, %s remain",
+            len(results), len(filtered_results))
         self.stats = [
             MergedRequest(mr, self.parent)
-            for mr in results]
+            for mr in filtered_results]
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
