@@ -333,21 +333,21 @@ class MergedRequest(Issue):
     # pylint: disable=too-few-public-methods
 
     def __init__(self, data, parent):
-        # For merged requests from the global merge_requests API,
-        # we get MR objects directly (not events), so iid and title
-        # are already in the data
-        set_id = data['iid']
-        super().__init__(data, parent, set_id)
-
-    def _get_title(self):
-        # MR objects from global API have 'title' field,
-        # unlike event objects which have 'target_title'
-        return self.data['title']
+        # Transform MR data from global API to match event structure
+        # that parent Issue class expects. MR objects have 'title'
+        # but Issue expects 'target_title', and MR objects lack
+        # 'target_type' which Issue.__str__() needs for formatting.
+        transformed_data = data.copy()
+        transformed_data['target_title'] = data['title']
+        transformed_data['target_type'] = 'MergeRequest'
+        # Store iid for override below to avoid unnecessary API calls
+        transformed_data['_iid'] = data['iid']
+        super().__init__(transformed_data, parent, data['iid'])
 
     def iid(self):
         # Override to avoid unnecessary API call since we already
-        # have iid
-        return self.data['iid']
+        # have iid in the transformed data
+        return self.data['_iid']
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
