@@ -5,13 +5,14 @@ import logging
 import os
 import re
 import tempfile
+from typing import Any
 
 import pytest
 from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
-from did.plugins.jira import JiraStats, JiraWorklog
+from did.plugins.jira import JiraStatsGroup, JiraWorklog
 
 CONFIG = """
 [general]
@@ -29,23 +30,23 @@ auth_url = https://issues.redhat.com/rest/auth/latest/session
 #  Configuration tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def test_config_gss_auth():
+def test_config_gss_auth() -> None:
     """  Test default authentication configuration """
     did.base.Config(CONFIG)
-    JiraStats("jira")
+    JiraStatsGroup("jira")
 
 
-def test_wrong_auth():
+def test_wrong_auth() -> None:
     """  Test wrong authentication type configuration """
     did.base.Config(f"""
 {CONFIG}
 auth_type = OAuth2
 """)
     with pytest.raises(did.base.ReportError, match=r"Unsupported authentication type"):
-        JiraStats("jira")
+        JiraStatsGroup("jira")
 
 
-def test_config_basic_auth():
+def test_config_basic_auth() -> None:
     """  Test basic authentication configuration """
     did.base.Config(f"""
 {CONFIG}
@@ -53,12 +54,12 @@ auth_type = basic
 auth_username = tom
 auth_password = motak
 """)
-    stats = JiraStats("jira")
+    stats = JiraStatsGroup("jira")
     with pytest.raises(did.base.ReportError, match="Jira authentication failed"):
         assert stats.session is not None
 
 
-def test_config_basic_auth_with_password_file():
+def test_config_basic_auth_with_password_file() -> None:
     """
     Test basic authentication configuration with a password file
     """
@@ -71,10 +72,10 @@ auth_type = basic
 auth_username = tom
 auth_password_file = {password_file.name}
 """)
-        JiraStats("jira")
+        JiraStatsGroup("jira")
 
 
-def test_config_missing_username():
+def test_config_missing_username() -> None:
     """  Test basic auth with missing username """
     assert_conf_error(f"""
 {CONFIG}
@@ -82,7 +83,7 @@ auth_type = basic
 """)
 
 
-def test_config_missing_password():
+def test_config_missing_password() -> None:
     """  Test basic auth with missing username """
     assert_conf_error(f"""
 {CONFIG}
@@ -91,7 +92,7 @@ auth_username = tom
 """)
 
 
-def test_config_gss_and_username():
+def test_config_gss_and_username() -> None:
     """  Test gss auth with username set """
     assert_conf_error(f"""
 {CONFIG}
@@ -100,7 +101,7 @@ auth_username = tom
 """)
 
 
-def test_config_gss_and_password():
+def test_config_gss_and_password() -> None:
     """  Test gss auth with password set """
     assert_conf_error(f"""
 {CONFIG}
@@ -109,7 +110,7 @@ auth_password = tom
 """)
 
 
-def test_config_gss_and_password_file():
+def test_config_gss_and_password_file() -> None:
     """  Test gss auth with password set """
     assert_conf_error(f"""
 {CONFIG}
@@ -118,7 +119,7 @@ auth_password_file = ~/.did/config
 """)
 
 
-def test_config_invaliad_ssl_verify():
+def test_config_invaliad_ssl_verify() -> None:
     """  Test ssl_verify with wrong bool value """
     assert_conf_error(f"""
 {CONFIG}
@@ -126,7 +127,7 @@ ssl_verify = ss
 """)
 
 
-def test_ssl_verify(caplog: LogCaptureFixture):
+def test_ssl_verify(caplog: LogCaptureFixture) -> None:
     """Test ssl_verify """
     did.base.Config(f"""
 {CONFIG}
@@ -139,12 +140,12 @@ ssl_verify = False
         assert "Jira authentication failed" in caplog.text
 
 
-def test_jira_missing_url():
+def test_jira_missing_url() -> None:
     """ Missing URL """
     assert_conf_error(CONFIG.replace("url = https://issues.redhat.com/\n", ""))
 
 
-def test_jira_wrong_url(caplog: LogCaptureFixture):
+def test_jira_wrong_url(caplog: LogCaptureFixture) -> None:
     """ Missing URL """
     did.base.Config(f"""{did.base.Config.example()}
 [jira]
@@ -158,7 +159,7 @@ url = https://localhost
         assert "Failed to connect to Jira" in caplog.text
 
 
-def test_jira_use_scriptrunner_config_error():
+def test_jira_use_scriptrunner_config_error() -> None:
     """ use_scriptrunner False and missing project """
     did.base.Config(f"""{did.base.Config.example()}
 [jira]
@@ -170,10 +171,10 @@ auth_url = https://issues.redhat.com/rest/auth/latest/session
 """)
     with pytest.raises(did.base.ReportError,
                        match=r"When scriptrunner is disabled.*has to be defined.*."):
-        JiraStats("jira")
+        JiraStatsGroup("jira")
 
 
-def test_missing_token():
+def test_missing_token() -> None:
     """ `token` and `token_file` missing with token auth """
     did.base.Config(f"""
 {CONFIG}
@@ -183,10 +184,10 @@ token_expiration = 30
     with pytest.raises(
             did.base.ReportError, match=r"The `token` or `token_file` key must be set"
             ):
-        JiraStats("jira")
+        JiraStatsGroup("jira")
 
 
-def test_missing_token_expiration_when_name_is_set():
+def test_missing_token_expiration_when_name_is_set() -> None:
     """ `token` and `token_name` set but missing token_expiration """
     did.base.Config(f"""
 {CONFIG}
@@ -198,10 +199,10 @@ token_name = did
             did.base.ReportError,
             match=r"The ``token_name`` and ``token_expiration`` must be set"
             ):
-        JiraStats("jira")
+        JiraStatsGroup("jira")
 
 
-def test_missing_token_name_when_expiration_is_set():
+def test_missing_token_name_when_expiration_is_set() -> None:
     """ `token` and `token_expiration` set but missing token_name """
     did.base.Config(f"""
 {CONFIG}
@@ -213,10 +214,10 @@ token_expiration = 30
             did.base.ReportError,
             match=r"The ``token_name`` and ``token_expiration`` must be set"
             ):
-        JiraStats("jira")
+        JiraStatsGroup("jira")
 
 
-def test_invalid_token_expiration():
+def test_invalid_token_expiration() -> None:
     """ `token` and `token_expiration` set but missing token_name """
     did.base.Config(f"""
 {CONFIG}
@@ -229,12 +230,12 @@ token_name = did
             did.base.ReportError,
             match=r"The ``token_expiration`` must contain number"
             ):
-        JiraStats("jira")
+        JiraStatsGroup("jira")
 
 
 @pytest.mark.skipif("JIRA_TOKEN" not in os.environ,
                     reason="No JIRA_TOKEN environment variable found")
-def test_auth_token():
+def test_auth_token() -> None:
     """
     Test token authentication
     """
@@ -243,30 +244,32 @@ def test_auth_token():
 auth_type = token
 token = {os.getenv(key="JIRA_TOKEN")}
 """)
-    stats = JiraStats("jira")
+    stats = JiraStatsGroup("jira")
     assert stats.token_expiration is None
     assert stats.token_name is None
     assert stats.session is not None
 
 
-def assert_conf_error(config, expected_error=did.base.ReportError):
+def assert_conf_error(
+        config: str,
+        expected_error: type[did.base.ReportError] = did.base.ReportError) -> None:
     """ Test given config and check that given error type is raised """
     did.base.Config(config)
     with pytest.raises(expected_error):
-        JiraStats("jira")
+        JiraStatsGroup("jira")
 
 
 def has_worklog_stat() -> bool:
     """ Returns true if a fresh initiated JiraStats
     object would have a JiraWorklog object """
-    stats = JiraStats("jira")
+    stats = JiraStatsGroup("jira")
     for stat in stats.stats:
         if isinstance(stat, JiraWorklog):
             return True
     return False
 
 
-@pytest.mark.parametrize(  # type: ignore[misc]
+@pytest.mark.parametrize(
     ("config_str", "expected_worklog_enable"),
     [
         (f"""
@@ -291,7 +294,7 @@ def test_worklog_enabled(
     assert has_worklog_stat() == expected_worklog_enable
 
 
-def get_named_stat(options: str):
+def get_named_stat(options: str) -> Any:
     """
     Retrieve the statistics by option name.
     """

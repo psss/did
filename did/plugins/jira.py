@@ -99,15 +99,19 @@ import os
 import re
 import time
 import urllib.parse
+from argparse import Namespace
 from datetime import datetime
+from http import HTTPStatus
+from typing import Any, Optional, cast
 
 import dateutil.parser
 import requests
 import urllib3
+import urllib3.exceptions
 from requests_gssapi import DISABLED  # type: ignore[import-untyped]
 from requests_gssapi import HTTPSPNEGOAuth
 
-from did.base import Config, ReportError, get_token
+from did.base import Config, ReportError, User, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty, strtobool
 
@@ -124,7 +128,7 @@ AUTH_TYPES = ["gss", "basic", "token"]
 SSL_VERIFY = True
 
 # Default number of seconds waiting on Sentry before giving up
-TIMEOUT = 60
+TIMEOUT = 60.0
 
 # State we are interested in
 DEFAULT_TRANSITION_TO = "Release Pending"
@@ -138,14 +142,16 @@ DEFAULT_TRANSITION_TO = "Release Pending"
 class Issue():
     """ Jira issue investigator """
 
-    def __init__(self, issue=None, parent=None):
+    def __init__(self,
+                 issue: dict[str, Any],
+                 parent: "JiraStatsGroup"):
         """ Initialize issue """
         if issue is None:
             return
         self.parent = parent
-        self.options = parent.options
+        self.options: Namespace = cast(Namespace, parent.options)
         self.issue = issue
-        self.key = issue["key"]
+        self.key: str = issue["key"]
         self.summary = issue["fields"]["summary"]
         self.comments = issue["fields"]["comment"]["comments"]
         self.worklogs = []
@@ -157,13 +163,15 @@ class Issue():
         else:
             self.histories = {}
         matched = re.match(r"(\w+)-(\d+)", self.key)
+        if matched is None:
+            raise RuntimeError("invalid key format detected")
         self.identifier = matched.groups()[1]
         if parent.prefix is not None:
             self.prefix = parent.prefix
         else:
             self.prefix = matched.groups()[0]
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Jira key and summary for displaying """
         res = ""
         label = f"{self.prefix}-{self.identifier}"
@@ -191,13 +199,22 @@ class Issue():
 
         return res + worklogs
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """ Compare issues by key """
+        if not isinstance(other, Issue):
+            # Not using Issue as typing to avoid violating
+            # Liskov substitution principle.
+            return NotImplemented
         return self.key == other.key
 
     @staticmethod
-    def search(query, stats, expand="", timeout=TIMEOUT, with_worklog=False):
+    def search(query: str,
+               stats: "JiraStats",
+               expand: str = "",
+               timeout: float = TIMEOUT,
+               with_worklog: bool = False) -> list["Issue"]:
         """ Perform issue search for given stats instance """
+        # pylint: disable=too-many-branches
         log.debug("Search query: %s", query)
         issues = []
         # Fetch data from the server in batches of MAX_RESULTS issues
@@ -221,15 +238,17 @@ class Issue():
                         current_url,
                         timeout=timeout)
                     # Handle the exceeded rate limit
-                    if response.status_code == 429:
+                    if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
                         if response.headers.get("X-RateLimit-Remaining") == "0":
                             # Wait at least a second.
                             retry_after = max(int(response.headers["retry-after"]), 1)
-                            log.warning("Jira rate limit exceeded.")
-                            log.warning("Sleeping now for %s.",
-                                        listed(retry_after, 'second'))
+                            log.debug("Jira rate limit exceeded.")
+                            log.debug("Sleeping now for %s.",
+                                      listed(retry_after, 'second'))
                             time.sleep(retry_after)
                             continue
+                    if response.status_code == HTTPStatus.UNAUTHORIZED:
+                        stats.parent.renew_session()
 
                     response.raise_for_status()
                 except requests.Timeout:
@@ -241,6 +260,10 @@ class Issue():
                         urllib3.exceptions.NewConnectionError,
                         requests.exceptions.HTTPError
                         ) as error:
+                    if 'Connection aborted' in str(error):
+                        log.debug("Connection aborted. Sleeping for 10 seconds.")
+                        time.sleep(10)
+                        continue
                     log.error("Error fetching '%s': %s", current_url, error)
                     raise ReportError(
                         f"Failed to connect to Jira at {stats.parent.url}."
@@ -278,7 +301,7 @@ class Issue():
             for issue in issues
             ]
 
-    def commented(self, user, options):
+    def commented(self, user: User, options: Namespace) -> bool:
         """ True if the issue was commented by given user """
         for comment in self.comments:
             created = dateutil.parser.parse(comment["created"]).date()
@@ -287,7 +310,7 @@ class Issue():
                 return True
         return False
 
-    def changed(self, user, options):
+    def changed(self, user: User, options: Namespace) -> bool:
         """ True if the issue was commented by given user """
         for history in self.histories:
             created = dateutil.parser.parse(history["created"]).date()
@@ -305,10 +328,27 @@ class Issue():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class JiraCreated(Stats):
+class JiraStats(Stats):
+    def __init__(self, /,
+                 option: str,
+                 name: Optional[str] = None,
+                 parent: Optional["JiraStatsGroup"] = None,
+                 user: Optional[User] = None, *,
+                 options: Optional[Namespace] = None):
+        self.parent: "JiraStatsGroup"
+        self.options: Namespace
+        self.user: User
+        super().__init__(option, name, parent, user, options=options)
+
+    def fetch(self) -> None:
+        raise NotImplementedError()
+
+
+class JiraCreated(JiraStats):
     """ Created issues """
 
-    def fetch(self):
+    def fetch(self) -> None:
+        self.parent: JiraStatsGroup
         log.info(
             "[%s] Searching for issues created in %s by %s",
             self.option,
@@ -325,10 +365,11 @@ class JiraCreated(Stats):
         log.info("[%s] done issues created", self.option)
 
 
-class JiraCommented(Stats):
+class JiraCommented(JiraStats):
     """ Commented issues """
 
-    def fetch(self):
+    def fetch(self) -> None:
+        self.parent: JiraStatsGroup
         log.info(
             "[%s] Searching for issues commented in %s by %s",
             self.option,
@@ -357,10 +398,11 @@ class JiraCommented(Stats):
         log.info("[%s] done issues commented", self.option)
 
 
-class JiraUpdated(Stats):
+class JiraUpdated(JiraStats):
     """ Updated issues """
 
-    def fetch(self):
+    def fetch(self) -> None:
+        self.parent: JiraStatsGroup
         if self.parent.project is None:
             log.warning(
                 "Skipping searching for issues updated as not restricting "
@@ -380,10 +422,11 @@ class JiraUpdated(Stats):
         log.info("[%s] done issues updated", self.option)
 
 
-class JiraResolved(Stats):
+class JiraResolved(JiraStats):
     """ Resolved issues """
 
-    def fetch(self):
+    def fetch(self) -> None:
+        self.parent: JiraStatsGroup
         log.info(
             "[%s] Searching for issues resolved in %s by %s",
             self.option,
@@ -400,10 +443,11 @@ class JiraResolved(Stats):
         log.info("[%s] done issues resolved", self.option)
 
 
-class JiraTested(Stats):
+class JiraTested(JiraStats):
     """ Tested issues """
 
-    def fetch(self):
+    def fetch(self) -> None:
+        self.parent: JiraStatsGroup
         log.info(
             "[%s] Searching for issues resolved in %s tested by %s",
             self.option,
@@ -420,10 +464,11 @@ class JiraTested(Stats):
         log.info("[%s] done issues tested", self.option)
 
 
-class JiraContributed(Stats):
+class JiraContributed(JiraStats):
     """ Contributed issues """
 
-    def fetch(self):
+    def fetch(self) -> None:
+        self.parent: JiraStatsGroup
         log.info(
             "[%s] Searching for issues resolved in %s with %s as contributor",
             self.option,
@@ -440,10 +485,11 @@ class JiraContributed(Stats):
         log.info("[%s] done issues contributed to", self.option)
 
 
-class JiraTransition(Stats):
+class JiraTransition(JiraStats):
     """ Issues transitioned to specified state """
 
-    def fetch(self):
+    def fetch(self) -> None:
+        self.parent: JiraStatsGroup
         log.info(
             "[%s] Searching for issues transitioned to '%s' by '%s'",
             self.option,
@@ -459,10 +505,10 @@ class JiraTransition(Stats):
         self.stats = Issue.search(query, stats=self)
 
 
-class JiraWorklog(Stats):
+class JiraWorklog(JiraStats):
     """ Jira Issues for which a worklog entry was made """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info(
             "[%s] Searching for issues for which work was logged by '%s'",
             self.option,
@@ -474,7 +520,13 @@ class JiraWorklog(Stats):
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
-        issues = Issue.search(query, stats=self, with_worklog=True)
+        try:
+            issues = Issue.search(query, stats=self, with_worklog=True)
+        except ReportError as error:
+            log.error("Failed to fetch worklogs: %s", error)
+            self.error = True
+            # Leave self.stats as empty list (already initialized)
+            return
         # Now we have just the issues which have work logs but we
         # want to limit what worklogs we include in the report.
         # Filter out worklogs that were not done in the given
@@ -498,13 +550,13 @@ class JiraWorklog(Stats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class JiraStats(StatsGroup):
+class JiraStatsGroup(StatsGroup):
     """ Jira stats """
 
     # Default order
     order = 600
 
-    def _basic_auth(self, option, config):
+    def _basic_auth(self, option: str, config: dict[str, str]) -> None:
         if "auth_username" not in config:
             raise ReportError(f"`auth_username` not set in the [{option}] section")
         self.auth_username = config["auth_username"]
@@ -519,7 +571,7 @@ class JiraStats(StatsGroup):
                 "`auth_password` or `auth_password_file` must be set "
                 f"in the [{option}] section.")
 
-    def _token_auth(self, option, config):
+    def _token_auth(self, option: str, config: dict[str, str]) -> None:
         self.token = get_token(config)
         if self.token is None:
             raise ReportError(
@@ -527,8 +579,8 @@ class JiraStats(StatsGroup):
                 f"in the [{option}] section.")
         if "token_expiration" in config or "token_name" in config:
             try:
-                self.token_expiration = int(config["token_expiration"])
-                self.token_name = config["token_name"]
+                self.token_expiration: Optional[int] = int(config["token_expiration"])
+                self.token_name: Optional[str] = config["token_name"]
             except KeyError as key_err:
                 raise ReportError(
                     "The ``token_name`` and ``token_expiration`` must be set at"
@@ -538,24 +590,24 @@ class JiraStats(StatsGroup):
                     "The ``token_expiration`` must contain number, "
                     f"used in [{option}] section.") from val_err
         else:
-            self.token_expiration = self.token_name = None
+            self.token_expiration = None
+            self.token_name = None
 
-    def _set_ssl_verification(self, config):
+    def _set_ssl_verification(self, config: dict[str, str]) -> None:
         # SSL verification
         if "ssl_verify" in config:
             try:
-                self.ssl_verify = strtobool(
-                    config["ssl_verify"])
+                self.ssl_verify = bool(strtobool(config["ssl_verify"]))
             except Exception as error:
                 raise ReportError(
                     f"Error when parsing 'ssl_verify': {error}") from error
         else:
             self.ssl_verify = SSL_VERIFY
 
-    def _handle_scriptrunner(self, config):
+    def _handle_scriptrunner(self, config: dict[str, str]) -> None:
         if "use_scriptrunner" in config:
-            self.use_scriptrunner = strtobool(
-                config["use_scriptrunner"])
+            self.use_scriptrunner: bool = bool(
+                strtobool(config["use_scriptrunner"]))
         else:
             self.use_scriptrunner = True
 
@@ -566,12 +618,16 @@ class JiraStats(StatsGroup):
 
     # pylint: disable=too-many-branches
     # pylint: disable=too-many-statements
-    def __init__(self, option, name=None, parent=None, user=None):
+    def __init__(self,
+                 option: str,
+                 name: Optional[str] = None,
+                 parent: Optional[StatsGroup] = None,
+                 user: Optional[User] = None) -> None:
         StatsGroup.__init__(self, option, name, parent, user)
-        self._session = None
+        self._session: Optional[requests.Session] = None
         # Make sure there is an url provided
         config = dict(Config().section(option))
-        self.timeout = config.get("timeout", TIMEOUT)
+        self.timeout: float = float(config.get("timeout", TIMEOUT))
         if "url" not in config:
             raise ReportError(f"No Jira url set in the [{option}] section")
         self.url = config["url"].rstrip("/")
@@ -602,12 +658,13 @@ class JiraStats(StatsGroup):
                     f" basic authentication (section [{option}])")
         # Token
         self.token_expiration = None
+        self.token_name = None
         if self.auth_type == "token":
             self._token_auth(option, config)
         self._set_ssl_verification(config)
 
         # Make sure we have project set
-        self.project = config.get("project", None)
+        self.project: Optional[str] = config.get("project", None)
         self._handle_scriptrunner(config)
         self.login = config.get("login", None)
 
@@ -672,11 +729,11 @@ class JiraStats(StatsGroup):
                 option=f"{option}-worklog", parent=self,
                 name=f"Issues with worklogs in {option}"))
 
-    def _basic_auth_session(self):
+    def _basic_auth_session(self) -> requests.Response:
         log.debug("Connecting to %s for basic auth", self.auth_url)
         basic_auth = (self.auth_username, self.auth_password)
         try:
-            response = self._session.get(
+            response = self.session.get(
                 self.auth_url, auth=basic_auth, verify=self.ssl_verify,
                 timeout=self.timeout)
         except (requests.exceptions.ConnectionError,
@@ -688,17 +745,17 @@ class JiraStats(StatsGroup):
                 ) from error
         return response
 
-    def _token_auth_session(self):
+    def _token_auth_session(self) -> requests.Response:
         log.debug("Connecting to %s", f"{self.url}/rest/api/2/myself")
         self.session.headers["Authorization"] = f"Bearer {self.token}"
         while True:
             try:
-                response = self._session.get(
+                response = self.session.get(
                     f"{self.url}/rest/api/2/myself",
                     verify=self.ssl_verify,
                     timeout=self.timeout)
             except urllib3.exceptions.ProtocolError as error:
-                log.warning(
+                log.debug(
                     "Jira server dropped connection with %s, retrying", error)
                 continue
             except (requests.exceptions.ConnectionError,
@@ -711,11 +768,13 @@ class JiraStats(StatsGroup):
             break
         return response
 
-    def _gss_api_auth_session(self):
+    def _gss_api_auth_session(self) -> requests.Response:
+        if self._session is None:
+            raise RuntimeError("Session has not been initialized")
         log.debug("Connecting to %s for gssapi auth", self.auth_url)
         gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
         try:
-            response = self._session.get(
+            response: requests.Response = self._session.get(
                 self.auth_url, auth=gssapi_auth, verify=self.ssl_verify,
                 timeout=self.timeout)
         except (requests.exceptions.ConnectionError,
@@ -727,8 +786,12 @@ class JiraStats(StatsGroup):
                 ) from error
         return response
 
+    def renew_session(self) -> requests.Session:
+        self._session = None
+        return self.session
+
     @property
-    def session(self):
+    def session(self) -> requests.Session:
         """ Initialize the session """
         # pylint: disable=too-many-branches
         if self._session is not None:
@@ -744,13 +807,13 @@ class JiraStats(StatsGroup):
                 response = self._token_auth_session()
             else:
                 response = self._gss_api_auth_session()
-            if response.status_code == 429:
+            if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
                 retry_after = 1
                 if response.headers.get("X-RateLimit-Remaining") == "0":
                     retry_after = max(int(response.headers["retry-after"]), 1)
-                    log.warning("Jira rate limit exceeded.")
-                    log.warning("Sleeping now for %s.",
-                                listed(retry_after, 'second'))
+                    log.debug("Jira rate limit exceeded.")
+                    log.debug("Sleeping now for %s.",
+                              listed(retry_after, 'second'))
                 time.sleep(retry_after)
                 continue
             try:
