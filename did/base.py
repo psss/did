@@ -259,11 +259,19 @@ class Config():
             directory = CONFIG
         # Detect config file (even before options are parsed)
         filename = "config"
-        matched = re.search(r"--confi?g?[ =](\S+)", " ".join(sys.argv))
-        if matched:
-            filepath, filename = os.path.split(matched.groups()[0])
-            if filepath:
-                directory = filepath
+        for i, a in enumerate(sys.argv):
+            matched = re.match(r"--conf(?:ig?)?(?:=(.*))?$", a)
+            if matched:
+                if matched.groups()[0] is not None:
+                    arg = matched.groups()[0]
+                elif i + 1 < len(sys.argv):
+                    arg = sys.argv[i + 1]
+                else:
+                    arg = ""
+                filepath, filename = os.path.split(arg)
+                if filepath:
+                    directory = filepath
+                break
         return os.path.join(directory.rstrip("/"), filename)
 
     @staticmethod
