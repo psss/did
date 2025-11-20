@@ -182,6 +182,26 @@ ssl_verify = ss
 
 @pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
                     reason="No GITLAB_TOKEN environment variable found")
+def test_gitlab_merge_requests_merged():
+    """
+    Merged merge requests.
+
+    Note: GITLAB_TOKEN must be for did.tester user to match test
+    data. The global merge_requests API only returns MRs visible to
+    the token owner.
+    """
+    did.base.Config(CONFIG)
+    option = "--gitlab-merge-requests-merged "
+    # Note: The stats list index is 7 for MergeRequestsMerged
+    # MR #4 was merged on 2023-01-20 at 14:14:01
+    stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[7].stats
+    assert any(
+        "did.tester/test-project#4" in str(stat) and "Update README.md" in str(stat)
+        for stat in stats)
+
+
+@pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
+                    reason="No GITLAB_TOKEN environment variable found")
 def test_gitlab_config_disabled_ssl_verify():
     """  Test ssl_verify disabled """
     did.base.Config(f"""
