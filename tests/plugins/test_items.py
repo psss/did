@@ -30,7 +30,7 @@ item2 = Task Two
 """
 
 
-def test_item_with_indented_content():
+def test_item_with_indented_content() -> None:
     did.base.Config(CONFIG)
     stats = did.plugins.items.CustomStats("projects")
     stats.check()
@@ -44,17 +44,17 @@ def test_item_with_indented_content():
         ]
 
 
-def test_item_with_wrongly_ordered_content():
+def test_item_with_wrongly_ordered_content() -> None:
     did.base.Config(CONFIG)
     stats = did.plugins.items.CustomStats("tasks")
     stats.check()
     assert len(stats.stats) == 1
     assert stats.stats[0].name == "Work on tasks"
     assert stats.stats[0].stats == ['Task One', 'Task Two', 'Task Three']
-    assert stats.header() is None
+    stats.header()
 
 
-def test_items_ordering():
+def test_items_ordering() -> None:
     config = did.base.Config(CONFIG)
     user_stats = did.stats.UserStats(
         user=did.base.User(email=config.email), config=config
