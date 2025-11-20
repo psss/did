@@ -8,7 +8,7 @@ from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
-from did.plugins.confluence import ConfluenceStats
+from did.plugins.confluence import ConfluenceStatsGroup
 
 CONFIG = """
 [general]
@@ -25,39 +25,41 @@ url = https://confluence.automotivelinux.org/
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def assert_conf_error(config, expected_error=did.base.ReportError):
+def assert_conf_error(
+        config: str,
+        expected_error: type[did.base.ReportError] = did.base.ReportError) -> None:
     """ Test given config and check that given error type is raised """
     did.base.Config(config)
     with pytest.raises(expected_error):
-        ConfluenceStats("confluence")
+        ConfluenceStatsGroup("confluence")
 
 
-def test_config_auth_url():
+def test_config_auth_url() -> None:
     """  Test authentication url in configuration """
     did.base.Config(f"""
 {CONFIG}
 auth_url = https://confluence.automotivelinux.org/step-auth-gss
 """)
-    ConfluenceStats("confluence")
+    ConfluenceStatsGroup("confluence")
 
 
-def test_config_gss_auth():
+def test_config_gss_auth() -> None:
     """  Test default authentication configuration """
     did.base.Config(CONFIG)
-    ConfluenceStats("confluence")
+    ConfluenceStatsGroup("confluence")
 
 
-def test_wrong_auth():
+def test_wrong_auth() -> None:
     """  Test wrong authentication type configuration """
     did.base.Config(f"""
 {CONFIG}
 auth_type = OAuth2
 """)
     with pytest.raises(did.base.ReportError, match=r"Unsupported authentication type"):
-        ConfluenceStats("confluence")
+        ConfluenceStatsGroup("confluence")
 
 
-def test_config_basic_auth():
+def test_config_basic_auth() -> None:
     """  Test basic authentication configuration """
     did.base.Config(f"""
 {CONFIG}
@@ -65,10 +67,10 @@ auth_type = basic
 auth_username = tom
 auth_password = motak
 """)
-    ConfluenceStats("confluence")
+    ConfluenceStatsGroup("confluence")
 
 
-def test_config_missing_username():
+def test_config_missing_username() -> None:
     """  Test basic auth with missing username """
     assert_conf_error(f"""
 {CONFIG}
@@ -76,7 +78,7 @@ auth_type = basic
 """)
 
 
-def test_config_missing_password():
+def test_config_missing_password() -> None:
     """  Test basic auth with missing username """
     assert_conf_error(f"""
 {CONFIG}
@@ -85,7 +87,7 @@ auth_username = tom
 """)
 
 
-def test_config_gss_and_username():
+def test_config_gss_and_username() -> None:
     """  Test gss auth with username set """
     assert_conf_error(f"""
 {CONFIG}
@@ -94,7 +96,7 @@ auth_username = tom
 """)
 
 
-def test_config_gss_and_password():
+def test_config_gss_and_password() -> None:
     """  Test gss auth with password set """
     assert_conf_error(f"""
 {CONFIG}
@@ -103,7 +105,7 @@ auth_password = tom
 """)
 
 
-def test_config_gss_and_password_file():
+def test_config_gss_and_password_file() -> None:
     """  Test gss auth with password set """
     assert_conf_error(f"""
 {CONFIG}
@@ -112,7 +114,7 @@ auth_password_file = ~/.did/config
 """)
 
 
-def test_confluence_config_invaliad_ssl_verify():
+def test_confluence_config_invaliad_ssl_verify() -> None:
     """  Test ssl_verify with wrong bool value """
     assert_conf_error(f"""
 {CONFIG}
@@ -120,7 +122,7 @@ ssl_verify = ss
 """)
 
 
-def test_confluence_ssl_verify(caplog: LogCaptureFixture):
+def test_confluence_ssl_verify(caplog: LogCaptureFixture) -> None:
     """Test ssl_verify """
     did.base.Config(f"""
 {CONFIG}
@@ -133,7 +135,7 @@ ssl_verify = False
         assert "Confluence authentication failed" in caplog.text
 
 
-def test_confluence_missing_url():
+def test_confluence_missing_url() -> None:
     """ Missing URL """
     assert_conf_error(
         CONFIG.replace(
@@ -141,7 +143,7 @@ def test_confluence_missing_url():
             ""))
 
 
-def test_confluence_wrong_url(caplog: LogCaptureFixture):
+def test_confluence_wrong_url(caplog: LogCaptureFixture) -> None:
     """ Missing URL """
     did.base.Config(f"""{did.base.Config.example()}
 [confluence]
@@ -153,7 +155,7 @@ url = https://localhost
         assert "Failed to connect to Confluence" in caplog.text
 
 
-def test_missing_token():
+def test_missing_token() -> None:
     """ `token` and `token_file` missing with token auth """
     did.base.Config(f"""
 {CONFIG}
@@ -163,4 +165,4 @@ token_expiration = 30
     with pytest.raises(
             did.base.ReportError, match=r"The `token` or `token_file` key must be set"
             ):
-        ConfluenceStats("confluence")
+        ConfluenceStatsGroup("confluence")

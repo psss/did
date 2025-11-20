@@ -70,15 +70,19 @@ import os
 import re
 import time
 import urllib.parse
+from argparse import Namespace
 from datetime import datetime
+from http import HTTPStatus
+from typing import Any, Optional
 
 import dateutil.parser
 import requests
 import urllib3
+import urllib3.exceptions
 from requests_gssapi import DISABLED  # type: ignore[import-untyped]
 from requests_gssapi import HTTPSPNEGOAuth
 
-from did.base import Config, ReportError, get_token
+from did.base import Config, ReportError, User, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty, strtobool
 
@@ -95,7 +99,7 @@ AUTH_TYPES = ["gss", "basic", "token"]
 SSL_VERIFY = True
 
 # Default number of seconds waiting on Sentry before giving up
-TIMEOUT = 60
+TIMEOUT = 60.0
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue Investigator
@@ -107,15 +111,27 @@ class Confluence():
     # pylint: disable=too-few-public-methods
 
     @staticmethod
-    def fetch_ratelimited_url(session, current_url, timeout):
+    def fetch_ratelimited_url(
+            parent: "ConfluenceStatsGroup",
+            current_url: str,
+            timeout: float) -> dict[str, Any]:
+        """
+        Fetch a URL with rate limiting.
+
+        :param parent: The parent stats group.
+        :param current_url: The URL to fetch.
+        :param timeout: The timeout for the request.
+        :return: The json of the response from the URL.
+        """
         log.debug("Fetching %s", current_url)
+        session = parent.session
         while True:
             try:
                 response = session.get(
                     current_url,
                     timeout=timeout)
                 # Handle the exceeded rate limit
-                if response.status_code == 429:
+                if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
                     if response.headers.get("X-RateLimit-Remaining") == "0":
                         # Wait at least a second.
                         retry_after = max(int(response.headers["retry-after"]), 1)
@@ -124,6 +140,8 @@ class Confluence():
                                     listed(retry_after, 'second'))
                         time.sleep(retry_after)
                         continue
+                if response.status_code == HTTPStatus.UNAUTHORIZED:
+                    session = parent.renew_session()
 
                 response.raise_for_status()
             except requests.Timeout:
@@ -135,13 +153,17 @@ class Confluence():
                     urllib3.exceptions.NewConnectionError,
                     requests.exceptions.HTTPError
                     ) as error:
+                if 'Connection aborted' in str(error):
+                    log.warning("Connection aborted. Sleeping for 10 seconds.")
+                    time.sleep(10)
+                    continue
                 log.error("Error fetching '%s': %s", current_url, error)
                 raise ReportError(
                     f"Failed to connect to Confluence at {current_url}."
                     ) from error
             break
         try:
-            data = response.json()
+            data: dict[str, Any] = response.json()
         except requests.exceptions.JSONDecodeError as error:
             log.debug(error)
             raise ReportError(
@@ -160,8 +182,12 @@ class Confluence():
         return data
 
     @staticmethod
-    def get_page_versions(page_id, stats):
+    def get_page_versions(
+            page_id: str,
+            stats: "ConfluenceStats") -> list[dict[str, Any]]:
         "Fetch all versions of the given page"
+        if stats.parent is None:
+            raise RuntimeError("f{stats} not initialized")
         version_url = f"{stats.parent.url}/rest/experimental/content/{page_id}/version"
         versions = []
         start = 0
@@ -170,7 +196,7 @@ class Confluence():
             encoded_query = urllib.parse.urlencode({"start": start, "limit": limit})
 
             data = Confluence.fetch_ratelimited_url(
-                stats.parent.session,
+                stats.parent,
                 f"{version_url}?{encoded_query}",
                 stats.parent.timeout)
             versions.extend(data.get("results", []))
@@ -180,7 +206,11 @@ class Confluence():
         return versions
 
     @staticmethod
-    def search(query, stats, expand=None, timeout=TIMEOUT):
+    def search(
+            query: str,
+            stats: "ConfluenceStats",
+            expand: Optional[str] = None,
+            timeout: float = TIMEOUT) -> list[dict[str, Any]]:
         """ Perform page/comment search for given stats instance """
         log.debug("Search query: %s", query)
         content = []
@@ -196,7 +226,7 @@ class Confluence():
                 )
             current_url = f"{stats.parent.url}/rest/api/content/search?{encoded_query}"
             data = Confluence.fetch_ratelimited_url(
-                stats.parent.session, current_url, timeout
+                stats.parent, current_url, timeout
                 )
             log.debug(
                 "Batch %s result: %s fetched",
@@ -214,13 +244,13 @@ class Confluence():
 class ConfluencePage(Confluence):
     """ Confluence page results """
 
-    def __init__(self, page, url, myformat):
+    def __init__(self, page: dict[str, Any], url: str, myformat: str) -> None:
         """ Initialize the page """
         self.title = page['title']
         self.url = f"{url}{page['_links']['webui']}"
         self.format = myformat
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Page title for displaying """
         if self.format == "markdown":
             return f"[{self.title}]({self.url})"
@@ -230,7 +260,7 @@ class ConfluencePage(Confluence):
 class ConfluenceComment(Confluence):
     """ Confluence comment results """
 
-    def __init__(self, comment, url, myformat):
+    def __init__(self, comment: dict[str, Any], url: str, myformat: str) -> None:
         """ Initialize issue """
         # Remove the 'Re:' prefix
         self.title = re.sub('^Re: ', '', comment['title'])
@@ -241,9 +271,10 @@ class ConfluenceComment(Confluence):
         self.url = url
         self.format = myformat
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ Confluence title & comment snippet for displaying """
-        # TODO: implement markdown output here
+        if self.format == "markdown":
+            return f"[{self.title}]({self.url}): {self.body}"
         return f"{self.title}: {self.body}"
 
 
@@ -252,10 +283,30 @@ class ConfluenceComment(Confluence):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class PageCreated(Stats):
+class ConfluenceStats(Stats):
+    """
+    Abstract class for collecting Confluence related Stats
+    """
+
+    def __init__(self, /,
+                 option: str,
+                 name: str,
+                 parent: "ConfluenceStatsGroup",
+                 user: Optional[User], *,
+                 options: Optional[Namespace]) -> None:
+        self.parent: ConfluenceStatsGroup
+        self.options: Namespace
+        self.user: User
+        super().__init__(option, name, parent, user, options=options)
+
+    def fetch(self) -> None:
+        raise NotImplementedError()
+
+
+class PageCreated(ConfluenceStats):
     """ Created pages """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for pages created by %s", self.user)
         query = (
             f"type=page AND creator = '{self.user.login}' "
@@ -270,10 +321,10 @@ class PageCreated(Stats):
             ]
 
 
-class PageModified(Stats):
+class PageModified(ConfluenceStats):
     """ Modified pages """
 
-    def fetch(self):
+    def fetch(self) -> None:
         log.info("Searching for pages modified by %s", self.user)
         query = (
             f"type=page AND contributor = '{self.user.login}' "
@@ -304,8 +355,10 @@ class PageModified(Stats):
             ]
 
 
-class CommentAdded(Stats):
-    def fetch(self):
+class CommentAdded(ConfluenceStats):
+    """ Commented pages """
+
+    def fetch(self) -> None:
         log.info("Searching for comments added by %s", self.user)
         query = (
             f"type=comment AND creator = '{self.user.login}' "
@@ -323,13 +376,14 @@ class CommentAdded(Stats):
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class ConfluenceStats(StatsGroup):
+
+class ConfluenceStatsGroup(StatsGroup):
     """ Confluence stats """
 
     # Default order
     order = 600
 
-    def _basic_auth(self, option, config):
+    def _basic_auth(self, option: str, config: dict[str, str]) -> None:
         if "auth_username" not in config:
             raise ReportError(f"`auth_username` not set in the [{option}] section")
         self.auth_username = config["auth_username"]
@@ -344,7 +398,7 @@ class ConfluenceStats(StatsGroup):
                 "`auth_password` or `auth_password_file` must be set "
                 f"in the [{option}] section.")
 
-    def _token_auth(self, option, config):
+    def _token_auth(self, option: str, config: dict[str, str]) -> None:
         self.token = get_token(config)
         if self.token is None:
             raise ReportError(
@@ -352,8 +406,8 @@ class ConfluenceStats(StatsGroup):
                 f"in the [{option}] section.")
         if "token_expiration" in config or "token_name" in config:
             try:
-                self.token_expiration = int(config["token_expiration"])
-                self.token_name = config["token_name"]
+                self.token_expiration: Optional[int] = int(config["token_expiration"])
+                self.token_name: Optional[str] = config["token_name"]
             except KeyError as key_err:
                 raise ReportError(
                     "The ``token_name`` and ``token_expiration`` must be set at"
@@ -363,26 +417,30 @@ class ConfluenceStats(StatsGroup):
                     "The ``token_expiration`` must contain number, "
                     f"used in [{option}] section.") from val_err
         else:
-            self.token_expiration = self.token_name = None
+            self.token_expiration = None
+            self.token_name = None
 
-    def _set_ssl_verification(self, config):
+    def _set_ssl_verification(self, config: dict[str, str]) -> None:
         # SSL verification
         if "ssl_verify" in config:
             try:
-                self.ssl_verify = strtobool(
-                    config["ssl_verify"])
+                self.ssl_verify = bool(strtobool(config["ssl_verify"]))
             except Exception as error:
                 raise ReportError(
                     f"Error when parsing 'ssl_verify': {error}") from error
         else:
             self.ssl_verify = SSL_VERIFY
 
-    def __init__(self, option, name=None, parent=None, user=None):
+    def __init__(self,
+                 option: str,
+                 name: Optional[str] = None,
+                 parent: Optional[StatsGroup] = None,
+                 user: Optional[User] = None) -> None:
         StatsGroup.__init__(self, option, name, parent, user)
-        self._session = None
+        self._session: Optional[requests.Session] = None
         # Make sure there is an url provided
         config = dict(Config().section(option))
-        self.timeout = config.get("timeout", TIMEOUT)
+        self.timeout: float = float(config.get("timeout", TIMEOUT))
         if "url" not in config:
             raise ReportError(f"No Confluence url set in the [{option}] section")
         self.url = config["url"].rstrip("/")
@@ -413,6 +471,7 @@ class ConfluenceStats(StatsGroup):
                     f" basic authentication (section [{option}])")
         # Token
         self.token_expiration = None
+        self.token_name = None
         if self.auth_type == "token":
             self._token_auth(option, config)
         self._set_ssl_verification(config)
@@ -425,22 +484,28 @@ class ConfluenceStats(StatsGroup):
             PageCreated(
                 option=f"{option}-pages-created",
                 parent=self,
+                user=self.user,
+                options=self.options,
                 name=f"Pages created in {option}"),
             PageModified(
                 option=f"{option}-pages-updated",
                 parent=self,
+                user=self.user,
+                options=self.options,
                 name=f"Pages updated in {option}"),
             CommentAdded(
                 option=f"{option}-comments",
                 parent=self,
+                user=self.user,
+                options=self.options,
                 name=f"Comments added in {option}"),
             ]
 
-    def _basic_auth_session(self):
+    def _basic_auth_session(self) -> requests.Response:
         log.debug("Connecting to %s for basic auth", self.auth_url)
         basic_auth = (self.auth_username, self.auth_password)
         try:
-            response = self._session.get(
+            response = self.session.get(
                 self.auth_url, auth=basic_auth, verify=self.ssl_verify,
                 timeout=self.timeout)
         except (requests.exceptions.ConnectionError,
@@ -452,12 +517,12 @@ class ConfluenceStats(StatsGroup):
                 ) from error
         return response
 
-    def _token_auth_session(self):
+    def _token_auth_session(self) -> requests.Response:
         log.debug("Connecting to %s/rest/api/content for token auth", self.url)
         self.session.headers["Authorization"] = f"Bearer {self.token}"
         while True:
             try:
-                response = self._session.get(
+                response = self.session.get(
                     f"{self.url}/rest/api/content",
                     verify=self.ssl_verify,
                     timeout=self.timeout)
@@ -475,11 +540,13 @@ class ConfluenceStats(StatsGroup):
             break
         return response
 
-    def _gss_api_auth_session(self):
+    def _gss_api_auth_session(self) -> requests.Response:
+        if self._session is None:
+            raise RuntimeError("Session has not been initialized")
         log.debug("Connecting to %s for gssapi auth", self.auth_url)
         gssapi_auth = HTTPSPNEGOAuth(mutual_authentication=DISABLED)
         try:
-            response = self._session.get(
+            response: requests.Response = self._session.get(
                 self.auth_url, auth=gssapi_auth, verify=self.ssl_verify,
                 timeout=self.timeout)
         except (requests.exceptions.ConnectionError,
@@ -491,8 +558,12 @@ class ConfluenceStats(StatsGroup):
                 ) from error
         return response
 
+    def renew_session(self) -> requests.Session:
+        self._session = None
+        return self.session
+
     @property
-    def session(self):
+    def session(self) -> requests.Session:
         """ Initialize the session """
         # pylint: disable=too-many-branches
         if self._session is not None:
@@ -508,7 +579,7 @@ class ConfluenceStats(StatsGroup):
                 response = self._token_auth_session()
             else:
                 response = self._gss_api_auth_session()
-            if response.status_code == 429:
+            if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
                 retry_after = 1
                 if response.headers.get("X-RateLimit-Remaining") == "0":
                     retry_after = max(int(response.headers["retry-after"]), 1)
