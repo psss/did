@@ -105,21 +105,30 @@ class GitHub():
                            login: str) -> list:
         valid_issues = []
         for issue in commented_issues:
-            comments = json.loads(
-                self.request(issue["comments_url"]).text
-                )
-            log.debug("Comments fetched for %s", issue["html_url"])
-            log.data(pretty(comments))
-            for comment in comments:
-                created_at = datetime.strptime(
-                    comment["created_at"],
-                    r"%Y-%m-%dT%H:%M:%SZ"
+            issue_since = since
+            valid_issue = False
+            while True:
+                url = (
+                    f"{issue['comments_url']}"
+                    f"?per_page={PER_PAGE}&since={issue_since.isoformat()}"
                     )
-                if (
-                        comment["user"]["login"] == login and
-                        (since <= created_at <= until)
-                        ):
-                    valid_issues.append(issue)
+                comments = self.request(url).json()
+                log.debug("Comments fetched for %s", issue["html_url"])
+                log.data(pretty(comments))
+                for comment in comments:
+                    created_at = datetime.strptime(
+                        comment["created_at"],
+                        r"%Y-%m-%dT%H:%M:%SZ"
+                        )
+                    if (
+                            comment["user"]["login"] == login and
+                            (since <= created_at <= until)
+                            ):
+                        valid_issues.append(issue)
+                        valid_issue = True
+                        break
+                # If all comments in range are checked, it is done
+                if valid_issue or len(comments) < PER_PAGE or created_at > until:
                     break
         return valid_issues
 
