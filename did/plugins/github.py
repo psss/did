@@ -113,7 +113,7 @@ class GitHub():
                     f"?per_page={PER_PAGE}&since={issue_since.isoformat()}"
                     )
                 comments = self.request(url).json()
-                log.debug("Comments fetched for %s", issue["html_url"])
+                log.debug("%s comments fetched for %s", len(comments), url)
                 log.data(pretty(comments))
                 for comment in comments:
                     created_at = datetime.strptime(
