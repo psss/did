@@ -13,7 +13,7 @@ Config example::
 
 from typing import Optional
 
-from did.base import Config
+from did.base import Config, User
 from did.stats import Stats, StatsGroup
 from did.utils import item
 
@@ -42,11 +42,11 @@ class ItemStats(Stats):
             for _, value in sorted(items, key=lambda x: x[0])
             ]
 
-    def header(self):
+    def header(self) -> None:
         """ Simple header for custom stats (no item count) """
         item(self.name, 0, options=self.options)
 
-    def fetch(self):
+    def fetch(self) -> None:
         self.stats = self._items
 
 
@@ -56,7 +56,11 @@ class CustomStats(StatsGroup):
     # Default order
     order = 800
 
-    def __init__(self, option, name=None, parent=None, user=None):
+    def __init__(self,
+                 option: str,
+                 name: Optional[str] = None,
+                 parent: Optional[StatsGroup] = None,
+                 user: Optional[User] = None) -> None:
         super().__init__(option, name, parent, user)
         self.stats.append(
             ItemStats(
