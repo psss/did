@@ -106,13 +106,14 @@ class GitHub():
         valid_issues = []
         for issue in commented_issues:
             issue_since = since
-            valid_issue = False
-            while True:
-                url = (
-                    f"{issue['comments_url']}"
-                    f"?per_page={PER_PAGE}&since={issue_since.isoformat()}"
-                    )
-                comments = self.request(url).json()
+            issue_checked = False
+            url = (
+                f"{issue['comments_url']}"
+                f"?per_page={PER_PAGE}&since={issue_since.isoformat()}"
+                )
+            while not issue_checked:
+                response = self.request(url)
+                comments = response.json()
                 log.debug("%s comments fetched for %s", len(comments), url)
                 log.data(pretty(comments))
                 for comment in comments:
@@ -120,16 +121,18 @@ class GitHub():
                         comment["created_at"],
                         r"%Y-%m-%dT%H:%M:%SZ"
                         )
-                    if (
-                            comment["user"]["login"] == login and
-                            (since <= created_at <= until)
-                            ):
-                        valid_issues.append(issue)
-                        valid_issue = True
+                    if created_at > until:
+                        # Comments are sorted by created_at asc
+                        issue_checked = True
                         break
-                # If all comments in range are checked, it is done
-                if valid_issue or len(comments) < PER_PAGE or created_at > until:
-                    break
+                    if comment["user"]["login"] == login and since <= created_at:
+                        valid_issues.append(issue)
+                        issue_checked = True
+                        break
+                if 'next' in response.links:
+                    url = response.links['next']['url']
+                else:
+                    issue_checked = True
         return valid_issues
 
     @staticmethod
