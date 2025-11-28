@@ -296,7 +296,11 @@ class IssueCommented(Stats):
         login = self.user.login
         since = self.options.since
         until = GitHub.until(self.options.until)
-        query = f"search/issues?q=commenter:{login}+updated:{since}..*+type:issue"
+        query = (
+            f"search/issues?q=commenter:{login}+updated:{since}..*+type:issue"
+            # Filter out Issues created after 'until'
+            f"+created:*..{until}"
+            )
         commented_issues = self.parent.github.search(query)
         valid_issues = self.parent.github.commented_in_range(
             commented_issues, since.datetime, until.datetime, login
@@ -326,7 +330,11 @@ class PullRequestsCommented(Stats):
         login = self.user.login
         since = self.options.since
         until = GitHub.until(self.options.until)
-        query = f"search/issues?q=commenter:{login}+updated:{since}..*+type:pr"
+        query = (
+            f"search/issues?q=commenter:{login}+updated:{since}..*+type:pr"
+            # Filter out PRs created after 'until'
+            f"+created:*..{until}"
+            )
         commented_issues = self.parent.github.search(query)
         valid_issues = self.parent.github.commented_in_range(
             commented_issues, since.datetime, until.datetime, login
