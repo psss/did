@@ -81,14 +81,16 @@ class GitLab():
         self.project_issues: dict[str, list[dict[str, Any]]] = {}
         self.timeout = timeout
 
-    def _get_gitlab_api_raw(self, url):
+    def _get_gitlab_api_raw(self, url, params=None):
         log.debug("Connecting to GitLab API at '%s'.", url)
+        if params:
+            log.debug("Query params: %s", params)
         retries = 0
         while True:
             try:
                 api_raw = requests.get(
                     url, headers=self.headers, verify=self.ssl_verify,
-                    timeout=self.timeout)
+                    params=params, timeout=self.timeout)
                 api_raw.raise_for_status()
                 return api_raw
             except requests.exceptions.HTTPError as http_err:
@@ -115,9 +117,9 @@ class GitLab():
                     )
                 sleep(GITLAB_INTERVAL)
 
-    def _get_gitlab_api(self, endpoint):
+    def _get_gitlab_api(self, endpoint, params=None):
         url = f'{self.url}/api/v{GITLAB_API}/{endpoint}'
-        return self._get_gitlab_api_raw(url)
+        return self._get_gitlab_api_raw(url, params=params)
 
     def _get_gitlab_api_json(self, endpoint):
         log.debug("Query: %s", endpoint)
@@ -126,11 +128,16 @@ class GitLab():
         return result
 
     def _get_gitlab_api_list(
-            self, endpoint, since=None, get_all_results=False):
+        self, endpoint,
+        params=None,
+        since=None,
+        get_all_results=False
+            ):
         results = []
-        result = self._get_gitlab_api(endpoint)
+        result = self._get_gitlab_api(endpoint, params=params)
         result.raise_for_status()
         results.extend(result.json())
+        log.data(pretty(results))
         while ('next' in result.links and 'url' in result.links['next'] and
                 get_all_results):
             log.debug("-> Fetching more paginated data")
@@ -169,6 +176,31 @@ class GitLab():
         mrs = self.get_project_mrs(project_id)
         mr = next(filter(lambda x: x['id'] == mr_id, mrs), None)
         return mr
+
+    def get_user_mr(self, username, state, since):
+        """
+        Fetch merge requests by user using GitLab's global
+        merge_requests endpoint.
+
+        This endpoint is available to all authenticated users
+        (not just admins) and returns merge requests based on
+        the user's visibility permissions.
+        See: https://docs.gitlab.com/ee/api/merge_requests.html
+
+        Note: GitLab API doesn't support filtering by merge date,
+        only by update date. We fetch by 'updated_after' to reduce
+        the dataset, but don't use 'updated_before' to avoid missing
+        MRs that were merged in the target range but had later updates
+        (e.g., comments after merge). Callers must filter by merged_at
+        timestamp client-side.
+        """
+        since_str = since.date.strftime('%Y-%m-%dT%H:%M:%S.000Z')
+        endpoint = 'merge_requests'
+        return self._get_gitlab_api_list(endpoint, params={
+            'author_username': username,
+            'state': state,
+            'updated_after': since_str
+            }, get_all_results=True)
 
     def get_project_mrs(self, project_id):
         if project_id not in self.project_mrs:
@@ -230,7 +262,10 @@ class Issue():
         self.id = set_id
         if set_id is None:
             self.id = self.iid()
-        self.title = data['target_title']
+        self.title = self._get_title()
+
+    def _get_title(self):
+        return self.data['target_title']
 
     def iid(self):
         return self.gitlabapi.get_project_issue(
@@ -294,9 +329,30 @@ class Note(Issue):
         return "unknown"
 
 
+class MergedRequest(Issue):
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self, data, parent):
+        # Transform MR data from global API to match event structure
+        # that parent Issue class expects. MR objects have 'title'
+        # but Issue expects 'target_title', and MR objects lack
+        # 'target_type' which Issue.__str__() needs for formatting.
+        transformed_data = data.copy()
+        transformed_data['target_title'] = data['title']
+        transformed_data['target_type'] = 'MergeRequest'
+        # Store iid for override below to avoid unnecessary API calls
+        transformed_data['_iid'] = data['iid']
+        super().__init__(transformed_data, parent, data['iid'])
+
+    def iid(self):
+        # Override to avoid unnecessary API call since we already
+        # have iid in the transformed data
+        return self.data['_iid']
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class IssuesCreated(Stats):
     """ Issue created """
@@ -398,9 +454,38 @@ class MergeRequestsApproved(Stats):
             for mr in results]
 
 
+class MergeRequestsMerged(Stats):
+    """ Merge requests merged """
+
+    def fetch(self):
+        log.info("Searching for Merged requests authored by %s", self.user)
+        results = self.parent.gitlab.get_user_mr(
+            self.user.login, 'merged',
+            self.options.since
+            )
+        # Filter by merge date since GitLab API only supports filtering
+        # by update date. We want MRs merged in the date range, not
+        # MRs updated in the date range (which could include comments
+        # after merge).
+        since_date = self.options.since.date
+        until_date = self.options.until.date
+        filtered_results = []
+        for mr in results:
+            if mr.get('merged_at'):
+                merged_at = dateutil.parser.parse(mr['merged_at']).date()
+                if since_date <= merged_at <= until_date:
+                    filtered_results.append(mr)
+        log.debug(
+            "Filtered %s MRs by merge date, %s remain",
+            len(results), len(filtered_results))
+        self.stats = [
+            MergedRequest(mr, self.parent)
+            for mr in filtered_results]
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 class GitLabStats(StatsGroup):
     """ GitLab work """
@@ -461,4 +546,7 @@ class GitLabStats(StatsGroup):
             MergeRequestsClosed(
                 option=f"{option}-merge-requests-closed", parent=self,
                 name=f"Merge requests closed on {option}"),
+            MergeRequestsMerged(
+                option=f"{option}-merge-requests-merged", parent=self,
+                name=f"Merged requests on {option}"),
             ]

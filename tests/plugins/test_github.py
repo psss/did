@@ -187,3 +187,14 @@ token = {os.getenv(key="GITHUB_TOKEN")}
     assert any(
         "teemtee/tmt#1787 - tmt does not run test with local changes applied"
         in str(stat) for stat in stats)
+
+
+def test_github_pull_requests_merged():
+    """ Merged pull requests """
+    did.base.Config(CONFIG)
+    option = "--gh-pull-requests-merged --since 2019-12-09 --until 2019-12-09"
+    # Note: The stats list index is 7 for PullRequestsMerged
+    stats = did.cli.main(option)[0][0].stats[0].stats[7].stats
+    assert any(
+        "psss/did#214 - Enable copr builds in Packit" in str(stat)
+        for stat in stats)
