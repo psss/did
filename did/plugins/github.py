@@ -105,22 +105,34 @@ class GitHub():
                            login: str) -> list:
         valid_issues = []
         for issue in commented_issues:
-            comments = json.loads(
-                self.request(issue["comments_url"]).text
+            issue_since = since
+            issue_checked = False
+            url = (
+                f"{issue['comments_url']}"
+                f"?per_page={PER_PAGE}&since={issue_since.isoformat()}"
                 )
-            log.debug("Comments fetched for %s", issue["html_url"])
-            log.data(pretty(comments))
-            for comment in comments:
-                created_at = datetime.strptime(
-                    comment["created_at"],
-                    r"%Y-%m-%dT%H:%M:%SZ"
-                    )
-                if (
-                        comment["user"]["login"] == login and
-                        (since <= created_at <= until)
-                        ):
-                    valid_issues.append(issue)
-                    break
+            while not issue_checked:
+                response = self.request(url)
+                comments = response.json()
+                log.debug("%s comments fetched for %s", len(comments), url)
+                log.data(pretty(comments))
+                for comment in comments:
+                    created_at = datetime.strptime(
+                        comment["created_at"],
+                        r"%Y-%m-%dT%H:%M:%SZ"
+                        )
+                    if created_at > until:
+                        # Comments are sorted by created_at asc
+                        issue_checked = True
+                        break
+                    if comment["user"]["login"] == login and since <= created_at:
+                        valid_issues.append(issue)
+                        issue_checked = True
+                        break
+                if 'next' in response.links:
+                    url = response.links['next']['url']
+                else:
+                    issue_checked = True
         return valid_issues
 
     @staticmethod
@@ -284,7 +296,11 @@ class IssueCommented(Stats):
         login = self.user.login
         since = self.options.since
         until = GitHub.until(self.options.until)
-        query = f"search/issues?q=commenter:{login}+updated:{since}..{until}+type:issue"
+        query = (
+            f"search/issues?q=commenter:{login}+updated:{since}..*+type:issue"
+            # Filter out Issues created after 'until'
+            f"+created:*..{until}"
+            )
         commented_issues = self.parent.github.search(query)
         valid_issues = self.parent.github.commented_in_range(
             commented_issues, since.datetime, until.datetime, login
@@ -314,7 +330,11 @@ class PullRequestsCommented(Stats):
         login = self.user.login
         since = self.options.since
         until = GitHub.until(self.options.until)
-        query = f"search/issues?q=commenter:{login}+updated:{since}..{until}+type:pr"
+        query = (
+            f"search/issues?q=commenter:{login}+updated:{since}..*+type:pr"
+            # Filter out PRs created after 'until'
+            f"+created:*..{until}"
+            )
         commented_issues = self.parent.github.search(query)
         valid_issues = self.parent.github.commented_in_range(
             commented_issues, since.datetime, until.datetime, login
