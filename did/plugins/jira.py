@@ -141,6 +141,7 @@ class Issue():
         self.key = issue["key"]
         self.summary = issue["fields"]["summary"]
         self.comments = issue["fields"]["comment"]["comments"]
+        self.story_points = issue["fields"].get("customfield_12310243")
         if "changelog" in issue:
             self.histories = issue["changelog"]["histories"]
         else:
@@ -155,10 +156,13 @@ class Issue():
     def __str__(self):
         """ Jira key and summary for displaying """
         label = f"{self.prefix}-{self.identifier}"
+        story_points_str = ""
+        if self.story_points is not None:
+            story_points_str = f" ({self.story_points} SP)"
         if self.options.format == "markdown":
             href = f"{self.parent.url}/browse/{self.issue['key']}"
-            return f"[{label}]({href}) - {self.summary}"
-        return f"{label} - {self.summary}"
+            return f"[{label}]({href}) - {self.summary}{story_points_str}"
+        return f"{label} - {self.summary}{story_points_str}"
 
     def __eq__(self, other):
         """ Compare issues by key """
@@ -174,7 +178,7 @@ class Issue():
             encoded_query = urllib.parse.urlencode(
                 {
                     "jql": query,
-                    "fields": "summary,comment",
+                    "fields": "summary,comment,customfield_12310243",
                     "maxResults": MAX_RESULTS,
                     "startAt": batch * MAX_RESULTS,
                     "expand": expand
@@ -272,7 +276,28 @@ class Issue():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-class JiraCreated(Stats):
+class JiraStatsBase(Stats):
+    """ Base class for JIRA stats with Story Points support """
+
+    def header(self):
+        """ Show summary header with story points total """
+        from did.utils import item
+        # Show question mark instead of count when errors encountered
+        count = "? (error encountered)" if self.error else len(self.stats)
+        # Calculate total story points
+        total_sp = sum(
+            issue.story_points for issue in self.stats
+            if issue.story_points is not None
+        )
+        # Format the header based on whether we have story points
+        if total_sp > 0:
+            header_text = f"{self.name}: {count} ({total_sp} SP)"
+        else:
+            header_text = f"{self.name}: {count}"
+        item(header_text, options=self.options)
+
+
+class JiraCreated(JiraStatsBase):
     """ Created issues """
 
     def fetch(self):
@@ -292,7 +317,7 @@ class JiraCreated(Stats):
         log.info("[%s] done issues created", self.option)
 
 
-class JiraCommented(Stats):
+class JiraCommented(JiraStatsBase):
     """ Commented issues """
 
     def fetch(self):
@@ -324,7 +349,7 @@ class JiraCommented(Stats):
         log.info("[%s] done issues commented", self.option)
 
 
-class JiraUpdated(Stats):
+class JiraUpdated(JiraStatsBase):
     """ Updated issues """
 
     def fetch(self):
@@ -347,7 +372,7 @@ class JiraUpdated(Stats):
         log.info("[%s] done issues updated", self.option)
 
 
-class JiraResolved(Stats):
+class JiraResolved(JiraStatsBase):
     """ Resolved issues """
 
     def fetch(self):
@@ -367,7 +392,7 @@ class JiraResolved(Stats):
         log.info("[%s] done issues resolved", self.option)
 
 
-class JiraTested(Stats):
+class JiraTested(JiraStatsBase):
     """ Tested issues """
 
     def fetch(self):
@@ -387,7 +412,7 @@ class JiraTested(Stats):
         log.info("[%s] done issues tested", self.option)
 
 
-class JiraContributed(Stats):
+class JiraContributed(JiraStatsBase):
     """ Contributed issues """
 
     def fetch(self):
@@ -407,7 +432,7 @@ class JiraContributed(Stats):
         log.info("[%s] done issues contributed to", self.option)
 
 
-class JiraTransition(Stats):
+class JiraTransition(JiraStatsBase):
     """ Issues transitioned to specified state """
 
     def fetch(self):
