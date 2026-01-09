@@ -39,13 +39,18 @@ class GitRepo():
         """ Initialize the path. """
         self.path = path
 
+    # pylint: disable=too-many-branches
     def commits(self, user, options):
         """ List commits for given user. """
         # Prepare the command
         command = f"git log --all --author={user.login}".split()
         command.append(f"--since='{options.since} 00:00:00'")
         command.append(f"--until='{options.until} 00:00:00'")
-        if options.verbose:
+        if getattr(options, 'full_message', False):
+            # Full message mode: show hash and complete commit body
+            # Use NULL character as separator between commits
+            command.append("--format=format:%h - %B%x00")
+        elif options.verbose:
             command.append("--name-only")
             # Need an extra new line to separate merge commits otherwise
             # they are squeezed together without an empty line between
@@ -78,6 +83,26 @@ class GitRepo():
 
         if not output:
             return []
+
+        # Full message mode: commits separated by NULL character
+        if getattr(options, 'full_message', False):
+            commits = []
+            for commit in output.split("\x00"):
+                commit = commit.strip()
+                if not commit:
+                    continue
+                # first line is "hash - subject" then body
+                lines = commit.split("\n")
+                if len(lines) == 1:
+                    commits.append(lines[0])
+                else:
+                    # Indent body lines with 8 spaces for proper display
+                    formatted = lines[0]
+                    for line in lines[1:]:
+                        if line.strip():
+                            formatted += f"\n        {line}"
+                    commits.append(formatted)
+            return commits
 
         # Single commit per line in non-verbose mode
         if not options.verbose:
