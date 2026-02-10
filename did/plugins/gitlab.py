@@ -175,13 +175,21 @@ class GitLab():
         if project_id not in self.project_mrs:
             query = f'projects/{project_id}/merge_requests'
 
-            # Check that this will not return more then 20 pages; if it does,
-            # skip rather than spending a large amount of time to query all of
-            # the results.
+            # Check that this will not return more then 20 pages;
+            # if it does, skip rather than spending a large amount
+            # of time to query all of the results.
             result = self._get_gitlab_api(query)
             result.raise_for_status()
-            log.debug("Page count for {0}: {1}".format(query, result.headers.get('x-total-pages')))
-            if int(result.headers.get('x-total-pages', GITLAB_MAX_PAGE_LIST + 1)) > GITLAB_MAX_PAGE_LIST:
+            log.debug(
+                "Page count for %s: %s",
+                query,
+                result.headers.get('x-total-pages')
+                )
+            if int(
+                result.headers.get(
+                    'x-total-pages',
+                    GITLAB_MAX_PAGE_LIST +
+                    1)) > GITLAB_MAX_PAGE_LIST:
                 self.project_mrs[project_id] = []
                 return []
 
@@ -198,13 +206,21 @@ class GitLab():
         if project_id not in self.project_issues:
             query = f'projects/{project_id}/issues'
 
-            # Check that this will not return more then 20 pages; if it does,
-            # skip rather than spending a large amount of time to query all of
-            # the results.
+            # Check that this will not return more then 20 pages;
+            # if it does, skip rather than spending a large amount
+            # of time to query all of the results.
             result = self._get_gitlab_api(query)
             result.raise_for_status()
-            log.debug("Page count for {0}: {1}".format(query, result.headers.get('x-total-pages')))
-            if int(result.headers.get('x-total-pages', GITLAB_MAX_PAGE_LIST + 1)) > GITLAB_MAX_PAGE_LIST:
+            log.debug(
+                "Page count for %s: %s",
+                query,
+                result.headers.get('x-total-pages')
+                )
+            if int(
+                result.headers.get(
+                    'x-total-pages',
+                    GITLAB_MAX_PAGE_LIST +
+                    1)) > GITLAB_MAX_PAGE_LIST:
                 self.project_issues[project_id] = []
                 return []
 
