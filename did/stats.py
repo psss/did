@@ -27,8 +27,6 @@ class Stats():
     dest: str
     user: Optional[did.base.User]
     parent: Optional[StatsGroup] = None
-    # stats can be a list of any type as long as it implements __str__
-    stats: list[Any]
 
     def __init__(
             self, /,
@@ -42,7 +40,7 @@ class Stats():
         self.dest = self.option.replace("-", "_")
         self._name = name
         self.parent = parent
-        self.stats = []
+        self._stats: list[Any] = []
         # Save user and options (get it directly or from parent)
         self.options = options or getattr(self.parent, 'options', None)
         if user is None and self.parent is not None:
@@ -50,6 +48,15 @@ class Stats():
         else:
             self.user = user
         log.debug('Loading %s Stats instance for %s', option, self.user)
+
+    @property
+    def stats(self) -> list[Any]:
+        """Stats list; subclasses may override this property."""
+        return self._stats
+
+    @stats.setter
+    def stats(self, value: list[Any]) -> None:
+        self._stats = value
 
     @property
     def name(self) -> str:
