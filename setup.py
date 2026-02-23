@@ -28,7 +28,7 @@ extras_require = {
     'bodhi': ['bodhi-client'],
     'bugzilla': ['python-bugzilla'],
     'docs': ['sphinx==8.2.3', 'sphinx-rtd-theme==3.0.2'],
-    'google': ['google-api-python-client', 'oauth2client'],
+    'google': ['google-api-python-client', 'google-auth-oauthlib'],
     'jira': ['requests_gssapi'],
     'koji': ['koji'],
     'redmine': ['feedparser'],
