@@ -17,9 +17,10 @@ import json
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import date, datetime
+from typing import Any, Optional, cast
 
-from did.base import Config, ReportError, get_token
+from did.base import Config, ReportError, User, get_token
 from did.stats import Stats, StatsGroup
 from did.utils import listed, log, pretty
 
@@ -35,7 +36,7 @@ class Zammad():
     """ Zammad Investigator """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, url, token):
+    def __init__(self, url: str, token: Optional[str]) -> None:
         """ Initialize url and headers """
         self.url = url.rstrip("/")
         if token is not None:
@@ -45,7 +46,7 @@ class Zammad():
 
         self.token = token
 
-    def perform_search(self, query: str) -> dict:
+    def perform_search(self, query: str) -> dict[str, Any]:
         """ Perform Zammad query """
         url = f"{self.url}/{query}"
         log.debug("Zammad query: %s", url)
@@ -53,14 +54,14 @@ class Zammad():
             request = urllib.request.Request(url, headers=self.headers)
             with urllib.request.urlopen(request) as response:
                 log.debug("Response headers:\n%s", str(response.info()).strip())
-                return json.loads(response.read())
+                return cast(dict[str, Any], json.loads(response.read()))
         except urllib.error.URLError as error:
             log.debug(error)
             raise ReportError(
                 f"Zammad search on {self.url} failed.") from error
 
-    def search(self, query: str) -> dict:
-        result = self.perform_search(query)["assets"]
+    def search(self, query: str) -> dict[str, Any]:
+        result: dict[str, Any] = self.perform_search(query)["assets"]
         try:
             result = result["Ticket"]
         except KeyError:
@@ -69,8 +70,9 @@ class Zammad():
         log.data(pretty(result))
         return result
 
-    def get_articles(self, ticket_id):
-        result = self.perform_search("/ticket_articles/by_ticket/" + str(ticket_id))
+    def get_articles(self, ticket_id: str) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = self.perform_search(
+            f"/ticket_articles/by_ticket/{ticket_id}")["assets"]
         log.debug("Result: %s fetched", listed(len(result), "item"))
         log.data(pretty(result))
         return result
@@ -80,16 +82,16 @@ class Zammad():
 #  Ticket
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class Ticket():
+class Ticket:
     """ Zammad Ticket """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, data):
+    def __init__(self, data: dict[str, Any]) -> None:
         self.data = data
         self.title = data["title"]
         self.id = data["id"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         """ String representation """
         return f"{str(self.id).zfill(PADDING)} - {self.title}"
 
@@ -101,7 +103,11 @@ class Ticket():
 class TicketsUpdated(Stats):
     """ Tickets updated """
 
-    def fetch(self):
+    def fetch(self) -> None:
+        self.parent: ZammadStats
+        self.user: User
+        if self.options is None or self.user is None:
+            raise RuntimeError("ZammadStats not properly initialized")
         log.info("Searching for tickets updated by %s", self.user)
         search = (
             f"article.from:\"{self.user.name}\" and "
@@ -113,9 +119,9 @@ class TicketsUpdated(Stats):
         until = self.options.until.date
         for _, ticket in self.parent.zammad.search(query).items():
             for article in self.parent.zammad.get_articles(ticket["id"]):
-                updated_at = datetime.fromisoformat(
-                    article["updated_at"].replace('Z', '+00:00')).date()
-                if (article["created_by"] == self.user.email and
+                date_str = article["updated_at"].replace('Z', '+00:00')
+                updated_at: date = datetime.fromisoformat(date_str).date()
+                if (str(article["created_by"]) == self.user.email and
                         since <= updated_at <= until):
                     self.stats.append(Ticket(ticket))
                     break
@@ -131,7 +137,11 @@ class ZammadStats(StatsGroup):
     # Default order
     order = 680
 
-    def __init__(self, option, name=None, parent=None, user=None):
+    def __init__(self,
+                 option: str,
+                 name: Optional[str] = None,
+                 parent: Optional[StatsGroup] = None,
+                 user: Optional[User] = None) -> None:
         StatsGroup.__init__(self, option, name, parent, user)
         config = dict(Config().section(option))
         # Check server url

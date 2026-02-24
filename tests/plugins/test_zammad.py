@@ -23,7 +23,7 @@ INTERVAL = "--since 2023-01-23 --until 2023-01-29"
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def test_missing_url(caplog: LogCaptureFixture):
+def test_missing_url(caplog: LogCaptureFixture) -> None:
     """ Missing Zammad url results in Error logged """
     # using a generic url just to avoid failing on missing url
     did.base.Config(BASIC_CONFIG)
@@ -32,7 +32,7 @@ def test_missing_url(caplog: LogCaptureFixture):
         assert "Skipping section zammad due to error: No zammad url set" in caplog.text
 
 
-def test_wrong_url(caplog: LogCaptureFixture):
+def test_wrong_url(caplog: LogCaptureFixture) -> None:
     """ Giving a non-Zammad url results in Exception """
     did.base.Config(BASIC_CONFIG + "url=https://www.google.com")
     with caplog.at_level(logging.ERROR):
