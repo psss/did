@@ -239,10 +239,24 @@ class Issue():
     def __str__(self):
         """ String representation """
         label = f"{self.owner}/{self.project}#{str(self.id).zfill(PADDING)}"
+        title = self.data["title"].strip() if self.data.get("title") else ""
+
+        # Check for full-message mode
+        if getattr(self.options, 'full_message', False) and self.data.get("body"):
+            body = self.data["body"].strip()
+            # Format body with indentation for multi-line content
+            body_lines = [line for line in body.split("\n") if line.strip()]
+            formatted_body = "\n        ".join(body_lines)
+
+            if self.options.format == "markdown":
+                return (f'[{label}]({self.data["html_url"]}) - {title}'
+                        f'\n        {formatted_body}')
+            return f'{label} - {title}\n        {formatted_body}'
+
+        # Default: title only
         if self.options.format == "markdown":
-            return f'[{label}]({self.data["html_url"]}) - {self.data["title"].strip()}'
-        # plain text format
-        return f'{label} - {self.data["title"]}'
+            return f'[{label}]({self.data["html_url"]}) - {title}'
+        return f'{label} - {title}'
 
     def __eq__(self, other):
         """ Equality comparison """

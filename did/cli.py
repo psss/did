@@ -88,6 +88,9 @@ class Options:
         group.add_argument(
             "--verbose", action="store_true",
             help="Include more details (like modified git directories)")
+        group.add_argument(
+            "--full-message", action="store_true",
+            help="Show full commit messages, PR descriptions, and issue bodies")
 
         # Other options
         group = self.parser.add_argument_group("Utils")

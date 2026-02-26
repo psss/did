@@ -301,10 +301,8 @@ class Issue():
         self.id = set_id
         if set_id is None:
             self.id = self.iid()
-        self.title = self._get_title()
-
-    def _get_title(self):
-        return self.data['target_title']
+        self.title = data['target_title']
+        self._body: Optional[str] = None
 
     def iid(self):
         issue = self.gitlabapi.get_project_issue(
@@ -314,22 +312,51 @@ class Issue():
             return issue['iid']
         return "unknown"
 
+    @property
+    def body(self) -> str:
+        """Get full issue description (lazy-loaded)"""
+        if self._body is None:
+            issue_data = self.gitlabapi.get_project_issue(
+                self.data['project_id'], self.data['target_id'])
+            self._body = issue_data.get('description', '') if issue_data else ''
+        return self._body
+
     def __str__(self):
         """ String representation """
+        # Determine endpoint for URL
+        endpoint = "merge_requests"
+        if self.data['target_type'] == 'Issue' or (
+                self.data['target_type'] == 'Note'
+                and self.data['note']['noteable_type'] == 'Issue'
+                ):
+            endpoint = "issues"
+
+        label = f"{self.project['path_with_namespace']}#{str(self.id)}"
+
+        # Check for full-message mode
+        if getattr(self.parent.options, 'full_message', False) and self.body:
+            body_text = self.body.strip()
+            body_lines = [line for line in body_text.split("\n") if line.strip()]
+            formatted_body = "\n        ".join(body_lines)
+
+            if self.parent.options.format == "markdown":
+                href = (
+                    f"{self.gitlabapi.url}/{self.project['path_with_namespace']}"
+                    f"/-/{endpoint}/{str(self.id)}"
+                    )
+                return (f"[{label}]({href}) - {self.title}"
+                        f"\n        {formatted_body}")
+            return (f"{self.project['path_with_namespace']}"
+                    f"#{str(self.id).zfill(PADDING)} - {self.title}"
+                    f"\n        {formatted_body}")
+
+        # Default: title only
         if self.parent.options.format == "markdown":
-            endpoint = "merge_requests"
-            if self.data['target_type'] == 'Issue' or (
-                    self.data['target_type'] == 'Note'
-                    and self.data['note']['noteable_type'] == 'Issue'
-                    ):
-                endpoint = "issues"
-            label = f"{self.project['path_with_namespace']}#{str(self.id)}"
             href = (
                 f"{self.gitlabapi.url}/{self.project['path_with_namespace']}"
                 f"/-/{endpoint}/{str(self.id)}"
                 )
             return f"[{label}]({href}) - {self.title}"
-        # plain text
         return (
             f"{self.project['path_with_namespace']}"
             f"#{str(self.id).zfill(PADDING)} - {self.title}"
@@ -346,6 +373,15 @@ class MergeRequest(Issue):
             if merge_request is not None:
                 set_id = merge_request['iid']
         super().__init__(data, parent, set_id)
+
+    @property
+    def body(self) -> str:
+        """Get full MR description (lazy-loaded)"""
+        if self._body is None:
+            mr_data = self.gitlabapi.get_project_mr(
+                self.data['project_id'], self.data['target_id'])
+            self._body = mr_data.get('description', '') if mr_data else ''
+        return self._body
 
 
 class Note(Issue):
@@ -374,6 +410,23 @@ class Note(Issue):
             if merge_request is not None:
                 return merge_request['iid']
         return "unknown"
+
+    @property
+    def body(self) -> str:
+        """Get full issue/MR description (lazy-loaded)"""
+        if self._body is None:
+            noteable_type = self.data['note']['noteable_type']
+            noteable_id = self.data['note']['noteable_id']
+            if noteable_type == 'Issue':
+                item_data = self.gitlabapi.get_project_issue(
+                    self.data['project_id'], noteable_id)
+            elif noteable_type == 'MergeRequest':
+                item_data = self.gitlabapi.get_project_mr(
+                    self.data['project_id'], noteable_id)
+            else:
+                item_data = None
+            self._body = item_data.get('description', '') if item_data else ''
+        return self._body
 
 
 class MergedRequest(Issue):

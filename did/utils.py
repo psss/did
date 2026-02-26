@@ -13,7 +13,7 @@ from pprint import pformat as pretty  # noqa: F401 (used by other modules)
 from types import ModuleType
 from typing import Any, Literal, Optional, Type, Union, cast
 
-__all__ = ["pretty"]
+__all__ = ["pretty", "EMAIL_REGEXP"]
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -50,7 +50,8 @@ LOG_ALL = 1
 
 # Extract name and email from string
 # See: http://stackoverflow.com/questions/14010875
-EMAIL_REGEXP = re.compile(r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
+EMAIL_REGEXP = re.compile(   # noqa: F401 (used by other modules)
+    r'(?:"?([^"]*)"?\s)?(?:<?(.+@[^>]+)>?)')
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
