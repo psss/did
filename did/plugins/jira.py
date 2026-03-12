@@ -730,7 +730,9 @@ class JiraStatsGroup(StatsGroup):
             raise ReportError(f"No Jira url set in the [{option}] section")
         self.url = config["url"].rstrip("/")
         # Detect if this is Jira Cloud (*.atlassian.net)
-        self.is_jira_cloud = "atlassian.net" in self.url.lower()
+        parsed_url = urllib.parse.urlparse(self.url)
+        hostname = (parsed_url.hostname or "").lower()
+        self.is_jira_cloud = hostname == "atlassian.net" or hostname.endswith(".atlassian.net")
         # API version: default to 3 for Cloud, latest for Server/DC
         if "api_version" in config:
             self.api_version = config["api_version"]
