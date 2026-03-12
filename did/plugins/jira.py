@@ -244,7 +244,8 @@ class Issue():
                timeout: float = TIMEOUT,
                with_worklog: bool = False) -> list["Issue"]:
         """ Perform issue search for given stats instance """
-        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-branches,too-many-locals
+        # pylint: disable=too-many-statements
         log.debug("Search query: %s", query)
         issues = []
         # Fetch data from the server in batches of MAX_RESULTS issues
@@ -732,7 +733,8 @@ class JiraStatsGroup(StatsGroup):
         # Detect if this is Jira Cloud (*.atlassian.net)
         parsed_url = urllib.parse.urlparse(self.url)
         hostname = (parsed_url.hostname or "").lower()
-        self.is_jira_cloud = hostname == "atlassian.net" or hostname.endswith(".atlassian.net")
+        self.is_jira_cloud = hostname == "atlassian.net" or hostname.endswith(
+            ".atlassian.net")
         # API version: default to 3 for Cloud, latest for Server/DC
         if "api_version" in config:
             self.api_version = config["api_version"]
