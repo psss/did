@@ -267,9 +267,10 @@ class Issue():
             # #CHANGE-2046
             search_endpoint = (
                 "search/jql" if stats.parent.is_jira_cloud else "search")
-            current_url = f"{
-                stats.parent.url}/rest/api/{
-                stats.parent.api_version}/{search_endpoint}?{encoded_query}"
+            current_url = (
+                f"{stats.parent.url}/rest/api/"
+                f"{stats.parent.api_version}/{search_endpoint}?{encoded_query}"
+                )
             log.debug("Fetching %s (Jira Cloud: %s, API version: %s)",
                       current_url, stats.parent.is_jira_cloud, stats.parent.api_version)
             while True:
