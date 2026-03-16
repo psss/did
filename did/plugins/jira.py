@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 """
 Jira stats such as created, updated or resolved issues, and worklogs
 
@@ -66,17 +67,19 @@ Configuration example (basic authentication for Jira Cloud)::
     url = https://your-instance.atlassian.net/
     auth_type = basic
     auth_username = your-email@example.com
-    auth_password = your-api-token
-    auth_password_file = ~/.did/jira_api_token
+    token = your-api-token
+    token_file = ~/.did/jira_api_token
     api_version = 3
 
-Keys ``auth_username``, ``auth_password`` and ``auth_password_file`` are
-only valid for ``basic`` authentication. Either ``auth_password`` or
-``auth_password_file`` must be provided, ``auth_password`` has a higher
-priority.
+Keys ``auth_username``, ``token`` and ``token_file`` are
+used for Jira Cloud with ``basic`` authentication. Either ``token`` or
+``token_file`` must be provided, ``token`` has a higher priority.
+
+For Jira Server/Data Center with ``basic`` authentication, use
+``auth_password`` or ``auth_password_file`` instead.
 
 For Jira Cloud, ``auth_username`` must be your email address and
-``auth_password`` must be an API token (not your account password).
+``token`` must be an API token (not your account password).
 Generate an API token at:
 https://id.atlassian.com/manage-profile/security/api-tokens
 
@@ -660,16 +663,31 @@ class JiraStatsGroup(StatsGroup):
         if "auth_username" not in config:
             raise ReportError(f"`auth_username` not set in the [{option}] section")
         self.auth_username = config["auth_username"]
-        if "auth_password" in config:
-            self.auth_password = config["auth_password"]
-        elif "auth_password_file" in config:
-            file_path = os.path.expanduser(config["auth_password_file"])
-            with open(file_path, encoding="utf-8") as password_file:
-                self.auth_password = password_file.read().strip()
+
+        # For Jira Cloud, use token/token_file; for Server/DC, use
+        # auth_password/auth_password_file
+        if self.is_jira_cloud:
+            if "token" in config:
+                self.auth_password = config["token"]
+            elif "token_file" in config:
+                file_path = os.path.expanduser(config["token_file"])
+                with open(file_path, encoding="utf-8") as token_file:
+                    self.auth_password = token_file.read().strip()
+            else:
+                raise ReportError(
+                    "`token` or `token_file` must be set "
+                    f"for Jira Cloud in the [{option}] section.")
         else:
-            raise ReportError(
-                "`auth_password` or `auth_password_file` must be set "
-                f"in the [{option}] section.")
+            if "auth_password" in config:
+                self.auth_password = config["auth_password"]
+            elif "auth_password_file" in config:
+                file_path = os.path.expanduser(config["auth_password_file"])
+                with open(file_path, encoding="utf-8") as password_file:
+                    self.auth_password = password_file.read().strip()
+            else:
+                raise ReportError(
+                    "`auth_password` or `auth_password_file` must be set "
+                    f"for Jira Server/Data Center in the [{option}] section.")
 
     def _token_auth(self, option: str, config: dict[str, str]) -> None:
         self.token = get_token(config)
