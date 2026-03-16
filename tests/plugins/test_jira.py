@@ -1,18 +1,20 @@
 # coding: utf-8
 """ Tests for the Jira plugin """
 
+import datetime
 import logging
 import os
 import re
 import tempfile
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
-from did.plugins.jira import JiraStatsGroup, JiraWorklog
+from did.plugins.jira import Issue, JiraStatsGroup, JiraWorklog
 
 CONFIG = """
 [general]
@@ -248,6 +250,50 @@ token = {os.getenv(key="JIRA_TOKEN")}
     assert stats.token_expiration is None
     assert stats.token_name is None
     assert stats.session is not None
+
+
+def test_config_default_api_version() -> None:
+    """ api_version defaults to 'latest' """
+    did.base.Config(CONFIG)
+    stats = JiraStatsGroup("jira")
+    assert stats.api_version == "latest"
+
+
+def test_config_api_version_3() -> None:
+    """ api_version can be set to '3' for Jira Cloud """
+    did.base.Config(f"""
+{CONFIG}
+api_version = 3
+""")
+    stats = JiraStatsGroup("jira")
+    assert stats.api_version == "3"
+
+
+def test_commented_missing_email_address() -> None:
+    """ commented() should not raise when author has no emailAddress """
+    parent = MagicMock()
+    parent.prefix = None
+    issue_data = {
+        "key": "JBEAP-1",
+        "fields": {
+            "summary": "Test issue",
+            "comment": {
+                "comments": [
+                    {
+                        "author": {"displayName": "Bot User"},
+                        "created": "2024-01-15T10:00:00.000+0000",
+                        }
+                    ]
+                },
+            },
+        }
+    issue = Issue(issue_data, parent)
+    user = MagicMock()
+    user.email = "user@example.com"
+    options = MagicMock()
+    options.since.date = datetime.date(2024, 1, 1)
+    options.until.date = datetime.date(2024, 1, 31)
+    assert issue.commented(user, options) is False
 
 
 def assert_conf_error(

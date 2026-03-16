@@ -93,6 +93,12 @@ It's also possible to set a timeout, if not specified it defaults to
 60 seconds.
 
     timeout = 10
+
+Use ``api_version`` to override the REST API version. Defaults to
+``latest`` (compatible with Jira Server/Data Center). Jira Cloud
+requires ``3``::
+
+    api_version = 3
 """
 
 import os
@@ -129,6 +135,9 @@ SSL_VERIFY = True
 
 # Default number of seconds waiting on Sentry before giving up
 TIMEOUT = 60.0
+
+# Default Jira REST API version ('latest' for Server/DC; '3' for Cloud)
+DEFAULT_API_VERSION = "latest"
 
 # State we are interested in
 DEFAULT_TRANSITION_TO = "Release Pending"
@@ -215,28 +224,48 @@ class Issue():
                with_worklog: bool = False) -> list["Issue"]:
         """ Perform issue search for given stats instance """
         # pylint: disable=too-many-branches
+        # pylint: disable=too-many-locals,too-many-statements
         log.debug("Search query: %s", query)
         issues = []
         # Fetch data from the server in batches of MAX_RESULTS issues
         fields = "summary,comment"
         if with_worklog:
             fields += ",worklog"
+        use_post = stats.parent.api_version == "3"
+        next_page_token: Optional[str] = None
         for batch in range(MAX_BATCHES):
-            encoded_query = urllib.parse.urlencode(
-                {
+            if use_post:
+                current_url = (
+                    f"{stats.parent.url}/rest/api"
+                    f"/{stats.parent.api_version}/search/jql")
+                payload: dict = {
                     "jql": query,
-                    "fields": fields,
+                    "fields": fields.split(","),
                     "maxResults": MAX_RESULTS,
-                    "startAt": batch *
-                    MAX_RESULTS,
-                    "expand": expand})
-            current_url = f"{stats.parent.url}/rest/api/latest/search?{encoded_query}"
+                    }
+                # expand (e.g. changelog) not supported by /search/jql
+                if next_page_token:
+                    payload["nextPageToken"] = next_page_token
+            else:
+                encoded_query = urllib.parse.urlencode(
+                    {
+                        "jql": query,
+                        "fields": fields,
+                        "maxResults": MAX_RESULTS,
+                        "startAt": batch * MAX_RESULTS,
+                        "expand": expand})
+                current_url = (
+                    f"{stats.parent.url}/rest/api/{stats.parent.api_version}"
+                    f"/search?{encoded_query}")
             log.debug("Fetching %s", current_url)
             while True:
                 try:
-                    response = stats.parent.session.get(
-                        current_url,
-                        timeout=timeout)
+                    if use_post:
+                        response = stats.parent.session.post(
+                            current_url, json=payload, timeout=timeout)
+                    else:
+                        response = stats.parent.session.get(
+                            current_url, timeout=timeout)
                     # Handle the exceeded rate limit
                     if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
                         if response.headers.get("X-RateLimit-Remaining") == "0":
@@ -290,11 +319,17 @@ class Issue():
                 )
             log.data(pretty(data))
             issues.extend(data["issues"])
-            # If all issues fetched, we're done
-            if len(issues) >= data["total"]:
-                break
-            log.info("Batch %s: fetched %s issues out of %s",
-                     batch, len(issues), data["total"])
+            # Check pagination based on API type
+            if use_post:
+                if data.get("isLast", True):
+                    break
+                next_page_token = data.get("nextPageToken")
+                log.info("Batch %s: fetched %s issues so far", batch, len(issues))
+            else:
+                if len(issues) >= data["total"]:
+                    break
+                log.info("Batch %s: fetched %s issues out of %s",
+                         batch, len(issues), data["total"])
         # Return the list of issue objects
         return [
             Issue(issue, parent=stats.parent)
@@ -305,7 +340,8 @@ class Issue():
         """ True if the issue was commented by given user """
         for comment in self.comments:
             created = dateutil.parser.parse(comment["created"]).date()
-            if (comment["author"]["emailAddress"] == user.email and
+            if ("emailAddress" in comment["author"] and
+                    comment["author"]["emailAddress"] == user.email and
                     options.since.date < created < options.until.date):
                 return True
         return False
@@ -663,6 +699,9 @@ class JiraStatsGroup(StatsGroup):
             self._token_auth(option, config)
         self._set_ssl_verification(config)
 
+        # API version ('latest' for Server/DC; '3' for Jira Cloud)
+        self.api_version = config.get("api_version", DEFAULT_API_VERSION)
+
         # Make sure we have project set
         self.project: Optional[str] = config.get("project", None)
         self._handle_scriptrunner(config)
@@ -732,9 +771,10 @@ class JiraStatsGroup(StatsGroup):
     def _basic_auth_session(self) -> requests.Response:
         log.debug("Connecting to %s for basic auth", self.auth_url)
         basic_auth = (self.auth_username, self.auth_password)
+        self.session.auth = basic_auth
         try:
             response = self.session.get(
-                self.auth_url, auth=basic_auth, verify=self.ssl_verify,
+                self.auth_url, verify=self.ssl_verify,
                 timeout=self.timeout)
         except (requests.exceptions.ConnectionError,
                 urllib3.exceptions.NewConnectionError,
@@ -746,12 +786,12 @@ class JiraStatsGroup(StatsGroup):
         return response
 
     def _token_auth_session(self) -> requests.Response:
-        log.debug("Connecting to %s", f"{self.url}/rest/api/2/myself")
+        log.debug("Connecting to %s", f"{self.url}/rest/api/{self.api_version}/myself")
         self.session.headers["Authorization"] = f"Bearer {self.token}"
         while True:
             try:
                 response = self.session.get(
-                    f"{self.url}/rest/api/2/myself",
+                    f"{self.url}/rest/api/{self.api_version}/myself",
                     verify=self.ssl_verify,
                     timeout=self.timeout)
             except urllib3.exceptions.ProtocolError as error:
