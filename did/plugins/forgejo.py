@@ -1,5 +1,5 @@
 """
-Forgejo stats such as submitted, review or merged changes
+Forgejo stats such as submitted, reviewed or merged changes
 
 Config example::
 
@@ -25,6 +25,7 @@ It's also possible to set a timeout, if not specified it defaults to
 """
 import json
 from argparse import Namespace
+from http import HTTPStatus
 from typing import Any, Optional
 
 import requests
@@ -72,7 +73,7 @@ class Forgejo():
                 raise ReportError(f"Forgejo request on {self.url} failed.") from error
             # Check if credentials are valid
             log.debug("Forgejo status code: %s", response.status_code)
-            if response.status_code == 401:
+            if response.status_code == HTTPStatus.UNAUTHORIZED:
                 raise ReportError(
                     "Defined token is not valid. "
                     "Either update it or remove it.")
@@ -91,7 +92,7 @@ class Forgejo():
             try:
                 error = json.loads(response.text)["errors"][0]["message"]
             except KeyError:
-                error = "unknown"
+                error = "Unexpected error response structure"
             raise ReportError(
                 f"Failed to fetch Forgejo data at '{url}'. "
                 f"The reason was '{response.reason}' "
@@ -106,10 +107,10 @@ class Issue():
     def __init__(self, issue: dict[str, Any], options: Namespace):
         self.options = options
         self.issue = issue
-        self.number = issue["number"]
-        self.url = issue["html_url"]
-        self.title = issue["title"]
-        self.repository = issue["repository"]["full_name"]
+        self.number: int = issue["number"]
+        self.url: str = issue["html_url"]
+        self.title: str = issue["title"]
+        self.repository: str = issue["repository"]["full_name"]
 
     def __str__(self) -> str:
         """ String representation """
