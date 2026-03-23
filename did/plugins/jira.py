@@ -398,7 +398,7 @@ class Issue():
                     "author" in comment and
                     "emailAddress" in comment["author"] and
                     comment["author"]["emailAddress"] == user.email and
-                    options.since.date < created < options.until.date
+                    options.since.date <= created < options.until.date
                     ):
                 return True
         return False
