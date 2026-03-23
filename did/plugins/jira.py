@@ -380,8 +380,12 @@ class Issue():
         """ True if the issue was commented by given user """
         for comment in self.comments:
             created = dateutil.parser.parse(comment["created"]).date()
-            if (comment["author"]["emailAddress"] == user.email and
-                    options.since.date < created < options.until.date):
+            if (
+                    "author" in comment and
+                    "emailAddress" in comment["author"] and
+                    comment["author"]["emailAddress"] == user.email and
+                    options.since.date < created < options.until.date
+                    ):
                 return True
         return False
 
