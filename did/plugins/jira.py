@@ -256,30 +256,48 @@ class Issue():
         fields = "summary,comment"
         if with_worklog:
             fields += ",worklog"
+        # Use new /search/jql endpoint for Jira Cloud
+        # (required as of May 2025)
+        # https://developer.atlassian.com/changelog/#CHANGE-2046
+        search_endpoint = (
+            "search/jql" if stats.parent.is_jira_cloud else "search")
+        base_url = (
+            f"{stats.parent.url}/rest/api/"
+            f"{stats.parent.api_version}/{search_endpoint}")
+        next_page_token: Optional[str] = None
         for batch in range(MAX_BATCHES):
-            encoded_query = urllib.parse.urlencode(
-                {
+            if stats.parent.is_jira_cloud:
+                # Jira Cloud: pass params as dict and use
+                # nextPageToken pagination
+                params: dict[str, Any] = {
                     "jql": query,
-                    "fields": fields,
+                    "fields": fields.split(","),
                     "maxResults": MAX_RESULTS,
-                    "startAt": batch *
-                    MAX_RESULTS,
-                    "expand": expand})
-            # Use new /search/jql endpoint for Jira Cloud
-            # (required as of May 2025)
-            # https://developer.atlassian.com/changelog/#CHANGE-2046
-            search_endpoint = (
-                "search/jql" if stats.parent.is_jira_cloud else "search")
-            current_url = (
-                f"{stats.parent.url}/rest/api/"
-                f"{stats.parent.api_version}/{search_endpoint}?{encoded_query}"
-                )
+                    }
+                if expand:
+                    params["expand"] = expand
+                if next_page_token:
+                    params["nextPageToken"] = next_page_token
+                current_url = base_url
+            else:
+                # Server/DC: URL-encode params and use
+                # startAt pagination
+                params = None
+                encoded_query = urllib.parse.urlencode(
+                    {
+                        "jql": query,
+                        "fields": fields,
+                        "maxResults": MAX_RESULTS,
+                        "startAt": batch * MAX_RESULTS,
+                        "expand": expand})
+                current_url = f"{base_url}?{encoded_query}"
             log.debug("Fetching %s (Jira Cloud: %s, API version: %s)",
                       current_url, stats.parent.is_jira_cloud, stats.parent.api_version)
             while True:
                 try:
                     response = stats.parent.session.get(
                         current_url,
+                        params=params,
                         timeout=timeout)
                     log.debug("Response status: %s", response.status_code)
                     # Handle the exceeded rate limit
@@ -348,27 +366,23 @@ class Issue():
             issues.extend(data["issues"])
 
             # Check if we're done fetching
-            # (handle both old and new API response structures)
-            # Old endpoint (/search) returns "total" field
-            # New endpoint (/search/jql) may return "isLast"
-            # or just fewer results
-            if "total" in data:
-                # Old API response structure
+            if stats.parent.is_jira_cloud:
+                # Jira Cloud: use nextPageToken for pagination
+                next_page_token = data.get("nextPageToken")
+                if data.get("isLast", False) or not next_page_token:
+                    break
+                log.info("Batch %s: fetched %s issues",
+                         batch, len(issues))
+            elif "total" in data:
+                # Server/DC: use total + startAt
                 if len(issues) >= data["total"]:
                     break
                 log.info("Batch %s: fetched %s issues out of %s",
                          batch, len(issues), data["total"])
             else:
-                # New API response structure (/search/jql)
-                # Check if this is the last page
-                if data.get("isLast", False):
-                    log.debug("Last page reached (isLast=true)")
-                    break
-                # Or if we got fewer issues than requested, we're done
                 if len(data["issues"]) < MAX_RESULTS:
-                    log.debug("Last page reached (fewer results than maxResults)")
                     break
-                log.info("Batch %s: fetched %s issues (total unknown)",
+                log.info("Batch %s: fetched %s issues",
                          batch, len(issues))
         # Return the list of issue objects
         return [
