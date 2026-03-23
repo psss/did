@@ -496,25 +496,34 @@ class JiraCommented(JiraStats):
             self.parent.project if self.parent.project is not None else "any project",
             self.user)
         user_id = self._get_user_identifier()
+
+        precise = False
         if self.parent.use_scriptrunner:
-            query = (
-                f"issueFunction in commented('by {user_id} "
-                f"after {self.options.since} "
-                f"before {self.options.until}')"
-                )
-            if self.parent.project:
-                query = query + f" AND project in ({self.parent.project})"
-            self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
+            if self.parent.is_jira_cloud:
+                # Jira Cloud ScriptRunner uses commentedBy field
+                query = (
+                    f"commentedBy = '{user_id}' "
+                    f"AND updated >= {self.options.since}"
+                    )
+            else:
+                # Jira Server/DC ScriptRunner uses issueFunction
+                precise = True
+                query = (
+                    f"issueFunction in commented('by {user_id} "
+                    f"after {self.options.since} "
+                    f"before {self.options.until}')"
+                    )
         else:
-            query = (
-                f"project in ({self.parent.project}) "
-                f"AND updated >= {self.options.since}"
-                )
-            # Filter only issues commented by given user
-            self.stats = [
-                issue for issue in Issue.search(query, stats=self,
-                                                timeout=self.parent.timeout)
-                if issue.commented(self.user, self.options)]
+            query = f"updated >= {self.options.since}"
+
+        if self.parent.project:
+            query = query + f" AND project in ({self.parent.project})"
+
+        self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
+        if not precise:
+            # Loose query - results need filtering on the client side
+            self.stats = [ issue for issue in self.stats
+                           if issue.commented(self.user, self.options)]
         log.info("[%s] done issues commented", self.option)
 
 
