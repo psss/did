@@ -403,19 +403,6 @@ class Issue():
                 return True
         return False
 
-    def changed(self, user: User, options: Namespace) -> bool:
-        """ True if the issue was commented by given user """
-        for history in self.histories:
-            created = dateutil.parser.parse(history["created"]).date()
-            if (
-                    "author" in history and
-                    "emailAddress" in history["author"] and
-                    history["author"]["emailAddress"] == user.email and
-                    options.since.date <= created <= options.until.date
-                    ):
-                return True
-        return False
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -554,14 +541,15 @@ class JiraUpdated(JiraStats):
             return
         log.info("[%s] Searching for issues updated in %s by %s",
                  self.option, self.parent.project, self.user)
-        query = f"updated >= {self.options.since}"
+        user_id = self._get_user_identifier()
+        query = (
+            f"issuekey IN updatedBy('{user_id}', "
+            f"'{self.options.since}', '{self.options.until - 1}')"
+            )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
-        # Filter only issues updated by given user
-        self.stats = [issue for issue
-                      in Issue.search(query, stats=self, expand="changelog",
-                                      timeout=self.parent.timeout)
-                      if issue.changed(self.user, self.options)]
+        self.stats = Issue.search(query, stats=self,
+                                  timeout=self.parent.timeout)
         log.info("[%s] done issues updated", self.option)
 
 
