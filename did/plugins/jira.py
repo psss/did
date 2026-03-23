@@ -478,7 +478,7 @@ class JiraCreated(JiraStats):
         query = (
             f"creator = '{user_id}' "
             f"AND created >= {self.options.since} "
-            f"AND created <= {self.options.until}"
+            f"AND created < {self.options.until}"
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
@@ -567,7 +567,7 @@ class JiraResolved(JiraStats):
         query = (
             f"assignee = '{user_id}' "
             f"AND resolved >= {self.options.since} "
-            f"AND resolved <= {self.options.until}"
+            f"AND resolved < {self.options.until}"
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
@@ -589,7 +589,7 @@ class JiraTested(JiraStats):
         query = (
             f"tester = '{user_id}' "
             f"AND resolved >= {self.options.since} "
-            f"AND resolved <= {self.options.until}"
+            f"AND resolved < {self.options.until}"
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
@@ -611,7 +611,7 @@ class JiraContributed(JiraStats):
         query = (
             f"contributors in ('{user_id}') "
             f"AND resolved >= {self.options.since} "
-            f"AND resolved <= {self.options.until}"
+            f"AND resolved < {self.options.until}"
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
