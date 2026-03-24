@@ -267,8 +267,7 @@ class Issue():
                     "expand": expand})
             # Use new /search/jql endpoint for Jira Cloud
             # (required as of May 2025)
-            # See: https://developer.atlassian.com/changelog/
-            # #CHANGE-2046
+            # https://developer.atlassian.com/changelog/#CHANGE-2046
             search_endpoint = (
                 "search/jql" if stats.parent.is_jira_cloud else "search")
             current_url = (
@@ -435,7 +434,7 @@ class JiraStats(Stats):
 
             if not users:
                 raise ReportError(
-                    f"No user found for email {self.user.email} in Jira Cloud"
+                    f"No user found for email '{self.user.email}' in Jira Cloud."
                     )
 
             # Return the accountId of the first matching user
@@ -992,7 +991,7 @@ class JiraStatsGroup(StatsGroup):
             if self._session is not None:
                 return self._session
 
-            # Do not set it to self._sesson until it is fully ready
+            # Do not set it to self._session until it is fully ready
             _session = requests.Session()
             # Disable SSL warning when ssl_verify is False
             if not self.ssl_verify:
