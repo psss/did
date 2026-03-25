@@ -48,8 +48,8 @@ Available stats:
 * ``issues-closed`` -- issues closed by the user
 * ``pull-requests-created`` -- pull requests opened by the user
 * ``pull-requests-commented`` -- pull requests where the user posted a comment
-* ``pull-requests-closed`` -- pull requests whose state changed to closed
-  (not yet merged)
+* ``pull-requests-closed`` -- pull requests assigned to the user that were
+  closed (either merged or declined)
 * ``pull-requests-reviewed`` -- pull requests reviewed by the user
 * ``pull-requests-merged`` -- pull requests authored by the user that were
   merged (merged_at timestamp falls within the reporting period)

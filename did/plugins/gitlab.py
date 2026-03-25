@@ -33,8 +33,8 @@ Available stats:
 * ``merge-requests-commented`` -- merge requests where the user
   posted a comment
 * ``merge-requests-approved`` -- merge requests approved by the user
-* ``merge-requests-closed`` -- merge requests whose state changed
-  to closed (not yet merged)
+* ``merge-requests-closed`` -- merge requests the user pressed the
+  Merge button on (distinct from Approve, tracked separately above)
 * ``merge-requests-merged`` -- merge requests authored by the user
   that were merged (merged_at timestamp falls within the reporting
   period)
