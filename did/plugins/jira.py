@@ -508,8 +508,7 @@ class JiraCommented(JiraStats):
         else:
             query = (
                 f"project in ({self.parent.project}) "
-                f"AND updated >= {self.options.since} "
-                f"AND updated <= {self.options.until}"
+                f"AND updated >= {self.options.since}"
                 )
             # Filter only issues commented by given user
             self.stats = [
@@ -532,7 +531,7 @@ class JiraUpdated(JiraStats):
             return
         log.info("[%s] Searching for issues updated in %s by %s",
                  self.option, self.parent.project, self.user)
-        query = f"updated >= {self.options.since} AND updated <= {self.options.until}"
+        query = f"updated >= {self.options.since}"
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
         # Filter only issues updated by given user
