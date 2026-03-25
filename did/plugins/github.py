@@ -41,6 +41,19 @@ It's also possible to set a timeout, if not specified it defaults to 60 seconds.
 
     timeout = 10
 
+Available stats:
+
+* ``issues-created`` -- issues opened by the user
+* ``issues-commented`` -- issues where the user posted a comment
+* ``issues-closed`` -- issues closed by the user
+* ``pull-requests-created`` -- pull requests opened by the user
+* ``pull-requests-commented`` -- pull requests where the user posted a comment
+* ``pull-requests-closed`` -- pull requests whose state changed to closed
+  (not yet merged)
+* ``pull-requests-reviewed`` -- pull requests reviewed by the user
+* ``pull-requests-merged`` -- pull requests authored by the user that were
+  merged (merged_at timestamp falls within the reporting period)
+
 """  # noqa: W505,E501 # pylint:disable=line-too-long
 
 import json
@@ -456,5 +469,5 @@ class GitHubStats(StatsGroup):
                 name=f"Pull requests reviewed on {option}"),
             PullRequestsMerged(
                 option=f"{option}-pull-requests-merged", parent=self,
-                name=f"Merged pull requests on {option}"),
+                name=f"Pull requests merged on {option}"),
             ]

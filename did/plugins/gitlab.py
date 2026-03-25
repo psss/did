@@ -24,6 +24,20 @@ seconds.
 
     timeout = 10
 
+Available stats:
+
+* ``issues-created`` -- issues opened by the user
+* ``issues-commented`` -- issues where the user posted a comment
+* ``issues-closed`` -- issues closed by the user
+* ``merge-requests-created`` -- merge requests opened by the user
+* ``merge-requests-commented`` -- merge requests where the user
+  posted a comment
+* ``merge-requests-approved`` -- merge requests approved by the user
+* ``merge-requests-closed`` -- merge requests whose state changed
+  to closed (not yet merged)
+* ``merge-requests-merged`` -- merge requests authored by the user
+  that were merged (merged_at timestamp falls within the reporting
+  period)
 
 __ https://docs.gitlab.com/ce/api/
 
@@ -440,14 +454,7 @@ class MergedRequest(Issue):
         transformed_data = data.copy()
         transformed_data['target_title'] = data['title']
         transformed_data['target_type'] = 'MergeRequest'
-        # Store iid for override below to avoid unnecessary API calls
-        transformed_data['_iid'] = data['iid']
         super().__init__(transformed_data, parent, data['iid'])
-
-    def iid(self):
-        # Override to avoid unnecessary API call since we already
-        # have iid in the transformed data
-        return self.data['_iid']
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
@@ -648,5 +655,5 @@ class GitLabStats(StatsGroup):
                 name=f"Merge requests closed on {option}"),
             MergeRequestsMerged(
                 option=f"{option}-merge-requests-merged", parent=self,
-                name=f"Merged requests on {option}"),
+                name=f"Merge requests merged on {option}"),
             ]
