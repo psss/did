@@ -374,3 +374,26 @@ class TestGetToken(unittest.TestCase):
             config = {"mytoken_file": filename}
             assert did.base.get_token(
                 config, token_file_key="mytoken_file") == token_in_file
+
+    def test_get_token_command(self) -> None:
+        """ Test getting a token from a command """
+        token = str(uuid4())
+        config = {"token_command": f"echo {token}"}
+        assert did.base.get_token(config) == token
+
+    def test_get_token_command_empty(self) -> None:
+        """ Test getting a token from a command that outputs whitespace """
+        config = {"token_command": "echo"}
+        assert did.base.get_token(config) is None
+
+    def test_get_token_command_failure(self) -> None:
+        """ Test getting a token from a command that fails """
+        config = {"token_command": "false"}
+        with pytest.raises(did.base.ReportError):
+            did.base.get_token(config)
+
+    def test_get_token_command_precedence(self) -> None:
+        """ Test that plain token takes precedence over command """
+        token_plain = str(uuid4())
+        config = {"token": token_plain, "token_command": "echo other"}
+        assert did.base.get_token(config) == token_plain

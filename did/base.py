@@ -7,6 +7,8 @@ import io
 import locale
 import os
 import re
+import shlex
+import subprocess
 import sys
 from configparser import NoOptionError, NoSectionError
 from datetime import timedelta
@@ -532,18 +534,26 @@ class User():
 def get_token(
         config: dict[str, str],
         token_key: str = "token",
-        token_file_key: str = "token_file") -> Optional[str]:
+        token_file_key: str = "token_file",
+        token_command_key: str = "token_command") -> Optional[str]:
     """
-    Extract the authentication token from config or token file
+    Extract the authentication token from config, token file, or command
 
-    Returns the contents of `config[token_key]`, or the file contents of
-    `config[token_file_key]` if no `config[token]` exists. If neither
-    keys exist, `None` is returned.
+    Returns the contents of ``config[token_key]``, the file contents of
+    ``config[token_file_key]``, or the stdout of
+    ``config[token_command_key]``. If none of these keys exist,
+    ``None`` is returned.
 
     Sometimes you want to be able to store a token in a file rather than
     in the your plain config file. Use this function to support a system
     wide mechanism to retrieve tokens or secrets either directly from
     the config file as plain text or from an outsourced file.
+
+    Use ``token_command`` to run an external command that prints the
+    token to stdout. This is useful for retrieving tokens from CLI
+    tools such as ``glab``::
+
+        token_command = glab config get --host gitlab.com token
 
     :param config:
         A configuration dictionary.
@@ -553,6 +563,9 @@ def get_token(
     :param token_file_key:
         The dict entry to look for when the token is supposed to be read
         from file.
+    :param token_command_key:
+        The dict entry to look for when the token is retrieved by
+        running an external command.
     :returns:
         The stripped token or `None` if no or only empty entries were
         found in the `config` dict.
@@ -566,6 +579,16 @@ def get_token(
         file_path = os.path.expanduser(config[token_file_key])
         with open(file_path, encoding="utf-8") as token_file:
             token = token_file.read().strip()
+    elif token_command_key in config:
+        command = config[token_command_key]
+        try:
+            result = subprocess.run(
+                shlex.split(command),
+                capture_output=True, text=True, check=True)
+            token = result.stdout.strip()
+        except (subprocess.CalledProcessError, OSError) as err:
+            raise ReportError(
+                f"Token command '{command}' failed: {err}") from err
 
     if token == "":
         token = None
