@@ -256,30 +256,48 @@ class Issue():
         fields = "summary,comment"
         if with_worklog:
             fields += ",worklog"
+        # Use new /search/jql endpoint for Jira Cloud
+        # (required as of May 2025)
+        # https://developer.atlassian.com/changelog/#CHANGE-2046
+        search_endpoint = (
+            "search/jql" if stats.parent.is_jira_cloud else "search")
+        base_url = (
+            f"{stats.parent.url}/rest/api/"
+            f"{stats.parent.api_version}/{search_endpoint}")
+        next_page_token: Optional[str] = None
         for batch in range(MAX_BATCHES):
-            encoded_query = urllib.parse.urlencode(
-                {
+            if stats.parent.is_jira_cloud:
+                # Jira Cloud: pass params as dict and use
+                # nextPageToken pagination
+                params: dict[str, Any] = {
                     "jql": query,
-                    "fields": fields,
+                    "fields": fields.split(","),
                     "maxResults": MAX_RESULTS,
-                    "startAt": batch *
-                    MAX_RESULTS,
-                    "expand": expand})
-            # Use new /search/jql endpoint for Jira Cloud
-            # (required as of May 2025)
-            # https://developer.atlassian.com/changelog/#CHANGE-2046
-            search_endpoint = (
-                "search/jql" if stats.parent.is_jira_cloud else "search")
-            current_url = (
-                f"{stats.parent.url}/rest/api/"
-                f"{stats.parent.api_version}/{search_endpoint}?{encoded_query}"
-                )
+                    }
+                if expand:
+                    params["expand"] = expand
+                if next_page_token:
+                    params["nextPageToken"] = next_page_token
+                current_url = base_url
+            else:
+                # Server/DC: URL-encode params and use
+                # startAt pagination
+                params = {}
+                encoded_query = urllib.parse.urlencode(
+                    {
+                        "jql": query,
+                        "fields": fields,
+                        "maxResults": MAX_RESULTS,
+                        "startAt": batch * MAX_RESULTS,
+                        "expand": expand})
+                current_url = f"{base_url}?{encoded_query}"
             log.debug("Fetching %s (Jira Cloud: %s, API version: %s)",
                       current_url, stats.parent.is_jira_cloud, stats.parent.api_version)
             while True:
                 try:
                     response = stats.parent.session.get(
                         current_url,
+                        params=params,
                         timeout=timeout)
                     log.debug("Response status: %s", response.status_code)
                     # Handle the exceeded rate limit
@@ -348,27 +366,23 @@ class Issue():
             issues.extend(data["issues"])
 
             # Check if we're done fetching
-            # (handle both old and new API response structures)
-            # Old endpoint (/search) returns "total" field
-            # New endpoint (/search/jql) may return "isLast"
-            # or just fewer results
-            if "total" in data:
-                # Old API response structure
+            if stats.parent.is_jira_cloud:
+                # Jira Cloud: use nextPageToken for pagination
+                next_page_token = data.get("nextPageToken")
+                if data.get("isLast", False) or not next_page_token:
+                    break
+                log.info("Batch %s: fetched %s issues",
+                         batch, len(issues))
+            elif "total" in data:
+                # Server/DC: use total + startAt
                 if len(issues) >= data["total"]:
                     break
                 log.info("Batch %s: fetched %s issues out of %s",
                          batch, len(issues), data["total"])
             else:
-                # New API response structure (/search/jql)
-                # Check if this is the last page
-                if data.get("isLast", False):
-                    log.debug("Last page reached (isLast=true)")
-                    break
-                # Or if we got fewer issues than requested, we're done
                 if len(data["issues"]) < MAX_RESULTS:
-                    log.debug("Last page reached (fewer results than maxResults)")
                     break
-                log.info("Batch %s: fetched %s issues (total unknown)",
+                log.info("Batch %s: fetched %s issues",
                          batch, len(issues))
         # Return the list of issue objects
         return [
@@ -380,20 +394,11 @@ class Issue():
         """ True if the issue was commented by given user """
         for comment in self.comments:
             created = dateutil.parser.parse(comment["created"]).date()
-            if (comment["author"]["emailAddress"] == user.email and
-                    options.since.date < created < options.until.date):
-                return True
-        return False
-
-    def changed(self, user: User, options: Namespace) -> bool:
-        """ True if the issue was commented by given user """
-        for history in self.histories:
-            created = dateutil.parser.parse(history["created"]).date()
             if (
-                    "author" in history and
-                    "emailAddress" in history["author"] and
-                    history["author"]["emailAddress"] == user.email and
-                    options.since.date <= created <= options.until.date
+                    "author" in comment and
+                    "emailAddress" in comment["author"] and
+                    comment["author"]["emailAddress"] == user.email and
+                    options.since.date <= created < options.until.date
                     ):
                 return True
         return False
@@ -473,7 +478,7 @@ class JiraCreated(JiraStats):
         query = (
             f"creator = '{user_id}' "
             f"AND created >= {self.options.since} "
-            f"AND created <= {self.options.until}"
+            f"AND created < {self.options.until}"
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
@@ -492,26 +497,34 @@ class JiraCommented(JiraStats):
             self.parent.project if self.parent.project is not None else "any project",
             self.user)
         user_id = self._get_user_identifier()
+
+        precise = False
         if self.parent.use_scriptrunner:
-            query = (
-                f"issueFunction in commented('by {user_id} "
-                f"after {self.options.since} "
-                f"before {self.options.until}')"
-                )
-            if self.parent.project:
-                query = query + f" AND project in ({self.parent.project})"
-            self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
+            if self.parent.is_jira_cloud:
+                # Jira Cloud ScriptRunner uses commentedBy field
+                query = (
+                    f"commentedBy = '{user_id}' "
+                    f"AND updated >= {self.options.since}"
+                    )
+            else:
+                # Jira Server/DC ScriptRunner uses issueFunction
+                precise = True
+                query = (
+                    f"issueFunction in commented('by {user_id} "
+                    f"after {self.options.since} "
+                    f"before {self.options.until}')"
+                    )
         else:
-            query = (
-                f"project in ({self.parent.project}) "
-                f"AND updated >= {self.options.since} "
-                f"AND updated <= {self.options.until}"
-                )
-            # Filter only issues commented by given user
-            self.stats = [
-                issue for issue in Issue.search(query, stats=self,
-                                                timeout=self.parent.timeout)
-                if issue.commented(self.user, self.options)]
+            query = f"updated >= {self.options.since}"
+
+        if self.parent.project:
+            query = query + f" AND project in ({self.parent.project})"
+
+        self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
+        if not precise:
+            # Loose query - results need filtering on the client side
+            self.stats = [issue for issue in self.stats
+                          if issue.commented(self.user, self.options)]
         log.info("[%s] done issues commented", self.option)
 
 
@@ -528,14 +541,15 @@ class JiraUpdated(JiraStats):
             return
         log.info("[%s] Searching for issues updated in %s by %s",
                  self.option, self.parent.project, self.user)
-        query = f"updated >= {self.options.since} AND updated <= {self.options.until}"
+        user_id = self._get_user_identifier()
+        query = (
+            f"issuekey IN updatedBy('{user_id}', "
+            f"'{self.options.since}', '{self.options.until - 1}')"
+            )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
-        # Filter only issues updated by given user
-        self.stats = [issue for issue
-                      in Issue.search(query, stats=self, expand="changelog",
-                                      timeout=self.parent.timeout)
-                      if issue.changed(self.user, self.options)]
+        self.stats = Issue.search(query, stats=self,
+                                  timeout=self.parent.timeout)
         log.info("[%s] done issues updated", self.option)
 
 
@@ -553,7 +567,7 @@ class JiraResolved(JiraStats):
         query = (
             f"assignee = '{user_id}' "
             f"AND resolved >= {self.options.since} "
-            f"AND resolved <= {self.options.until}"
+            f"AND resolved < {self.options.until}"
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
@@ -575,7 +589,7 @@ class JiraTested(JiraStats):
         query = (
             f"tester = '{user_id}' "
             f"AND resolved >= {self.options.since} "
-            f"AND resolved <= {self.options.until}"
+            f"AND resolved < {self.options.until}"
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
@@ -597,7 +611,7 @@ class JiraContributed(JiraStats):
         query = (
             f"contributors in ('{user_id}') "
             f"AND resolved >= {self.options.since} "
-            f"AND resolved <= {self.options.until}"
+            f"AND resolved < {self.options.until}"
             )
         if self.parent.project:
             query = query + f" AND project in ({self.parent.project})"
