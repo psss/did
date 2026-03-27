@@ -282,7 +282,7 @@ class Issue():
             else:
                 # Server/DC: URL-encode params and use
                 # startAt pagination
-                params = None
+                params = {}
                 encoded_query = urllib.parse.urlencode(
                     {
                         "jql": query,
@@ -523,8 +523,8 @@ class JiraCommented(JiraStats):
         self.stats = Issue.search(query, stats=self, timeout=self.parent.timeout)
         if not precise:
             # Loose query - results need filtering on the client side
-            self.stats = [ issue for issue in self.stats
-                           if issue.commented(self.user, self.options)]
+            self.stats = [issue for issue in self.stats
+                          if issue.commented(self.user, self.options)]
         log.info("[%s] done issues commented", self.option)
 
 
