@@ -196,7 +196,7 @@ def test_gitlab_merge_requests_merged():
     # MR #4 was merged on 2023-01-20 at 14:14:01
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[7].stats
     assert any(
-        "did.tester/test-project#4" in str(stat) and "Update README.md" in str(stat)
+        "did.tester/test-project#004" in str(stat) and "Update README.md" in str(stat)
         for stat in stats)
 
 

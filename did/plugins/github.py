@@ -41,18 +41,35 @@ It's also possible to set a timeout, if not specified it defaults to 60 seconds.
 
     timeout = 10
 
-Available stats:
 
-* ``issues-created`` -- issues opened by the user
-* ``issues-commented`` -- issues where the user posted a comment
-* ``issues-closed`` -- issues closed by the user
-* ``pull-requests-created`` -- pull requests opened by the user
-* ``pull-requests-commented`` -- pull requests where the user posted a comment
-* ``pull-requests-closed`` -- pull requests assigned to the user that were
-  closed (either merged or declined)
-* ``pull-requests-reviewed`` -- pull requests reviewed by the user
-* ``pull-requests-merged`` -- pull requests authored by the user that were
-  merged (merged_at timestamp falls within the reporting period)
+Available Stats
+~~~~~~~~~~~~~~~
+
+issues-created
+    issues opened by the user
+
+issues-commented
+    issues where the user posted a comment
+
+issues-closed
+    issues closed by the user
+
+pull-requests-created
+    pull requests opened by the user
+
+pull-requests-commented
+    pull requests where the user posted a comment
+
+pull-requests-closed
+    pull requests assigned to the user that were closed (either merged
+    or declined)
+
+pull-requests-reviewed
+    pull requests reviewed by the user
+
+pull-requests-merged
+    pull requests authored by the user that were merged (merged_at
+    timestamp falls within the reporting period)
 
 """  # noqa: W505,E501 # pylint:disable=line-too-long
 
