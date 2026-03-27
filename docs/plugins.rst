@@ -35,6 +35,13 @@ footer
     :members:
     :undoc-members:
 
+forgejo
+-------
+
+.. automodule:: did.plugins.forgejo
+    :members:
+    :undoc-members:
+
 gerrit
 ------
 
