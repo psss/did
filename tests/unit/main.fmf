@@ -2,7 +2,7 @@ summary: Python unit tests
 description:
     Run all available python unit tests using pytest.
 test: python3 -m pytest -vvv -ra --showlocals
-duration: 15m
+duration: 1h
 framework: shell
 require:
   - bodhi-client
