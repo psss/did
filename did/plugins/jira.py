@@ -424,14 +424,15 @@ class JiraStats(Stats):
         """
         Get the user's Atlassian Account ID (AAID) for Jira Cloud.
         """
-        query = urllib.parse.quote(self.user.email)
-        search_url = f"{self.parent.url}/rest/api/3/user/search?query={query}"
+        params = {'query': self.user.email}
+        search_url = f"{self.parent.url}/rest/api/3/user/search"
 
         log.debug("Fetching user AAID for %s from %s", self.user.email, search_url)
 
         try:
             response = self.parent.session.get(
                 search_url,
+                params=params,
                 timeout=self.parent.timeout
                 )
             response.raise_for_status()
