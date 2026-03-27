@@ -41,6 +41,36 @@ It's also possible to set a timeout, if not specified it defaults to 60 seconds.
 
     timeout = 10
 
+
+Available Stats
+~~~~~~~~~~~~~~~
+
+issues-created
+    issues opened by the user
+
+issues-commented
+    issues where the user posted a comment
+
+issues-closed
+    issues closed by the user
+
+pull-requests-created
+    pull requests opened by the user
+
+pull-requests-commented
+    pull requests where the user posted a comment
+
+pull-requests-closed
+    pull requests assigned to the user that were closed (either merged
+    or declined)
+
+pull-requests-reviewed
+    pull requests reviewed by the user
+
+pull-requests-merged
+    pull requests authored by the user that were merged (merged_at
+    timestamp falls within the reporting period)
+
 """  # noqa: W505,E501 # pylint:disable=line-too-long
 
 import json
@@ -386,6 +416,19 @@ class PullRequestsReviewed(Stats):
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
 
+class PullRequestsMerged(Stats):
+    """ Pull requests merged """
+
+    def fetch(self):
+        log.info("Searching for merged pull requests authored by %s", self.user)
+        login = self.user.login
+        since = self.options.since
+        until = GitHub.until(self.options.until)
+        query = f"search/issues?q=author:{login}+merged:{since}..{until}+type:pr"
+        self.stats = [
+            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -441,4 +484,7 @@ class GitHubStats(StatsGroup):
             PullRequestsReviewed(
                 option=f"{option}-pull-requests-reviewed", parent=self,
                 name=f"Pull requests reviewed on {option}"),
+            PullRequestsMerged(
+                option=f"{option}-pull-requests-merged", parent=self,
+                name=f"Pull requests merged on {option}"),
             ]
