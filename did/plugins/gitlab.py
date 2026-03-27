@@ -8,12 +8,19 @@ Config example::
     url = https://gitlab.com/
     token = <authentication-token>
     token_file = <authentication-token-file>
+    token_command = <command-to-retrieve-token>
     login = <username>
     ssl_verify = true
 
 The authentication token is required. Create it in the GitLab web
 interface (select ``api`` as the desired scope). See the `GitLab API`__
 documentation for details.
+
+Use ``token_command`` to run an external command that prints the
+token to stdout. For example, to read tokens from the ``glab`` CLI
+configuration::
+
+    token_command = glab config get --host gitlab.com token
 
 Use ``login`` to override user name detected from the email address.
 See the :doc:`config` documentation for details on using aliases.
