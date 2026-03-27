@@ -14,6 +14,7 @@ jobs:
   targets:
   - fedora-all
   - epel-9
+  - epel-10
   enable_net: False
 
 - job: tests
@@ -21,6 +22,7 @@ jobs:
   targets:
   - fedora-all
   - epel-9
+  - epel-10
 
 - job: copr_build
   trigger: commit
@@ -28,6 +30,7 @@ jobs:
   targets:
   - fedora-all
   - epel-9
+  - epel-10
   enable_net: False
   list_on_homepage: True
   preserve_project: True
