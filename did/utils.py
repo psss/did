@@ -202,7 +202,7 @@ def shorted(text: str, width: int = MAX_WIDTH) -> str:
     lines = []
 
     for line in text.split("\n"):
-        if len(line) <= width:
+        if width == 0 or len(line) <= width:
             lines.append(line)
         else:
             # Remove any word after first overlapping non-word character
@@ -257,7 +257,7 @@ def item(
         if options.format == "wiki" and level == 0:
             indent = 1
     # Shorten the text if necessary to match the desired maximum width
-    width = 333
+    width = 0
     if options is not None and options.width:
         width = options.width - indent - 2
     spaces = " " * indent
