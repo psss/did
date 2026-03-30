@@ -233,7 +233,8 @@ Miloš Malík, Jeffrey Bastian, Côme Chilliet, Marcin Juszkiewicz,
 Tomáš Kopeček, Konrad Kleine, Sandro Bonazzola, Morgan Weetman,
 Jakub Rozek, Petr Matyáš, Miroslav Suchý, Max Rydahl Andersen,
 Maxime Ripard, Wayne Sun, Morgan Bazalgette, Adriano Machado,
-Jakub Stejskal and Mikhail Shiryaev.
+Jakub Stejskal, Mikhail Shiryaev, Pavel Cahyna, Michal Schmidt,
+Chris Suszynski, Clemens Lang and Brian Grech.
 
 
 Copyright
