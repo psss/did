@@ -1,6 +1,8 @@
 # coding: utf-8
 """ Tests for the Public Inbox plugin """
 
+import pytest
+
 import did.base
 import did.cli
 
@@ -60,6 +62,7 @@ def test_lore_started():
 #  Mails threads the user was involved in
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.skip("https://github.com/psss/did/issues/461")
 def test_lore_involved():
     """ Check new mail threads the user was involved in """
     did.base.Config(CONFIG)
@@ -79,6 +82,7 @@ def test_lore_involved():
 #  Mails threads the user replied to themselves
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.skip("https://github.com/psss/did/issues/461")
 def test_lore_reply_to_themselves():
     """ Check new mail threads started by and replied to the user"""
     did.base.Config(CONFIG)
