@@ -9,6 +9,7 @@ Config example::
     url = https://some.trac.com/trac/project/rpc
 """
 
+import http.client
 import re
 import xmlrpc.client
 
@@ -68,7 +69,10 @@ class Trac():
         except xmlrpc.client.Fault as error:
             log.error("An error encountered, while searching for tickets.")
             raise ReportError(error) from error
-        except (xmlrpc.client.ProtocolError, ConnectionError) as error:
+        except (
+                xmlrpc.client.ProtocolError,
+                http.client.HTTPException,
+                ConnectionError) as error:
             log.debug(error)
             log.error("Trac url: %s", parent.url)
             raise ReportError(
