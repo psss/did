@@ -89,6 +89,8 @@ def test_github_pull_requests_reviewed():
                for stat in stats)
 
 
+@pytest.mark.skipif("GITHUB_TOKEN" not in os.environ,
+                    reason="No GITHUB_TOKEN environment variable found")
 def test_github_pull_requests_commented():
     """ Commented pull requests """
     did.base.Config(CONFIG)

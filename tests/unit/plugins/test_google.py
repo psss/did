@@ -28,7 +28,7 @@ type = google
 apps = calendar, tasks
 client_id = 389009292292-c130a3j6gpgs4677qlt3qil1kbs6gvel.apps.googleusercontent.com
 client_secret = vGlqWk35qnF2pj0qoYxNByrH
-storage = tests/plugins/google-api-credentials.json
+storage = tests/unit/plugins/google-api-credentials.json
 """
 
 FULL_DAY_EVENT_DICT = {

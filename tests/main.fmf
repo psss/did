@@ -1,4 +1,5 @@
 test: ./test.sh
 framework: beakerlib
-require: did
+require:
+  - did
 tier: 1
