@@ -4,8 +4,9 @@ description:
 test: python3 -m pytest -vvv -ra --showlocals
 duration: 1h
 framework: shell
-require:
+require+:
   - bodhi-client
+  - git-core
   - python3-bugzilla
   - python3-feedparser
   - python3-google-api-client
