@@ -203,7 +203,8 @@ class Comment():
         if match:
             self.href = match.group(1)
             self.title = match.group(2) or ''
-            # Parse project and id from href like "/rpms/munge/pull-request/10"
+            # Parse project and id from href
+            # e.g. "/rpms/munge/pull-request/10"
             path_match = re.search(
                 r'/([^/]+(?:/[^/]+)*)/(?:pull-request|issue)/(\d+)',
                 self.href)
@@ -299,11 +300,20 @@ class Commented(Stats):
             if activity["type"] != "commented":
                 continue
 
-        self.stats = sorted([
+        comments = [
             Comment(activity, self.options, self.parent.pagure.url)
             for activity in activity_stats
             if activity["type"] == "commented"
-            ], key=str)
+            ]
+        # Deduplicate: keep only one entry per PR/issue
+        seen = set()
+        unique = []
+        for comment in comments:
+            key = (comment.project, comment.identifier)
+            if key not in seen:
+                seen.add(key)
+                unique.append(comment)
+        self.stats = sorted(unique, key=str)
 
 
 class PullRequestsClosed(Stats):
