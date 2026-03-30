@@ -95,7 +95,7 @@ repos:
             koji,
             lxml,
             nitrate,
-            oauth2client,
+            google-auth-oauthlib,
             pytest,
             python-bugzilla,
             requests_gssapi,
