@@ -22,6 +22,7 @@ It's also possible to set a timeout, if not specified it defaults to
 """
 
 import datetime
+import re
 from typing import Any, Optional
 
 import requests
@@ -188,17 +189,45 @@ class Comment():
     def __init__(self, data, options, url):
         self.options = options
         self.date = data["date"]
-        self.text = data["description_mk"].replace(
-            'href="',
-            f'href="{url.replace("/api/0", "")}').replace(
-            '<div class="markdown"><p>',
-            '').replace(
-            '</p></div>',
-            '')
+        self.base_url = url.replace("/api/0", "")
+        self._parse(data["description_mk"])
+
+    def _parse(self, description_mk):
+        """ Extract project, id, and title from the HTML description """
+        # Extract href, title attribute, and link text from the <a> tag
+        match = re.search(
+            r'<a\s+href="([^"]*)"'
+            r'(?:\s+title="\[(?:Open|Closed|Merged)\]\s*([^"]*)")?'
+            r'[^>]*>([^<]*)</a>',
+            description_mk)
+        if match:
+            self.href = match.group(1)
+            self.title = match.group(2) or ''
+            # Parse project and id from href like "/rpms/munge/pull-request/10"
+            path_match = re.search(
+                r'/([^/]+(?:/[^/]+)*)/(?:pull-request|issue)/(\d+)',
+                self.href)
+            if path_match:
+                self.project = path_match.group(1)
+                self.identifier = path_match.group(2)
+            else:
+                self.project = None
+                self.identifier = None
+        else:
+            self.href = None
+            self.title = re.sub(r'<[^>]+>', '', description_mk).strip()
+            self.project = None
+            self.identifier = None
 
     def __str__(self):
         """ String representation """
-        return f'{self.date} - {self.text}'
+        if self.project and self.identifier:
+            label = f"{self.project}#{self.identifier}"
+            if self.options.format == "markdown":
+                url = f"{self.base_url}{self.href}"
+                return f"[{label}]({url}) - {self.title}"
+            return f"{label} - {self.title}"
+        return f'{self.date} - {self.title}'
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
