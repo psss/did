@@ -96,11 +96,11 @@ def test_pagure_comments():
     did.base.Config(CONFIG)
     option = "--pagure-commented "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[COMMENTS].stats
-    assert any("2018-11-26 - psss commented on PR" in str(stat) for stat in stats)
+    assert any("did#2 - Closed Issue" in str(stat) for stat in stats)
     stats = did.cli.main(option + BEFORE)[0][0].stats[0].stats[COMMENTS].stats
-    assert any("2018-11-22 - psss commented on PR" in str(stat) for stat in stats)
+    assert any("fedora-ci/messages#16" in str(stat) for stat in stats)
     stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[COMMENTS].stats
-    assert any("2018-11-27 - psss commented on issue" in str(stat) for stat in stats)
+    assert any("fedora-ci/metadata#3" in str(stat) for stat in stats)
 
 
 def test_pagure_missing_url(caplog: LogCaptureFixture):
