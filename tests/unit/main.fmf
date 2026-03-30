@@ -16,3 +16,9 @@ require:
 environment:
     LANG: en_US.UTF-8
 tier: 0
+
+adjust:
+    test+: " --no-google"
+    require-: [python3-google-api-client]
+    when: distro == centos-stream
+    because: the package is not available there
