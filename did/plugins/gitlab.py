@@ -327,19 +327,10 @@ class Issue():
         self.data = data
         self.gitlabapi: GitLab = parent.gitlab
         self.project = self.gitlabapi.get_project(data['project_id'])
-        self.id = set_id
-        if set_id is None:
-            self.id = self.iid()
+        self.id = set_id if set_id is not None else data.get(
+            'target_iid', 'unknown')
         self.title = data['target_title']
         self._body: Optional[str] = None
-
-    def iid(self):
-        issue = self.gitlabapi.get_project_issue(
-            self.data['project_id'], self.data['target_id'])
-
-        if issue is not None:
-            return issue['iid']
-        return "unknown"
 
     @property
     def body(self) -> str:
@@ -395,14 +386,6 @@ class Issue():
 class MergeRequest(Issue):
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, data, parent, set_id=None):
-        if set_id is None:
-            merge_request = parent.gitlab.get_project_mr(
-                data['project_id'], data['target_id'])
-            if merge_request is not None:
-                set_id = merge_request['iid']
-        super().__init__(data, parent, set_id)
-
     @property
     def body(self) -> str:
         """Get full MR description (lazy-loaded)"""
@@ -418,27 +401,8 @@ class Note(Issue):
 
     def __init__(self, data, parent, set_id=None):
         if set_id is None:
-            set_id = self.note_iid(data, parent.gitlab)
+            set_id = data['note'].get('noteable_iid', 'unknown')
         super().__init__(data, parent, set_id)
-
-    def note_iid(self, data, gitlabapi):
-        if data['note']['noteable_type'] == 'Issue':
-            issue = gitlabapi.get_project_issue(
-                data['project_id'],
-                data['note']['noteable_id'])
-
-            # `noteable_type` is `Issue` even for `WorkItem`s, which
-            # aren't returned by `get_project_issue()`
-            if issue is not None:
-                return issue['iid']
-            return 'unknown'
-        if data['note']['noteable_type'] == 'MergeRequest':
-            merge_request = gitlabapi.get_project_mr(
-                data['project_id'],
-                data['note']['noteable_id'])
-            if merge_request is not None:
-                return merge_request['iid']
-        return "unknown"
 
     @property
     def body(self) -> str:
