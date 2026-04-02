@@ -170,8 +170,28 @@ class GitHub():
                 f"{issue['comments_url']}"
                 f"?per_page={PER_PAGE}&since={issue_since.isoformat()}"
                 )
-            if self.issue_pr_commented_in_range(url, since, until, login):
+            if self.issue_pr_commented_in_range(url, since,
+                                                until, login):
                 valid_issues.append(issue)
+                continue
+            # If the issue is a PR, retry with review comments, these
+            # are different from issue comments:
+            # https://docs.github.com/en/rest/pulls/comments?apiVersion=2026-03-10
+            pr_dict = issue.get('pull_request')
+            if pr_dict:
+                # pr_dict is a small dict that contains the actual
+                # pull request URL.
+                response = self.request(pr_dict['url'])
+                # the full PR dict, contains different fields
+                # than the issue dict even if the issue is actually a PR
+                pr = response.json()
+                url = (
+                    f"{pr['review_comments_url']}"
+                    f"?per_page={PER_PAGE}&since={issue_since.isoformat()}"
+                    )
+                if self.issue_pr_commented_in_range(url, since,
+                                                    until, login):
+                    valid_issues.append(issue)
         return valid_issues
 
     @staticmethod
