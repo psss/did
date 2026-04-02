@@ -128,6 +128,36 @@ class GitHub():
             condition("+-org", exclude_org)
             )
 
+    def issue_pr_commented_in_range(self,
+                                    issue_pr_url: str,
+                                    since: datetime,
+                                    until: datetime,
+                                    login: str) -> bool:
+        issue_checked = False
+        url = issue_pr_url
+        while not issue_checked:
+            response = self.request(url)
+            comments = response.json()
+            log.debug("%s comments fetched for %s", len(comments), url)
+            log.data(pretty(comments))
+            for comment in comments:
+                created_at = datetime.strptime(
+                    comment["created_at"],
+                    r"%Y-%m-%dT%H:%M:%SZ"
+                    )
+                if created_at > until:
+                    # Comments are sorted by created_at asc
+                    issue_checked = True
+                    break
+                if comment["user"]["login"] == login and since <= created_at:
+                    issue_checked = True
+                    return True
+            if 'next' in response.links:
+                url = response.links['next']['url']
+            else:
+                issue_checked = True
+        return False
+
     def commented_in_range(self,
                            commented_issues: list,
                            since: datetime,
@@ -136,33 +166,12 @@ class GitHub():
         valid_issues = []
         for issue in commented_issues:
             issue_since = since
-            issue_checked = False
             url = (
                 f"{issue['comments_url']}"
                 f"?per_page={PER_PAGE}&since={issue_since.isoformat()}"
                 )
-            while not issue_checked:
-                response = self.request(url)
-                comments = response.json()
-                log.debug("%s comments fetched for %s", len(comments), url)
-                log.data(pretty(comments))
-                for comment in comments:
-                    created_at = datetime.strptime(
-                        comment["created_at"],
-                        r"%Y-%m-%dT%H:%M:%SZ"
-                        )
-                    if created_at > until:
-                        # Comments are sorted by created_at asc
-                        issue_checked = True
-                        break
-                    if comment["user"]["login"] == login and since <= created_at:
-                        valid_issues.append(issue)
-                        issue_checked = True
-                        break
-                if 'next' in response.links:
-                    url = response.links['next']['url']
-                else:
-                    issue_checked = True
+            if self.issue_pr_commented_in_range(url, since, until, login):
+                valid_issues.append(issue)
         return valid_issues
 
     @staticmethod
