@@ -97,6 +97,20 @@ def test_shorted() -> None:
     assert res == "this...\nthis..."
 
 
+def test_shorted_unlimited() -> None:
+    long_text = "this text is longer than 6\nthis is also longer"
+    res = did.utils.shorted(long_text, width=0)
+    assert res == long_text
+
+
+def test_item_unlimited_width(capsys: pytest.CaptureFixture[str]) -> None:
+    options = Namespace(brief=False, format="text", width=0)
+    long_text = "x" * 500
+    did.utils.item(long_text, level=0, options=options)
+    captured = capsys.readouterr()
+    assert captured.out == f"\n* {long_text}\n"
+
+
 def test_item_no_options(capsys: pytest.CaptureFixture[str]) -> None:
     did.utils.item("this is level 0 text", level=0, options=None)
     captured = capsys.readouterr()
