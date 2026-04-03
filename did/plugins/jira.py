@@ -8,7 +8,7 @@ Configuration example (token)::
     type = jira
     url = https://issues.redhat.com/
     auth_type = token
-    token_file = ~/.did/jira-token
+    token_file = ~/.did/jira_api_token
     token_expiration = 7
     token_name = did-token
 
