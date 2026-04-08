@@ -66,6 +66,25 @@ def test_invalid_date() -> None:
             did.cli.main(argument)
 
 
+def test_version_flag(capsys: pytest.CaptureFixture[str]) -> None:
+    """ --version exits before config and prints a version line """
+    with pytest.raises(SystemExit) as exc:
+        did.cli.main(["--version"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out.strip()
+    assert out.startswith("did ")
+    assert len(out) > len("did ")
+
+
+def test_version_short_flag(capsys: pytest.CaptureFixture[str]) -> None:
+    """ -V is an alias for --version """
+    with pytest.raises(SystemExit) as exc:
+        did.cli.main(["-V"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out.strip()
+    assert out.startswith("did ")
+
+
 def test_conflicting_options() -> None:
     """ Complain about conflicting options """
     did.base.Config(config=MINIMAL)
