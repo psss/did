@@ -1,14 +1,17 @@
 # coding: utf-8
 """ Tests for the GitLab plugin """
 
+import datetime
 import logging
 import os
+from types import SimpleNamespace
 
 import pytest
 from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
+import did.plugins.gitlab
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -104,7 +107,7 @@ def test_gitlab_paginated_merge_requests_commented(caplog: LogCaptureFixture):
     option = "--gitlab-merge-requests-commented "
     with caplog.at_level(logging.DEBUG, logger=did.base.log.name):
         stats = did.cli.main(option + PAGINATED_INTERVAL)[0][0].stats[0].stats[4].stats
-        assert "Fetching more paginated data" in caplog.text
+        assert "Fetching " in caplog.text
     assert any(
         "CentOS/automotive/src/automotive-image-builder#220" in str(stat)
         for stat in stats)
@@ -209,3 +212,172 @@ def test_gitlab_config_disabled_ssl_verify():
 ssl_verify = False
 """)
     did.cli.main(INTERVAL)
+
+
+class FakeResponse:
+
+    def __init__(self, payload, links=None):
+        self.payload = payload
+        self.links = links or {}
+
+    def json(self):
+        return self.payload
+
+    def raise_for_status(self):
+        return None
+
+
+class FakeFuture:
+
+    def __init__(self, value=None, error=None):
+        self.value = value
+        self.error = error
+
+    def result(self):
+        if self.error is not None:
+            raise self.error
+        return self.value
+
+
+class FakeExecutor:
+
+    def __init__(self, max_workers):
+        self.max_workers = max_workers
+        self.futures = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def submit(self, function, *args, **kwargs):
+        try:
+            future = FakeFuture(function(*args, **kwargs))
+        except Exception as error:
+            future = FakeFuture(error=error)
+        self.futures.append(future)
+        return future
+
+
+def test_gitlab_api_list_preserves_page_order(monkeypatch):
+    """ Pages fetched out of order are assembled in correct order """
+    gitlab = did.plugins.gitlab.GitLab("https://gitlab.example.com", "token")
+    first_page = FakeResponse(
+        payload=[
+            {'created_at': '2023-01-05T00:00:00Z', 'id': 1},
+            {'created_at': '2023-01-04T00:00:00Z', 'id': 2},
+            ],
+        links={
+            'next': {'url': 'https://gitlab.example.com/api/v4/events?page=2'},
+            'last': {'url': 'https://gitlab.example.com/api/v4/events?page=3'},
+            })
+    later_pages = {
+        2: FakeResponse([
+            {'created_at': '2023-01-03T00:00:00Z', 'id': 3},
+            {'created_at': '2023-01-02T00:00:00Z', 'id': 4},
+            ]),
+        3: FakeResponse([
+            {'created_at': '2023-01-01T00:00:00Z', 'id': 5},
+            ]),
+        }
+
+    def fake_get_gitlab_api(endpoint, params=None):
+        assert endpoint == 'events'
+        assert params is None
+        return first_page
+
+    def fake_get_gitlab_api_raw(url, params=None):
+        del params
+        page = int(url.split("page=")[1])
+        return later_pages[page]
+
+    monkeypatch.setattr(gitlab, "_get_gitlab_api", fake_get_gitlab_api)
+    monkeypatch.setattr(gitlab, "_get_gitlab_api_raw", fake_get_gitlab_api_raw)
+    monkeypatch.setattr(did.plugins.gitlab, "ThreadPoolExecutor", FakeExecutor)
+    monkeypatch.setattr(
+        did.plugins.gitlab,
+        "as_completed",
+        lambda futures: reversed(list(futures)))
+
+    results = gitlab._get_gitlab_api_list(
+        'events',
+        since=SimpleNamespace(date=datetime.date(2023, 1, 2)),
+        get_all_results=True)
+
+    assert [item['id'] for item in results] == [1, 2, 3, 4]
+
+
+def test_gitlab_api_list_wraps_page_fetch_errors(monkeypatch):
+    """ Thread fetch errors are wrapped in ReportError """
+    gitlab = did.plugins.gitlab.GitLab("https://gitlab.example.com", "token")
+    first_page = FakeResponse(
+        payload=[{'created_at': '2023-01-05T00:00:00Z', 'id': 1}],
+        links={
+            'next': {'url': 'https://gitlab.example.com/api/v4/events?page=2'},
+            'last': {'url': 'https://gitlab.example.com/api/v4/events?page=2'},
+            })
+
+    def fake_get_gitlab_api(endpoint, params=None):
+        assert endpoint == 'events'
+        assert params is None
+        return first_page
+
+    def fake_get_gitlab_api_raw(url, params=None):
+        del url, params
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(gitlab, "_get_gitlab_api", fake_get_gitlab_api)
+    monkeypatch.setattr(gitlab, "_get_gitlab_api_raw", fake_get_gitlab_api_raw)
+    monkeypatch.setattr(did.plugins.gitlab, "ThreadPoolExecutor", FakeExecutor)
+    monkeypatch.setattr(
+        did.plugins.gitlab,
+        "as_completed",
+        lambda futures: list(futures))
+
+    with pytest.raises(did.base.ReportError, match="Unable to fetch page 2"):
+        gitlab._get_gitlab_api_list('events', get_all_results=True)
+
+
+def test_gitlab_api_list_falls_back_to_next_links(monkeypatch):
+    """ Sequential next-link fallback when last header is missing """
+    gitlab = did.plugins.gitlab.GitLab("https://gitlab.example.com", "token")
+    first_page = FakeResponse(
+        payload=[{'created_at': '2023-01-05T00:00:00Z', 'id': 1}],
+        links={
+            'next': {'url': 'https://gitlab.example.com/api/v4/events?page=2'},
+            })
+    later_pages = {
+        2: FakeResponse(
+            [],
+            links={
+                'next': {
+                    'url': 'https://gitlab.example.com/api/v4/events?page=3'}
+                }),
+        3: FakeResponse([
+            {'created_at': '2023-01-04T00:00:00Z', 'id': 2},
+            {'created_at': '2023-01-01T00:00:00Z', 'id': 3},
+            ]),
+        }
+
+    def fake_get_gitlab_api(endpoint, params=None):
+        assert endpoint == 'events'
+        assert params is None
+        return first_page
+
+    def fake_get_gitlab_api_raw(url, params=None):
+        del params
+        page = int(url.split("page=")[1])
+        return later_pages[page]
+
+    monkeypatch.setattr(gitlab, "_get_gitlab_api", fake_get_gitlab_api)
+    monkeypatch.setattr(gitlab, "_get_gitlab_api_raw", fake_get_gitlab_api_raw)
+
+    results = gitlab._get_gitlab_api_list(
+        'events',
+        since=SimpleNamespace(date=datetime.date(2023, 1, 2)),
+        get_all_results=True)
+
+    assert [item['id'] for item in results] == [1, 2]
+
+

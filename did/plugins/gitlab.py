@@ -59,13 +59,16 @@ __ https://docs.gitlab.com/ce/api/
 """
 
 from __future__ import annotations
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from time import sleep
 from typing import Any, Optional
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
-import dateutil
+import dateutil.parser
 import requests
 import urllib3
+from tenacity import (RetryError, Retrying, retry_if_exception_type,
+                      stop_after_attempt, wait_fixed)
 from urllib3.exceptions import InsecureRequestWarning
 
 from did.base import Config, ReportError, get_token
@@ -79,6 +82,9 @@ GITLAB_API = 4
 GITLAB_ATTEMPTS = 5
 GITLAB_INTERVAL = 5
 GITLAB_MAX_PAGE_LIST = 20
+
+# Threading
+MAX_THREAD_WORKERS = 32
 
 # Identifier padding
 PADDING = 3
@@ -115,37 +121,56 @@ class GitLab():
         log.debug("Connecting to GitLab API at '%s'.", url)
         if params:
             log.debug("Query params: %s", params)
-        retries = 0
-        while True:
+        for attempt in range(1, GITLAB_ATTEMPTS + 1):
             try:
-                api_raw = requests.get(
-                    url, headers=self.headers, verify=self.ssl_verify,
-                    params=params, timeout=self.timeout)
+                for retry in Retrying(
+                        stop=stop_after_attempt(GITLAB_ATTEMPTS),
+                        retry=retry_if_exception_type(
+                            requests.exceptions.ConnectionError),
+                        wait=wait_fixed(GITLAB_INTERVAL),
+                        reraise=True):
+                    with retry:
+                        api_raw = requests.get(
+                            url, headers=self.headers,
+                            verify=self.ssl_verify,
+                            params=params, timeout=self.timeout)
+            except (requests.exceptions.RequestException, RetryError) as error:
+                raise ReportError(
+                    f"Unable to connect to '{url}'. "
+                    f"Error: {error}") from error
+            # Retry on rate limiting
+            if api_raw.status_code == 429:
+                if attempt >= GITLAB_ATTEMPTS:
+                    raise ReportError(
+                        f"Rate limited by '{url}' after "
+                        f"{GITLAB_ATTEMPTS} attempts.")
+                interval = int(api_raw.headers.get(
+                    'Retry-After', GITLAB_INTERVAL))
+                log.debug(
+                    "Rate limited by '%s', retrying in %s seconds.",
+                    url, interval)
+                sleep(interval)
+                continue
+            # Handle other HTTP errors
+            try:
                 api_raw.raise_for_status()
-                return api_raw
-            except requests.exceptions.HTTPError as http_err:
-                result = api_raw.json()
+            except requests.exceptions.HTTPError as error:
+                try:
+                    result = api_raw.json()
+                except requests.exceptions.JSONDecodeError:
+                    raise ReportError(
+                        f"Unable to access '{url}'. "
+                        f"Error: {error}") from error
                 if "error" in result:
                     raise ReportError(
-                        f'Error \"{result["error"]}\" '
-                        f'connecting to GitLab: {result["error_description"]}'
-                        ) from http_err
+                        f'Error \"{result["error"]}\" connecting '
+                        f'to GitLab: {result["error_description"]}'
+                        ) from error
                 raise ReportError(
-                    f"Unable to access '{url}'. Error: {http_err}"
-                    ) from http_err
-            except requests.exceptions.ConnectionError as connection_error:
-                retries += 1
-                if retries > GITLAB_ATTEMPTS:
-                    raise ReportError(
-                        f"Unable to connect to '{url}'. Error: {connection_error}"
-                        ) from connection_error
-                log.debug(
-                    "Retrying connection to '%s' in %s seconds due to %s.",
-                    url,
-                    GITLAB_INTERVAL,
-                    connection_error
-                    )
-                sleep(GITLAB_INTERVAL)
+                    f"Unable to access '{url}'. "
+                    f"Error: {error}") from error
+            return api_raw
+        raise ReportError(f"Unable to fetch '{url}'.")
 
     def _get_gitlab_api(self, endpoint, params=None):
         url = f'{self.url}/api/v{GITLAB_API}/{endpoint}'
@@ -157,29 +182,90 @@ class GitLab():
         log.data(pretty(result))
         return result
 
+    def _created_at_date(self, item):
+        return dateutil.parser.parse(item['created_at']).date()
+
+    def _filter_results_since(self, results, since_date):
+        if since_date is None:
+            return results
+        return [
+            item for item in results
+            if self._created_at_date(item) >= since_date]
+
+    def _get_paginated_page(self, url, since_date=None):
+        result = self._get_gitlab_api_raw(url)
+        return self._filter_results_since(result.json(), since_date)
+
+    def _build_page_url(self, parsed_url, parsed_qs, page_num):
+        new_qs = parsed_qs.copy()
+        new_qs['page'] = [page_num]
+        return urlunparse(
+            parsed_url._replace(query=urlencode(new_qs, doseq=True)))
+
     def _get_gitlab_api_list(
         self, endpoint,
         params=None,
         since=None,
         get_all_results=False
             ):
-        results = []
         result = self._get_gitlab_api(endpoint, params=params)
-        result.raise_for_status()
-        results.extend(result.json())
+        since_date = since.date if since is not None else None
+        results = self._filter_results_since(result.json(), since_date)
         log.data(pretty(results))
-        while ('next' in result.links and 'url' in result.links['next'] and
-                get_all_results):
-            log.debug("-> Fetching more paginated data")
-            result = self._get_gitlab_api_raw(result.links['next']['url'])
-            json_result = result.json()
-            results.extend(json_result)
-            if since is not None:
-                # check if the last result is older than the since date
-                created_at = dateutil.parser.parse(
-                    json_result[-1]['created_at']).date()
-                if created_at < since.date:
-                    return results
+
+        if not get_all_results:
+            return results
+
+        if 'next' not in result.links or 'url' not in result.links['next']:
+            return results
+
+        if 'last' not in result.links or 'url' not in result.links['last']:
+            while 'next' in result.links and 'url' in result.links['next']:
+                next_url = result.links['next']['url']
+                result = self._get_gitlab_api_raw(next_url)
+                page_data = result.json()
+                filtered = self._filter_results_since(
+                    page_data, since_date)
+                results.extend(filtered)
+                if since_date is not None and len(filtered) < len(page_data):
+                    break
+            return results
+
+        parsed_url = urlparse(result.links['last']['url'])
+        parsed_qs = parse_qs(parsed_url.query)
+        if 'page' not in parsed_qs:
+            return results
+
+        pages = int(parsed_qs['page'][0])
+        if pages < 2:
+            return results
+        log.debug("Fetching %s pages from '%s'.", pages, endpoint)
+
+        def fetch_page(page_num):
+            url = self._build_page_url(parsed_url, parsed_qs, page_num)
+            return page_num, self._get_paginated_page(url, since_date)
+
+        fetched_pages: dict[int, list[dict[str, Any]]] = {}
+        max_workers = min(MAX_THREAD_WORKERS, pages - 1)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_page = {
+                executor.submit(fetch_page, page_num): page_num
+                for page_num in range(2, pages + 1)
+                }
+            for future in as_completed(future_to_page):
+                page_num = future_to_page[future]
+                try:
+                    _, data = future.result()
+                    fetched_pages[page_num] = data
+                except Exception as exc:
+                    raise ReportError(
+                        f"Unable to fetch page {page_num} "
+                        f"for '{endpoint}'. Error: {exc}"
+                        ) from exc
+
+        for page_num in sorted(fetched_pages):
+            results.extend(fetched_pages[page_num])
+
         return results
 
     def get_user(self, username):
@@ -294,7 +380,8 @@ class GitLab():
             # Not supported
             return []
         query = f'users/{user_id}/events?after={since - 1}&before={until}'
-        return self._get_gitlab_api_list(query, since, True)
+        return self._get_gitlab_api_list(
+            query, since=since, get_all_results=True)
 
     def search(self, user, since, until, *, target_type, action_name):
         """ Perform GitLab query """
