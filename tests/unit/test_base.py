@@ -305,6 +305,12 @@ def test_reporterror_exception() -> None:
 class TestGetToken(unittest.TestCase):
     """ Tests for the `get_token` function """
 
+    def setUp(self) -> None:
+        # Clear the per-process token-command cache so memoized results
+        # from previous tests do not bleed into this one.
+        # pylint: disable=protected-access
+        did.base._run_token_command.cache_clear()
+
     @contextmanager
     def get_token_as_file(self, token: str) -> Iterator[str]:
         """
@@ -361,13 +367,17 @@ class TestGetToken(unittest.TestCase):
             assert did.base.get_token(config) is None
 
     def test_get_token_precedence(self) -> None:
-        """ Test plain token precedence over file one """
+        """ token wins over token_file, which wins over command """
         token_plain = str(uuid4())
         token_in_file = str(uuid4())
-        filename: str
         with self.get_token_as_file(token_in_file) as filename:
-            config = {"token_file": filename, "token": token_plain}
-            assert did.base.get_token(config) == token_plain
+            assert did.base.get_token(
+                {"token": token_plain,
+                 "token_file": filename,
+                 "token_command": "printf nope"}) == token_plain
+            assert did.base.get_token(
+                {"token_file": filename,
+                 "token_command": "printf nope"}) == token_in_file
 
     def test_get_token_file_different_name(self) -> None:
         """ Test getting a token from a file under different name """
@@ -376,6 +386,34 @@ class TestGetToken(unittest.TestCase):
             config = {"mytoken_file": filename}
             assert did.base.get_token(
                 config, token_file_key="mytoken_file") == token_in_file
+
+    def test_get_token_command(self) -> None:
+        """ Test getting a token from the stdout of a command """
+        token = str(uuid4())
+        config = {"token_command": f"printf %s {token}"}
+        assert did.base.get_token(config) == token
+
+    def test_get_token_command_failure(self) -> None:
+        """ Non-zero exit from token command must raise ConfigError """
+        config = {"token_command": "false"}
+        with pytest.raises(did.base.ConfigError):
+            did.base.get_token(config)
+
+    def test_get_token_command_missing_binary(self) -> None:
+        """ Missing binary in token command must raise ConfigError """
+        config = {"token_command": "did-no-such-binary-xyz"}
+        with pytest.raises(did.base.ConfigError):
+            did.base.get_token(config)
+
+    def test_get_token_command_memoized(self) -> None:
+        """ Repeated calls with same command run the subprocess once """
+        token = str(uuid4())
+        config = {"token_command": f"printf %s {token}"}
+        with patch("did.base.subprocess.run",
+                   wraps=did.base.subprocess.run) as run_spy:
+            assert did.base.get_token(config) == token
+            assert did.base.get_token(config) == token
+            assert run_spy.call_count == 1
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
