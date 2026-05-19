@@ -60,11 +60,16 @@ class Zammad():
                 f"Zammad search on {self.url} failed.") from error
 
     def search(self, query: str) -> dict:
-        result = self.perform_search(query)["assets"]
-        try:
-            result = result["Ticket"]
-        except KeyError:
-            result = {}
+        result = self.perform_search(query)
+        if isinstance(result, list):
+            # Newer Zammad API returns a flat list of ticket objects
+            result = {str(ticket["id"]): ticket for ticket in result}
+        else:
+            result = result["assets"]
+            try:
+                result = result["Ticket"]
+            except KeyError:
+                result = {}
         log.debug("Result: %s fetched", listed(len(result), "item"))
         log.data(pretty(result))
         return result
