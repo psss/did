@@ -203,7 +203,11 @@ class GitHub():
                     log.warning("Sleeping now for %s.", listed(sleep_time, 'second'))
                     time.sleep(sleep_time)
                     continue
-                raise ReportError(f"GitHub query failed: {response.text}")
+                try:
+                    message = json.loads(response.text).get("message", response.text)
+                except (json.JSONDecodeError, AttributeError):
+                    message = response.text
+                raise ReportError(f"GitHub query failed: {message}")
             # all good!
             break
 
