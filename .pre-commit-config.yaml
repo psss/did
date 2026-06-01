@@ -80,7 +80,6 @@ repos:
             python-dateutil,
             requests,
             requests-gssapi,
-            setuptools,
             tenacity,
           ]
 
