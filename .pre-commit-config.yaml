@@ -66,6 +66,22 @@ repos:
             "-sn", # Don't display the score
             "--rcfile=.pylintrc", # Link to config file
           ]
+        additional_dependencies:
+          [
+            bodhi-client,
+            feedparser,
+            google-api-python-client,
+            gssapi,
+            koji,
+            nitrate,
+            oauth2client,
+            pytest,
+            python-bugzilla,
+            python-dateutil,
+            requests,
+            requests-gssapi,
+            tenacity,
+          ]
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
