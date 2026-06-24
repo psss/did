@@ -71,12 +71,21 @@ pull-requests-merged
     pull requests authored by the user that were merged (merged_at
     timestamp falls within the reporting period)
 
+releases-created
+    releases published by the user
+
+Note that ``releases-created`` requires one or more repositories to be
+specified using the ``repo`` config option, as the GitHub search API does
+not support querying releases::
+
+    repo = psss/did, teemtee/tmt
+
 """  # noqa: W505,E501 # pylint:disable=line-too-long
 
 import json
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import requests
 from tenacity import (RetryError, Retrying, retry_if_exception_type,
@@ -113,6 +122,10 @@ class GitHub():
             self.headers = {'Authorization': f'token {token}'}
         else:
             self.headers = {}
+
+        # Keep the explicit repositories around for endpoints which do not
+        # support the search API (e.g. releases).
+        self.repos = re.split(r"\s*,\s*", repo) if repo else []
 
         # Prepare the org, user, repo filter
         def condition(key: str, names: str) -> list[str]:
@@ -248,6 +261,56 @@ class GitHub():
         log.data(pretty(result))
         return result
 
+    def release_list(self, repo, login, since, until):
+        """ Fetch releases published in the given repo and date range
+
+        The GitHub search API does not support releases, so they have to be
+        fetched per repository and filtered locally by the published date and
+        the release author.
+        """
+        result = []
+        url = f"{self.url}/repos/{repo}/releases?per_page={PER_PAGE}"
+        # Include the whole 'until' day (the stored datetime is its midnight)
+        until_end = until.datetime + timedelta(days=1)
+
+        while True:
+            log.debug("GitHub query: %s", url)
+            response = self.request(url)
+            if not response.ok:
+                raise ReportError(
+                    f"Failed to fetch GitHub releases at '{url}'. "
+                    f"The reason was '{response.reason}'.")
+            log.data(pretty(response.text))
+            try:
+                releases = json.loads(response.text)
+            except requests.exceptions.JSONDecodeError as error:
+                log.debug(error)
+                raise ReportError(f"GitHub JSON failed: {response.text}.") from error
+
+            for release in releases:
+                # Skip drafts, they have no published date
+                published = release.get("published_at")
+                if not published:
+                    continue
+                published_at = datetime.strptime(published, r"%Y-%m-%dT%H:%M:%SZ")
+                if not since.datetime <= published_at < until_end:
+                    continue
+                author = (release.get("author") or {}).get("login")
+                if login and author != login:
+                    continue
+                release["repo"] = repo
+                result.append(release)
+
+            # Update url to the next page, break if no next page provided
+            if 'next' in response.links:
+                url = response.links['next']['url']
+            else:
+                break
+
+        log.debug("Result: %s fetched", listed(len(result), "release"))
+        log.data(pretty(result))
+        return result
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Issue
@@ -300,6 +363,40 @@ class Issue():
     def __hash__(self):
         """ Hash function """
         return hash((self.owner, self.project, self.id))
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Release
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+class Release():
+    """ GitHub Release """
+
+    def __init__(self, data, parent):
+        self.data = data
+        self.repo = data["repo"]
+        # Fall back to the tag name when the release has no title
+        self.title = data.get("name") or data.get("tag_name")
+        self.tag = data.get("tag_name")
+        self.options = parent.options
+
+    def __str__(self):
+        """ String representation """
+        label = f"{self.repo} {self.tag}"
+        title = self.title.strip() if self.title else ""
+        if self.options.format == "markdown":
+            return f'[{label}]({self.data["html_url"]}) - {title}'
+        return f'{label} - {title}'
+
+    def __eq__(self, other):
+        """ Equality comparison """
+        if isinstance(other, Release):
+            return self.repo == other.repo and self.tag == other.tag
+        return False
+
+    def __hash__(self):
+        """ Hash function """
+        return hash((self.repo, self.tag))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -429,6 +526,31 @@ class PullRequestsMerged(Stats):
             Issue(issue, self.parent) for issue in self.parent.github.search(query)]
 
 
+class ReleasesCreated(Stats):
+    """ Releases created """
+
+    def fetch(self):
+        login = self.user.login
+        since = self.options.since
+        until = self.options.until
+        repos = self.parent.github.repos
+        if not repos:
+            log.warning(
+                "Skipping releases for %s, no 'repo' configured "
+                "(the GitHub search API does not support releases).",
+                self.parent.option)
+            self.stats = []
+            return
+        releases = []
+        for repo in repos:
+            log.info("Searching for releases published by %s in %s",
+                     self.user, repo)
+            releases.extend(
+                Release(release, self.parent) for release in
+                self.parent.github.release_list(repo, login, since, until))
+        self.stats = releases
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -487,4 +609,7 @@ class GitHubStats(StatsGroup):
             PullRequestsMerged(
                 option=f"{option}-pull-requests-merged", parent=self,
                 name=f"Pull requests merged on {option}"),
+            ReleasesCreated(
+                option=f"{option}-releases-created", parent=self,
+                name=f"Releases created on {option}"),
             ]
