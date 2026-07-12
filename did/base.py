@@ -166,6 +166,24 @@ class Config():
         return int_month
 
     @property
+    def week_start(self) -> wd:
+        """ The first day of the week, defaults to Monday """
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
+
+        day_str = self.parser.get(
+            "general", "week_start", fallback="monday").strip().lower()
+
+        # Support flexible matching (min 3 chars)
+        for day_name, weekday_const in WEEKDAY_MAP.items():
+            if day_name.startswith(day_str) and len(day_str) >= 3:
+                return weekday_const
+
+        raise ConfigError(
+            f"Invalid week_start '{day_str}'. "
+            f"Use a weekday name (e.g., 'Monday', 'Sunday', 'mon', 'sun').")
+
+    @property
     def email(self) -> str:
         """ User email(s) """
         if self.parser is None:
@@ -320,11 +338,15 @@ class Date():
     @staticmethod
     def get_week(last: bool) -> tuple["Date", "Date", str]:
         # Return start and end date of the current week.
-        since = TODAY + delta(weekday=MONDAY(-1))
+        week_start = Config().week_start
+        since = TODAY + delta(weekday=week_start)
         until = since + delta(weeks=1)
         if last:
             # Return start and end date of the last week instead.
-            since = TODAY + delta(weekday=MONDAY(-2))
+            # week_start is already WEEKDAY(-1), so we need WEEKDAY(-2) for last week
+            last_week_start = week_start.__class__(
+                week_start.weekday, week_start.n - 1)
+            since = TODAY + delta(weekday=last_week_start)
             until = since + delta(weeks=1)
         period = f"the week {since.strftime('%V')}"
         return Date(since), Date(until), period
