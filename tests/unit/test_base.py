@@ -95,9 +95,11 @@ def test_date_works_properly() -> None:
 @pytest.fixture
 def _mock_today() -> Iterator[None]:
     original_today = datetime.date.today()
+    original_parser = did.base.Config.parser
     did.base.TODAY = datetime.date(2015, 10, 3)
     yield
     did.base.TODAY = original_today
+    did.base.Config.parser = original_parser
 
 
 @pytest.fixture
@@ -382,56 +384,27 @@ class TestGetToken(unittest.TestCase):
 
 
 @pytest.mark.usefixtures("_mock_today")
-def test_this_week_sunday_start(tmp_path: pytest.TempPathFactory) -> None:
+def test_this_week_sunday_start() -> None:
     """ Test this week with Sunday as first day of week """
     # Oct 3, 2015 is a Saturday
     # With Sunday start, this week should be Sep 27 (Sun) to Oct 4 (Sun)
-    config_file = tmp_path / "config"
-    config_file.write_text("[general]\nweek_start = sunday\nemail = test@example.com\n")
-
-    config = did.base.Config(path=str(config_file))
-    # Temporarily replace did.base.Config() calls with our config instance
-    original_config = did.base.Config
-
-    def mock_config(*args: str, **kwargs: str) -> did.base.Config:
-        if args or kwargs:
-            return original_config(*args, **kwargs)
-        return config
-
-    did.base.Config = mock_config  # type: ignore
-    try:
-        since, until, period = did.base.Date.get_week(False)
-        assert str(since) == "2015-09-27"
-        assert str(until) == "2015-10-04"
-        assert period == "the week 39"
-    finally:
-        did.base.Config = original_config
+    did.base.Config("[general]\nweek_start = sunday\nemail = test@example.com")
+    since, until, period = did.base.Date.get_week(False)
+    assert str(since) == "2015-09-27"
+    assert str(until) == "2015-10-04"
+    assert period == "the week 39"
 
 
 @pytest.mark.usefixtures("_mock_today")
-def test_last_week_sunday_start(tmp_path: pytest.TempPathFactory) -> None:
+def test_last_week_sunday_start() -> None:
     """ Test last week with Sunday as first day of week """
     # Oct 3, 2015 is a Saturday
-    # With Sunday start, last week should be Sep 20 (Sun) to Sep 27 (Sun)
-    config_file = tmp_path / "config"
-    config_file.write_text("[general]\nweek_start = sunday\nemail = test@example.com\n")
-
-    config = did.base.Config(path=str(config_file))
-    original_config = did.base.Config
-
-    def mock_config(*args: str, **kwargs: str) -> did.base.Config:
-        if args or kwargs:
-            return original_config(*args, **kwargs)
-        return config
-
-    did.base.Config = mock_config  # type: ignore
-    try:
-        since, until, period = did.base.Date.get_week(True)
-        assert str(since) == "2015-09-20"
-        assert str(until) == "2015-09-27"
-        assert period == "the week 38"
-    finally:
-        did.base.Config = original_config
+    # With Sunday start, last week is Sep 20 .. Sep 27
+    did.base.Config("[general]\nweek_start = sunday\nemail = test@example.com")
+    since, until, period = did.base.Date.get_week(True)
+    assert str(since) == "2015-09-20"
+    assert str(until) == "2015-09-27"
+    assert period == "the week 38"
 
 
 def test_week_start_config_validation() -> None:
@@ -456,6 +429,7 @@ def test_week_start_config_validation() -> None:
         _ = config.week_start
 
     # Invalid - not a weekday
-    config = did.base.Config("[general]\nweek_start = invalid\nemail = test@example.com")
+    config = did.base.Config(
+        "[general]\nweek_start = invalid\nemail = test@example.com")
     with pytest.raises(did.base.ConfigError, match=r"Invalid week_start"):
         _ = config.week_start
