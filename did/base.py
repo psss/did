@@ -340,14 +340,9 @@ class Date():
         # Return start and end date of the current week.
         week_start = Config().week_start
         since = TODAY + delta(weekday=week_start)
-        until = since + delta(weeks=1)
         if last:
-            # Return start and end date of the last week instead.
-            # week_start is already WEEKDAY(-1), so we need WEEKDAY(-2) for last week
-            last_week_start = week_start.__class__(
-                week_start.weekday, week_start.n - 1)
-            since = TODAY + delta(weekday=last_week_start)
-            until = since + delta(weeks=1)
+            since -= delta(weeks=1)
+        until = since + delta(weeks=1)
         period = f"the week {since.strftime('%V')}"
         return Date(since), Date(until), period
 
