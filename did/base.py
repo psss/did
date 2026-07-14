@@ -7,9 +7,12 @@ import io
 import locale
 import os
 import re
+import shlex
+import subprocess
 import sys
 from configparser import NoOptionError, NoSectionError
 from datetime import timedelta
+from functools import lru_cache
 from typing import Iterator, Optional, Union
 
 from dateutil.relativedelta import FR as FRIDAY
@@ -546,21 +549,63 @@ class User():
             log.info("Using login alias '%s' for '%s'", login, stats)
 
 
+@lru_cache(maxsize=None)
+def _run_token_command(command: str) -> str:
+    """
+    Run `command` and return its stripped stdout.
+
+    The command line is parsed with `shlex.split` and executed without
+    a shell, so config files cannot inject shell metacharacters. A
+    30-second timeout protects against secret managers that block on
+    interactive prompts (e.g. an expired ``op`` session). Non-zero
+    exit, missing binary or timeout each raise `ConfigError`; stdout
+    is never logged because it is the secret.
+
+    Results are memoized for the lifetime of the process so that
+    multiple config sections sharing the same command string only
+    invoke the external tool once per run. Failures are not cached.
+    """
+    try:
+        result = subprocess.run(
+            shlex.split(command),
+            capture_output=True, text=True,
+            timeout=30, check=True,
+            )
+    except FileNotFoundError as exc:
+        raise ConfigError(
+            f"Token command not found: {exc.filename}") from exc
+    except subprocess.TimeoutExpired as exc:
+        raise ConfigError(
+            f"Token command timed out after {exc.timeout}s: {command}"
+            ) from exc
+    except subprocess.CalledProcessError as exc:
+        raise ConfigError(
+            f"Token command failed (exit {exc.returncode}): "
+            f"{exc.stderr.strip()}") from exc
+    return result.stdout.strip()
+
+
 def get_token(
         config: dict[str, str],
         token_key: str = "token",
-        token_file_key: str = "token_file") -> Optional[str]:
+        token_file_key: str = "token_file",
+        token_command_key: str = "token_command") -> Optional[str]:
     """
-    Extract the authentication token from config or token file
+    Extract the authentication token from config, file, or command.
 
-    Returns the contents of `config[token_key]`, or the file contents of
-    `config[token_file_key]` if no `config[token]` exists. If neither
-    keys exist, `None` is returned.
+    Returns the contents of `config[token_key]`, the file contents of
+    `config[token_file_key]`, or the stdout of
+    `config[token_command_key]`, whichever is set. If none are set,
+    returns `None`.
 
     Sometimes you want to be able to store a token in a file rather than
-    in the your plain config file. Use this function to support a system
-    wide mechanism to retrieve tokens or secrets either directly from
-    the config file as plain text or from an outsourced file.
+    in your plain config file, or fetch it from a password manager such
+    as BitWarden (``bw get password did-jira``) or 1Password
+    (``op read op://Personal/Jira/token``). Use this function to support
+    a system-wide mechanism to retrieve tokens or secrets.
+
+    Precedence when more than one key is set: ``token`` > ``token_file``
+    > ``token_command``.
 
     :param config:
         A configuration dictionary.
@@ -570,12 +615,15 @@ def get_token(
     :param token_file_key:
         The dict entry to look for when the token is supposed to be read
         from file.
+    :param token_command_key:
+        The dict entry to look for when the token is produced by running
+        an external command.
     :returns:
         The stripped token or `None` if no or only empty entries were
         found in the `config` dict.
 
     """
-    token = None
+    token: Optional[str] = None
 
     if token_key in config:
         token = str(config[token_key]).strip()
@@ -583,8 +631,7 @@ def get_token(
         file_path = os.path.expanduser(config[token_file_key])
         with open(file_path, encoding="utf-8") as token_file:
             token = token_file.read().strip()
+    elif token_command_key in config:
+        token = _run_token_command(str(config[token_command_key]).strip())
 
-    if token == "":
-        token = None
-
-    return token
+    return token or None
