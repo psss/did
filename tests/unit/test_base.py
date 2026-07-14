@@ -95,9 +95,11 @@ def test_date_works_properly() -> None:
 @pytest.fixture
 def _mock_today() -> Iterator[None]:
     original_today = datetime.date.today()
+    original_parser = did.base.Config.parser
     did.base.TODAY = datetime.date(2015, 10, 3)
     yield
     did.base.TODAY = original_today
+    did.base.Config.parser = original_parser
 
 
 @pytest.fixture
@@ -374,3 +376,60 @@ class TestGetToken(unittest.TestCase):
             config = {"mytoken_file": filename}
             assert did.base.get_token(
                 config, token_file_key="mytoken_file") == token_in_file
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Week Start Configuration Tests
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+@pytest.mark.usefixtures("_mock_today")
+def test_this_week_sunday_start() -> None:
+    """ Test this week with Sunday as first day of week """
+    # Oct 3, 2015 is a Saturday
+    # With Sunday start, this week should be Sep 27 (Sun) to Oct 4 (Sun)
+    did.base.Config("[general]\nweek_start = sunday\nemail = test@example.com")
+    since, until, period = did.base.Date.get_week(False)
+    assert str(since) == "2015-09-27"
+    assert str(until) == "2015-10-04"
+    assert period == "the week 39"
+
+
+@pytest.mark.usefixtures("_mock_today")
+def test_last_week_sunday_start() -> None:
+    """ Test last week with Sunday as first day of week """
+    # Oct 3, 2015 is a Saturday
+    # With Sunday start, last week is Sep 20 .. Sep 27
+    did.base.Config("[general]\nweek_start = sunday\nemail = test@example.com")
+    since, until, period = did.base.Date.get_week(True)
+    assert str(since) == "2015-09-20"
+    assert str(until) == "2015-09-27"
+    assert period == "the week 38"
+
+
+def test_week_start_config_validation() -> None:
+    """ Test week_start config property validation """
+    # Valid configurations
+    config = did.base.Config("[general]\nweek_start = monday\nemail = test@example.com")
+    assert config.week_start == did.base.MONDAY(-1)
+
+    config = did.base.Config("[general]\nweek_start = sunday\nemail = test@example.com")
+    assert config.week_start == did.base.SUNDAY(-1)
+
+    # Flexible matching - case insensitive and partial
+    config = did.base.Config("[general]\nweek_start = Sun\nemail = test@example.com")
+    assert config.week_start == did.base.SUNDAY(-1)
+
+    config = did.base.Config("[general]\nweek_start = MON\nemail = test@example.com")
+    assert config.week_start == did.base.MONDAY(-1)
+
+    # Invalid - too short
+    config = did.base.Config("[general]\nweek_start = su\nemail = test@example.com")
+    with pytest.raises(did.base.ConfigError, match=r"Invalid week_start"):
+        _ = config.week_start
+
+    # Invalid - not a weekday
+    config = did.base.Config(
+        "[general]\nweek_start = invalid\nemail = test@example.com")
+    with pytest.raises(did.base.ConfigError, match=r"Invalid week_start"):
+        _ = config.week_start
