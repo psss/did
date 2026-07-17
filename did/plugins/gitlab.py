@@ -294,7 +294,7 @@ class GitLab():
             # Not supported
             return []
         query = f'users/{user_id}/events?after={since - 1}&before={until}'
-        return self._get_gitlab_api_list(query, since, True)
+        return self._get_gitlab_api_list(query, since=since, get_all_results=True)
 
     def search(self, user, since, until, *, target_type, action_name):
         """ Perform GitLab query """
