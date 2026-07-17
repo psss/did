@@ -16,6 +16,7 @@ import did.base
 from did import utils
 from did.stats import UserStats
 from did.utils import log
+from did.version import get_version
 
 USAGE = """
 did [this|last] [week|month|quarter|year] [options]
@@ -26,6 +27,15 @@ Comfortably gather status report data for given week, month,
 quarter, year or selected date range. By default all available
 stats for this week are reported.
 """.strip()
+
+
+def _argv_list(arguments: Union[None, str, list[str]]) -> list[str]:
+    """Command-line tokens to parse (excluding program name)."""
+    if arguments is None:
+        return sys.argv[1:]
+    if isinstance(arguments, str):
+        return arguments.split()
+    return list(arguments)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -110,6 +120,10 @@ class Options:
         group.add_argument(
             "--test", action="store_true",
             help="Run a simple smoke test against the github server")
+        group.add_argument(
+            "--version", "-V", action="version",
+            version=f"did {get_version()}",
+            help="Show program version and exit")
 
     def _prepare_arguments(self, arguments: Union[None, str, list[str]]) -> None:
         """ Prepare arguments (both direct and from command line) """
@@ -209,6 +223,11 @@ def main(arguments: Union[None, str, list[str]] = None
 
     with the list of all gathered stats objects.
     """
+    argv = _argv_list(arguments)
+    if "--version" in argv or "-V" in argv:
+        print(f"did {get_version()}")
+        raise SystemExit(0)
+
     config = None
     try:
         config = did.base.Config()
