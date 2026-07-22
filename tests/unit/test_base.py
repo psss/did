@@ -453,7 +453,7 @@ def test_sprint_period() -> None:
             did.plugins.jira,
             'get_sprint_dates',
             return_value=(mock_start, mock_end, mock_period)):
-        since, until, period = did.base.Date.period(['sprint'])
+        since, until, period = did.base.Date.period(['this', 'sprint'])
         assert str(since) == "2015-09-21"
         assert str(until) == "2015-10-05"
         assert period == "Sprint 42"

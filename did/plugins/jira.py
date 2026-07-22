@@ -702,17 +702,16 @@ class JiraWorklog(JiraStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def get_sprint_dates(last: bool = False):
+def get_sprint_dates(last: bool = False) -> tuple:
     """
     Fetch sprint dates from Jira Agile API.
 
-    Returns (since, until, period_name) tuple with the sprint's
-    date range.
+    Returns (since, until, sprint_name) tuple with the sprint's
+    date range. If ``last`` is True, returns the most recently
+    closed sprint; otherwise returns the active sprint.
 
-    Auto-discovers the Scrum board from the project config, or uses
-    the sprint_board config if provided. For 'this sprint', returns
-    the active sprint. For 'last sprint', returns the most recently
-    closed sprint.
+    Auto-discovers the Scrum board from the project config, or
+    uses the sprint_board config if provided.
     """
     # Import Date here to avoid circular dependency
     # (base.py -> jira.py -> base.py)
