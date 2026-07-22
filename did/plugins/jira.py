@@ -746,7 +746,12 @@ def get_sprint_dates(last: bool = False) -> tuple:
                 "Neither 'sprint_board' nor 'project' is set in [jira] config. "
                 "Sprint support requires one of them.")
 
-        project_key = config["project"].split(",")[0].strip()
+        project_key = config["project"].strip()
+        if "," in project_key:
+            raise ReportError(
+                "Multiple projects configured in [jira] config. "
+                "Set sprint_board to specify which board to use "
+                "for sprint dates.")
         log.debug("Auto-discovering Scrum board for project %s", project_key)
 
         # Query Agile API for boards
