@@ -727,6 +727,8 @@ def get_sprint_dates(last: bool = False) -> tuple:
             "No [jira] section found in config. Sprint support requires "
             "a configured Jira integration.") from error
 
+    jira_group = JiraStatsGroup(option="jira")
+
     # Get board ID - either from config or auto-discover
     board_id: Optional[int] = None
     if "sprint_board" in config:
@@ -746,9 +748,6 @@ def get_sprint_dates(last: bool = False) -> tuple:
 
         project_key = config["project"].split(",")[0].strip()
         log.debug("Auto-discovering Scrum board for project %s", project_key)
-
-        # Instantiate JiraStatsGroup to reuse auth logic
-        jira_group = JiraStatsGroup(option="jira")
 
         # Query Agile API for boards
         boards_url = (
@@ -785,15 +784,9 @@ def get_sprint_dates(last: bool = False) -> tuple:
         log.debug("Auto-discovered board ID: %s (%s)",
                   board_id, boards[0]["name"])
 
-    # Instantiate JiraStatsGroup to reuse auth (if not already done)
     if board_id is None:
         # This should never happen due to validation above
         raise ReportError("Failed to determine board ID")
-
-    try:
-        jira_group
-    except NameError:
-        jira_group = JiraStatsGroup(option="jira")
 
     # Query for sprints
     state = "closed" if last else "active"
