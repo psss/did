@@ -818,22 +818,22 @@ def get_sprint_dates(last: bool = False) -> tuple:
         raise ReportError(
             f"No {state} sprints found for board {board_id}.")
 
-    # For last sprint, sort by endDate descending and take the first
-    if last:
-        sprints_with_dates = [
-            s for s in sprints
-            if s.get("endDate")
-            ]
-        if not sprints_with_dates:
-            raise ReportError(
-                f"No closed sprints with end dates found for board {board_id}.")
-        sprints_with_dates.sort(
-            key=lambda s: dateutil.parser.parse(s["endDate"]),
-            reverse=True)
-        sprint = sprints_with_dates[0]
-    else:
-        # For this sprint, take the first active one
-        sprint = sprints[0]
+    # Sort by endDate descending and take the most recent one.
+    # This handles both "last sprint" (most recently closed) and
+    # "this sprint" (if parallel sprints are enabled, picks the
+    # one ending soonest).
+    sprints_with_dates = [
+        s for s in sprints
+        if s.get("endDate")
+        ]
+    if not sprints_with_dates:
+        raise ReportError(
+            f"No {state} sprints with end dates found "
+            f"for board {board_id}.")
+    sprints_with_dates.sort(
+        key=lambda s: dateutil.parser.parse(s["endDate"]),
+        reverse=True)
+    sprint = sprints_with_dates[0]
 
     # Parse dates
     if "startDate" not in sprint or "endDate" not in sprint:
