@@ -13,6 +13,8 @@ from uuid import uuid4
 import pytest
 
 import did.base
+import did.cli
+import did.plugins.jira
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Config
@@ -433,3 +435,55 @@ def test_week_start_config_validation() -> None:
         "[general]\nweek_start = invalid\nemail = test@example.com")
     with pytest.raises(did.base.ConfigError, match=r"Invalid week_start"):
         _ = config.week_start
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Sprint Support Tests
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+@pytest.mark.usefixtures("_mock_today")
+def test_sprint_period() -> None:
+    """ Test 'this sprint' period """
+    mock_start = did.base.Date("2015-09-21")
+    mock_end = did.base.Date("2015-10-05")
+    mock_period = "Sprint 42"
+
+    with patch.object(
+            did.plugins.jira,
+            'get_sprint_dates',
+            return_value=(mock_start, mock_end, mock_period)):
+        since, until, period = did.base.Date.period(['sprint'])
+        assert str(since) == "2015-09-21"
+        assert str(until) == "2015-10-05"
+        assert period == "Sprint 42"
+
+
+@pytest.mark.usefixtures("_mock_today")
+def test_last_sprint_period() -> None:
+    """ Test 'last sprint' period """
+    mock_start = did.base.Date("2015-09-07")
+    mock_end = did.base.Date("2015-09-21")
+    mock_period = "Sprint 41"
+
+    with patch.object(
+            did.plugins.jira,
+            'get_sprint_dates',
+            return_value=(mock_start, mock_end, mock_period)):
+        since, until, period = did.base.Date.period(['last', 'sprint'])
+        assert str(since) == "2015-09-07"
+        assert str(until) == "2015-09-21"
+        assert period == "Sprint 41"
+
+
+def test_sprint_keyword_accepted() -> None:
+    """ Test that 'sprint' keyword is accepted in Options.check() """
+    # Mock sys.argv to provide a minimal valid config path
+    with patch.object(sys, 'argv', ['did', 'sprint']):
+        # Create a minimal config to allow Options init
+        did.base.Config(config="[general]\nemail = test@example.com\n")
+        options = did.cli.Options()
+        # Setting self.arg directly to test the check() method
+        options.arg = ['sprint']
+        # This should not raise OptionError
+        options.check()
