@@ -698,6 +698,159 @@ class JiraWorklog(JiraStats):
         self.stats = [issue for issue in issues if len(issue.worklogs) > 0]
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Sprint Support
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+def get_sprint_dates(last: bool = False) -> tuple:
+    """
+    Fetch sprint dates from Jira Agile API.
+
+    Returns (since, until, sprint_name) tuple with the sprint's
+    date range. If ``last`` is True, returns the most recently
+    closed sprint; otherwise returns the active sprint.
+
+    Auto-discovers the Scrum board from the project config, or
+    uses the sprint_board config if provided.
+    """
+    # Import Date here to avoid circular dependency
+    # (base.py -> jira.py -> base.py)
+    # pylint: disable=import-outside-toplevel,too-many-locals
+    # pylint: disable=too-many-branches,too-many-statements
+    from did.base import Date
+
+    # Read Jira config
+    try:
+        config = dict(Config().section("jira"))
+    except Exception as error:
+        raise ReportError(
+            "No [jira] section found in config. Sprint support requires "
+            "a configured Jira integration.") from error
+
+    jira_group = JiraStatsGroup(option="jira")
+
+    # Get board ID - either from config or auto-discover
+    board_id: Optional[int] = None
+    if "sprint_board" in config:
+        try:
+            board_id = int(config["sprint_board"])
+            log.debug("Using sprint_board from config: %s", board_id)
+        except ValueError as error:
+            raise ReportError(
+                f"Invalid sprint_board value '{config['sprint_board']}'. "
+                "Must be a numeric board ID.") from error
+    else:
+        # Auto-discover from project
+        if "project" not in config:
+            raise ReportError(
+                "Neither 'sprint_board' nor 'project' is set in [jira] config. "
+                "Sprint support requires one of them.")
+
+        project_key = config["project"].strip()
+        if "," in project_key:
+            raise ReportError(
+                "Multiple projects configured in [jira] config. "
+                "Set sprint_board to specify which board to use "
+                "for sprint dates.")
+        log.debug("Auto-discovering Scrum board for project %s", project_key)
+
+        # Query Agile API for boards
+        boards_url = (
+            f"{jira_group.url}/rest/agile/1.0/board"
+            f"?projectKeyOrId={project_key}&type=scrum"
+            )
+
+        try:
+            response = jira_group.session.get(
+                boards_url,
+                timeout=jira_group.timeout)
+            response.raise_for_status()
+            boards_data = response.json()
+        except requests.exceptions.RequestException as error:
+            raise ReportError(
+                f"Failed to fetch Scrum boards for project {project_key}: {error}"
+                ) from error
+
+        boards = boards_data.get("values", [])
+        if not boards:
+            raise ReportError(
+                f"No Scrum boards found for project {project_key}. "
+                "Make sure the project has a Scrum board configured, or "
+                "set sprint_board manually in [jira] config.")
+
+        if len(boards) > 1:
+            board_list = ", ".join(
+                f"{b['id']} ({b['name']})" for b in boards)
+            raise ReportError(
+                f"Multiple Scrum boards found for project {project_key}: "
+                f"{board_list}. Set sprint_board in [jira] config to choose one.")
+
+        board_id = boards[0]["id"]
+        log.debug("Auto-discovered board ID: %s (%s)",
+                  board_id, boards[0]["name"])
+
+    if board_id is None:
+        # This should never happen due to validation above
+        raise ReportError("Failed to determine board ID")
+
+    # Query for sprints
+    state = "closed" if last else "active"
+    sprints_url = (
+        f"{jira_group.url}/rest/agile/1.0/board/{board_id}/sprint"
+        f"?state={state}"
+        )
+
+    try:
+        response = jira_group.session.get(
+            sprints_url,
+            timeout=jira_group.timeout)
+        response.raise_for_status()
+        sprints_data = response.json()
+    except requests.exceptions.RequestException as error:
+        raise ReportError(
+            f"Failed to fetch {state} sprints for board {board_id}: {error}"
+            ) from error
+
+    sprints = sprints_data.get("values", [])
+    if not sprints:
+        raise ReportError(
+            f"No {state} sprints found for board {board_id}.")
+
+    # Sort by endDate descending and take the most recent one.
+    # This handles both "last sprint" (most recently closed) and
+    # "this sprint" (if parallel sprints are enabled, picks the
+    # one ending soonest).
+    sprints_with_dates = [
+        s for s in sprints
+        if s.get("endDate")
+        ]
+    if not sprints_with_dates:
+        raise ReportError(
+            f"No {state} sprints with end dates found "
+            f"for board {board_id}.")
+    sprints_with_dates.sort(
+        key=lambda s: dateutil.parser.parse(s["endDate"]),
+        reverse=True)
+    sprint = sprints_with_dates[0]
+
+    # Parse dates
+    if "startDate" not in sprint or "endDate" not in sprint:
+        raise ReportError(
+            f"Sprint {sprint.get('name', sprint.get('id'))} is missing "
+            "startDate or endDate.")
+
+    start_date = dateutil.parser.parse(sprint["startDate"]).date()
+    end_date = dateutil.parser.parse(sprint["endDate"]).date()
+    sprint_name = sprint.get("name", f"Sprint {sprint['id']}")
+
+    return (
+        Date(str(start_date)),
+        Date(str(end_date)),
+        sprint_name
+        )
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats Group
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
