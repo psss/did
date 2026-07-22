@@ -435,7 +435,7 @@ class Date():
             since, until, period = Date.get_month("last" in argument)
 
         elif "sprint" in argument:
-            # pylint: disable=import-outside-toplevel
+            # pylint: disable=import-outside-toplevel,cyclic-import
             from did.plugins.jira import get_sprint_dates
             since, until, period = get_sprint_dates("last" in argument)
 
