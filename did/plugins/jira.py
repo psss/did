@@ -717,7 +717,7 @@ class JiraWorklog(JiraStats):
 
 def get_sprint_dates(last: bool = False):
     """
-    Get sprint dates from Jira for 'did this sprint' / 'did last sprint'.
+    Fetch sprint dates from Jira Agile API.
 
     Returns (since, until, period_name) tuple with the sprint's
     date range.
@@ -768,7 +768,7 @@ def get_sprint_dates(last: bool = False):
         boards_url = (
             f"{jira_group.url}/rest/agile/1.0/board"
             f"?projectKeyOrId={project_key}&type=scrum"
-        )
+            )
 
         try:
             response = jira_group.session.get(
@@ -801,7 +801,7 @@ def get_sprint_dates(last: bool = False):
 
     # Instantiate JiraStatsGroup to reuse auth (if not already done)
     if board_id is None:
-        # This should never happen due to validation above, but for type safety
+        # This should never happen due to validation above
         raise ReportError("Failed to determine board ID")
 
     try:
@@ -814,7 +814,7 @@ def get_sprint_dates(last: bool = False):
     sprints_url = (
         f"{jira_group.url}/rest/agile/1.0/board/{board_id}/sprint"
         f"?state={state}"
-    )
+        )
 
     try:
         response = jira_group.session.get(
@@ -837,7 +837,7 @@ def get_sprint_dates(last: bool = False):
         sprints_with_dates = [
             s for s in sprints
             if s.get("endDate")
-        ]
+            ]
         if not sprints_with_dates:
             raise ReportError(
                 f"No closed sprints with end dates found for board {board_id}.")
@@ -863,7 +863,7 @@ def get_sprint_dates(last: bool = False):
         Date(str(start_date)),
         Date(str(end_date)),
         sprint_name
-    )
+        )
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
