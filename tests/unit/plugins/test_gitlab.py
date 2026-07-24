@@ -3,12 +3,14 @@
 
 import logging
 import os
+from unittest.mock import MagicMock
 
 import pytest
 from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
+from did.plugins.gitlab import Issue, MergedRequest, MergeRequest
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -209,3 +211,58 @@ def test_gitlab_config_disabled_ssl_verify():
 ssl_verify = False
 """)
     did.cli.main(INTERVAL)
+
+
+def _make_parent(full_message=True):
+    """ Build a minimal mock GitLabStats parent """
+    parent = MagicMock()
+    parent.gitlab.url = "https://gitlab.com"
+    parent.gitlab.get_project.return_value = {
+        "path_with_namespace": "user/project"}
+    parent.options.full_message = full_message
+    parent.options.format = "text"
+    return parent
+
+
+def test_issue_str_missing_target_id():
+    """ Issue.__str__ with full_message should not raise when
+    target_id is absent """
+    parent = _make_parent()
+    data = {
+        "project_id": 1,
+        "target_title": "Some issue",
+        "target_type": "Issue",
+        }
+    issue = Issue(data, parent)
+    result = str(issue)
+    assert "Some issue" in result
+
+
+def test_merge_request_str_missing_target_id():
+    """ MergeRequest.__str__ with full_message should not raise when
+    target_id is absent """
+    parent = _make_parent()
+    data = {
+        "project_id": 1,
+        "target_title": "Some MR",
+        "target_type": "MergeRequest",
+        }
+    mr = MergeRequest(data, parent, set_id=42)
+    result = str(mr)
+    assert "Some MR" in result
+
+
+def test_merged_request_str_full_message():
+    """ MergedRequest.__str__ with full_message should not raise when
+    target_id is absent from raw MR data """
+    parent = _make_parent()
+    data = {
+        "id": 99,
+        "iid": 4,
+        "project_id": 1,
+        "title": "Update README.md",
+        "description": "Fixes the readme",
+        }
+    mr = MergedRequest(data, parent)
+    result = str(mr)
+    assert "Update README.md" in result
