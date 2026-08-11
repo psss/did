@@ -334,9 +334,11 @@ class Issue():
         self._body: Optional[str] = None
 
     def iid(self):
+        target_id = self.data.get('target_id')
+        if target_id is None:
+            return "unknown"
         issue = self.gitlabapi.get_project_issue(
-            self.data['project_id'], self.data['target_id'])
-
+            self.data['project_id'], target_id)
         if issue is not None:
             return issue['iid']
         return "unknown"
@@ -345,9 +347,13 @@ class Issue():
     def body(self) -> str:
         """Get full issue description (lazy-loaded)"""
         if self._body is None:
-            issue_data = self.gitlabapi.get_project_issue(
-                self.data['project_id'], self.data['target_id'])
-            self._body = issue_data.get('description', '') if issue_data else ''
+            target_id = self.data.get('target_id')
+            if target_id is None:
+                self._body = ''
+            else:
+                issue_data = self.gitlabapi.get_project_issue(
+                    self.data['project_id'], target_id)
+                self._body = issue_data.get('description', '') if issue_data else ''
         return self._body
 
     def __str__(self):
@@ -397,19 +403,25 @@ class MergeRequest(Issue):
 
     def __init__(self, data, parent, set_id=None):
         if set_id is None:
-            merge_request = parent.gitlab.get_project_mr(
-                data['project_id'], data['target_id'])
-            if merge_request is not None:
-                set_id = merge_request['iid']
+            target_id = data.get('target_id')
+            if target_id is not None:
+                merge_request = parent.gitlab.get_project_mr(
+                    data['project_id'], target_id)
+                if merge_request is not None:
+                    set_id = merge_request['iid']
         super().__init__(data, parent, set_id)
 
     @property
     def body(self) -> str:
         """Get full MR description (lazy-loaded)"""
         if self._body is None:
-            mr_data = self.gitlabapi.get_project_mr(
-                self.data['project_id'], self.data['target_id'])
-            self._body = mr_data.get('description', '') if mr_data else ''
+            target_id = self.data.get('target_id')
+            if target_id is None:
+                self._body = ''
+            else:
+                mr_data = self.gitlabapi.get_project_mr(
+                    self.data['project_id'], target_id)
+                self._body = mr_data.get('description', '') if mr_data else ''
         return self._body
 
 
