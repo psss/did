@@ -232,6 +232,21 @@ class GitLab():
             'updated_after': since_str
             }, get_all_results=True)
 
+    def get_user_mr_created(self, username, since, until):
+        """
+        Fetch merge requests created by user in date range using
+        GitLab's global merge_requests endpoint.
+
+        Unlike the events API, this reliably returns all MRs
+        the authenticated user has visibility to.
+        """
+        endpoint = 'merge_requests'
+        return self._get_gitlab_api_list(endpoint, params={
+            'author_username': username,
+            'created_after': since.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+            'created_before': until.date.strftime('%Y-%m-%dT23:59:59.999Z'),
+            }, get_all_results=True)
+
     def get_project_mrs(self, project_id):
         if project_id not in self.project_mrs:
             query = f'projects/{project_id}/merge_requests'
@@ -524,12 +539,12 @@ class MergeRequestsCreated(Stats):
 
     def fetch(self):
         log.info("Searching for Merge requests created by %s", self.user)
-        results = self.parent.gitlab.search(
-            self.user.login, self.options.since, self.options.until,
-            target_type='MergeRequest',
-            action_name='opened')
+        results = self.parent.gitlab.get_user_mr_created(
+            self.user.login,
+            self.options.since,
+            self.options.until)
         self.stats = [
-            MergeRequest(mr, self.parent)
+            MergedRequest(mr, self.parent)
             for mr in results]
 
 
