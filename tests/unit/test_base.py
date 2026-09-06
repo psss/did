@@ -306,7 +306,7 @@ class TestGetToken(unittest.TestCase):
     """ Tests for the `get_token` function """
 
     def setUp(self) -> None:
-        # Clear the per-process token-command cache so memoized results
+        # Clear the per-process token-command cache so cached results
         # from previous tests do not bleed into this one.
         # pylint: disable=protected-access
         did.base._run_token_command.cache_clear()

@@ -9,6 +9,7 @@ Configuration example (token)::
     url = https://issues.redhat.com/
     auth_type = token
     token_file = ~/.did/jira_api_token
+    token_command = <command-to-fetch-token>
     token_expiration = 7
     token_name = did-token
 
@@ -27,7 +28,11 @@ token_command
     Shell-style command line whose stdout is used as the token, e.g.
     ``bw get password did-jira`` or
     ``op read op://Personal/Jira/token``. The command is parsed with
-    ``shlex`` and executed without a shell.
+    ``shlex`` and executed directly, without a shell. It inherits the
+    environment of ``did``, so variables such as ``BW_SESSION`` are
+    visible to it, but there is no shell expansion: pipes, redirects,
+    ``$VAR`` substitution and globs are not interpreted. Wrap the
+    command in ``sh -c '...'`` if you need any of those.
 
 token_expiration
     Print warning if token with provided ``token_name`` expires within

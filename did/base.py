@@ -554,16 +554,22 @@ def _run_token_command(command: str) -> str:
     """
     Run `command` and return its stripped stdout.
 
-    The command line is parsed with `shlex.split` and executed without
-    a shell, so config files cannot inject shell metacharacters. A
-    30-second timeout protects against secret managers that block on
-    interactive prompts (e.g. an expired ``op`` session). Non-zero
-    exit, missing binary or timeout each raise `ConfigError`; stdout
-    is never logged because it is the secret.
+    The command line is parsed with `shlex.split` and executed
+    directly, without a shell, so config files cannot inject shell
+    metacharacters. The command inherits the environment of `did`
+    (so variables such as ``BW_SESSION`` are visible to it) but gets
+    no shell expansion. A 30-second timeout protects against secret
+    managers that block on interactive prompts (e.g. an expired ``op``
+    session). Non-zero exit, missing binary or timeout each raise
+    `ConfigError`; stdout is never logged because it is the secret.
 
-    Results are memoized for the lifetime of the process so that
+    Results are cached for the lifetime of the process so that
     multiple config sections sharing the same command string only
-    invoke the external tool once per run. Failures are not cached.
+    invoke the external tool once per run. This does not widen the
+    exposure of the secret: `did` is a short-lived command and the
+    token is already held in memory by every caller of `get_token`.
+    Nothing is written to disk and the cache dies with the process.
+    Failures are not cached, so a transient error can be retried.
     """
     try:
         result = subprocess.run(
@@ -573,14 +579,14 @@ def _run_token_command(command: str) -> str:
             )
     except FileNotFoundError as exc:
         raise ConfigError(
-            f"Token command not found: {exc.filename}") from exc
+            f"Token command not found: {exc.filename}: {command}") from exc
     except subprocess.TimeoutExpired as exc:
         raise ConfigError(
             f"Token command timed out after {exc.timeout}s: {command}"
             ) from exc
     except subprocess.CalledProcessError as exc:
         raise ConfigError(
-            f"Token command failed (exit {exc.returncode}): "
+            f"Token command failed (exit {exc.returncode}): {command}: "
             f"{exc.stderr.strip()}") from exc
     return result.stdout.strip()
 

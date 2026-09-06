@@ -8,6 +8,7 @@ Config example::
     url = https://gitlab.com/
     token = <authentication-token>
     token_file = <authentication-token-file>
+    token_command = <command-to-fetch-token>
     login = <username>
     ssl_verify = true
 
