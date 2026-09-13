@@ -7,6 +7,7 @@ Test project: https://pagure.io/did
 
 import logging
 
+import pytest
 from _pytest.logging import LogCaptureFixture
 
 import did.base
@@ -42,6 +43,7 @@ PR_CLOSED = 4
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.skip("pagure.io was sunset in 2026, its API is gone")
 def test_pagure_issues_created():
     """ Created issues """
     did.base.Config(CONFIG)
@@ -54,6 +56,7 @@ def test_pagure_issues_created():
     assert not stats
 
 
+@pytest.mark.skip("pagure.io was sunset in 2026, its API is gone")
 def test_pagure_issues_closed():
     """ Closed issues """
     did.base.Config(CONFIG)
@@ -66,6 +69,7 @@ def test_pagure_issues_closed():
     assert not stats
 
 
+@pytest.mark.skip("pagure.io was sunset in 2026, its API is gone")
 def test_pagure_pull_requests_created():
     """ Created pull requests """
     did.base.Config(CONFIG)
@@ -78,6 +82,7 @@ def test_pagure_pull_requests_created():
     assert not stats
 
 
+@pytest.mark.skip("pagure.io was sunset in 2026, its API is gone")
 def test_pagure_pull_requests_closed():
     """ Closed pull requests """
     did.base.Config(CONFIG)
@@ -91,6 +96,7 @@ def test_pagure_pull_requests_closed():
                in str(stat) for stat in stats)
 
 
+@pytest.mark.skip("pagure.io was sunset in 2026, its API is gone")
 def test_pagure_comments():
     """ Comments """
     did.base.Config(CONFIG)
