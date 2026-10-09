@@ -333,8 +333,8 @@ class Issue():
         self.data = data
         self.gitlabapi: GitLab = parent.gitlab
         self.project = self.gitlabapi.get_project(data['project_id'])
-        self.id = set_id if set_id is not None else data.get(
-            'target_iid', 'unknown')
+        self.id = set_id if set_id is not None else (
+            data.get('target_iid') or 'unknown')
         self.title = data['target_title']
         self._body: Optional[str] = None
 
@@ -407,7 +407,7 @@ class Note(Issue):
 
     def __init__(self, data, parent, set_id=None):
         if set_id is None:
-            set_id = data['note'].get('noteable_iid', 'unknown')
+            set_id = data['note'].get('noteable_iid') or 'unknown'
         super().__init__(data, parent, set_id)
 
     @property
