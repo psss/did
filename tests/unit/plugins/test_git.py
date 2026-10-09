@@ -26,6 +26,17 @@ type = git
 did = {0}
 """
 
+# Config limiting the search to selected branches
+CONFIG_BRANCHES = """
+[general]
+email = "Petr Splichal" <psplicha@redhat.com>
+
+[tools]
+type = git
+branches_to_check = main devel
+did = {0}
+"""
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Smoke
@@ -85,6 +96,26 @@ def test_git_nothing():
     did.base.Config(CONFIG.format(GIT_PATH))
     stats = did.cli.main("--until 2015-01-01")[0][0].stats[0].stats[0].stats
     assert stats == []
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Branches to check
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def test_git_branches_default():
+    """ All branches are searched by default """
+    did.base.Config(CONFIG.format(GIT_PATH))
+    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0]
+    assert stats.repo.branches is None
+
+
+def test_git_branches_selected():
+    """ The search can be limited to selected branches """
+    did.base.Config(CONFIG_BRANCHES.format(GIT_PATH))
+    stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0]
+    assert stats.repo.branches == ["main", "devel"]
+    # The 'branches_to_check' option must not be treated as a repository
+    assert len(did.cli.main(INTERVAL)[0][0].stats[0].stats) == 1
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
