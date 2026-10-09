@@ -8,12 +8,18 @@ Config example::
     url = https://gitlab.com/
     token = <authentication-token>
     token_file = <authentication-token-file>
+    token_command = <command-to-fetch-token>
     login = <username>
     ssl_verify = true
 
 The authentication token is required. Create it in the GitLab web
 interface (select ``api`` as the desired scope). See the `GitLab API`__
 documentation for details.
+
+Alternatively to ``token`` you can use ``token_file`` to have the
+token stored in a file, or ``token_command`` to fetch it from an
+external command (e.g. a password manager), rather than storing it
+directly in your did config file.
 
 Use ``login`` to override user name detected from the email address.
 See the :doc:`config` documentation for details on using aliases.

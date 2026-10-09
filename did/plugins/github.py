@@ -32,7 +32,9 @@ Use ``login`` to override the default email address for searching.
 See the :doc:`config` documentation for details on using aliases.
 
 Alternatively to ``token`` you can use ``token_file`` to have the
-token stored in a file rather than in your did config file.
+token stored in a file, or ``token_command`` to fetch it from an
+external command (e.g. a password manager), rather than storing it
+directly in your did config file.
 
 __ https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
 
@@ -203,7 +205,11 @@ class GitHub():
                     log.warning("Sleeping now for %s.", listed(sleep_time, 'second'))
                     time.sleep(sleep_time)
                     continue
-                raise ReportError(f"GitHub query failed: {response.text}")
+                try:
+                    message = json.loads(response.text).get("message", response.text)
+                except (json.JSONDecodeError, AttributeError):
+                    message = response.text
+                raise ReportError(f"GitHub query failed: {message}")
             # all good!
             break
 
