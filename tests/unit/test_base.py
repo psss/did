@@ -483,8 +483,9 @@ def test_week_start_config_validation() -> None:
 @pytest.mark.usefixtures("_mock_today")
 def test_sprint_period() -> None:
     """ Test 'this sprint' period """
-    mock_start = did.base.Date("2015-09-21")
-    mock_end = did.base.Date("2015-10-05")
+    # get_sprint_dates returns plain dates; base wraps them in Date
+    mock_start = datetime.date(2015, 9, 21)
+    mock_end = datetime.date(2015, 10, 5)
     mock_period = "Sprint 42"
 
     with patch.object(
@@ -500,8 +501,8 @@ def test_sprint_period() -> None:
 @pytest.mark.usefixtures("_mock_today")
 def test_last_sprint_period() -> None:
     """ Test 'last sprint' period """
-    mock_start = did.base.Date("2015-09-07")
-    mock_end = did.base.Date("2015-09-21")
+    mock_start = datetime.date(2015, 9, 7)
+    mock_end = datetime.date(2015, 9, 21)
     mock_period = "Sprint 41"
 
     with patch.object(

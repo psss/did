@@ -147,7 +147,7 @@ import threading
 import time
 import urllib.parse
 from argparse import Namespace
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from http import HTTPStatus
 from typing import Any, Optional, cast
 
@@ -715,22 +715,24 @@ class JiraWorklog(JiraStats):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def get_sprint_dates(last: bool = False) -> tuple:
+def get_sprint_dates(
+        last: bool = False) -> tuple[date, date, str]:
     """
     Fetch sprint dates from Jira Agile API.
 
-    Returns (since, until, sprint_name) tuple with the sprint's
-    date range. If ``last`` is True, returns the most recently
-    closed sprint; otherwise returns the active sprint.
+    Returns a ``(since, until, sprint_name)`` tuple where ``since``
+    and ``until`` are :class:`datetime.date` objects. If ``last`` is
+    True, returns the most recently closed sprint; otherwise returns
+    the active sprint. The caller is responsible for wrapping the
+    dates in :class:`did.base.Date`; returning plain dates keeps this
+    plugin free of any import back into ``did.base.Date`` and avoids a
+    circular dependency.
 
     Auto-discovers the Scrum board from the project config, or
     uses the sprint_board config if provided.
     """
-    # Import Date here to avoid circular dependency
-    # (base.py -> jira.py -> base.py)
-    # pylint: disable=import-outside-toplevel,too-many-locals
+    # pylint: disable=too-many-locals
     # pylint: disable=too-many-branches,too-many-statements
-    from did.base import Date
 
     # Read Jira config
     try:
@@ -856,11 +858,10 @@ def get_sprint_dates(last: bool = False) -> tuple:
     end_date = dateutil.parser.parse(sprint["endDate"]).date()
     sprint_name = sprint.get("name", f"Sprint {sprint['id']}")
 
-    return (
-        Date(str(start_date)),
-        Date(str(end_date)),
-        sprint_name
-        )
+    # ``until`` is treated as exclusive everywhere else (stats compare
+    # ``created < until`` and git uses ``--until``), so advance the
+    # sprint end date by one day to include the sprint's last day.
+    return (start_date, end_date + timedelta(days=1), sprint_name)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
