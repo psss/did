@@ -42,6 +42,12 @@ WEEKDAY_MAP: dict[str, wd] = {
     "sunday": SUNDAY(-1),
     }
 
+# Header lines which can be shown in the report
+HEADERS = ["report", "user", "total"]
+
+# Keywords selecting all or no header lines
+HEADER_KEYWORDS = ["all", "none"]
+
 # Config file location
 CONFIG = os.path.expanduser("~/.did")
 
@@ -88,6 +94,60 @@ class ReportError(GeneralError):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Functions
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+def parse_headers(values: Union[str, list[str]]) -> list[str]:
+    """
+    Parse header lines which should be shown in the report
+
+    Accepts a space-or-comma-separated list of header names (see the
+    ``HEADERS`` constant) together with the ``all`` and ``none``
+    keywords which stand for all headers and no header at all. The
+    keywords are merged with the rest of the provided values, for
+    example ``none, user`` selects the user header only. Invalid
+    values are reported and ignored. If no valid value is given all
+    headers are selected. Returns the list of the selected headers
+    sorted in the order in which they appear in the report.
+    """
+    selected: set[str] = set()
+    keywords: list[str] = []
+    invalid: list[str] = []
+
+    # Sort the provided values into keywords, headers and garbage
+    for value in utils.split(values):
+        value = value.strip().lower()
+        if not value:
+            continue
+        if value in HEADER_KEYWORDS:
+            keywords.append(value)
+        elif value in HEADERS:
+            selected.add(value)
+        else:
+            invalid.append(value)
+
+    # Warn about invalid values, keep the valid ones
+    if invalid:
+        log.warning(
+            "Ignoring invalid header %s %s, expecting %s.",
+            "value" if len(invalid) == 1 else "values",
+            utils.listed(invalid, quote="'"),
+            utils.listed(HEADERS + HEADER_KEYWORDS, quote="'"))
+
+    # Show all headers if nothing valid was selected
+    if not keywords and not selected:
+        if invalid:
+            log.warning("No valid header selected, showing all of them.")
+        return list(HEADERS)
+
+    # Keywords are just merged with the other values
+    if keywords and (selected or len(keywords) > 1):
+        log.warning(
+            "Combining %s with other values in the 'headers' option, "
+            "using their union.", utils.listed(keywords, quote="'"))
+    if "all" in keywords:
+        selected.update(HEADERS)
+
+    return [header for header in HEADERS if header in selected]
 
 
 @contextlib.contextmanager
@@ -231,6 +291,16 @@ class Config():
             return int(self.parser.get("general", "separator_width"))
         except (NoOptionError, NoSectionError):
             return MAX_WIDTH
+
+    @property
+    def headers(self) -> list[str]:
+        """ Header lines to be shown in the report """
+        if self.parser is None:
+            raise RuntimeError("Config.parser not yet initialized")
+        try:
+            return parse_headers(self.parser.get("general", "headers"))
+        except (NoOptionError, NoSectionError):
+            return list(HEADERS)
 
     def sections(self, kind: Optional[str] = None) -> list[str]:
         """ Return all sections (optionally of given kind only) """

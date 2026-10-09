@@ -82,6 +82,51 @@ def test_config_sets_width_properly() -> None:
     assert config.width == 123
 
 
+def test_config_shows_all_headers_by_default() -> None:
+    config = did.base.Config("[general]\n")
+    assert config.headers == ["report", "user", "total"]
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("all", ["report", "user", "total"]),
+        ("none", []),
+        ("user", ["user"]),
+        ("total, report", ["report", "total"]),
+        ("user total", ["user", "total"]),
+        ("USER, All", ["report", "user", "total"]),
+        ("none, user", ["user"]),
+        ("all, none", ["report", "user", "total"]),
+        ])
+def test_config_selects_headers_properly(
+        value: str, expected: list[str]) -> None:
+    config = did.base.Config(f"[general]\nheaders = {value}\n")
+    assert config.headers == expected
+
+
+def test_config_ignores_invalid_headers(
+        caplog: pytest.LogCaptureFixture) -> None:
+    config = did.base.Config("[general]\nheaders = bogus, user\n")
+    assert config.headers == ["user"]
+    assert "Ignoring invalid header value 'bogus'" in caplog.text
+
+
+def test_config_warns_if_no_valid_header_selected(
+        caplog: pytest.LogCaptureFixture) -> None:
+    config = did.base.Config("[general]\nheaders = bogus, weird\n")
+    assert config.headers == ["report", "user", "total"]
+    assert "Ignoring invalid header values 'bogus' and 'weird'" in caplog.text
+    assert "No valid header selected" in caplog.text
+
+
+def test_config_warns_if_headers_keyword_combined(
+        caplog: pytest.LogCaptureFixture) -> None:
+    config = did.base.Config("[general]\nheaders = none, user\n")
+    assert config.headers == ["user"]
+    assert "Combining 'none' with other values" in caplog.text
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Date
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

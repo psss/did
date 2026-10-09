@@ -40,6 +40,23 @@ character used, and width of the separator between users::
     separator = #
     separator_width = 20
 
+The ``headers`` option selects which header lines should be shown
+in the report. Use ``report`` for the ``Status report for ...``
+line, ``user`` for the name and email of each user and ``total``
+for the ``Total Report`` line. Several values can be provided,
+separated with a space or a comma, the ``all`` and ``none``
+keywords are supported as well. All headers are shown by default.
+For example, to keep the user names only::
+
+    [general]
+    email = Petr Šplíchal <psplicha@redhat.com>
+    headers = user
+
+The very same values can be used with the ``--headers`` command
+line option which overrides the config file setting. Note that
+this option has nothing to do with the ``header`` and ``footer``
+sections provided by the ``items`` plugin.
+
 In order to load additional plugins from your custom locations
 provide paths to be searched in the ``plugins`` option::
 
