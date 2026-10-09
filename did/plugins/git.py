@@ -16,6 +16,18 @@ Config example::
 
 Note that using an ``*`` you can enable multiple git repositories at
 once. Non git directories from the expansion are silently ignored.
+
+By default commits are searched across all branches (``git log
+--all``). This can result in duplicate entries, for example when a
+change was rebased or squashed before merging into the main branch.
+Use the ``branches_to_check`` option to limit the search to selected
+branches instead. Multiple branches can be separated by spaces or
+commas::
+
+    [tools]
+    type = git
+    branches_to_check = main
+    did = ~/git/did
 """
 
 import os
@@ -35,15 +47,19 @@ class GitRepo():
     """ Git repository investigator """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, path):
+    def __init__(self, path, branches=None):
         """ Initialize the path. """
         self.path = path
+        # Branches to check, all branches are searched by default
+        self.branches = branches
 
     # pylint: disable=too-many-branches
     def commits(self, user, options):
         """ List commits for given user. """
-        # Prepare the command
-        command = f"git log --all --author={user.login}".split()
+        # Prepare the command, limit to selected branches if configured,
+        # otherwise search across all branches
+        command = ["git", "log", *(self.branches or ["--all"])]
+        command.append(f"--author={user.login}")
         command.append(f"--since='{options.since} 00:00:00'")
         command.append(f"--until='{options.until} 00:00:00'")
         if getattr(options, 'full_message', False):
@@ -133,10 +149,11 @@ class GitRepo():
 class GitCommits(Stats):
     """ Git commits """
 
-    def __init__(self, option, name=None, parent=None, path=None):
+    def __init__(self, option, name=None, parent=None, path=None, *,
+                 branches=None):
         super().__init__(option=option, name=name, parent=parent)
         self.path = path
-        self.repo = GitRepo(self.path)
+        self.repo = GitRepo(self.path, branches=branches)
 
     def fetch(self):
         self.stats = self.repo.commits(self.user, self.options)
@@ -164,7 +181,20 @@ class GitStats(StatsGroup):
     def __init__(self, option, name=None, parent=None, user=None):
         name = f"Work on {option}"
         StatsGroup.__init__(self, option, name, parent, user)
-        for repo, path in did.base.Config().section(option):
+
+        # Search across all branches by default, allow to limit the
+        # search to selected branches so that duplicate entries (e.g.
+        # from rebased or squashed changes) are not listed in reports.
+        # Branches can be separated by spaces or commas.
+        config = dict(did.base.Config().section(option))
+        branches_to_check = config.get("branches_to_check", "").strip(", \t")
+        if branches_to_check:
+            branches = re.split(r"[,\s]+", branches_to_check)
+        else:
+            branches = None
+
+        for repo, path in did.base.Config().section(
+                option, skip=('type', 'order', 'branches_to_check')):
             path = os.path.expanduser(path)
             if path.endswith('/*'):
                 try:
@@ -186,10 +216,11 @@ class GitStats(StatsGroup):
                         GitCommits(
                             option=f"{repo}-{repo_dir}",
                             parent=self, path=repo_path,
-                            name=f"Work on {repo}/{repo_dir}"
+                            name=f"Work on {repo}/{repo_dir}",
+                            branches=branches
                             )
                         )
             else:
                 self.stats.append(GitCommits(
                     option=f"{option}-{repo}", parent=self, path=path,
-                    name=f"Work on {repo}"))
+                    name=f"Work on {repo}", branches=branches))
