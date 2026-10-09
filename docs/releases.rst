@@ -23,9 +23,16 @@ new ``token_command`` config option, enabling integration with
 password managers such as 1Password or BitWarden (`#469`_). The
 option is supported by all plugins that use token authentication.
 
+The git plugin now supports the ``branches_to_check`` config
+option (`#487`_). By default commits are searched across all
+branches. Use this option to limit the search to selected branches
+(for example ``main``) and avoid duplicate entries caused by
+rebased or squashed changes.
+
 .. _#474: https://github.com/psss/did/pull/474
 .. _#460: https://github.com/psss/did/pull/460
 .. _#469: https://github.com/psss/did/pull/469
+.. _#487: https://github.com/psss/did/pull/487
 
 
 did-0.23
