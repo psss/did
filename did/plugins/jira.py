@@ -9,18 +9,30 @@ Configuration example (token)::
     url = https://issues.redhat.com/
     auth_type = token
     token_file = ~/.did/jira_api_token
+    token_command = <command-to-fetch-token>
     token_expiration = 7
     token_name = did-token
 
 Notes:
-Either ``token`` or ``token_file`` has to be defined.
+One of ``token``, ``token_file`` or ``token_command`` has to be defined.
 
 token
     Token string directly included in the config.
-    Has a higher priority over ``token_file``.
+    Has a higher priority over ``token_file`` and ``token_command``.
 
 token_file
     Path to the file where the token is stored.
+    Has a higher priority over ``token_command``.
+
+token_command
+    Shell-style command line whose stdout is used as the token, e.g.
+    ``bw get password did-jira`` or
+    ``op read op://Personal/Jira/token``. The command is parsed with
+    ``shlex`` and executed directly, without a shell. It inherits the
+    environment of ``did``, so variables such as ``BW_SESSION`` are
+    visible to it, but there is no shell expansion: pipes, redirects,
+    ``$VAR`` substitution and globs are not interpreted. Wrap the
+    command in ``sh -c '...'`` if you need any of those.
 
 token_expiration
     Print warning if token with provided ``token_name`` expires within
@@ -71,9 +83,10 @@ Configuration example (basic authentication for Jira Cloud)::
     token_file = ~/.did/jira_api_token
     api_version = 3
 
-Keys ``auth_username``, ``token`` and ``token_file`` are
-used for Jira Cloud with ``basic`` authentication. Either ``token`` or
-``token_file`` must be provided, ``token`` has a higher priority.
+Keys ``auth_username``, ``token``, ``token_file`` and ``token_command``
+are used for Jira Cloud with ``basic`` authentication. One of ``token``,
+``token_file`` or ``token_command`` must be provided; ``token`` has the
+highest priority, then ``token_file``, then ``token_command``.
 
 For Jira Server/Data Center with ``basic`` authentication, use
 ``auth_password`` or ``auth_password_file`` instead.

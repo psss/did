@@ -7,6 +7,7 @@ Test project: https://pagure.io/did
 
 import logging
 
+import pytest
 from _pytest.logging import LogCaptureFixture
 
 import did.base
@@ -42,6 +43,7 @@ PR_CLOSED = 4
 #  Tests
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+@pytest.mark.skip("pagure.io was sunset in 2026, its API is gone")
 def test_pagure_issues_created():
     """ Created issues """
     did.base.Config(CONFIG)
@@ -54,6 +56,7 @@ def test_pagure_issues_created():
     assert not stats
 
 
+@pytest.mark.skip("pagure.io was sunset in 2026, its API is gone")
 def test_pagure_issues_closed():
     """ Closed issues """
     did.base.Config(CONFIG)
@@ -66,6 +69,7 @@ def test_pagure_issues_closed():
     assert not stats
 
 
+@pytest.mark.skip("pagure.io was sunset in 2026, its API is gone")
 def test_pagure_pull_requests_created():
     """ Created pull requests """
     did.base.Config(CONFIG)
@@ -78,6 +82,7 @@ def test_pagure_pull_requests_created():
     assert not stats
 
 
+@pytest.mark.skip("pagure.io was sunset in 2026, its API is gone")
 def test_pagure_pull_requests_closed():
     """ Closed pull requests """
     did.base.Config(CONFIG)
@@ -91,16 +96,17 @@ def test_pagure_pull_requests_closed():
                in str(stat) for stat in stats)
 
 
+@pytest.mark.skip("pagure.io was sunset in 2026, its API is gone")
 def test_pagure_comments():
     """ Comments """
     did.base.Config(CONFIG)
     option = "--pagure-commented "
     stats = did.cli.main(option + INTERVAL)[0][0].stats[0].stats[COMMENTS].stats
-    assert any("2018-11-26 - psss commented on PR" in str(stat) for stat in stats)
+    assert any("did#2 - Closed Issue" in str(stat) for stat in stats)
     stats = did.cli.main(option + BEFORE)[0][0].stats[0].stats[COMMENTS].stats
-    assert any("2018-11-22 - psss commented on PR" in str(stat) for stat in stats)
+    assert any("fedora-ci/messages#16" in str(stat) for stat in stats)
     stats = did.cli.main(option + AFTER)[0][0].stats[0].stats[COMMENTS].stats
-    assert any("2018-11-27 - psss commented on issue" in str(stat) for stat in stats)
+    assert any("fedora-ci/metadata#3" in str(stat) for stat in stats)
 
 
 def test_pagure_missing_url(caplog: LogCaptureFixture):

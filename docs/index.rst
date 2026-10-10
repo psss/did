@@ -19,6 +19,7 @@ Table of Contents
 
     Overview <overview>
     Install <install>
+    Releases <releases>
     Config <config>
     Examples <examples>
     Plugins <plugins>

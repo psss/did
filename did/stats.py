@@ -179,7 +179,7 @@ class StatsGroup(Stats, metaclass=StatsGroupPlugin):
                 try:
                     f.result()
                 except did.base.ReportError as error:
-                    log.error("Skipping %s due to %s", f, error)
+                    log.error("%s", error)
                     sys.stdout.flush()
                     sys.stderr.flush()
 

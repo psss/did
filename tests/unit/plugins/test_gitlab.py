@@ -3,12 +3,14 @@
 
 import logging
 import os
+from unittest.mock import MagicMock
 
 import pytest
 from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
+from did.plugins.gitlab import Issue, Note
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -198,6 +200,42 @@ def test_gitlab_merge_requests_merged():
     assert any(
         "did.tester/test-project#004" in str(stat) and "Update README.md" in str(stat)
         for stat in stats)
+
+
+def _mock_parent():
+    """ Minimal GitLabStats stand-in for Issue/Note objects """
+    parent = MagicMock()
+    parent.gitlab.get_project.return_value = {
+        "path_with_namespace": "did.tester/test-project"}
+    return parent
+
+
+def test_gitlab_issue_iid_from_target_iid():
+    """ Issue iid is read directly from target_iid """
+    data = {"project_id": 1, "target_iid": 42,
+            "target_title": "t", "target_type": "Issue"}
+    assert Issue(data, _mock_parent()).id == 42
+
+
+def test_gitlab_issue_iid_null_target_iid():
+    """ Null target_iid falls back to 'unknown' instead of None """
+    data = {"project_id": 1, "target_iid": None,
+            "target_title": "t", "target_type": "Issue"}
+    assert Issue(data, _mock_parent()).id == "unknown"
+
+
+def test_gitlab_note_iid_from_noteable_iid():
+    """ Note iid is read directly from noteable_iid """
+    data = {"project_id": 1, "target_title": "t", "target_type": "Note",
+            "note": {"noteable_iid": 7, "noteable_type": "Issue"}}
+    assert Note(data, _mock_parent()).id == 7
+
+
+def test_gitlab_note_iid_null_noteable_iid():
+    """ Null noteable_iid falls back to 'unknown' instead of None """
+    data = {"project_id": 1, "target_title": "t", "target_type": "Note",
+            "note": {"noteable_iid": None, "noteable_type": "Issue"}}
+    assert Note(data, _mock_parent()).id == "unknown"
 
 
 @pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
