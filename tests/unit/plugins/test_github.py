@@ -103,6 +103,27 @@ def test_github_pull_requests_commented():
         in str(stat) for stat in stats)
 
 
+def test_github_releases_created():
+    """ Created releases """
+    did.base.Config(f"{CONFIG}\nrepo = psss/did")
+    option = "--gh-releases-created --since 2023-03-10 --until 2023-03-10"
+    # Note: The stats list index is 8 for ReleasesCreated
+    stats = did.cli.main(option)[0][0].stats[0].stats[8].stats
+    assert any(
+        "psss/did 0.20 - New koji & phabricator plugins, custom separator"
+        in str(stat) for stat in stats)
+
+
+def test_github_releases_created_no_repo(caplog: LogCaptureFixture):
+    """ Releases require a repo to be configured """
+    did.base.Config(CONFIG)
+    option = "--gh-releases-created --since 2023-03-10 --until 2023-03-10"
+    with caplog.at_level(logging.WARNING):
+        stats = did.cli.main(option)[0][0].stats[0].stats[8].stats
+        assert not stats
+        assert "no 'repo' configured" in caplog.text
+
+
 def test_github_invalid_token(caplog: LogCaptureFixture):
     """ Invalid token """
     did.base.Config(f"{CONFIG}\ntoken = bad-token")
