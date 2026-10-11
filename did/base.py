@@ -437,6 +437,15 @@ class Date():
         elif "month" in argument:
             since, until, period = Date.get_month("last" in argument)
 
+        elif "sprint" in argument:
+            # The jira plugin returns plain ``datetime.date`` objects
+            # to avoid importing ``Date`` back into the plugin; wrap
+            # them here.
+            # pylint: disable=import-outside-toplevel,cyclic-import
+            from did.plugins.jira import get_sprint_dates
+            start, end, period = get_sprint_dates("last" in argument)
+            since, until = Date(str(start)), Date(str(end))
+
         else:  # Default to week
             since, until, period = Date.get_week("last" in argument)
 
