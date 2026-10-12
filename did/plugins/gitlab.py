@@ -455,6 +455,11 @@ class MergedRequest(Issue):
         transformed_data['target_title'] = data['title']
         transformed_data['target_type'] = 'MergeRequest'
         super().__init__(transformed_data, parent, data['iid'])
+        # The description is available inline in the global
+        # merge_requests API data, so populate the body directly and
+        # skip the inherited Issue.body lookup (which needs 'target_id',
+        # a field absent from this data).
+        self._body = data.get('description', '') or ''
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
