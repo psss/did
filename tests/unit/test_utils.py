@@ -86,10 +86,23 @@ def test_import_failure() -> None:
         did.utils._import("blah", False)
 
 
+@pytest.fixture(autouse=True)
+def _already_printed() -> None:
+    """ Pretend that some content has been already printed """
+    did.utils.OUTPUT.printed = True
+
+
 def test_header(capsys: pytest.CaptureFixture[str]) -> None:
     did.utils.header("test", separator='-', separator_width=2)
     captured = capsys.readouterr()
     assert captured.out == "\n--\n test\n--\n"
+
+
+def test_header_at_the_very_start(capsys: pytest.CaptureFixture[str]) -> None:
+    did.utils.OUTPUT.printed = False
+    did.utils.header("test", separator='-', separator_width=2)
+    captured = capsys.readouterr()
+    assert captured.out == "--\n test\n--\n"
 
 
 def test_shorted() -> None:
@@ -130,6 +143,18 @@ def test_item_not_brief(capsys: pytest.CaptureFixture[str]) -> None:
     did.utils.item("this is level 1 text", level=1, options=options)
     captured = capsys.readouterr()
     assert captured.out == "    * this is level 1 text\n"
+
+
+def test_item_at_the_very_start(capsys: pytest.CaptureFixture[str]) -> None:
+    did.utils.OUTPUT.printed = False
+    options = Namespace(brief=False, format="text", width=100)
+    did.utils.item("this is level 0 text", level=0, options=options)
+    captured = capsys.readouterr()
+    assert captured.out == "* this is level 0 text\n"
+
+    did.utils.item("this is another section", level=0, options=options)
+    captured = capsys.readouterr()
+    assert captured.out == "\n* this is another section\n"
 
 
 def test_item_brief_text(capsys: pytest.CaptureFixture[str]) -> None:

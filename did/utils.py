@@ -8,6 +8,7 @@ import pkgutil
 import re
 import sys
 from argparse import Namespace
+from dataclasses import dataclass
 # pylint:disable=unused-import
 from pprint import pformat as pretty  # noqa: F401 (used by other modules)
 from types import ModuleType
@@ -183,13 +184,33 @@ def load_components(
     return num_loaded
 
 
+@dataclass
+class Output:
+    """
+    Report output state
+
+    Keeps track of already printed content so that the report
+    does not start with an unnecessary empty line separator.
+    """
+
+    printed: bool = False
+
+
+# Current state of the report output
+OUTPUT = Output()
+
+
 def header(
         text: str,
         separator: str = DEFAULT_SEPARATOR,
         separator_width: int = MAX_WIDTH) -> None:
     """ Show text as a header. """
     hr = separator_width * separator
-    print(f"\n{hr}\n {text}\n{hr}")
+    # Separate from the previous content (unless at the very start)
+    if OUTPUT.printed:
+        print()
+    print(f"{hr}\n {text}\n{hr}")
+    OUTPUT.printed = True
 
 
 def shorted(text: str, width: int = MAX_WIDTH) -> str:
@@ -243,8 +264,10 @@ def item(
         level: int = 0,
         options: Optional[Namespace] = None) -> None:
     """ Print indented item. """
-    # Extra line before in each section (unless brief)
-    if level == 0 and options is not None and not options.brief:
+    # Extra line before in each section
+    # (unless brief or at the very start)
+    if (level == 0 and options is not None
+            and not options.brief and OUTPUT.printed):
         print('')
     # Only top-level items displayed in brief mode
     if level == 1 and options is not None and options.brief:
@@ -263,6 +286,7 @@ def item(
     spaces = " " * indent
     short_text = shorted(str(text), width)
     print(f"{spaces}* {short_text}")
+    OUTPUT.printed = True
 
 
 def pluralize(singular: str) -> str:

@@ -18,11 +18,18 @@ starts on Sunday or another day. Flexible matching is supported
 The ``--width 0`` option can be used to produce reports with
 unlimited line width (`#460`_).
 
+Individual report **header lines** can be turned off using the
+new ``headers`` option, available both in the ``[general]``
+config section and on the command line (`#485`_). Choose any
+combination of ``report``, ``user`` and ``total`` or use the
+``all`` and ``none`` keywords.
+
 Tokens can now be fetched from an **external command** using the
 new ``token_command`` config option, enabling integration with
 password managers such as 1Password or BitWarden (`#469`_). The
 option is supported by all plugins that use token authentication.
 
+.. _#485: https://github.com/psss/did/pull/485
 .. _#474: https://github.com/psss/did/pull/474
 .. _#460: https://github.com/psss/did/pull/460
 .. _#469: https://github.com/psss/did/pull/469

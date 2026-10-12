@@ -83,6 +83,11 @@ class Options:
             "--width", default=width, type=int,
             help="Maximum width of the report output (default: %(default)s)")
         group.add_argument(
+            "--headers", action="append", metavar="HEADERS",
+            help="Header lines to show: "
+            f"{', '.join(did.base.HEADERS + did.base.HEADER_KEYWORDS)} "
+            "(default: all)")
+        group.add_argument(
             "--brief", action="store_true",
             help="Show brief summary only, do not list individual items")
         group.add_argument(
@@ -196,6 +201,23 @@ class Options:
 #  Main
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+def show_header(
+        text: str,
+        enabled: bool,
+        options: argparse.Namespace,
+        config: did.base.Config) -> None:
+    """ Show given header line if enabled by the 'headers' option """
+    if enabled:
+        utils.header(
+            text,
+            separator=config.separator,
+            separator_width=config.separator_width)
+    elif utils.OUTPUT.printed and options.brief:
+        # Headers and items provide an empty line separator,
+        # in the brief mode we have to print it ourselves
+        print()
+
+
 def main(arguments: Union[None, str, list[str]] = None
          ) -> tuple[list[UserStats], UserStats]:
     """
@@ -240,14 +262,20 @@ def main(arguments: Union[None, str, list[str]] = None
     emails = utils.split(emails, separator=re.compile(r"\s*,\s*"))
     users = [did.base.User(email=email) for email in emails]
 
+    # Detect which headers should be shown
+    # (command line wins over config)
+    headers = (
+        did.base.parse_headers(options.headers)
+        if options.headers else config.headers)
+
     # Print header and prepare team stats object for data merging
-    print(header)
+    utils.OUTPUT.printed = False
+    if "report" in headers:
+        print(header)
+        utils.OUTPUT.printed = True
     team_stats = UserStats(options=options)
     if options.merge:
-        utils.header(
-            "Total Report",
-            separator=config.separator,
-            separator_width=config.separator_width)
+        show_header("Total Report", "total" in headers, options, config)
         utils.item(f"Users: {len(users)}", options=options)
 
     # Check individual user stats
@@ -255,10 +283,7 @@ def main(arguments: Union[None, str, list[str]] = None
         if options.merge:
             utils.item(str(user), 1, options=options)
         else:
-            utils.header(
-                str(user),
-                separator=config.separator,
-                separator_width=config.separator_width)
+            show_header(str(user), "user" in headers, options, config)
         user_stats = UserStats(user=user, options=options)
         user_stats.check()
         # Show the results stats (unless merging)
@@ -270,10 +295,7 @@ def main(arguments: Union[None, str, list[str]] = None
     # Display merged team report
     if options.merge or options.total:
         if options.total:
-            utils.header(
-                "Total Report",
-                separator=config.separator,
-                separator_width=config.separator_width)
+            show_header("Total Report", "total" in headers, options, config)
         team_stats.show()
 
     # Return all gathered stats objects
