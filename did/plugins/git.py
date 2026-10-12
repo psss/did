@@ -73,6 +73,9 @@ class GitRepo():
             command.append("--format=format:%n%h - %s")
         else:
             command.append("--format=format:%h - %s")
+        # End of revisions, the rest would be paths (disambiguate branch
+        # names from file names to prevent "ambiguous argument" errors)
+        command.append("--")
         log.info("Checking commits in %s", self.path)
         log.details(pretty(command))
 
