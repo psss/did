@@ -18,11 +18,18 @@ starts on Sunday or another day. Flexible matching is supported
 The ``--width 0`` option can be used to produce reports with
 unlimited line width (`#460`_).
 
+Git commits can be shown as **links** to the web interface of the
+forge when using the markdown format (`#486`_). Provide the
+address in the new ``weburl`` option of the git section, the
+``{repo}`` and ``{commit}`` placeholders are expanded for each
+commit.
+
 Tokens can now be fetched from an **external command** using the
 new ``token_command`` config option, enabling integration with
 password managers such as 1Password or BitWarden (`#469`_). The
 option is supported by all plugins that use token authentication.
 
+.. _#486: https://github.com/psss/did/pull/486
 .. _#474: https://github.com/psss/did/pull/474
 .. _#460: https://github.com/psss/did/pull/460
 .. _#469: https://github.com/psss/did/pull/469

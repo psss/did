@@ -16,6 +16,28 @@ Config example::
 
 Note that using an ``*`` you can enable multiple git repositories at
 once. Non git directories from the expansion are silently ignored.
+
+In the markdown format commits can be turned into links pointing to
+the web interface of the forge. As the address cannot be guessed
+from the git remote, provide it in the ``weburl`` option::
+
+    [fedora]
+    type = git
+    weburl = https://src.fedoraproject.org/rpms/{repo}/c/{commit}
+    packages = ~/packaging/Fedora/*
+
+The ``{repo}`` placeholder stands for the name of the repository
+directory, ``{commit}`` for the commit hash. Here are templates of
+a few common forges, with ``{base}`` being the address of the
+particular server::
+
+    cgit      {base}/{repo}.git/commit/?id={commit}
+    gitweb    {base}/?p={repo}.git;a=commit;h={commit}
+    GitHub    {base}/{repo}/commit/{commit}
+    GitLab    {base}/{repo}/-/commit/{commit}
+    Pagure    {base}/{repo}/c/{commit}
+
+Commits are shown without a link if the option is not provided.
 """
 
 import os
@@ -27,6 +49,14 @@ from did.stats import Stats, StatsGroup
 from did.utils import item, log, pretty
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#  Constants
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Commit hash at the very beginning of the commit summary line
+COMMIT = re.compile(r"^([0-9a-f]{4,40}) - ")
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Git Repository
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -35,9 +65,34 @@ class GitRepo():
     """ Git repository investigator """
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, path):
+    def __init__(self, path, weburl=None):
         """ Initialize the path. """
         self.path = path
+        self.weburl = weburl
+        # The repository name is used in the web url template
+        self.name = os.path.basename(path.rstrip("/"))
+
+    def linked(self, commits, options):
+        """ Turn commit hashes into links to the web interface. """
+        if not self.weburl or options.format != "markdown":
+            return commits
+        linked = []
+        for commit in commits:
+            matched = COMMIT.match(commit)
+            # Keep lines not starting with a hash as they are
+            if not matched:
+                linked.append(commit)
+                continue
+            commit_hash = matched.group(1)
+            try:
+                url = self.weburl.format(repo=self.name, commit=commit_hash)
+            except (IndexError, KeyError, ValueError) as error:
+                log.warning(
+                    "Invalid weburl '%s': %s", self.weburl, error)
+                return commits
+            linked.append(
+                f"[{commit_hash}]({url}){commit[matched.end(1):]}")
+        return linked
 
     # pylint: disable=too-many-branches
     def commits(self, user, options):
@@ -102,11 +157,11 @@ class GitRepo():
                         if line.strip():
                             formatted += f"\n        {line}"
                     commits.append(formatted)
-            return commits
+            return self.linked(commits, options)
 
         # Single commit per line in non-verbose mode
         if not options.verbose:
-            return output.split("\n")
+            return self.linked(output.split("\n"), options)
 
         # In verbose mode commits separated by two empty lines
         commits = []
@@ -123,7 +178,7 @@ class GitRepo():
             else:
                 directory = re.sub("/[^/]+$", "", lines[1])
                 commits.append(f"{lines[0]}\n        * {directory}")
-        return commits
+        return self.linked(commits, options)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -133,10 +188,10 @@ class GitRepo():
 class GitCommits(Stats):
     """ Git commits """
 
-    def __init__(self, option, name=None, parent=None, path=None):
+    def __init__(self, option, name=None, parent=None, path=None, weburl=None):
         super().__init__(option=option, name=name, parent=parent)
         self.path = path
-        self.repo = GitRepo(self.path)
+        self.repo = GitRepo(self.path, weburl)
 
     def fetch(self):
         self.stats = self.repo.commits(self.user, self.options)
@@ -164,7 +219,10 @@ class GitStats(StatsGroup):
     def __init__(self, option, name=None, parent=None, user=None):
         name = f"Work on {option}"
         StatsGroup.__init__(self, option, name, parent, user)
-        for repo, path in did.base.Config().section(option):
+        # The web url template is shared by all repos in the section
+        config = dict(did.base.Config().section(option))
+        weburl = config.pop("weburl", None)
+        for repo, path in config.items():
             path = os.path.expanduser(path)
             if path.endswith('/*'):
                 try:
@@ -186,10 +244,11 @@ class GitStats(StatsGroup):
                         GitCommits(
                             option=f"{repo}-{repo_dir}",
                             parent=self, path=repo_path,
-                            name=f"Work on {repo}/{repo_dir}"
+                            name=f"Work on {repo}/{repo_dir}",
+                            weburl=weburl
                             )
                         )
             else:
                 self.stats.append(GitCommits(
                     option=f"{option}-{repo}", parent=self, path=path,
-                    name=f"Work on {repo}"))
+                    name=f"Work on {repo}", weburl=weburl))

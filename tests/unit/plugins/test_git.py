@@ -25,6 +25,7 @@ email = "Petr Splichal" <psplicha@redhat.com>
 type = git
 did = {0}
 """
+WEBURL = "weburl = https://example.org/{0}\n"
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -68,6 +69,52 @@ def test_git_regular():
     """ Simple git stats """
     did.base.Config(CONFIG.format(GIT_PATH))
     stats = did.cli.main(INTERVAL)[0][0].stats[0].stats[0].stats
+    assert any(
+        "8a725af - Simplify git plugin tests" in stat
+        for stat in stats)
+
+
+def test_git_markdown_without_weburl():
+    """ No links if the web url template is not provided """
+    did.base.Config(CONFIG.format(GIT_PATH))
+    stats = did.cli.main(
+        f"{INTERVAL} --format markdown")[0][0].stats[0].stats[0].stats
+    assert any(
+        "8a725af - Simplify git plugin tests" in stat
+        for stat in stats)
+
+
+def test_git_markdown_link():
+    """ Commit hash turned into a link in the markdown format """
+    did.base.Config(
+        CONFIG.format(GIT_PATH) + WEBURL.format("{repo}/c/{commit}"))
+    stats = did.cli.main(
+        f"{INTERVAL} --format markdown")[0][0].stats[0].stats[0].stats
+    link = f"https://example.org/{os.path.basename(GIT_PATH)}/c/8a725af"
+    assert any(
+        f"[8a725af]({link}) - Simplify git plugin tests" in stat
+        for stat in stats)
+
+
+def test_git_markdown_link_other_formats():
+    """ Links are used in the markdown format only """
+    did.base.Config(
+        CONFIG.format(GIT_PATH) + WEBURL.format("{repo}/c/{commit}"))
+    for text_format in ["text", "wiki"]:
+        stats = did.cli.main(
+            f"{INTERVAL} --format {text_format}")[0][0].stats[0].stats[0].stats
+        assert any(
+            "8a725af - Simplify git plugin tests" in stat
+            for stat in stats)
+
+
+def test_git_markdown_invalid_weburl(caplog: LogCaptureFixture):
+    """ Invalid web url reported, commits shown without links """
+    did.base.Config(CONFIG.format(GIT_PATH) + WEBURL.format("{bogus}"))
+    with caplog.at_level(logging.WARNING):
+        stats = did.cli.main(
+            f"{INTERVAL} --format markdown")[0][0].stats[0].stats[0].stats
+        assert "Invalid weburl" in caplog.text
     assert any(
         "8a725af - Simplify git plugin tests" in stat
         for stat in stats)
