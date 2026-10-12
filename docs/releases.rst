@@ -29,10 +29,19 @@ branches. Use this option to limit the search to selected branches
 (for example ``main``) and avoid duplicate entries caused by
 rebased or squashed changes.
 
+The GitHub ``pull-requests-reviewed`` stat now counts pull
+requests by the **date the review was submitted** rather than by
+the date the pull request happened to be closed (`#488`_). Reviews
+performed within the selected period are no longer missed when the
+pull request is still open or merged later, and reviews performed
+long ago are no longer reported in the period the pull request
+merged.
+
 .. _#474: https://github.com/psss/did/pull/474
 .. _#460: https://github.com/psss/did/pull/460
 .. _#469: https://github.com/psss/did/pull/469
 .. _#487: https://github.com/psss/did/pull/487
+.. _#488: https://github.com/psss/did/pull/488
 
 
 did-0.23
