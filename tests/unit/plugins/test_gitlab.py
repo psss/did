@@ -10,7 +10,7 @@ from _pytest.logging import LogCaptureFixture
 
 import did.base
 import did.cli
-from did.plugins.gitlab import Issue, Note
+from did.plugins.gitlab import Issue, MergedRequest, Note
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Constants
@@ -236,6 +236,28 @@ def test_gitlab_note_iid_null_noteable_iid():
     data = {"project_id": 1, "target_title": "t", "target_type": "Note",
             "note": {"noteable_iid": None, "noteable_type": "Issue"}}
     assert Note(data, _mock_parent()).id == "unknown"
+
+
+def test_gitlab_merged_request_body_from_inline_description():
+    """ MR description is served inline, without extra API lookups
+
+    The global ``merge_requests`` API data has no ``target_id`` key,
+    so the inherited ``Issue.body`` would raise ``KeyError`` in
+    full-message mode. ``MergedRequest`` must read the inline
+    ``description`` instead.
+    """
+    data = {"project_id": 1, "iid": 4, "title": "Update README.md",
+            "description": "Full MR description"}
+    parent = _mock_parent()
+    merged_request = MergedRequest(data, parent)
+    assert merged_request.body == "Full MR description"
+    parent.gitlab.get_project_issue.assert_not_called()
+
+
+def test_gitlab_merged_request_body_missing_description():
+    """ Missing description yields an empty body, not an error """
+    data = {"project_id": 1, "iid": 4, "title": "Update README.md"}
+    assert MergedRequest(data, _mock_parent()).body == ""
 
 
 @pytest.mark.skipif("GITLAB_TOKEN" not in os.environ,
