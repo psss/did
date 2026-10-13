@@ -6,6 +6,7 @@ did="did --config"
 YEAR_2022="--since 2022-01-01 --until 2022-12-31"
 YEAR_2021="--since 2021-01-01 --until 2021-12-31"
 CHECK_UNTIL="--since 2022-10-01 --until 2022-10-26"
+WEEK_41="--since 2026-10-05 --until 2026-10-11"
 
 rlJournalStart
 
@@ -114,6 +115,36 @@ rlJournalStart
         rlAssertNotGrep "teemtee/fmf#177 - Shallow git clone if no reference" $rlRun_LOG
         rlAssertNotGrep "teemtee/tmt#1050 - Run commands via bash" $rlRun_LOG
         rlAssertNotGrep "teemtee/upgrade#006 - Store the old packages " $rlRun_LOG
+    rlPhaseEnd
+
+    # Pull Requests Reviewed
+    #
+    # Reviewed pull requests are counted by the date the review was
+    # submitted, not by the date the pull request was closed. These
+    # assertions guard that behavior using the week 41/2026 data:
+    #
+    #   * pull requests reviewed in the window but closed later (or still
+    #     open) must be included, even though the old `closed:` qualifier
+    #     missed them (tmt#5203, tmt#5200, did#478, did#475),
+    #   * pull requests closed in the window but reviewed earlier must be
+    #     excluded, even though the old qualifier counted them (did#469).
+    #
+    # Note: the reviewed stat fetches reviews per pull request, so a token
+    # is needed to avoid hitting the unauthenticated rate limit.
+
+    rlPhaseStartTest "Pull Requests Reviewed"
+        rlRun -s "$did ./config-default.ini --gh-pull-requests-reviewed $WEEK_41"
+        rlAssertGrep "Pull requests reviewed on gh: 12$" $rlRun_LOG
+        # Baseline reviews present with either implementation
+        rlAssertGrep "teemtee/tmt#5217 - Note the real purpose of" $rlRun_LOG
+        rlAssertGrep "psss/did#484 - Skip live Pagure tests after the" $rlRun_LOG
+        # Reviewed in the window but closed later or still open (newly counted)
+        rlAssertGrep "teemtee/tmt#5203 - Update renovatebot image" $rlRun_LOG
+        rlAssertGrep "teemtee/tmt#5200 - Update GitHub Actions" $rlRun_LOG
+        rlAssertGrep "psss/did#478 - Add CLAUDE.md project guidance" $rlRun_LOG
+        rlAssertGrep "psss/did#475 - Add Jira sprint support for" $rlRun_LOG
+        # Closed in the window but reviewed earlier (no longer counted)
+        rlAssertNotGrep "psss/did#469 - Support fetching tokens" $rlRun_LOG
     rlPhaseEnd
 
 rlJournalEnd

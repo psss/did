@@ -67,7 +67,8 @@ pull-requests-closed
     or declined)
 
 pull-requests-reviewed
-    pull requests reviewed by the user
+    pull requests reviewed by the user (counted by the date the review was
+    submitted, regardless of whether the pull request has been closed)
 
 pull-requests-merged
     pull requests authored by the user that were merged (merged_at
@@ -166,6 +167,53 @@ class GitHub():
                 else:
                     issue_checked = True
         return valid_issues
+
+    def reviewed_in_range(self,
+                          reviewed_pulls: list,
+                          since: datetime,
+                          until: datetime,
+                          login: str) -> list:
+        """
+        Keep only pull requests actually reviewed within the given range
+
+        The search api cannot filter by the review submission date, only
+        by the time the pull request was closed. Fetch the reviews for
+        each candidate pull request and check whether the user submitted
+        at least one review in the requested time window.
+        """
+        valid_pulls = []
+        for pull in reviewed_pulls:
+            # Search returns issue objects, the pull request api url
+            # (used to fetch the reviews) is available under the
+            # 'pull_request' key, present thanks to the 'type:pr' query.
+            reviews_url = f"{pull['pull_request']['url']}/reviews"
+            url = f"{reviews_url}?per_page={PER_PAGE}"
+            pull_checked = False
+            while not pull_checked:
+                response = self.request(url)
+                reviews = response.json()
+                log.debug("%s reviews fetched for %s", len(reviews), url)
+                log.data(pretty(reviews))
+                for review in reviews:
+                    # Pending reviews have not been submitted yet
+                    if not review.get("submitted_at"):
+                        continue
+                    submitted_at = datetime.strptime(
+                        review["submitted_at"], r"%Y-%m-%dT%H:%M:%SZ")
+                    if submitted_at > until:
+                        # Reviews are sorted by submitted_at asc
+                        pull_checked = True
+                        break
+                    if ((review.get("user") or {}).get("login") == login
+                            and since <= submitted_at):
+                        valid_pulls.append(pull)
+                        pull_checked = True
+                        break
+                if not pull_checked and 'next' in response.links:
+                    url = response.links['next']['url']
+                else:
+                    pull_checked = True
+        return valid_pulls
 
     @staticmethod
     def until(until):
@@ -414,12 +462,19 @@ class PullRequestsReviewed(Stats):
         login = self.user.login
         since = self.options.since
         until = GitHub.until(self.options.until)
+        # The search api has no review submission date qualifier, so
+        # gather candidate pull requests touched in the range (same as
+        # the commented stats) and keep only those actually reviewed by
+        # the user within the window.
         query = (
             f"search/issues?q=reviewed-by:{login}+-author:{login}"
-            f"+closed:{since}..{until}+type:pr"
+            f"+updated:{since}..*+created:*..{until}+type:pr"
             )
+        reviewed_pulls = self.parent.github.search(query)
+        valid_pulls = self.parent.github.reviewed_in_range(
+            reviewed_pulls, since.datetime, until.datetime, login)
         self.stats = [
-            Issue(issue, self.parent) for issue in self.parent.github.search(query)]
+            Issue(issue, self.parent) for issue in valid_pulls]
 
 
 class PullRequestsMerged(Stats):
