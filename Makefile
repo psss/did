@@ -22,7 +22,7 @@ tmp:
 test: tmp
 	DID_DIR=$(TMP) pytest -n auto tests
 smoke: tmp
-	DID_DIR=$(TMP) pytest -n auto tests/test_cli.py
+	DID_DIR=$(TMP) pytest -n auto tests/unit/test_cli.py
 coverage: tmp
 	DID_DIR=$(TMP) pytest --cov-report html:cov_html --cov-report annotate:cov_annotate --cov=did -n auto tests
 
