@@ -726,19 +726,15 @@ class JiraStatsGroup(StatsGroup):
             raise ReportError(f"`auth_username` not set in the [{option}] section")
         self.auth_username = config["auth_username"]
 
-        # For Jira Cloud, use token/token_file; for Server/DC, use
-        # auth_password/auth_password_file
+        # For Jira Cloud, use token/token_file/token_command; for
+        # Server/DC, use auth_password/auth_password_file
         if self.is_jira_cloud:
-            if "token" in config:
-                self.auth_password = config["token"]
-            elif "token_file" in config:
-                file_path = os.path.expanduser(config["token_file"])
-                with open(file_path, encoding="utf-8") as token_file:
-                    self.auth_password = token_file.read().strip()
-            else:
+            token = get_token(config)
+            if token is None:
                 raise ReportError(
-                    "`token` or `token_file` must be set "
+                    "`token`, `token_file` or `token_command` must be set "
                     f"for Jira Cloud in the [{option}] section.")
+            self.auth_password = token
         else:
             if "auth_password" in config:
                 self.auth_password = config["auth_password"]
@@ -755,7 +751,7 @@ class JiraStatsGroup(StatsGroup):
         self.token = get_token(config)
         if self.token is None:
             raise ReportError(
-                "The `token` or `token_file` key must be set "
+                "The `token`, `token_file` or `token_command` key must be set "
                 f"in the [{option}] section.")
         if "token_expiration" in config or "token_name" in config:
             try:

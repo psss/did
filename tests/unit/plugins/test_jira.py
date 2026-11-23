@@ -75,6 +75,36 @@ auth_password_file = {password_file.name}
         JiraStatsGroup("jira")
 
 
+CLOUD_CONFIG = """
+[general]
+email = mail@example.com
+[jira]
+type = jira
+url = https://example.atlassian.net/
+auth_type = basic
+auth_username = mail@example.com
+"""
+
+
+def test_config_cloud_basic_auth_with_token_command() -> None:
+    """ Jira Cloud basic auth reads the token from `token_command` """
+    did.base.Config(f"""
+{CLOUD_CONFIG}
+token_command = echo cloud-secret
+""")
+    stats = JiraStatsGroup("jira")
+    assert stats.auth_password == "cloud-secret"
+
+
+def test_config_cloud_basic_auth_missing_token() -> None:
+    """ Jira Cloud basic auth without any token source """
+    did.base.Config(CLOUD_CONFIG)
+    with pytest.raises(
+            did.base.ReportError,
+            match=r"`token`, `token_file` or `token_command` must be set"):
+        JiraStatsGroup("jira")
+
+
 def test_config_missing_username() -> None:
     """  Test basic auth with missing username """
     assert_conf_error(f"""
@@ -175,15 +205,15 @@ auth_url = https://issues.redhat.com/rest/auth/latest/session
 
 
 def test_missing_token() -> None:
-    """ `token` and `token_file` missing with token auth """
+    """ All token sources missing with token auth """
     did.base.Config(f"""
 {CONFIG}
 auth_type = token
 token_expiration = 30
 """)
     with pytest.raises(
-            did.base.ReportError, match=r"The `token` or `token_file` key must be set"
-            ):
+            did.base.ReportError,
+            match=r"The `token`, `token_file` or `token_command` key must be set"):
         JiraStatsGroup("jira")
 
 
