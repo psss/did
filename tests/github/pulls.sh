@@ -141,7 +141,7 @@ rlJournalStart
         # Reviewed in the window but closed later or still open (newly counted)
         rlAssertGrep "teemtee/tmt#5203 - Update renovatebot image" $rlRun_LOG
         rlAssertGrep "teemtee/tmt#5200 - Update GitHub Actions" $rlRun_LOG
-        rlAssertGrep "psss/did#478 - Add CLAUDE.md project guidance" $rlRun_LOG
+        rlAssertGrep 'psss/did#478 - Add the `AGENTS.md` project guidance' $rlRun_LOG
         rlAssertGrep "psss/did#475 - Add Jira sprint support for" $rlRun_LOG
         # Closed in the window but reviewed earlier (no longer counted)
         rlAssertNotGrep "psss/did#469 - Support fetching tokens" $rlRun_LOG
