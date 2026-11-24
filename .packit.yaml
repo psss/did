@@ -23,6 +23,9 @@ jobs:
   - fedora-all
   - epel-9
   - epel-10
+  tf_extra_params:
+    pipeline:
+      type: tmt-multihost
 
 - job: copr_build
   trigger: commit
