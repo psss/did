@@ -26,6 +26,14 @@ This will bring dependencies for all core plugins as well.
 __ https://copr.fedoraproject.org/coprs/psss/did/
 
 
+UV
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install did as an isolated command-line tool using uv::
+
+    uv tool install did
+
+
 PIP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
