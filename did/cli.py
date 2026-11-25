@@ -184,7 +184,7 @@ class Options:
             'today', 'yesterday', 'monday', 'tuesday', 'wednesday', 'thursday',
             'friday', 'saturday', 'sunday',
             'this', 'last',
-            'week', 'month', 'quarter', 'year']
+            'week', 'month', 'quarter', 'year', 'sprint']
         if self.arg is None:
             raise RuntimeError("Programming error: call `parse` before `check`")
         for argument in self.arg:

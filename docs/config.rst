@@ -51,6 +51,39 @@ Each path should be a package or module. This method works whether
 the package or module is on the filesystem or in an ``.egg``.
 
 
+Time Periods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In addition to the standard time periods (``today``, ``yesterday``,
+``this week``, ``last week``, ``this month``, ``last month``,
+``this quarter``, ``last quarter``, ``this year``, ``last year``),
+``did`` supports sprint-based reporting when configured with Jira::
+
+    did this sprint
+    did last sprint
+
+Sprint periods automatically query the Jira Agile API to fetch the
+date range of your active sprint (for ``this sprint``) or the most
+recently closed sprint (for ``last sprint``). All configured stats
+(git, GitHub, GitLab, Confluence, etc.) will then report against
+that sprint's date range.
+
+Sprint support requires a ``[jira]`` section in your config with at
+least a ``project`` or ``sprint_board`` setting. If your project has
+multiple Scrum boards, specify which one to use::
+
+    [jira]
+    type = jira
+    url = https://your-jira.atlassian.net
+    project = MYPROJECT
+    sprint_board = 42
+
+The ``sprint_board`` option should be set to the numeric board ID
+shown in your Jira board URL. If not specified, ``did`` will
+auto-discover the Scrum board from your project. If multiple boards
+exist, an error will list their IDs so you can choose the correct one.
+
+
 Email
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
