@@ -52,6 +52,7 @@ Gather stats for the last month::
     did last month
 
 See ``did --help`` for complete list of available stats.
+Use ``did --version`` (or ``-V``) to print the installed version.
 
 
 Options
