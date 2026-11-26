@@ -238,7 +238,7 @@ def test_color_function_exists() -> None:
     # No color sets
     res = did.utils.color(
         "text", text_color=None, background=None, light=False, enabled=True)
-    assert res == "\033[0mtext\033[1;m"
+    assert res == "\033[0mtext\033[0m"
     # Disabled
     res = did.utils.color(
         "text", text_color=None, background=None, light=False, enabled=False)
@@ -256,11 +256,11 @@ def test_color_function_exists() -> None:
     # Known color
     res = did.utils.color(
         "text", text_color="red", background=None, light=False, enabled=True)
-    assert res == "\033[0;31mtext\033[1;m"
+    assert res == "\033[0;31mtext\033[0m"
     # Light version
     res = did.utils.color(
         "text", text_color="red", background=None, light=True, enabled=True)
-    assert res == "\033[1;31mtext\033[1;m"
+    assert res == "\033[1;31mtext\033[0m"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  strtobool

@@ -43,14 +43,21 @@ Configuration example (token authentication)::
     token_expiration = 30
 
 Notes:
-Either ``token`` or ``token_file`` has to be defined.
+One of ``token``, ``token_file`` or ``token_command`` has to be defined.
 
 token
     Token string directly included in the config.
-    Has a higher priority over ``token_file``.
+    Has a higher priority over ``token_file`` and ``token_command``.
 
 token_file
     Path to the file where the token is stored.
+    Has a higher priority over ``token_command``.
+
+token_command
+    Shell-style command line whose stdout is used as the token, e.g.
+    ``bw get password did-confluence`` or
+    ``op read op://Personal/Confluence/token``. The command is parsed
+    with ``shlex`` and executed without a shell.
 
 token_expiration
     Print warning if token with provided ``token_name`` expires within

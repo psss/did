@@ -80,9 +80,17 @@ def test_github_pull_requests_closed():
         "psss/did#037 - Skip CI users" in str(stat) for stat in stats)
 
 
+@pytest.mark.skipif("GITHUB_TOKEN" not in os.environ,
+                    reason="No GITHUB_TOKEN environment variable found")
 def test_github_pull_requests_reviewed():
-    """ Reviewed pull requests """
-    did.base.Config(CONFIG.replace('psss', 'evgeni'))
+    """
+    Reviewed pull requests.
+    Requires the use of a GitHub token due to the extra per-pull-request
+    queries needed to confirm the review submission date.
+    """
+    did.base.Config(
+        CONFIG.replace('psss', 'evgeni')
+        + f"\ntoken = {os.getenv(key='GITHUB_TOKEN')}")
     option = "--gh-pull-requests-reviewed --since 2017-02-22 --until 2017-02-23"
     stats = did.cli.main(option)[0][0].stats[0].stats[6].stats
     assert any("Katello/katello-client-bootstrap#164" in str(stat)

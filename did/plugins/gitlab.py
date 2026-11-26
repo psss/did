@@ -8,12 +8,18 @@ Config example::
     url = https://gitlab.com/
     token = <authentication-token>
     token_file = <authentication-token-file>
+    token_command = <command-to-fetch-token>
     login = <username>
     ssl_verify = true
 
 The authentication token is required. Create it in the GitLab web
 interface (select ``api`` as the desired scope). See the `GitLab API`__
 documentation for details.
+
+Alternatively to ``token`` you can use ``token_file`` to have the
+token stored in a file, or ``token_command`` to fetch it from an
+external command (e.g. a password manager), rather than storing it
+directly in your did config file.
 
 Use ``login`` to override user name detected from the email address.
 See the :doc:`config` documentation for details on using aliases.
@@ -232,6 +238,21 @@ class GitLab():
             'updated_after': since_str
             }, get_all_results=True)
 
+    def get_user_mr_created(self, username, since, until):
+        """
+        Fetch merge requests created by user in date range using
+        GitLab's global merge_requests endpoint.
+
+        Unlike the events API, this reliably returns all MRs
+        the authenticated user has visibility to.
+        """
+        endpoint = 'merge_requests'
+        return self._get_gitlab_api_list(endpoint, params={
+            'author_username': username,
+            'created_after': since.date.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+            'created_before': until.date.strftime('%Y-%m-%dT23:59:59.999Z'),
+            }, get_all_results=True)
+
     def get_project_mrs(self, project_id):
         if project_id not in self.project_mrs:
             query = f'projects/{project_id}/merge_requests'
@@ -327,19 +348,10 @@ class Issue():
         self.data = data
         self.gitlabapi: GitLab = parent.gitlab
         self.project = self.gitlabapi.get_project(data['project_id'])
-        self.id = set_id
-        if set_id is None:
-            self.id = self.iid()
+        self.id = set_id if set_id is not None else (
+            data.get('target_iid') or 'unknown')
         self.title = data['target_title']
         self._body: Optional[str] = None
-
-    def iid(self):
-        issue = self.gitlabapi.get_project_issue(
-            self.data['project_id'], self.data['target_id'])
-
-        if issue is not None:
-            return issue['iid']
-        return "unknown"
 
     @property
     def body(self) -> str:
@@ -395,14 +407,6 @@ class Issue():
 class MergeRequest(Issue):
     # pylint: disable=too-few-public-methods
 
-    def __init__(self, data, parent, set_id=None):
-        if set_id is None:
-            merge_request = parent.gitlab.get_project_mr(
-                data['project_id'], data['target_id'])
-            if merge_request is not None:
-                set_id = merge_request['iid']
-        super().__init__(data, parent, set_id)
-
     @property
     def body(self) -> str:
         """Get full MR description (lazy-loaded)"""
@@ -418,27 +422,8 @@ class Note(Issue):
 
     def __init__(self, data, parent, set_id=None):
         if set_id is None:
-            set_id = self.note_iid(data, parent.gitlab)
+            set_id = data['note'].get('noteable_iid') or 'unknown'
         super().__init__(data, parent, set_id)
-
-    def note_iid(self, data, gitlabapi):
-        if data['note']['noteable_type'] == 'Issue':
-            issue = gitlabapi.get_project_issue(
-                data['project_id'],
-                data['note']['noteable_id'])
-
-            # `noteable_type` is `Issue` even for `WorkItem`s, which
-            # aren't returned by `get_project_issue()`
-            if issue is not None:
-                return issue['iid']
-            return 'unknown'
-        if data['note']['noteable_type'] == 'MergeRequest':
-            merge_request = gitlabapi.get_project_mr(
-                data['project_id'],
-                data['note']['noteable_id'])
-            if merge_request is not None:
-                return merge_request['iid']
-        return "unknown"
 
     @property
     def body(self) -> str:
@@ -470,6 +455,11 @@ class MergedRequest(Issue):
         transformed_data['target_title'] = data['title']
         transformed_data['target_type'] = 'MergeRequest'
         super().__init__(transformed_data, parent, data['iid'])
+        # The description is available inline in the global
+        # merge_requests API data, so populate the body directly and
+        # skip the inherited Issue.body lookup (which needs 'target_id',
+        # a field absent from this data).
+        self._body = data.get('description', '') or ''
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #  Stats
@@ -524,12 +514,12 @@ class MergeRequestsCreated(Stats):
 
     def fetch(self):
         log.info("Searching for Merge requests created by %s", self.user)
-        results = self.parent.gitlab.search(
-            self.user.login, self.options.since, self.options.until,
-            target_type='MergeRequest',
-            action_name='opened')
+        results = self.parent.gitlab.get_user_mr_created(
+            self.user.login,
+            self.options.since,
+            self.options.until)
         self.stats = [
-            MergeRequest(mr, self.parent)
+            MergedRequest(mr, self.parent)
             for mr in results]
 
 

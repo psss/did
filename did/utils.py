@@ -521,7 +521,7 @@ def color(
     light_code = (1 if light else 0)
     # Starting and finishing sequence
     start = f"\033[{light_code}{text_color_code}{background_code}m"
-    finish = "\033[1;m"
+    finish = "\033[0m"
     return "".join([start, text, finish])
 
 
